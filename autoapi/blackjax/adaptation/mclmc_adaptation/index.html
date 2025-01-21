@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.mass_matrix" href="../mass_matrix/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga0812be" />
+  <meta name="docsearch:version" content="0.1.dev1+g4d4eae0" />
   </head>
   
   
@@ -189,6 +189,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
@@ -365,7 +366,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.L"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.L</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.step_size"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.step_size</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.sqrt_diag_cov"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.sqrt_diag_cov</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.inverse_mass_matrix</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size"><code class="docutils literal notranslate"><span class="pre">mclmc_find_L_and_step_size()</span></code></a></li>
@@ -430,7 +431,7 @@
 </dd>
 <dt>step_size</dt><dd><p>The step size used for the MCLMC algorithm.</p>
 </dd>
-<dt>sqrt_diag_cov</dt><dd><p>A matrix used for preconditioning.</p>
+<dt>inverse_mass_matrix</dt><dd><p>A matrix used for preconditioning.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -444,8 +445,8 @@
 <dd></dd></dl>
 
 <dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.sqrt_diag_cov">
-<span class="sig-name descname"><span class="pre">sqrt_diag_cov</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#MCLMCAdaptationState.sqrt_diag_cov"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.sqrt_diag_cov" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.inverse_mass_matrix">
+<span class="sig-name descname"><span class="pre">inverse_mass_matrix</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#MCLMCAdaptationState.inverse_mass_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.inverse_mass_matrix" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -551,7 +552,7 @@ function returns the old state in this case.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.L"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.L</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.step_size"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.step_size</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.sqrt_diag_cov"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.sqrt_diag_cov</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState.inverse_mass_matrix</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size"><code class="docutils literal notranslate"><span class="pre">mclmc_find_L_and_step_size()</span></code></a></li>

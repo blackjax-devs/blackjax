@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga0812be" />
+  <meta name="docsearch:version" content="0.1.dev1+g4d4eae0" />
   </head>
   
   
@@ -188,6 +188,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
@@ -686,7 +687,9 @@
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">norm</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">,</span> <span class="n">x</span> <span class="o">/</span> <span class="n">norm</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="n">norm</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">esh_dynamics_momentum_update_one_step</span><span class="p">(</span><span class="n">sqrt_diag_cov</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">esh_dynamics_momentum_update_one_step</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="n">sqrt_inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
         <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
         <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
@@ -705,7 +708,7 @@
 
         <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">logdensity_grad</span>
         <span class="n">flatten_grads</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">logdensity_grad</span><span class="p">)</span>
-        <span class="n">flatten_grads</span> <span class="o">=</span> <span class="n">flatten_grads</span> <span class="o">*</span> <span class="n">sqrt_diag_cov</span>
+        <span class="n">flatten_grads</span> <span class="o">=</span> <span class="n">flatten_grads</span> <span class="o">*</span> <span class="n">sqrt_inverse_mass_matrix</span>
         <span class="n">flatten_momentum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
         <span class="n">dims</span> <span class="o">=</span> <span class="n">flatten_momentum</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">normalized_gradient</span><span class="p">,</span> <span class="n">gradient_norm</span> <span class="o">=</span> <span class="n">_normalized_flatten_array</span><span class="p">(</span><span class="n">flatten_grads</span><span class="p">)</span>
@@ -717,7 +720,7 @@
             <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">zeta</span> <span class="o">*</span> <span class="n">flatten_momentum</span>
         <span class="p">)</span>
         <span class="n">new_momentum_normalized</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_normalized_flatten_array</span><span class="p">(</span><span class="n">new_momentum_raw</span><span class="p">)</span>
-        <span class="n">gr</span> <span class="o">=</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">new_momentum_normalized</span> <span class="o">*</span> <span class="n">sqrt_diag_cov</span><span class="p">)</span>
+        <span class="n">gr</span> <span class="o">=</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">new_momentum_normalized</span> <span class="o">*</span> <span class="n">sqrt_inverse_mass_matrix</span><span class="p">)</span>
         <span class="n">next_momentum</span> <span class="o">=</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">new_momentum_normalized</span><span class="p">)</span>
         <span class="n">kinetic_energy_change</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">delta</span>
@@ -749,11 +752,11 @@
 
 <span class="k">def</span><span class="w"> </span><span class="nf">generate_isokinetic_integrator</span><span class="p">(</span><span class="n">coefficients</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">isokinetic_integrator</span><span class="p">(</span>
-        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">sqrt_diag_cov</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">=</span> <span class="mf">1.0</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GeneralIntegrator</span><span class="p">:</span>
         <span class="n">position_update_fn</span> <span class="o">=</span> <span class="n">euclidean_position_update_fn</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
         <span class="n">one_step</span> <span class="o">=</span> <span class="n">generalized_two_stage_integrator</span><span class="p">(</span>
-            <span class="n">esh_dynamics_momentum_update_one_step</span><span class="p">(</span><span class="n">sqrt_diag_cov</span><span class="p">),</span>
+            <span class="n">esh_dynamics_momentum_update_one_step</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">),</span>
             <span class="n">position_update_fn</span><span class="p">,</span>
             <span class="n">coefficients</span><span class="p">,</span>
             <span class="n">format_output_fn</span><span class="o">=</span><span class="n">format_isokinetic_state_output</span><span class="p">,</span>

@@ -11,6 +11,7 @@ Submodules
    :maxdepth: 1
 
    /autoapi/blackjax/mcmc/adjusted_mclmc/index
+   /autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index
    /autoapi/blackjax/mcmc/barker/index
    /autoapi/blackjax/mcmc/diffusions/index
    /autoapi/blackjax/mcmc/dynamic_hmc/index

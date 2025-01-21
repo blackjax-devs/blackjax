@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga0812be" />
+  <meta name="docsearch:version" content="0.1.dev1+g4d4eae0" />
   </head>
   
   
@@ -188,6 +188,7 @@
 <li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
@@ -445,14 +446,20 @@
     <span class="n">dim</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">sqrt_diag_cov</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">dim</span><span class="p">,))</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">dim</span><span class="p">,))</span>
         <span class="p">)</span>
 
     <span class="n">part1_key</span><span class="p">,</span> <span class="n">part2_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
+    <span class="n">total_num_tuning_integrator_steps</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_windows</span><span class="p">):</span>
         <span class="n">window_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">part1_key</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">eigenvector</span><span class="p">)</span> <span class="o">=</span> <span class="n">adjusted_mclmc_make_L_step_size_adaptation</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">params</span><span class="p">,</span>
+            <span class="n">eigenvector</span><span class="p">,</span>
+            <span class="n">num_tuning_integrator_steps</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">=</span> <span class="n">adjusted_mclmc_make_L_step_size_adaptation</span><span class="p">(</span>
             <span class="n">kernel</span><span class="o">=</span><span class="n">mclmc_kernel</span><span class="p">,</span>
             <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
             <span class="n">frac_tune1</span><span class="o">=</span><span class="n">frac_tune1</span><span class="p">,</span>
@@ -461,22 +468,38 @@
             <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="n">diagonal_preconditioning</span><span class="p">,</span>
             <span class="nb">max</span><span class="o">=</span><span class="nb">max</span><span class="p">,</span>
             <span class="n">tuning_factor</span><span class="o">=</span><span class="n">tuning_factor</span><span class="p">,</span>
-        <span class="p">)(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">window_key</span><span class="p">)</span>
+        <span class="p">)(</span>
+            <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">window_key</span>
+        <span class="p">)</span>
+        <span class="n">total_num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">num_tuning_integrator_steps</span>
 
     <span class="k">if</span> <span class="n">frac_tune3</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_windows</span><span class="p">):</span>
             <span class="n">part2_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">part2_key</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
             <span class="n">part2_key1</span><span class="p">,</span> <span class="n">part2_key2</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">part2_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
-            <span class="n">state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">adjusted_mclmc_make_adaptation_L</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">,</span>
+                <span class="n">num_tuning_integrator_steps</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">adjusted_mclmc_make_adaptation_L</span><span class="p">(</span>
                 <span class="n">mclmc_kernel</span><span class="p">,</span>
                 <span class="n">frac</span><span class="o">=</span><span class="n">frac_tune3</span><span class="p">,</span>
                 <span class="n">Lfactor</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
                 <span class="nb">max</span><span class="o">=</span><span class="nb">max</span><span class="p">,</span>
                 <span class="n">eigenvector</span><span class="o">=</span><span class="n">eigenvector</span><span class="p">,</span>
-            <span class="p">)(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">part2_key1</span><span class="p">)</span>
+            <span class="p">)(</span>
+                <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">part2_key1</span>
+            <span class="p">)</span>
 
-            <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="o">=</span> <span class="n">adjusted_mclmc_make_L_step_size_adaptation</span><span class="p">(</span>
+            <span class="n">total_num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">num_tuning_integrator_steps</span>
+
+            <span class="p">(</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">,</span>
+                <span class="n">_</span><span class="p">,</span>
+                <span class="n">num_tuning_integrator_steps</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="n">adjusted_mclmc_make_L_step_size_adaptation</span><span class="p">(</span>
                 <span class="n">kernel</span><span class="o">=</span><span class="n">mclmc_kernel</span><span class="p">,</span>
                 <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
                 <span class="n">frac_tune1</span><span class="o">=</span><span class="n">frac_tune1</span><span class="p">,</span>
@@ -486,9 +509,13 @@
                 <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="n">diagonal_preconditioning</span><span class="p">,</span>
                 <span class="nb">max</span><span class="o">=</span><span class="nb">max</span><span class="p">,</span>
                 <span class="n">tuning_factor</span><span class="o">=</span><span class="n">tuning_factor</span><span class="p">,</span>
-            <span class="p">)(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">part2_key2</span><span class="p">)</span>
+            <span class="p">)(</span>
+                <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">part2_key2</span>
+            <span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span></div>
+            <span class="n">total_num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">num_tuning_integrator_steps</span>
+
+    <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">total_num_tuning_integrator_steps</span></div>
 
 
 
@@ -526,7 +553,7 @@
                 <span class="n">state</span><span class="o">=</span><span class="n">previous_state</span><span class="p">,</span>
                 <span class="n">avg_num_integration_steps</span><span class="o">=</span><span class="n">avg_num_integration_steps</span><span class="p">,</span>
                 <span class="n">step_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-                <span class="n">sqrt_diag_cov</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">sqrt_diag_cov</span><span class="p">,</span>
+                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="c1"># step updating</span>
@@ -630,6 +657,7 @@
             <span class="n">update_da</span><span class="o">=</span><span class="n">update_da</span><span class="p">,</span>
         <span class="p">)</span>
 
+        <span class="n">num_tuning_integrator_steps</span> <span class="o">=</span> <span class="n">info</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
         <span class="n">final_stepsize</span> <span class="o">=</span> <span class="n">final_da</span><span class="p">(</span><span class="n">dual_avg_state</span><span class="p">)</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">step_size</span><span class="o">=</span><span class="n">final_stepsize</span><span class="p">)</span>
 
@@ -657,9 +685,7 @@
                 <span class="n">L</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="n">change</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">step_size</span> <span class="o">*</span> <span class="n">change</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">diagonal_preconditioning</span><span class="p">:</span>
-                <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
-                    <span class="n">sqrt_diag_cov</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">variances</span><span class="p">),</span> <span class="n">L</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
-                <span class="p">)</span>
+                <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">variances</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
 
             <span class="n">initial_da</span><span class="p">,</span> <span class="n">update_da</span><span class="p">,</span> <span class="n">final_da</span> <span class="o">=</span> <span class="n">dual_averaging_adaptation</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
             <span class="p">(</span>
@@ -675,9 +701,11 @@
                 <span class="n">initial_da</span><span class="o">=</span><span class="n">initial_da</span><span class="p">,</span>
             <span class="p">)</span>
 
+            <span class="n">num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">info</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
             <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">step_size</span><span class="o">=</span><span class="n">final_da</span><span class="p">(</span><span class="n">dual_avg_state</span><span class="p">))</span>
 
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">eigenvector</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">eigenvector</span><span class="p">,</span> <span class="n">num_tuning_integrator_steps</span>
 
     <span class="k">return</span> <span class="n">L_step_size_adaptation</span></div>
 
@@ -695,16 +723,16 @@
         <span class="n">adaptation_L_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-            <span class="n">next_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span>
+            <span class="n">next_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
                 <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
                 <span class="n">step_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
                 <span class="n">avg_num_integration_steps</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">/</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-                <span class="n">sqrt_diag_cov</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">sqrt_diag_cov</span><span class="p">,</span>
+                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="p">)</span>
-            <span class="k">return</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">next_state</span><span class="o">.</span><span class="n">position</span>
+            <span class="k">return</span> <span class="n">next_state</span><span class="p">,</span> <span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
 
-        <span class="n">state</span><span class="p">,</span> <span class="n">samples</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">samples</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
             <span class="n">f</span><span class="o">=</span><span class="n">step</span><span class="p">,</span>
             <span class="n">init</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
             <span class="n">xs</span><span class="o">=</span><span class="n">adaptation_L_keys</span><span class="p">,</span>
@@ -725,10 +753,14 @@
         <span class="c1"># number of effective samples per 1 actual sample</span>
         <span class="n">ess</span> <span class="o">=</span> <span class="n">contract</span><span class="p">(</span><span class="n">effective_sample_size</span><span class="p">(</span><span class="n">flat_samples</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">]))</span> <span class="o">/</span> <span class="n">num_steps</span>
 
-        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
-            <span class="n">L</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
-                <span class="n">Lfactor</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ess</span><span class="p">),</span> <span class="nb">max</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="n">Lratio_upperbound</span>
-            <span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
+                <span class="n">L</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+                    <span class="n">Lfactor</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">ess</span><span class="p">),</span> <span class="nb">max</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="n">Lratio_upperbound</span>
+                <span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">info</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="o">.</span><span class="n">sum</span><span class="p">(),</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">adaptation_L</span></div>

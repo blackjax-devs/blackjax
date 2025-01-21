@@ -7,6 +7,8 @@ blackjax.mcmc.adjusted_mclmc
 
    Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin".
 
+   NOTE: For best performance, we recommend using adjusted_mclmc_dynamic instead of this module, which is primarily intended for use in parallelized versions of the algorithm.
+
 
 
 Functions
@@ -22,11 +24,11 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: blackjax.types.Array)
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable)
 
-.. py:function:: build_kernel(integration_steps_fn, integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], sqrt_diag_cov=1.0)
+.. py:function:: build_kernel(logdensity_fn: Callable, integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000, inverse_mass_matrix=1.0)
 
-   Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
+   Build an MHMCHMC kernel where the number of integration steps is chosen randomly.
 
    :param integrator: The integrator to use to integrate the Hamiltonian dynamics.
    :param divergence_threshold: Value of the difference in energy above which we consider that the transition is divergent.
@@ -39,9 +41,9 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, L_proposal_factor: float = jnp.inf, sqrt_diag_cov=1.0, *, divergence_threshold: int = 1000, integrator: Callable = integrators.isokinetic_mclachlan, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10)) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, L_proposal_factor: float = jnp.inf, inverse_mass_matrix=1.0, *, divergence_threshold: int = 1000, integrator: Callable = integrators.isokinetic_mclachlan, num_integration_steps) -> blackjax.base.SamplingAlgorithm
 
-   Implements the (basic) user interface for the dynamic MHMCHMC kernel.
+   Implements the (basic) user interface for the MHMCHMC kernel.
 
    :param logdensity_fn: The log-density function we wish to draw samples from.
    :param step_size: The value to use for the step size in the symplectic integrator.

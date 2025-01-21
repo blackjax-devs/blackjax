@@ -41,7 +41,7 @@ Module Contents
        The momentum decoherent rate for the MCLMC algorithm.
    step_size
        The step size used for the MCLMC algorithm.
-   sqrt_diag_cov
+   inverse_mass_matrix
        A matrix used for preconditioning.
 
 
@@ -53,7 +53,7 @@ Module Contents
       :type:  float
 
 
-   .. py:attribute:: sqrt_diag_cov
+   .. py:attribute:: inverse_mass_matrix
       :type:  float
 
 
@@ -78,10 +78,10 @@ Module Contents
    .. rubric:: Example
 
    .. code::
-       kernel = lambda sqrt_diag_cov : blackjax.mcmc.mclmc.build_kernel(
+       kernel = lambda inverse_mass_matrix : blackjax.mcmc.mclmc.build_kernel(
        logdensity_fn=logdensity_fn,
        integrator=integrator,
-       sqrt_diag_cov=sqrt_diag_cov,
+       inverse_mass_matrix=inverse_mass_matrix,
        )
 
        (
