@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin".
-
-NOTE: For best performance, we recommend using adjusted_mclmc_dynamic instead of this module, which is primarily intended for use in parallelized versions of the algorithm.
-
-"""
+"""Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin"."""
 from typing import Callable, Union
 
 import jax
@@ -23,26 +19,28 @@ import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.hmc import HMCInfo, HMCState
+from blackjax.mcmc.dynamic_hmc import DynamicHMCState, halton_sequence
+from blackjax.mcmc.hmc import HMCInfo
 from blackjax.mcmc.proposal import static_binomial_sampling
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_unit_vector
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
 
 
-def init(position: ArrayLikeTree, logdensity_fn: Callable):
+def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
-    return HMCState(position, logdensity, logdensity_grad)
+    return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
 
 def build_kernel(
-    num_integration_steps: int,
+    integration_steps_fn,
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
+    next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     sqrt_diag_cov=1.0,
 ):
-    """Build an MHMCHMC kernel where the number of integration steps is chosen randomly.
+    """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
     Parameters
     ----------
@@ -65,16 +63,18 @@ def build_kernel(
 
     def kernel(
         rng_key: PRNGKey,
-        state: HMCState,
+        state: DynamicHMCState,
         logdensity_fn: Callable,
         step_size: float,
         L_proposal_factor: float = jnp.inf,
-    ) -> tuple[HMCState, HMCInfo]:
+    ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
+
+        num_integration_steps = integration_steps_fn(state.random_generator_arg)
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
-        proposal, info, _ = adjusted_mclmc_proposal(
+        proposal, info, _ = bazbarfoo_proposal(
             integrator=integrators.with_isokinetic_maruyama(
                 integrator(logdensity_fn=logdensity_fn, sqrt_diag_cov=sqrt_diag_cov)
             ),
@@ -90,10 +90,11 @@ def build_kernel(
         )
 
         return (
-            HMCState(
+            DynamicHMCState(
                 proposal.position,
                 proposal.logdensity,
                 proposal.logdensity_grad,
+                next_random_arg_fn(state.random_generator_arg),
             ),
             info,
         )
@@ -109,9 +110,10 @@ def as_top_level_api(
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.isokinetic_mclachlan,
-    num_integration_steps,
+    next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
+    integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
 ) -> SamplingAlgorithm:
-    """Implements the (basic) user interface for the MHMCHMC kernel.
+    """Implements the (basic) user interface for the dynamic MHMCHMC kernel.
 
     Parameters
     ----------
@@ -138,15 +140,15 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(
-        num_integration_steps,
+        integration_steps_fn=integration_steps_fn,
         integrator=integrator,
+        next_random_arg_fn=next_random_arg_fn,
         sqrt_diag_cov=sqrt_diag_cov,
         divergence_threshold=divergence_threshold,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
+    def init_fn(position: ArrayLikeTree, rng_key: Array):
+        return init(position, logdensity_fn, rng_key)
 
     def update_fn(rng_key: PRNGKey, state):
         return kernel(
@@ -160,7 +162,7 @@ def as_top_level_api(
     return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
 
 
-def adjusted_mclmc_proposal(
+def bazbarfoo_proposal(
     integrator: Callable,
     step_size: Union[float, ArrayLikeTree],
     L_proposal_factor: float,
@@ -238,3 +240,18 @@ def adjusted_mclmc_proposal(
         return sampled_state, info, other_proposal_info
 
     return generate
+
+
+def rescale(mu):
+    """returns s, such that
+     round(U(0, 1) * s + 0.5)
+    has expected value mu.
+    """
+    k = jnp.floor(2 * mu - 1)
+    x = k * (mu - 0.5 * (k + 1)) / (k + 1 - mu)
+    return k + x
+
+
+def trajectory_length(t, mu):
+    s = rescale(mu)
+    return jnp.rint(0.5 + halton_sequence(t) * s)

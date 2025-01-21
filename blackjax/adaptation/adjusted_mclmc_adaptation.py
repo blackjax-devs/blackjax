@@ -14,7 +14,7 @@ Lratio_lowerbound = 0.0
 Lratio_upperbound = 2.0
 
 
-def adjusted_mclmc_find_L_and_step_size(
+def bazbarfoo_find_L_and_step_size(
     mclmc_kernel,
     num_steps,
     state,
@@ -81,7 +81,7 @@ def adjusted_mclmc_find_L_and_step_size(
 
     for i in range(num_windows):
         window_key = jax.random.fold_in(part1_key, i)
-        (state, params, eigenvector) = adjusted_mclmc_make_L_step_size_adaptation(
+        (state, params, eigenvector) = bazbarfoo_make_L_step_size_adaptation(
             kernel=mclmc_kernel,
             dim=dim,
             frac_tune1=frac_tune1,
@@ -97,7 +97,7 @@ def adjusted_mclmc_find_L_and_step_size(
             part2_key = jax.random.fold_in(part2_key, i)
             part2_key1, part2_key2 = jax.random.split(part2_key, 2)
 
-            state, params = adjusted_mclmc_make_adaptation_L(
+            state, params = bazbarfoo_make_adaptation_L(
                 mclmc_kernel,
                 frac=frac_tune3,
                 Lfactor=0.5,
@@ -105,7 +105,7 @@ def adjusted_mclmc_find_L_and_step_size(
                 eigenvector=eigenvector,
             )(state, params, num_steps, part2_key1)
 
-            (state, params, _) = adjusted_mclmc_make_L_step_size_adaptation(
+            (state, params, _) = bazbarfoo_make_L_step_size_adaptation(
                 kernel=mclmc_kernel,
                 dim=dim,
                 frac_tune1=frac_tune1,
@@ -120,7 +120,7 @@ def adjusted_mclmc_find_L_and_step_size(
     return state, params
 
 
-def adjusted_mclmc_make_L_step_size_adaptation(
+def bazbarfoo_make_L_step_size_adaptation(
     kernel,
     dim,
     frac_tune1,
@@ -308,9 +308,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
     return L_step_size_adaptation
 
 
-def adjusted_mclmc_make_adaptation_L(
-    kernel, frac, Lfactor, max="avg", eigenvector=None
-):
+def bazbarfoo_make_adaptation_L(kernel, frac, Lfactor, max="avg", eigenvector=None):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):

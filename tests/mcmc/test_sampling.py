@@ -15,7 +15,7 @@ import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
-from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
+from blackjax.mcmc.adjusted_mclmc import rescale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
@@ -147,7 +147,7 @@ class LinearRegressionTest(chex.TestCase):
 
         return samples
 
-    def run_adjusted_mclmc_dynamic(
+    def run_adjusted_mclmc(
         self,
         logdensity_fn,
         num_steps,
@@ -159,13 +159,13 @@ class LinearRegressionTest(chex.TestCase):
 
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
-        initial_state = blackjax.mcmc.adjusted_mclmc_dynamic.init(
+        initial_state = blackjax.mcmc.adjusted_mclmc.init(
             position=initial_position,
             logdensity_fn=logdensity_fn,
             random_generator_arg=init_key,
         )
 
-        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, sqrt_diag_cov: blackjax.mcmc.adjusted_mclmc_dynamic.build_kernel(
+        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, sqrt_diag_cov: blackjax.mcmc.adjusted_mclmc.build_kernel(
             integrator=integrator,
             integration_steps_fn=lambda k: jnp.ceil(
                 jax.random.uniform(k) * rescale(avg_num_integration_steps)
@@ -183,7 +183,7 @@ class LinearRegressionTest(chex.TestCase):
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
-        ) = blackjax.adjusted_mclmc_find_L_and_step_size(
+        ) = blackjax.bazbarfoo_find_L_and_step_size(
             mclmc_kernel=kernel,
             num_steps=num_steps,
             state=initial_state,
@@ -198,7 +198,7 @@ class LinearRegressionTest(chex.TestCase):
         step_size = blackjax_mclmc_sampler_params.step_size
         L = blackjax_mclmc_sampler_params.L
 
-        alg = blackjax.adjusted_mclmc_dynamic(
+        alg = blackjax.adjusted_mclmc(
             logdensity_fn=logdensity_fn,
             step_size=step_size,
             integration_steps_fn=lambda key: jnp.ceil(
@@ -219,7 +219,7 @@ class LinearRegressionTest(chex.TestCase):
 
         return out
 
-    def run_adjusted_mclmc(
+    def run_bazbarfoo(
         self,
         logdensity_fn,
         num_steps,
@@ -231,12 +231,12 @@ class LinearRegressionTest(chex.TestCase):
 
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
-        initial_state = blackjax.mcmc.adjusted_mclmc.init(
+        initial_state = blackjax.mcmc.bazbarfoo.init(
             position=initial_position,
             logdensity_fn=logdensity_fn,
         )
 
-        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, sqrt_diag_cov: blackjax.mcmc.adjusted_mclmc.build_kernel(
+        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, sqrt_diag_cov: blackjax.mcmc.bazbarfoo.build_kernel(
             integrator=integrator,
             num_integration_steps=avg_num_integration_steps,
             sqrt_diag_cov=sqrt_diag_cov,
@@ -252,7 +252,7 @@ class LinearRegressionTest(chex.TestCase):
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
-        ) = blackjax.adjusted_mclmc_find_L_and_step_size(
+        ) = blackjax.bazbarfoo_find_L_and_step_size(
             mclmc_kernel=kernel,
             num_steps=num_steps,
             state=initial_state,
@@ -267,7 +267,7 @@ class LinearRegressionTest(chex.TestCase):
         step_size = blackjax_mclmc_sampler_params.step_size
         L = blackjax_mclmc_sampler_params.L
 
-        alg = blackjax.adjusted_mclmc(
+        alg = blackjax.bazbarfoo(
             logdensity_fn=logdensity_fn,
             step_size=step_size,
             num_integration_steps=L / step_size,
@@ -403,7 +403,7 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, rtol=1e-2, atol=1e-1)
 
     @parameterized.parameters([True, False])
-    def test_adjusted_mclmc_dynamic(self, diagonal_preconditioning):
+    def test_adjusted_mclmc(self, diagonal_preconditioning):
         """Test the MCLMC kernel."""
 
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
@@ -415,7 +415,7 @@ class LinearRegressionTest(chex.TestCase):
         )
         logdensity_fn = lambda x: logposterior_fn_(**x)
 
-        states = self.run_adjusted_mclmc_dynamic(
+        states = self.run_adjusted_mclmc(
             initial_position={"coefs": 1.0, "log_scale": 1.0},
             logdensity_fn=logdensity_fn,
             key=inference_key,
@@ -430,7 +430,7 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
 
     @parameterized.parameters([True, False])
-    def test_adjusted_mclmc(self, diagonal_preconditioning):
+    def test_bazbarfoo(self, diagonal_preconditioning):
         """Test the MCLMC kernel."""
 
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
@@ -442,7 +442,7 @@ class LinearRegressionTest(chex.TestCase):
         )
         logdensity_fn = lambda x: logposterior_fn_(**x)
 
-        states = self.run_adjusted_mclmc(
+        states = self.run_bazbarfoo(
             initial_position={"coefs": 1.0, "log_scale": 1.0},
             logdensity_fn=logdensity_fn,
             key=inference_key,
