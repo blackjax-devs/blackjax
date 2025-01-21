@@ -303,7 +303,6 @@ def as_top_level_api(
         parameters to be used for the creation of the smc_algorithm.
     """
     def smc_from_particle_update_fn(pretuned_step, mcmc_parameters):
-
         return smc_algorithm(
             logprior_fn=logprior_fn,
             loglikelihood_fn=loglikelihood_fn,
@@ -313,14 +312,28 @@ def as_top_level_api(
             resampling_fn=resampling_fn,
             num_mcmc_steps=num_mcmc_steps,
             update_particles_fn=functools.partial(pretuned_step, mcmc_parameters=mcmc_parameters),
+            **extra_parameters
         ).step
 
-    delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, functools.partial(update_and_take_last, num_mcmc_steps=num_mcmc_steps))
+    update_strategy = functools.partial(update_and_take_last, num_mcmc_steps=1)
+    def delegate_for_pretuning_mutation(
+            rng_key,
+            state,
+            pretuned_parameters,
+            logposterior_fn,
+            log_weights_fn,
+    ):
+
+        return smc_from_mcmc(mcmc_step_fn,
+                      mcmc_init_fn,
+                      resampling_fn,
+                      pretuned_parameters,
+                      update_strategy)(rng_key, state, logposterior_fn,log_weights_fn)
 
     kernel = build_kernel(
         smc_from_particle_update_fn,
         pretune_fn,
-        delegate
+        delegate_for_pretuning_mutation
     )
 
     def init_fn(position, rng_key=None):
