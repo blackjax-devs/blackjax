@@ -357,7 +357,6 @@ def adjusted_mclmc_make_adaptation_L(
         state, (samples, info) = jax.lax.scan(
             f=step,
             init=state,
-            f=step,
             xs=adaptation_L_keys,
         )
 
