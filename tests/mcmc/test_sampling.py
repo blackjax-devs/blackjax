@@ -122,7 +122,6 @@ class LinearRegressionTest(chex.TestCase):
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
-            num_tuning_integrator_steps,
         ) = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
             num_steps=num_steps,
@@ -184,7 +183,6 @@ class LinearRegressionTest(chex.TestCase):
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
-            num_tuning_integrator_steps,
         ) = blackjax.adjusted_mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
             num_steps=num_steps,
@@ -254,7 +252,6 @@ class LinearRegressionTest(chex.TestCase):
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
-            num_tuning_integrator_steps,
         ) = blackjax.adjusted_mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
             num_steps=num_steps,
@@ -519,7 +516,7 @@ class LinearRegressionTest(chex.TestCase):
                 inverse_mass_matrix=inverse_mass_matrix,
             )
 
-            (_, blackjax_mclmc_sampler_params, _) = blackjax.mclmc_find_L_and_step_size(
+            (_, blackjax_mclmc_sampler_params) = blackjax.mclmc_find_L_and_step_size(
                 mclmc_kernel=kernel,
                 num_steps=num_steps,
                 state=initial_state,
