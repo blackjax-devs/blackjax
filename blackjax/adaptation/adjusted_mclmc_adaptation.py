@@ -328,8 +328,8 @@ def adjusted_mclmc_make_adaptation_L(
             return next_state, next_state.position
 
         state, samples = jax.lax.scan(
-            f=step,
             init=state,
+            f=step,
             xs=adaptation_L_keys,
         )
 
