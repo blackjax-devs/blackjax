@@ -74,7 +74,7 @@ def adjusted_mclmc_find_L_and_step_size(
     dim = pytree_size(state.position)
     if params is None:
         params = MCLMCAdaptationState(
-            jnp.sqrt(dim), jnp.sqrt(dim) * 0.2, sqrt_diag_cov=jnp.ones((dim,))
+            jnp.sqrt(dim), jnp.sqrt(dim) * 0.2, inverse_mass_matrix=jnp.ones((dim,))
         )
 
     part1_key, part2_key = jax.random.split(rng_key, 2)
@@ -152,7 +152,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 state=previous_state,
                 avg_num_integration_steps=avg_num_integration_steps,
                 step_size=params.step_size,
-                sqrt_diag_cov=params.sqrt_diag_cov,
+                inverse_mass_matrix=params.inverse_mass_matrix,
             )
 
             # step updating
@@ -283,9 +283,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 L=params.L * change, step_size=params.step_size * change
             )
             if diagonal_preconditioning:
-                params = params._replace(
-                    sqrt_diag_cov=jnp.sqrt(variances), L=jnp.sqrt(dim)
-                )
+                params = params._replace(inverse_mass_matrix=variances, L=jnp.sqrt(dim))
 
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
             (
@@ -323,7 +321,7 @@ def adjusted_mclmc_make_adaptation_L(
                 state=state,
                 step_size=params.step_size,
                 avg_num_integration_steps=params.L / params.step_size,
-                sqrt_diag_cov=params.sqrt_diag_cov,
+                inverse_mass_matrix=params.inverse_mass_matrix,
             )
             return next_state, next_state.position
 

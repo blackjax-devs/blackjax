@@ -38,7 +38,7 @@ def build_kernel(
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
-    sqrt_diag_cov=1.0,
+    inverse_mass_matrix=1.0,
 ):
     """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
@@ -76,7 +76,9 @@ def build_kernel(
         momentum = generate_unit_vector(key_momentum, state.position)
         proposal, info, _ = adjusted_mclmc_proposal(
             integrator=integrators.with_isokinetic_maruyama(
-                integrator(logdensity_fn=logdensity_fn, sqrt_diag_cov=sqrt_diag_cov)
+                integrator(
+                    logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix
+                )
             ),
             step_size=step_size,
             L_proposal_factor=L_proposal_factor * (num_integration_steps * step_size),
@@ -106,7 +108,7 @@ def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
     L_proposal_factor: float = jnp.inf,
-    sqrt_diag_cov=1.0,
+    inverse_mass_matrix=1.0,
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.isokinetic_mclachlan,
@@ -143,7 +145,7 @@ def as_top_level_api(
         integration_steps_fn=integration_steps_fn,
         integrator=integrator,
         next_random_arg_fn=next_random_arg_fn,
-        sqrt_diag_cov=sqrt_diag_cov,
+        inverse_mass_matrix=inverse_mass_matrix,
         divergence_threshold=divergence_threshold,
     )
 
