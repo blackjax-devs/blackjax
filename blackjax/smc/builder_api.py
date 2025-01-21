@@ -10,6 +10,11 @@ from blackjax.smc.from_mcmc import build_kernel as smc_from_mcmc
 
 
 class SMCSamplerBuilder:
+    """
+    A user friendly API aimed at easy experimentation with different
+    variants of SMC samplers.
+
+    """
     def __init__(self):
         self.step_structure = None
         self.update_strategy = None
@@ -93,13 +98,11 @@ class SMCSamplerBuilder:
                 " or partial_posteriors_path()")
 
         if self.step_structure == "adaptive_tempering":
-            init, step = self._build_adaptive_tempered()
-
+            init, step = self._adaptive_tempered_from_parameters()
         elif self.step_structure == "tempering":
-            init, step = self._build_tempered_from_parameters()
+            init, step = self._tempered_from_parameters()
         elif self.step_structure == "partial_posteriors":
-            init, step = self._build_partial_posterior_from_parameters()
-
+            init, step = self._partial_posterior_from_parameters()
         else:
             raise NotImplementedError(
                 "The SMCBuilder API supports three ways of structuring SMC"
@@ -107,27 +110,25 @@ class SMCSamplerBuilder:
                 "partial posteriors (data tempering). "
             )
 
-        if self.mcmc_parameter_update_fn is not None:
-            """
-            if inner kernel tuning then wraps step structure
-            """
+        if self.mcmc_parameter_update_fn is None and self.pretune_fn is None:
+            # no tuning or pretuning is used
+            return SamplingAlgorithm(init, step(self._inner_kernel_params))
+
+        if self.mcmc_parameter_update_fn is not None and self.pretune_fn is None:
+            # only tuning
             def new_init(position):
                 return inner_kernel_tuning.init(init, position, self._inner_kernel_params)
 
             return SamplingAlgorithm(new_init,
                                      inner_kernel_tuning.build_kernel(step, self.mcmc_parameter_update_fn))
-        else:
-            """
-            if no inner kernel tuning then parameters are fixed.
-            """
-            step = step(self._inner_kernel_params)
-
-        if self.pretune_fn is not None:
+        if self.mcmc_parameter_update_fn is None and self.pretune_fn is not None:
+            # only pretune
             return self._build_pretuning()
 
-        return SamplingAlgorithm(init, step)
+        # Both Pretune and Tune
+        return self._tune_and_pretune()
 
-    def _build_adaptive_tempered(self):
+    def _adaptive_tempered_from_parameters(self):
         def from_parameteres(inner_kernel_params):
             mutation_step = from_mcmc.build_kernel(
                 self._inner_kernel_step,
@@ -154,7 +155,7 @@ class SMCSamplerBuilder:
         init = tempered.init
         return init, from_parameteres
 
-    def _build_tempered_from_parameters(self):
+    def _tempered_from_parameters(self):
         def from_parameteres(inner_kernel_params):
             mutation_step = from_mcmc.build_kernel(
                 self._inner_kernel_step,
@@ -172,7 +173,7 @@ class SMCSamplerBuilder:
         init = tempered.init
         return init, from_parameteres
 
-    def _build_partial_posterior_from_parameters(self):
+    def _partial_posterior_from_parameters(self):
         def from_parameters(params):
             update_particles = from_mcmc.build_kernel(
                 self._inner_kernel_step,
@@ -224,6 +225,41 @@ class SMCSamplerBuilder:
 
             return SamplingAlgorithm(init_fn, kernel)
 
+    def _tune_and_pretune(
+            self
+    ):
+        def pt(logprior_fn,
+               loglikelihood_fn,
+               mcmc_step_fn,
+               mcmc_init_fn,
+               mcmc_parameters,
+               resampling_fn,
+               num_mcmc_steps,
+               initial_parameter_value,
+               target_ess,
+               ):
+            return blackjax.pretuning(blackjax.adaptive_tempered_smc,
+                                      logprior_fn,
+                                      loglikelihood_fn,
+                                      mcmc_step_fn,
+                                      mcmc_init_fn,
+                                      resampling_fn,
+                                      num_mcmc_steps,
+                                      target_ess=self.target_ess,
+                                      pretune_fn=self.pretune)
 
+        kernel = blackjax.smc.inner_kernel_tuning.build_kernel(pt,
+                                                               self.logprior_fn,
+                                                               self.loglikelihood_fn,
+                                                               self._inner_kernel_step,
+                                                               self._inner_kernel_init,
+                                                               self.resampling_fn,
+                                                               self.mcmc_parameter_update_fn,
+                                                               initial_parameter_value=self._inner_kernel_params,
+                                                               target_ess = self.target_ess,
+                                                               smc_returns_state_with_parameter_override=True)
 
-def _tune_and_pretune():
+        def init2(position):
+            return blackjax.smc.inner_kernel_tuning.init(blackjax.adaptive_tempered_smc.init, position, initial_parameters)
+
+        return SamplingAlgorithm(init2, kernel)
