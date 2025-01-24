@@ -72,16 +72,18 @@ class SMCParameterTuningTest(chex.TestCase):
         logpdf = stats.norm.logpdf(preds, y, scale)
         return jnp.sum(logpdf)
 
-    def top_level_api_sampler_provider(self,
-                                       logprior_fn,
-                                       loglikelihood_fn,
-                                       mcmc_step_fn,
-                                       mcmc_init_fn,
-                                       resampling_fn,
-                                       smc_algorithm,
-                                       mcmc_parameter_update_fn,
-                                       initial_parameter_value,
-                                       smc_parameters):
+    def top_level_api_sampler_provider(
+        self,
+        logprior_fn,
+        loglikelihood_fn,
+        mcmc_step_fn,
+        mcmc_init_fn,
+        resampling_fn,
+        smc_algorithm,
+        mcmc_parameter_update_fn,
+        initial_parameter_value,
+        smc_parameters,
+    ):
         return inner_kernel_tuning(
             logprior_fn=logprior_fn,
             loglikelihood_fn=loglikelihood_fn,
@@ -94,41 +96,48 @@ class SMCParameterTuningTest(chex.TestCase):
             **smc_parameters,
         )
 
-    def builder_api_adaptive_provider(self,
-                                      logprior_fn,
-                                      loglikelihood_fn,
-                                      mcmc_step_fn,
-                                      mcmc_init_fn,
-                                      resampling_fn,
-                                      smc_algorithm,
-                                      mcmc_parameter_update_fn,
-                                      initial_parameter_value,
-                                      smc_parameters):
-        return (SMCSamplerBuilder()
-                .adaptive_tempering(0.5, logprior_fn, loglikelihood_fn)
-                .inner_kernel(mcmc_init_fn, mcmc_step_fn, initial_parameter_value)
-                .with_inner_kernel_tuning(mcmc_parameter_update_fn)
-                .mutate_and_take_last(10)
-                .build(resampling_fn)
+    def builder_api_adaptive_provider(
+        self,
+        logprior_fn,
+        loglikelihood_fn,
+        mcmc_step_fn,
+        mcmc_init_fn,
+        resampling_fn,
+        smc_algorithm,
+        mcmc_parameter_update_fn,
+        initial_parameter_value,
+        smc_parameters,
+    ):
+        return (
+            SMCSamplerBuilder()
+            .adaptive_tempering(0.5, logprior_fn, loglikelihood_fn)
+            .inner_kernel(mcmc_init_fn, mcmc_step_fn, initial_parameter_value)
+            .with_inner_kernel_tuning(mcmc_parameter_update_fn)
+            .mutate_and_take_last(10)
+            .build(resampling_fn)
         )
 
-    def builder_api_tempered_provider(self,
-                                      logprior_fn,
-                                      loglikelihood_fn,
-                                      mcmc_step_fn,
-                                      mcmc_init_fn,
-                                      resampling_fn,
-                                      smc_algorithm,
-                                      mcmc_parameter_update_fn,
-                                      initial_parameter_value,
-                                      smc_parameters):
-        return (SMCSamplerBuilder()
-                .tempering_from_sequence(logprior_fn, loglikelihood_fn)
-                .inner_kernel(mcmc_init_fn, mcmc_step_fn, initial_parameter_value)
-                .with_inner_kernel_tuning(mcmc_parameter_update_fn)
-                .mutate_and_take_last(10)
-                .build(resampling_fn)
+    def builder_api_tempered_provider(
+        self,
+        logprior_fn,
+        loglikelihood_fn,
+        mcmc_step_fn,
+        mcmc_init_fn,
+        resampling_fn,
+        smc_algorithm,
+        mcmc_parameter_update_fn,
+        initial_parameter_value,
+        smc_parameters,
+    ):
+        return (
+            SMCSamplerBuilder()
+            .tempering_from_sequence(logprior_fn, loglikelihood_fn)
+            .inner_kernel(mcmc_init_fn, mcmc_step_fn, initial_parameter_value)
+            .with_inner_kernel_tuning(mcmc_parameter_update_fn)
+            .mutate_and_take_last(10)
+            .build(resampling_fn)
         )
+
     def test_smc_inner_kernel_adaptive_tempered_builder_api(self):
         self.smc_inner_kernel_tuning_test_case(
             blackjax.adaptive_tempered_smc,
@@ -142,7 +151,7 @@ class SMCParameterTuningTest(chex.TestCase):
             blackjax.tempered_smc,
             smc_parameters={},
             step_parameters={"lmbda": 0.75},
-            sampler_provider=self.builder_api_tempered_provider
+            sampler_provider=self.builder_api_tempered_provider,
         )
 
     def test_smc_inner_kernel_adaptive_tempered(self):
@@ -158,12 +167,11 @@ class SMCParameterTuningTest(chex.TestCase):
             blackjax.tempered_smc,
             smc_parameters={},
             step_parameters={"lmbda": 0.75},
-            sampler_provider=self.top_level_api_sampler_provider
+            sampler_provider=self.top_level_api_sampler_provider,
         )
 
     def smc_inner_kernel_tuning_test_case(
-        self, smc_algorithm, smc_parameters, step_parameters,
-            sampler_provider
+        self, smc_algorithm, smc_parameters, step_parameters, sampler_provider
     ):
         specialized_log_weights_fn = lambda tree: log_weights_fn(tree, 1.0)
         # Don't use exactly the invariant distribution for the MCMC kernel

@@ -195,9 +195,9 @@ def build_pretune(
 
 
 def build_kernel(
-    smc_from_particle_update_fn,
+    smc_algorithm_from_params,
     pretune_fn: Callable,
-    delegate: Callable
+    delegate,
 ) -> Callable:
     """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
     MCMC that is used to perturbate/update each of the particles. This adaptation tunes some parameter of that MCMC,
@@ -228,7 +228,7 @@ def build_kernel(
         state,
         logposterior_fn: Callable,
         log_weights_fn: Callable,
-        mcmc_parameters
+        mcmc_parameters,
     ) -> tuple[smc.base.SMCState, SMCInfoWithParameterDistribution]:
         """Wraps the output of smc.from_mcmc.build_kernel into a pretuning + step method.
         This one should be a subtype of the former, in the sense that a usage of the former
@@ -241,19 +241,16 @@ def build_kernel(
             StateWithParameterOverride(state, mcmc_parameters),
             logposterior_fn,
         )
+
         state, info = delegate(
-            rng_key,
-            state,
-            pretuned_parameters,
-            logposterior_fn,
-            log_weights_fn,
+            rng_key, state, logposterior_fn, log_weights_fn, pretuned_parameters
         )
         return state, SMCInfoWithParameterDistribution(info, pretuned_parameters)
 
     def kernel(
         rng_key: PRNGKey, state: StateWithParameterOverride, **extra_step_parameters
     ) -> Tuple[StateWithParameterOverride, SMCInfo]:
-        step_fn = smc_from_particle_update_fn(pretuned_step, state.parameter_override)
+        step_fn = smc_algorithm_from_params(state.parameter_override, pretuned_step)
         new_state, info = step_fn(rng_key, state.sampler_state, **extra_step_parameters)
         return (
             StateWithParameterOverride(new_state, info.parameter_override),
@@ -274,9 +271,10 @@ def as_top_level_api(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
-    num_mcmc_steps: int,
+    num_mcmc_steps: Optional[int],
     initial_parameter_value: ArrayLikeTree,
     pretune_fn: Callable,
+    mcmc_run_strategy: Callable = None,
     **extra_parameters,
 ):
     """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
@@ -302,7 +300,24 @@ def as_top_level_api(
     extra_parameters:
         parameters to be used for the creation of the smc_algorithm.
     """
-    def smc_from_particle_update_fn(pretuned_step, mcmc_parameters):
+    if num_mcmc_steps is not None:
+        us = functools.partial(update_and_take_last, num_mcmc_steps=num_mcmc_steps)
+    elif mcmc_run_strategy is not None:
+        us = mcmc_run_strategy
+    else:
+        raise ValueError("here")
+
+    def delegate(rng_key, state, logposterior_fn, log_weights_fn, mcmc_parameteres):
+        return smc_from_mcmc(
+            mcmc_step_fn, mcmc_init_fn, resampling_fn, mcmc_parameteres, us
+        )(
+            rng_key,
+            state,
+            logposterior_fn,
+            log_weights_fn,
+        )
+
+    def smc_algorithm_from_params(mcmc_parameters, pretuned_step):
         return smc_algorithm(
             logprior_fn=logprior_fn,
             loglikelihood_fn=loglikelihood_fn,
@@ -310,31 +325,14 @@ def as_top_level_api(
             mcmc_init_fn=mcmc_init_fn,
             mcmc_parameters=mcmc_parameters,
             resampling_fn=resampling_fn,
-            num_mcmc_steps=num_mcmc_steps,
-            update_particles_fn=functools.partial(pretuned_step, mcmc_parameters=mcmc_parameters),
-            **extra_parameters
+            num_mcmc_steps=None,
+            mutation_step=functools.partial(
+                pretuned_step, mcmc_parameters=mcmc_parameters
+            ),
+            **extra_parameters,
         ).step
 
-    update_strategy = functools.partial(update_and_take_last, num_mcmc_steps=1)
-    def delegate_for_pretuning_mutation(
-            rng_key,
-            state,
-            pretuned_parameters,
-            logposterior_fn,
-            log_weights_fn,
-    ):
-
-        return smc_from_mcmc(mcmc_step_fn,
-                      mcmc_init_fn,
-                      resampling_fn,
-                      pretuned_parameters,
-                      update_strategy)(rng_key, state, logposterior_fn,log_weights_fn)
-
-    kernel = build_kernel(
-        smc_from_particle_update_fn,
-        pretune_fn,
-        delegate_for_pretuning_mutation
-    )
+    kernel = build_kernel(smc_algorithm_from_params, pretune_fn, delegate)
 
     def init_fn(position, rng_key=None):
         del rng_key

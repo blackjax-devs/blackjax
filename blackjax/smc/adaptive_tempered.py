@@ -78,7 +78,8 @@ def as_top_level_api(
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
     num_mcmc_steps: int = 10,
-    update_strategy=base.update_and_take_last,
+    mcmc_run_strategy=None,
+    mutation_step=None,
     **extra_parameters,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
@@ -109,26 +110,39 @@ def as_top_level_api(
     Returns
     -------
     A ``SamplingAlgorithm``.
-
-
     """
-
-    # TODO THIS WILL BREAK!
-
     if num_mcmc_steps is not None:
-        # for backwards compatibility
-        update_strategy = functools.partial(
+        mcmc_run_strategy = functools.partial(
             base.update_and_take_last, num_mcmc_steps=num_mcmc_steps
         )
+        mutation_step = smc_from_mcmc.build_kernel(
+            mcmc_step_fn,
+            mcmc_init_fn,
+            resampling_fn,
+            mcmc_parameters,
+            mcmc_run_strategy,
+        )
 
-    update_particles = smc_from_mcmc.build_kernel(
-        mcmc_step_fn, mcmc_init_fn, resampling_fn, mcmc_parameters, update_strategy
-    )
+    elif mcmc_run_strategy is not None:
+        mutation_step = smc_from_mcmc.build_kernel(
+            mcmc_step_fn,
+            mcmc_init_fn,
+            resampling_fn,
+            mcmc_parameters,
+            mcmc_run_strategy,
+        )
+
+    elif mutation_step is not None:
+        mutation_step = mutation_step
+    else:
+        raise ValueError(
+            "You must either supply num_mcmc_steps, or mcmc_run_strategy or mutation_step"
+        )
 
     tempered_kernel = tempered.build_kernel(
         logprior_fn,
         loglikelihood_fn,
-        update_particles,
+        mutation_step,
     )
 
     kernel = build_kernel(loglikelihood_fn, target_ess, root_solver, tempered_kernel)

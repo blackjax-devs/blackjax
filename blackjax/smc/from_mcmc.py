@@ -30,7 +30,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     mcmc_parameters,
-    update_strategy: Callable = update_and_take_last,
+    particle_mutation_fn: Callable = update_and_take_last,
 ):
     """SMC step from MCMC kernels.
     Builds MCMC kernels from the input parameters, which may change across iterations.
@@ -54,7 +54,7 @@ def build_kernel(
             mcmc_parameters, mcmc_step_fn
         )
 
-        update_fn, num_resampled = update_strategy(
+        update_fn, num_resampled = particle_mutation_fn(
             mcmc_init_fn,
             logposterior_fn,
             shared_mcmc_step_fn,

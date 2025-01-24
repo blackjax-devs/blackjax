@@ -20,21 +20,32 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
 
     @chex.variants(with_jit=True)
     def test_partial_posteriors_top_level_api(self):
-        def sampler_provider(kernel, init, parameters, steps, partial_logposterior_factory):
+        def sampler_provider(
+            kernel, init, parameters, steps, partial_logposterior_factory
+        ):
             return blackjax.partial_posteriors_smc(
-            kernel, init, parameters, resampling.systematic, steps, partial_logposterior_factory
+                kernel,
+                init,
+                parameters,
+                resampling.systematic,
+                steps,
+                partial_logposterior_factory,
             )
+
         self.partial_posteriors_test_case(sampler_provider)
 
     @chex.variants(with_jit=True)
     def test_partial_posteriors_builder_api(self):
-        def sampler_provider(kernel, init, parameters, steps, partial_logposterior_factory):
-            return (SMCSamplerBuilder()
-                    .partial_posteriors(partial_logposterior_factory)
-                    .inner_kernel(init, kernel, parameters)
-                    .mutate_and_take_last(steps)
-                    .build()
-                    )
+        def sampler_provider(
+            kernel, init, parameters, steps, partial_logposterior_factory
+        ):
+            return (
+                SMCSamplerBuilder()
+                .partial_posteriors(partial_logposterior_factory)
+                .inner_kernel(init, kernel, parameters)
+                .mutate_and_take_last(steps)
+                .build()
+            )
 
         self.partial_posteriors_test_case(sampler_provider)
 

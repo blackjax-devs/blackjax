@@ -152,8 +152,8 @@ def as_top_level_api(
     mcmc_parameters: dict,
     resampling_fn: Callable,
     num_mcmc_steps: Optional[int] = 10,
-    update_strategy=update_and_take_last,
-    update_particles_fn=None,
+    mcmc_run_strategy=None,
+    mutation_step=None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
@@ -182,20 +182,34 @@ def as_top_level_api(
     """
 
     if num_mcmc_steps is not None:
-        # for backwards compatibility
-        update_strategy = functools.partial(
+        mcmc_run_strategy = functools.partial(
             update_and_take_last, num_mcmc_steps=num_mcmc_steps
         )
-
-    update_particles = (
-        smc_from_mcmc.build_kernel(
-            mcmc_step_fn, mcmc_init_fn, resampling_fn, mcmc_parameters, update_strategy
+        mutation_step = smc_from_mcmc.build_kernel(
+            mcmc_step_fn,
+            mcmc_init_fn,
+            resampling_fn,
+            mcmc_parameters,
+            mcmc_run_strategy,
         )
-        if update_particles_fn is None
-        else update_particles_fn
-    )
 
-    kernel = build_kernel(logprior_fn, loglikelihood_fn, update_particles)
+    elif mcmc_run_strategy is not None:
+        mutation_step = smc_from_mcmc.build_kernel(
+            mcmc_step_fn,
+            mcmc_init_fn,
+            resampling_fn,
+            mcmc_parameters,
+            mcmc_run_strategy,
+        )
+
+    elif mutation_step is not None:
+        mutation_step = mutation_step
+    else:
+        raise ValueError(
+            "You must either supply num_mcmc_steps, or mcmc_run_strategy or mutation_step"
+        )
+
+    kernel = build_kernel(logprior_fn, loglikelihood_fn, mutation_step)
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
         del rng_key

@@ -8,6 +8,7 @@ from absl.testing import absltest
 
 import blackjax
 from blackjax.smc import extend_params, resampling
+from blackjax.smc.base import update_and_take_last
 from blackjax.smc.builder_api import SMCSamplerBuilder
 from blackjax.smc.pretuning import (
     build_pretune,
@@ -146,61 +147,128 @@ class TestUpdateParameterDistribution(chex.TestCase):
         )
 
 
+def tuned_adaptive_tempered_inference_loop(kernel, rng_key, initial_state):
+    def cond(carry):
+        _, state, *_ = carry
+        return state.sampler_state.lmbda < 1
+
+    def body(carry):
+        i, state, curr_loglikelihood = carry
+        subkey = jax.random.fold_in(rng_key, i)
+        state, info = kernel(subkey, state)
+        return i + 1, state, curr_loglikelihood + info.log_likelihood_increment
+
+    total_iter, final_state, log_likelihood = jax.lax.while_loop(
+        cond, body, (0, initial_state, 0.0)
+    )
+    return final_state
+
+
 class PretuningSMCTest(SMCLinearRegressionTestCase):
     def setUp(self):
         super().setUp()
         self.key = jax.random.key(42)
 
+    def loop(self, init, smc_kernel, init_particles):
+        initial_state = init(init_particles)
+
+        def body_fn(carry, lmbda):
+            i, state = carry
+            subkey = jax.random.fold_in(self.key, i)
+            new_state, info = smc_kernel(subkey, state, lmbda=lmbda)
+            return (i + 1, new_state), (new_state, info)
+
+        num_tempering_steps = 10
+        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
+
+        (_, result), _ = jax.lax.scan(body_fn, (0, initial_state), lambda_schedule)
+        return result
+
     @chex.variants(with_jit=True)
-    def test_linear_regression_top_level_api(self):
-        def sampler_provider(logprior_fn, loglikelihood_fn, steps, pretune, initial_parameters):
-            return blackjax.smc.pretuning.as_top_level_api(
+    def test_tempered_builder_api(self):
+        step_provider = (
+            lambda logprior_fn, loglikelihood_fn, pretune, initial_parameter_value: (
+                SMCSamplerBuilder()
+                .tempering_from_sequence(logprior_fn, loglikelihood_fn)
+                .inner_kernel(
+                    blackjax.hmc.init,
+                    blackjax.hmc.build_kernel(),
+                    initial_parameter_value,
+                )
+                .mutate_and_take_last(10)
+                .with_pretuning(pretune)
+                .build(resampling.systematic)
+            )
+        )
+
+        self.linear_regression_test_case(step_provider, self.loop)
+
+    @chex.variants(with_jit=True)
+    def test_tempered_top_level_api(self):
+        def step_provider(
+            logprior_fn, loglikelihood_fn, pretune, initial_parameter_value
+        ):
+            return blackjax.pretuning(
                 blackjax.tempered_smc,
                 logprior_fn,
                 loglikelihood_fn,
                 blackjax.hmc.build_kernel(),
                 blackjax.hmc.init,
                 resampling.systematic,
-                num_mcmc_steps=steps,
+                num_mcmc_steps=10,
+                initial_parameter_value=initial_parameter_value,
                 pretune_fn=pretune,
-                initial_parameter_value=initial_parameters
             )
 
-        self.linear_regression_test_case(sampler_provider)
+        self.linear_regression_test_case(step_provider, self.loop)
 
     @chex.variants(with_jit=True)
-    def test_linear_regression_adaptive_tempered_top_level_api(self):
-        def sampler_provider(logprior_fn, loglikelihood_fn, steps, pretune, initial_parameters):
-            return blackjax.smc.pretuning.as_top_level_api(
-                blackjax.adaptive_tempered_smc,
-                logprior_fn,
-                loglikelihood_fn,
-                blackjax.hmc.build_kernel(),
-                blackjax.hmc.init,
-                resampling.systematic,
-                num_mcmc_steps=steps,
-                pretune_fn=pretune,
-                initial_parameter_value=initial_parameters,
-                target_ess = 0.5
+    def test_adaptive_tempered_builder_api(self):
+        step_provider = (
+            lambda logprior_fn, loglikelihood_fn, pretune, initial_parameters: (
+                SMCSamplerBuilder()
+                .adaptive_tempering(0.5, logprior_fn, loglikelihood_fn)
+                .inner_kernel(
+                    blackjax.hmc.init, blackjax.hmc.build_kernel(), initial_parameters
+                )
+                .with_pretuning(pretune)
+                .mutate_and_take_last(10)
+                .build()
+            )
+        )
+
+        def loop(init, smc_kernel, init_particles):
+            initial_state = init(init_particles)
+            return tuned_adaptive_tempered_inference_loop(
+                smc_kernel, self.key, initial_state
             )
 
-        self.linear_regression_test_case(sampler_provider)
+        self.linear_regression_test_case(step_provider, loop)
 
     @chex.variants(with_jit=True)
-    def test_linear_regression_builder_api(self):
-        def sampler_provider(logprior_fn, loglikelihood_fn, steps, pretune, initial_parameters):
-            return (SMCSamplerBuilder()
-                    .tempering_from_sequence(logprior_fn, loglikelihood_fn)
-                    .inner_kernel(blackjax.hmc.init, blackjax.hmc.build_kernel(), initial_parameters)
-                    .with_pretuning(pretune)
-                    .mutate_and_take_last(steps)
-                    .build()
-                    )
-        self.linear_regression_test_case(sampler_provider)
+    def test_adaptive_tempered_top_level_api(self):
+        step_provider = lambda logprior_fn, loglikelihood_fn, pretune, initial_parameters: blackjax.pretuning(
+            blackjax.adaptive_tempered_smc,
+            logprior_fn,
+            loglikelihood_fn,
+            blackjax.hmc.build_kernel(),
+            blackjax.hmc.init,
+            resampling.systematic,
+            num_mcmc_steps=10,
+            pretune_fn=pretune,
+            initial_parameter_value=initial_parameters,
+            target_ess=0.5,
+        )
 
+        def loop(init, smc_kernel, init_particles):
+            initial_state = init(init_particles)
+            return tuned_adaptive_tempered_inference_loop(
+                smc_kernel, self.key, initial_state
+            )
 
+        self.linear_regression_test_case(step_provider, loop)
 
-    def linear_regression_test_case(self, sampler_provider):
+    def linear_regression_test_case(self, step_provider, loop):
         (
             init_particles,
             logprior_fn,
@@ -240,27 +308,13 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             positive_parameters=["step_size"],
         )
 
-        init, step = sampler_provider(
-            logprior_fn,
-            loglikelihood_fn,
-            10,
-            pretune,
-            initial_parameters
+        init, step = step_provider(
+            logprior_fn, loglikelihood_fn, pretune, initial_parameters
         )
 
-        initial_state = init(init_particles)
         smc_kernel = self.variant(step)
 
-        def body_fn(carry, lmbda):
-            i, state = carry
-            subkey = jax.random.fold_in(self.key, i)
-            new_state, info = smc_kernel(subkey, state, lmbda=lmbda)
-            return (i + 1, new_state), (new_state, info)
-
-        num_tempering_steps = 10
-        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
-
-        (_, result), _ = jax.lax.scan(body_fn, (0, initial_state), lambda_schedule)
+        result = loop(init, smc_kernel, init_particles)
         self.assert_linear_regression_test_case(result.sampler_state)
         assert set(result.parameter_override.keys()) == {
             "step_size",

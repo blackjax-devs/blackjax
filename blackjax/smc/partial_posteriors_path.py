@@ -39,8 +39,7 @@ def init(particles: ArrayLikeTree, num_datapoints: int) -> PartialPosteriorsSMCS
 
 def build_kernel(
     partial_logposterior_factory: Callable[[Array], Callable],
-    update_particles: Callable
-
+    update_particles: Callable,
 ) -> Callable:
     """Build the Partial Posteriors (data tempering) SMC kernel.
     The distribution's trajectory includes increasingly adding more
@@ -78,9 +77,7 @@ def build_kernel(
         def log_weights_fn(x):
             return logposterior_fn(x) - previous_logposterior_fn(x)
 
-        state, info = update_particles(
-            key, state, logposterior_fn, log_weights_fn
-        )
+        state, info = update_particles(key, state, logposterior_fn, log_weights_fn)
 
         return (
             PartialPosteriorsSMCState(state.particles, state.weights, data_mask),
@@ -97,23 +94,20 @@ def as_top_level_api(
     resampling_fn: Callable,
     num_mcmc_steps,
     partial_logposterior_factory: Callable,
-    update_strategy=update_and_take_last,
+    mcmc_run_strategy=update_and_take_last,
 ) -> SamplingAlgorithm:
     """A factory that wraps the kernel into a SamplingAlgorithm object.
     See build_kernel for full documentation on the parameters.
     """
     if num_mcmc_steps is not None:
-        update_strategy = functools.partial(update_and_take_last, num_mcmc_steps=num_mcmc_steps)
+        mcmc_run_strategy = functools.partial(
+            update_and_take_last, num_mcmc_steps=num_mcmc_steps
+        )
 
-    update_particles = smc_from_mcmc(mcmc_step_fn,
-                                     mcmc_init_fn,
-                                     resampling_fn,
-                                     mcmc_parameters,
-                                     update_strategy)
-    kernel = build_kernel(
-        partial_logposterior_factory,
-        update_particles
+    update_particles = smc_from_mcmc(
+        mcmc_step_fn, mcmc_init_fn, resampling_fn, mcmc_parameters, mcmc_run_strategy
     )
+    kernel = build_kernel(partial_logposterior_factory, update_particles)
 
     def init_fn(position: ArrayLikeTree, num_observations, rng_key=None):
         del rng_key

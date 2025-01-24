@@ -127,7 +127,7 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
                 hmc_parameters,
                 resampling.systematic,
                 target_ess,
-                update_strategy=waste_free_smc(n_particles, p),
+                mcmc_run_strategy=waste_free_smc(n_particles, p),
                 num_mcmc_steps=None,
             )
 
