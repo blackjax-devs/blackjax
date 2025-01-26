@@ -30,7 +30,8 @@ def compute_nlive(info: NSInfo):
     )
     sorted_indices = jnp.lexsort((combined[:, 1], combined[:, 0]))
     sorted_combined = combined[sorted_indices]
-    cumsum = jnp.cumsum(sorted_combined[:, 1])
+    # cumsum = jnp.cumsum(sorted_combined[:, 1])
+    cumsum = jnp.maximum(jnp.cumsum(sorted_combined[:, 1]), 0)
 
     death_mask = sorted_combined[:, 1] == -1
     nlive = cumsum[death_mask] + 1

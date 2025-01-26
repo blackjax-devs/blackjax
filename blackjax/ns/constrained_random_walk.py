@@ -58,8 +58,13 @@ def build_constrained_random_walk(
             return ~(is_accepted & (logl > logL0))
 
         walk_state = init_rw(state.position, logprior_fn)
-        carry = (walk_state, step_key, False, state.loglikelihood, 0, walk_state)
-        _, _, _, logl, info, walk_state = jax.lax.while_loop(cond_fn, body_fn, carry)
-        return CRWState(walk_state.position, walk_state.logdensity, logl), CRWInfo(info)
+        new_walk_state = init_rw(state.position, logprior_fn)
+        carry = (walk_state, step_key, False, state.loglikelihood, 0, new_walk_state)
+        _, _, _, logl, info, new_walk_state = jax.lax.while_loop(
+            cond_fn, body_fn, carry
+        )
+        return CRWState(
+            new_walk_state.position, new_walk_state.logdensity, logl
+        ), CRWInfo(info)
 
     return kernel

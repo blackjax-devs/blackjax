@@ -32,8 +32,7 @@ class NSInfo(NamedTuple):
     update_info: NamedTuple
 
 
-def init(particles: ArrayLikeTree, loglikelihood_fn):
-    logL_star = -jnp.inf
+def init(particles: ArrayLikeTree, loglikelihood_fn, logL_star=-jnp.inf) -> NSState:
     num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
     logL_birth = logL_star * jnp.ones(num_particles)
     logL = jax.vmap(loglikelihood_fn)(particles)
