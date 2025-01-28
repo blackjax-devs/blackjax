@@ -4,6 +4,24 @@ import jax.numpy as jnp
 from blackjax.ns.base import NSInfo
 
 
+def log1mexp(x):
+    """
+    Numerically stable calculation of the quantity
+    :math:`\\log(1 - \\exp(x))`, following the algorithm
+    of `Mächler 2012`_.
+    .. _Mächler 2012: https://cran.r-project.org/web/packages/Rmpfr/vignettes/log1mexp-note.pdf
+    Returns ``-jnp.inf`` when ``x == 0`` and ``jnp.nan``
+    when ``x > 0``.
+    :param x: A number or array of numbers.
+    :return: The value of :math:`\\log(1 - \\exp(x))`.
+    """
+    return jnp.where(
+        x > -0.6931472,  # approx log(2)
+        jnp.log(-jnp.expm1(x)),
+        jnp.log1p(-jnp.exp(x)),
+    )
+
+
 def compute_nlive(info: NSInfo):
     """
     Compute the effective number of live points at each death contour.
@@ -77,7 +95,8 @@ def logX(key: jax.random.PRNGKey, dead: NSInfo, samples=100):
     logXp = jnp.concatenate([jnp.zeros((1, logX.shape[1])), logX[:-1]], axis=0)
     logXm = jnp.concatenate([logX[1:], jnp.full((1, logX.shape[1]), -jnp.inf)], axis=0)
     log_diff = logXm - logXp
-    logdX = jnp.log1p(-jnp.exp(log_diff).clip(max=1.0)) + logXp - jnp.log(2)
+    # logdX = jnp.log1p(-jnp.exp(log_diff).clip(max=1.0)) + logXp - jnp.log(2)
+    logdX = log1mexp(log_diff) + logXp - jnp.log(2)
     return logX, logdX
 
 
