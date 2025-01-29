@@ -188,7 +188,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
     def test_tempered_builder_api(self):
         step_provider = (
             lambda logprior_fn, loglikelihood_fn, pretune, initial_parameter_value: (
-                SMCSamplerBuilder()
+                SMCSamplerBuilder(resampling.systematic)
                 .tempering_from_sequence(logprior_fn, loglikelihood_fn)
                 .inner_kernel(
                     blackjax.hmc.init,
@@ -197,7 +197,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
                 )
                 .mutate_and_take_last(10)
                 .with_pretuning(pretune)
-                .build(resampling.systematic)
+                .build()
             )
         )
 
@@ -227,7 +227,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
         step_provider = (
             lambda logprior_fn, loglikelihood_fn, pretune, initial_parameters: (
                 SMCSamplerBuilder()
-                .adaptive_tempering(0.5, logprior_fn, loglikelihood_fn)
+                .adaptive_tempering_sequence(0.5, logprior_fn, loglikelihood_fn)
                 .inner_kernel(
                     blackjax.hmc.init, blackjax.hmc.build_kernel(), initial_parameters
                 )

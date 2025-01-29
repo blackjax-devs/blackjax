@@ -109,12 +109,12 @@ class SMCParameterTuningTest(chex.TestCase):
         smc_parameters,
     ):
         return (
-            SMCSamplerBuilder()
-            .adaptive_tempering(0.5, logprior_fn, loglikelihood_fn)
+            SMCSamplerBuilder(resampling_fn)
+            .adaptive_tempering_sequence(0.5, logprior_fn, loglikelihood_fn)
             .inner_kernel(mcmc_init_fn, mcmc_step_fn, initial_parameter_value)
             .with_inner_kernel_tuning(mcmc_parameter_update_fn)
             .mutate_and_take_last(10)
-            .build(resampling_fn)
+            .build()
         )
 
     def builder_api_tempered_provider(
@@ -130,12 +130,12 @@ class SMCParameterTuningTest(chex.TestCase):
         smc_parameters,
     ):
         return (
-            SMCSamplerBuilder()
+            SMCSamplerBuilder(resampling_fn)
             .tempering_from_sequence(logprior_fn, loglikelihood_fn)
             .inner_kernel(mcmc_init_fn, mcmc_step_fn, initial_parameter_value)
             .with_inner_kernel_tuning(mcmc_parameter_update_fn)
             .mutate_and_take_last(10)
-            .build(resampling_fn)
+            .build()
         )
 
     def test_smc_inner_kernel_adaptive_tempered_builder_api(self):

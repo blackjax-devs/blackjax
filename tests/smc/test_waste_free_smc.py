@@ -62,11 +62,11 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
             p,
         ):
             return (
-                SMCSamplerBuilder()
+                SMCSamplerBuilder(resampling.systematic)
                 .tempering_from_sequence(logprior_fn, loglikelihood_fn)
                 .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
-                .waste_free(n_particles, p)
-                .build(resampling.systematic)
+                .mutate_waste_free(n_particles, p)
+                .build()
             )
 
         self.fixed_schedule_tempered_smc_test_case(sampler_provider)
@@ -147,10 +147,10 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
         ):
             return (
                 SMCSamplerBuilder()
-                .adaptive_tempering(target_ess, logprior_fn, loglikelihood_fn)
+                .adaptive_tempering_sequence(target_ess, logprior_fn, loglikelihood_fn)
                 .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
-                .waste_free(n_particles, p)
-                .build(resampling.systematic)
+                .mutate_waste_free(n_particles, p)
+                .build()
             )
 
         self.adaptive_tempered_smc_test_case(sampler_provider)

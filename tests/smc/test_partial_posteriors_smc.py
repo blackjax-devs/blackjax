@@ -41,7 +41,7 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
         ):
             return (
                 SMCSamplerBuilder()
-                .partial_posteriors(partial_logposterior_factory)
+                .partial_posteriors_sequence(partial_logposterior_factory)
                 .inner_kernel(init, kernel, parameters)
                 .mutate_and_take_last(steps)
                 .build()

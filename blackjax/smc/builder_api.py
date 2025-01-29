@@ -24,15 +24,16 @@ class SMCSamplerBuilder:
     is to foster modifying such compositions easily.
     """
 
-    def __init__(self):
+    def __init__(self, resampling_fn=resampling.systematic):
         self.step_structure = None
         self.update_strategy = None
         self.mcmc_parameter_update_fn = None
         self.pretune_fn = None
+        self.resampling_fn = resampling_fn
 
     # Different ways of building the sequence of distributions
-    def adaptive_tempering(
-        self, target_ess, logprior_fn, loglikelihood_fn, root_solver=solver.dichotomy
+    def adaptive_tempering_sequence(
+            self, target_ess, logprior_fn, loglikelihood_fn, root_solver=solver.dichotomy
     ):
         self.step_structure = "adaptive_tempering"
         self.step_structure_algorithm = blackjax.smc.adaptive_tempered.build_kernel
@@ -51,7 +52,7 @@ class SMCSamplerBuilder:
         self.loglikelihood_fn = loglikelihood_fn
         return self
 
-    def partial_posteriors(self, partial_logposterior_factory):
+    def partial_posteriors_sequence(self, partial_logposterior_factory):
         self.step_structure = "partial_posteriors"
         self.step_structure_algorithm = (
             blackjax.smc.partial_posteriors_path.build_kernel
@@ -67,7 +68,7 @@ class SMCSamplerBuilder:
         return self
 
     # Ways of updating the particles
-    def waste_free(self, n_particles, p):
+    def mutate_waste_free(self, n_particles, p):
         if self.update_strategy is not None:
             raise ValueError("Can't use two update strategies at the same time")
         self.update_strategy = waste_free_smc(n_particles, p)
@@ -99,8 +100,7 @@ class SMCSamplerBuilder:
         self.pretune_fn = pretune_fn
         return self
 
-    def build(self, resampling_fn=resampling.systematic):
-        self.resampling_fn = resampling_fn
+    def build(self):
         if self.update_strategy is None:
             raise ValueError(
                 "You must choose an update strategy, either waste_free() or mutate_and_take_last()"
@@ -146,7 +146,7 @@ class SMCSamplerBuilder:
             return self._build_pretuning()
 
         # Both Pretune and Tune
-        return self._tune_and_pretune()
+        raise NotImplementedError("Tuning and pretuning used together hasn't been implemented yet")
 
     def _adaptive_tempered_from_parameters(self):
         def from_parameteres(inner_kernel_params):
@@ -262,15 +262,15 @@ class SMCSamplerBuilder:
 
     def _tune_and_pretune(self):
         def pt(
-            logprior_fn,
-            loglikelihood_fn,
-            mcmc_step_fn,
-            mcmc_init_fn,
-            mcmc_parameters,
-            resampling_fn,
-            num_mcmc_steps,
-            initial_parameter_value,
-            target_ess,
+                logprior_fn,
+                loglikelihood_fn,
+                mcmc_step_fn,
+                mcmc_init_fn,
+                mcmc_parameters,
+                resampling_fn,
+                num_mcmc_steps,
+                initial_parameter_value,
+                target_ess,
         ):
             return blackjax.pretuning(
                 blackjax.adaptive_tempered_smc,

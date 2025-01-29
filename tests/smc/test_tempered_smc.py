@@ -53,13 +53,13 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
             hmc_parameters,
         ):
             return (
-                SMCSamplerBuilder()
-                .adaptive_tempering(
+                SMCSamplerBuilder(resampling.systematic)
+                .adaptive_tempering_sequence(
                     target_ess, logprior_fn, loglikelihood_fn, solver.dichotomy
                 )
                 .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
                 .mutate_and_take_last(5)
-                .build(resampling.systematic)
+                .build()
             )
 
         self.adaptive_tempered_test_case(sampler_provider)
@@ -179,11 +179,11 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
             num_mcmc_steps,
         ):
             return (
-                SMCSamplerBuilder()
+                SMCSamplerBuilder(resampling_fn)
                 .tempering_from_sequence(logprior_fn, loglikelihood_fn)
                 .inner_kernel(hmc_init, hmc_kernel, hmc_parameters)
                 .mutate_and_take_last(num_mcmc_steps)
-                .build(resampling_fn)
+                .build()
             )
 
         self.fixed_schedule_tempered_smc_test_case(sampler_provider)
