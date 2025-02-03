@@ -2,6 +2,7 @@
 strategies to tune the parameters of mcmc kernels
 used within smc, based on MCMC states
 """
+
 import jax
 import jax.numpy as jnp
 

@@ -128,6 +128,7 @@ def contract_history(theta, weights):
     return jnp.array([jnp.max(r), jnp.average(r)])
 
 
+# used for the early stopping
 class History(NamedTuple):
     observables: Array
     stopping: Array
@@ -224,6 +225,7 @@ class Adaptation:
             history=history,
         )
 
+    # info 1
     def summary_statistics_fn(self, state, info, rng_key):
         position_flat, unravel_fn = ravel_pytree(state.position)
 

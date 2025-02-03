@@ -35,6 +35,7 @@ class SGNHTState(NamedTuple):
         Scalar thermostat controlling kinetic energy.
 
     """
+
     position: ArrayTree
     momentum: ArrayTree
     xi: float

@@ -1,4 +1,5 @@
 """Test the tempered SMC steps and routine"""
+
 import functools
 
 import chex
@@ -79,9 +80,11 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
             base_params,
             jax.tree.map(lambda x: jnp.repeat(x, num_particles, axis=0), base_params),
             jax.tree_util.tree_map_with_path(
-                lambda path, x: jnp.repeat(x, num_particles, axis=0)
-                if path[0].key == "step_size"
-                else x,
+                lambda path, x: (
+                    jnp.repeat(x, num_particles, axis=0)
+                    if path[0].key == "step_size"
+                    else x
+                ),
                 base_params,
             ),
         ]

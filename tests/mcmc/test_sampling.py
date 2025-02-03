@@ -1,4 +1,5 @@
 """Test the accuracy of the MCMC kernels."""
+
 import functools
 import itertools
 
@@ -285,31 +286,50 @@ class LinearRegressionTest(chex.TestCase):
         )
 
         return out
-    
+
     def run_emaus(
-            self,
-            initial_position,
+        self,
+        initial_position,
+        logdensity_fn,
+        key,
+        num_steps,
+        diagonal_preconditioning,
+    ):
+
+        mesh = jax.sharding.Mesh(jax.devices(), "chains")
+
+        from blackjax.mcmc.integrators import (
+            velocity_verlet_coefficients,
+            mclachlan_coefficients,
+            omelyan_coefficients,
+        )
+
+        integrator_coefficients = mclachlan_coefficients
+
+        info1, info2, grads_per_step, _acc_prob = emaus(
             logdensity_fn,
-            key,
-            num_steps,
-            diagonal_preconditioning,
-        ):
+            num_steps1=1000,
+            num_steps2=3000,
+            num_chains=4000,
+            mesh=mesh,
+            rng_key=key,
+            alpha=1.9,
+            bias_type=3,
+            C=0.1,
+            power=3.0 / 8.0,
+            early_stop=1,
+            r_end=1e-2,
+            diagonal_preconditioning=diagonal_preconditioning,
+            integrator_coefficients=integrator_coefficients,
+            steps_per_sample=15,
+            acc_prob=None,
+            ensemble_observables=lambda x: x,
+            # ensemble_observables = lambda x: vec @ x
+        )  # run the algorithm
 
-        mesh = jax.sharding.Mesh(jax.devices(), 'chains')
-
-        from blackjax.mcmc.integrators import velocity_verlet_coefficients, mclachlan_coefficients, omelyan_coefficients
-
-
-        integrator_coefficients = mclachlan_coefficients 
-
-        info1, info2, grads_per_step, _acc_prob = emaus(logdensity_fn, num_steps1=1000, num_steps2=3000, num_chains=4000, mesh=mesh, rng_key=key, 
-        alpha = 1.9, bias_type= 3, C= 0.1, power= 3./8.,
-        early_stop=1, r_end= 1e-2, diagonal_preconditioning= diagonal_preconditioning, integrator_coefficients= integrator_coefficients, 
-        steps_per_sample= 15, acc_prob= None, ensemble_observables= lambda x: x
-                             #ensemble_observables = lambda x: vec @ x
-                             ) # run the algorithm
-        
-        return info2[1].reshape(info2[1].shape[0]*info2[1].shape[1], info2[1].shape[2])
+        return info2[1].reshape(
+            info2[1].shape[0] * info2[1].shape[1], info2[1].shape[2]
+        )
 
     @parameterized.parameters(
         itertools.product(
@@ -483,9 +503,11 @@ class LinearRegressionTest(chex.TestCase):
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
-    
+
     # TODO: add preconditioning
-    def test_emaus(self,):
+    def test_emaus(
+        self,
+    ):
         """Test the MCLMC kernel."""
 
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
@@ -593,8 +615,7 @@ class LinearRegressionTest(chex.TestCase):
         assert (
             jnp.abs(
                 jnp.dot(
-                    (inverse_mass_matrix**2)
-                    / jnp.linalg.norm(inverse_mass_matrix**2),
+                    (inverse_mass_matrix**2) / jnp.linalg.norm(inverse_mass_matrix**2),
                     eigs / jnp.linalg.norm(eigs),
                 )
                 - 1
@@ -1284,41 +1305,50 @@ class MonteCarloStandardErrorTest(chex.TestCase):
         )
 
 
-
-#TODO: remove
-class Banana():
+# TODO: remove
+class Banana:
     """Banana target fromm the Inference Gym"""
 
-    def __init__(self, initialization= 'wide'):
-        self.name = 'Banana'
+    def __init__(self, initialization="wide"):
+        self.name = "Banana"
         self.ndims = 2
         self.curvature = 0.03
-        
+
         self.transform = lambda x: x
-        self.E_x2 = jnp.array([100.0, 19.0]) #the first is analytic the second is by drawing 10^8 samples from the generative model. Relative accuracy is around 10^-5.
+        self.E_x2 = jnp.array(
+            [100.0, 19.0]
+        )  # the first is analytic the second is by drawing 10^8 samples from the generative model. Relative accuracy is around 10^-5.
         self.Var_x2 = jnp.array([20000.0, 4600.898])
 
-        if initialization == 'map':
+        if initialization == "map":
             self.sample_init = lambda key: jnp.array([0, -100.0 * self.curvature])
-        elif initialization == 'posterior':
+        elif initialization == "posterior":
             self.sample_init = lambda key: self.posterior_draw(key)
-        elif initialization == 'wide':
-            self.sample_init = lambda key: jax.random.normal(key, shape=(self.ndims,)) * jnp.array([10.0, 5.0]) * 2
+        elif initialization == "wide":
+            self.sample_init = (
+                lambda key: jax.random.normal(key, shape=(self.ndims,))
+                * jnp.array([10.0, 5.0])
+                * 2
+            )
         else:
-            raise ValueError('initialization = '+initialization +' is not a valid option.')
+            raise ValueError(
+                "initialization = " + initialization + " is not a valid option."
+            )
 
     def logdensity_fn(self, x):
         mu2 = self.curvature * (x[0] ** 2 - 100)
         return -0.5 * (jnp.square(x[0] / 10.0) + jnp.square(x[1] - mu2))
 
     def posterior_draw(self, key):
-        z = jax.random.normal(key, shape = (2, ))
+        z = jax.random.normal(key, shape=(2,))
         x0 = 10.0 * z[0]
-        x1 = self.curvature * (x0 ** 2 - 100) + z[1]
+        x1 = self.curvature * (x0**2 - 100) + z[1]
         return jnp.array([x0, x1])
 
     def ground_truth(self):
-        x = jax.vmap(self.posterior_draw)(jax.random.split(jax.random.PRNGKey(0), 100000000))
+        x = jax.vmap(self.posterior_draw)(
+            jax.random.split(jax.random.PRNGKey(0), 100000000)
+        )
         print(jnp.average(x, axis=0))
         print(jnp.average(jnp.square(x), axis=0))
         print(jnp.std(jnp.square(x[:, 0])) ** 2, jnp.std(jnp.square(x[:, 1])) ** 2)
@@ -1326,4 +1356,3 @@ class Banana():
 
 if __name__ == "__main__":
     absltest.main()
-

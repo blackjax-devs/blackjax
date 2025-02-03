@@ -269,9 +269,7 @@ def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
         b = z_l.T @ s_l
         c = s_l.T @ jnp.diag(1.0 / alpha_lm1) @ s_l
         inv_alpha_l = (
-            a / (b * alpha_lm1)
-            + z_l**2 / b
-            - (a * s_l**2) / (b * c * alpha_lm1**2)
+            a / (b * alpha_lm1) + z_l**2 / b - (a * s_l**2) / (b * c * alpha_lm1**2)
         )
         return 1.0 / inv_alpha_l
 

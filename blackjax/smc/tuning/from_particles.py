@@ -2,6 +2,7 @@
 strategies to tune the parameters of mcmc kernels
 used within SMC, based on particles.
 """
+
 import jax
 import jax.numpy as jnp
 from jax._src.flatten_util import ravel_pytree
