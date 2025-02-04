@@ -11,6 +11,8 @@ from jax.random import normal, split
 from jax.sharding import NamedSharding, PartitionSpec
 from jax.tree_util import tree_leaves, tree_map
 
+
+import jax
 from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
@@ -375,6 +377,7 @@ def run_eca(
     num_chains,
     mesh,
     ensemble_info=None,
+    early_stop=False,
 ):
     step = eca_step(
         kernel,
@@ -396,7 +399,31 @@ def run_eca(
             keys_adaptation,
         )  # keys for all steps that will be performed. keys_sampling.shape = (num_steps, chains_per_device), keys_adaptation.shape = (num_steps, )
 
-        final_state_all, info_history = lax.scan(step, initial_state_all, xs)
+        # ((a, Int) -> (a, Int))
+        def step_while(a):
+            x, i, _ = a
+
+            auxilliary_input = (xs[0][i], xs[1][i], xs[2][i])
+
+            # output, info = step(x, (jnp.arange(num_steps)[0],keys_sampling.T[0],keys_adaptation[0]))
+            output, info = step(x,auxilliary_input)
+
+            
+            # jax.debug.print("info {x}", x=info[0].get("while_cond"))
+            # jax.debug.print("info {x}", x=i)
+
+            return (output, i + 1, info[0].get("while_cond"))
+
+        # jax.debug.print("initial {x}", x=0)
+        if early_stop:
+            final_state_all, i, _ = lax.while_loop(
+                lambda a: ((a[1] < num_steps) & a[2] ), step_while, (initial_state_all, 0, True)
+            )
+            info_history = None
+
+        else:
+            final_state_all, info_history = lax.scan(step, initial_state_all, xs)
+
         final_state, final_adaptation_state = final_state_all
         return (
             final_state,

@@ -111,9 +111,7 @@ class Adaptation:
         }
 
     def update(self, adaptation_state, Etheta):
-        # combine the expectation values to get useful scalars
         acc_prob = Etheta["acceptance_probability"]
-        # acc_prob = 1./Etheta['inv_acceptance_probability']
         equi_diag = equipartition_diagonal_loss(Etheta["equipartition_diagonal"])
         true_bias = self.contract(Etheta["observables_for_bias"])  # remove
 
@@ -173,10 +171,8 @@ def emaus(
     mesh,
     rng_key,
     alpha=1.9,  # L = \sqrt{d}*\alpha*vars
-    bias_type=0,  # eliminate (fix to diagonal rank)
     save_frac=0.2,  # to end stage one, the fraction of stage 1 samples used to estimate fluctuation. min is: save_frac*num_steps1
     C=0.1,  # constant in stage 1 that determines step size (eq (9) in paper)
-    power=3.0 / 8.0,  # eliminate
     early_stop=True,  # for stage 1
     r_end=5e-3,  # stage1 parameters
     diagonal_preconditioning=True,
@@ -187,6 +183,28 @@ def emaus(
     ensemble_observables=None,
     diagnostics=True
 ):
+    
+    """
+    model: the target density object
+    num_steps1: number of steps in the first phase
+    num_steps2: number of steps in the second phase
+    num_chains: number of chains
+    mesh: the mesh object, used for distributing the computation across cpus and nodes
+    rng_key: the random key
+    alpha: L = \sqrt{d}*\alpha*variances
+    save_frac: the fraction of samples used to estimate the fluctuation in the first phase
+    C: constant in stage 1 that determines step size (eq (9) of EMAUS paper)
+    early_stop: whether to stop the first phase early
+    r_end
+    diagonal_preconditioning: whether to use diagonal preconditioning
+    integrator_coefficients: the coefficients of the integrator
+    steps_per_sample: the number of steps per sample
+    acc_prob: the acceptance probability
+    observables: the observables (for diagnostic use)
+    ensemble_observables:  observable calculated over the ensemble (for diagnostic use)
+    diagnostics: whether to return diagnostics
+    """
+
     observables_for_bias, contract = bias(model)
     key_init, key_umclmc, key_mclmc = jax.random.split(rng_key, 3)
 
@@ -201,15 +219,16 @@ def emaus(
     adap = umclmc.Adaptation(
         model.ndims,
         alpha=alpha,
-        bias_type=bias_type,
+        bias_type=3,
         save_num=save_num,
         C=C,
-        power=power,
+        power=3.0 / 8.0,
         r_end=r_end,
         observables=observables,
         observables_for_bias=observables_for_bias,
         contract=contract,
     )
+    
     final_state, final_adaptation_state, info1 = run_eca(
         key_umclmc,
         initial_state,
@@ -219,25 +238,8 @@ def emaus(
         num_chains,
         mesh,
         ensemble_observables,
+        early_stop=early_stop,
     )
-
-    if (
-        early_stop
-    ):  # here I am cheating a bit, because I am not sure if it is possible to do a while loop in jax and save something at every step. Therefore I rerun burn-in with exactly the same parameters and stop at the point where the orignal while loop would have stopped. The release implementation should not have that.
-        num_steps_while = while_steps_num(
-            (info1[0] if ensemble_observables is not None else info1)["while_cond"]
-        )
-        # print(num_steps_while, save_num)
-        final_state, final_adaptation_state, info1 = run_eca(
-            key_umclmc,
-            initial_state,
-            kernel,
-            adap,
-            num_steps_while,
-            num_chains,
-            mesh,
-            ensemble_observables,
-        )
 
     # refine the results with the adjusted method #
     _acc_prob = acc_prob
