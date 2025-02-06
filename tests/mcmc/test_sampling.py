@@ -3,7 +3,6 @@
 import functools
 import itertools
 
-from blackjax.adaptation.ensemble_mclmc import emaus
 import chex
 import jax
 import jax.numpy as jnp
@@ -16,6 +15,7 @@ import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
+from blackjax.adaptation.ensemble_mclmc import emaus
 from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
@@ -296,14 +296,9 @@ class LinearRegressionTest(chex.TestCase):
         key,
         diagonal_preconditioning,
     ):
-
         mesh = jax.sharding.Mesh(jax.devices(), "chains")
 
-        from blackjax.mcmc.integrators import (
-            velocity_verlet_coefficients,
-            mclachlan_coefficients,
-            omelyan_coefficients,
-        )
+        from blackjax.mcmc.integrators import mclachlan_coefficients
 
         integrator_coefficients = mclachlan_coefficients
 
@@ -511,33 +506,22 @@ class LinearRegressionTest(chex.TestCase):
         """Test the MCLMC kernel."""
 
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
-        
-        # model = Banana()
-        # logdensity_fn = model.logdensity_fn
-        # sample_init = model.sample_init
 
-       
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
         y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
 
         logposterior_fn_ = functools.partial(
             self.regression_logprob, x=x_data, preds=y_data
         )
-        # logdensity_fn = lambda x: logposterior_fn_(coefs=x[0], log_scale=x[1])
-        logdensity_fn = lambda x: logposterior_fn_(coefs=x['coefs'][0], log_scale=x['log_scale'][0])
-        # logdensity_fn = lambda x: logposterior_fn_(**x)
-
-        # jax.debug.print("logposterior_fn_ {x}", x=logdensity_fn(jnp.array([[1.5606847], [1.719502]])))
-        # jax.debug.print("logposterior_fn_ {x}", x=logdensity_fn({"coefs": jnp.array(1.5606847), "log_scale": jnp.array(1.719502)}))
-
+        logdensity_fn = lambda x: logposterior_fn_(
+            coefs=x["coefs"][0], log_scale=x["log_scale"][0]
+        )
 
         def sample_init(key):
             key1, key2 = jax.random.split(key)
             coefs = jax.random.uniform(key1, shape=(1,), minval=1, maxval=2)
-            log_scale =  jax.random.uniform(key2, shape=(1,), minval=1, maxval=2)
+            log_scale = jax.random.uniform(key2, shape=(1,), minval=1, maxval=2)
             return {"coefs": coefs, "log_scale": log_scale}
-            # return jnp.concatenate([coefs, log_scale])
-
 
         samples = self.run_emaus(
             sample_init=sample_init,
@@ -548,16 +532,8 @@ class LinearRegressionTest(chex.TestCase):
             diagonal_preconditioning=True,
         )
 
-
-
-        # # jax.debug.print("pos mean, {x}", x=jnp.mean(samples["coefs"][-1]))
-
-        
         coefs_samples = samples["coefs"]
         scale_samples = np.exp(samples["log_scale"])
-
-        jax.debug.print("coefs_samples mean {x}", x=jnp.mean(coefs_samples))
-        jax.debug.print("scale_samples mean {x}", x=jnp.mean(scale_samples))
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
@@ -636,7 +612,8 @@ class LinearRegressionTest(chex.TestCase):
         assert (
             jnp.abs(
                 jnp.dot(
-                    (inverse_mass_matrix**2) / jnp.linalg.norm(inverse_mass_matrix**2),
+                    (inverse_mass_matrix**2)
+                    / jnp.linalg.norm(inverse_mass_matrix**2),
                     eigs / jnp.linalg.norm(eigs),
                 )
                 - 1

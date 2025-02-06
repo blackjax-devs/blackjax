@@ -169,7 +169,6 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
             position,
             kinetic_grad,
         )
-        # jax.debug.print("new_position {x}", x=new_position)
         logdensity, logdensity_grad = logdensity_and_grad_fn(new_position)
         return new_position, logdensity, logdensity_grad, None
 
@@ -331,7 +330,6 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         """
         del is_last_call
 
-        # jax.debug.print("old momentum {x}", x=momentum)
         logdensity_grad = logdensity_grad
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
         flatten_grads = flatten_grads * sqrt_inverse_mass_matrix
@@ -340,7 +338,6 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
         momentum_proj = jnp.dot(flatten_momentum, normalized_gradient)
         delta = step_size * coef * gradient_norm / (dims - 1)
-        # jax.debug.print("delta {x}", x=delta)
         zeta = jnp.exp(-delta)
         new_momentum_raw = (
             normalized_gradient * (1 - zeta) * (1 + zeta + momentum_proj * (1 - zeta))
@@ -357,7 +354,6 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         if previous_kinetic_energy_change is not None:
             kinetic_energy_change += previous_kinetic_energy_change
 
-        # jax.debug.print("new_momentum {x}", x=next_momentum)
         return next_momentum, gr, kinetic_energy_change
 
     return update
@@ -422,16 +418,12 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     momentum with random change in angle
     """
 
-    # jax.debug.print("momentum unflat {x}", x=momentum)
     m, unravel_fn = ravel_pytree(momentum)
-    # jax.debug.print("momentum {x}", x=m)
     dim = m.shape[0]
     nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
-    # jax.debug.print("z {x}", x=z)
     new_momentum = unravel_fn((m + z) / jnp.linalg.norm(m + z))
-    # jax.debug.print("new_momentum {x}", x=new_momentum)
-    # return new_momentum
+
     return jax.lax.cond(
         jnp.isinf(L),
         lambda _: momentum,
@@ -444,7 +436,6 @@ def with_isokinetic_maruyama(integrator):
     def stochastic_integrator(init_state, step_size, L_proposal, rng_key):
         key1, key2 = jax.random.split(rng_key)
         # partial refreshment
-        # jax.debug.print("state before noise {x}", x=init_state.momentum)
         state = init_state._replace(
             momentum=partially_refresh_momentum(
                 momentum=init_state.momentum,
@@ -453,10 +444,8 @@ def with_isokinetic_maruyama(integrator):
                 step_size=step_size * 0.5,
             )
         )
-        # jax.debug.print("state after noise {x}", x=state.momentum)
         # one step of the deterministic dynamics
         state, info = integrator(state, step_size)
-        # jax.debug.print("state after integ {x}", x=state.position)
 
         # partial refreshment
         state = state._replace(

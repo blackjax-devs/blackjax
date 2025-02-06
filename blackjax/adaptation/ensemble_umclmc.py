@@ -78,17 +78,12 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
             _normalized_flatten_array(flat_g)[0]
         )  # = grad logp/ |grad logp|
 
-        jax.debug.print("logdensity {x}", x=logdensity_fn(position))
-        # jax.debug.print("velocity {x}", x=velocity)
-        jax.debug.print("position {x}", x=position)
-        # jax.debug.print("logdensity_grad {x}", x=logdensity_grad)
-        # jax.debug.print("logdensity {x}", x=logdensity)
-        # jax.debug.print("flat_g {x}", x=flat_g)
         return IntegratorState(position, velocity, logdensity, logdensity_grad), None
 
     def summary_statistics_fn(state):
         """compute the diagonal elements of the equipartition matrix"""
-        return 0 # -state.position * state.logdensity_grad
+        return 0  # -state.position * state.logdensity_grad
+
     # TODO: restore!
 
     def ensemble_init(key, state, signs):
@@ -99,7 +94,7 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
         momentum, unflatten = jax.flatten_util.ravel_pytree(state.momentum)
 
         velocity_flat = jax.tree_util.tree_map(
-            lambda sign, u: sign*u, signs, momentum
+            lambda sign, u: sign * u, signs, momentum
         )
 
         velocity = unflatten(velocity_flat)
@@ -119,8 +114,6 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
         mesh,
         summary_statistics_fn=summary_statistics_fn,
     )
-
-    # jax.debug.print("initial_state {x}", x=initial_state.momentum)
 
     signs = -2.0 * (equipartition < 1.0) + 1.0
     initial_state, _ = ensemble_execute_fn(
@@ -277,7 +270,7 @@ class Adaptation:
             Etheta["observables_for_bias"], adaptation_state.history.observables
         )
         # history_observables = adaptation_state.history.observables
-        
+
         history_weights = update_history_scalar(1.0, adaptation_state.history.weights)
         fluctuations = contract_history(history_observables, history_weights)
         history_stopping = update_history_scalar(

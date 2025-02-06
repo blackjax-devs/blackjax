@@ -35,7 +35,6 @@ from blackjax.util import run_eca
 
 
 class AdaptationState(NamedTuple):
-
     steps_per_sample: float
     step_size: float
     stepsize_adaptation_state: (
@@ -83,7 +82,9 @@ class Adaptation:
         # With the current eps, we had sigma^2 = EEVPD * d for N = 1.
         # Combining the two we have EEVPD * d / 0.82 = eps^6 / eps_new^4 L^2
         # adjustment_factor = jnp.power(0.82 / (num_dims * adaptation_state.EEVPD), 0.25) / jnp.sqrt(steps_per_sample)
-        step_size = adaptation_state.step_size  # * integrator_factor * adjustment_factor
+        step_size = (
+            adaptation_state.step_size
+        )  # * integrator_factor * adjustment_factor
 
         # steps_per_sample = (int)(jnp.max(jnp.array([Lfull / step_size, 1])))
 
@@ -184,7 +185,7 @@ def emaus(
     acc_prob=None,
     observables=lambda x: None,
     ensemble_observables=None,
-    diagnostics=True
+    diagnostics=True,
 ):
     """
     model: the target density object
@@ -215,8 +216,6 @@ def emaus(
         key_init, logdensity_fn, sample_init, num_chains, mesh
     )
 
-
-    # jax.debug.print("{x} foo", x=jax.flatten_util.ravel_pytree(initial_state.position)[0].shape[-1])
     ndims = 2
 
     # burn-in with the unadjusted method #
@@ -231,12 +230,12 @@ def emaus(
         power=3.0 / 8.0,
         r_end=r_end,
         # observables=observables,
-        observables_for_bias=lambda position: jnp.square(transform(jax.flatten_util.ravel_pytree(position)[0])),
+        observables_for_bias=lambda position: jnp.square(
+            transform(jax.flatten_util.ravel_pytree(position)[0])
+        ),
         # contract=contract,
     )
 
-    # jax.debug.print("initial_state.momentum: {x}", x=initial_state.momentum)
-    
     final_state, final_adaptation_state, info1 = run_eca(
         key_umclmc,
         initial_state,
@@ -248,9 +247,6 @@ def emaus(
         ensemble_observables,
         early_stop=early_stop,
     )
-
-    # print(final_state.position['coefs'].shape, "\n\nfoo\n\n")
-    # jax.debug.print("final_state.position: {x}", x=jnp.mean(final_state.position['coefs']))
 
     # refine the results with the adjusted method #
     _acc_prob = acc_prob
@@ -288,8 +284,6 @@ def emaus(
         logdensity_fn, integrator, inverse_mass_matrix=inverse_mass_matrix
     )
 
-
-
     initial_state = HMCState(
         final_state.position, final_state.logdensity, final_state.logdensity_grad
     )
@@ -320,7 +314,7 @@ def emaus(
     )
 
     if diagnostics:
-        info = {"phase_1" : info1, "phase_2" : info2}
+        info = {"phase_1": info1, "phase_2": info2}
     else:
         info = None
 

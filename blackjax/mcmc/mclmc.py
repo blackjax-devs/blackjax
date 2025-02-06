@@ -89,14 +89,9 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, MCLMCInfo]:
-        # jax.debug.print("state momentum 1 {x}", x=state.momentum)
         (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
             state, step_size, L, rng_key
         )
-
-        # jax.debug.print("state position 2 {x}", x=position)
-        # jax.debug.print("state position {x}", x=state.position.mean(axis=0))
-        # jax.debug.print("state position 2 {x}", x=position.mean(axis=0))
 
         return IntegratorState(
             position, momentum, logdensity, logdensitygrad

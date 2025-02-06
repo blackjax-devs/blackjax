@@ -11,8 +11,6 @@ from jax.random import normal, split
 from jax.sharding import NamedSharding, PartitionSpec
 from jax.tree_util import tree_leaves, tree_map
 
-
-import jax
 from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
@@ -337,7 +335,6 @@ def eca_step(
 
         # update the state of all chains on this device
         state, info = vmap(kernel, (0, 0, None))(keys_sampling, state, adaptation_state)
-        
 
         # combine all the chains to compute expectation values
         theta = vmap(summary_statistics_fn, (0, 0, None))(state, info, key_adaptation)
@@ -405,33 +402,18 @@ def run_eca(
             x, i, _ = a
 
             auxilliary_input = (xs[0][i], xs[1][i], xs[2][i])
-            # jax.debug.print("momentum init {x}", x=x[0].momentum)
 
-            # output, info = step(x, (jnp.arange(num_steps)[0],keys_sampling.T[0],keys_adaptation[0]))
-            # print(x, "\n\n")
-            output, info = step(x,auxilliary_input)
-
-            # print(output, "\n\n\nFOOO\n\n\n")
-
-            # jax.debug.print("\nbar\n {x}", x=output[0].position['coefs'].mean(axis=0))
-            # jax.debug.print("\nbar\n {x}", x=output[0].position.mean(axis=0))
+            output, info = step(x, auxilliary_input)
 
             check_state, _ = vmap(kernel, (0, 0, None))(xs[1][i], output[0], output[1])
-            
-            # jax.debug.print("\nbaz\n {x}", x=check_state.position['coefs'].mean(axis=0))
-            # jax.debug.print("\nbaz\n {x}", x=check_state.position.mean(axis=0))
-            # jax.debug.print("info {x}", x=info[0].get("while_cond"))
-            # jax.debug.print("info {x}", x=i)
 
             return (output, i + 1, info[0].get("while_cond"))
 
-        # flatten with ravel: use ravel, not tree_map
-        # initial_state_all = ravel_pytree(initial_state_all)[0]
-
-        # jax.debug.print("initial {x}", x=0)
         if early_stop:
             final_state_all, i, _ = lax.while_loop(
-                lambda a: ((a[1] < num_steps) & a[2] ), step_while, (initial_state_all, 0, True)
+                lambda a: ((a[1] < num_steps) & a[2]),
+                step_while,
+                (initial_state_all, 0, True),
             )
             info_history = None
 

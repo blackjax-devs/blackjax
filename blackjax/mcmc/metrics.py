@@ -43,7 +43,8 @@ __all__ = ["default_metric", "gaussian_euclidean", "gaussian_riemannian"]
 class KineticEnergy(Protocol):
     def __call__(
         self, momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
-    ) -> Numeric: ...
+    ) -> Numeric:
+        ...
 
 
 class CheckTurning(Protocol):
@@ -54,7 +55,8 @@ class CheckTurning(Protocol):
         momentum_sum: ArrayLikeTree,
         position_left: Optional[ArrayLikeTree] = None,
         position_right: Optional[ArrayLikeTree] = None,
-    ) -> bool: ...
+    ) -> bool:
+        ...
 
 
 class Scale(Protocol):
@@ -65,7 +67,8 @@ class Scale(Protocol):
         *,
         inv: bool,
         trans: bool,
-    ) -> ArrayLikeTree: ...
+    ) -> ArrayLikeTree:
+        ...
 
 
 class Metric(NamedTuple):
