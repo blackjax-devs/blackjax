@@ -289,10 +289,11 @@ class LinearRegressionTest(chex.TestCase):
 
     def run_emaus(
         self,
-        initial_position,
+        sample_init,
         logdensity_fn,
+        ndims,
+        transform,
         key,
-        num_steps,
         diagonal_preconditioning,
     ):
 
@@ -306,17 +307,18 @@ class LinearRegressionTest(chex.TestCase):
 
         integrator_coefficients = mclachlan_coefficients
 
-        info1, info2, grads_per_step, _acc_prob = emaus(
-            logdensity_fn,
-            num_steps1=1000,
-            num_steps2=3000,
-            num_chains=4000,
+        info, grads_per_step, _acc_prob, final_state = emaus(
+            logdensity_fn=logdensity_fn,
+            sample_init=sample_init,
+            transform=transform,
+            ndims=ndims,
+            num_steps1=100,
+            num_steps2=300,
+            num_chains=100,
             mesh=mesh,
             rng_key=key,
             alpha=1.9,
-            bias_type=3,
             C=0.1,
-            power=3.0 / 8.0,
             early_stop=1,
             r_end=1e-2,
             diagonal_preconditioning=diagonal_preconditioning,
@@ -327,9 +329,7 @@ class LinearRegressionTest(chex.TestCase):
             # ensemble_observables = lambda x: vec @ x
         )  # run the algorithm
 
-        return info2[1].reshape(
-            info2[1].shape[0] * info2[1].shape[1], info2[1].shape[2]
-        )
+        return final_state.position
 
     @parameterized.parameters(
         itertools.product(
@@ -511,35 +511,56 @@ class LinearRegressionTest(chex.TestCase):
         """Test the MCLMC kernel."""
 
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+        
+        # model = Banana()
+        # logdensity_fn = model.logdensity_fn
+        # sample_init = model.sample_init
+
+       
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
         y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
 
         logposterior_fn_ = functools.partial(
             self.regression_logprob, x=x_data, preds=y_data
         )
-        logdensity_fn = lambda x: logposterior_fn_(**x)
+        # logdensity_fn = lambda x: logposterior_fn_(coefs=x[0], log_scale=x[1])
+        logdensity_fn = lambda x: logposterior_fn_(coefs=x['coefs'][0], log_scale=x['log_scale'][0])
+        # logdensity_fn = lambda x: logposterior_fn_(**x)
 
-        model = Banana()
+        # jax.debug.print("logposterior_fn_ {x}", x=logdensity_fn(jnp.array([[1.5606847], [1.719502]])))
+        # jax.debug.print("logposterior_fn_ {x}", x=logdensity_fn({"coefs": jnp.array(1.5606847), "log_scale": jnp.array(1.719502)}))
 
-        states = self.run_emaus(
-            initial_position={"coefs": 1.0, "log_scale": 1.0},
-            logdensity_fn=model,
+
+        def sample_init(key):
+            key1, key2 = jax.random.split(key)
+            coefs = jax.random.uniform(key1, shape=(1,), minval=1, maxval=2)
+            log_scale =  jax.random.uniform(key2, shape=(1,), minval=1, maxval=2)
+            return {"coefs": coefs, "log_scale": log_scale}
+            # return jnp.concatenate([coefs, log_scale])
+
+
+        samples = self.run_emaus(
+            sample_init=sample_init,
+            logdensity_fn=logdensity_fn,
+            transform=lambda x: x,
+            ndims=2,
             key=inference_key,
-            num_steps=10000,
             diagonal_preconditioning=True,
         )
 
-        # coefs_samples = states["coefs"][3000:]
-        # scale_samples = np.exp(states["log_scale"][3000:])
 
-        # samples = states[3000:]
 
-        print((states**2).mean(axis=0), Banana().E_x2)
+        # # jax.debug.print("pos mean, {x}", x=jnp.mean(samples["coefs"][-1]))
 
-        np.testing.assert_allclose((states**2).mean(axis=0), Banana().E_x2, atol=1e-2)
+        
+        coefs_samples = samples["coefs"]
+        scale_samples = np.exp(samples["log_scale"])
 
-        # np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-        # np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+        jax.debug.print("coefs_samples mean {x}", x=jnp.mean(coefs_samples))
+        jax.debug.print("scale_samples mean {x}", x=jnp.mean(scale_samples))
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
 
     def test_mclmc_preconditioning(self):
         class IllConditionedGaussian:

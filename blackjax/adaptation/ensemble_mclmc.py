@@ -164,13 +164,16 @@ def while_steps_num(cond):
 
 
 def emaus(
-    model,
+    logdensity_fn,
+    sample_init,
+    transform,
+    ndims,
     num_steps1,  # max number in phase 1
     num_steps2,  # fixed number in phase 2
     num_chains,
     mesh,
     rng_key,
-    alpha=1.9,  # L = \sqrt{d}*\alpha*vars
+    alpha=1.9,  # L = sqrt{d}*alpha*vars
     save_frac=0.2,  # to end stage one, the fraction of stage 1 samples used to estimate fluctuation. min is: save_frac*num_steps1
     C=0.1,  # constant in stage 1 that determines step size (eq (9) in paper)
     early_stop=True,  # for stage 1
@@ -183,7 +186,6 @@ def emaus(
     ensemble_observables=None,
     diagnostics=True
 ):
-    
     """
     model: the target density object
     num_steps1: number of steps in the first phase
@@ -191,7 +193,7 @@ def emaus(
     num_chains: number of chains
     mesh: the mesh object, used for distributing the computation across cpus and nodes
     rng_key: the random key
-    alpha: L = \sqrt{d}*\alpha*variances
+    alpha: L = sqrt{d}*alpha*variances
     save_frac: the fraction of samples used to estimate the fluctuation in the first phase
     C: constant in stage 1 that determines step size (eq (9) of EMAUS paper)
     early_stop: whether to stop the first phase early
@@ -205,29 +207,35 @@ def emaus(
     diagnostics: whether to return diagnostics
     """
 
-    observables_for_bias, contract = bias(model)
+    # observables_for_bias, contract = bias(model)
     key_init, key_umclmc, key_mclmc = jax.random.split(rng_key, 3)
 
     # initialize the chains
     initial_state = umclmc.initialize(
-        key_init, model.logdensity_fn, model.sample_init, num_chains, mesh
+        key_init, logdensity_fn, sample_init, num_chains, mesh
     )
 
+
+    # jax.debug.print("{x} foo", x=jax.flatten_util.ravel_pytree(initial_state.position)[0].shape[-1])
+    ndims = 2
+
     # burn-in with the unadjusted method #
-    kernel = umclmc.build_kernel(model.logdensity_fn)
+    kernel = umclmc.build_kernel(logdensity_fn)
     save_num = (int)(jnp.rint(save_frac * num_steps1))
     adap = umclmc.Adaptation(
-        model.ndims,
+        ndims,
         alpha=alpha,
         bias_type=3,
         save_num=save_num,
         C=C,
         power=3.0 / 8.0,
         r_end=r_end,
-        observables=observables,
-        observables_for_bias=observables_for_bias,
-        contract=contract,
+        # observables=observables,
+        observables_for_bias=lambda position: jnp.square(transform(jax.flatten_util.ravel_pytree(position)[0])),
+        # contract=contract,
     )
+
+    # jax.debug.print("initial_state.momentum: {x}", x=initial_state.momentum)
     
     final_state, final_adaptation_state, info1 = run_eca(
         key_umclmc,
@@ -241,10 +249,13 @@ def emaus(
         early_stop=early_stop,
     )
 
+    # print(final_state.position['coefs'].shape, "\n\nfoo\n\n")
+    # jax.debug.print("final_state.position: {x}", x=jnp.mean(final_state.position['coefs']))
+
     # refine the results with the adjusted method #
     _acc_prob = acc_prob
     if integrator_coefficients is None:
-        high_dims = model.ndims > 200
+        high_dims = ndims > 200
         _integrator_coefficients = (
             omelyan_coefficients if high_dims else mclachlan_coefficients
         )
@@ -274,8 +285,11 @@ def emaus(
         inverse_mass_matrix = 1.0
 
     kernel = build_kernel(
-        model.logdensity_fn, integrator, inverse_mass_matrix=inverse_mass_matrix
+        logdensity_fn, integrator, inverse_mass_matrix=inverse_mass_matrix
     )
+
+
+
     initial_state = HMCState(
         final_state.position, final_state.logdensity, final_state.logdensity_grad
     )
@@ -289,9 +303,9 @@ def emaus(
         num_adaptation_samples,
         steps_per_sample,
         _acc_prob,
-        observables=observables,
-        observables_for_bias=observables_for_bias,
-        contract=contract,
+        # observables=observables,
+        # observables_for_bias=observables_for_bias,
+        # contract=contract,
     )
 
     final_state, final_adaptation_state, info2 = run_eca(

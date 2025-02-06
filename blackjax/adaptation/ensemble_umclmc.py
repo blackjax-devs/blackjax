@@ -77,17 +77,33 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
         velocity = unravel_fn(
             _normalized_flatten_array(flat_g)[0]
         )  # = grad logp/ |grad logp|
+
+        jax.debug.print("logdensity {x}", x=logdensity_fn(position))
+        # jax.debug.print("velocity {x}", x=velocity)
+        jax.debug.print("position {x}", x=position)
+        # jax.debug.print("logdensity_grad {x}", x=logdensity_grad)
+        # jax.debug.print("logdensity {x}", x=logdensity)
+        # jax.debug.print("flat_g {x}", x=flat_g)
         return IntegratorState(position, velocity, logdensity, logdensity_grad), None
 
     def summary_statistics_fn(state):
         """compute the diagonal elements of the equipartition matrix"""
-        return -state.position * state.logdensity_grad
+        return 0 # -state.position * state.logdensity_grad
+    # TODO: restore!
 
     def ensemble_init(key, state, signs):
         """flip the velocity, depending on the equipartition condition"""
-        velocity = jax.tree_util.tree_map(
-            lambda sign, u: sign * u, signs, state.momentum
+        # velocity = jax.tree_util.tree_map(
+        #     lambda sign, u: sign * u, signs, state.momentum
+        # )
+        momentum, unflatten = jax.flatten_util.ravel_pytree(state.momentum)
+
+        velocity_flat = jax.tree_util.tree_map(
+            lambda sign, u: sign*u, signs, momentum
         )
+
+        velocity = unflatten(velocity_flat)
+
         return (
             IntegratorState(
                 state.position, velocity, state.logdensity, state.logdensity_grad
@@ -103,6 +119,9 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
         mesh,
         summary_statistics_fn=summary_statistics_fn,
     )
+
+    # jax.debug.print("initial_state {x}", x=initial_state.momentum)
+
     signs = -2.0 * (equipartition < 1.0) + 1.0
     initial_state, _ = ensemble_execute_fn(
         ensemble_init, key2, num_chains, mesh, x=initial_state, args=signs
@@ -112,7 +131,14 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
 
 
 def update_history(new_vals, history):
+    # new_vals = jax.flatten_util.ravel_pytree(new_vals)[0]
+    # history = jax.flatten_util.ravel_pytree(history)[0]
+    # print(new_vals, "FOOO\n\n")
+
+    new_vals, _ = jax.flatten_util.ravel_pytree(new_vals)
+    # print(history, "FOOO\n\n")
     return jnp.concatenate((new_vals[None, :], history[:-1]))
+    # return history # TODO CHANGE BACK!!!!
 
 
 def update_history_scalar(new_val, history):
@@ -192,7 +218,7 @@ class Adaptation:
         bias_type=0,
         save_num=10,
         observables=lambda x: 0.0,
-        observables_for_bias=lambda x: 0.0,
+        observables_for_bias=lambda x: x,
         contract=lambda x: 0.0,
     ):
         self.num_dims = num_dims
@@ -250,6 +276,8 @@ class Adaptation:
         history_observables = update_history(
             Etheta["observables_for_bias"], adaptation_state.history.observables
         )
+        # history_observables = adaptation_state.history.observables
+        
         history_weights = update_history_scalar(1.0, adaptation_state.history.weights)
         fluctuations = contract_history(history_observables, history_weights)
         history_stopping = update_history_scalar(
