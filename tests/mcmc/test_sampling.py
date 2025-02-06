@@ -15,10 +15,10 @@ import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
+from blackjax.adaptation.ensemble_mclmc import emaus
 from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
-from blackjax.adaptation.ensemble_mclmc import emaus
 
 
 def orbit_samples(orbits, weights, rng_key):
@@ -291,43 +291,43 @@ class LinearRegressionTest(chex.TestCase):
         return out
 
     def run_emaus(
-            self,
-            sample_init,
-            logdensity_fn,
-            ndims,
-            transform,
-            key,
-            diagonal_preconditioning,
-        ):
-            mesh = jax.sharding.Mesh(jax.devices(), "chains")
-    
-            from blackjax.mcmc.integrators import mclachlan_coefficients
-    
-            integrator_coefficients = mclachlan_coefficients
-    
-            info, grads_per_step, _acc_prob, final_state = emaus(
-                logdensity_fn=logdensity_fn,
-                sample_init=sample_init,
-                transform=transform,
-                ndims=ndims,
-                num_steps1=100,
-                num_steps2=300,
-                num_chains=100,
-                mesh=mesh,
-                rng_key=key,
-                alpha=1.9,
-                C=0.1,
-                early_stop=1,
-                r_end=1e-2,
-                diagonal_preconditioning=diagonal_preconditioning,
-                integrator_coefficients=integrator_coefficients,
-                steps_per_sample=15,
-                acc_prob=None,
-                ensemble_observables=lambda x: x,
-                # ensemble_observables = lambda x: vec @ x
-            )  # run the algorithm
-    
-            return final_state.position
+        self,
+        sample_init,
+        logdensity_fn,
+        ndims,
+        transform,
+        key,
+        diagonal_preconditioning,
+    ):
+        mesh = jax.sharding.Mesh(jax.devices(), "chains")
+
+        from blackjax.mcmc.integrators import mclachlan_coefficients
+
+        integrator_coefficients = mclachlan_coefficients
+
+        info, grads_per_step, _acc_prob, final_state = emaus(
+            logdensity_fn=logdensity_fn,
+            sample_init=sample_init,
+            transform=transform,
+            ndims=ndims,
+            num_steps1=100,
+            num_steps2=300,
+            num_chains=100,
+            mesh=mesh,
+            rng_key=key,
+            alpha=1.9,
+            C=0.1,
+            early_stop=1,
+            r_end=1e-2,
+            diagonal_preconditioning=diagonal_preconditioning,
+            integrator_coefficients=integrator_coefficients,
+            steps_per_sample=15,
+            acc_prob=None,
+            ensemble_observables=lambda x: x,
+            # ensemble_observables = lambda x: vec @ x
+        )  # run the algorithm
+
+        return final_state.position
 
     @parameterized.parameters(
         itertools.product(
@@ -576,42 +576,42 @@ class LinearRegressionTest(chex.TestCase):
         )
 
     def test_emaus(
-            self,
-        ):
-            """Test the MCLMC kernel."""
-    
-            init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
-    
-            x_data = jax.random.normal(init_key0, shape=(1000, 1))
-            y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
-    
-            logposterior_fn_ = functools.partial(
-                self.regression_logprob, x=x_data, preds=y_data
-            )
-            logdensity_fn = lambda x: logposterior_fn_(
-                coefs=x["coefs"][0], log_scale=x["log_scale"][0]
-            )
-    
-            def sample_init(key):
-                key1, key2 = jax.random.split(key)
-                coefs = jax.random.uniform(key1, shape=(1,), minval=1, maxval=2)
-                log_scale = jax.random.uniform(key2, shape=(1,), minval=1, maxval=2)
-                return {"coefs": coefs, "log_scale": log_scale}
-    
-            samples = self.run_emaus(
-                sample_init=sample_init,
-                logdensity_fn=logdensity_fn,
-                transform=lambda x: x,
-                ndims=2,
-                key=inference_key,
-                diagonal_preconditioning=True,
-            )
-    
-            coefs_samples = samples["coefs"]
-            scale_samples = np.exp(samples["log_scale"])
-    
-            np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-            np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+        self,
+    ):
+        """Test the MCLMC kernel."""
+
+        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logdensity_fn = lambda x: logposterior_fn_(
+            coefs=x["coefs"][0], log_scale=x["log_scale"][0]
+        )
+
+        def sample_init(key):
+            key1, key2 = jax.random.split(key)
+            coefs = jax.random.uniform(key1, shape=(1,), minval=1, maxval=2)
+            log_scale = jax.random.uniform(key2, shape=(1,), minval=1, maxval=2)
+            return {"coefs": coefs, "log_scale": log_scale}
+
+        samples = self.run_emaus(
+            sample_init=sample_init,
+            logdensity_fn=logdensity_fn,
+            transform=lambda x: x,
+            ndims=2,
+            key=inference_key,
+            diagonal_preconditioning=True,
+        )
+
+        coefs_samples = samples["coefs"]
+        scale_samples = np.exp(samples["log_scale"])
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
 
     @parameterized.parameters(regression_test_cases)
     def test_pathfinder_adaptation(
