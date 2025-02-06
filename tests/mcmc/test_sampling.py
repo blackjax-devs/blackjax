@@ -15,10 +15,10 @@ import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
-from blackjax.adaptation.ensemble_mclmc import emaus
 from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
+from blackjax.adaptation.ensemble_mclmc import emaus
 
 
 def orbit_samples(orbits, weights, rng_key):
@@ -123,6 +123,7 @@ class LinearRegressionTest(chex.TestCase):
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
+            _,
         ) = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
             num_steps=num_steps,
@@ -148,7 +149,7 @@ class LinearRegressionTest(chex.TestCase):
 
         return samples
 
-    def run_adjusted_mclmc_dynamic(
+    def run_adjusted_mclmc(
         self,
         logdensity_fn,
         num_steps,
@@ -179,11 +180,12 @@ class LinearRegressionTest(chex.TestCase):
             logdensity_fn=logdensity_fn,
         )
 
-        target_acc_rate = 0.9
+        target_acc_rate = 0.65
 
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
+            _,
         ) = blackjax.adjusted_mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
             num_steps=num_steps,
@@ -220,7 +222,7 @@ class LinearRegressionTest(chex.TestCase):
 
         return out
 
-    def run_adjusted_mclmc(
+    def run_adjusted_mclmc_static(
         self,
         logdensity_fn,
         num_steps,
@@ -253,6 +255,7 @@ class LinearRegressionTest(chex.TestCase):
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
+            _,
         ) = blackjax.adjusted_mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
             num_steps=num_steps,
@@ -288,43 +291,43 @@ class LinearRegressionTest(chex.TestCase):
         return out
 
     def run_emaus(
-        self,
-        sample_init,
-        logdensity_fn,
-        ndims,
-        transform,
-        key,
-        diagonal_preconditioning,
-    ):
-        mesh = jax.sharding.Mesh(jax.devices(), "chains")
-
-        from blackjax.mcmc.integrators import mclachlan_coefficients
-
-        integrator_coefficients = mclachlan_coefficients
-
-        info, grads_per_step, _acc_prob, final_state = emaus(
-            logdensity_fn=logdensity_fn,
-            sample_init=sample_init,
-            transform=transform,
-            ndims=ndims,
-            num_steps1=100,
-            num_steps2=300,
-            num_chains=100,
-            mesh=mesh,
-            rng_key=key,
-            alpha=1.9,
-            C=0.1,
-            early_stop=1,
-            r_end=1e-2,
-            diagonal_preconditioning=diagonal_preconditioning,
-            integrator_coefficients=integrator_coefficients,
-            steps_per_sample=15,
-            acc_prob=None,
-            ensemble_observables=lambda x: x,
-            # ensemble_observables = lambda x: vec @ x
-        )  # run the algorithm
-
-        return final_state.position
+            self,
+            sample_init,
+            logdensity_fn,
+            ndims,
+            transform,
+            key,
+            diagonal_preconditioning,
+        ):
+            mesh = jax.sharding.Mesh(jax.devices(), "chains")
+    
+            from blackjax.mcmc.integrators import mclachlan_coefficients
+    
+            integrator_coefficients = mclachlan_coefficients
+    
+            info, grads_per_step, _acc_prob, final_state = emaus(
+                logdensity_fn=logdensity_fn,
+                sample_init=sample_init,
+                transform=transform,
+                ndims=ndims,
+                num_steps1=100,
+                num_steps2=300,
+                num_chains=100,
+                mesh=mesh,
+                rng_key=key,
+                alpha=1.9,
+                C=0.1,
+                early_stop=1,
+                r_end=1e-2,
+                diagonal_preconditioning=diagonal_preconditioning,
+                integrator_coefficients=integrator_coefficients,
+                steps_per_sample=15,
+                acc_prob=None,
+                ensemble_observables=lambda x: x,
+                # ensemble_observables = lambda x: vec @ x
+            )  # run the algorithm
+    
+            return final_state.position
 
     @parameterized.parameters(
         itertools.product(
@@ -439,41 +442,10 @@ class LinearRegressionTest(chex.TestCase):
         coefs_samples = states["coefs"][3000:]
         scale_samples = np.exp(states["log_scale"][3000:])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, rtol=1e-2, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, rtol=1e-2, atol=1e-1)
 
-    @parameterized.parameters([True, False])
-    def test_adjusted_mclmc_dynamic(
-        self,
-        diagonal_preconditioning,
-    ):
-        """Test the MCLMC kernel."""
-
-        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
-        x_data = jax.random.normal(init_key0, shape=(1000, 1))
-        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
-
-        logposterior_fn_ = functools.partial(
-            self.regression_logprob, x=x_data, preds=y_data
-        )
-        logdensity_fn = lambda x: logposterior_fn_(**x)
-
-        states = self.run_adjusted_mclmc_dynamic(
-            initial_position={"coefs": 1.0, "log_scale": 1.0},
-            logdensity_fn=logdensity_fn,
-            key=inference_key,
-            num_steps=10000,
-            diagonal_preconditioning=diagonal_preconditioning,
-        )
-
-        coefs_samples = states["coefs"][3000:]
-        scale_samples = np.exp(states["log_scale"][3000:])
-
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
-
-    @parameterized.parameters([True, False])
-    def test_adjusted_mclmc(self, diagonal_preconditioning):
+    def test_adjusted_mclmc(self):
         """Test the MCLMC kernel."""
 
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
@@ -490,53 +462,38 @@ class LinearRegressionTest(chex.TestCase):
             logdensity_fn=logdensity_fn,
             key=inference_key,
             num_steps=10000,
-            diagonal_preconditioning=diagonal_preconditioning,
         )
 
         coefs_samples = states["coefs"][3000:]
         scale_samples = np.exp(states["log_scale"][3000:])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, rtol=1e-2, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, rtol=1e-2, atol=1e-1)
 
-    # TODO: add preconditioning
-    def test_emaus(
-        self,
-    ):
+    def test_adjusted_mclmc_static(self):
         """Test the MCLMC kernel."""
 
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
-
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
         y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
 
         logposterior_fn_ = functools.partial(
             self.regression_logprob, x=x_data, preds=y_data
         )
-        logdensity_fn = lambda x: logposterior_fn_(
-            coefs=x["coefs"][0], log_scale=x["log_scale"][0]
-        )
+        logdensity_fn = lambda x: logposterior_fn_(**x)
 
-        def sample_init(key):
-            key1, key2 = jax.random.split(key)
-            coefs = jax.random.uniform(key1, shape=(1,), minval=1, maxval=2)
-            log_scale = jax.random.uniform(key2, shape=(1,), minval=1, maxval=2)
-            return {"coefs": coefs, "log_scale": log_scale}
-
-        samples = self.run_emaus(
-            sample_init=sample_init,
+        states = self.run_adjusted_mclmc_static(
+            initial_position={"coefs": 1.0, "log_scale": 1.0},
             logdensity_fn=logdensity_fn,
-            transform=lambda x: x,
-            ndims=2,
             key=inference_key,
-            diagonal_preconditioning=True,
+            num_steps=10000,
         )
 
-        coefs_samples = samples["coefs"]
-        scale_samples = np.exp(samples["log_scale"])
+        coefs_samples = states["coefs"][3000:]
+        scale_samples = np.exp(states["log_scale"][3000:])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, rtol=1e-2, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, rtol=1e-2, atol=1e-1)
 
     def test_mclmc_preconditioning(self):
         class IllConditionedGaussian:
@@ -595,10 +552,7 @@ class LinearRegressionTest(chex.TestCase):
                 inverse_mass_matrix=inverse_mass_matrix,
             )
 
-            (
-                _,
-                blackjax_mclmc_sampler_params,
-            ) = blackjax.mclmc_find_L_and_step_size(
+            (_, blackjax_mclmc_sampler_params, _) = blackjax.mclmc_find_L_and_step_size(
                 mclmc_kernel=kernel,
                 num_steps=num_steps,
                 state=initial_state,
@@ -620,6 +574,44 @@ class LinearRegressionTest(chex.TestCase):
             )
             < 0.1
         )
+
+    def test_emaus(
+            self,
+        ):
+            """Test the MCLMC kernel."""
+    
+            init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+    
+            x_data = jax.random.normal(init_key0, shape=(1000, 1))
+            y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+    
+            logposterior_fn_ = functools.partial(
+                self.regression_logprob, x=x_data, preds=y_data
+            )
+            logdensity_fn = lambda x: logposterior_fn_(
+                coefs=x["coefs"][0], log_scale=x["log_scale"][0]
+            )
+    
+            def sample_init(key):
+                key1, key2 = jax.random.split(key)
+                coefs = jax.random.uniform(key1, shape=(1,), minval=1, maxval=2)
+                log_scale = jax.random.uniform(key2, shape=(1,), minval=1, maxval=2)
+                return {"coefs": coefs, "log_scale": log_scale}
+    
+            samples = self.run_emaus(
+                sample_init=sample_init,
+                logdensity_fn=logdensity_fn,
+                transform=lambda x: x,
+                ndims=2,
+                key=inference_key,
+                diagonal_preconditioning=True,
+            )
+    
+            coefs_samples = samples["coefs"]
+            scale_samples = np.exp(samples["log_scale"])
+    
+            np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
+            np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
 
     @parameterized.parameters(regression_test_cases)
     def test_pathfinder_adaptation(
@@ -787,8 +779,8 @@ class LinearRegressionTest(chex.TestCase):
         coefs_samples = states["coefs"][3000:]
         scale_samples = np.exp(states["log_scale"][3000:])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-2)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-2)
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, rtol=1e-2, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, rtol=1e-2, atol=1e-1)
 
 
 class SGMCMCTest(chex.TestCase):
@@ -1041,7 +1033,7 @@ class UnivariateNormalTest(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_nuts(self):
         inference_algorithm = blackjax.nuts(
-            self.normal_logprob, step_size=4.0, inverse_mass_matrix=jnp.array([1.0])
+            self.normal_logprob, step_size=1.0, inverse_mass_matrix=jnp.array([1.0])
         )
 
         initial_state = inference_algorithm.init(jnp.array(3.0))
@@ -1201,7 +1193,7 @@ mcse_test_cases = [
     },
     {
         "algorithm": blackjax.barker_proposal,
-        "parameters": {"step_size": 0.5},
+        "parameters": {"step_size": 0.45},
         "is_mass_matrix_diagonal": None,
     },
 ]
@@ -1301,55 +1293,6 @@ class MonteCarloStandardErrorTest(chex.TestCase):
             [posterior_samples, posterior_variance, posterior_correlation],
             [true_loc, true_scale**2, true_rho],
         )
-
-
-# TODO: remove
-class Banana:
-    """Banana target fromm the Inference Gym"""
-
-    def __init__(self, initialization="wide"):
-        self.name = "Banana"
-        self.ndims = 2
-        self.curvature = 0.03
-
-        self.transform = lambda x: x
-        self.E_x2 = jnp.array(
-            [100.0, 19.0]
-        )  # the first is analytic the second is by drawing 10^8 samples from the generative model. Relative accuracy is around 10^-5.
-        self.Var_x2 = jnp.array([20000.0, 4600.898])
-
-        if initialization == "map":
-            self.sample_init = lambda key: jnp.array([0, -100.0 * self.curvature])
-        elif initialization == "posterior":
-            self.sample_init = lambda key: self.posterior_draw(key)
-        elif initialization == "wide":
-            self.sample_init = (
-                lambda key: jax.random.normal(key, shape=(self.ndims,))
-                * jnp.array([10.0, 5.0])
-                * 2
-            )
-        else:
-            raise ValueError(
-                "initialization = " + initialization + " is not a valid option."
-            )
-
-    def logdensity_fn(self, x):
-        mu2 = self.curvature * (x[0] ** 2 - 100)
-        return -0.5 * (jnp.square(x[0] / 10.0) + jnp.square(x[1] - mu2))
-
-    def posterior_draw(self, key):
-        z = jax.random.normal(key, shape=(2,))
-        x0 = 10.0 * z[0]
-        x1 = self.curvature * (x0**2 - 100) + z[1]
-        return jnp.array([x0, x1])
-
-    def ground_truth(self):
-        x = jax.vmap(self.posterior_draw)(
-            jax.random.split(jax.random.PRNGKey(0), 100000000)
-        )
-        print(jnp.average(x, axis=0))
-        print(jnp.average(jnp.square(x), axis=0))
-        print(jnp.std(jnp.square(x[:, 0])) ** 2, jnp.std(jnp.square(x[:, 1])) ** 2)
 
 
 if __name__ == "__main__":

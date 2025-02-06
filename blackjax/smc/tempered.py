@@ -55,6 +55,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
+    update_particles_fn: Optional[Callable] = None,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -92,8 +93,12 @@ def build_kernel(
     information about the transition.
 
     """
-    delegate = smc_from_mcmc.build_kernel(
-        mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy
+    update_particles = (
+        smc_from_mcmc.build_kernel(
+            mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy
+        )
+        if update_particles_fn is None
+        else update_particles_fn
     )
 
     def kernel(
@@ -135,7 +140,7 @@ def build_kernel(
             tempered_loglikelihood = state.lmbda * loglikelihood_fn(position)
             return logprior + tempered_loglikelihood
 
-        smc_state, info = delegate(
+        smc_state, info = update_particles(
             rng_key,
             state,
             num_mcmc_steps,
@@ -162,6 +167,7 @@ def as_top_level_api(
     resampling_fn: Callable,
     num_mcmc_steps: Optional[int] = 10,
     update_strategy=update_and_take_last,
+    update_particles_fn=None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
@@ -196,6 +202,7 @@ def as_top_level_api(
         mcmc_init_fn,
         resampling_fn,
         update_strategy,
+        update_particles_fn,
     )
 
     def init_fn(position: ArrayLikeTree, rng_key=None):

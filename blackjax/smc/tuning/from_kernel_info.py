@@ -1,4 +1,5 @@
 """
+static (all particles get the same value)
 strategies to tune the parameters of mcmc kernels
 used within smc, based on MCMC states
 """
