@@ -88,9 +88,7 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
 
     def ensemble_init(key, state, signs):
         """flip the velocity, depending on the equipartition condition"""
-        # velocity = jax.tree_util.tree_map(
-        #     lambda sign, u: sign * u, signs, state.momentum
-        # )
+
         momentum, unflatten = jax.flatten_util.ravel_pytree(state.momentum)
 
         velocity_flat = jax.tree_util.tree_map(
@@ -124,14 +122,8 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
 
 
 def update_history(new_vals, history):
-    # new_vals = jax.flatten_util.ravel_pytree(new_vals)[0]
-    # history = jax.flatten_util.ravel_pytree(history)[0]
-    # print(new_vals, "FOOO\n\n")
-
     new_vals, _ = jax.flatten_util.ravel_pytree(new_vals)
-    # print(history, "FOOO\n\n")
     return jnp.concatenate((new_vals[None, :], history[:-1]))
-    # return history # TODO CHANGE BACK!!!!
 
 
 def update_history_scalar(new_val, history):
@@ -146,8 +138,6 @@ def contract_history(theta, weights):
 
     return jnp.array([jnp.max(r), jnp.average(r)])
 
-
-# used for the early stopping
 class History(NamedTuple):
     observables: Array
     stopping: Array
@@ -224,8 +214,6 @@ class Adaptation:
         self.contract = contract
         self.bias_type = bias_type
         self.save_num = save_num
-        # sigma = unravel_fn(jnp.ones(flat_pytree.shape, dtype = flat_pytree.dtype))
-
         r_save_num = save_num
 
         history = History(

@@ -84,13 +84,8 @@ class Adaptation:
         # adjustment_factor = jnp.power(0.82 / (num_dims * adaptation_state.EEVPD), 0.25) / jnp.sqrt(steps_per_sample)
         step_size = (
             adaptation_state.step_size
-        )  # * integrator_factor * adjustment_factor
+        )  
 
-        # steps_per_sample = (int)(jnp.max(jnp.array([Lfull / step_size, 1])))
-
-        # Initialize the dual averaging adaptation #
-        # da_init_fn, self.epsadap_update, _ = dual_averaging_adaptation(target= acc_prob_target)
-        # stepsize_adaptation_state = da_init_fn(step_size)
 
         # Initialize the bisection for finding the step size
         stepsize_adaptation_state, self.epsadap_update = bisection_monotonic_fn(
@@ -169,18 +164,18 @@ def emaus(
     sample_init,
     transform,
     ndims,
-    num_steps1,  # max number in phase 1
-    num_steps2,  # fixed number in phase 2
+    num_steps1,
+    num_steps2,
     num_chains,
     mesh,
     rng_key,
-    alpha=1.9,  # L = sqrt{d}*alpha*vars
-    save_frac=0.2,  # to end stage one, the fraction of stage 1 samples used to estimate fluctuation. min is: save_frac*num_steps1
-    C=0.1,  # constant in stage 1 that determines step size (eq (9) in paper)
-    early_stop=True,  # for stage 1
-    r_end=5e-3,  # stage1 parameters
+    alpha=1.9,
+    save_frac=0.2,
+    C=0.1,
+    early_stop=True,
+    r_end=5e-3,
     diagonal_preconditioning=True,
-    integrator_coefficients=None,  # (for stage 2)
+    integrator_coefficients=None,
     steps_per_sample=10,
     acc_prob=None,
     observables=lambda x: None,
@@ -229,11 +224,9 @@ def emaus(
         C=C,
         power=3.0 / 8.0,
         r_end=r_end,
-        # observables=observables,
         observables_for_bias=lambda position: jnp.square(
             transform(jax.flatten_util.ravel_pytree(position)[0])
         ),
-        # contract=contract,
     )
 
     final_state, final_adaptation_state, info1 = run_eca(
@@ -248,7 +241,7 @@ def emaus(
         early_stop=early_stop,
     )
 
-    # refine the results with the adjusted method #
+    # refine the results with the adjusted method
     _acc_prob = acc_prob
     if integrator_coefficients is None:
         high_dims = ndims > 200
@@ -297,9 +290,6 @@ def emaus(
         num_adaptation_samples,
         steps_per_sample,
         _acc_prob,
-        # observables=observables,
-        # observables_for_bias=observables_for_bias,
-        # contract=contract,
     )
 
     final_state, final_adaptation_state, info2 = run_eca(
