@@ -41,7 +41,6 @@ class ContourSGLDState(NamedTuple):
         Index `i` such that the current position belongs to :math:`S_i`.
 
     """
-
     position: ArrayTree
     energy_pdf: Array
     energy_idx: int

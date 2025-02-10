@@ -377,6 +377,25 @@ def run_eca(
     ensemble_info=None,
     early_stop=False,
 ):
+    """
+    Run ensemble of chains in parallel on multiple devices.
+    -----------------------------------------------------
+    Args:
+        rng_key: random key
+        initial_state: initial state of the system
+        kernel: kernel for the dynamics
+        adaptation: adaptation object
+        num_steps: number of steps to run
+        num_chains: number of chains
+        mesh: mesh for parallelization
+        ensemble_info: function that takes the state of the system and returns some information about the ensemble
+        early_stop: whether to stop early
+    Returns:
+        final_state: final state of the system
+        final_adaptation_state: final adaptation state
+        info_history: history of the information that was stored at each step (if early_stop is False, then this is None)
+    """
+
     step = eca_step(
         kernel,
         adaptation.summary_statistics_fn,
@@ -404,8 +423,6 @@ def run_eca(
             auxilliary_input = (xs[0][i], xs[1][i], xs[2][i])
 
             output, info = step(x, auxilliary_input)
-
-            check_state, _ = vmap(kernel, (0, 0, None))(xs[1][i], output[0], output[1])
 
             return (output, i + 1, info[0].get("while_cond"))
 
@@ -437,7 +454,6 @@ def run_eca(
     )
 
     # produce all random keys that will be needed
-    # rng_key = rng_key if not isinstance(rng_key, jnp.ndarray) else rng_key[0]
 
     key_sampling, key_adaptation = split(rng_key)
     num_steps = jnp.array(num_steps).item()
