@@ -138,6 +138,7 @@ def contract_history(theta, weights):
 
     return jnp.array([jnp.max(r), jnp.average(r)])
 
+
 class History(NamedTuple):
     observables: Array
     stopping: Array

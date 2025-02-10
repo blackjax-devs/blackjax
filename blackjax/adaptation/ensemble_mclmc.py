@@ -82,10 +82,7 @@ class Adaptation:
         # With the current eps, we had sigma^2 = EEVPD * d for N = 1.
         # Combining the two we have EEVPD * d / 0.82 = eps^6 / eps_new^4 L^2
         # adjustment_factor = jnp.power(0.82 / (num_dims * adaptation_state.EEVPD), 0.25) / jnp.sqrt(steps_per_sample)
-        step_size = (
-            adaptation_state.step_size
-        )  
-
+        step_size = adaptation_state.step_size
 
         # Initialize the bisection for finding the step size
         stepsize_adaptation_state, self.epsadap_update = bisection_monotonic_fn(
