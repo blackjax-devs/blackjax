@@ -1,4 +1,5 @@
 """Test the trajectory integration"""
+
 import chex
 import jax
 import jax.numpy as jnp

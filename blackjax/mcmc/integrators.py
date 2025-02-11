@@ -312,7 +312,7 @@ def _normalized_flatten_array(x, tol=1e-13):
 
 
 def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
-    sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
+    sqrt_inverse_mass_matrix = jax.tree_util.tree_map(jnp.sqrt, inverse_mass_matrix)
 
     def update(
         momentum: ArrayTree,
@@ -353,6 +353,7 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         ) * (dims - 1)
         if previous_kinetic_energy_change is not None:
             kinetic_energy_change += previous_kinetic_energy_change
+
         return next_momentum, gr, kinetic_energy_change
 
     return update
@@ -422,7 +423,7 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
     new_momentum = unravel_fn((m + z) / jnp.linalg.norm(m + z))
-    # return new_momentum
+
     return jax.lax.cond(
         jnp.isinf(L),
         lambda _: momentum,
