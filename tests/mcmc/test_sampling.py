@@ -312,7 +312,7 @@ class LinearRegressionTest(chex.TestCase):
             ndims=ndims,
             num_steps1=100,
             num_steps2=300,
-            num_chains=300,
+            num_chains=400,
             mesh=mesh,
             rng_key=key,
             alpha=1.9,
