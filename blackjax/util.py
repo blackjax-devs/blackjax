@@ -321,6 +321,10 @@ def incremental_value_update(
 def eca_step(
     kernel, summary_statistics_fn, adaptation_update, num_chains, ensemble_info=None
 ):
+    """
+    Construct a single step of ensemble chain adaptation (eca) to be performed in parallel on multiple devices.
+    """
+
     def _step(state_all, xs):
         """This function operates on a single device."""
         (
@@ -378,7 +382,7 @@ def run_eca(
     early_stop=False,
 ):
     """
-    Run ensemble of chains in parallel on multiple devices.
+    Run ensemble chain adaptation (eca) in parallel on multiple devices.
     -----------------------------------------------------
     Args:
         rng_key: random key
