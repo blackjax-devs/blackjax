@@ -113,9 +113,7 @@ def build_pretune(
     alpha: float,
     sigma_parameters: ArrayLikeTree,
     n_particles: int,
-    performance_of_chain_measure_factory: Callable = lambda state: esjd(
-        state.parameter_override["inverse_mass_matrix"]
-    ),
+    performance_of_chain_measure_factory: Callable = default_measure_factory,
     natural_parameters: Optional[List[str]] = None,
     positive_parameters: Optional[List[str]] = None,
 ):
