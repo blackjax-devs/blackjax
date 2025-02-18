@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.smc.adaptive_tempered" href="../adaptive_tempered/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga053bed" />
+  <meta name="docsearch:version" content="0.1.dev1+g3f0cbb7" />
   </head>
   
   
@@ -397,7 +397,7 @@
 <span id="blackjax-smc-base"></span><h1>blackjax.smc.base<a class="headerlink" href="#module-blackjax.smc.base" title="Link to this heading">#</a></h1>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.SMCState" title="blackjax.smc.base.SMCState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SMCState</span></code></a></p></td>
 <td><p>State of the SMC sampler.</p></td>
@@ -411,7 +411,7 @@
 </section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.base.init" title="blackjax.smc.base.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(particles, init_update_params)</p></td>
 <td><p></p></td>
@@ -433,7 +433,7 @@
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.smc.base.SMCState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SMCState</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SMCState</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCState" title="Link to this definition">#</a></dt>
 <dd><p>State of the SMC sampler.</p>
 <p>Particles must be a ArrayTree, each leave represents a variable from the posterior,
 being an array of size <cite>(n_particles, …)</cite>.</p>
@@ -483,7 +483,7 @@ Array([[50., 51., 52., 51], [51., 52., 52. ,54.], [55., 60, 60, 70]]) ]</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.smc.base.SMCInfo">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SMCInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCInfo" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">SMCInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/base.html#SMCInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.base.SMCInfo" title="Link to this definition">#</a></dt>
 <dd><p>Additional information on the tempered SMC step.</p>
 <dl class="simple">
 <dt>ancestors: Array</dt><dd><p>The index of the particles proposed by the MCMC pass that were selected

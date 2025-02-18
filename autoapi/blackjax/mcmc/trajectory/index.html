@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.termination" href="../termination/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga053bed" />
+  <meta name="docsearch:version" content="0.1.dev1+g3f0cbb7" />
   </head>
   
   
@@ -430,7 +430,7 @@ trajectory is being sampled. While the former is faster, we risk saturating the
 memory by keeping states that will subsequently be discarded.</p>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.Trajectory" title="blackjax.mcmc.trajectory.Trajectory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Trajectory</span></code></a></p></td>
 <td><p></p></td>
@@ -447,7 +447,7 @@ memory by keeping states that will subsequently be discarded.</p>
 </section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.append_to_trajectory" title="blackjax.mcmc.trajectory.append_to_trajectory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">append_to_trajectory</span></code></a>(→ Trajectory)</p></td>
 <td><p>Append a state to the (right of the) trajectory to form a new trajectory.</p></td>
@@ -481,7 +481,7 @@ memory by keeping states that will subsequently be discarded.</p>
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.trajectory.Trajectory">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Trajectory</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#Trajectory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.Trajectory" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">Trajectory</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#Trajectory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.Trajectory" title="Link to this definition">#</a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.trajectory.Trajectory.leftmost_state">
 <span class="sig-name descname"><span class="pre">leftmost_state</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.mcmc.integrators.IntegratorState</span></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#Trajectory.leftmost_state"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.Trajectory.leftmost_state" title="Link to this definition">#</a></dt>
@@ -529,7 +529,7 @@ memory by keeping states that will subsequently be discarded.</p>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.trajectory.DynamicIntegrationState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DynamicIntegrationState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#DynamicIntegrationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.DynamicIntegrationState" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DynamicIntegrationState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#DynamicIntegrationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.DynamicIntegrationState" title="Link to this definition">#</a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.trajectory.DynamicIntegrationState.step">
 <span class="sig-name descname"><span class="pre">step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#DynamicIntegrationState.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.DynamicIntegrationState.step" title="Link to this definition">#</a></dt>
@@ -598,7 +598,7 @@ trajectory.</p></li>
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.trajectory.DynamicExpansionState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DynamicExpansionState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#DynamicExpansionState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.DynamicExpansionState" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">DynamicExpansionState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#DynamicExpansionState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.DynamicExpansionState" title="Link to this definition">#</a></dt>
 <dd><dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.trajectory.DynamicExpansionState.step">
 <span class="sig-name descname"><span class="pre">step</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#DynamicExpansionState.step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.DynamicExpansionState.step" title="Link to this definition">#</a></dt>

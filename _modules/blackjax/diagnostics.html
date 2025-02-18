@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga053bed" />
+  <meta name="docsearch:version" content="0.1.dev1+g3f0cbb7" />
   </head>
   
   
@@ -484,6 +484,9 @@
     <span class="n">sample_axis</span> <span class="o">=</span> <span class="n">sample_axis</span> <span class="k">if</span> <span class="n">sample_axis</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">+</span> <span class="n">sample_axis</span>
     <span class="n">num_chains</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="n">chain_axis</span><span class="p">]</span>
     <span class="n">num_samples</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="n">sample_axis</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="p">(</span>
+        <span class="n">num_samples</span> <span class="o">&gt;</span> <span class="mi">1</span>
+    <span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;The input array must have at least 2 samples, got only </span><span class="si">{</span><span class="n">num_samples</span><span class="si">}</span><span class="s2">.&quot;</span>
 
     <span class="n">mean_across_chain</span> <span class="o">=</span> <span class="n">input_array</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="n">sample_axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="c1"># Compute autocovariance estimates for every lag for the input array using FFT.</span>

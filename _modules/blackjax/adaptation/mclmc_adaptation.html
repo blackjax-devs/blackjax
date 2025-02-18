@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga053bed" />
+  <meta name="docsearch:version" content="0.1.dev1+g3f0cbb7" />
   </head>
   
   
@@ -429,6 +429,7 @@
     <span class="n">trust_in_estimate</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
     <span class="n">num_effective_samples</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
     <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Finds the optimal value of the parameters for the MCLMC algorithm.</span>
@@ -457,6 +458,8 @@
 <span class="sd">        The number of effective samples for the MCMC algorithm.</span>
 <span class="sd">    diagonal_preconditioning</span>
 <span class="sd">        Whether to do diagonal preconditioning (i.e. a mass matrix)</span>
+<span class="sd">    params</span>
+<span class="sd">        Initial params to start tuning from (optional)</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -483,10 +486,19 @@
 <span class="sd">        )</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">dim</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
-    <span class="n">params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
-        <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.25</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">dim</span><span class="p">,))</span>
-    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.25</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">dim</span><span class="p">,))</span>
+        <span class="p">)</span>
+
     <span class="n">part1_key</span><span class="p">,</span> <span class="n">part2_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="n">total_num_tuning_integrator_steps</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">num_steps1</span><span class="p">,</span> <span class="n">num_steps2</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune1</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span>
+        <span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune2</span>
+    <span class="p">)</span>
+    <span class="n">num_steps2</span> <span class="o">+=</span> <span class="n">diagonal_preconditioning</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_steps2</span> <span class="o">//</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">num_steps3</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune3</span><span class="p">)</span>
 
     <span class="n">state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">make_L_step_size_adaptation</span><span class="p">(</span>
         <span class="n">kernel</span><span class="o">=</span><span class="n">mclmc_kernel</span><span class="p">,</span>
@@ -498,13 +510,15 @@
         <span class="n">num_effective_samples</span><span class="o">=</span><span class="n">num_effective_samples</span><span class="p">,</span>
         <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="n">diagonal_preconditioning</span><span class="p">,</span>
     <span class="p">)(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">part1_key</span><span class="p">)</span>
+    <span class="n">total_num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">num_steps1</span> <span class="o">+</span> <span class="n">num_steps2</span>
 
-    <span class="k">if</span> <span class="n">frac_tune3</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">num_steps3</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># at least 2 samples for ESS estimation</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">make_adaptation_L</span><span class="p">(</span>
             <span class="n">mclmc_kernel</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">frac</span><span class="o">=</span><span class="n">frac_tune3</span><span class="p">,</span> <span class="n">Lfactor</span><span class="o">=</span><span class="mf">0.4</span>
         <span class="p">)(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">part2_key</span><span class="p">)</span>
+        <span class="n">total_num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">num_steps3</span>
 
-    <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span> <span class="o">*</span> <span class="p">(</span><span class="n">frac_tune1</span> <span class="o">+</span> <span class="n">frac_tune2</span> <span class="o">+</span> <span class="n">frac_tune3</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">total_num_tuning_integrator_steps</span></div>
 
 
 
@@ -606,10 +620,10 @@
     <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">L_step_size_adaptation</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-        <span class="n">num_steps1</span><span class="p">,</span> <span class="n">num_steps2</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune1</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-            <span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune2</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">num_steps1</span><span class="p">,</span> <span class="n">num_steps2</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune1</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span>
+            <span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune2</span>
         <span class="p">)</span>
+
         <span class="n">L_step_size_adaptation_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps1</span> <span class="o">+</span> <span class="n">num_steps2</span> <span class="o">+</span> <span class="mi">1</span>
         <span class="p">)</span>
@@ -640,7 +654,7 @@
                 <span class="n">L</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
 
                 <span class="c1"># readjust the stepsize</span>
-                <span class="n">steps</span> <span class="o">=</span> <span class="n">num_steps2</span> <span class="o">//</span> <span class="mi">3</span>  <span class="c1"># we do some small number of steps</span>
+                <span class="n">steps</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_steps2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># we do some small number of steps</span>
                 <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">final_key</span><span class="p">,</span> <span class="n">steps</span><span class="p">)</span>
                 <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">average</span><span class="p">)</span> <span class="o">=</span> <span class="n">run_steps</span><span class="p">(</span>
                     <span class="n">xs</span><span class="o">=</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">),</span> <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span>
@@ -658,7 +672,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">adaptation_L</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="n">num_steps_3</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac</span><span class="p">)</span>
+        <span class="n">num_steps_3</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac</span><span class="p">)</span>
         <span class="n">adaptation_L_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">num_steps_3</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>

@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.nuts" href="../nuts/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga053bed" />
+  <meta name="docsearch:version" content="0.1.dev1+g3f0cbb7" />
   </head>
   
   
@@ -392,7 +392,7 @@
 <p>Public API for Periodic Orbital Kernel</p>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState" title="blackjax.mcmc.periodic_orbital.PeriodicOrbitalState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PeriodicOrbitalState</span></code></a></p></td>
 <td><p>State of the periodic orbital algorithm.</p></td>
@@ -403,7 +403,7 @@
 </section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.init" title="blackjax.mcmc.periodic_orbital.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ PeriodicOrbitalState)</p></td>
 <td><p>Create a periodic orbital state from a position.</p></td>
@@ -422,7 +422,7 @@
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.PeriodicOrbitalState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PeriodicOrbitalState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#PeriodicOrbitalState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PeriodicOrbitalState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#PeriodicOrbitalState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState" title="Link to this definition">#</a></dt>
 <dd><p>State of the periodic orbital algorithm.</p>
 <p>The periodic orbital algorithm takes one orbit with weights,
 samples from the points on that orbit according to their weights
@@ -518,7 +518,7 @@ with a position.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.as_top_level_api">
-<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bijection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.as_top_level_api" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">period</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">bijection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.as_top_level_api" title="Link to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p>
 <p>Each iteration of the periodic orbital MCMC outputs <code class="docutils literal notranslate"><span class="pre">period</span></code> weighted samples from
 a single Hamiltonian orbit connecting the previous sample and momentum (latent) variable

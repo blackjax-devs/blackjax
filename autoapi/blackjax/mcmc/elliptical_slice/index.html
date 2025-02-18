@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.dynamic_hmc" href="../dynamic_hmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga053bed" />
+  <meta name="docsearch:version" content="0.1.dev1+g3f0cbb7" />
   </head>
   
   
@@ -395,7 +395,7 @@
 <p>Public API for the Elliptical Slice sampling Kernel</p>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.elliptical_slice.EllipSliceState" title="blackjax.mcmc.elliptical_slice.EllipSliceState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">EllipSliceState</span></code></a></p></td>
 <td><p>State of the Elliptical Slice sampling algorithm.</p></td>
@@ -409,7 +409,7 @@
 </section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table autosummary">
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.elliptical_slice.init" title="blackjax.mcmc.elliptical_slice.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(position, logdensity_fn)</p></td>
 <td><p></p></td>
@@ -428,7 +428,7 @@
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.elliptical_slice.EllipSliceState">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EllipSliceState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#EllipSliceState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.EllipSliceState" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EllipSliceState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#EllipSliceState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.EllipSliceState" title="Link to this definition">#</a></dt>
 <dd><p>State of the Elliptical Slice sampling algorithm.</p>
 <dl class="simple">
 <dt>position</dt><dd><p>Current position of the chain.</p>
@@ -450,7 +450,7 @@
 
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.elliptical_slice.EllipSliceInfo">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EllipSliceInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#EllipSliceInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.EllipSliceInfo" title="Link to this definition">#</a></dt>
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">EllipSliceInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#EllipSliceInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.EllipSliceInfo" title="Link to this definition">#</a></dt>
 <dd><p>Additional information on the Elliptical Slice sampling chain.</p>
 <p>This additional information can be used for debugging or computing
 diagnostics.</p>
@@ -510,7 +510,7 @@ the posterior we wish to sample.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.elliptical_slice.as_top_level_api">
-<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.as_top_level_api" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mean</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cov</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/elliptical_slice.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.elliptical_slice.as_top_level_api" title="Link to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the Elliptical Slice sampling kernel.</p>
 <p class="rubric">Examples</p>
 <p>A new Elliptical Slice sampling kernel can be initialized and used with the following code:</p>
