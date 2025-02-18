@@ -116,7 +116,9 @@ def mclmc_find_L_and_step_size(
     part1_key, part2_key = jax.random.split(rng_key, 2)
     total_num_tuning_integrator_steps = 0
 
-    num_steps1, num_steps2 = round(num_steps * frac_tune1), round(num_steps * frac_tune2)
+    num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
+        num_steps * frac_tune2
+    )
     num_steps2 += diagonal_preconditioning * (num_steps2 // 3)
     num_steps3 = round(num_steps * frac_tune3)
 
@@ -132,7 +134,7 @@ def mclmc_find_L_and_step_size(
     )(state, params, num_steps, part1_key)
     total_num_tuning_integrator_steps += num_steps1 + num_steps2
 
-    if num_steps3 >= 2: # at least 2 samples for ESS estimation
+    if num_steps3 >= 2:  # at least 2 samples for ESS estimation
         state, params = make_adaptation_L(
             mclmc_kernel(params.inverse_mass_matrix), frac=frac_tune3, Lfactor=0.4
         )(state, params, num_steps, part2_key)
@@ -237,7 +239,9 @@ def make_L_step_size_adaptation(
     )[0]
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
-        num_steps1, num_steps2 = round(num_steps * frac_tune1), round(num_steps * frac_tune2)
+        num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
+            num_steps * frac_tune2
+        )
 
         L_step_size_adaptation_keys = jax.random.split(
             rng_key, num_steps1 + num_steps2 + 1
