@@ -19,6 +19,7 @@ Functions
 
    blackjax.smc.pretuning.esjd
    blackjax.smc.pretuning.update_parameter_distribution
+   blackjax.smc.pretuning.default_measure_factory
    blackjax.smc.pretuning.build_pretune
    blackjax.smc.pretuning.build_kernel
    blackjax.smc.pretuning.init
@@ -74,7 +75,9 @@ Module Contents
                                   into latest_particles.
 
 
-.. py:function:: build_pretune(mcmc_init_fn: Callable, mcmc_step_fn: Callable, alpha: float, sigma_parameters: blackjax.types.ArrayLikeTree, n_particles: int, performance_of_chain_measure_factory: Callable = lambda state: esjd(state.parameter_override['inverse_mass_matrix']), natural_parameters: Optional[List[str]] = None, positive_parameters: Optional[List[str]] = None)
+.. py:function:: default_measure_factory(state)
+
+.. py:function:: build_pretune(mcmc_init_fn: Callable, mcmc_step_fn: Callable, alpha: float, sigma_parameters: blackjax.types.ArrayLikeTree, n_particles: int, performance_of_chain_measure_factory: Callable = default_measure_factory, natural_parameters: Optional[List[str]] = None, positive_parameters: Optional[List[str]] = None)
 
    Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure.
    The goal is to maintain a probability distribution of parameters, in order

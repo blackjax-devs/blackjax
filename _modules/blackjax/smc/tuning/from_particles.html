@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g3f0cbb7" />
+  <meta name="docsearch:version" content="0.1.dev1+g7e4241f" />
   </head>
   
   
@@ -376,7 +376,7 @@
     <span class="s2">&quot;particles_means&quot;</span><span class="p">,</span>
     <span class="s2">&quot;particles_stds&quot;</span><span class="p">,</span>
     <span class="s2">&quot;particles_covariance_matrix&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mass_matrix_from_particles&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;inverse_mass_matrix_from_particles&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -401,20 +401,18 @@
 
 
 
-<div class="viewcode-block" id="mass_matrix_from_particles">
-<a class="viewcode-back" href="../../../../autoapi/blackjax/smc/tuning/from_particles/index.html#blackjax.smc.tuning.from_particles.mass_matrix_from_particles">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">mass_matrix_from_particles</span><span class="p">(</span><span class="n">particles</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<div class="viewcode-block" id="inverse_mass_matrix_from_particles">
+<a class="viewcode-back" href="../../../../autoapi/blackjax/smc/tuning/from_particles/index.html#blackjax.smc.tuning.from_particles.inverse_mass_matrix_from_particles">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">inverse_mass_matrix_from_particles</span><span class="p">(</span><span class="n">particles</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Implements tuning from section 3.1 from https://arxiv.org/pdf/1808.07730.pdf</span>
-<span class="sd">    Computing a mass matrix to be used in HMC from particles.</span>
-<span class="sd">    Given the particles covariance matrix, set all non-diagonal elements as zero,</span>
-<span class="sd">    take the inverse, and keep the diagonal.</span>
+<span class="sd">    Computing an inverse mass matrix to be used in HMC from particles.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A mass Matrix</span>
+<span class="sd">    An inverse mass matrix</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">particles_as_rows</span><span class="p">(</span><span class="n">particles</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span></div>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">particles_as_rows</span><span class="p">(</span><span class="n">particles</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span></div>
 
 
 

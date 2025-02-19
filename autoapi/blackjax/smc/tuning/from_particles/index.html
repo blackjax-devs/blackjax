@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.smc.tuning.from_kernel_info" href="../from_kernel_info/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g3f0cbb7" />
+  <meta name="docsearch:version" content="0.1.dev1+g7e4241f" />
   </head>
   
   
@@ -365,7 +365,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.particles_stds"><code class="docutils literal notranslate"><span class="pre">particles_stds()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.particles_means"><code class="docutils literal notranslate"><span class="pre">particles_means()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.particles_covariance_matrix"><code class="docutils literal notranslate"><span class="pre">particles_covariance_matrix()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.mass_matrix_from_particles"><code class="docutils literal notranslate"><span class="pre">mass_matrix_from_particles()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.inverse_mass_matrix_from_particles"><code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix_from_particles()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -396,7 +396,7 @@ used within SMC, based on particles.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.tuning.from_particles.particles_covariance_matrix" title="blackjax.smc.tuning.from_particles.particles_covariance_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">particles_covariance_matrix</span></code></a>(particles)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.tuning.from_particles.mass_matrix_from_particles" title="blackjax.smc.tuning.from_particles.mass_matrix_from_particles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mass_matrix_from_particles</span></code></a>(→ blackjax.types.Array)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.tuning.from_particles.inverse_mass_matrix_from_particles" title="blackjax.smc.tuning.from_particles.inverse_mass_matrix_from_particles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inverse_mass_matrix_from_particles</span></code></a>(→ blackjax.types.Array)</p></td>
 <td><p>Implements tuning from section 3.1 from <a class="reference external" href="https://arxiv.org/pdf/1808.07730.pdf">https://arxiv.org/pdf/1808.07730.pdf</a></p></td>
 </tr>
 </tbody>
@@ -421,15 +421,13 @@ used within SMC, based on particles.</p>
 <dd></dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="blackjax.smc.tuning.from_particles.mass_matrix_from_particles">
-<span class="sig-name descname"><span class="pre">mass_matrix_from_particles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">particles</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../../_modules/blackjax/smc/tuning/from_particles.html#mass_matrix_from_particles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.tuning.from_particles.mass_matrix_from_particles" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.smc.tuning.from_particles.inverse_mass_matrix_from_particles">
+<span class="sig-name descname"><span class="pre">inverse_mass_matrix_from_particles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">particles</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../../_modules/blackjax/smc/tuning/from_particles.html#inverse_mass_matrix_from_particles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.tuning.from_particles.inverse_mass_matrix_from_particles" title="Link to this definition">#</a></dt>
 <dd><p>Implements tuning from section 3.1 from <a class="reference external" href="https://arxiv.org/pdf/1808.07730.pdf">https://arxiv.org/pdf/1808.07730.pdf</a>
-Computing a mass matrix to be used in HMC from particles.
-Given the particles covariance matrix, set all non-diagonal elements as zero,
-take the inverse, and keep the diagonal.</p>
+Computing an inverse mass matrix to be used in HMC from particles.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A mass Matrix</p>
+<dd class="field-odd"><p>An inverse mass matrix</p>
 </dd>
 </dl>
 </dd></dl>
@@ -488,7 +486,7 @@ take the inverse, and keep the diagonal.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.particles_stds"><code class="docutils literal notranslate"><span class="pre">particles_stds()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.particles_means"><code class="docutils literal notranslate"><span class="pre">particles_means()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.particles_covariance_matrix"><code class="docutils literal notranslate"><span class="pre">particles_covariance_matrix()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.mass_matrix_from_particles"><code class="docutils literal notranslate"><span class="pre">mass_matrix_from_particles()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.tuning.from_particles.inverse_mass_matrix_from_particles"><code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix_from_particles()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g3f0cbb7" />
+  <meta name="docsearch:version" content="0.1.dev1+g7e4241f" />
   </head>
   
   
@@ -364,6 +364,8 @@
   <h1>Source code for blackjax.smc.inner_kernel_tuning</h1><div class="highlight"><pre>
 <span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.smc.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SMCInfo</span><span class="p">,</span> <span class="n">SMCState</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
@@ -406,8 +408,11 @@
     <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">mcmc_parameter_update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">SMCState</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]],</span>
+    <span class="n">mcmc_parameter_update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
+        <span class="p">[</span><span class="n">PRNGKey</span><span class="p">,</span> <span class="n">SMCState</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span>
+    <span class="p">],</span>
     <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">smc_returns_state_with_parameter_override</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there&#39;s an inner</span>
@@ -418,7 +423,8 @@
 <span class="sd">    ----------</span>
 <span class="sd">    smc_algorithm</span>
 <span class="sd">        Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of</span>
-<span class="sd">        a sampling algorithm that returns an SMCState and SMCInfo pair).</span>
+<span class="sd">        a sampling algorithm that returns an SMCState and SMCInfo pair). It is also possible for this</span>
+<span class="sd">        to return an StateWithParameterOverride, in such case smc_returns_state_with_parameter_override needs to be True</span>
 <span class="sd">    logprior_fn</span>
 <span class="sd">        A function that computes the log density of the prior distribution</span>
 <span class="sd">    loglikelihood_fn</span>
@@ -432,7 +438,30 @@
 <span class="sd">        A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the inner kernel in i+1 iteration.</span>
 <span class="sd">    extra_parameters:</span>
 <span class="sd">        parameters to be used for the creation of the smc_algorithm.</span>
+<span class="sd">    smc_returns_state_with_parameter_override:</span>
+<span class="sd">        a boolean indicating that the underlying smc_algorithm returns a smc_returns_state_with_parameter_override.</span>
+<span class="sd">        this is used in order to compose different adaptation mechanisms, such as pretuning with tuning.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">smc_returns_state_with_parameter_override</span><span class="p">:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">extract_state_for_delegate</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">state</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">compose_new_state</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_parameter_override</span><span class="p">):</span>
+            <span class="n">composed_parameter_override</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">new_state</span><span class="o">.</span><span class="n">parameter_override</span> <span class="o">|</span> <span class="n">new_parameter_override</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">StateWithParameterOverride</span><span class="p">(</span>
+                <span class="n">new_state</span><span class="o">.</span><span class="n">sampler_state</span><span class="p">,</span> <span class="n">composed_parameter_override</span>
+            <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">extract_state_for_delegate</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">sampler_state</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">compose_new_state</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_parameter_override</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">StateWithParameterOverride</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_parameter_override</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">StateWithParameterOverride</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_step_parameters</span>
@@ -447,9 +476,14 @@
             <span class="n">num_mcmc_steps</span><span class="o">=</span><span class="n">num_mcmc_steps</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">)</span><span class="o">.</span><span class="n">step</span>
-        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">sampler_state</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_step_parameters</span><span class="p">)</span>
-        <span class="n">new_parameter_override</span> <span class="o">=</span> <span class="n">mcmc_parameter_update_fn</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">StateWithParameterOverride</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_parameter_override</span><span class="p">),</span> <span class="n">info</span>
+        <span class="n">parameter_update_key</span><span class="p">,</span> <span class="n">step_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step_fn</span><span class="p">(</span>
+            <span class="n">step_key</span><span class="p">,</span> <span class="n">extract_state_for_delegate</span><span class="p">(</span><span class="n">state</span><span class="p">),</span> <span class="o">**</span><span class="n">extra_step_parameters</span>
+        <span class="p">)</span>
+        <span class="n">new_parameter_override</span> <span class="o">=</span> <span class="n">mcmc_parameter_update_fn</span><span class="p">(</span>
+            <span class="n">parameter_update_key</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">compose_new_state</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_parameter_override</span><span class="p">),</span> <span class="n">info</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
 
@@ -464,9 +498,12 @@
     <span class="n">mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">mcmc_parameter_update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">SMCState</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]],</span>
+    <span class="n">mcmc_parameter_update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span>
+        <span class="p">[</span><span class="n">PRNGKey</span><span class="p">,</span> <span class="n">SMCState</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span>
+    <span class="p">],</span>
     <span class="n">initial_parameter_value</span><span class="p">,</span>
     <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">smc_returns_state_with_parameter_override</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;In the context of an SMC sampler (whose step_fn returning state</span>
@@ -511,6 +548,7 @@
         <span class="n">resampling_fn</span><span class="p">,</span>
         <span class="n">mcmc_parameter_update_fn</span><span class="p">,</span>
         <span class="n">num_mcmc_steps</span><span class="p">,</span>
+        <span class="n">smc_returns_state_with_parameter_override</span><span class="p">,</span>
         <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
     <span class="p">)</span>
 

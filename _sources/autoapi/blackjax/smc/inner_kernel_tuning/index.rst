@@ -45,14 +45,15 @@ Module Contents
 
 .. py:function:: init(alg_init_fn, position, initial_parameter_value)
 
-.. py:function:: build_kernel(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], Dict[str, blackjax.types.ArrayTree]], num_mcmc_steps: int = 10, **extra_parameters) -> Callable
+.. py:function:: build_kernel(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.types.PRNGKey, blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], Dict[str, blackjax.types.ArrayTree]], num_mcmc_steps: int = 10, smc_returns_state_with_parameter_override=False, **extra_parameters) -> Callable
 
    In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
    MCMC that is used to perturbate/update each of the particles. This adaptation tunes some parameter of that MCMC,
    based on particles. The parameter type must be a valid JAX type.
 
    :param smc_algorithm: Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
-                         a sampling algorithm that returns an SMCState and SMCInfo pair).
+                         a sampling algorithm that returns an SMCState and SMCInfo pair). It is also possible for this
+                         to return an StateWithParameterOverride, in such case smc_returns_state_with_parameter_override needs to be True
    :param logprior_fn: A function that computes the log density of the prior distribution
    :param loglikelihood_fn: A function that returns the probability at a given position.
    :param mcmc_step_fn: The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
@@ -60,9 +61,11 @@ Module Contents
    :param mcmc_init_fn: A callable that initializes the inner kernel
    :param mcmc_parameter_update_fn: A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the inner kernel in i+1 iteration.
    :param extra_parameters: parameters to be used for the creation of the smc_algorithm.
+   :param smc_returns_state_with_parameter_override: a boolean indicating that the underlying smc_algorithm returns a smc_returns_state_with_parameter_override.
+                                                     this is used in order to compose different adaptation mechanisms, such as pretuning with tuning.
 
 
-.. py:function:: as_top_level_api(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], Dict[str, blackjax.types.ArrayTree]], initial_parameter_value, num_mcmc_steps: int = 10, **extra_parameters) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.types.PRNGKey, blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], Dict[str, blackjax.types.ArrayTree]], initial_parameter_value, num_mcmc_steps: int = 10, smc_returns_state_with_parameter_override=False, **extra_parameters) -> blackjax.base.SamplingAlgorithm
 
    In the context of an SMC sampler (whose step_fn returning state
    has a .particles attribute), there's an inner MCMC that is used
