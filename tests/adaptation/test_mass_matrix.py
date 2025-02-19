@@ -1,4 +1,5 @@
 """Test the welford adaptation algorithm."""
+
 import itertools
 
 import chex

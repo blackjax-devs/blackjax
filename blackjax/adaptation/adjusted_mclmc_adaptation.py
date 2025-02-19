@@ -113,7 +113,7 @@ def adjusted_mclmc_find_L_and_step_size(
             ) = adjusted_mclmc_make_adaptation_L(
                 mclmc_kernel,
                 frac=frac_tune3,
-                Lfactor=0.5,
+                Lfactor=0.3,
                 max=max,
                 eigenvector=eigenvector,
             )(

@@ -1,4 +1,5 @@
 """Test optimizers."""
+
 import functools
 
 import chex

@@ -1,4 +1,5 @@
 """Test MCMC diagnostics."""
+
 import functools
 import itertools
 

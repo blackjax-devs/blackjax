@@ -1,4 +1,5 @@
 """Test the iterative u-turn criterion."""
+
 import chex
 import jax.numpy as jnp
 from absl.testing import absltest, parameterized
