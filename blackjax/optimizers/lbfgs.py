@@ -58,7 +58,7 @@ class LBFGSHistory(NamedTuple):
     x: Array
     f: Array
     g: Array
-    alpha: Array
+    alpha: Array  # Q: should alpha be calculated later?
     update_mask: Array
 
 
