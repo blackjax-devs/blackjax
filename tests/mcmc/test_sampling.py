@@ -610,8 +610,6 @@ class LinearRegressionTest(chex.TestCase):
         coefs_samples = samples["coefs"]
         scale_samples = np.exp(samples["log_scale"])
 
-        print(np.mean(scale_samples), np.mean(coefs_samples), "foo")
-
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 

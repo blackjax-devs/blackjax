@@ -81,7 +81,7 @@ class Adaptation:
         # In the adjusted method we want sigma^2 = 2 mu = 2 * 0.41 = 0.82
         # With the current eps, we had sigma^2 = EEVPD * d for N = 1.
         # Combining the two we have EEVPD * d / 0.82 = eps^6 / eps_new^4 L^2
-        # adjustment_factor = jnp.power(0.82 / (num_dims * adaptation_state.EEVPD), 0.25) / jnp.sqrt(steps_per_sample)
+        # adjustment_factor = jnp.power(0.82 / (ndims * adaptation_state.EEVPD), 0.25) / jnp.sqrt(steps_per_sample)
         step_size = adaptation_state.step_size
 
         # Initialize the bisection for finding the step size
@@ -207,8 +207,6 @@ def emaus(
     initial_state = umclmc.initialize(
         key_init, logdensity_fn, sample_init, num_chains, mesh
     )
-
-    ndims = 2
 
     # burn-in with the unadjusted method #
     kernel = umclmc.build_kernel(logdensity_fn)

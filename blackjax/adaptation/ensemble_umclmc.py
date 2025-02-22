@@ -123,7 +123,7 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
 
 def update_history(new_vals, history):
     new_vals, _ = jax.flatten_util.ravel_pytree(new_vals)
-    return jnp.concatenate((new_vals[None, :], history[:-1]))
+    return jnp.concatenate((new_vals[None, :], history[:-1, :]))
 
 
 def update_history_scalar(new_val, history):
@@ -194,7 +194,7 @@ def equipartition_fullrank_loss(delta_z):
 class Adaptation:
     def __init__(
         self,
-        num_dims,
+        ndims,
         alpha=1.0,
         C=0.1,
         power=3.0 / 8.0,
@@ -205,7 +205,7 @@ class Adaptation:
         observables_for_bias=lambda x: x,
         contract=lambda x: 0.0,
     ):
-        self.num_dims = num_dims
+        self.ndims = ndims
         self.alpha = alpha
         self.C = C
         self.power = power
@@ -218,15 +218,15 @@ class Adaptation:
         r_save_num = save_num
 
         history = History(
-            observables=jnp.zeros((r_save_num, num_dims)),
+            observables=jnp.zeros((r_save_num, ndims)),
             stopping=jnp.full((save_num,), jnp.nan),
             weights=jnp.zeros(r_save_num),
         )
 
         self.initial_state = AdaptationState(
             L=jnp.inf,  # do not add noise for the first step
-            inverse_mass_matrix=jnp.ones(num_dims),
-            step_size=0.01 * jnp.sqrt(num_dims),
+            inverse_mass_matrix=jnp.ones(ndims),
+            step_size=0.01 * jnp.sqrt(ndims),
             step_count=0,
             EEVPD=1e-3,
             EEVPD_wanted=1e-3,
@@ -277,7 +277,7 @@ class Adaptation:
             jnp.sum(Etheta["xsq"] - jnp.square(Etheta["x"]))
         )  # average over the ensemble, sum over parameters (to get sqrt(d))
         inverse_mass_matrix = Etheta["xsq"] - jnp.square(Etheta["x"])
-        EEVPD = (Etheta["Esq"] - jnp.square(Etheta["E"])) / self.num_dims
+        EEVPD = (Etheta["Esq"] - jnp.square(Etheta["E"])) / self.ndims
         true_bias = self.contract(Etheta["observables_for_bias"])
         nans = Etheta["rejection_rate_nans"] > 0.0  # | (~jnp.isfinite(eps_factor))
 
