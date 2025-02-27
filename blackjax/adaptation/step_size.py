@@ -298,4 +298,4 @@ def bisection_monotonic_fn(acc_prob_wanted, reduce_shift=jnp.log(2.0), tolerance
 
         return (bounds_new, terminated_new), stepsize
 
-    return (jnp.array([-jnp.inf, jnp.inf]), False), update
+    return update
