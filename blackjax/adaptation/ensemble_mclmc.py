@@ -86,7 +86,7 @@ class Adaptation:
 
         # Initialize the bisection for finding the step size
         self.epsadap_update = bisection_monotonic_fn(acc_prob_target)
-        stepsize_adaptation_state = ((jnp.array([-jnp.inf, jnp.inf]), False),)
+        stepsize_adaptation_state = (jnp.array([-jnp.inf, jnp.inf]), False)
 
         self.initial_state = AdaptationState(
             steps_per_sample, step_size, stepsize_adaptation_state, 0
