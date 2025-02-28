@@ -49,6 +49,7 @@ def build_slice_kernel(
     loglikelihood_fn: Callable,
     logL0: Array,
     proposal_distribution: Callable,
+    stepper: Callable,
 ) -> Callable:
     """Instantiate a (constrained) hit and run slice sampling kernel.
 
@@ -62,6 +63,8 @@ def build_slice_kernel(
         Initial log-likelihood values.
     proposal_distribution : Callable
         Function to generate a proposal PyTree for slice stepping.
+    stepper : Callable
+        Function to compute the next step in the slice stepping.
 
     Returns
     -------
@@ -74,16 +77,14 @@ def build_slice_kernel(
     """
 
     def kernel(rng_key: PRNGKey, state: SliceState):
-        def proposal_generator(rng_key: PRNGKey, position: ArrayTree):
-            return proposal_distribution(rng_key, position)
-
         rng_key, vertical_slice_key = jax.random.split(rng_key)
         logpi0, _ = vertical_slice(vertical_slice_key, logprior_fn, state.position)
         rng_key, horizontal_slice_key = jax.random.split(rng_key)
         slice_state, slice_info = horizontal_slice_proposal(
             horizontal_slice_key,
             state.position,
-            proposal_generator,
+            proposal_distribution,
+            stepper,
             loglikelihood_fn,
             logL0,
             logprior_fn,
@@ -101,21 +102,21 @@ def vertical_slice(rng, logdensity, positions):
     return logpi0, logpi
 
 
-def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
+def horizontal_slice_proposal(key, x0, proposal, step, logL, logL0, logpi, logpi0):
     key, proposal_key = jax.random.split(key)
-    n = proposal(proposal_key, x0)
+    n = proposal(proposal_key)
 
     # # Initial bounds
     key, subkey = jax.random.split(key)
     w = jax.random.uniform(subkey)
-    l = jax.tree_map(lambda x, y: x + w * y, x0, n)
-    r = jax.tree_map(lambda x, y: x + (w - 1) * y, x0, n)
+    l = step(x0, n*w)
+    r = step(x0, n*(w-1))
 
     # Expand l
     def expand_l(carry):
         l0, within, counter = carry
         counter += 1
-        l = jax.tree_map(jnp.add, l0, n)
+        l = step(l0, n)
         within = jnp.logical_and(logL(l) > logL0, logpi(l) >= logpi0)
         return l, within, counter
 
@@ -131,7 +132,7 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
     def expand_r(carry):
         r0, within, counter = carry
         counter += 1
-        r = jax.tree_map(lambda x, y: x - y, r0, n)
+        r = step(r0, -n)
         within = jnp.logical_and(logL(r) > logL0, logpi(r) >= logpi0)
         return r, within, counter
 
@@ -151,7 +152,7 @@ def horizontal_slice_proposal(key, x0, proposal, logL, logL0, logpi, logpi0):
         key, subkey = jax.random.split(key)
         u = jax.random.uniform(subkey)
 
-        x1 = jax.tree_util.tree_map(lambda l, r: l + u * (r - l), l, r)
+        x1 = step(l, u*(r-l))
 
         logLx1 = logL(x1)
         within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) >= logpi0)

@@ -143,6 +143,22 @@ def as_top_level_api(
 
     return SamplingAlgorithm(init_fn, step_fn)
 
+def default_stepper(x, n):
+    return jax.tree_map(lambda x, n: x + n, x, n)
+
+def default_predict_fn(key, **kwargs):
+    cov = kwargs["cov"]
+    n = jax.random.multivariate_normal(
+        key, mean=jnp.zeros(cov.shape[0]), cov=cov
+    )
+    invcov = jnp.linalg.inv(cov)
+    norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
+    n = n / norm[..., None]
+    return n
+
+def default_train_fn(particles):
+    cov = particles_covariance_matrix(particles)
+    return {"cov": jnp.atleast_2d(cov)}
 
 def nss(
     logprior_fn: Callable,
@@ -150,6 +166,9 @@ def nss(
     num_mcmc_steps: int,
     n_delete: int = 1,
     ravel_fn: Callable = lambda x: x,
+    stepper: Callable = default_stepper,
+    train_fn: Callable = default_train_fn,
+    predict_fn: Callable = default_predict_fn,
 ) -> SamplingAlgorithm:
     """Implements the a baseline Nested Slice Sampling kernel.
 
@@ -165,6 +184,8 @@ def nss(
         Number of particles to delete in each iteration. Default is 1.
     ravel_fn: Callable, optional
         Optional function to ravel the proposal to the same shape as the state space, if needed
+    stepper: Callable, optional
+        Optional function to add the proposal to the current state, if needed
 
     Returns
     -------
@@ -175,22 +196,12 @@ def nss(
     mcmc_init_fn = slice_init
 
     def parameter_update_fn(state, _):
-        cov = jnp.atleast_2d(particles_covariance_matrix(state.particles))
-        return {"cov": cov}
+        return train_fn(state.particles)
 
-    def step(logprior, loglikelihood, logL0, cov):
-        "We need step to be vmappable over the parameter space, so we wrap it to make all parameter Jax Arrays or JaxTrees"
-        invcov = jnp.linalg.inv(cov)
-
-        def proposal_distribution(key, x0):
-            n = jax.random.multivariate_normal(
-                key, mean=jnp.zeros(cov.shape[0]), cov=cov
-            )
-            norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
-            n = n / norm[..., None]
-            return ravel_fn(n)
-
-        return slice_kernel(logprior, loglikelihood, logL0, proposal_distribution)
+    def step(logprior, loglikelihood, logL0, **kwargs):
+        def proposal_distribution(key):
+            return ravel_fn(predict_fn(key, **kwargs))
+        return slice_kernel(logprior, loglikelihood, logL0, proposal_distribution, stepper)
 
     kernel = build_kernel(
         logprior_fn,
