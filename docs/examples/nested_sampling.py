@@ -1,4 +1,3 @@
-import distrax
 import jax
 import jax.numpy as jnp
 import tqdm
@@ -17,7 +16,7 @@ like_cov = C @ C.T
 like_mean = jax.random.normal(rng_key, (d,))
 prior_mean = jnp.zeros(d)
 prior_cov = jnp.eye(d) * 1
-prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=jnp.diag(prior_cov))
+prior = lambda x: jax.scipy.stats.multivariate_normal.logpdf(x, prior_mean, prior_cov)
 
 
 def loglikelihood(x):
@@ -64,7 +63,7 @@ n_delete = 20
 num_mcmc_steps = d * 5
 
 algo = blackjax.ns.adaptive.nss(
-    logprior_fn=prior.log_prob,
+    logprior_fn=prior,
     loglikelihood_fn=loglikelihood,
     n_delete=n_delete,
     num_mcmc_steps=num_mcmc_steps,
@@ -72,7 +71,7 @@ algo = blackjax.ns.adaptive.nss(
 
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
-initial_particles = prior.sample(seed=init_key, sample_shape=(n_live,))
+initial_particles = jax.random.multivariate_normal(init_key, prior_mean, prior_cov, (n_live,))
 state = algo.init(initial_particles, loglikelihood)
 
 
