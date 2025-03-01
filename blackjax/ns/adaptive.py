@@ -143,8 +143,8 @@ def as_top_level_api(
 
     return SamplingAlgorithm(init_fn, step_fn)
 
-def default_stepper(x, n):
-    return jax.tree_map(lambda x, n: x + n, x, n)
+def default_stepper(x, n, t):
+    return jax.tree_map(lambda x, n: x + t * n, x, n)
 
 def default_predict_fn(key, **kwargs):
     cov = kwargs["cov"]

@@ -109,75 +109,47 @@ def horizontal_slice_proposal(key, x0, proposal, step, logL, logL0, logpi, logpi
     # # Initial bounds
     key, subkey = jax.random.split(key)
     w = jax.random.uniform(subkey)
-    l = step(x0, n*w)
-    r = step(x0, n*(w-1))
 
-    # Expand l
-    def expand_l(carry):
-        l0, within, counter = carry
-        counter += 1
-        l = step(l0, n)
-        within = jnp.logical_and(logL(l) > logL0, logpi(l) >= logpi0)
-        return l, within, counter
-
-    def cond_fun_l(carry):
-        within = carry[1]
-        return within
-
-    within = True
-    carry = (l, within, 0)
-    l, _, l_i = jax.lax.while_loop(cond_fun_l, expand_l, carry)
-
-    # Expand r
-    def expand_r(carry):
-        r0, within, counter = carry
-        counter += 1
-        r = step(r0, -n)
-        within = jnp.logical_and(logL(r) > logL0, logpi(r) >= logpi0)
-        return r, within, counter
-
-    def cond_fun_r(carry):
-        within = carry[1]
-        return within
-
-    within = True
-    carry = (r, within, 0)
-    r, _, r_i = jax.lax.while_loop(cond_fun_r, expand_r, carry)
-
-    # Shrink
-    def shrink_step(carry):
-        l, r, xminus1, _, key, within, counter = carry
-        counter += 1
-
-        key, subkey = jax.random.split(key)
-        u = jax.random.uniform(subkey)
-
-        x1 = step(l, u*(r-l))
-
-        logLx1 = logL(x1)
-        within_new = jnp.logical_and(logLx1 > logL0, logpi(x1) >= logpi0)
-
-        s_vec = jax.tree_util.tree_map(
-            lambda x1, x0, r, l: (x1 - x0) * (r - l),
-            x1,
-            x0,
-            r,
-            l,
-        )
-        s_flat, _ = jax.flatten_util.ravel_pytree(s_vec)
-        s = jnp.sum(s_flat) > 0
-        # this is slow and should be optimized, dont need to check all the elements!
-        l = jax.tree_map(lambda l_i, x1_i: jnp.where(s, l_i, x1_i), l, x1)
-        r = jax.tree_map(lambda r_i, x1_i: jnp.where(s, x1_i, r_i), r, x1)
-        return l, r, x1, logLx1, key, within_new, counter
+    def body_fun(carry):
+        _, s, t, count = carry
+        t += s
+        x = step(x0, n, t)
+        within = jnp.logical_and(logL(x) > logL0, logpi(x) >= logpi0)
+        count += 1
+        return within, s, t, count
 
     def cond_fun(carry):
-        within = carry[-2]
+        within = carry[0]
+        return within
+
+    _, _, l, count_l = jax.lax.while_loop(cond_fun, body_fun, (True, +1, w-1, 0))
+    _, _, r, count_r = jax.lax.while_loop(cond_fun, body_fun, (True, -1, w,   0))
+
+    # Shrink
+    def body_fun(carry):
+        _, l, r, _, _, _, key, count = carry
+        count += 1
+
+        key, subkey = jax.random.split(key)
+        u = jax.random.uniform(subkey, minval=r, maxval=l)
+        x = step(x0, n, u)
+
+        logL_x = logL(x)
+        logpi_x = logpi(x)
+        within = jnp.logical_and(logL_x > logL0, logpi(x) >= logpi0)
+
+        l = jnp.where(u>0, u, l)
+        r = jnp.where(u<0, u, r)
+
+        return within, l, r, x, logL_x, logpi_x, key, count
+
+    def cond_fun(carry):
+        within = carry[0]
         return ~within
 
-    within = False
-    carry = (l, r, x0, 0.0, key, within, 0)
-    l, r, x1, logl, key, within, s_i = jax.lax.while_loop(cond_fun, shrink_step, carry)
-    slice_state = SliceState(x1, logpi(x1), logl)
-    slice_info = SliceInfo(l_i, r_i, s_i, (l_i + r_i + s_i))
+    carry = (False, l, r, x0, -jnp.inf, -jnp.inf, key, 0)
+    carry = jax.lax.while_loop(cond_fun, body_fun, carry)
+    _, l, r, x, logL_x, logpi_x, key, count = carry
+    slice_state = SliceState(x, logpi_x, logL_x)
+    slice_info = SliceInfo(count_l, count_r, count, (count_l + count_r + count))
     return slice_state, slice_info
