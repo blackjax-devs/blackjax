@@ -133,10 +133,11 @@ def horizontal_slice_proposal(key, x0, proposal, step, logL, logL0, logpi, logpi
         key, subkey = jax.random.split(key)
         u = jax.random.uniform(subkey, minval=r, maxval=l)
         x = step(x0, n, u)
+        # check for nan values
 
         logL_x = logL(x)
         logpi_x = logpi(x)
-        within = jnp.logical_and(logL_x > logL0, logpi(x) >= logpi0)
+        within = jnp.logical_and(logL_x > logL0, logpi_x >= logpi0)
 
         l = jnp.where(u>0, u, l)
         r = jnp.where(u<0, u, r)
