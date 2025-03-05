@@ -13,6 +13,12 @@
 # limitations under the License.
 # """Public API for the MCLMC Kernel"""
 
+# import jax
+# import jax.numpy as jnp
+# from blackjax.util import run_eca
+# import blackjax.adaptation.ensemble_umclmc as umclmc
+
+
 from typing import Any, NamedTuple
 
 import jax
@@ -285,6 +291,8 @@ def emaus(
         steps_per_sample,
         _acc_prob,
     )
+
+
 
     final_state, final_adaptation_state, info2 = run_eca(
         key_mclmc,

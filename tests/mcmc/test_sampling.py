@@ -5,6 +5,7 @@ import itertools
 
 import chex
 import jax
+# jax.config.update("jax_traceback_filtering", "off")
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
@@ -299,7 +300,7 @@ class LinearRegressionTest(chex.TestCase):
         key,
         diagonal_preconditioning,
     ):
-        mesh = jax.sharding.Mesh(jax.devices(), "chains")
+        mesh = jax.sharding.Mesh(devices=jax.devices(),axis_names= "chains")
 
         from blackjax.mcmc.integrators import mclachlan_coefficients
 
