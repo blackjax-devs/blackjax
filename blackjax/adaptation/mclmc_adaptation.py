@@ -52,7 +52,6 @@ def mclmc_find_L_and_step_size(
     num_effective_samples=150,
     params=None,
     diagonal_preconditioning=True,
-    params=None,
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
