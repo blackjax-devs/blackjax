@@ -99,15 +99,21 @@ def update_parameter_distribution(
     )
 
 
+def default_measure_factory(state):
+    inverse_mass_matrix = state.parameter_override["inverse_mass_matrix"]
+    if not (len(inverse_mass_matrix.shape) == 3 and inverse_mass_matrix.shape[0] == 1):
+        raise ValueError("ESJD only works if chains share the inverse_mass_matrix.")
+
+    return esjd(inverse_mass_matrix[0])
+
+
 def build_pretune(
     mcmc_init_fn: Callable,
     mcmc_step_fn: Callable,
     alpha: float,
     sigma_parameters: ArrayLikeTree,
     n_particles: int,
-    performance_of_chain_measure_factory: Callable = lambda state: esjd(
-        state.parameter_override["inverse_mass_matrix"]
-    ),
+    performance_of_chain_measure_factory: Callable = default_measure_factory,
     natural_parameters: Optional[List[str]] = None,
     positive_parameters: Optional[List[str]] = None,
 ):

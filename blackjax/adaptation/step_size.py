@@ -270,12 +270,14 @@ def bisection_monotonic_fn(acc_prob_wanted, reduce_shift=jnp.log(2.0), tolerance
         x = jnp.log(exp_x)
 
         def on_true(bounds):
-            bounds0 = jnp.max(jnp.array([bounds[0], x]))
-            return jnp.array([bounds0, bounds[1]]), bounds0 + reduce_shift
+            lower, upper = bounds
+            lower = jnp.max(jnp.array([lower, x]))
+            return jnp.array([lower, upper]), lower + reduce_shift
 
         def on_false(bounds):
-            bounds1 = jnp.min(jnp.array([bounds[1], x]))
-            return jnp.array([bounds[0], bounds1]), bounds1 - reduce_shift
+            lower, upper = bounds
+            upper = jnp.min(jnp.array([upper, x]))
+            return jnp.array([lower, upper]), upper - reduce_shift
 
         bounds_new, x_new = jax.lax.cond(acc_high, on_true, on_false, bounds)
 
@@ -298,4 +300,4 @@ def bisection_monotonic_fn(acc_prob_wanted, reduce_shift=jnp.log(2.0), tolerance
 
         return (bounds_new, terminated_new), stepsize
 
-    return (jnp.array([-jnp.inf, jnp.inf]), False), update
+    return update

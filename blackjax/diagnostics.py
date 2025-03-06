@@ -115,6 +115,9 @@ def effective_sample_size(
     sample_axis = sample_axis if sample_axis >= 0 else len(input_shape) + sample_axis
     num_chains = input_shape[chain_axis]
     num_samples = input_shape[sample_axis]
+    assert (
+        num_samples > 1
+    ), f"The input array must have at least 2 samples, got only {num_samples}."
 
     mean_across_chain = input_array.mean(axis=sample_axis, keepdims=True)
     # Compute autocovariance estimates for every lag for the input array using FFT.

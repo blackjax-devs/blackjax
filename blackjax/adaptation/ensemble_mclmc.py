@@ -61,7 +61,7 @@ class Adaptation:
         self,
         adaptation_state,
         num_adaptation_samples,  # amount of tuning in the adjusted phase before fixing params
-        steps_per_sample,  # L/eps (same for each chain: currently fixed to 15)
+        steps_per_sample=15,  # L/eps
         acc_prob_target=0.8,
         observables=lambda x: 0.0,  # just for diagnostics: some function of a given chain at given timestep
         observables_for_bias=lambda x: 0.0,  # just for diagnostics: the above, but averaged over all chains
@@ -85,9 +85,8 @@ class Adaptation:
         step_size = adaptation_state.step_size
 
         # Initialize the bisection for finding the step size
-        stepsize_adaptation_state, self.epsadap_update = bisection_monotonic_fn(
-            acc_prob_target
-        )
+        self.epsadap_update = bisection_monotonic_fn(acc_prob_target)
+        stepsize_adaptation_state = (jnp.array([-jnp.inf, jnp.inf]), False)
 
         self.initial_state = AdaptationState(
             steps_per_sample, step_size, stepsize_adaptation_state, 0
@@ -172,7 +171,7 @@ def emaus(
     r_end=5e-3,
     diagonal_preconditioning=True,
     integrator_coefficients=None,
-    steps_per_sample=10,
+    steps_per_sample=15,
     acc_prob=None,
     observables_for_bias=lambda x: 0.0,
     ensemble_observables=None,
