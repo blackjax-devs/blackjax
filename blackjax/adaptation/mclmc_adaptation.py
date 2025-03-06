@@ -50,6 +50,7 @@ def mclmc_find_L_and_step_size(
     desired_energy_var=5e-4,
     trust_in_estimate=1.5,
     num_effective_samples=150,
+    params=None,
     diagonal_preconditioning=True,
 ):
     """
@@ -105,7 +106,8 @@ def mclmc_find_L_and_step_size(
         )
     """
     dim = pytree_size(state.position)
-    params = MCLMCAdaptationState(
+    if params is None:
+        params = MCLMCAdaptationState(
         jnp.sqrt(dim), jnp.sqrt(dim) * 0.25, inverse_mass_matrix=jnp.ones((dim,))
     )
     part1_key, part2_key = jax.random.split(rng_key, 2)
