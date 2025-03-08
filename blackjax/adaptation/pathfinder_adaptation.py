@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Pathinder warmup for the HMC family of sampling algorithms."""
+
 from typing import Callable, NamedTuple
 
 import jax
@@ -197,7 +198,12 @@ def pathfinder_adaptation(
             adaptation_info_fn(new_state, info, new_adaptation_state),
         )
 
-    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 400):
+    def run(
+        rng_key: PRNGKey,
+        position: ArrayLikeTree,
+        num_steps: int = 400,
+        num_samples_per_path: int = 1000,
+    ):
         init_key, sample_key, rng_key = jax.random.split(rng_key, 3)
 
         pathfinder_state, _ = vi.pathfinder.approximate(
@@ -210,7 +216,9 @@ def pathfinder_adaptation(
             initial_step_size,
         )
 
-        init_position, _ = vi.pathfinder.sample(sample_key, pathfinder_state)
+        init_position, _ = vi.pathfinder.sample(
+            sample_key, pathfinder_state, num_samples_per_path
+        )
         init_state = algorithm.init(init_position, logdensity_fn)
 
         keys = jax.random.split(rng_key, num_steps)

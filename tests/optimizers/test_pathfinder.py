@@ -5,11 +5,10 @@ import functools
 import chex
 import jax
 import jax.numpy as jnp
-import jax.scipy.stats as stats
+import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax
-from blackjax.optimizers.lbfgs import bfgs_sample
 
 
 class PathfinderTest(chex.TestCase):
@@ -17,7 +16,7 @@ class PathfinderTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.key(1)
 
-    @chex.all_variants(without_device=False, with_pmap=False)
+    @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
         [(1,), (2,)],
     )
@@ -37,16 +36,20 @@ class PathfinderTest(chex.TestCase):
                     + n * true_prec @ observed.mean(0)[:, None]
                 )
             )[:, 0]
-            return stats.multivariate_normal.logpdf(x, posterior_mu, posterior_cov)
+            return jax.scipy.stats.multivariate_normal.logpdf(
+                x, posterior_mu, posterior_cov
+            )
 
         def logp_unnormalized_posterior(x, observed, prior_mu, prior_prec, true_cov):
             logp = 0.0
-            logp += stats.multivariate_normal.logpdf(x, prior_mu, prior_prec)
-            logp += stats.multivariate_normal.logpdf(observed, x, true_cov).sum()
+            logp += jax.scipy.stats.multivariate_normal.logpdf(x, prior_mu, prior_prec)
+            logp += jax.scipy.stats.multivariate_normal.logpdf(
+                observed, x, true_cov
+            ).sum()
             return logp
 
-        rng_key_chol, rng_key_observed, rng_key_pathfinder = jax.random.split(
-            self.key, 3
+        rng_key_chol, rng_key_observed, rng_key_path, rng_key_choice = jax.random.split(
+            self.key, 4
         )
 
         L = jnp.tril(jax.random.normal(rng_key_chol, (ndim, ndim)))
@@ -70,26 +73,93 @@ class PathfinderTest(chex.TestCase):
         )
 
         x0 = jnp.ones(ndim)
-        pathfinder = blackjax.pathfinder(logp_model)
-        out, _ = self.variant(pathfinder.approximate)(rng_key_pathfinder, x0)
+        num_paths = 4
 
-        sim_p, log_p = bfgs_sample(
-            rng_key_pathfinder,
-            10_000,
-            out.position,
-            out.grad_position,
-            out.alpha,
-            out.beta,
-            out.gamma,
+        pathfinder = blackjax.pathfinder(logp_model, num_paths=num_paths)
+        initial_positions = self.variant(pathfinder.init)(initial_position=x0)
+
+        path_keys = jax.random.split(rng_key_path, num_paths)
+
+        samples, logq = self.variant(jax.vmap(pathfinder.pathfinder))(
+            path_keys, initial_positions
         )
 
-        log_q = logp_posterior_conjugate_normal_model(
-            sim_p, observed, prior_mu, prior_prec, true_prec
+        samples = samples.reshape((-1, ndim))
+        logq = logq.ravel()
+
+        logp = logp_posterior_conjugate_normal_model(
+            samples, observed, prior_mu, prior_prec, true_prec
         )
 
-        kl = (log_p - log_q).mean()
+        kl = (logp - logq).mean()
         # TODO(junpenglao): Make this test more robust.
         self.assertAlmostEqual(kl, 0.0, delta=2.5)
+
+        result = blackjax.multi_pathfinder(
+            rng_key=self.key,
+            logdensity_fn=logp_model,
+            initial_position=x0,
+            # jitter_amount=12.0,
+            num_paths=num_paths,
+            parallel_method="vectorize",
+        )
+
+        self.assertAlmostEqual(result.samples.mean(), 0.0, delta=2.5)
+
+    @chex.all_variants(with_pmap=False)
+    @parameterized.parameters(
+        [(2,), (6,)],
+    )
+    def test_recover_posterior_eight_schools(self, maxcor):
+        J = 8
+        y = jnp.array([28.0, 8.0, -3.0, 7.0, -1.0, 1.0, 18.0, 12.0])
+        sigma = jnp.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])
+
+        def eight_schools_log_density(y, sigma, mu, tau, theta):
+            logp = 0.0
+            # Prior for mu
+            logp += jax.scipy.stats.norm.logpdf(mu, loc=0.0, scale=10.0)
+            # Prior for tau
+            logp += jax.scipy.stats.gamma.logpdf(tau, 5, 1)
+            # Prior for theta
+            logp += jax.scipy.stats.norm.logpdf(theta, loc=0.0, scale=1.0).sum()
+            # Likelihood
+            logp += jax.scipy.stats.norm.logpdf(
+                y, loc=mu + tau * theta, scale=sigma
+            ).sum()
+            return logp
+
+        def logdensity_fn(param):
+            def inner(param):
+                mu, tau, *theta = param
+                mu = jnp.atleast_1d(mu)
+                tau = jnp.atleast_1d(tau)
+                theta = jnp.array(theta)
+                return eight_schools_log_density(y, sigma, mu, tau, theta)
+
+            return inner(param).squeeze()
+
+        mu_prior = jnp.array([0.0])
+        tau_prior = jnp.array([5.0])
+        theta_prior = jnp.array([0.0] * J)
+        base_position = jnp.concatenate([mu_prior, tau_prior, theta_prior])
+
+        mp = functools.partial(
+            blackjax.multi_pathfinder,
+            logdensity_fn=logdensity_fn,
+            num_paths=20,
+            maxcor=maxcor,
+            parallel_method="vectorize",
+        )
+
+        result = self.variant(mp)(
+            rng_key=self.key,
+            base_position=base_position,
+            jitter_amount=12.0,
+        )
+
+        np.testing.assert_allclose(result.samples[:, 0].mean(), 5.0, atol=1.6)
+        np.testing.assert_allclose(result.samples[:, 1].mean(), 4.15, atol=1.5)
 
 
 if __name__ == "__main__":
