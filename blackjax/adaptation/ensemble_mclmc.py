@@ -294,8 +294,7 @@ def emaus(
         observables_for_bias=observables_for_bias,
     )
 
-
-    final_state, final_adaptation_state, info2, steps_done_phase_2 = run_eca(
+    final_state, final_adaptation_state, info2, _ = run_eca(
         key_mclmc,
         initial_state,
         kernel,
@@ -307,7 +306,7 @@ def emaus(
     )
 
     if diagnostics:
-        info = {"phase_1": {'steps_done' : steps_done_phase_1}, "phase_2": info2}
+        info = {"phase_1": {"steps_done": steps_done_phase_1}, "phase_2": info2}
     else:
         info = None
 
