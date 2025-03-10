@@ -441,11 +441,12 @@ def run_eca(
                 step_while,
                 (initial_state_all, 0, True),
             )
+            steps_done = i
             info_history = None
 
         else:
             final_state_all, info_history = lax.scan(step, initial_state_all, xs)
-
+            steps_done = num_steps
         
 
         final_state, final_adaptation_state = final_state_all
@@ -453,6 +454,7 @@ def run_eca(
             final_state,
             final_adaptation_state,
             info_history,
+            steps_done
         )  # info history is composed of averages over all chains, so it is a couple of scalars
 
 
@@ -461,7 +463,7 @@ def run_eca(
         all_steps,
         mesh=mesh,
         in_specs=(p, p, pscalar),
-        out_specs=(p, pscalar, pscalar),
+        out_specs=(p, pscalar, pscalar, pscalar),
         check_rep=False,
     )
 
@@ -476,11 +478,13 @@ def run_eca(
     keys_sampling = distribute_keys(key_sampling, (num_chains, num_steps))
 
     # run sampling in parallel
-    final_state, final_adaptation_state, info_history = parallel_execute(
+    final_state, final_adaptation_state, info_history, steps_done = parallel_execute(
         initial_state, keys_sampling, keys_adaptation
     )
 
-    return final_state, final_adaptation_state, info_history
+    
+
+    return final_state, final_adaptation_state, info_history, steps_done
 
 
 def ensemble_execute_fn(

@@ -222,7 +222,7 @@ def emaus(
         contract=contract,
     )
 
-    final_state, final_adaptation_state, info1 = run_eca(
+    final_state, final_adaptation_state, info1, steps_done_phase_1 = run_eca(
         key_umclmc,
         initial_state,
         kernel,
@@ -288,7 +288,7 @@ def emaus(
     )
 
 
-    final_state, final_adaptation_state, info2 = run_eca(
+    final_state, final_adaptation_state, info2, steps_done_phase_2 = run_eca(
         key_mclmc,
         initial_state,
         kernel,
@@ -300,7 +300,7 @@ def emaus(
     )
 
     if diagnostics:
-        info = {"phase_1": info1, "phase_2": info2}
+        info = {"phase_1": {'steps_done' : steps_done_phase_1}, "phase_2": info2}
     else:
         info = None
 
