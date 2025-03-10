@@ -5,6 +5,7 @@ import itertools
 
 import chex
 import jax
+
 # jax.config.update("jax_traceback_filtering", "off")
 import jax.numpy as jnp
 import jax.scipy.stats as stats
@@ -296,11 +297,10 @@ class LinearRegressionTest(chex.TestCase):
         sample_init,
         logdensity_fn,
         ndims,
-        transform,
         key,
         diagonal_preconditioning,
     ):
-        mesh = jax.sharding.Mesh(devices=jax.devices(),axis_names= "chains")
+        mesh = jax.sharding.Mesh(devices=jax.devices(), axis_names="chains")
 
         from blackjax.mcmc.integrators import mclachlan_coefficients
 
@@ -309,7 +309,6 @@ class LinearRegressionTest(chex.TestCase):
         info, grads_per_step, _acc_prob, final_state = emaus(
             logdensity_fn=logdensity_fn,
             sample_init=sample_init,
-            transform=transform,
             ndims=ndims,
             num_steps1=100,
             num_steps2=300,
@@ -602,7 +601,6 @@ class LinearRegressionTest(chex.TestCase):
         samples = self.run_emaus(
             sample_init=sample_init,
             logdensity_fn=logdensity_fn,
-            transform=lambda x: x,
             ndims=2,
             key=inference_key,
             diagonal_preconditioning=True,
