@@ -442,14 +442,13 @@ def run_eca(
         else:
             final_state_all, info_history = lax.scan(step, initial_state_all, xs)
             steps_done = num_steps
-        
 
         final_state, final_adaptation_state = final_state_all
         return (
             final_state,
             final_adaptation_state,
             info_history,
-            steps_done
+            steps_done,
         )  # info history is composed of averages over all chains, so it is a couple of scalars
 
     p, pscalar = PartitionSpec("chains"), PartitionSpec()
@@ -475,8 +474,6 @@ def run_eca(
     final_state, final_adaptation_state, info_history, steps_done = parallel_execute(
         initial_state, keys_sampling, keys_adaptation
     )
-
-    
 
     return final_state, final_adaptation_state, info_history, steps_done
 
