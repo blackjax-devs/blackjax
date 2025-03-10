@@ -128,6 +128,7 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
 
 
 def update_history(new_vals, history):
+    new_vals, _ = jax.flatten_util.ravel_pytree(new_vals)
     return jnp.concatenate((new_vals[None, :], history[:-1, :]))
 
 
