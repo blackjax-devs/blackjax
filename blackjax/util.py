@@ -10,7 +10,7 @@ from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
 from jax.sharding import NamedSharding, PartitionSpec
 from jax.tree_util import tree_leaves, tree_map
-
+import jax
 from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
@@ -352,10 +352,13 @@ def eca_step(
         adaptation_state, info_to_be_stored = adaptation_update(
             adaptation_state, Etheta
         )
+        
 
         return (state, adaptation_state), info_to_be_stored
+    
 
     if ensemble_info is not None:
+
 
         def step(state_all, xs):
             (state, adaptation_state), info_to_be_stored = _step(state_all, xs)
@@ -381,6 +384,7 @@ def run_eca(
     ensemble_info=None,
     early_stop=False,
 ):
+    
     """
     Run ensemble chain adaptation (eca) in parallel on multiple devices.
     -----------------------------------------------------
@@ -413,6 +417,7 @@ def run_eca(
 
         initial_state_all = (initial_state, adaptation.initial_state)
 
+
         # run sampling
         xs = (
             jnp.arange(num_steps),
@@ -441,12 +446,15 @@ def run_eca(
         else:
             final_state_all, info_history = lax.scan(step, initial_state_all, xs)
 
+        
+
         final_state, final_adaptation_state = final_state_all
         return (
             final_state,
             final_adaptation_state,
             info_history,
         )  # info history is composed of averages over all chains, so it is a couple of scalars
+
 
     p, pscalar = PartitionSpec("chains"), PartitionSpec()
     parallel_execute = shard_map(

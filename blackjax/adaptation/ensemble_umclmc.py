@@ -72,6 +72,7 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
     def sequential_init(key, x, args):
         """initialize the position using sample_init and the velocity along the gradient"""
         position = sample_init(key)
+        
         logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
         flat_g, unravel_fn = ravel_pytree(logdensity_grad)
         velocity = unravel_fn(
@@ -82,9 +83,8 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
 
     def summary_statistics_fn(state):
         """compute the diagonal elements of the equipartition matrix"""
-        return 0  # -state.position * state.logdensity_grad
+        return -state.position * state.logdensity_grad
 
-    # TODO: restore!
 
     def ensemble_init(key, state, signs):
         """flip the velocity, depending on the equipartition condition"""

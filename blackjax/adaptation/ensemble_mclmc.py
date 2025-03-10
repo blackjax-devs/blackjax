@@ -71,7 +71,7 @@ class Adaptation:
         acc_prob_target=0.8,
         observables=lambda x: 0.0,  # just for diagnostics: some function of a given chain at given timestep
         observables_for_bias=lambda x: 0.0,  # just for diagnostics: the above, but averaged over all chains
-        contract=lambda x: 0.0,  # just for diagnostics: observabiels for bias, contracted over dimensions
+        contract=lambda x: 0.0,  # just for diagnostics: observables for bias, contracted over dimensions
     ):
         self.num_adaptation_samples = num_adaptation_samples
         self.observables = observables
@@ -111,7 +111,7 @@ class Adaptation:
     def update(self, adaptation_state, Etheta):
         acc_prob = Etheta["acceptance_probability"]
         equi_diag = equipartition_diagonal_loss(Etheta["equipartition_diagonal"])
-        true_bias = self.contract(Etheta["observables_for_bias"])  # remove
+        true_bias = self.contract(Etheta["observables_for_bias"]) 
 
         info_to_be_stored = {
             "L": adaptation_state.step_size * adaptation_state.steps_per_sample,
@@ -164,7 +164,6 @@ def while_steps_num(cond):
 def emaus(
     logdensity_fn,
     sample_init,
-    transform,
     ndims,
     num_steps1,
     num_steps2,
@@ -180,9 +179,10 @@ def emaus(
     integrator_coefficients=None,
     steps_per_sample=15,
     acc_prob=None,
-    observables=lambda x: None,
+    observables_for_bias=lambda x: 0.0,
     ensemble_observables=None,
     diagnostics=True,
+    contract=lambda x: 0.0,
 ):
     """
     model: the target density object
@@ -215,7 +215,7 @@ def emaus(
 
     # burn-in with the unadjusted method #
     kernel = umclmc.build_kernel(logdensity_fn)
-    save_num = (int)(jnp.rint(save_frac * num_steps1))
+    save_num = (jnp.rint(save_frac * num_steps1)).astype(int)
     adap = umclmc.Adaptation(
         ndims,
         alpha=alpha,
@@ -224,9 +224,8 @@ def emaus(
         C=C,
         power=3.0 / 8.0,
         r_end=r_end,
-        observables_for_bias=lambda position: jnp.square(
-            transform(jax.flatten_util.ravel_pytree(position)[0])
-        ),
+        observables_for_bias=observables_for_bias,
+        contract=contract,
     )
 
     final_state, final_adaptation_state, info1 = run_eca(
@@ -294,7 +293,10 @@ def emaus(
         num_adaptation_samples,
         steps_per_sample,
         _acc_prob,
+        contract=contract,
+        observables_for_bias=observables_for_bias,
     )
+
 
     final_state, final_adaptation_state, info2 = run_eca(
         key_mclmc,

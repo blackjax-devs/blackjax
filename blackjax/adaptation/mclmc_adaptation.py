@@ -50,8 +50,8 @@ def mclmc_find_L_and_step_size(
     desired_energy_var=5e-4,
     trust_in_estimate=1.5,
     num_effective_samples=150,
-    diagonal_preconditioning=True,
     params=None,
+    diagonal_preconditioning=True,
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
