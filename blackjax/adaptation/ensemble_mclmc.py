@@ -13,6 +13,12 @@
 # limitations under the License.
 # """Public API for the MCLMC Kernel"""
 
+# import jax
+# import jax.numpy as jnp
+# from blackjax.util import run_eca
+# import blackjax.adaptation.ensemble_umclmc as umclmc
+
+
 from typing import Any, NamedTuple
 
 import jax
@@ -95,9 +101,7 @@ class Adaptation:
     def summary_statistics_fn(self, state, info, rng_key):
         return {
             "acceptance_probability": info.acceptance_rate,
-            "equipartition_diagonal": equipartition_diagonal(
-                state
-            ),  # metric for bias: equipartition theorem gives todo...
+            "equipartition_diagonal": equipartition_diagonal(state),
             "observables": self.observables(state.position),
             "observables_for_bias": self.observables_for_bias(state.position),
         }
@@ -105,7 +109,7 @@ class Adaptation:
     def update(self, adaptation_state, Etheta):
         acc_prob = Etheta["acceptance_probability"]
         equi_diag = equipartition_diagonal_loss(Etheta["equipartition_diagonal"])
-        true_bias = self.contract(Etheta["observables_for_bias"]) 
+        true_bias = self.contract(Etheta["observables_for_bias"])
 
         info_to_be_stored = {
             "L": adaptation_state.step_size * adaptation_state.steps_per_sample,
@@ -173,7 +177,7 @@ def emaus(
     integrator_coefficients=None,
     steps_per_sample=15,
     acc_prob=None,
-    observables_for_bias=lambda x: 0.0,
+    observables_for_bias=lambda x: x,
     ensemble_observables=None,
     diagnostics=True,
     contract=lambda x: 0.0,
@@ -199,7 +203,6 @@ def emaus(
     diagnostics: whether to return diagnostics
     """
 
-    # observables_for_bias, contract = bias(model)
     key_init, key_umclmc, key_mclmc = jax.random.split(rng_key, 3)
 
     # initialize the chains
@@ -277,6 +280,10 @@ def emaus(
     num_adaptation_samples = (
         num_samples // 2
     )  # number of samples after which the stepsize is fixed.
+
+    final_adaptation_state = final_adaptation_state._replace(
+        step_size=final_adaptation_state.step_size.item()
+    )
 
     adap = Adaptation(
         final_adaptation_state,

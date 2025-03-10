@@ -72,7 +72,7 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
     def sequential_init(key, x, args):
         """initialize the position using sample_init and the velocity along the gradient"""
         position = sample_init(key)
-        
+
         logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
         flat_g, unravel_fn = ravel_pytree(logdensity_grad)
         velocity = unravel_fn(
@@ -83,8 +83,12 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
 
     def summary_statistics_fn(state):
         """compute the diagonal elements of the equipartition matrix"""
-        return -state.position * state.logdensity_grad
+        flat_pos, unflatten = jax.flatten_util.ravel_pytree(state.position)
+        flat_g, unravel_fn = ravel_pytree(state.logdensity_grad)
+        return unravel_fn(-flat_pos * flat_g)
+        # return 0
 
+    # -state.position # * state.logdensity_grad
 
     def ensemble_init(key, state, signs):
         """flip the velocity, depending on the equipartition condition"""
@@ -113,7 +117,9 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
         summary_statistics_fn=summary_statistics_fn,
     )
 
-    signs = -2.0 * (equipartition < 1.0) + 1.0
+    flat_equi, _ = ravel_pytree(equipartition)
+
+    signs = -2.0 * (flat_equi < 1.0) + 1.0
     initial_state, _ = ensemble_execute_fn(
         ensemble_init, key2, num_chains, mesh, x=initial_state, args=signs
     )
@@ -258,7 +264,6 @@ class Adaptation:
         history_observables = update_history(
             Etheta["observables_for_bias"], adaptation_state.history.observables
         )
-        # history_observables = adaptation_state.history.observables
 
         history_weights = update_history_scalar(1.0, adaptation_state.history.weights)
         fluctuations = contract_history(history_observables, history_weights)
