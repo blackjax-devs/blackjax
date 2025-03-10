@@ -285,14 +285,16 @@ def emaus(
         num_samples // 2
     )  # number of samples after which the stepsize is fixed.
 
+    final_adaptation_state = final_adaptation_state._replace(
+        step_size=final_adaptation_state.step_size.item()
+    )
+
     adap = Adaptation(
         final_adaptation_state,
         num_adaptation_samples,
         steps_per_sample,
         _acc_prob,
     )
-
-
 
     final_state, final_adaptation_state, info2 = run_eca(
         key_mclmc,
