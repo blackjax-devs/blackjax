@@ -3,6 +3,7 @@ from typing import Callable
 
 from blackjax._version import __version__
 
+from .adaptation.adjusted_mclmc_adaptation import adjusted_mclmc_find_L_and_step_size
 from .adaptation.chees_adaptation import chees_adaptation
 from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.meads_adaptation import meads_adaptation
@@ -11,6 +12,8 @@ from .adaptation.window_adaptation import window_adaptation
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
+from .mcmc import adjusted_mclmc as _adjusted_mclmc
+from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
 from .mcmc import barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
@@ -36,6 +39,8 @@ from .sgmcmc import sgld as _sgld
 from .sgmcmc import sgnht as _sgnht
 from .smc import adaptive_tempered
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
+from .smc import partial_posteriors_path as _partial_posteriors_smc
+from .smc import pretuning as _pretuning
 from .smc import tempered
 from .vi import meanfield_vi as _meanfield_vi
 from .vi import pathfinder as _pathfinder
@@ -111,6 +116,8 @@ additive_step_random_walk.register_factory("normal_random_walk", normal_random_w
 
 mclmc = generate_top_level_api_from(_mclmc)
 langevin = generate_top_level_api_from(_langevin)
+adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
+adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
 ghmc = generate_top_level_api_from(_ghmc)
 barker_proposal = generate_top_level_api_from(barker)
@@ -121,8 +128,9 @@ hmc_family = [hmc, nuts]
 adaptive_tempered_smc = generate_top_level_api_from(adaptive_tempered)
 tempered_smc = generate_top_level_api_from(tempered)
 inner_kernel_tuning = generate_top_level_api_from(_inner_kernel_tuning)
-
-smc_family = [tempered_smc, adaptive_tempered_smc]
+partial_posteriors_smc = generate_top_level_api_from(_partial_posteriors_smc)
+pretuning = generate_top_level_api_from(_pretuning)
+smc_family = [tempered_smc, adaptive_tempered_smc, partial_posteriors_smc]
 "Step_fn returning state has a .particles attribute"
 
 # stochastic gradient mcmc
@@ -160,6 +168,7 @@ __all__ = [
     "chees_adaptation",
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation
+    "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
     "ess",  # diagnostics
     "rhat",
 ]

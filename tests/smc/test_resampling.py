@@ -1,4 +1,5 @@
 """Test the resampling functions for SMC."""
+
 import itertools
 
 import chex

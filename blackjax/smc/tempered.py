@@ -11,15 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from functools import partial
 from typing import Callable, NamedTuple, Optional
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.smc as smc
+import blackjax.smc.from_mcmc as smc_from_mcmc
 from blackjax.base import SamplingAlgorithm
-from blackjax.smc.base import SMCState
+from blackjax.smc.base import update_and_take_last
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["TemperedSMCState", "init", "build_kernel", "as_top_level_api"]
@@ -48,35 +48,6 @@ def init(particles: ArrayLikeTree):
     return TemperedSMCState(particles, weights, 0.0)
 
 
-def update_and_take_last(
-    mcmc_init_fn,
-    tempered_logposterior_fn,
-    shared_mcmc_step_fn,
-    num_mcmc_steps,
-    n_particles,
-):
-    """
-    Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and
-    returns the last values, waisting the previous num_mcmc_steps-1
-    samples per chain.
-    """
-
-    def mcmc_kernel(rng_key, position, step_parameters):
-        state = mcmc_init_fn(position, tempered_logposterior_fn)
-
-        def body_fn(state, rng_key):
-            new_state, info = shared_mcmc_step_fn(
-                rng_key, state, tempered_logposterior_fn, **step_parameters
-            )
-            return new_state, info
-
-        keys = jax.random.split(rng_key, num_mcmc_steps)
-        last_state, info = jax.lax.scan(body_fn, state, keys)
-        return last_state.position, info
-
-    return jax.vmap(mcmc_kernel), n_particles
-
-
 def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
@@ -84,6 +55,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
+    update_particles_fn: Optional[Callable] = None,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -121,6 +93,13 @@ def build_kernel(
     information about the transition.
 
     """
+    update_particles = (
+        smc_from_mcmc.build_kernel(
+            mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy
+        )
+        if update_particles_fn is None
+        else update_particles_fn
+    )
 
     def kernel(
         rng_key: PRNGKey,
@@ -153,14 +132,6 @@ def build_kernel(
         """
         delta = lmbda - state.lmbda
 
-        shared_mcmc_parameters = {}
-        unshared_mcmc_parameters = {}
-        for k, v in mcmc_parameters.items():
-            if v.shape[0] == 1:
-                shared_mcmc_parameters[k] = v[0, ...]
-            else:
-                unshared_mcmc_parameters[k] = v
-
         def log_weights_fn(position: ArrayLikeTree) -> float:
             return delta * loglikelihood_fn(position)
 
@@ -169,23 +140,13 @@ def build_kernel(
             tempered_loglikelihood = state.lmbda * loglikelihood_fn(position)
             return logprior + tempered_loglikelihood
 
-        shared_mcmc_step_fn = partial(mcmc_step_fn, **shared_mcmc_parameters)
-
-        update_fn, num_resampled = update_strategy(
-            mcmc_init_fn,
-            tempered_logposterior_fn,
-            shared_mcmc_step_fn,
-            n_particles=state.weights.shape[0],
-            num_mcmc_steps=num_mcmc_steps,
-        )
-
-        smc_state, info = smc.base.step(
+        smc_state, info = update_particles(
             rng_key,
-            SMCState(state.particles, state.weights, unshared_mcmc_parameters),
-            update_fn,
-            jax.vmap(log_weights_fn),
-            resampling_fn,
-            num_resampled,
+            state,
+            num_mcmc_steps,
+            mcmc_parameters,
+            tempered_logposterior_fn,
+            log_weights_fn,
         )
 
         tempered_state = TemperedSMCState(
@@ -206,6 +167,7 @@ def as_top_level_api(
     resampling_fn: Callable,
     num_mcmc_steps: Optional[int] = 10,
     update_strategy=update_and_take_last,
+    update_particles_fn=None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
 
@@ -240,6 +202,7 @@ def as_top_level_api(
         mcmc_init_fn,
         resampling_fn,
         update_strategy,
+        update_particles_fn,
     )
 
     def init_fn(position: ArrayLikeTree, rng_key=None):

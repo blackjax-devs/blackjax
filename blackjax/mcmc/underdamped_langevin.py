@@ -19,11 +19,11 @@ import jax
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import (
     IntegratorState,
-    isokinetic_mclachlan,
-    with_isokinetic_maruyama,
+    with_maruyama,
+    velocity_verlet,
 )
 from blackjax.types import ArrayLike, PRNGKey
-from blackjax.util import generate_unit_vector, pytree_size
+import blackjax.mcmc.metrics as metrics
 
 __all__ = ["LangevinInfo", "init", "build_kernel", "as_top_level_api"]
 
@@ -45,19 +45,19 @@ class LangevinInfo(NamedTuple):
     energy_change: float
 
 
-def init(position: ArrayLike, logdensity_fn, rng_key):
+def init(position: ArrayLike, logdensity_fn, metric, rng_key):
     
     l, g = jax.value_and_grad(logdensity_fn)(position)
 
     return IntegratorState(
         position=position,
-        momentum=generate_unit_vector(rng_key, position),
+        momentum = metric.sample_momentum(rng_key, position),
         logdensity=l,
         logdensity_grad=g,
     )
 
 
-def build_kernel(logdensity_fn, sqrt_diag_cov, integrator):
+def build_kernel(logdensity_fn, inverse_mass_matrix, integrator):
     """Build a HMC kernel.
 
     Parameters
@@ -77,23 +77,32 @@ def build_kernel(logdensity_fn, sqrt_diag_cov, integrator):
 
     """
 
-    step = with_isokinetic_maruyama(
-        integrator(logdensity_fn=logdensity_fn, sqrt_diag_cov=sqrt_diag_cov)
-    )
+    # step = with_isokinetic_maruyama(
+    #     integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
+    # )
+
+    metric = metrics.default_metric(inverse_mass_matrix)
+    step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy))
 
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, LangevinInfo]:
-        (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
+        (position, momentum, logdensity, logdensitygrad) = step(
             state, step_size, L, rng_key
         )
+
+        kinetic_change = - metric.kinetic_energy(momentum) + metric.kinetic_energy(
+            state.momentum
+        )
+        # kinetic_change = - momentum@momentum/2 + state.momentum@state.momentum/2
+        
 
         return IntegratorState(
             position, momentum, logdensity, logdensitygrad
         ), LangevinInfo(
             logdensity=logdensity,
-            energy_change=kinetic_change - logdensity + state.logdensity,
-            kinetic_change=kinetic_change,
+            energy_change= kinetic_change - logdensity + state.logdensity,
+            kinetic_change=kinetic_change
         )
 
     return kernel
@@ -103,8 +112,8 @@ def as_top_level_api(
     logdensity_fn: Callable,
     L,
     step_size,
-    integrator=isokinetic_mclachlan,
-    sqrt_diag_cov=1.0,
+    integrator=velocity_verlet,
+    inverse_mass_matrix=1.0,
 ) -> SamplingAlgorithm:
     """The general Langevin kernel builder (:meth:`blackjax.mcmc.langevin.build_kernel`, alias `blackjax.langevin.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
@@ -152,10 +161,11 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
 
-    kernel = build_kernel(logdensity_fn, sqrt_diag_cov, integrator)
+    kernel = build_kernel(logdensity_fn, inverse_mass_matrix, integrator)
+    metric = metrics.default_metric(inverse_mass_matrix)
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
-        return init(position, logdensity_fn, rng_key)
+        return init(position, logdensity_fn, metric, rng_key)
 
     def update_fn(rng_key, state):
         return kernel(rng_key, state, L, step_size)

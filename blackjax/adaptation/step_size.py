@@ -257,3 +257,47 @@ def find_reasonable_step_size(
     rss_state = jax.lax.while_loop(do_continue, update, rss_state)
 
     return rss_state.step_size
+
+
+def bisection_monotonic_fn(acc_prob_wanted, reduce_shift=jnp.log(2.0), tolerance=0.03):
+    """Bisection of a monotonically decreassing function, that doesn't require an initially bracketing interval."""
+
+    def update(state, exp_x, acc_rate_new):
+        bounds, terminated = state
+
+        # update the bounds
+        acc_high = acc_rate_new > acc_prob_wanted
+        x = jnp.log(exp_x)
+
+        def on_true(bounds):
+            lower, upper = bounds
+            lower = jnp.max(jnp.array([lower, x]))
+            return jnp.array([lower, upper]), lower + reduce_shift
+
+        def on_false(bounds):
+            lower, upper = bounds
+            upper = jnp.min(jnp.array([upper, x]))
+            return jnp.array([lower, upper]), upper - reduce_shift
+
+        bounds_new, x_new = jax.lax.cond(acc_high, on_true, on_false, bounds)
+
+        # if we have already found a bracketing interval, do bisection, otherwise further reduce or increase the bounds
+        bracketing = jnp.all(jnp.isfinite(bounds_new))
+
+        def reduce(bounds):
+            return x_new
+
+        def bisect(bounds):
+            return jnp.average(bounds)
+
+        x_new = jax.lax.cond(bracketing, bisect, reduce, bounds_new)
+
+        stepsize = terminated * exp_x + (1 - terminated) * jnp.exp(x_new)
+
+        terminated_new = (
+            jnp.abs(acc_rate_new - acc_prob_wanted) < tolerance
+        ) | terminated
+
+        return (bounds_new, terminated_new), stepsize
+
+    return update

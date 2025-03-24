@@ -33,10 +33,10 @@ def iterative_uturn_numpyro(is_turning: CheckTurning):
 
     def new_state(chain_state, max_num_doublings) -> IterativeUTurnState:
         flat, _ = jax.flatten_util.ravel_pytree(chain_state.position)
-        num_dims = jnp.shape(flat)[0]
+        ndims = jnp.shape(flat)[0]
         return IterativeUTurnState(
-            jnp.zeros((max_num_doublings, num_dims)),
-            jnp.zeros((max_num_doublings, num_dims)),
+            jnp.zeros((max_num_doublings, ndims)),
+            jnp.zeros((max_num_doublings, ndims)),
             0,
             0,
         )

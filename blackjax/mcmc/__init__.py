@@ -1,4 +1,6 @@
 from . import (
+    adjusted_mclmc,
+    adjusted_mclmc_dynamic,
     barker,
     elliptical_slice,
     ghmc,
@@ -26,4 +28,6 @@ __all__ = [
     "random_walk",
     "mclmc",
     "underdamped_langevin"
+    "adjusted_mclmc_dynamic",
+    "adjusted_mclmc",
 ]
