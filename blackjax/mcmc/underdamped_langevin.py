@@ -82,18 +82,16 @@ def build_kernel(logdensity_fn, inverse_mass_matrix, integrator):
     # )
 
     metric = metrics.default_metric(inverse_mass_matrix)
-    step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy))
+    step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy)
 
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, LangevinInfo]:
-        (position, momentum, logdensity, logdensitygrad) = step(
+        (position, momentum, logdensity, logdensitygrad), (kinetic_change, energy_change) = step(
             state, step_size, L, rng_key
         )
 
-        kinetic_change = - metric.kinetic_energy(momentum) + metric.kinetic_energy(
-            state.momentum
-        )
+        
         # kinetic_change = - momentum@momentum/2 + state.momentum@state.momentum/2
         
 
@@ -101,7 +99,7 @@ def build_kernel(logdensity_fn, inverse_mass_matrix, integrator):
             position, momentum, logdensity, logdensitygrad
         ), LangevinInfo(
             logdensity=logdensity,
-            energy_change= kinetic_change - logdensity + state.logdensity,
+            energy_change=energy_change,
             kinetic_change=kinetic_change
         )
 

@@ -504,7 +504,7 @@ def with_isokinetic_maruyama(integrator):
     return stochastic_integrator
 
 
-def with_maruyama(integrator):
+def with_maruyama(integrator, kinetic_energy):
     def stochastic_integrator(init_state, step_size, L_proposal, rng_key):
         key1, key2 = jax.random.split(rng_key)
         # partial refreshment
@@ -520,19 +520,28 @@ def with_maruyama(integrator):
         # jax.debug.print("state 1.5 {x}",x=state)
         # state = init_state # TODO: add noise back!
         # one step of the deterministic dynamics
-        state = integrator(state, step_size)
+        new_state = integrator(state, step_size)
         # jax.debug.print("state 2 {x}",x=state)
+        
+        kinetic_change = - kinetic_energy(new_state.momentum) + kinetic_energy(
+            state.momentum
+        )
+        energy_change = kinetic_change - new_state.logdensity + state.logdensity
 
         # partial refreshment
-        state = state._replace(
+        state = new_state._replace(
             momentum=partially_refresh_momentum(
-                momentum=state.momentum,
+                momentum=new_state.momentum,
                 rng_key=key2,
                 L=L_proposal,
                 step_size=step_size * 0.5,
             )
         )
-        return state
+
+
+        
+
+        return state, (kinetic_change, energy_change)
 
     return stochastic_integrator
 
