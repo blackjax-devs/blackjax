@@ -29,7 +29,6 @@ __all__ = [
 class SliceState(NamedTuple):
     position: ArrayTree
     logdensity: ArrayTree
-    loglikelihood: ArrayTree
 
 
 class SliceInfo(NamedTuple):
@@ -39,15 +38,11 @@ class SliceInfo(NamedTuple):
     evals: Array
 
 
-def init(position: ArrayTree, logdensity_fn: Callable, loglikelihood: Array):
-    logdensity = logdensity_fn(position)
-    return SliceState(position, logdensity, loglikelihood)
+def init(position: ArrayTree, logdensity_fn: Callable):
+    return SliceState(position, logdensity_fn(position))
 
 
 def build_slice_kernel(
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    logL0: Array,
     proposal_distribution: Callable,
     stepper: Callable,
 ) -> Callable:
@@ -76,7 +71,11 @@ def build_slice_kernel(
     The Annals of Statistics, Ann. Statist. 31(3), 705-767, (June 2003)
     """
 
-    def kernel(rng_key: PRNGKey, state: SliceState):
+    def kernel(
+            rng_key: PRNGKey,
+            state: SliceState,
+            logdensity_fn: Callable
+    ) -> tuple[SliceState, SliceInfo]:
         rng_key, vertical_slice_key = jax.random.split(rng_key)
         logpi0, _ = vertical_slice(vertical_slice_key, logprior_fn, state.position)
         rng_key, horizontal_slice_key = jax.random.split(rng_key)

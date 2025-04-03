@@ -93,14 +93,15 @@ def build_kernel(
         new_pos = jax.tree.map(lambda x: x[live_idx], state.particles)
         new_logl = state.logL[live_idx]
 
-        kernel = mcmc_step_fn(logprior_fn, loglikelihood_fn, logL0, **mcmc_parameters)
+        logdensity_fn = lambda x: jnp.where(loglikelihood_fn(x) > logL0, logprior_fn(x) , -jnp.inf)
+        kernel = mcmc_step_fn(**mcmc_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
 
-        def mcmc_kernel(rng_key, position, new_logl):
+        def num_mcmc_steps_kernel(rng_key, position, new_logl):
             state = mcmc_init_fn(position, logprior_fn, new_logl)
 
             def body_fn(state, rng_key):
-                new_state, info = kernel(rng_key, state)
+                new_state, info = kernel(rng_key, state, logdensity_fn)
                 return new_state, info
 
             keys = jax.random.split(rng_key, num_mcmc_steps)
@@ -109,7 +110,7 @@ def build_kernel(
 
         sample_keys = jax.random.split(sample_key, dead_idx.shape[0])
 
-        new_state, new_state_info = jax.vmap(mcmc_kernel)(
+        new_state, new_state_info = jax.vmap(num_mcmc_steps_kernel)(
             sample_keys, new_pos, new_logl
         )
 
@@ -120,7 +121,8 @@ def build_kernel(
             state.particles,
             new_state.position,
         )
-        logL = state.logL.at[dead_idx].set(new_state.loglikelihood)
+        new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
+        logL = state.logL.at[dead_idx].set(new_state_loglikelihood)
         logL_birth = state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.logL.min()
         pid = state.pid.at[dead_idx].set(state.pid[live_idx])
