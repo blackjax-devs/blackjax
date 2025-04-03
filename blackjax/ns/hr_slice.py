@@ -50,12 +50,6 @@ def build_slice_kernel(
 
     Parameters
     ----------
-    logprior_fn : Callable
-        Function to compute the log prior probability.
-    loglikelihood_fn : Callable
-        Function to compute the log likelihood.
-    logL0 : Array
-        Initial log-likelihood values.
     proposal_distribution : Callable
         Function to generate a proposal PyTree for slice stepping.
     stepper : Callable
@@ -77,16 +71,14 @@ def build_slice_kernel(
             logdensity_fn: Callable
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, vertical_slice_key = jax.random.split(rng_key)
-        logpi0, _ = vertical_slice(vertical_slice_key, logprior_fn, state.position)
+        logpi0, _ = vertical_slice(vertical_slice_key, logdensity_fn, state.position)
         rng_key, horizontal_slice_key = jax.random.split(rng_key)
         slice_state, slice_info = horizontal_slice_proposal(
             horizontal_slice_key,
             state.position,
             proposal_distribution,
             stepper,
-            loglikelihood_fn,
-            logL0,
-            logprior_fn,
+            logdensity_fn,
             logpi0,
         )
 
@@ -101,7 +93,7 @@ def vertical_slice(rng, logdensity, positions):
     return logpi0, logpi
 
 
-def horizontal_slice_proposal(key, x0, proposal, step, logL, logL0, logpi, logpi0):
+def horizontal_slice_proposal(key, x0, proposal, step, logpi, logpi0):
     key, proposal_key = jax.random.split(key)
     n = proposal(proposal_key)
 
@@ -113,7 +105,7 @@ def horizontal_slice_proposal(key, x0, proposal, step, logL, logL0, logpi, logpi
         _, s, t, count = carry
         t += s
         x = step(x0, n, t)
-        within = jnp.logical_and(logL(x) > logL0, logpi(x) >= logpi0)
+        within = logpi(x) >= logpi0
         count += 1
         return within, s, t, count
 
@@ -126,7 +118,7 @@ def horizontal_slice_proposal(key, x0, proposal, step, logL, logL0, logpi, logpi
 
     # Shrink
     def body_fun(carry):
-        _, l, r, _, _, _, key, count = carry
+        _, l, r, _, _, key, count = carry
         count += 1
 
         key, subkey = jax.random.split(key)
@@ -134,22 +126,21 @@ def horizontal_slice_proposal(key, x0, proposal, step, logL, logL0, logpi, logpi
         x = step(x0, n, u)
         # check for nan values
 
-        logL_x = logL(x)
         logpi_x = logpi(x)
-        within = jnp.logical_and(logL_x > logL0, logpi_x >= logpi0)
+        within = logpi_x >= logpi0
 
         l = jnp.where(u>0, u, l)
         r = jnp.where(u<0, u, r)
 
-        return within, l, r, x, logL_x, logpi_x, key, count
+        return within, l, r, x, logpi_x, key, count
 
     def cond_fun(carry):
         within = carry[0]
         return ~within
 
-    carry = (False, l, r, x0, -jnp.inf, -jnp.inf, key, 0)
+    carry = (False, l, r, x0, -jnp.inf, key, 0)
     carry = jax.lax.while_loop(cond_fun, body_fun, carry)
-    _, l, r, x, logL_x, logpi_x, key, count = carry
-    slice_state = SliceState(x, logpi_x, logL_x)
+    _, l, r, x, logpi_x, key, count = carry
+    slice_state = SliceState(x, logpi_x)
     slice_info = SliceInfo(count_l, count_r, count, (count_l + count_r + count))
     return slice_state, slice_info

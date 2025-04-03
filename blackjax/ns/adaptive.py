@@ -48,7 +48,7 @@ def build_kernel(
         Function that takes an array of log likelihoods and marks particles for deletion and updates.
     mcmc_step_fn:
         The initialisation of the transition kernel, should take as parameters.
-        kernel = mcmc_step_fn(logprior, loglikelihood, logL0 (likelihood threshold), **mcmc_parameter_update_fn())
+        kernel = mcmc_step_fn(**mcmc_parameter_update_fn())
     mcmc_init_fn
         A callable that initializes the inner kernel
     mcmc_parameter_update_fn : Callable[[NSState, NSInfo], Dict[str, ArrayTree]]
@@ -198,10 +198,10 @@ def nss(
     def parameter_update_fn(state, _):
         return train_fn(state.particles)
 
-    def step(logprior, loglikelihood, logL0, **kwargs):
+    def step(**kwargs):
         def proposal_distribution(key):
             return ravel_fn(predict_fn(key, **kwargs))
-        return slice_kernel(logprior, loglikelihood, logL0, proposal_distribution, stepper)
+        return slice_kernel(proposal_distribution, stepper)
 
     kernel = build_kernel(
         logprior_fn,
