@@ -52,6 +52,7 @@ def mclmc_find_L_and_step_size(
     num_effective_samples=150,
     params=None,
     diagonal_preconditioning=True,
+    euclidean=False
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -82,6 +83,7 @@ def mclmc_find_L_and_step_size(
         Whether to do diagonal preconditioning (i.e. a mass matrix)
     params
         Initial params to start tuning from (optional)
+    euclidean: if this tuning is used for HMC or underdamped LMC, there are sqrt{d} factors that need to be taken into account (because L is parametrized differently)
 
     Returns
     -------
@@ -109,9 +111,15 @@ def mclmc_find_L_and_step_size(
     """
     dim = pytree_size(state.position)
     if params is None:
-        params = MCLMCAdaptationState(
-            jnp.sqrt(dim), jnp.sqrt(dim) * 0.25, inverse_mass_matrix=jnp.ones((dim,))
-        )
+        if euclidean:
+            params = MCLMCAdaptationState(
+                1, 0.25, inverse_mass_matrix=jnp.ones((dim,))
+            )
+        else:
+            params = MCLMCAdaptationState(
+                jnp.sqrt(dim), jnp.sqrt(dim) * 0.25, inverse_mass_matrix=jnp.ones((dim,))
+            )
+
 
     part1_key, part2_key = jax.random.split(rng_key, 2)
     total_num_tuning_integrator_steps = 0
@@ -131,6 +139,7 @@ def mclmc_find_L_and_step_size(
         trust_in_estimate=trust_in_estimate,
         num_effective_samples=num_effective_samples,
         diagonal_preconditioning=diagonal_preconditioning,
+        euclidean=euclidean
     )(state, params, num_steps, part1_key)
     total_num_tuning_integrator_steps += num_steps1 + num_steps2
 
@@ -152,6 +161,7 @@ def make_L_step_size_adaptation(
     desired_energy_var=1e-3,
     trust_in_estimate=1.5,
     num_effective_samples=150,
+    euclidean=False
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for unadjusted MCLMC"""
 
@@ -265,12 +275,16 @@ def make_L_step_size_adaptation(
         if num_steps2 > 1:
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
-            L = jnp.sqrt(jnp.sum(variances))
+            L = jnp.sqrt(jnp.sum(variances)) # lmc: should be jnp.mean
+            if euclidean:
+                L /= jnp.sqrt(dim)
 
             if diagonal_preconditioning:
                 inverse_mass_matrix = variances
                 params = params._replace(inverse_mass_matrix=inverse_mass_matrix)
-                L = jnp.sqrt(dim)
+                L = jnp.sqrt(dim) # lmc: 1
+                if euclidean:
+                    L /= jnp.sqrt(dim)
 
                 # readjust the stepsize
                 steps = round(num_steps2 / 3)  # we do some small number of steps

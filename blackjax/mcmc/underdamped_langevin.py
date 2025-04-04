@@ -91,6 +91,8 @@ def build_kernel(logdensity_fn, inverse_mass_matrix, integrator):
             state, step_size, L, rng_key
         )
 
+        # jax.debug.print("energy change {x}", x=energy_change)
+
         
         # kinetic_change = - momentum@momentum/2 + state.momentum@state.momentum/2
         
@@ -121,42 +123,8 @@ def as_top_level_api(
     We also add the general kernel and state generator as an attribute to this class so
     users only need to pass `blackjax.langevin` to SMC, adaptation, etc. algorithms.
 
-    Examples
-    --------
 
-    A new langevin kernel can be initialized and used with the following code:
 
-    .. code::
-
-        langevin = blackjax.mcmc.langevin.langevin(
-            logdensity_fn=logdensity_fn,
-            L=L,
-            step_size=step_size
-        )
-        state = langevin.init(position)
-        new_state, info = langevin.step(rng_key, state)
-
-    Kernels are not jit-compiled by default so you will need to do it manually:
-
-    .. code::
-
-        step = jax.jit(langevin.step)
-        new_state, info = step(rng_key, state)
-
-    Parameters
-    ----------
-    logdensity_fn
-        The log-density function we wish to draw samples from.
-    L
-        the momentum decoherence rate
-    step_size
-        step size of the integrator
-    integrator
-        an integrator. We recommend using the default here.
-
-    Returns
-    -------
-    A ``SamplingAlgorithm``.
     """
 
     kernel = build_kernel(logdensity_fn, inverse_mass_matrix, integrator)

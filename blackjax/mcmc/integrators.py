@@ -100,7 +100,7 @@ def generalized_two_stage_integrator(
 
     def one_step(state: IntegratorState, step_size: float):
         position, momentum, _, logdensity_grad = state
-        # jax.debug.print("initial state {x}", x=state)
+        # jax.debug.print("initial state {x}", x=jnp.any(jnp.isnan(momentum)))
         # auxiliary infomation generated during integration for diagnostics. It is
         # updated by the operator1 and operator2 at each call.
         momentum_update_info = None
@@ -167,6 +167,7 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
         auxiliary_info=None,
     ):
 
+        # jax.debug.print("nan? {x}", x=jnp.any(jnp.isnan(kinetic_grad)))
         # jax.debug.print("position {x}", x=position)
         del auxiliary_info
         new_position = jax.tree_util.tree_map(
