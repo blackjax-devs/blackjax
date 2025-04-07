@@ -121,7 +121,7 @@ class ImportanceSamplingState(NamedTuple):
     num_paths: int
     samples: Array
     pareto_k: Optional[float] = None
-    method: ImpSamplingMethod = ImpSamplingMethod.PSIS
+    method: int = ImpSamplingMethod.PSIS
 
 
 class MultiPathfinderAlgorithm(NamedTuple):
@@ -353,9 +353,11 @@ def approximate(
 
     # keep all of PathfinderInfo, including masked info to make approximate jittable.
     return SinglePathfinderState(
-        initial_position,
-        *jax.tree.map(lambda x: x.at[max_elbo_idx].get(), res_argmax),
-        sparse,
+        *(
+            initial_position,
+            *jax.tree.map(lambda x: x.at[max_elbo_idx].get(), res_argmax),
+            sparse,
+        ),
     ), SinglePathfinderInfo(
         SinglePathfinderState(initial_position, *res_argmax, sparse), update_mask
     )
@@ -405,7 +407,7 @@ def sample(
     return jax.vmap(unravel_fn)(psi), logq
 
 
-def logp(logdensity_fn: Callable, samples: Array):
+def logp(logdensity_fn: Callable, samples: Array) -> Array:
     return logdensity_fn(samples)
 
 
@@ -416,7 +418,7 @@ def importance_sampling(
     logQ: Array,
     num_paths: int,
     num_samples: int = 1000,
-    method: int = 0,
+    method: int = ImpSamplingMethod.PSIS,
 ) -> ImportanceSamplingState:
     """Pareto Smoothed Importance Resampling (PSIR)
 
@@ -564,13 +566,15 @@ def importance_sampling(
                     num_paths=num_paths,
                     samples=resampled,
                     pareto_k=pareto_k,
-                    method="psir",
+                    method=ImpSamplingMethod.PSIR,
                 )
             except ValueError as e2:
                 logger.error(f"Importance sampling failed: {str(e2)}")
                 raise ValueError(
                     "Importance sampling failed for both with and without replacement. "
                 )
+        else:
+            raise e1
 
 
 def pathfinder(
@@ -586,7 +590,7 @@ def pathfinder(
     ftol: float = 1e-05,
     epsilon: float = 1e-8,
     **lbfgs_kwargs,
-):
+) -> tuple[Array, Array]:
     approx_key, sample_key = jax.random.split(rng_key, 2)
 
     state, _ = approximate(
@@ -636,7 +640,7 @@ def multi_pathfinder(
     logdensity_fn: Callable,
     base_position: Optional[Array] = None,
     jitter_amount: Optional[float] = None,
-    num_paths: int = None,
+    num_paths: int = 4,
     num_samples: int = 1000,
     num_samples_per_path: int = 1000,
     num_elbo_draws: int = 15,
@@ -803,7 +807,7 @@ def multi_pathfinder(
 
 def as_top_level_api(
     logdensity_fn: Callable,
-    num_paths: int,
+    num_paths: int = 4,
     num_samples: int = 1000,
     num_samples_per_path: int = 1000,
     num_elbo_draws: int = 15,
@@ -849,9 +853,9 @@ def as_top_level_api(
     def init_fn(
         rng_key: Optional[PRNGKey] = None,
         base_position: Optional[Array] = None,
-        jitter_amount: float = None,
+        jitter_amount: Optional[float] = None,
         initial_position: Optional[Array] = None,
-    ):
+    ) -> Array:
         return init(
             rng_key=rng_key,
             base_position=base_position,
