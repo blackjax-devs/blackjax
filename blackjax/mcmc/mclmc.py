@@ -100,16 +100,11 @@ def build_kernel(
 
         energy_error = kinetic_change - logdensity + state.logdensity
 
-        eev_max = desired_energy_var_max_ratio * desired_energy_var
-        # if energy_error > jnp.sqrt(eev_max):
-        #     return state, MCLMCInfo(
-        #         logdensity=state.logdensity,
-        #         energy_change=0,
-        #         kinetic_change=0,
-        #     )
+        eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
+        ndims = pytree_size(position)
 
         new_state, new_info = jax.lax.cond(
-            energy_error > jnp.sqrt(eev_max),
+            energy_error > jnp.sqrt(ndims * eev_max_per_dim),
             lambda: (
                 state,
                 MCLMCInfo(
@@ -129,14 +124,6 @@ def build_kernel(
         )
 
         return new_state, new_info
-
-        # return IntegratorState(
-        #     position, momentum, logdensity, logdensitygrad
-        # ), MCLMCInfo(
-        #     logdensity=logdensity,
-        #     energy_change=energy_error,
-        #     kinetic_change=kinetic_change,
-        # )
 
     return kernel
 
