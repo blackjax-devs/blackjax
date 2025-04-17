@@ -92,7 +92,7 @@ def build_kernel(
 
         new_pos = jax.tree.map(lambda x: x[live_idx], state.particles)
 
-        mcmc_parameters["constraint"] = lambda x: loglikelihood_fn(x) - logL0
+        mcmc_parameters["logL0"] = logL0
         kernel = mcmc_step_fn(**mcmc_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
 

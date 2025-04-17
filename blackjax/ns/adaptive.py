@@ -201,7 +201,9 @@ def nss(
     def step(**kwargs):
         def proposal_distribution(key):
             return ravel_fn(predict_fn(key, **kwargs))
-        return build_slice_kernel(proposal_distribution, stepper)
+        def constraint_fn(x):
+            return loglikelihood_fn(x) - kwargs["logL0"]
+        return build_slice_kernel(proposal_distribution, stepper, constraint_fn)
 
     kernel = build_kernel(
         logprior_fn,
