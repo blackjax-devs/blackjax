@@ -104,7 +104,7 @@ def build_kernel(
         ndims = pytree_size(position)
 
         new_state, new_info = jax.lax.cond(
-            energy_error > jnp.sqrt(ndims * eev_max_per_dim),
+            jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim),
             lambda: (
                 state,
                 MCLMCInfo(
