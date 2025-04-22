@@ -21,6 +21,7 @@ from jax.flatten_util import ravel_pytree
 
 from blackjax.diagnostics import effective_sample_size
 from blackjax.util import generate_unit_vector, incremental_value_update, pytree_size
+import blackjax.mcmc.metrics as metrics
 
 
 class MCLMCAdaptationState(NamedTuple):
@@ -173,7 +174,7 @@ def make_L_step_size_adaptation(
 
         time, x_average, step_size_max = adaptive_state
 
-        rng_key, nan_key = jax.random.split(rng_key)
+        rng_key, nan_key, energy_key = jax.random.split(rng_key, 3)
 
         # dynamics
         next_state, info = kernel(params.inverse_mass_matrix)(
@@ -183,6 +184,26 @@ def make_L_step_size_adaptation(
             step_size=params.step_size,
         )
 
+        ndims = pytree_size(previous_state.position)
+        cutoff = jnp.sqrt(ndims * desired_energy_var * 10**4) 
+        energy_change_, next_state = handle_high_energy(
+            next_state=next_state,
+            previous_state=previous_state,
+            energy_change=info.energy_change,
+            key=energy_key,
+            inverse_mass_matrix=params.inverse_mass_matrix,
+            euclidean=euclidean,
+            cutoff=cutoff
+        )
+
+        info = info._replace(
+            energy_change=energy_change_,
+        )
+
+        # jax.debug.print("info.energy_change {x}", x=info.energy_change)
+
+        
+
         # step updating
         success, state, step_size_max, energy_change = handle_nans(
             previous_state,
@@ -191,7 +212,14 @@ def make_L_step_size_adaptation(
             step_size_max,
             info.energy_change,
             nan_key,
+            euclidean=euclidean,
         )
+
+        # energy_change = jnp.clip(
+        #     energy_change,
+        #     -25,
+        #     25
+        # )
 
         # Warning: var = 0 if there were nans, but we will give it a very small weight
         xi = (
@@ -200,10 +228,15 @@ def make_L_step_size_adaptation(
         weight = jnp.exp(
             -0.5 * jnp.square(jnp.log(xi) / (6.0 * trust_in_estimate))
         )  # the weight reduces the impact of stepsizes which are much larger on much smaller than the desired one.
+        # jax.debug.print("energy change {x}", x=energy_change)
+        # jax.debug.print("step size {x}", x=params.step_size)
+
 
         x_average = decay_rate * x_average + weight * (
             xi / jnp.power(params.step_size, 6.0)
         )
+        # jax.debug.print("xi {x}", x=(xi, energy_change, x_average))
+        
         time = decay_rate * time + weight
         step_size = jnp.power(
             x_average / time, -1.0 / 6.0
@@ -211,6 +244,12 @@ def make_L_step_size_adaptation(
         step_size = (step_size < step_size_max) * step_size + (
             step_size > step_size_max
         ) * step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
+
+        # jax.debug.print("step size {x}", x=(step_size, step_size_max))
+
+
+
+        # params_new = params._replace(step_size=(energy_change==0)*params.step_size/2 + (energy_change != 0)*step_size)
         params_new = params._replace(step_size=step_size)
 
         adaptive_state = (time, x_average, step_size_max)
@@ -265,9 +304,11 @@ def make_L_step_size_adaptation(
         mask = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
         # run the steps
-        state, params, _, (_, average) = run_steps(
+        state, params, (_,x_average, _), (_, average) = run_steps(
             xs=(mask, L_step_size_adaptation_keys), state=state, params=params
         )
+
+        jax.debug.print("step size {x}", x=(params.step_size, x_average))
 
         L = params.L
         # determine L
@@ -332,7 +373,7 @@ def make_adaptation_L(kernel, frac, Lfactor):
 
 
 def handle_nans(
-    previous_state, next_state, step_size, step_size_max, kinetic_change, key
+    previous_state, next_state, step_size, step_size_max, kinetic_change, key, euclidean=False
 ):
     """if there are nans, let's reduce the stepsize, and not update the state. The
     function returns the old state in this case."""
@@ -347,12 +388,41 @@ def handle_nans(
         (previous_state, step_size * reduced_step_size, 0.0),
     )
 
+    # new_momentum = euclidean*0.0 + (1-euclidean)*generate_unit_vector(key, previous_state.position)
+    new_momentum = generate_unit_vector(key, previous_state.position)
+
     state = jax.lax.cond(
         jnp.isnan(next_state.logdensity),
         lambda: state._replace(
-            momentum=generate_unit_vector(key, previous_state.position)
+            # momentum=generate_unit_vector(key, previous_state.position)
+            momentum=new_momentum
         ),
         lambda: state,
     )
 
     return nonans, state, step_size, kinetic_change
+
+
+def handle_high_energy(
+    previous_state, next_state, energy_change, key, inverse_mass_matrix, cutoff, euclidean=False
+):
+    """if there are nans, let's reduce the stepsize, and not update the state. The
+    function returns the old state in this case."""
+
+    metric = metrics.default_metric(inverse_mass_matrix)
+
+
+    new_momentum = euclidean*metric.sample_momentum(key, previous_state.position) + (1-euclidean)*generate_unit_vector(key, previous_state.position)
+    # new_momentum = generate_unit_vector(key, previous_state.position)
+
+    state = jax.lax.cond(
+        jnp.abs(energy_change) > cutoff,
+        lambda: previous_state._replace(
+            # momentum=generate_unit_vector(key, next_state.position)
+            momentum=new_momentum
+        ),
+        lambda: next_state,
+    )
+    energy_change = jnp.clip(energy_change, -cutoff, cutoff)
+
+    return energy_change, state

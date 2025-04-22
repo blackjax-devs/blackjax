@@ -136,7 +136,7 @@ def build_kernel(
 
         position, logdensity, logdensity_grad = state
         momentum = metric.sample_momentum(key_momentum, position)
-        import jax.numpy as jnp
+        # import jax.numpy as jnp
         # jax.debug.print("momentum nan? {x}",x=jnp.any(jnp.isnan(momentum)))
 
         integrator_state = integrators.IntegratorState(

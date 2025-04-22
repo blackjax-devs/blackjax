@@ -195,6 +195,7 @@ def euclidean_momentum_update_fn(kinetic_energy_fn: KineticEnergy):
     ):
         del auxiliary_info
         # jax.debug.print("momentum {x}", x=momentum)
+        # jax.debug.print("force {x}", x=logdensity_grad[0])
         new_momentum = jax.tree_util.tree_map(
             lambda x, grad: x + step_size * coef * grad,
             momentum,
@@ -314,7 +315,7 @@ omelyan_coefficients = [b1, a1, b2, a2, b3, a3, b3, a2, b2, a1, b1]
 omelyan = generate_euclidean_integrator(omelyan_coefficients)
 
 
-# Intergrators with non Euclidean updates
+# Integrators with non Euclidean updates
 def _normalized_flatten_array(x, tol=1e-13):
     norm = jnp.linalg.norm(x)
     return jnp.where(norm > tol, x / norm, x), norm

@@ -24,6 +24,8 @@ from blackjax.mcmc.integrators import (
 )
 from blackjax.types import ArrayLike, PRNGKey
 import blackjax.mcmc.metrics as metrics
+import jax.numpy as jnp
+from blackjax.util import pytree_size
 
 __all__ = ["LangevinInfo", "init", "build_kernel", "as_top_level_api"]
 
@@ -57,7 +59,12 @@ def init(position: ArrayLike, logdensity_fn, metric, rng_key):
     )
 
 
-def build_kernel(logdensity_fn, inverse_mass_matrix, integrator):
+def build_kernel(
+        logdensity_fn, 
+        inverse_mass_matrix, 
+        integrator,
+        desired_energy_var_max_ratio=jnp.inf,
+        desired_energy_var=5e-4,):
     """Build a HMC kernel.
 
     Parameters
@@ -87,7 +94,7 @@ def build_kernel(logdensity_fn, inverse_mass_matrix, integrator):
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, LangevinInfo]:
-        (position, momentum, logdensity, logdensitygrad), (kinetic_change, energy_change) = step(
+        (position, momentum, logdensity, logdensitygrad), (kinetic_change, energy_error) = step(
             state, step_size, L, rng_key
         )
 
@@ -97,13 +104,39 @@ def build_kernel(logdensity_fn, inverse_mass_matrix, integrator):
         # kinetic_change = - momentum@momentum/2 + state.momentum@state.momentum/2
         
 
-        return IntegratorState(
-            position, momentum, logdensity, logdensitygrad
-        ), LangevinInfo(
-            logdensity=logdensity,
-            energy_change=energy_change,
-            kinetic_change=kinetic_change
+        # return IntegratorState(
+        #     position, momentum, logdensity, logdensitygrad
+        # ), LangevinInfo(
+        #     logdensity=logdensity,
+        #     energy_change=energy_change,
+        #     kinetic_change=kinetic_change
+        # )
+
+        eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
+        ndims = pytree_size(position)
+        # jax.debug.print("diagnostics {x}", x=(eev_max_per_dim, jnp.abs(energy_error), jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim)))
+
+        new_state, new_info = jax.lax.cond(
+            jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim),
+            lambda: (
+                state,
+                LangevinInfo(
+                    logdensity=state.logdensity,
+                    energy_change=0.0,
+                    kinetic_change=0.0,
+                ),
+            ),
+            lambda: (
+                IntegratorState(position, momentum, logdensity, logdensitygrad),
+                LangevinInfo(
+                    logdensity=logdensity,
+                    energy_change=energy_error,
+                    kinetic_change=kinetic_change,
+                ),
+            ),
         )
+
+        return new_state, new_info
 
     return kernel
 
@@ -114,6 +147,8 @@ def as_top_level_api(
     step_size,
     integrator=velocity_verlet,
     inverse_mass_matrix=1.0,
+    desired_energy_var_max_ratio=jnp.inf,
+    desired_energy_var=5e-4,
 ) -> SamplingAlgorithm:
     """The general Langevin kernel builder (:meth:`blackjax.mcmc.langevin.build_kernel`, alias `blackjax.langevin.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
@@ -127,7 +162,13 @@ def as_top_level_api(
 
     """
 
-    kernel = build_kernel(logdensity_fn, inverse_mass_matrix, integrator)
+    kernel = build_kernel(
+        logdensity_fn, 
+        inverse_mass_matrix, 
+        integrator,
+        desired_energy_var_max_ratio=desired_energy_var_max_ratio,
+        desired_energy_var=desired_energy_var,
+        )
     metric = metrics.default_metric(inverse_mass_matrix)
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
