@@ -53,6 +53,7 @@ def mclmc_find_L_and_step_size(
     num_effective_samples=150,
     params=None,
     diagonal_preconditioning=True,
+    num_windows=1,
     euclidean=False
 ):
     """
@@ -122,6 +123,8 @@ def mclmc_find_L_and_step_size(
             )
 
 
+
+
     part1_key, part2_key = jax.random.split(rng_key, 2)
     total_num_tuning_integrator_steps = 0
 
@@ -131,17 +134,21 @@ def mclmc_find_L_and_step_size(
     num_steps2 += diagonal_preconditioning * (num_steps2 // 3)
     num_steps3 = round(num_steps * frac_tune3)
 
-    state, params = make_L_step_size_adaptation(
-        kernel=mclmc_kernel,
-        dim=dim,
-        frac_tune1=frac_tune1,
-        frac_tune2=frac_tune2,
-        desired_energy_var=desired_energy_var,
-        trust_in_estimate=trust_in_estimate,
-        num_effective_samples=num_effective_samples,
-        diagonal_preconditioning=diagonal_preconditioning,
-        euclidean=euclidean
-    )(state, params, num_steps, part1_key)
+    for i in range(num_windows):
+        window_key = jax.random.fold_in(part1_key, i)
+
+        state, params = make_L_step_size_adaptation(
+            kernel=mclmc_kernel,
+            dim=dim,
+            frac_tune1=frac_tune1/num_windows,
+            frac_tune2=frac_tune2/num_windows,
+            desired_energy_var=desired_energy_var,
+            trust_in_estimate=trust_in_estimate,
+            num_effective_samples=num_effective_samples,
+            diagonal_preconditioning=diagonal_preconditioning,
+            euclidean=euclidean
+        )(state, params, num_steps, window_key)
+    
     total_num_tuning_integrator_steps += num_steps1 + num_steps2
 
     if num_steps3 >= 2:  # at least 2 samples for ESS estimation
