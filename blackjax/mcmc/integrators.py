@@ -21,6 +21,7 @@ from jax.random import normal
 
 from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import ArrayTree
+from blackjax.mcmc.metrics import default_metric
 
 __all__ = [
     "mclachlan",
@@ -442,7 +443,7 @@ def partially_refresh_momentum_isokinetic(momentum, rng_key, step_size, L):
     )
 
 
-def partially_refresh_momentum(momentum, rng_key, step_size, L):
+def partially_refresh_momentum(momentum, rng_key, step_size, L, inverse_mass_matrix):
     """Adds a small noise to momentum and normalizes.
 
     Parameters
@@ -463,10 +464,14 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
 
     # TODO
     m, unravel_fn = ravel_pytree(momentum)
+    # m = jax.tree_util.tree_map(lambda x: x * jnp.sqrt(inverse_mass_matrix), m)
     # dim = m.shape[0]
     c1 = jnp.exp(-step_size/L)
     c2 = jnp.sqrt((1-c1**2))
     z = normal(rng_key, shape=m.shape, dtype=m.dtype)
+    metric = default_metric(inverse_mass_matrix)
+    z = metric.sample_momentum(rng_key, m)
+    # normal(rng_key, shape=m.shape, dtype=m.dtype)
     new_momentum = unravel_fn(c1*m + c2*z)
 
     return jax.lax.cond(
@@ -506,7 +511,7 @@ def with_isokinetic_maruyama(integrator):
     return stochastic_integrator
 
 
-def with_maruyama(integrator, kinetic_energy):
+def with_maruyama(integrator, kinetic_energy,inverse_mass_matrix):
     def stochastic_integrator(init_state, step_size, L_proposal, rng_key):
         key1, key2 = jax.random.split(rng_key)
         # partial refreshment
@@ -517,6 +522,7 @@ def with_maruyama(integrator, kinetic_energy):
                 rng_key=key1,
                 L=L_proposal,
                 step_size=step_size * 0.5,
+                inverse_mass_matrix=inverse_mass_matrix,
             )
         )
         # jax.debug.print("state 1.5 {x}",x=state)
@@ -537,6 +543,7 @@ def with_maruyama(integrator, kinetic_energy):
                 rng_key=key2,
                 L=L_proposal,
                 step_size=step_size * 0.5,
+                inverse_mass_matrix=inverse_mass_matrix,
             )
         )
 

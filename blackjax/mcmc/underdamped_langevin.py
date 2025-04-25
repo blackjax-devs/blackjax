@@ -84,12 +84,8 @@ def build_kernel(
 
     """
 
-    # step = with_isokinetic_maruyama(
-    #     integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
-    # )
-
     metric = metrics.default_metric(inverse_mass_matrix)
-    step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy)
+    step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy,inverse_mass_matrix)
 
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float

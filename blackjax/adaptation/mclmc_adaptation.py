@@ -315,7 +315,7 @@ def make_L_step_size_adaptation(
             xs=(mask, L_step_size_adaptation_keys), state=state, params=params
         )
 
-        jax.debug.print("step size {x}", x=(params.step_size, x_average))
+        # jax.debug.print("step size {x}", x=(params.step_size, x_average))
 
         L = params.L
         # determine L
