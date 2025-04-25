@@ -420,15 +420,35 @@ def run_eca(
             keys_adaptation,
         )  # keys for all steps that will be performed. keys_sampling.shape = (num_steps, chains_per_device), keys_adaptation.shape = (num_steps, )
 
-        # ((a, Int) -> (a, Int))
+        EEVPD = jnp.zeros((num_steps,))
+        EEVPD_wanted = jnp.zeros((num_steps,))
+        L = jnp.zeros((num_steps,))
+        entropy = jnp.zeros((num_steps,))
+        equi_diag = jnp.zeros((num_steps,))
+        equi_full = jnp.zeros((num_steps,))
+        observables = jnp.zeros((num_steps,))
+        r_avg = jnp.zeros((num_steps,))
+        r_max = jnp.zeros((num_steps,))
+        step_size = jnp.zeros((num_steps,))
+
         def step_while(a):
             x, i, _ = a
 
             auxilliary_input = (xs[0][i], xs[1][i], xs[2][i])
 
-            output, info = step(x, auxilliary_input)
+            output, (info, pos) = step(x, auxilliary_input)
+            EEVPD.at[i].set(info.get("EEVPD"))
+            EEVPD_wanted.at[i].set(info.get("EEVPD_wanted"))
+            L.at[i].set(info.get("L"))
+            entropy.at[i].set(info.get("entropy"))
+            equi_diag.at[i].set(info.get("equi_diag"))
+            equi_full.at[i].set(info.get("equi_full"))
+            observables.at[i].set(info.get("observables"))
+            r_avg.at[i].set(info.get("r_avg"))
+            r_max.at[i].set(info.get("r_max"))
+            step_size.at[i].set(info.get("step_size"))
 
-            return (output, i + 1, info[0].get("while_cond"))
+            return (output, i + 1, info.get("while_cond"))
 
         if early_stop:
             final_state_all, i, _ = lax.while_loop(
@@ -437,7 +457,19 @@ def run_eca(
                 (initial_state_all, 0, True),
             )
             steps_done = i
-            info_history = None
+            info_history = {
+                "EEVPD": EEVPD,
+                "EEVPD_wanted": EEVPD_wanted,
+                "L": L,
+                "entropy": entropy,
+                "equi_diag": equi_diag,
+                "equi_full": equi_full,
+                "observables": observables,
+                "r_avg": r_avg,
+                "r_max": r_max,
+                "step_size": step_size,
+                "steps_done": steps_done,
+            }
 
         else:
             final_state_all, info_history = lax.scan(step, initial_state_all, xs)

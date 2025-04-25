@@ -306,7 +306,7 @@ def emaus(
     )
 
     if diagnostics:
-        info = {"phase_1": {"steps_done": steps_done_phase_1}, "phase_2": info2}
+        info = {"phase_1": info1, "phase_2": info2}
     else:
         info = None
 
