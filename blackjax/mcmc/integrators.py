@@ -21,6 +21,7 @@ from jax.random import normal
 
 from blackjax.mcmc.metrics import KineticEnergy
 from blackjax.types import ArrayTree
+from blackjax.mcmc.metrics import default_metric
 
 __all__ = [
     "mclachlan",
@@ -28,6 +29,7 @@ __all__ = [
     "velocity_verlet",
     "yoshida",
     "with_isokinetic_maruyama",
+    "with_maruyama",
     "isokinetic_velocity_verlet",
     "isokinetic_mclachlan",
     "isokinetic_omelyan",
@@ -99,6 +101,7 @@ def generalized_two_stage_integrator(
 
     def one_step(state: IntegratorState, step_size: float):
         position, momentum, _, logdensity_grad = state
+        # jax.debug.print("initial state {x}", x=jnp.any(jnp.isnan(momentum)))
         # auxiliary infomation generated during integration for diagnostics. It is
         # updated by the operator1 and operator2 at each call.
         momentum_update_info = None
@@ -113,6 +116,7 @@ def generalized_two_stage_integrator(
                     momentum_update_info,
                     is_last_call=False,
                 )
+                # jax.debug.print("momentum inside {x}", x=momentum)
             else:
                 (
                     position,
@@ -163,12 +167,16 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
         coef: float,
         auxiliary_info=None,
     ):
+
+        # jax.debug.print("nan? {x}", x=jnp.any(jnp.isnan(kinetic_grad)))
+        # jax.debug.print("position {x}", x=position)
         del auxiliary_info
         new_position = jax.tree_util.tree_map(
             lambda x, grad: x + step_size * coef * grad,
             position,
             kinetic_grad,
         )
+        # jax.debug.print("new position {x}", x=new_position)
         logdensity, logdensity_grad = logdensity_and_grad_fn(new_position)
         return new_position, logdensity, logdensity_grad, None
 
@@ -187,11 +195,14 @@ def euclidean_momentum_update_fn(kinetic_energy_fn: KineticEnergy):
         is_last_call=False,
     ):
         del auxiliary_info
+        # jax.debug.print("momentum {x}", x=momentum)
+        # jax.debug.print("force {x}", x=logdensity_grad[0])
         new_momentum = jax.tree_util.tree_map(
             lambda x, grad: x + step_size * coef * grad,
             momentum,
             logdensity_grad,
         )
+        # jax.debug.print("new momentum {x}", x=new_momentum)
         if is_last_call:
             return new_momentum, None, None
         kinetic_grad = kinetic_energy_grad_fn(new_momentum)
@@ -305,14 +316,14 @@ omelyan_coefficients = [b1, a1, b2, a2, b3, a3, b3, a2, b2, a1, b1]
 omelyan = generate_euclidean_integrator(omelyan_coefficients)
 
 
-# Intergrators with non Euclidean updates
+# Integrators with non Euclidean updates
 def _normalized_flatten_array(x, tol=1e-13):
     norm = jnp.linalg.norm(x)
     return jnp.where(norm > tol, x / norm, x), norm
 
 
 def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
-    sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
+    sqrt_inverse_mass_matrix = jax.tree_util.tree_map(jnp.sqrt, inverse_mass_matrix)
 
     def update(
         momentum: ArrayTree,
@@ -353,6 +364,7 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         ) * (dims - 1)
         if previous_kinetic_energy_change is not None:
             kinetic_energy_change += previous_kinetic_energy_change
+
         return next_momentum, gr, kinetic_energy_change
 
     return update
@@ -398,7 +410,7 @@ isokinetic_mclachlan = generate_isokinetic_integrator(mclachlan_coefficients)
 isokinetic_omelyan = generate_isokinetic_integrator(omelyan_coefficients)
 
 
-def partially_refresh_momentum(momentum, rng_key, step_size, L):
+def partially_refresh_momentum_isokinetic(momentum, rng_key, step_size, L):
     """Adds a small noise to momentum and normalizes.
 
     Parameters
@@ -422,7 +434,46 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
     new_momentum = unravel_fn((m + z) / jnp.linalg.norm(m + z))
-    # return new_momentum
+
+    return jax.lax.cond(
+        jnp.isinf(L),
+        lambda _: momentum,
+        lambda _: new_momentum,
+        operand=None,
+    )
+
+
+def partially_refresh_momentum(momentum, rng_key, step_size, L, inverse_mass_matrix):
+    """Adds a small noise to momentum and normalizes.
+
+    Parameters
+    ----------
+    rng_key
+        The pseudo-random number generator key used to generate random numbers.
+    momentum
+        PyTree that the structure the output should to match.
+    step_size
+        Step size
+    L
+        controls rate of momentum change
+
+    Returns
+    -------
+    momentum with random change in angle
+    """
+
+    # TODO
+    m, unravel_fn = ravel_pytree(momentum)
+    # m = jax.tree_util.tree_map(lambda x: x * jnp.sqrt(inverse_mass_matrix), m)
+    # dim = m.shape[0]
+    c1 = jnp.exp(-step_size/L)
+    c2 = jnp.sqrt((1-c1**2))
+    z = normal(rng_key, shape=m.shape, dtype=m.dtype)
+    metric = default_metric(inverse_mass_matrix)
+    z = metric.sample_momentum(rng_key, m)
+    # normal(rng_key, shape=m.shape, dtype=m.dtype)
+    new_momentum = unravel_fn(c1*m + c2*z)
+
     return jax.lax.cond(
         jnp.isinf(L),
         lambda _: momentum,
@@ -436,7 +487,7 @@ def with_isokinetic_maruyama(integrator):
         key1, key2 = jax.random.split(rng_key)
         # partial refreshment
         state = init_state._replace(
-            momentum=partially_refresh_momentum(
+            momentum=partially_refresh_momentum_isokinetic(
                 momentum=init_state.momentum,
                 rng_key=key1,
                 L=L_proposal,
@@ -448,7 +499,7 @@ def with_isokinetic_maruyama(integrator):
 
         # partial refreshment
         state = state._replace(
-            momentum=partially_refresh_momentum(
+            momentum=partially_refresh_momentum_isokinetic(
                 momentum=state.momentum,
                 rng_key=key2,
                 L=L_proposal,
@@ -456,6 +507,50 @@ def with_isokinetic_maruyama(integrator):
             )
         )
         return state, info
+
+    return stochastic_integrator
+
+
+def with_maruyama(integrator, kinetic_energy,inverse_mass_matrix):
+    def stochastic_integrator(init_state, step_size, L_proposal, rng_key):
+        key1, key2 = jax.random.split(rng_key)
+        # partial refreshment
+        # jax.debug.print("state 1 {x}",x=init_state)
+        state = init_state._replace(
+            momentum=partially_refresh_momentum(
+                momentum=init_state.momentum,
+                rng_key=key1,
+                L=L_proposal,
+                step_size=step_size * 0.5,
+                inverse_mass_matrix=inverse_mass_matrix,
+            )
+        )
+        # jax.debug.print("state 1.5 {x}",x=state)
+        # state = init_state # TODO: add noise back!
+        # one step of the deterministic dynamics
+        new_state = integrator(state, step_size)
+        # jax.debug.print("state 2 {x}",x=state)
+        
+        kinetic_change = - kinetic_energy(new_state.momentum) + kinetic_energy(
+            state.momentum
+        )
+        energy_change = kinetic_change - new_state.logdensity + state.logdensity
+
+        # partial refreshment
+        state = new_state._replace(
+            momentum=partially_refresh_momentum(
+                momentum=new_state.momentum,
+                rng_key=key2,
+                L=L_proposal,
+                step_size=step_size * 0.5,
+                inverse_mass_matrix=inverse_mass_matrix,
+            )
+        )
+
+
+        
+
+        return state, (kinetic_change, energy_change)
 
     return stochastic_integrator
 

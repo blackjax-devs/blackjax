@@ -1,4 +1,5 @@
 """Test the ess function"""
+
 import functools
 
 import chex

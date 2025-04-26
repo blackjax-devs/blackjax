@@ -28,6 +28,7 @@ def adjusted_mclmc_find_L_and_step_size(
     max="avg",
     num_windows=1,
     tuning_factor=1.3,
+    euclidean=False,
 ):
     """
     Finds the optimal value of the parameters for the MH-MCHMC algorithm.
@@ -73,7 +74,14 @@ def adjusted_mclmc_find_L_and_step_size(
 
     dim = pytree_size(state.position)
     if params is None:
-        params = MCLMCAdaptationState(
+        if euclidean:
+            
+            params = MCLMCAdaptationState(
+                1.0, 0.2, inverse_mass_matrix=jnp.ones((dim,))
+            )
+
+        else:
+            params = MCLMCAdaptationState(
             jnp.sqrt(dim), jnp.sqrt(dim) * 0.2, inverse_mass_matrix=jnp.ones((dim,))
         )
 
@@ -113,7 +121,7 @@ def adjusted_mclmc_find_L_and_step_size(
             ) = adjusted_mclmc_make_adaptation_L(
                 mclmc_kernel,
                 frac=frac_tune3,
-                Lfactor=0.5,
+                Lfactor=0.3,
                 max=max,
                 eigenvector=eigenvector,
             )(

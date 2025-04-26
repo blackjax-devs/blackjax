@@ -11,30 +11,31 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the MCLMC Kernel"""
+"""Public API for the Underdamped Langevin Kernel"""
 from typing import Callable, NamedTuple
 
 import jax
-import jax.numpy as jnp
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import (
     IntegratorState,
-    isokinetic_mclachlan,
-    with_isokinetic_maruyama,
+    with_maruyama,
+    velocity_verlet,
 )
 from blackjax.types import ArrayLike, PRNGKey
-from blackjax.util import generate_unit_vector, pytree_size
+import blackjax.mcmc.metrics as metrics
+import jax.numpy as jnp
+from blackjax.util import pytree_size
 
-__all__ = ["MCLMCInfo", "init", "build_kernel", "as_top_level_api"]
+__all__ = ["LangevinInfo", "init", "build_kernel", "as_top_level_api"]
 
 
-class MCLMCInfo(NamedTuple):
+class LangevinInfo(NamedTuple):
     """
-    Additional information on the MCLMC transition.
+    Additional information on the Langevin transition.
 
     logdensity
-        The log-density of the distribution at the current step of the MCLMC chain.
+        The log-density of the distribution at the current step of the Langevin chain.
     kinetic_change
         The difference in kinetic energy between the current and previous step.
     energy_change
@@ -46,34 +47,30 @@ class MCLMCInfo(NamedTuple):
     energy_change: float
 
 
-def init(position: ArrayLike, logdensity_fn, rng_key):
-    if pytree_size(position) < 2:
-        raise ValueError(
-            "The target distribution must have more than 1 dimension for MCLMC."
-        )
+def init(position: ArrayLike, logdensity_fn, metric, rng_key):
+    
     l, g = jax.value_and_grad(logdensity_fn)(position)
 
     return IntegratorState(
         position=position,
-        momentum=generate_unit_vector(rng_key, position),
+        momentum = metric.sample_momentum(rng_key, position),
         logdensity=l,
         logdensity_grad=g,
     )
 
 
 def build_kernel(
-    logdensity_fn,
-    inverse_mass_matrix,
-    integrator,
-    desired_energy_var_max_ratio=jnp.inf,
-    desired_energy_var=5e-4,
-):
+        logdensity_fn, 
+        inverse_mass_matrix, 
+        integrator,
+        desired_energy_var_max_ratio=jnp.inf,
+        desired_energy_var=5e-4,):
     """Build a HMC kernel.
 
     Parameters
     ----------
     integrator
-        The symplectic integrator to use to integrate the Hamiltonian dynamics.
+        The symplectic integrator to use to integrate the Langevin dynamics.
     L
         the momentum decoherence rate.
     step_size
@@ -87,27 +84,39 @@ def build_kernel(
 
     """
 
-    step = with_isokinetic_maruyama(
-        integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
-    )
+    metric = metrics.default_metric(inverse_mass_matrix)
+    step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy,inverse_mass_matrix)
 
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
-    ) -> tuple[IntegratorState, MCLMCInfo]:
-        (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
+    ) -> tuple[IntegratorState, LangevinInfo]:
+        (position, momentum, logdensity, logdensitygrad), (kinetic_change, energy_error) = step(
             state, step_size, L, rng_key
         )
 
-        energy_error = kinetic_change - logdensity + state.logdensity
+        # jax.debug.print("energy change {x}", x=energy_change)
+
+        
+        # kinetic_change = - momentum@momentum/2 + state.momentum@state.momentum/2
+        
+
+        # return IntegratorState(
+        #     position, momentum, logdensity, logdensitygrad
+        # ), LangevinInfo(
+        #     logdensity=logdensity,
+        #     energy_change=energy_change,
+        #     kinetic_change=kinetic_change
+        # )
 
         eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
         ndims = pytree_size(position)
+        # jax.debug.print("diagnostics {x}", x=(eev_max_per_dim, jnp.abs(energy_error), jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim)))
 
         new_state, new_info = jax.lax.cond(
-            energy_error > jnp.sqrt(ndims * eev_max_per_dim),
+            jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim),
             lambda: (
                 state,
-                MCLMCInfo(
+                LangevinInfo(
                     logdensity=state.logdensity,
                     energy_change=0.0,
                     kinetic_change=0.0,
@@ -115,7 +124,7 @@ def build_kernel(
             ),
             lambda: (
                 IntegratorState(position, momentum, logdensity, logdensitygrad),
-                MCLMCInfo(
+                LangevinInfo(
                     logdensity=logdensity,
                     energy_change=energy_error,
                     kinetic_change=kinetic_change,
@@ -132,65 +141,34 @@ def as_top_level_api(
     logdensity_fn: Callable,
     L,
     step_size,
-    integrator=isokinetic_mclachlan,
+    integrator=velocity_verlet,
     inverse_mass_matrix=1.0,
     desired_energy_var_max_ratio=jnp.inf,
+    desired_energy_var=5e-4,
 ) -> SamplingAlgorithm:
-    """The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
+    """The general Langevin kernel builder (:meth:`blackjax.mcmc.langevin.build_kernel`, alias `blackjax.langevin.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
     parameters at initialization time, we provide a helper function that
     specializes the general kernel.
 
     We also add the general kernel and state generator as an attribute to this class so
-    users only need to pass `blackjax.mclmc` to SMC, adaptation, etc. algorithms.
+    users only need to pass `blackjax.langevin` to SMC, adaptation, etc. algorithms.
 
-    Examples
-    --------
 
-    A new mclmc kernel can be initialized and used with the following code:
 
-    .. code::
-
-        mclmc = blackjax.mcmc.mclmc.mclmc(
-            logdensity_fn=logdensity_fn,
-            L=L,
-            step_size=step_size
-        )
-        state = mclmc.init(position)
-        new_state, info = mclmc.step(rng_key, state)
-
-    Kernels are not jit-compiled by default so you will need to do it manually:
-
-    .. code::
-
-        step = jax.jit(mclmc.step)
-        new_state, info = step(rng_key, state)
-
-    Parameters
-    ----------
-    logdensity_fn
-        The log-density function we wish to draw samples from.
-    L
-        the momentum decoherence rate
-    step_size
-        step size of the integrator
-    integrator
-        an integrator. We recommend using the default here.
-
-    Returns
-    -------
-    A ``SamplingAlgorithm``.
     """
 
     kernel = build_kernel(
-        logdensity_fn,
-        inverse_mass_matrix,
+        logdensity_fn, 
+        inverse_mass_matrix, 
         integrator,
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
-    )
+        desired_energy_var=desired_energy_var,
+        )
+    metric = metrics.default_metric(inverse_mass_matrix)
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
-        return init(position, logdensity_fn, rng_key)
+        return init(position, logdensity_fn, metric, rng_key)
 
     def update_fn(rng_key, state):
         return kernel(rng_key, state, L, step_size)

@@ -136,6 +136,8 @@ def build_kernel(
 
         position, logdensity, logdensity_grad = state
         momentum = metric.sample_momentum(key_momentum, position)
+        # import jax.numpy as jnp
+        # jax.debug.print("momentum nan? {x}",x=jnp.any(jnp.isnan(momentum)))
 
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
@@ -299,7 +301,9 @@ def hmc_proposal(
         proposal_energy = hmc_energy_fn(state)
         new_energy = hmc_energy_fn(end_state)
         delta_energy = safe_energy_diff(proposal_energy, new_energy)
+        # jax.debug.print("delta_energy {x}",x=delta_energy)
         is_diverging = -delta_energy > divergence_threshold
+        # jax.debug.print("is_diverging {x}",x=is_diverging)
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
 

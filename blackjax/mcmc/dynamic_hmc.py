@@ -101,6 +101,10 @@ def build_kernel(
             inverse_mass_matrix,
             num_integration_steps,
         )
+
+        # jax.debug.print("logdensity {x}", x=hmc_proposal.logdensity)
+        # jax.debug.print("acceptance {x}", x=info)
+
         next_random_arg = next_random_arg_fn(state.random_generator_arg)
         return (
             DynamicHMCState(

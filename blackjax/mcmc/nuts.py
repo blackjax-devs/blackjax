@@ -120,6 +120,7 @@ def build_kernel(
     ) -> tuple[hmc.HMCState, NUTSInfo]:
         """Generate a new sample with the NUTS kernel."""
 
+
         metric = metrics.default_metric(inverse_mass_matrix)
         symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
         proposal_generator = iterative_nuts_proposal(
@@ -142,6 +143,9 @@ def build_kernel(
         proposal = hmc.HMCState(
             proposal.position, proposal.logdensity, proposal.logdensity_grad
         )
+        # jax.debug.print("step {x}",x=info.acceptance_rate)
+        # jax.debug.print("num steps {x}",x=info.num_integration_steps)
+        # jax.debug.print("step size {x}",x=step_size)
         return proposal, info
 
     return kernel
