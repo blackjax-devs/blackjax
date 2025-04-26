@@ -44,12 +44,14 @@ def nan_reject(nonans, old, new):
 def build_kernel(logdensity_fn):
     """MCLMC kernel (with nan rejection)"""
 
-    kernel = mclmc.build_kernel(
-        logdensity_fn=logdensity_fn, integrator=isokinetic_velocity_verlet
-    )
+    # kernel = mclmc.build_kernel(
+    #     logdensity_fn=logdensity_fn, integrator=isokinetic_velocity_verlet
+    # )
 
     def sequential_kernel(key, state, adap):
-        new_state, info = kernel(key, state, adap.L, adap.step_size)
+        new_state, info = mclmc.build_kernel(
+        logdensity_fn=logdensity_fn, integrator=isokinetic_velocity_verlet, inverse_mass_matrix=adap.inverse_mass_matrix
+            )(key, state, adap.L, adap.step_size)
 
         # reject the new state if there were nans
         nonans = no_nans(new_state)

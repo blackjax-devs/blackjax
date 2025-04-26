@@ -432,29 +432,29 @@ def run_eca(
         step_size = jnp.zeros((num_steps,))
 
         def step_while(a):
-            x, i, _ = a
+            x, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, observables, r_avg, r_max, step_size = a
 
             auxilliary_input = (xs[0][i], xs[1][i], xs[2][i])
 
             output, (info, pos) = step(x, auxilliary_input)
-            EEVPD.at[i].set(info.get("EEVPD"))
-            EEVPD_wanted.at[i].set(info.get("EEVPD_wanted"))
-            L.at[i].set(info.get("L"))
-            entropy.at[i].set(info.get("entropy"))
-            equi_diag.at[i].set(info.get("equi_diag"))
-            equi_full.at[i].set(info.get("equi_full"))
-            observables.at[i].set(info.get("observables"))
-            r_avg.at[i].set(info.get("r_avg"))
-            r_max.at[i].set(info.get("r_max"))
-            step_size.at[i].set(info.get("step_size"))
+            new_EEVPD = EEVPD.at[i].set(info.get("EEVPD"))
+            new_EEVPD_wanted = EEVPD_wanted.at[i].set(info.get("EEVPD_wanted"))
+            new_L = L.at[i].set(info.get("L"))
+            new_entropy = entropy.at[i].set(info.get("entropy"))
+            new_equi_diag = equi_diag.at[i].set(info.get("equi_diag"))
+            new_equi_full = equi_full.at[i].set(info.get("equi_full"))
+            new_observables = observables.at[i].set(info.get("observables"))
+            new_r_avg = r_avg.at[i].set(info.get("r_avg"))
+            new_r_max = r_max.at[i].set(info.get("r_max"))
+            new_step_size = step_size.at[i].set(info.get("step_size"))
 
-            return (output, i + 1, info.get("while_cond"))
+            return (output, i + 1, info.get("while_cond"), new_EEVPD, new_EEVPD_wanted, new_L, new_entropy, new_equi_diag, new_equi_full, new_observables, new_r_avg, new_r_max, new_step_size)
 
         if early_stop:
-            final_state_all, i, _ = lax.while_loop(
+            final_state_all, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, observables, r_avg, r_max, step_size = lax.while_loop(
                 lambda a: ((a[1] < num_steps) & a[2]),
                 step_while,
-                (initial_state_all, 0, True),
+                (initial_state_all, 0, True, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, observables, r_avg, r_max, step_size),
             )
             steps_done = i
             info_history = {
