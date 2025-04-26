@@ -58,7 +58,7 @@ Module Contents
 
 .. py:function:: init(position: blackjax.types.ArrayLike, logdensity_fn, rng_key)
 
-.. py:function:: build_kernel(logdensity_fn, inverse_mass_matrix, integrator)
+.. py:function:: build_kernel(logdensity_fn, inverse_mass_matrix, integrator, desired_energy_var_max_ratio=jnp.inf, desired_energy_var=0.0005)
 
    Build a HMC kernel.
 
@@ -71,7 +71,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, L, step_size, integrator=isokinetic_mclachlan, inverse_mass_matrix=1.0) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, L, step_size, integrator=isokinetic_mclachlan, inverse_mass_matrix=1.0, desired_energy_var_max_ratio=jnp.inf) -> blackjax.base.SamplingAlgorithm
 
    The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
    cumbersome to manipulate. Since most users only need to specify the kernel

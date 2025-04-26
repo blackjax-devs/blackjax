@@ -16,32 +16,29 @@
     document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
     document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
   </script>
-  <!--
-    this give us a css class that will be invisible only if js is disabled
-  -->
-  <noscript>
-    <style>
-      .pst-js-only { display: none !important; }
-
-    </style>
-  </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
-    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=a3416100" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
     <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
   
-  <!-- So that users can add custom icons -->
-  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
 
     <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
     <script src="../_static/doctools.js?v=9bcbadda"></script>
@@ -55,7 +52,6 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g7e4241f" />
   </head>
   
   
@@ -71,8 +67,19 @@
     <i class="fa-solid fa-arrow-up"></i>Back to top</button>
 
   
-  <dialog id="pst-search-dialog">
-    
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
 <form class="bd-search d-flex align-items-center"
       action="../search.html"
       method="get">
@@ -80,6 +87,7 @@
   <input type="search"
          class="form-control"
          name="q"
+         id="search-input"
          placeholder="Search..."
          aria-label="Search..."
          autocomplete="off"
@@ -87,8 +95,8 @@
          autocapitalize="off"
          spellcheck="false"/>
   <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
-</form>
-  </dialog>
+</form></div>
+  </div>
 
   <div class="pst-async-banner-revealer d-none">
   <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
@@ -104,8 +112,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
-      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+      <div class="bd-sidebar-primary bd-sidebar">
         
 
   
@@ -135,17 +142,21 @@
     
     
     <img src="../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
-    <img src="../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+    <script>document.write(`<img src="../_static/blackjax.png" class="logo__image only-dark" alt=" - Home"/>`);</script>
   
   
 </a></div>
         <div class="sidebar-primary-item">
 
-<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
- <i class="fa-solid fa-magnifying-glass"></i>
- <span class="search-button__default-text">Search</span>
- <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
-</button></div>
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
         <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
@@ -256,14 +267,9 @@
   
   
   <div class="sidebar-primary-items__end sidebar-primary__section">
-      <div class="sidebar-primary-item">
-<div id="ethical-ad-placement"
-      class="flat"
-      data-ea-publisher="readthedocs"
-      data-ea-type="readthedocs-sidebar"
-      data-ea-manual="true">
-</div></div>
   </div>
+  
+  <div id="rtd-footer-container"></div>
 
 
       </div>
@@ -327,16 +333,24 @@
 
 
 
-<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
-  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
-  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
-  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
-</button>
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
 
 
-<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
-</button>
+  </button>
+`);
+</script>
 <button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <span class="fa-solid fa-list"></span>
 </button>
@@ -409,19 +423,19 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
     Optimized (vendor) Blas libraries are not found.
     Falls back to netlib Blas library which has worse performance.
     A better performance should be easily gained by switching
     Blas library.
   if self._calc_info(blas):
-/opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
+/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
     Blas (http://www.netlib.org/blas/) libraries not found.
     Directories to search for the libraries can be specified in the
     numpy/distutils/site.cfg file (section [blas]) or by setting
     the BLAS environment variable.
   if self._calc_info(blas):
-/opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
+/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
     Blas (http://www.netlib.org/blas/) sources not found.
     Directories to search for the sources can be specified in the
     numpy/distutils/site.cfg file (section [blas_src]) or by setting
@@ -487,7 +501,7 @@
 <span class="ne">----&gt; </span><span class="mi">1</span> <span class="n">logdensity_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">y_vv</span><span class="p">,),</span> <span class="n">total_logdensity</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;NUMBA&quot;</span><span class="p">)</span>
 <span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/compile/function/__init__.py:317,</span> in <span class="ni">function</span><span class="nt">(inputs, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/compile/function/__init__.py:317,</span> in <span class="ni">function</span><span class="nt">(inputs, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input)</span>
 <span class="g g-Whitespace">    </span><span class="mi">311</span>     <span class="n">fn</span> <span class="o">=</span> <span class="n">orig_function</span><span class="p">(</span>
 <span class="g g-Whitespace">    </span><span class="mi">312</span>         <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">accept_inplace</span><span class="o">=</span><span class="n">accept_inplace</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span>
 <span class="g g-Whitespace">    </span><span class="mi">313</span>     <span class="p">)</span>
@@ -511,13 +525,12 @@
 <span class="g g-Whitespace">    </span><span class="mi">331</span>     <span class="p">)</span>
 <span class="g g-Whitespace">    </span><span class="mi">332</span> <span class="k">return</span> <span class="n">fn</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/compile/function/pfunc.py:367,</span> in <span class="ni">pfunc</span><span class="nt">(params, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input, output_keys, fgraph)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/compile/function/pfunc.py:367,</span> in <span class="ni">pfunc</span><span class="nt">(params, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input, output_keys, fgraph)</span>
 <span class="g g-Whitespace">    </span><span class="mi">353</span>     <span class="n">profile</span> <span class="o">=</span> <span class="n">ProfileStats</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">profile</span><span class="p">)</span>
 <span class="g g-Whitespace">    </span><span class="mi">355</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">cloned_outputs</span> <span class="o">=</span> <span class="n">construct_pfunc_ins_and_outs</span><span class="p">(</span>
 <span class="g g-Whitespace">    </span><span class="mi">356</span>     <span class="n">params</span><span class="p">,</span>
 <span class="g g-Whitespace">    </span><span class="mi">357</span>     <span class="n">outputs</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">364</span>     <span class="n">fgraph</span><span class="o">=</span><span class="n">fgraph</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>    <span class="mi">364</span>     <span class="n">fgraph</span><span class="o">=</span><span class="n">fgraph</span><span class="p">,</span>
 <span class="g g-Whitespace">    </span><span class="mi">365</span> <span class="p">)</span>
 <span class="ne">--&gt; </span><span class="mi">367</span> <span class="k">return</span> <span class="n">orig_function</span><span class="p">(</span>
 <span class="g g-Whitespace">    </span><span class="mi">368</span>     <span class="n">inputs</span><span class="p">,</span>
@@ -531,19 +544,18 @@
 <span class="g g-Whitespace">    </span><span class="mi">376</span>     <span class="n">fgraph</span><span class="o">=</span><span class="n">fgraph</span><span class="p">,</span>
 <span class="g g-Whitespace">    </span><span class="mi">377</span> <span class="p">)</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/compile/function/types.py:1815,</span> in <span class="ni">orig_function</span><span class="nt">(inputs, outputs, mode, accept_inplace, name, profile, on_unused_input, output_keys, fgraph)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/compile/function/types.py:1815,</span> in <span class="ni">orig_function</span><span class="nt">(inputs, outputs, mode, accept_inplace, name, profile, on_unused_input, output_keys, fgraph)</span>
 <span class="g g-Whitespace">   </span><span class="mi">1803</span>     <span class="n">m</span> <span class="o">=</span> <span class="n">Maker</span><span class="p">(</span>
 <span class="g g-Whitespace">   </span><span class="mi">1804</span>         <span class="n">inputs</span><span class="p">,</span>
 <span class="g g-Whitespace">   </span><span class="mi">1805</span>         <span class="n">outputs</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1812</span>         <span class="n">fgraph</span><span class="o">=</span><span class="n">fgraph</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>   <span class="mi">1812</span>         <span class="n">fgraph</span><span class="o">=</span><span class="n">fgraph</span><span class="p">,</span>
 <span class="g g-Whitespace">   </span><span class="mi">1813</span>     <span class="p">)</span>
 <span class="g g-Whitespace">   </span><span class="mi">1814</span>     <span class="k">with</span> <span class="n">config</span><span class="o">.</span><span class="n">change_flags</span><span class="p">(</span><span class="n">compute_test_value</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">):</span>
 <span class="ne">-&gt; </span><span class="mi">1815</span>         <span class="n">fn</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span>
 <span class="g g-Whitespace">   </span><span class="mi">1816</span> <span class="k">finally</span><span class="p">:</span>
 <span class="g g-Whitespace">   </span><span class="mi">1817</span>     <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/compile/function/types.py:1708,</span> in <span class="ni">FunctionMaker.create</span><span class="nt">(self, input_storage, trustme, storage_map)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/compile/function/types.py:1708,</span> in <span class="ni">FunctionMaker.create</span><span class="nt">(self, input_storage, trustme, storage_map)</span>
 <span class="g g-Whitespace">   </span><span class="mi">1705</span> <span class="n">start_import_time</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">link</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">cmodule</span><span class="o">.</span><span class="n">import_time</span>
 <span class="g g-Whitespace">   </span><span class="mi">1707</span> <span class="k">with</span> <span class="n">config</span><span class="o">.</span><span class="n">change_flags</span><span class="p">(</span><span class="n">traceback__limit</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">traceback__compile_limit</span><span class="p">):</span>
 <span class="ne">-&gt; </span><span class="mi">1708</span>     <span class="n">_fn</span><span class="p">,</span> <span class="n">_i</span><span class="p">,</span> <span class="n">_o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linker</span><span class="o">.</span><span class="n">make_thunk</span><span class="p">(</span>
@@ -552,12 +564,11 @@
 <span class="g g-Whitespace">   </span><span class="mi">1712</span> <span class="n">end_linker</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
 <span class="g g-Whitespace">   </span><span class="mi">1714</span> <span class="n">linker_time</span> <span class="o">=</span> <span class="n">end_linker</span> <span class="o">-</span> <span class="n">start_linker</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/link/basic.py:254,</span> in <span class="ni">LocalLinker.make_thunk</span><span class="nt">(self, input_storage, output_storage, storage_map, **kwargs)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/link/basic.py:254,</span> in <span class="ni">LocalLinker.make_thunk</span><span class="nt">(self, input_storage, output_storage, storage_map, **kwargs)</span>
 <span class="g g-Whitespace">    </span><span class="mi">247</span> <span class="k">def</span><span class="w"> </span><span class="nf">make_thunk</span><span class="p">(</span>
 <span class="g g-Whitespace">    </span><span class="mi">248</span>     <span class="bp">self</span><span class="p">,</span>
 <span class="g g-Whitespace">    </span><span class="mi">249</span>     <span class="n">input_storage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;InputStorageType&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">252</span>     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>    <span class="mi">252</span>     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="g g-Whitespace">    </span><span class="mi">253</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="s2">&quot;BasicThunkType&quot;</span><span class="p">,</span> <span class="s2">&quot;InputStorageType&quot;</span><span class="p">,</span> <span class="s2">&quot;OutputStorageType&quot;</span><span class="p">]:</span>
 <span class="ne">--&gt; </span><span class="mi">254</span>     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_all</span><span class="p">(</span>
 <span class="g g-Whitespace">    </span><span class="mi">255</span>         <span class="n">input_storage</span><span class="o">=</span><span class="n">input_storage</span><span class="p">,</span>
@@ -565,7 +576,7 @@
 <span class="g g-Whitespace">    </span><span class="mi">257</span>         <span class="n">storage_map</span><span class="o">=</span><span class="n">storage_map</span><span class="p">,</span>
 <span class="g g-Whitespace">    </span><span class="mi">258</span>     <span class="p">)[:</span><span class="mi">3</span><span class="p">]</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/link/basic.py:697,</span> in <span class="ni">JITLinker.make_all</span><span class="nt">(self, input_storage, output_storage, storage_map)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/link/basic.py:697,</span> in <span class="ni">JITLinker.make_all</span><span class="nt">(self, input_storage, output_storage, storage_map)</span>
 <span class="g g-Whitespace">    </span><span class="mi">694</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">storage_map</span><span class="p">:</span>
 <span class="g g-Whitespace">    </span><span class="mi">695</span>     <span class="n">compute_map</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span><span class="o">.</span><span class="n">owner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>
 <span class="ne">--&gt; </span><span class="mi">697</span> <span class="n">thunks</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">jit_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_jitable_thunk</span><span class="p">(</span>
@@ -574,7 +585,7 @@
 <span class="g g-Whitespace">    </span><span class="mi">701</span> <span class="n">computed</span><span class="p">,</span> <span class="n">last_user</span> <span class="o">=</span> <span class="n">gc_helper</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
 <span class="g g-Whitespace">    </span><span class="mi">703</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_gc</span><span class="p">:</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/link/basic.py:647,</span> in <span class="ni">JITLinker.create_jitable_thunk</span><span class="nt">(self, compute_map, order, input_storage, output_storage, storage_map)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/link/basic.py:647,</span> in <span class="ni">JITLinker.create_jitable_thunk</span><span class="nt">(self, compute_map, order, input_storage, output_storage, storage_map)</span>
 <span class="g g-Whitespace">    </span><span class="mi">644</span> <span class="c1"># This is a bit hackish, but we only return one of the output nodes</span>
 <span class="g g-Whitespace">    </span><span class="mi">645</span> <span class="n">output_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">owner</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fgraph</span><span class="o">.</span><span class="n">outputs</span> <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">owner</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">][:</span><span class="mi">1</span><span class="p">]</span>
 <span class="ne">--&gt; </span><span class="mi">647</span> <span class="n">converted_fgraph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fgraph_convert</span><span class="p">(</span>
@@ -587,12 +598,12 @@
 <span class="g g-Whitespace">    </span><span class="mi">655</span> <span class="n">thunk_inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_thunk_inputs</span><span class="p">(</span><span class="n">storage_map</span><span class="p">)</span>
 <span class="g g-Whitespace">    </span><span class="mi">657</span> <span class="n">thunks</span> <span class="o">=</span> <span class="p">[]</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/aesara/link/numba/linker.py:25,</span> in <span class="ni">NumbaLinker.fgraph_convert</span><span class="nt">(self, fgraph, **kwargs)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/link/numba/linker.py:25,</span> in <span class="ni">NumbaLinker.fgraph_convert</span><span class="nt">(self, fgraph, **kwargs)</span>
 <span class="g g-Whitespace">     </span><span class="mi">24</span> <span class="k">def</span><span class="w"> </span><span class="nf">fgraph_convert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fgraph</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
 <span class="ne">---&gt; </span><span class="mi">25</span>     <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.link.numba.dispatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">numba_funcify</span>
 <span class="g g-Whitespace">     </span><span class="mi">27</span>     <span class="k">return</span> <span class="n">numba_funcify</span><span class="p">(</span><span class="n">fgraph</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.11.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.11</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="n">link</span><span class="o">/</span><span class="n">numba</span><span class="o">/</span><span class="n">dispatch</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">2</span>
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.11.12</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.11</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="n">link</span><span class="o">/</span><span class="n">numba</span><span class="o">/</span><span class="n">dispatch</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">2</span>
 <span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># isort: off</span>
 <span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.link.numba.dispatch.basic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
 <span class="g g-Whitespace">      </span><span class="mi">3</span>     <span class="n">numba_funcify</span><span class="p">,</span>
@@ -602,7 +613,7 @@
 <span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="c1"># Load dispatch specializations</span>
 <span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="kn">import</span><span class="w"> </span><span class="nn">aesara.link.numba.dispatch.scalar</span>
 
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.11.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.11</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="n">link</span><span class="o">/</span><span class="n">numba</span><span class="o">/</span><span class="n">dispatch</span><span class="o">/</span><span class="n">basic</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">198</span>
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.11.12</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.11</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="n">link</span><span class="o">/</span><span class="n">numba</span><span class="o">/</span><span class="n">dispatch</span><span class="o">/</span><span class="n">basic</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">198</span>
 <span class="g g-Whitespace">    </span><span class="mi">192</span>             <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="kc">False</span>
 <span class="g g-Whitespace">    </span><span class="mi">195</span> <span class="n">enable_slice_boxing</span><span class="p">()</span>
 <span class="ne">--&gt; </span><span class="mi">198</span> <span class="nd">@generated_jit</span>
@@ -610,7 +621,7 @@
 <span class="g g-Whitespace">    </span><span class="mi">200</span>     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">numba</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Number</span><span class="p">,</span> <span class="n">numba</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Boolean</span><span class="p">)):</span>
 <span class="g g-Whitespace">    </span><span class="mi">201</span>         <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
 
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.11/x64/lib/python3.11/site-packages/numba/core/decorators.py:221,</span> in <span class="ni">_jit.&lt;locals&gt;.wrapper</span><span class="nt">(func)</span>
+<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/numba/core/decorators.py:221,</span> in <span class="ni">_jit.&lt;locals&gt;.wrapper</span><span class="nt">(func)</span>
 <span class="g g-Whitespace">    </span><span class="mi">219</span> <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">DISABLE_JIT</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">target</span> <span class="o">==</span> <span class="s1">&#39;npyufunc&#39;</span><span class="p">:</span>
 <span class="g g-Whitespace">    </span><span class="mi">220</span>     <span class="k">return</span> <span class="n">func</span>
 <span class="ne">--&gt; </span><span class="mi">221</span> <span class="n">disp</span> <span class="o">=</span> <span class="n">dispatcher</span><span class="p">(</span><span class="n">py_func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span> <span class="nb">locals</span><span class="o">=</span><span class="nb">locals</span><span class="p">,</span>
@@ -771,8 +782,7 @@
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
   <div class="sidebar-secondary-item">
@@ -832,8 +842,8 @@ By The Blackjax developers
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+  <script src="../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
 
   <footer class="bd-footer">
   </footer>

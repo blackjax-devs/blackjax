@@ -1,0 +1,109 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/nbclient/client.py", line 1319, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+from oryx.core.ppl import joint_sample
+
+bnn = mlp([50, 50], num_classes)
+rng_key, init_key = jax.random.split(rng_key)
+initial_weights = joint_sample(bnn)(init_key, jnp.ones(num_features))
+
+print(initial_weights.keys())
+------------------
+
+
+[31m---------------------------------------------------------------------------[39m
+[31mAttributeError[39m                            Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[7][39m[32m, line 5[39m
+[32m      3[39m bnn = mlp([[32m50[39m, [32m50[39m], num_classes)
+[32m      4[39m rng_key, init_key = jax.random.split(rng_key)
+[32m----> [39m[32m5[39m initial_weights = [43mjoint_sample[49m[43m([49m[43mbnn[49m[43m)[49m[43m([49m[43minit_key[49m[43m,[49m[43m [49m[43mjnp[49m[43m.[49m[43mones[49m[43m([49m[43mnum_features[49m[43m)[49m[43m)[49m
+[32m      7[39m [38;5;28mprint[39m(initial_weights.keys())
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:768[39m, in [36mreap.<locals>.wrapped[39m[34m(*args, **kwargs)[39m
+[32m    767[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mwrapped[39m(*args, **kwargs):
+[32m--> [39m[32m768[39m   [38;5;28;01mreturn[39;00m [43mcall_and_reap[49m[43m([49m
+[32m    769[39m [43m      [49m[43mf[49m[43m,[49m
+[32m    770[39m [43m      [49m[43mtag[49m[43m=[49m[43mtag[49m[43m,[49m
+[32m    771[39m [43m      [49m[43mallowlist[49m[43m=[49m[43mallowlist[49m[43m,[49m
+[32m    772[39m [43m      [49m[43mblocklist[49m[43m=[49m[43mblocklist[49m[43m,[49m
+[32m    773[39m [43m      [49m[43mexclusive[49m[43m=[49m[43mexclusive[49m[43m)[49m[43m([49m[43m*[49m[43margs[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mkwargs[49m[43m)[49m[[32m1[39m]
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:703[39m, in [36mcall_and_reap.<locals>.wrapped[39m[34m(*args, **kwargs)[39m
+[32m    702[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mwrapped[39m(*args, **kwargs):
+[32m--> [39m[32m703[39m   out, reaps, preds = [43m_call_and_reap[49m[43m([49m
+[32m    704[39m [43m      [49m[43mf[49m[43m,[49m
+[32m    705[39m [43m      [49m[43mtag[49m[43m=[49m[43mtag[49m[43m,[49m
+[32m    706[39m [43m      [49m[43mallowlist[49m[43m=[49m[43mallowlist[49m[43m,[49m
+[32m    707[39m [43m      [49m[43mblocklist[49m[43m=[49m[43mblocklist[49m[43m,[49m
+[32m    708[39m [43m      [49m[43mexclusive[49m[43m=[49m[43mexclusive[49m[43m,[49m
+[32m    709[39m [43m  [49m[43m)[49m[43m([49m[43m*[49m[43margs[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mkwargs[49m[43m)[49m
+[32m    711[39m   [38;5;28;01mdef[39;00m[38;5;250m [39m[34mselect_from_pred[39m(pred, value):
+[32m    712[39m     [38;5;28;01mif[39;00m pred [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m:
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:739[39m, in [36m_call_and_reap.<locals>.wrapped[39m[34m(*args, **kwargs)[39m
+[32m    737[39m flat_fun, out_tree = api_util.flatten_fun_nokwargs(fun, in_tree)
+[32m    738[39m flat_fun = reap_function(flat_fun, settings, [38;5;28;01mFalse[39;00m)
+[32m--> [39m[32m739[39m out_flat, reaps, preds = [43mflat_fun[49m[43m.[49m[43mcall_wrapped[49m[43m([49m[43mflat_args[49m[43m)[49m
+[32m    740[39m [38;5;28;01mreturn[39;00m tree_util.tree_unflatten(out_tree(), out_flat), reaps, preds
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/linear_util.py:211[39m, in [36mWrappedFun.call_wrapped[39m[34m(self, *args, **kwargs)[39m
+[32m    209[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mcall_wrapped[39m([38;5;28mself[39m, *args, **kwargs):
+[32m    210[39m [38;5;250m  [39m[33;03m"""Calls the transformed function"""[39;00m
+[32m--> [39m[32m211[39m   [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[43m.[49m[43mf_transformed[49m[43m([49m[43m*[49m[43margs[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mkwargs[49m[43m)[49m
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/linear_util.py:245[39m, in [36mtransformation.<locals>.gen2[39m[34m(f, *args, **kwargs)[39m
+[32m    243[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mgen2[39m(f, *args, **kwargs):
+[32m    244[39m   gen_inst = gen(*args, **kwargs)
+[32m--> [39m[32m245[39m   args_, kwargs_ = [38;5;28;43mnext[39;49m[43m([49m[43mgen_inst[49m[43m)[49m
+[32m    246[39m   [38;5;28;01mreturn[39;00m gen_inst.send(f(*args_, **kwargs_))
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:646[39m, in [36mreap_function[39m[34m(settings, return_metadata, args)[39m
+[32m    644[39m [38;5;250m[39m[33;03m"""A function transformation that returns reap values and predicates."""[39;00m
+[32m    645[39m context = ReapContext(settings, {})
+[32m--> [39m[32m646[39m [43m[49m[38;5;28;43;01mwith[39;49;00m[43m [49m[43mharvest_trace[49m[43m([49m[43mcontext[49m[43m)[49m[43m:[49m
+[32m    647[39m [43m  [49m[43mout_values[49m[43m [49m[43m=[49m[43m [49m[38;5;28;43;01myield[39;49;00m[43m [49m[43margs[49m[43m,[49m[43m [49m[43m{[49m[43m}[49m
+[32m    648[39m [43m  [49m[43mreap_values[49m[43m [49m[43m=[49m[43m [49m[43mtree_util[49m[43m.[49m[43mtree_map[49m[43m([49m[38;5;28;43;01mlambda[39;49;00m[43m [49m[43mx[49m[43m:[49m[43m [49m[43mx[49m[43m.[49m[43mvalue[49m[43m,[49m[43m [49m[43mcontext[49m[43m.[49m[43mreaps[49m[43m)[49m
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/contextlib.py:137[39m, in [36m_GeneratorContextManager.__enter__[39m[34m(self)[39m
+[32m    135[39m [38;5;28;01mdel[39;00m [38;5;28mself[39m.args, [38;5;28mself[39m.kwds, [38;5;28mself[39m.func
+[32m    136[39m [38;5;28;01mtry[39;00m:
+[32m--> [39m[32m137[39m     [38;5;28;01mreturn[39;00m [38;5;28mnext[39m([38;5;28mself[39m.gen)
+[32m    138[39m [38;5;28;01mexcept[39;00m [38;5;167;01mStopIteration[39;00m:
+[32m    139[39m     [38;5;28;01mraise[39;00m [38;5;167;01mRuntimeError[39;00m([33m"[39m[33mgenerator didn[39m[33m'[39m[33mt yield[39m[33m"[39m) [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;28;01mNone[39;00m
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:1232[39m, in [36mharvest_trace[39m[34m(context)[39m
+[32m   1230[39m [38;5;28;01mwith[39;00m jax_core.take_current_trace() [38;5;28;01mas[39;00m parent_trace:
+[32m   1231[39m   trace = HarvestTrace(parent_trace, context)
+[32m-> [39m[32m1232[39m [43m  [49m[38;5;28;43;01mwith[39;49;00m[43m [49m[43mjax_core[49m[43m.[49m[43mset_current_trace[49m[43m([49m[43mtrace[49m[43m)[49m[43m:[49m
+[32m   1233[39m [43m    [49m[38;5;28;43;01myield[39;49;00m
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/core.py:1155[39m, in [36mSetCurrentTraceContextManager.__enter__[39m[34m(self)[39m
+[32m   1153[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34m__enter__[39m([38;5;28mself[39m):
+[32m   1154[39m   [38;5;28mself[39m.prev = trace_ctx.trace
+[32m-> [39m[32m1155[39m   [43mtrace_ctx[49m[43m.[49m[43mset_trace[49m[43m([49m[38;5;28;43mself[39;49m[43m.[49m[43mtrace[49m[43m)[49m
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/core.py:1117[39m, in [36mTracingContext.set_trace[39m[34m(self, trace)[39m
+[32m   1115[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mset_trace[39m([38;5;28mself[39m, trace):
+[32m   1116[39m   [38;5;28mself[39m.trace = trace
+[32m-> [39m[32m1117[39m   ts = [43mtrace[49m[43m.[49m[43m_weakref[49m [38;5;28;01mif[39;00m trace [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m [38;5;28;01melse[39;00m [38;5;28;01mNone[39;00m
+[32m   1118[39m   config.trace_state.set_local(ts)
+
+[31mAttributeError[39m: 'HarvestTrace' object has no attribute '_weakref'
+
