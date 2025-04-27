@@ -6,7 +6,7 @@ flax
 ipython
 jax>=0.4.25
 jaxlib>=0.4.25
-jaxopt
+jaxopt<=0.8.3
 jupytext
 myst_nb>=1.0.0
 numba
