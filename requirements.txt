@@ -1,4 +1,5 @@
 -e ./
+arviz
 chex>=0.1.83
 pre-commit
 pytest

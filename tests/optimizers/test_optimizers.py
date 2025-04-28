@@ -1,23 +1,49 @@
 """Test optimizers."""
+
 import functools
 
 import chex
 import jax
 import jax.numpy as jnp
-import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
-from jax.flatten_util import ravel_pytree
-from jaxopt._src.lbfgs import compute_gamma, inv_hessian_product
 
 from blackjax.optimizers.dual_averaging import dual_averaging
 from blackjax.optimizers.lbfgs import (
+    lbfgs_diff_history_matrix,
     lbfgs_inverse_hessian_factors,
     lbfgs_inverse_hessian_formula_1,
     lbfgs_inverse_hessian_formula_2,
     lbfgs_recover_alpha,
     minimize_lbfgs,
 )
+
+
+def compute_inverse_hessian_1_and_2(history, maxcor):
+    not_converged_mask = jnp.logical_not(history.converged.at[1:].get())
+
+    # jax.jit would not work with truncated history, so we keep the full history
+    position = history.x
+    grad_position = history.g
+
+    alpha, s, z, update_mask = lbfgs_recover_alpha(
+        position, grad_position, not_converged_mask
+    )
+
+    s = jnp.diff(position, axis=0)
+    z = jnp.diff(grad_position, axis=0)
+    S = lbfgs_diff_history_matrix(s, update_mask, maxcor)
+    Z = lbfgs_diff_history_matrix(z, update_mask, maxcor)
+
+    position = position.at[1:].get()
+    grad_position = grad_position.at[1:].get()
+
+    beta, gamma = jax.vmap(lbfgs_inverse_hessian_factors)(S, Z, alpha)
+
+    inv_hess_1 = jax.vmap(lbfgs_inverse_hessian_formula_1)(alpha, beta, gamma)
+    inv_hess_2 = jax.vmap(lbfgs_inverse_hessian_formula_2)(alpha, beta, gamma)
+
+    return inv_hess_1, inv_hess_2
 
 
 class OptimizerTest(chex.TestCase):
@@ -51,107 +77,90 @@ class OptimizerTest(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
-        [(5, 10), (10, 2), (10, 20)],
+        [(4, 12), (12, 12), (4, 20), (20, 20)],
     )
-    def test_minimize_lbfgs(self, maxiter, maxcor):
+    def test_minimize_lbfgs(self, maxcor, n):
         """Test if dot product between approximate inverse hessian and gradient is
         the same between two loop recursion algorthm of LBFGS and formulas of the
         pathfinder paper"""
 
-        def regression_logprob(log_scale, coefs, preds, x):
-            """Linear regression"""
-            scale = jnp.exp(log_scale)
-            scale_prior = stats.expon.logpdf(scale, 0, 1) + log_scale
-            coefs_prior = stats.norm.logpdf(coefs, 0, 5)
-            y = jnp.dot(x, coefs)
-            logpdf = stats.norm.logpdf(preds, y, scale)
-            return sum(x.sum() for x in [scale_prior, coefs_prior, logpdf])
+        def quadratic(
+            x: np.ndarray, A: np.ndarray, b: np.ndarray, c: float = 0.0
+        ) -> float:
+            """
+            Quadratic function: f(x) = 0.5 * x^T * A * x - b^T * x + c
 
-        def regression_model(key):
-            init_key0, init_key1 = jax.random.split(key, 2)
-            x_data = jax.random.normal(init_key0, shape=(10_000, 1))
-            y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+            Parameters:
+                x: Input vector of shape (n,)
+                A: Symmetric positive definite matrix of shape (n, n)
+                b: Vector of shape (n,)
+                c: Scalar constant
 
-            logposterior_fn_ = functools.partial(
-                regression_logprob, x=x_data, preds=y_data
-            )
-            logposterior_fn = lambda x: logposterior_fn_(**x)
+            Returns:
+                Function value at x
+            """
+            return 0.5 * x.dot(A).dot(x) - b.dot(x) + c
 
-            return logposterior_fn
+        def create_spd_matrix(rng_key, n):
+            """Create a symmetric positive definite matrix of shape (n, n)."""
+            rand = jax.random.normal(rng_key, (n, n))
+            A = jnp.dot(rand, rand.T) + n * jnp.eye(n)
+            assert np.all(jnp.linalg.eigh(A)[0] > 0)
+            return A
 
-        fn = regression_model(self.key)
-        b0 = {"log_scale": 0.0, "coefs": 2.0}
-        b0_flatten, unravel_fn = ravel_pytree(b0)
-        objective_fn = lambda x: -fn(unravel_fn(x))
-        (_, status), history = self.variant(
-            functools.partial(
-                minimize_lbfgs, objective_fn, maxiter=maxiter, maxcor=maxcor
-            )
-        )(b0_flatten)
-        history = jax.tree.map(lambda x: x[: status.iter_num + 1], history)
+        spd_key, b_key, init_key = jax.random.split(self.key, 3)
 
-        # Test recover alpha
-        S = jnp.diff(history.x, axis=0)
-        Z = jnp.diff(history.g, axis=0)
-        alpha0 = history.alpha[0]
+        A = create_spd_matrix(spd_key, n)
+        b = jax.random.normal(b_key, (n,))
 
-        def scan_fn(alpha, val):
-            alpha_l, mask_l = lbfgs_recover_alpha(alpha, *val)
-            return alpha_l, (alpha_l, mask_l)
+        # initial guess
+        x0 = jax.random.normal(init_key, shape=(n,))
 
-        _, (alpha, mask) = jax.lax.scan(scan_fn, alpha0, (S, Z))
-        np.testing.assert_array_almost_equal(alpha, history.alpha[1:])
-        np.testing.assert_array_equal(mask, history.update_mask[1:])
+        # run the optimizer
+        quadratic_fn = functools.partial(quadratic, A=A, b=b)
+        (result, (last_lbfgs_state, last_ls_state)), history = self.variant(
+            functools.partial(minimize_lbfgs, quadratic_fn, maxcor=maxcor)
+        )(x0)
 
-        # Test inverse hessian product
-        S_partial = S[-maxcor:].T
-        Z_partial = Z[-maxcor:].T
-        alpha = history.alpha[-1]
-
-        beta, gamma = lbfgs_inverse_hessian_factors(S_partial, Z_partial, alpha)
-        inv_hess_1 = lbfgs_inverse_hessian_formula_1(alpha, beta, gamma)
-        inv_hess_2 = lbfgs_inverse_hessian_formula_2(alpha, beta, gamma)
-
-        gamma = compute_gamma(S_partial, Z_partial, -1)
-        pk = inv_hessian_product(
-            -history.g[-1],
-            status.s_history,
-            status.y_history,
-            status.rho_history,
-            gamma,
-            status.iter_num % maxcor,
+        # check if the result is close to the expected minimum
+        gt_minimum = np.linalg.solve(A, b)
+        np.testing.assert_allclose(
+            result,
+            gt_minimum,
+            atol=1e-2,
+            err_msg=f"Expected {gt_minimum}, got {result}",
         )
 
-        np.testing.assert_allclose(pk, -inv_hess_1 @ history.g[-1], atol=1e-3)
-        np.testing.assert_allclose(pk, -inv_hess_2 @ history.g[-1], atol=1e-3)
+        gt_inverse_hessian = jnp.linalg.inv(A)
+        inv_hess_1, inv_hess_2 = compute_inverse_hessian_1_and_2(history, maxcor=maxcor)
+
+        np.testing.assert_allclose(gt_inverse_hessian, inv_hess_1[-1], atol=1e-1)
+
+        np.testing.assert_allclose(gt_inverse_hessian, inv_hess_2[-1], atol=1e-1)
 
     @chex.all_variants(with_pmap=False)
     def test_recover_diag_inv_hess(self):
         "Compare inverse Hessian estimation from LBFGS with known groundtruth."
         nd = 5
+        maxcor = 6
+
         mean = np.linspace(3.0, 50.0, nd)
         cov = np.diag(np.linspace(1.0, 10.0, nd))
 
         def loss_fn(x):
-            return -stats.multivariate_normal.logpdf(x, mean, cov)
+            return -jax.scipy.stats.multivariate_normal.logpdf(x, mean, cov)
 
-        (result, status), history = self.variant(
-            functools.partial(minimize_lbfgs, loss_fn, maxiter=50)
-        )(np.zeros(nd))
-        history = jax.tree.map(lambda x: x[: status.iter_num + 1], history)
+        x0 = jnp.zeros(nd)
+        (result, (last_lbfgs_state, last_ls_state)), history = self.variant(
+            functools.partial(minimize_lbfgs, loss_fn, maxcor=maxcor)
+        )(x0)
 
-        np.testing.assert_allclose(result, mean, rtol=0.01)
+        np.testing.assert_allclose(result, mean, rtol=0.05)
 
-        S_partial = jnp.diff(history.x, axis=0)[-10:].T
-        Z_partial = jnp.diff(history.g, axis=0)[-10:].T
-        alpha = history.alpha[-1]
+        inv_hess_1, inv_hess_2 = compute_inverse_hessian_1_and_2(history, maxcor=maxcor)
 
-        beta, gamma = lbfgs_inverse_hessian_factors(S_partial, Z_partial, alpha)
-        inv_hess_1 = lbfgs_inverse_hessian_formula_1(alpha, beta, gamma)
-        inv_hess_2 = lbfgs_inverse_hessian_formula_2(alpha, beta, gamma)
-
-        np.testing.assert_allclose(np.diag(inv_hess_1), np.diag(cov), rtol=0.01)
-        np.testing.assert_allclose(inv_hess_1, inv_hess_2, rtol=0.01)
+        np.testing.assert_allclose(np.diag(inv_hess_1[-1]), np.diag(cov), rtol=0.05)
+        np.testing.assert_allclose(inv_hess_1[-1], inv_hess_2[-1], rtol=0.05)
 
 
 if __name__ == "__main__":

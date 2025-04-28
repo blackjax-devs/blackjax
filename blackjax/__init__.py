@@ -45,7 +45,7 @@ from .vi import meanfield_vi as _meanfield_vi
 from .vi import pathfinder as _pathfinder
 from .vi import schrodinger_follmer as _schrodinger_follmer
 from .vi import svgd as _svgd
-from .vi.pathfinder import PathFinderAlgorithm
+from .vi.pathfinder import MultiPathfinderAlgorithm, multi_pathfinder
 
 """
 The above three classes exist as a backwards compatible way of exposing both the high level, differentiable
@@ -81,10 +81,12 @@ class GenerateVariationalAPI:
 @dataclasses.dataclass
 class GeneratePathfinderAPI:
     differentiable: Callable
-    approximate: Callable
-    sample: Callable
+    init: Callable
+    pathfinder: Callable
+    logp: Callable
+    importance_sampling: Callable
 
-    def __call__(self, *args, **kwargs) -> PathFinderAlgorithm:
+    def __call__(self, *args, **kwargs) -> MultiPathfinderAlgorithm:
         return self.differentiable(*args, **kwargs)
 
 
@@ -153,7 +155,11 @@ schrodinger_follmer = GenerateVariationalAPI(
 )
 
 pathfinder = GeneratePathfinderAPI(
-    _pathfinder.as_top_level_api, _pathfinder.approximate, _pathfinder.sample
+    _pathfinder.as_top_level_api,
+    _pathfinder.init,
+    _pathfinder.pathfinder,
+    _pathfinder.logp,
+    _pathfinder.importance_sampling,
 )
 
 
@@ -169,4 +175,5 @@ __all__ = [
     "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
     "ess",  # diagnostics
     "rhat",
+    "multi_pathfinder",  # pathfinder
 ]

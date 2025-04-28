@@ -11,7 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""" All things resampling. """
+"""All things resampling."""
+
 from functools import partial
 from typing import Callable
 
@@ -22,9 +23,7 @@ from blackjax.types import Array, PRNGKey
 
 
 def _resampling_func(func, name, desc="", additional_params="") -> Callable:
-    # Decorator for resampling function
-
-    doc = f"""
+    doc = """
     {name} resampling. {desc}
 
     Parameters
@@ -40,8 +39,9 @@ def _resampling_func(func, name, desc="", additional_params="") -> Callable:
     -------
     idx: Array
         Array of size `num_samples` to use for resampling
-    """
-
+    """.format(
+        name=name, desc=desc
+    )
     func.__doc__ = doc
     return func
 
@@ -104,7 +104,6 @@ def residual(rng_key: PRNGKey, weights: Array, num_samples: int) -> Array:
     )
 
     # Permutation is needed due to the concatenation happening at the last step.
-    #
     # I am pretty sure we can use lower variance resamplers inside here instead
     # of multinomial, but I am not sure yet due to the loss of exchangeability,
     # and as a consequence I am playing it safe.
