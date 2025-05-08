@@ -21,10 +21,9 @@ from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 __all__ = ["init", "as_top_level_api", "build_kernel"]
 
 
-# TODO: review if this is the right thing to do
-def init(position, loglikelihood_fn, parameter_update_function):
-    state = init_base(position, loglikelihood_fn)
-    initial_parameter_value = parameter_update_function(
+def init(particles, loglikelihood_fn, parameter_update_fn):
+    state = init_base(particles, loglikelihood_fn)
+    initial_parameter_value = parameter_update_fn(
         state, NSInfo(state, state, state, None)
     )
     return StateWithParameterOverride(state, initial_parameter_value)
@@ -124,21 +123,21 @@ def as_top_level_api(
     SamplingAlgorithm
         A sampling algorithm object.
     """
-    delete_func = partial(delete_fn, n_delete=n_delete)
+    delete_fn = partial(delete_fn, n_delete=n_delete)
 
     kernel = build_kernel(
         logprior_fn,
         loglikelihood_fn,
-        delete_func,
+        delete_fn,
         mcmc_build_kernel,
         mcmc_init_fn,
         mcmc_parameter_update_fn,
         num_mcmc_steps,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key=None):
+    def init_fn(particles: ArrayLikeTree, rng_key=None):
         del rng_key
-        return init(position, loglikelihood_fn, mcmc_parameter_update_fn)
+        return init(particles, loglikelihood_fn, mcmc_parameter_update_fn)
 
     def step_fn(rng_key: PRNGKey, state):
         return kernel(rng_key, state)

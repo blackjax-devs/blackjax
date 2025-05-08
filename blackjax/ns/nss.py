@@ -86,9 +86,9 @@ def as_top_level_api(
         num_mcmc_steps,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key=None):
+    def init_fn(particles: ArrayLikeTree, rng_key=None):
         del rng_key
-        return init(position, loglikelihood_fn, mcmc_parameter_update_fn)
+        return init(particles, loglikelihood_fn, mcmc_parameter_update_fn)
 
     def step_fn(rng_key: PRNGKey, state):
         return kernel(rng_key, state)

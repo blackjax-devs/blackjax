@@ -21,9 +21,9 @@ class CRWInfo(NamedTuple):
     evals: Array
 
 
-def init(position: ArrayTree, logdensity_fn: Callable, loglikelihood: Array):
-    logdensity = logdensity_fn(position)
-    return CRWState(position, logdensity, loglikelihood)
+def init(particles: ArrayTree, logdensity_fn: Callable, loglikelihood: Array):
+    logdensity = logdensity_fn(particles)
+    return CRWState(particles, logdensity, loglikelihood)
 
 
 def build_constrained_random_walk(

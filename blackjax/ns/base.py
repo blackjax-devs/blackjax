@@ -128,8 +128,8 @@ def build_kernel(
 
         # Update the logX and logZ
         num_particles = len(state.particles)
-        n = jnp.arange(num_particles, num_particles - num_deleted, -1)
-        delta_log_xi = -1 / n
+        num_live = jnp.arange(num_particles, num_particles - num_deleted, -1)
+        delta_log_xi = -1 / num_live
         log_delta_xi = (
             state.logX + jnp.cumsum(delta_log_xi) + jnp.log(1 - jnp.exp(delta_log_xi))
         )
@@ -233,9 +233,9 @@ def as_top_level_api(
         num_mcmc_steps,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key=None):
+    def init_fn(particles: ArrayLikeTree, rng_key=None):
         del rng_key
-        return init(position, loglikelihood_fn)
+        return init(particles, loglikelihood_fn)
 
     def step_fn(rng_key: PRNGKey, state):
         return kernel(rng_key, state, mcmc_parameters)

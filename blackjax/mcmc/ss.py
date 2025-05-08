@@ -81,8 +81,8 @@ def build_kernel(
     return kernel
 
 
-def vertical_slice(rng, logdensity_fn, positions):
-    logdensity = logdensity_fn(positions)
+def vertical_slice(rng, logdensity_fn, position):
+    logdensity = logdensity_fn(position)
     return logdensity + jnp.log(jax.random.uniform(rng))
 
 
@@ -103,6 +103,7 @@ def horizontal_slice_proposal(key, x0, n, step, logdensity_fn, logdensity):
         within = carry[0]
         return within
 
+    # Expand
     _, _, l, count_l = jax.lax.while_loop(cond_fun, body_fun, (True, +1, w-1, 0))
     _, _, r, count_r = jax.lax.while_loop(cond_fun, body_fun, (True, -1, w,   0))
 
@@ -114,7 +115,6 @@ def horizontal_slice_proposal(key, x0, n, step, logdensity_fn, logdensity):
         key, subkey = jax.random.split(key)
         u = jax.random.uniform(subkey, minval=r, maxval=l)
         x = step(x0, n, u)
-        # check for nan values
 
         logdensity_x = logdensity_fn(x)
         within = logdensity_x >= logdensity
@@ -142,6 +142,8 @@ def hrss_as_top_level_api(
 
     def proposal_distribution(key):
         return jax.random.multivariate_normal(key, mean=jnp.zeros(cov.shape[0]), cov=cov)
-    def stepper(x0, n, t):
-        return x0 + t * n
+
+    def stepper(x, n, t):
+        return x + t * n
+
     kernel = build_kernel(proposal_distribution, stepper)
