@@ -29,7 +29,6 @@ __all__ = [
 class SliceState(NamedTuple):
     position: ArrayTree
     logdensity: ArrayTree
-    constraint: ArrayTree
 
 
 class SliceInfo(NamedTuple):
@@ -38,18 +37,14 @@ class SliceInfo(NamedTuple):
     s_steps: Array
     evals: Array
 
-def constraint_default(x):
-    return jnp.inf
-
-def init(position: ArrayTree, logdensity_fn: Callable, constraint_fn: Callable = constraint_default):
-    return SliceState(position, logdensity_fn(position), constraint_fn(position))
+def init(position: ArrayTree, logdensity_fn: Callable):
+    return SliceState(position, logdensity_fn(position))
 
 def build_kernel(
     proposal_distribution: Callable,
     stepper: Callable,
-    constraint: Callable,
 ) -> Callable:
-    """Instantiate a (constrained) hit and run slice sampling kernel.
+    """Instantiate a hit and run slice sampling kernel.
 
     Parameters
     ----------
@@ -77,7 +72,7 @@ def build_kernel(
         logprob0, _ = vertical_slice(vs_key, logdensity_fn, state.position)
         n = proposal_distribution(prop_key)
         slice_state, slice_info = horizontal_slice_proposal(
-            hs_key, state.position, n, stepper, logdensity_fn, logprob0, constraint
+            hs_key, state.position, n, stepper, logdensity_fn, logprob0
         )
 
         return slice_state, slice_info
@@ -91,7 +86,7 @@ def vertical_slice(rng, logdensity, positions):
     return logprob0, logprob
 
 
-def horizontal_slice_proposal(key, x0, n, step, logprob, logprob0, constraint):
+def horizontal_slice_proposal(key, x0, n, step, logprob, logprob0):
     # Initial bounds
     key, subkey = jax.random.split(key)
     w = jax.random.uniform(subkey)
@@ -100,7 +95,7 @@ def horizontal_slice_proposal(key, x0, n, step, logprob, logprob0, constraint):
         _, s, t, count = carry
         t += s
         x = step(x0, n, t)
-        within = jnp.logical_and(logprob(x) >= logprob0, jnp.all(constraint(x) > 0))
+        within = logprob(x) >= logprob0
         count += 1
         return within, s, t, count
 
@@ -113,7 +108,7 @@ def horizontal_slice_proposal(key, x0, n, step, logprob, logprob0, constraint):
 
     # Shrink
     def body_fun(carry):
-        _, l, r, _, _, _, key, count = carry
+        _, l, r, _, _, key, count = carry
         count += 1
 
         key, subkey = jax.random.split(key)
@@ -122,22 +117,21 @@ def horizontal_slice_proposal(key, x0, n, step, logprob, logprob0, constraint):
         # check for nan values
 
         logprob_x = logprob(x)
-        constraint_x = constraint(x)
-        within = jnp.logical_and(logprob_x >= logprob0, jnp.all(constraint_x > 0))
+        within = logprob_x >= logprob0
 
         l = jnp.where(u>0, u, l)
         r = jnp.where(u<0, u, r)
 
-        return within, l, r, x, logprob_x, constraint_x, key, count
+        return within, l, r, x, logprob_x, key, count
 
     def cond_fun(carry):
         within = carry[0]
         return ~within
 
-    carry = (False, l, r, x0, -jnp.inf, -jnp.inf, key, 0)
+    carry = (False, l, r, x0, -jnp.inf, key, 0)
     carry = jax.lax.while_loop(cond_fun, body_fun, carry)
-    _, l, r, x, logprob_x, constraint_x, key, count = carry
-    slice_state = SliceState(x, logprob_x, constraint_x)
+    _, l, r, x, logprob_x, key, count = carry
+    slice_state = SliceState(x, logprob_x)
     slice_info = SliceInfo(count_l, count_r, count, (count_l + count_r + count))
     return slice_state, slice_info
 

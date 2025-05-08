@@ -69,9 +69,7 @@ def as_top_level_api(
     def mcmc_step_fn(**kwargs):
         def proposal_distribution(key):
             return ravel_fn(predict_fn(key, **kwargs))
-        def constraint_fn(x):
-            return loglikelihood_fn(x) - kwargs["logL0"]
-        return build_slice_kernel(proposal_distribution, stepper, constraint_fn)
+        return build_slice_kernel(proposal_distribution, stepper)
 
     mcmc_init_fn = slice_init
 

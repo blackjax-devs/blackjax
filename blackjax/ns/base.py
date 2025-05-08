@@ -31,12 +31,10 @@ class NSInfo(NamedTuple):
     logL_birth: (Array)  # The hard likelihood threshold of each particle at birth
     update_info: NamedTuple
 
-
 def init(particles: ArrayLikeTree, loglikelihood_fn, logL_star=-jnp.inf) -> NSState:
-    num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
-    logL_birth = logL_star * jnp.ones(num_particles)
     logL = jax.vmap(loglikelihood_fn)(particles)
-    pid = jnp.arange(num_particles)
+    logL_birth = logL_star * jnp.ones_like(logL)
+    pid = jnp.arange(len(logL))
     return NSState(particles, logL, logL_birth, logL_star, pid)
 
 
@@ -81,18 +79,18 @@ def build_kernel(
         state: NSState,
         mcmc_parameters: dict,
     ) -> tuple[NSState, NSInfo]:
-        num_particles = jnp.shape(jax.tree_leaves(state.particles)[0])[0]
-        rng_key, delete_fn_key = jax.random.split(rng_key)
-        dead_logL, dead_idx, live_idx = delete_fn(delete_fn_key, state)
 
+        rng_key, delete_fn_key = jax.random.split(rng_key)
+
+        # Delete, and grab all the dead information
+        dead_logL, dead_idx, live_idx = delete_fn(delete_fn_key, state)
         logL0 = dead_logL.max()
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
         dead_logL = state.logL[dead_idx]
         dead_logL_birth = state.logL_birth[dead_idx]
 
-        new_pos = jax.tree.map(lambda x: x[live_idx], state.particles)
+        new_particles = jax.tree.map(lambda x: x[live_idx], state.particles)
 
-        mcmc_parameters["logL0"] = logL0
         kernel = mcmc_step_fn(**mcmc_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
 
@@ -100,7 +98,13 @@ def build_kernel(
             state = mcmc_init_fn(position, logprior_fn)
 
             def body_fn(state, rng_key):
-                new_state, info = kernel(rng_key, state, logprior_fn)
+
+                def logprob_fn(x):
+                    return jnp.where(loglikelihood_fn(x) > logL0, logprior_fn(x), -jnp.inf)
+
+                new_state, info = kernel(rng_key, state, logprob_fn)
+
+                #info.logL = loglikelihood_fn(new_state.position)
                 return new_state, info
 
             keys = jax.random.split(rng_key, num_mcmc_steps)
@@ -110,7 +114,7 @@ def build_kernel(
         sample_keys = jax.random.split(sample_key, dead_idx.shape[0])
 
         new_state, new_state_info = jax.vmap(num_mcmc_steps_kernel)(
-            sample_keys, new_pos
+            sample_keys, new_particles
         )
 
         logL_births = logL0 * jnp.ones(dead_idx.shape)
@@ -120,13 +124,15 @@ def build_kernel(
             state.particles,
             new_state.position,
         )
-        new_state_loglikelihood = new_state.constraint + logL0
+        #new_state_loglikelihood = new_state_info.logL
+        new_state_loglikelihood = loglikelihood_fn(new_state.position)
         logL = state.logL.at[dead_idx].set(new_state_loglikelihood)
         logL_birth = state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.logL.min()
         pid = state.pid.at[dead_idx].set(state.pid[live_idx])
 
         ndel = dead_idx.shape[0]
+        num_particles = jnp.shape(jax.tree_leaves(state.particles)[0])[0]
         n = jnp.arange(num_particles, num_particles - ndel, -1)
         delta_log_xi = -1 / n
         log_delta_xi = (
