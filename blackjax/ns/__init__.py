@@ -1,5 +1,6 @@
-from . import adaptive
+from . import adaptive, nss
 
 __all__ = [
     "adaptive",
+    "nss",
 ]
