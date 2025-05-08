@@ -34,7 +34,7 @@ def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
-    mcmc_step_fn: Callable,
+    mcmc_build_kernel: Callable,
     mcmc_init_fn: Callable,
     mcmc_parameter_update_fn: Callable,
     num_mcmc_steps: int,
@@ -50,9 +50,8 @@ def build_kernel(
         A function that computes the log likelihood.
     delete_fn : Callable
         Function that takes an array of log likelihoods and marks particles for deletion and updates.
-    mcmc_step_fn:
-        The initialisation of the transition kernel, should take as parameters.
-        kernel = mcmc_step_fn(**mcmc_parameter_update_fn())
+    mcmc_build_kernel:
+        A function that builds an mcmc kernel
     mcmc_init_fn
         A callable that initializes the inner kernel
     mcmc_parameter_update_fn : Callable[[NSState, NSInfo], Dict[str, ArrayTree]]
@@ -76,7 +75,7 @@ def build_kernel(
             logprior_fn,
             loglikelihood_fn,
             delete_fn,
-            mcmc_step_fn,
+            mcmc_build_kernel,
             mcmc_init_fn,
             num_mcmc_steps,
         )
@@ -95,7 +94,7 @@ def build_kernel(
 def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
-    mcmc_step_fn: Callable,
+    mcmc_build_kernel: Callable,
     mcmc_init_fn: Callable,
     mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
     num_mcmc_steps: int,
@@ -109,9 +108,8 @@ def as_top_level_api(
         A function that computes the log prior probability.
     loglikelihood_fn : Callable
         A function that computes the log likelihood.
-    mcmc_step_fn:
-        The initialisation of the transition kernel, should take as parameters.
-        kernel = mcmc_step_fn(logprior, loglikelihood, logL0 (likelihood threshold), **mcmc_parameter_update_fn())
+    mcmc_build_kernel:
+        A function that builds an mcmc kernel
     mcmc_init_fn
         A callable that initializes the inner kernel
     mcmc_parameter_update_fn : Callable[[NSState, NSInfo], Dict[str, ArrayTree]]
@@ -132,7 +130,7 @@ def as_top_level_api(
         logprior_fn,
         loglikelihood_fn,
         delete_func,
-        mcmc_step_fn,
+        mcmc_build_kernel,
         mcmc_init_fn,
         mcmc_parameter_update_fn,
         num_mcmc_steps,

@@ -66,7 +66,7 @@ def as_top_level_api(
     """
     delete_func = partial(delete_fn, n_delete=n_delete)
 
-    def mcmc_step_fn(**kwargs):
+    def mcmc_build_kernel(**kwargs):
         def proposal_distribution(key):
             return ravel_fn(predict_fn(key, **kwargs))
         return build_slice_kernel(proposal_distribution, stepper)
@@ -80,7 +80,7 @@ def as_top_level_api(
         logprior_fn,
         loglikelihood_fn,
         delete_func,
-        mcmc_step_fn,
+        mcmc_build_kernel,
         mcmc_init_fn,
         mcmc_parameter_update_fn,
         num_mcmc_steps,

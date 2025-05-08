@@ -42,7 +42,7 @@ def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
-    mcmc_step_fn: Callable,
+    mcmc_build_kernel: Callable,
     mcmc_init_fn: Callable,
     num_mcmc_steps: int,
 ) -> Callable:
@@ -58,9 +58,8 @@ def build_kernel(
         A function that computes the log likelihood.
     delete_fn : Callable
         Function that takes an array of log likelihoods and marks particles for deletion and updates.
-    mcmc_step_fn:
-        The initialisation of the transition kernel, should take as parameters.
-        kernel = mcmc_step_fn(logprior, loglikelihood, logL0 (likelihood threshold), **mcmc_parameter_update_fn())
+    mcmc_build_kernel:
+        A function that builds an mcmc kernel
     mcmc_init_fn
         A callable that initializes the inner kernel
     num_mcmc_steps: int
@@ -91,17 +90,15 @@ def build_kernel(
 
         new_particles = jax.tree.map(lambda x: x[live_idx], state.particles)
 
-        kernel = mcmc_step_fn(**mcmc_parameters)
+        kernel = mcmc_build_kernel(**mcmc_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
 
         def num_mcmc_steps_kernel(rng_key, position):
             state = mcmc_init_fn(position, logprior_fn)
 
             def body_fn(state, rng_key):
-
                 def logprob_fn(x):
                     return jnp.where(loglikelihood_fn(x) > logL0, logprior_fn(x), -jnp.inf)
-
                 new_state, info = kernel(rng_key, state, logprob_fn)
 
                 #info.logL = loglikelihood_fn(new_state.position)
@@ -200,7 +197,7 @@ def delete_fn(key, state, n_delete):
 def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
-    mcmc_step_fn: Callable,
+    mcmc_build_kernel: Callable,
     mcmc_init_fn: Callable,
     mcmc_parameters: dict,
     num_mcmc_steps: int,
@@ -214,9 +211,8 @@ def as_top_level_api(
         A function that computes the log prior probability.
     loglikelihood_fn : Callable
         A function that computes the log likelihood.
-    mcmc_step_fn:
-        The initialisation of the transition kernel, should take as parameters.
-        kernel = mcmc_step_fn(logprior, loglikelihood, logL0 (likelihood threshold), **mcmc_parameter_update_fn())
+    mcmc_build_kernel:
+        A function that builds an mcmc kernel
     mcmc_init_fn
         A callable that initializes the inner kernel
     num_mcmc_steps: int
@@ -235,7 +231,7 @@ def as_top_level_api(
         logprior_fn,
         loglikelihood_fn,
         delete_func,
-        mcmc_step_fn,
+        mcmc_build_kernel,
         mcmc_init_fn,
         num_mcmc_steps,
     )
