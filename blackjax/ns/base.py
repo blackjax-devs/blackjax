@@ -79,58 +79,56 @@ def build_kernel(
         mcmc_parameters: dict,
     ) -> tuple[NSState, NSInfo]:
 
-        rng_key, delete_fn_key = jax.random.split(rng_key)
-
         # Delete, and grab all the dead information
-        dead_logL, dead_idx, live_idx = delete_fn(delete_fn_key, state)
-        logL0 = dead_logL.max()
+        rng_key, delete_fn_key = jax.random.split(rng_key)
+        dead_idx, live_idx = delete_fn(delete_fn_key, state)
+
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
         dead_logL = state.logL[dead_idx]
         dead_logL_birth = state.logL_birth[dead_idx]
+        logL0 = dead_logL.max()
+        num_deleted = len(dead_idx)
 
-        new_particles = jax.tree.map(lambda x: x[live_idx], state.particles)
-
+        # Resample the live particles
         kernel = mcmc_build_kernel(**mcmc_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
 
-        def num_mcmc_steps_kernel(rng_key, position):
-            state = mcmc_init_fn(position, logprior_fn)
+        def logdensity_fn(x):
+            return jnp.where(loglikelihood_fn(x) > logL0, logprior_fn(x), -jnp.inf)
+
+        def num_mcmc_steps_kernel(rng_key, particles):
+            state = mcmc_init_fn(particles, logprior_fn)
 
             def body_fn(state, rng_key):
-                def logprob_fn(x):
-                    return jnp.where(loglikelihood_fn(x) > logL0, logprior_fn(x), -jnp.inf)
-                new_state, info = kernel(rng_key, state, logprob_fn)
-
-                #info.logL = loglikelihood_fn(new_state.position)
+                new_state, info = kernel(rng_key, state, logdensity_fn)
                 return new_state, info
 
             keys = jax.random.split(rng_key, num_mcmc_steps)
             last_state, info = jax.lax.scan(body_fn, state, keys)
             return last_state, info
 
-        sample_keys = jax.random.split(sample_key, dead_idx.shape[0])
-
+        new_particles = jax.tree.map(lambda x: x[live_idx], state.particles)
+        sample_keys = jax.random.split(sample_key, num_deleted)
         new_state, new_state_info = jax.vmap(num_mcmc_steps_kernel)(
             sample_keys, new_particles
         )
 
-        logL_births = logL0 * jnp.ones(dead_idx.shape)
-
+        # Update the particles
         particles = jax.tree_util.tree_map(
             lambda p, n: p.at[dead_idx].set(n),
             state.particles,
             new_state.position,
         )
-        #new_state_loglikelihood = new_state_info.logL
         new_state_loglikelihood = loglikelihood_fn(new_state.position)
         logL = state.logL.at[dead_idx].set(new_state_loglikelihood)
+        logL_births = logL0 * jnp.ones(num_deleted)
         logL_birth = state.logL_birth.at[dead_idx].set(logL_births)
         logL_star = state.logL.min()
         pid = state.pid.at[dead_idx].set(state.pid[live_idx])
 
-        ndel = dead_idx.shape[0]
-        num_particles = jnp.shape(jax.tree_leaves(state.particles)[0])[0]
-        n = jnp.arange(num_particles, num_particles - ndel, -1)
+        # Update the logX and logZ
+        num_particles = len(state.particles)
+        n = jnp.arange(num_particles, num_particles - num_deleted, -1)
         delta_log_xi = -1 / n
         log_delta_xi = (
             state.logX + jnp.cumsum(delta_log_xi) + jnp.log(1 - jnp.exp(delta_log_xi))
@@ -143,6 +141,7 @@ def build_kernel(
         )
         logZ_live = jax.scipy.special.logsumexp(logL) - jnp.log(num_particles) + logX
 
+        # Update the state
         new_state = NSState(
             particles,
             logL,
@@ -174,8 +173,6 @@ def delete_fn(key, state, n_delete):
 
     Returns:
     --------
-    dead_logL : jnp.ndarray
-        log likelihood threshold of live particles, sorted from low to high.
     dead_idx : jnp.ndarray
         Indices of particles to be deleted.
     live_idx : jnp.ndarray
@@ -186,12 +183,12 @@ def delete_fn(key, state, n_delete):
     weights = jnp.array(logL > -neg_dead_logL.min(), dtype=jnp.float32)
     live_idx = jax.random.choice(
         key,
-        weights.shape[0],
+        len(weights),
         shape=(n_delete,),
         p=weights / weights.sum(),
         replace=True,
     )
-    return -neg_dead_logL, dead_idx, live_idx
+    return dead_idx, live_idx
 
 
 def as_top_level_api(
