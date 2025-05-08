@@ -23,6 +23,7 @@ __all__ = [
     "SliceInfo",
     "init",
     "build_kernel",
+    "as_top_level_api",
 ]
 
 
@@ -135,3 +136,13 @@ def horizontal_slice_proposal(key, x0, n, step, logprob, logprob0):
     slice_info = SliceInfo(count_l, count_r, count, (count_l + count_r + count))
     return slice_state, slice_info
 
+def as_top_level_api(
+    logdensity_fn: Callable,
+    cov: Array,
+) -> Callable:
+
+    def proposal_distribution(key):
+        return jax.random.multivariate_normal(key, mean=jnp.zeros(cov.shape[0]), cov=cov)
+    def stepper(x0, n, t):
+        return x0 + t * n
+    kernel = build_kernel(proposal_distribution, stepper)
