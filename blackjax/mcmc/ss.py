@@ -23,7 +23,7 @@ __all__ = [
     "SliceInfo",
     "init",
     "build_kernel",
-    "as_top_level_api",
+    "hrss_as_top_level_api",
 ]
 
 
@@ -136,7 +136,7 @@ def horizontal_slice_proposal(key, x0, n, step, logprob, logprob0):
     slice_info = SliceInfo(count_l, count_r, count, (count_l + count_r + count))
     return slice_state, slice_info
 
-def as_top_level_api(
+def hrss_as_top_level_api(
     logdensity_fn: Callable,
     cov: Array,
 ) -> Callable:

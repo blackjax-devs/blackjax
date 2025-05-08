@@ -9,8 +9,8 @@ from blackjax import SamplingAlgorithm
 from blackjax.ns.adaptive import build_kernel, init
 from blackjax.types import ArrayLikeTree, PRNGKey
 from blackjax.smc.tuning.from_particles import particles_covariance_matrix
-from blackjax.mcmc.hr_slice import build_kernel as build_slice_kernel
-from blackjax.mcmc.hr_slice import init as slice_init
+from blackjax.mcmc.ss import build_kernel as build_slice_kernel
+from blackjax.mcmc.ss import init as slice_init
 
 __all__ = ["init", "as_top_level_api", "build_kernel"]
 
