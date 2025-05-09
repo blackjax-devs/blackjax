@@ -97,14 +97,12 @@ def build_kernel(
             return jnp.where(loglikelihood_fn(x) > logL0, logprior_fn(x), -jnp.inf)
 
         def num_mcmc_steps_kernel(rng_key, particles):
-            state = mcmc_init_fn(particles, logprior_fn)
-
             def body_fn(state, rng_key):
                 new_state, info = kernel(rng_key, state, logdensity_fn)
                 return new_state, info
-
+            init = mcmc_init_fn(particles, logprior_fn)
             keys = jax.random.split(rng_key, num_mcmc_steps)
-            last_state, info = jax.lax.scan(body_fn, state, keys)
+            last_state, info = jax.lax.scan(body_fn, init, keys)
             return last_state, info
 
         new_particles = jax.tree.map(lambda x: x[live_idx], state.particles)
@@ -119,7 +117,7 @@ def build_kernel(
             state.particles,
             new_state.position,
         )
-        new_state_loglikelihood = loglikelihood_fn(new_state.position)
+        new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
         logL = state.logL.at[dead_idx].set(new_state_loglikelihood)
         logL_births = logL0 * jnp.ones(num_deleted)
         logL_birth = state.logL_birth.at[dead_idx].set(logL_births)
@@ -127,7 +125,7 @@ def build_kernel(
         pid = state.pid.at[dead_idx].set(state.pid[live_idx])
 
         # Update the logX and logZ
-        num_particles = len(state.particles)
+        num_particles = len(state.logL)
         num_live = jnp.arange(num_particles, num_particles - num_deleted, -1)
         delta_log_xi = -1 / num_live
         log_delta_xi = (
