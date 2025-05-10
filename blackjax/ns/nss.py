@@ -13,29 +13,22 @@ from blackjax.types import ArrayLikeTree, PRNGKey
 from blackjax.smc.tuning.from_particles import particles_covariance_matrix, particles_as_rows
 from blackjax.mcmc.ss import build_kernel as build_slice_kernel
 from blackjax.mcmc.ss import init as slice_init
+from blackjax.mcmc.ss import default_stepper
 from blackjax.ns.utils import get_first_row
+from blackjax.mcmc.ss import default_proposal_distribution
 
-__all__ = ["init", "as_top_level_api", "build_kernel"]
-
-def default_stepper(x, n, t):
-    return jax.tree.map(lambda x, n: x + t * n, x, n)
+__all__ = ["init", "as_top_level_api"]
 
 def default_predict_fn(key, **kwargs):
     cov = kwargs["cov"]
     row = get_first_row(cov)
     _, unravel_fn = ravel_pytree(row)
     cov = particles_as_rows(cov) 
-
-    n = jax.random.multivariate_normal(
-        key, mean=jnp.zeros(cov.shape[0]), cov=cov
-    )
-    invcov = jnp.linalg.inv(cov)
-    norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
-    n = n / norm[..., None]
-
+    n = default_proposal_distribution(key, cov)
     return unravel_fn(n)
 
-def default_train_fn(state):
+
+def default_train_fn(state, info):
     cov = particles_covariance_matrix(state.particles)
     single_particle = get_first_row(state.particles)
     _, unravel_fn = ravel_pytree(single_particle)
@@ -79,9 +72,7 @@ def as_top_level_api(
         return build_slice_kernel(proposal_distribution, stepper)
 
     mcmc_init_fn = slice_init
-
-    def mcmc_parameter_update_fn(state, _):
-        return train_fn(state)
+    mcmc_parameter_update_fn = train_fn
 
     kernel = build_kernel(
         logprior_fn,

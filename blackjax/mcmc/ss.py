@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from typing import Callable, NamedTuple
+from functools import partial
 
 import jax
 import jax.numpy as jnp
@@ -135,15 +136,25 @@ def horizontal_slice_proposal(key, x0, n, step, logdensity_fn, logdensity):
     slice_info = SliceInfo(count_l, count_r, count, (count_l + count_r + count))
     return slice_state, slice_info
 
+
+def default_stepper(x, n, t):
+    return jax.tree.map(lambda x, n: x + t * n, x, n)
+
+
+def default_proposal_distribution(key, cov):
+    n = jax.random.multivariate_normal(
+        key, mean=jnp.zeros(cov.shape[0]), cov=cov
+    )
+    invcov = jnp.linalg.inv(cov)
+    norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
+    n = n / norm[..., None]
+    return n
+
+
 def hrss_as_top_level_api(
     logdensity_fn: Callable,
     cov: Array,
 ) -> Callable:
 
-    def proposal_distribution(key):
-        return jax.random.multivariate_normal(key, mean=jnp.zeros(cov.shape[0]), cov=cov)
-
-    def stepper(x, n, t):
-        return x + t * n
-
-    kernel = build_kernel(proposal_distribution, stepper)
+    proposal_distribution = partial(default_proposal_distribution, cov=cov)
+    kernel = build_kernel(proposal_distribution, default_stepper)
