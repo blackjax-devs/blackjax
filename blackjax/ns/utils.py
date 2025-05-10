@@ -169,5 +169,6 @@ def sample(rng_key, dead_map, n=1000):
     )
     return jax.tree_util.tree_map(lambda leaf: leaf[indices], dead_map.particles)
 
+
 def get_first_row(x):
     return jax.tree.map(lambda x: x[0], x)

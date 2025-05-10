@@ -11,12 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple
 from functools import partial
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
-
 from blackjax.types import Array, ArrayTree, PRNGKey
 
 __all__ = [
@@ -39,8 +38,10 @@ class SliceInfo(NamedTuple):
     s_steps: Array
     evals: Array
 
+
 def init(position: ArrayTree, logdensity_fn: Callable):
     return SliceState(position, logdensity_fn(position))
+
 
 def build_kernel(
     proposal_distribution: Callable,
@@ -66,9 +67,7 @@ def build_kernel(
     """
 
     def kernel(
-            rng_key: PRNGKey,
-            state: SliceState,
-            logdensity_fn: Callable
+        rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, vs_key, prop_key, hs_key = jax.random.split(rng_key, 4)
         logdensity = vertical_slice(vs_key, logdensity_fn, state.position)
@@ -105,8 +104,8 @@ def horizontal_slice_proposal(key, x0, n, step, logdensity_fn, logdensity):
         return within
 
     # Expand
-    _, _, l, count_l = jax.lax.while_loop(cond_fun, body_fun, (True, +1, w-1, 0))
-    _, _, r, count_r = jax.lax.while_loop(cond_fun, body_fun, (True, -1, w,   0))
+    _, _, l, count_l = jax.lax.while_loop(cond_fun, body_fun, (True, +1, w - 1, 0))
+    _, _, r, count_r = jax.lax.while_loop(cond_fun, body_fun, (True, -1, w, 0))
 
     # Shrink
     def body_fun(carry):
@@ -120,8 +119,8 @@ def horizontal_slice_proposal(key, x0, n, step, logdensity_fn, logdensity):
         logdensity_x = logdensity_fn(x)
         within = logdensity_x >= logdensity
 
-        l = jnp.where(u>0, u, l)
-        r = jnp.where(u<0, u, r)
+        l = jnp.where(u > 0, u, l)
+        r = jnp.where(u < 0, u, r)
 
         return within, l, r, x, logdensity_x, key, count
 
@@ -142,9 +141,7 @@ def default_stepper(x, n, t):
 
 
 def default_proposal_distribution(key, cov):
-    n = jax.random.multivariate_normal(
-        key, mean=jnp.zeros(cov.shape[0]), cov=cov
-    )
+    n = jax.random.multivariate_normal(key, mean=jnp.zeros(cov.shape[0]), cov=cov)
     invcov = jnp.linalg.inv(cov)
     norm = jnp.sqrt(jnp.einsum("...i,...ij,...j", n, invcov, n))
     n = n / norm[..., None]

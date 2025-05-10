@@ -4,6 +4,7 @@ A nested sampling outer kernel that updates its inner kernel parameters at each 
 
 Inner kernel is the 'mcmc kernel' (typically slice sampling, but could be anything)
 """
+
 from functools import partial
 from typing import Callable, Dict
 

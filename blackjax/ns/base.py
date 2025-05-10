@@ -14,7 +14,7 @@ class NSState(NamedTuple):
 
     particles: ArrayTree
     logL: Array  # The log-likelihood of the particles
-    logL_birth: (Array)  # The hard likelihood threshold of each particle at birth
+    logL_birth: Array  # The hard likelihood threshold of each particle at birth
     logL_star: float  # The current hard likelihood threshold
     pid: Array = Array  # particle ID
     logX: float = 0.0  # The current log-volume estiamte
@@ -27,8 +27,9 @@ class NSInfo(NamedTuple):
 
     particles: ArrayTree
     logL: Array  # The log-likelihood of the particles
-    logL_birth: (Array)  # The hard likelihood threshold of each particle at birth
+    logL_birth: Array  # The hard likelihood threshold of each particle at birth
     update_info: NamedTuple
+
 
 def init(particles: ArrayLikeTree, loglikelihood_fn, logL_star=-jnp.inf) -> NSState:
     logL = jax.vmap(loglikelihood_fn)(particles)
@@ -99,6 +100,7 @@ def build_kernel(
             def body_fn(state, rng_key):
                 new_state, info = kernel(rng_key, state, logdensity_fn)
                 return new_state, info
+
             init = mcmc_init_fn(particles, logprior_fn)
             keys = jax.random.split(rng_key, num_mcmc_steps)
             last_state, info = jax.lax.scan(body_fn, init, keys)

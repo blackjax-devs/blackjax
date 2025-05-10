@@ -11,18 +11,21 @@ from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel, init
 from blackjax.ns.base import NSInfo, NSState, delete_fn
 from blackjax.ns.utils import get_first_row
-from blackjax.smc.tuning.from_particles import (particles_as_rows,
-                                                particles_covariance_matrix)
+from blackjax.smc.tuning.from_particles import (
+    particles_as_rows,
+    particles_covariance_matrix,
+)
 from blackjax.types import ArrayLikeTree, PRNGKey
 from jax.flatten_util import ravel_pytree
 
 __all__ = ["init", "as_top_level_api"]
 
+
 def default_predict_fn(key, **kwargs):
     cov = kwargs["cov"]
     row = get_first_row(cov)
     _, unravel_fn = ravel_pytree(row)
-    cov = particles_as_rows(cov) 
+    cov = particles_as_rows(cov)
     n = default_proposal_distribution(key, cov)
     return unravel_fn(n)
 
@@ -68,6 +71,7 @@ def as_top_level_api(
     def mcmc_build_kernel(**kwargs):
         def proposal_distribution(key):
             return predict_fn(key, **kwargs)
+
         return build_slice_kernel(proposal_distribution, stepper)
 
     mcmc_init_fn = slice_init
