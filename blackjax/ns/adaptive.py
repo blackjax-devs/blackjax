@@ -21,10 +21,10 @@ from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 __all__ = ["init", "as_top_level_api", "build_kernel"]
 
 
-def init(particles, loglikelihood_fn, parameter_update_fn):
-    state = init_base(particles, loglikelihood_fn)
+def init(particles, loglikelihood_fn, logprior_fn, parameter_update_fn):
+    state = init_base(particles, loglikelihood_fn, logprior_fn)
     initial_parameter_value = parameter_update_fn(
-        state, NSInfo(state, state, state, None)
+        state, NSInfo(state, None, None, None, None)
     )
     return StateWithParameterOverride(state, initial_parameter_value)
 
@@ -137,7 +137,7 @@ def as_top_level_api(
 
     def init_fn(particles: ArrayLikeTree, rng_key=None):
         del rng_key
-        return init(particles, loglikelihood_fn, mcmc_parameter_update_fn)
+        return init(particles, loglikelihood_fn, logprior_fn, mcmc_parameter_update_fn)
 
     def step_fn(rng_key: PRNGKey, state):
         return kernel(rng_key, state)
