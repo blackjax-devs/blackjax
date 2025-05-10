@@ -1,7 +1,6 @@
 from typing import Callable, NamedTuple
 
 import jax
-
 from blackjax.mcmc.random_walk import build_additive_step
 from blackjax.mcmc.random_walk import init as init_rw
 from blackjax.types import Array, ArrayTree, PRNGKey

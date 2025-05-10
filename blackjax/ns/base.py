@@ -3,7 +3,6 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
-
 from blackjax import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 

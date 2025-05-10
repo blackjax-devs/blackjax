@@ -9,7 +9,6 @@ from typing import Callable, Dict
 
 import jax
 import jax.numpy as jnp
-
 from blackjax import SamplingAlgorithm
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import build_kernel as base_build_kernel

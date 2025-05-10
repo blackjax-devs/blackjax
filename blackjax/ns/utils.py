@@ -1,6 +1,5 @@
 import jax
 import jax.numpy as jnp
-
 from blackjax.ns.base import NSInfo
 
 

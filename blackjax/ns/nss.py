@@ -1,21 +1,20 @@
+import functools
+from functools import partial
+from typing import Callable
+
 import jax
 import jax.numpy as jnp
-from jax.flatten_util import ravel_pytree
-import functools
-
-from functools import partial
-from blackjax.ns.base import delete_fn
-from typing import Callable
-from blackjax.ns.base import NSInfo, NSState
 from blackjax import SamplingAlgorithm
-from blackjax.ns.adaptive import build_kernel, init
-from blackjax.types import ArrayLikeTree, PRNGKey
-from blackjax.smc.tuning.from_particles import particles_covariance_matrix, particles_as_rows
 from blackjax.mcmc.ss import build_kernel as build_slice_kernel
+from blackjax.mcmc.ss import default_proposal_distribution, default_stepper
 from blackjax.mcmc.ss import init as slice_init
-from blackjax.mcmc.ss import default_stepper
+from blackjax.ns.adaptive import build_kernel, init
+from blackjax.ns.base import NSInfo, NSState, delete_fn
 from blackjax.ns.utils import get_first_row
-from blackjax.mcmc.ss import default_proposal_distribution
+from blackjax.smc.tuning.from_particles import (particles_as_rows,
+                                                particles_covariance_matrix)
+from blackjax.types import ArrayLikeTree, PRNGKey
+from jax.flatten_util import ravel_pytree
 
 __all__ = ["init", "as_top_level_api"]
 
