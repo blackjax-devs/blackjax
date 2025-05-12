@@ -69,10 +69,7 @@ def as_top_level_api(
     delete_func = partial(delete_fn, n_delete=n_delete)
 
     def mcmc_build_kernel(**kwargs):
-        def proposal_distribution(key):
-            return predict_fn(key, **kwargs)
-
-        return build_slice_kernel(proposal_distribution, stepper)
+        return build_slice_kernel(partial(predict_fn, **kwargs), stepper)
 
     mcmc_init_fn = slice_init
     mcmc_parameter_update_fn = train_fn
