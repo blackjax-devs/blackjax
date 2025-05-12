@@ -34,24 +34,28 @@ def compute_nlive(info: NSInfo):
     nlive : jnp.array
         Number of live points at each contour.
     """
-    birth = info.loglikelihood_birth
-    death = info.loglikelihood
-    birth = jnp.where(jnp.isnan(birth), -jnp.inf, birth)
 
-    # Combine birth and death arrays
-    combined = jnp.concatenate(
-        [
-            jnp.column_stack((birth, jnp.ones_like(birth))),
-            jnp.column_stack((death, -jnp.ones_like(death))),
-        ]
+    birth_logL = info.loglikelihood_birth
+    death_logL = info.loglikelihood
+
+    birth_events = jnp.column_stack(
+        (birth_logL, jnp.ones_like(birth_logL, dtype=jnp.int32))
     )
-    sorted_indices = jnp.lexsort((combined[:, 1], combined[:, 0]))
-    sorted_combined = combined[sorted_indices]
-    # cumsum = jnp.cumsum(sorted_combined[:, 1])
-    cumsum = jnp.maximum(jnp.cumsum(sorted_combined[:, 1]), 0)
-
-    death_mask = sorted_combined[:, 1] == -1
-    nlive = cumsum[death_mask] + 1
+    death_events = jnp.column_stack(
+        (death_logL, -jnp.ones_like(death_logL, dtype=jnp.int32))
+    )
+    combined = jnp.concatenate([birth_events, death_events], axis=0)
+    logL_col = combined[:, 0]
+    n_col = combined[:, 1]
+    not_nan_key = ~jnp.isnan(logL_col)
+    logL_key = logL_col
+    n_key = n_col
+    sorted_indices = jnp.lexsort((n_key, logL_key, not_nan_key))
+    sorted_n_col = n_col[sorted_indices]
+    cumsum = jnp.cumsum(sorted_n_col)
+    cumsum = jnp.maximum(cumsum, 0)
+    death_mask_sorted = sorted_n_col == -1
+    nlive = cumsum[death_mask_sorted] + 1
 
     return nlive
 
@@ -124,7 +128,7 @@ def log_weights(key: jax.random.PRNGKey, dead: NSInfo, samples=100, beta=1.0):
     # sort by loglikelihood
     j = jnp.argsort(dead.loglikelihood)
     original_indices = jnp.arange(len(dead.loglikelihood))
-    dead = jax.tree_map(lambda x: x[j], dead)
+    dead = jax.tree.map(lambda x: x[j], dead)
     _, ldX = logX(key, dead, samples)
     ln_w = ldX + beta * dead.loglikelihood[..., jnp.newaxis]
     return ln_w[original_indices]
@@ -140,6 +144,7 @@ def finalise(state, dead):
                     state.sampler_state.particles,
                     state.sampler_state.loglikelihood,
                     state.sampler_state.loglikelihood_birth,
+                    state.sampler_state.logprior,
                     dead[-1].update_info,
                 )
             ]
@@ -167,7 +172,7 @@ def sample(rng_key, dead_map, n=1000):
         shape=(n,),
         replace=True,
     )
-    return jax.tree_util.tree_map(lambda leaf: leaf[indices], dead_map.particles)
+    return jax.tree.map(lambda leaf: leaf[indices], dead_map.particles)
 
 
 def get_first_row(x):
