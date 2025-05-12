@@ -20,7 +20,6 @@ def log1mexp(x):
         jnp.log1p(-jnp.exp(x)),
     )
 
-
 def compute_nlive(info: NSInfo):
     """
     Compute the effective number of live points at each death contour.
@@ -37,6 +36,7 @@ def compute_nlive(info: NSInfo):
     """
     birth = info.loglikelihood_birth
     death = info.loglikelihood
+    birth = jnp.where(jnp.isnan(birth), -jnp.inf, birth)
 
     # Combine birth and death arrays
     combined = jnp.concatenate(
