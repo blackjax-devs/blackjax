@@ -125,7 +125,7 @@ def as_top_level_api(
     """
     delete_fn = partial(delete_fn, n_delete=n_delete)
 
-    kernel = build_kernel(
+    step_fn = build_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
@@ -138,8 +138,5 @@ def as_top_level_api(
     def init_fn(particles: ArrayLikeTree, rng_key=None):
         del rng_key
         return init(particles, loglikelihood_fn, logprior_fn, mcmc_parameter_update_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state)
 
     return SamplingAlgorithm(init_fn, step_fn)
