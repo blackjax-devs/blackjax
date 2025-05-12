@@ -90,7 +90,7 @@ def build_kernel(
         dead_loglikelihood = state.loglikelihood[dead_idx]
         dead_loglikelihood_birth = state.loglikelihood_birth[dead_idx]
         dead_logprior = state.logprior[dead_idx]
-        loglikelihood0 = dead_loglikelihood.max()
+        loglikelihood_0 = dead_loglikelihood.max()
         num_deleted = len(dead_idx)
 
         # Resample the live particles
@@ -98,7 +98,7 @@ def build_kernel(
         rng_key, sample_key = jax.random.split(rng_key)
 
         def logdensity_fn(x):
-            return jnp.where(loglikelihood_fn(x) > loglikelihood0, logprior_fn(x), -jnp.inf)
+            return jnp.where(loglikelihood_fn(x) > loglikelihood_0, logprior_fn(x), -jnp.inf)
 
         def num_mcmc_steps_kernel(rng_key, particles):
             def body_fn(state, rng_key):
@@ -125,7 +125,7 @@ def build_kernel(
         new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
         new_state_logprior = jax.vmap(logprior_fn)(new_state.position)
         loglikelihood = state.loglikelihood.at[dead_idx].set(new_state_loglikelihood)
-        loglikelihood_births = loglikelihood0 * jnp.ones(num_deleted)
+        loglikelihood_births = loglikelihood_0 * jnp.ones(num_deleted)
         loglikelihood_birth = state.loglikelihood_birth.at[dead_idx].set(loglikelihood_births)
         loglikelihood_star = state.loglikelihood.min()
         logprior = state.logprior.at[dead_idx].set(new_state_logprior)
