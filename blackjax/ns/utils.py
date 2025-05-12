@@ -35,8 +35,8 @@ def compute_nlive(info: NSInfo):
     nlive : jnp.array
         Number of live points at each contour.
     """
-    birth = info.logL_birth
-    death = info.logL
+    birth = info.loglikelihood_birth
+    death = info.loglikelihood
 
     # Combine birth and death arrays
     combined = jnp.concatenate(
@@ -80,9 +80,9 @@ def logX(key: jax.random.PRNGKey, dead: NSInfo, samples=100):
         Logarithm of the difference in volume for each contour.
     """
     key, subkey = jax.random.split(key)
-    min_val = jnp.finfo(dead.logL.dtype).tiny
+    min_val = jnp.finfo(dead.loglikelihood.dtype).tiny
     r = jnp.log(
-        jax.random.uniform(subkey, shape=(dead.logL.shape[0], samples)).clip(
+        jax.random.uniform(subkey, shape=(dead.loglikelihood.shape[0], samples)).clip(
             min_val, 1 - min_val
         )
     )
@@ -121,12 +121,12 @@ def log_weights(key: jax.random.PRNGKey, dead: NSInfo, samples=100, beta=1.0):
     jnp.ndarray
         An array containing the log weights of the dead points.
     """
-    # sort by logL
-    j = jnp.argsort(dead.logL)
-    original_indices = jnp.arange(len(dead.logL))
+    # sort by loglikelihood
+    j = jnp.argsort(dead.loglikelihood)
+    original_indices = jnp.arange(len(dead.loglikelihood))
     dead = jax.tree_map(lambda x: x[j], dead)
     _, ldX = logX(key, dead, samples)
-    ln_w = ldX + beta * dead.logL[..., jnp.newaxis]
+    ln_w = ldX + beta * dead.loglikelihood[..., jnp.newaxis]
     return ln_w[original_indices]
 
 
@@ -138,8 +138,8 @@ def finalise(state, dead):
             + [
                 NSInfo(
                     state.sampler_state.particles,
-                    state.sampler_state.logL,
-                    state.sampler_state.logL_birth,
+                    state.sampler_state.loglikelihood,
+                    state.sampler_state.loglikelihood_birth,
                     dead[-1].update_info,
                 )
             ]
@@ -162,7 +162,7 @@ def sample(rng_key, dead_map, n=1000):
     logw = log_weights(rng_key, dead_map).mean(axis=-1)
     indices = jax.random.choice(
         rng_key,
-        dead_map.logL.shape[0],
+        dead_map.loglikelihood.shape[0],
         p=jnp.exp(logw.squeeze() - jnp.max(logw)),
         shape=(n,),
         replace=True,
