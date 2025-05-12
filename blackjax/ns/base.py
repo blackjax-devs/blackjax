@@ -15,7 +15,6 @@ class NSState(NamedTuple):
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
-    loglikelihood_star: float  # The current hard likelihood threshold
     logprior: Array # The log-prior density of the particles
     pid: Array = Array  # particle ID
     logX: float = 0.0  # The current log-volume estiamte
@@ -33,12 +32,12 @@ class NSInfo(NamedTuple):
     update_info: NamedTuple
 
 
-def init(particles: ArrayLikeTree, loglikelihood_fn, logprior_fn, loglikelihood_birth=-jnp.nan, loglikelihood_star=-jnp.inf) -> NSState:
+def init(particles: ArrayLikeTree, loglikelihood_fn, logprior_fn, loglikelihood_birth=-jnp.nan) -> NSState:
     loglikelihood = jax.vmap(loglikelihood_fn)(particles)
     loglikelihood_birth = loglikelihood_birth * jnp.ones_like(loglikelihood)
     logprior = jax.vmap(logprior_fn)(particles)
     pid = jnp.arange(len(loglikelihood))
-    return NSState(particles, loglikelihood, loglikelihood_birth, loglikelihood_star, logprior, pid)
+    return NSState(particles, loglikelihood, loglikelihood_birth, logprior, pid)
 
 
 def build_kernel(
@@ -127,7 +126,6 @@ def build_kernel(
         loglikelihood = state.loglikelihood.at[dead_idx].set(new_state_loglikelihood)
         loglikelihood_births = loglikelihood_0 * jnp.ones(num_deleted)
         loglikelihood_birth = state.loglikelihood_birth.at[dead_idx].set(loglikelihood_births)
-        loglikelihood_star = state.loglikelihood.min()
         logprior = state.logprior.at[dead_idx].set(new_state_logprior)
         pid = state.pid.at[dead_idx].set(state.pid[live_idx])
 
@@ -151,7 +149,6 @@ def build_kernel(
             particles,
             loglikelihood,
             loglikelihood_birth,
-            loglikelihood_star,
             logprior,
             pid,
             logX=logX,
