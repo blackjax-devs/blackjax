@@ -151,6 +151,7 @@ def as_top_level_api(
     mcmc_init_fn: Callable,
     mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
     num_mcmc_steps: int,
+    delete_fn: Callable,
     n_delete: int = 1,
 ) -> SamplingAlgorithm:
     """Creates an Adaptive Nested Sampling algorithm.

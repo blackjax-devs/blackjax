@@ -72,7 +72,7 @@ class NSState(NamedTuple):
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
-    logprior: Array # The log-prior density of the particles
+    logprior: Array  # The log-prior density of the particles
     pid: Array = Array  # particle ID
     logX: float = 0.0  # The current log-volume estiamte
     logZ_live: float = -jnp.inf  # The current evidence estimate
@@ -209,7 +209,9 @@ def build_kernel(
         dead_loglikelihood_birth = state.loglikelihood_birth[dead_idx]
         dead_logprior = state.logprior[dead_idx]
         loglikelihood_0 = dead_loglikelihood.max()
-        num_dead = len(dead_idx)
+
+        num_deleted = len(dead_idx)
+        num_updates = len(target_update_idx)
         num_evolve = len(start_mcmc_idx)
 
         # Resample the live particles
@@ -243,11 +245,12 @@ def build_kernel(
         )
         new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
         new_state_logprior = jax.vmap(logprior_fn)(new_state.position)
-        loglikelihood = state.loglikelihood.at[dead_idx].set(new_state_loglikelihood)
-        loglikelihood_births = loglikelihood_0 * jnp.ones(num_deleted)
-        loglikelihood_birth = state.loglikelihood_birth.at[dead_idx].set(loglikelihood_births)
-        logprior = state.logprior.at[dead_idx].set(new_state_logprior)
-        pid = state.pid.at[dead_idx].set(state.pid[live_idx])
+        loglikelihood = state.loglikelihood.at[target_update_idx].set(new_state_loglikelihood)
+
+        loglikelihood_births = loglikelihood_0 * jnp.ones(num_updates)
+        loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(loglikelihood_births)
+        logprior = state.logprior.at[target_update_idx].set(new_state_logprior)
+        pid = state.pid.at[target_update_idx].set(state.pid[start_mcmc_idx])
 
         # Update the logX and logZ
         num_particles = len(state.loglikelihood)
@@ -327,7 +330,7 @@ def delete_fn(
         loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32
     )
     start_mcmc_idx = jax.random.choice(
-        key,
+        rng_key,
         len(weights),
         shape=(n_delete,),
         p=weights / weights.sum(),
@@ -335,6 +338,51 @@ def delete_fn(
     )
     target_update_idx = dead_idx
     return dead_idx, target_update_idx, start_mcmc_idx
+
+def bi_directional_delete_fn(key, state, n_delete):
+    """Selects particles for deletion and MCMC initialization for full state regeneration.
+
+    This deletion strategy assumes the total number of particles (`N_total`) in the
+    `NSState` is exactly twice `n_delete` (i.e., `N_total = 2 * n_delete`).
+    It operates as follows:
+    1. The `n_delete` particles with the lowest log-likelihoods are marked as 'dead'.
+       These define `loglikelihood_0` and are reported in `NSInfo`.
+    2. All `N_total` particle slots are targeted for replacement.
+    3. The `n_delete` particles with the highest log-likelihoods (the 'live' set)
+       are each duplicated to serve as `N_total` starting points for MCMC evolution.
+
+    The `key` (PRNGKey) is unused by this deterministic selection strategy but is
+    included for interface compatibility.
+
+    Parameters
+    ----------
+    key
+        A JAX PRNG key (unused).
+    state
+        The current `NSState`. `len(state.loglikelihood)` must equal `2 * n_delete`.
+    n_delete
+        The number of lowest-likelihood particles to mark as dead.
+
+    Returns
+    -------
+    tuple[Array, Array, Array]
+        - dead_idx: Indices of the `n_delete` lowest-likelihood particles.
+        - target_update_idx: Indices of all `N_total` particles, for replacement.
+        - start_mcmc_idx: `N_total` MCMC starting indices, derived from duplicating
+          the `n_delete` highest-likelihood particles.
+    """
+    loglikelihood = state.loglikelihood
+    sorted_indices = jnp.argsort(loglikelihood)
+
+    dead_idx = sorted_indices[:n_delete]
+    live_idx = sorted_indices[n_delete:]
+
+    return (
+        dead_idx,
+        jnp.arange(len(loglikelihood)),
+        jnp.concatenate([live_idx, live_idx])
+    )
+
 
 
 def as_top_level_api(
@@ -344,6 +392,7 @@ def as_top_level_api(
     mcmc_init_fn: Callable,
     mcmc_parameters: dict,
     num_mcmc_steps: int,
+    delete_fn: Callable = delete_fn,
     n_delete: int = 1,
 ) -> SamplingAlgorithm:
     """Creates a Nested Sampling algorithm with fixed MCMC parameters.
