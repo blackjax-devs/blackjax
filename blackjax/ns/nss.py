@@ -45,6 +45,7 @@ def as_top_level_api(
     stepper: Callable = default_stepper,
     train_fn: Callable = default_train_fn,
     predict_fn: Callable = default_predict_fn,
+    delete_fn: Callable = delete_fn,
 ) -> SamplingAlgorithm:
     """Implements the a baseline Nested Slice Sampling kernel.
 

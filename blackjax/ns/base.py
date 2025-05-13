@@ -14,9 +14,11 @@ class NSState(NamedTuple):
 
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
-    loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
+    loglikelihood_birth: (
+        Array  # The hard likelihood threshold of each particle at birth
+    )
     loglikelihood_star: float  # The current hard likelihood threshold
-    logprior: Array # The log-prior density of the particles
+    logprior: Array  # The log-prior density of the particles
     pid: Array = Array  # particle ID
     logX: float = 0.0  # The current log-volume estiamte
     logZ_live: float = -jnp.inf  # The current evidence estimate
@@ -28,17 +30,27 @@ class NSInfo(NamedTuple):
 
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
-    loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
-    logprior: Array # The log-prior density of the particles
+    loglikelihood_birth: (
+        Array  # The hard likelihood threshold of each particle at birth
+    )
+    logprior: Array  # The log-prior density of the particles
     update_info: NamedTuple
 
 
-def init(particles: ArrayLikeTree, loglikelihood_fn, logprior_fn, loglikelihood_birth=-jnp.nan, loglikelihood_star=-jnp.inf) -> NSState:
+def init(
+    particles: ArrayLikeTree,
+    loglikelihood_fn,
+    logprior_fn,
+    loglikelihood_birth=-jnp.nan,
+    loglikelihood_star=-jnp.inf,
+) -> NSState:
     loglikelihood = jax.vmap(loglikelihood_fn)(particles)
     loglikelihood_birth = loglikelihood_birth * jnp.ones_like(loglikelihood)
     logprior = jax.vmap(logprior_fn)(particles)
     pid = jnp.arange(len(loglikelihood))
-    return NSState(particles, loglikelihood, loglikelihood_birth, loglikelihood_star, logprior, pid)
+    return NSState(
+        particles, loglikelihood, loglikelihood_birth, loglikelihood_star, logprior, pid
+    )
 
 
 def build_kernel(
@@ -81,24 +93,26 @@ def build_kernel(
         state: NSState,
         mcmc_parameters: dict,
     ) -> tuple[NSState, NSInfo]:
-
         # Delete, and grab all the dead information
         rng_key, delete_fn_key = jax.random.split(rng_key)
-        dead_idx, live_idx = delete_fn(delete_fn_key, state)
+        dead_idx, target_update_idx, start_mcmc_idx = delete_fn(delete_fn_key, state)
 
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
         dead_loglikelihood = state.loglikelihood[dead_idx]
         dead_loglikelihood_birth = state.loglikelihood_birth[dead_idx]
         dead_logprior = state.logprior[dead_idx]
         loglikelihood0 = dead_loglikelihood.max()
-        num_deleted = len(dead_idx)
+        num_dead = len(dead_idx)
+        num_evolve = len(start_mcmc_idx)
 
         # Resample the live particles
         kernel = mcmc_build_kernel(**mcmc_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
 
         def logdensity_fn(x):
-            return jnp.where(loglikelihood_fn(x) > loglikelihood0, logprior_fn(x), -jnp.inf)
+            return jnp.where(
+                loglikelihood_fn(x) > loglikelihood0, logprior_fn(x), -jnp.inf
+            )
 
         def num_mcmc_steps_kernel(rng_key, particles):
             def body_fn(state, rng_key):
@@ -110,30 +124,34 @@ def build_kernel(
             last_state, info = jax.lax.scan(body_fn, init, keys)
             return last_state, info
 
-        new_particles = jax.tree.map(lambda x: x[live_idx], state.particles)
-        sample_keys = jax.random.split(sample_key, num_deleted)
+        new_particles = jax.tree.map(lambda x: x[start_mcmc_idx], state.particles)
+        sample_keys = jax.random.split(sample_key, num_evolve)
         new_state, new_state_info = jax.vmap(num_mcmc_steps_kernel)(
             sample_keys, new_particles
         )
 
         # Update the particles
         particles = jax.tree_util.tree_map(
-            lambda p, n: p.at[dead_idx].set(n),
+            lambda p, n: p.at[target_update_idx].set(n),
             state.particles,
             new_state.position,
         )
         new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
         new_state_logprior = jax.vmap(logprior_fn)(new_state.position)
-        loglikelihood = state.loglikelihood.at[dead_idx].set(new_state_loglikelihood)
-        loglikelihood_births = loglikelihood0 * jnp.ones(num_deleted)
-        loglikelihood_birth = state.loglikelihood_birth.at[dead_idx].set(loglikelihood_births)
+        loglikelihood = state.loglikelihood.at[target_update_idx].set(
+            new_state_loglikelihood
+        )
+        loglikelihood_births = loglikelihood0 * jnp.ones(num_evolve)
+        loglikelihood_birth = state.loglikelihood_birth.at[start_mcmc_idx].set(
+            loglikelihood_births
+        )
         loglikelihood_star = state.loglikelihood.min()
-        logprior = state.logprior.at[dead_idx].set(new_state_logprior)
-        pid = state.pid.at[dead_idx].set(state.pid[live_idx])
+        logprior = state.logprior.at[target_update_idx].set(new_state_logprior)
+        pid = state.pid.at[target_update_idx].set(state.pid[start_mcmc_idx])
 
         # Update the logX and logZ
         num_particles = len(state.loglikelihood)
-        num_live = jnp.arange(num_particles, num_particles - num_deleted, -1)
+        num_live = jnp.arange(num_particles, num_particles - num_dead, -1)
         delta_log_xi = -1 / num_live
         log_delta_xi = (
             state.logX + jnp.cumsum(delta_log_xi) + jnp.log(1 - jnp.exp(delta_log_xi))
@@ -144,7 +162,9 @@ def build_kernel(
         logZ_dead = jnp.logaddexp(
             state.logZ, jax.scipy.special.logsumexp(delta_logz_dead)
         )
-        logZ_live = jax.scipy.special.logsumexp(loglikelihood) - jnp.log(num_particles) + logX
+        logZ_live = (
+            jax.scipy.special.logsumexp(loglikelihood) - jnp.log(num_particles) + logX
+        )
 
         # Update the state
         new_state = NSState(
@@ -158,7 +178,13 @@ def build_kernel(
             logZ=logZ_dead,
             logZ_live=logZ_live,
         )
-        info = NSInfo(dead_particles, dead_loglikelihood, dead_loglikelihood_birth, dead_logprior, new_state_info)
+        info = NSInfo(
+            dead_particles,
+            dead_loglikelihood,
+            dead_loglikelihood_birth,
+            dead_logprior,
+            new_state_info,
+        )
         return new_state, info
 
     return kernel
@@ -181,20 +207,26 @@ def delete_fn(key, state, n_delete):
     --------
     dead_idx : jnp.ndarray
         Indices of particles to be deleted.
-    live_idx : jnp.ndarray
-        Indices of resampled particles to evolve.
+    target_update_idx : jnp.ndarray
+        Indices of particles to be updated (same as dead_idx in this implementation).
+    start_mcmc_idx : jnp.ndarray
+        Indices of particles to use as starting points for MCMC evolution.
+
     """
     loglikelihood = state.loglikelihood
     neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, n_delete)
-    weights = jnp.array(loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32)
-    live_idx = jax.random.choice(
+    weights = jnp.array(
+        loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32
+    )
+    start_mcmc_idx = jax.random.choice(
         key,
         len(weights),
         shape=(n_delete,),
         p=weights / weights.sum(),
         replace=True,
     )
-    return dead_idx, live_idx
+    target_update_idx = dead_idx
+    return dead_idx, target_update_idx, start_mcmc_idx
 
 
 def as_top_level_api(
