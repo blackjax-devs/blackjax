@@ -6,7 +6,7 @@ import jax
 import jax.numpy as jnp
 from blackjax import SamplingAlgorithm
 from blackjax.mcmc.ss import build_kernel as build_slice_kernel
-from blackjax.mcmc.ss import default_proposal_distribution, default_stepper
+from blackjax.mcmc.ss import default_generate_slice_direction_fn, default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel, init
 from blackjax.ns.base import NSInfo, NSState, delete_fn
@@ -26,7 +26,7 @@ def default_predict_fn(key, **kwargs):
     row = get_first_row(cov)
     _, unravel_fn = ravel_pytree(row)
     cov = particles_as_rows(cov)
-    n = default_proposal_distribution(key, cov)
+    n = default_generate_slice_direction_fn(key, cov)
     return unravel_fn(n)
 
 
@@ -42,7 +42,7 @@ def as_top_level_api(
     loglikelihood_fn: Callable,
     num_mcmc_steps: int,
     n_delete: int = 1,
-    stepper: Callable = default_stepper,
+    stepper_fn: Callable = default_stepper_fn,
     train_fn: Callable = default_train_fn,
     predict_fn: Callable = default_predict_fn,
 ) -> SamplingAlgorithm:
@@ -58,7 +58,7 @@ def as_top_level_api(
         Number of MCMC steps to perform. Recommended is 5 times the dimension of the parameter space.
     n_delete: int, optional
         Number of particles to delete in each iteration. Default is 1.
-    stepper: Callable, optional
+    stepper_fn: Callable, optional
         Optional function to add the proposal to the current state, if needed
 
     Returns
@@ -69,7 +69,7 @@ def as_top_level_api(
     delete_func = partial(delete_fn, n_delete=n_delete)
 
     def mcmc_build_kernel(**kwargs):
-        return build_slice_kernel(partial(predict_fn, **kwargs), stepper)
+        return build_slice_kernel(partial(predict_fn, **kwargs), stepper_fn)
 
     mcmc_init_fn = slice_init
     mcmc_parameter_update_fn = train_fn
