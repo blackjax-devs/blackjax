@@ -212,7 +212,7 @@ def horizontal_slice_proposal(
     """
     # Initial bounds
     rng_key, subkey = jax.random.split(rng_key)
-    w = jax.random.uniform(subkey)
+    u = jax.random.uniform(subkey)
 
     def body_fun(carry):
         _, s, t, count = carry
@@ -227,8 +227,8 @@ def horizontal_slice_proposal(
         return within
 
     # Expand
-    _, _, l, count_l = jax.lax.while_loop(cond_fun, body_fun, (True, +1, w - 1, 0))
-    _, _, r, count_r = jax.lax.while_loop(cond_fun, body_fun, (True, -1, w, 0))
+    _, _, l, count_l = jax.lax.while_loop(cond_fun, body_fun, (True, -1, -u, 0))
+    _, _, r, count_r = jax.lax.while_loop(cond_fun, body_fun, (True, +1, 1 - u, 0))
 
     # Shrink
     def body_fun(carry):
@@ -236,14 +236,14 @@ def horizontal_slice_proposal(
         count += 1
 
         rng_key, subkey = jax.random.split(rng_key)
-        u = jax.random.uniform(subkey, minval=r, maxval=l)
+        u = jax.random.uniform(subkey, minval=l, maxval=r)
         x = stepper_fn(x0, d, u)
 
         logdensity_x = logdensity_fn(x)
         within = logdensity_x >= log_slice_height
 
-        l = jnp.where(u > 0, u, l)
-        r = jnp.where(u < 0, u, r)
+        l = jnp.where(u < 0, u, l)
+        r = jnp.where(u > 0, u, r)
 
         return within, l, r, x, logdensity_x, rng_key, count
 

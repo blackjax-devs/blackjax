@@ -2,6 +2,7 @@
   - for direction generation we're generating (malhanobis) unit vectors
     - these should shrink with the nested sampling loop
     - we may want to determine the (dimension specific) optimal vector, or tune it manually
+    - should mention this in paper
 - type hinting
   - float vs ArrayTree vs ArrayLikeTree ? 
 - delete_fn should be an argument

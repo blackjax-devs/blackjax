@@ -47,29 +47,40 @@ __all__ = ["init", "as_top_level_api"]
 
 
 def default_generate_slice_direction_fn(rng_key: PRNGKey, **kernel_args: ArrayTree) -> ArrayTree:
-    """Default function to generate a normalized slice direction.
+    """Default function to generate a normalized slice direction for NSS.
 
-    This function generates a random direction for the Hit-and-Run Slice Sampler.
-    It samples from a zero-mean multivariate Gaussian distribution with the provided
-    covariance matrix (`cov` in `kernel_args`) and then normalizes the direction
-    with respect to the Mahalanobis norm defined by `inv(cov)`.
+    This function is designed to work with covariance parameters adapted by
+    `default_adapt_direction_params_fn`. It expects `kernel_args` to contain
+    'cov', a PyTree structured identically to a single particle. Each leaf
+    of this 'cov' PyTree contains rows of the full covariance matrix that
+    correspond to that leaf's elements in the flattened particle vector.
+    (Specifically, if the full DxD covariance matrix of flattened particles is
+    `M_flat`, and `unravel_fn` un-flattens a D-vector to the particle PyTree,
+    then the input `cov` is effectively `jax.vmap(unravel_fn)(M_flat)`).
+
+    The function reassembles the full (D,D) covariance matrix from this
+    PyTree structure. It then samples a flat direction vector `d_flat` from
+    a multivariate Gaussian $\\mathcal{N}(0, M_{reassembled})$, normalizes
+    `d_flat` using the Mahalanobis norm defined by $M_{reassembled}^{-1}$,
+    and finally un-flattens this normalized direction back into the
+    particle's PyTree structure using an `unravel_fn` derived from the
+    particle structure.
 
     Parameters
     ----------
     rng_key
         A JAX PRNG key.
     **kernel_args
-        Keyword arguments, expected to contain `cov`: the covariance matrix (PyTree
-        where each leaf is a row (or column) of the covariance matrix). This is 
-        used for sampling the initial direction. The structure of `cov` should
-        match the particle structure after `particles_as_rows` and then unravelling
-        the first row.
+        Keyword arguments, must contain:
+        - `cov`: A PyTree (structured like a particle) whose leaves are rows
+                 of the covariance matrix, typically output by
+                 `default_adapt_direction_params_fn`.
 
     Returns
     -------
     ArrayTree
-        A normalized direction vector (PyTree, matching the structure of a single particle),
-        to be used by the slice sampler.
+        A Mahalanobis-normalized direction vector (PyTree, matching the
+        structure of a single particle), to be used by the slice sampler.
     """
     cov = kernel_args["cov"]
     row = get_first_row(cov)
@@ -97,14 +108,12 @@ def default_adapt_direction_params_fn(state: NSState, info: NSInfo) -> Dict[str,
     Returns
     -------
     Dict[str, ArrayTree]
-        A dictionary containing the adapted parameters. Specifically, it returns
-        `{'cov': cov}` where `cov`
-        is a PyTree. Each leaf of this PyTree is a row (or column) of the
-        covariance matrix (2D Array) corresponding to a flattened component of
-        the particles.
-        If particles are simple N-D arrays, `cov` will be a single 2D array.
-        If particles are PyTrees, `cov` will be a PyTree where each leaf is the
-        covariance of that leaf across particles, reshaped appropriately.
+        A dictionary `{'cov': cov_pytree}`. `cov_pytree` is a PyTree with the
+        same structure as a single particle. If the full DxD covariance matrix
+        of the flattened particles is `M_flat`, and `unravel_fn` is the function
+        to un-flatten a D-vector to the particle's PyTree structure, then
+        `cov_pytree` is equivalent to `jax.vmap(unravel_fn)(M_flat)`.
+        This means each leaf of `cov_pytree` will have a shape `(D, *leaf_original_dims)`.
     """
     cov = particles_covariance_matrix(state.particles)
     single_particle = get_first_row(state.particles)

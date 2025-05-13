@@ -222,7 +222,7 @@ def build_kernel(
                 new_state, info = kernel(rng_key, state, logdensity_fn)
                 return new_state, info
 
-            init = mcmc_init_fn(particles, logprior_fn)
+            init = mcmc_init_fn(particles, logdensity_fn)
             keys = jax.random.split(rng_key, num_mcmc_steps)
             last_state, info = jax.lax.scan(body_fn, init, keys)
             return last_state, info

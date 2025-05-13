@@ -192,12 +192,13 @@ def log_weights(
         An array of log importance weights, shape `(num_dead_particles, samples)`.
         The original order of particles in `dead_info` is preserved.
     """
-    j = jnp.argsort(dead_info.loglikelihood)
-    original_indices = jnp.arange(len(dead_info.loglikelihood))
-    dead_info = jax.tree.map(lambda x: x[j], dead_info)
-    _, log_dX = logX(rng_key, dead_info, samples)
-    log_w = log_dX + beta * dead_info.loglikelihood[..., jnp.newaxis]
-    return log_w[original_indices]
+    sort_indices = jnp.argsort(dead_info.loglikelihood)
+    unsort_indices = jnp.empty_like(sort_indices)
+    unsort_indices = unsort_indices.at[sort_indices].set(jnp.arange(len(sort_indices)))
+    dead_info_sorted = jax.tree.map(lambda x: x[sort_indices], dead_info)
+    _, log_dX = logX(rng_key, dead_info_sorted, samples)
+    log_w = log_dX + beta * dead_info_sorted.loglikelihood[..., jnp.newaxis]
+    return log_w[unsort_indices]
 
 
 def finalise(state: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
@@ -300,15 +301,15 @@ def sample(
         A PyTree of resampled particles, where each leaf has a leading dimension
         of `n_samples`.
     """
-    logw = log_weights(rng_key, deaf_info_map).mean(axis=-1)
+    logw = log_weights(rng_key, dead_info_map).mean(axis=-1)
     indices = jax.random.choice(
         rng_key,
-        deaf_info_map.loglikelihood.shape[0],
+        dead_info_map.loglikelihood.shape[0],
         p=jnp.exp(logw.squeeze() - jnp.max(logw)),
         shape=(n_samples,),
         replace=True,
     )
-    return jax.tree.map(lambda leaf: leaf[indices], deaf_info_map.particles)
+    return jax.tree.map(lambda leaf: leaf[indices], dead_info_map.particles)
 
 
 def get_first_row(x: ArrayTree) -> ArrayTree:
