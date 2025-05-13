@@ -1,0 +1,19 @@
+- should think carefully about the core of the algo:
+  - for direction generation we're generating (malhanobis) unit vectors
+    - these should shrink with the nested sampling loop
+    - we may want to determine the (dimension specific) optimal vector, or tune it manually
+- type hinting
+  - float vs ArrayTree vs ArrayLikeTree ? 
+- delete_fn should be an argument
+  - perhaps in place of n_delete at base? 
+- should mcmc_init_fn have placeholder NotImplementedError?
+- StateWithParameterOverride
+  - this seems less than consistent 
+- are we sure adaptive init is doing the right thing? 
+- mcmc_ ? should we just call this 'inner kernel'?
+- discuss unravel_fn implementation
+- nlive calculation:
+  - much more explicit than my version (which was just to treat nans as -infs for this case, which works wlog)
+  - possibly could be a bit shorter
+- sample:
+  - n_samples -> shape?
