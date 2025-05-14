@@ -247,10 +247,8 @@ def build_kernel(
         new_state_logprior = jax.vmap(logprior_fn)(new_state.position)
         loglikelihood = state.loglikelihood.at[target_update_idx].set(new_state_loglikelihood)
 
-        # loglikelihood_births = loglikelihood_0 * jnp.ones(num_updates)
-        # loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(loglikelihood_births)
-        loglikelihood_births = loglikelihood_0 * jnp.ones(num_deleted)
-        loglikelihood_birth = state.loglikelihood_birth.at[dead_idx].set(loglikelihood_births)
+        loglikelihood_births = loglikelihood_0 * jnp.ones(num_updates)
+        loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(loglikelihood_births)
 
         logprior = state.logprior.at[target_update_idx].set(new_state_logprior)
         pid = state.pid.at[target_update_idx].set(state.pid[start_mcmc_idx])

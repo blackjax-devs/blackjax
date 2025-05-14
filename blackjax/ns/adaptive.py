@@ -84,7 +84,7 @@ def build_kernel(
     mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
     num_mcmc_steps: int,
 ) -> Callable:
-    r"""Build an adaptive Nested Sampling kernel.
+    """Build an adaptive Nested Sampling kernel.
 
     This kernel extends the base Nested Sampling kernel by re-computing/tuning
     the parameters for the inner MCMC kernel at each step. The
