@@ -282,14 +282,14 @@ def build_kernel(
 
 
 def delete_fn(
-    rng_key: PRNGKey, state: NSState, n_delete: int
+    rng_key: PRNGKey, state: NSState, num_delete: int
 ) -> tuple[Array, Array]:
     """Identifies particles to be deleted and selects live particles for resampling.
 
     This function implements a common strategy in Nested Sampling:
-    1. Identify the `n_delete` particles with the lowest log-likelihoods. These
+    1. Identify the `num_delete` particles with the lowest log-likelihoods. These
        are marked as "dead".
-    2. From the remaining live particles (those not marked as dead), `n_delete`
+    2. From the remaining live particles (those not marked as dead), `num_delete`
        particles are chosen (typically with replacement, weighted by their
        current importance weights, here it is uniform from survivors)
        to serve as starting points for generating new particles via MCMC.
@@ -300,7 +300,7 @@ def delete_fn(
         A JAX PRNG key, used here for choosing live particles.
     state
         The current state of the Nested Sampler.
-    n_delete
+    num_delete
         The number of particles to delete and subsequently replace.
 
     Returns
@@ -315,28 +315,28 @@ def delete_fn(
             selected for MCMC initialization. 
     """
     loglikelihood = state.loglikelihood
-    neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, n_delete)
+    neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, num_delete)
     weights = jnp.array(loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32)
     start_mcmc_idx = jax.random.choice(
         rng_key,
         len(weights),
-        shape=(n_delete,),
+        shape=(num_delete,),
         p=weights / weights.sum(),
         replace=True,
     )
     target_update_idx = dead_idx
     return dead_idx, target_update_idx, start_mcmc_idx
 
-def bi_directional_delete_fn(key, state, n_delete):
+def bi_directional_delete_fn(key, state, num_delete):
     """Selects particles for deletion and MCMC initialization for full state regeneration.
 
     This deletion strategy assumes the total number of particles (`N_total`) in the
-    `NSState` is exactly twice `n_delete` (i.e., `N_total = 2 * n_delete`).
+    `NSState` is exactly twice `num_delete` (i.e., `N_total = 2 * num_delete`).
     It operates as follows:
-    1. The `n_delete` particles with the lowest log-likelihoods are marked as 'dead'.
+    1. The `num_delete` particles with the lowest log-likelihoods are marked as 'dead'.
        These define `loglikelihood_0` and are reported in `NSInfo`.
     2. All `N_total` particle slots are targeted for replacement.
-    3. The `n_delete` particles with the highest log-likelihoods (the 'live' set)
+    3. The `num_delete` particles with the highest log-likelihoods (the 'live' set)
        are each duplicated to serve as `N_total` starting points for MCMC evolution.
 
     The `key` (PRNGKey) is unused by this deterministic selection strategy but is
@@ -347,23 +347,23 @@ def bi_directional_delete_fn(key, state, n_delete):
     key
         A JAX PRNG key (unused).
     state
-        The current `NSState`. `len(state.loglikelihood)` must equal `2 * n_delete`.
-    n_delete
+        The current `NSState`. `len(state.loglikelihood)` must equal `2 * num_delete`.
+    num_delete
         The number of lowest-likelihood particles to mark as dead.
 
     Returns
     -------
     tuple[Array, Array, Array]
-        - dead_idx: Indices of the `n_delete` lowest-likelihood particles.
+        - dead_idx: Indices of the `num_delete` lowest-likelihood particles.
         - target_update_idx: Indices of all `N_total` particles, for replacement.
         - start_mcmc_idx: `N_total` MCMC starting indices, derived from duplicating
-          the `n_delete` highest-likelihood particles.
+          the `num_delete` highest-likelihood particles.
     """
     loglikelihood = state.loglikelihood
     sorted_indices = jnp.argsort(loglikelihood)
 
-    dead_idx = sorted_indices[:n_delete]
-    live_idx = sorted_indices[n_delete:]
+    dead_idx = sorted_indices[:num_delete]
+    live_idx = sorted_indices[num_delete:]
 
     return (
         dead_idx,

@@ -35,7 +35,7 @@ from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel, init
 from blackjax.ns.base import NSInfo, NSState
-from blackjax.ns.utils import delete_fn as default_delete_fn
+from blackjax.ns.base import delete_fn as default_delete_fn
 from blackjax.ns.utils import get_first_row
 from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
@@ -184,11 +184,11 @@ def as_top_level_api(
     step_fn = build_kernel(
         logprior_fn,
         loglikelihood_fn,
-        delete_func,
+        delete_fn,
         mcmc_build_kernel,
         mcmc_init_fn,
-        mcmc_parameter_update_fn,
         num_mcmc_steps,
+        mcmc_parameter_update_fn,
     )
 
     return SamplingAlgorithm(init_fn, step_fn)
