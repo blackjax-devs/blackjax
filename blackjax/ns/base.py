@@ -193,7 +193,7 @@ def build_kernel(
 
         # Delete, and grab all the dead information
         rng_key, delete_fn_key = jax.random.split(rng_key)
-        dead_idx, target_update_idx, start_mcmc_idx = delete_fn(delete_fn_key, state)
+        dead_idx, target_update_idx, start_idx = delete_fn(delete_fn_key, state)
 
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
         dead_loglikelihood = state.loglikelihood[dead_idx]
@@ -202,7 +202,7 @@ def build_kernel(
         loglikelihood_0 = dead_loglikelihood.max()
         num_deleted = len(dead_idx)
         num_updates = len(target_update_idx)
-        num_evolve = len(start_mcmc_idx)
+        num_evolve = len(start_idx)
 
         # Resample the live particles
         def constrained_logdensity_fn(x):
@@ -211,7 +211,7 @@ def build_kernel(
 
         inner_kernel = build_inner_kernel(constrained_logdensity_fn, **inner_kernel_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
-        new_particles = jax.tree.map(lambda x: x[start_mcmc_idx], state.particles)
+        new_particles = jax.tree.map(lambda x: x[start_idx], state.particles)
         sample_keys = jax.random.split(sample_key, num_evolve)
         new_state, new_state_info = jax.vmap(inner_kernel)(
             sample_keys, new_particles
@@ -229,7 +229,7 @@ def build_kernel(
         loglikelihood_births = loglikelihood_0 * jnp.ones(num_updates)
         loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(loglikelihood_births)
         logprior = state.logprior.at[target_update_idx].set(new_state_logprior)
-        pid = state.pid.at[target_update_idx].set(state.pid[start_mcmc_idx])
+        pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 
         # Update the logX and logZ
         num_particles = len(state.loglikelihood)
@@ -274,7 +274,7 @@ def delete_fn(
     2. From the remaining live particles (those not marked as dead), `num_delete`
        particles are chosen (typically with replacement, weighted by their
        current importance weights, here it is uniform from survivors)
-       to serve as starting points for generating new particles via MCMC.
+       to serve as starting points for generating new particles.
 
     Parameters
     ----------
@@ -293,13 +293,13 @@ def delete_fn(
           marked for deletion.
         - `target_update_idx`: An array of indices corresponding to the
           particles to be updated (same as dead_idx in this implementation).
-        - `start_mcmc_idx`: An array of indices corresponding to the particles
-            selected for MCMC initialization. 
+        - `start_idx`: An array of indices corresponding to the particles
+            selected for initialization. 
     """
     loglikelihood = state.loglikelihood
     neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, num_delete)
     weights = jnp.array(loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32)
-    start_mcmc_idx = jax.random.choice(
+    start_idx = jax.random.choice(
         rng_key,
         len(weights),
         shape=(num_delete,),
@@ -307,10 +307,10 @@ def delete_fn(
         replace=True,
     )
     target_update_idx = dead_idx
-    return dead_idx, target_update_idx, start_mcmc_idx
+    return dead_idx, target_update_idx, start_idx
 
 def bi_directional_delete_fn(key, state, num_delete):
-    """Selects particles for deletion and MCMC initialization for full state regeneration.
+    """Selects particles for deletion and initialization for full state regeneration.
 
     This deletion strategy assumes the total number of particles (`N_total`) in the
     `NSState` is exactly twice `num_delete` (i.e., `N_total = 2 * num_delete`).
@@ -319,7 +319,7 @@ def bi_directional_delete_fn(key, state, num_delete):
        These define `loglikelihood_0` and are reported in `NSInfo`.
     2. All `N_total` particle slots are targeted for replacement.
     3. The `num_delete` particles with the highest log-likelihoods (the 'live' set)
-       are each duplicated to serve as `N_total` starting points for MCMC evolution.
+       are each duplicated to serve as `N_total` starting points for resampling.
 
     The `key` (PRNGKey) is unused by this deterministic selection strategy but is
     included for interface compatibility.
@@ -338,7 +338,7 @@ def bi_directional_delete_fn(key, state, num_delete):
     tuple[Array, Array, Array]
         - dead_idx: Indices of the `num_delete` lowest-likelihood particles.
         - target_update_idx: Indices of all `N_total` particles, for replacement.
-        - start_mcmc_idx: `N_total` MCMC starting indices, derived from duplicating
+        - start_idx: `N_total` starting indices, derived from duplicating
           the `num_delete` highest-likelihood particles.
     """
     loglikelihood = state.loglikelihood
