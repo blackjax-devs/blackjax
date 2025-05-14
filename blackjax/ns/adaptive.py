@@ -69,9 +69,7 @@ def init(
         initial MCMC kernel parameters.
     """
     state = init_base(particles, loglikelihood_fn, logprior_fn)
-    initial_parameter_value = mcmc_parameter_update_fn(
-        state, NSInfo(state, None, None, None, None)
-    )
+    initial_parameter_value = mcmc_parameter_update_fn(state, None)
     return StateWithParameterOverride(state, initial_parameter_value)
 
 
