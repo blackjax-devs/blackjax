@@ -34,7 +34,8 @@ from blackjax.mcmc.ss import default_generate_slice_direction_fn as ss_default_g
 from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel, init
-from blackjax.ns.base import NSInfo, NSState, delete_fn
+from blackjax.ns.base import NSInfo, NSState
+from blackjax.ns.base import delete_fn as default_delete_fn
 from blackjax.ns.utils import get_first_row
 from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
@@ -121,11 +122,37 @@ def default_adapt_direction_params_fn(state: NSState, info: NSInfo) -> Dict[str,
     return {"cov": jax.vmap(unravel_fn)(cov)}
 
 
+def build_repeated_kernel(
+        build_kernel,
+        logdensity_fn,
+        mcmc_init_fn,
+        num_repeats: int,
+        **kwargs
+        ):
+
+        inner_kernel = build_kernel(**kwargs)
+
+        def kernel(rng_key: PRNGKey, position: ArrayLikeTree):
+            def body_fn(state, rng_key):
+                new_state, info = inner_kernel(rng_key, state, logdensity_fn)
+                return new_state, info
+
+            init = mcmc_init_fn(position, logdensity_fn)
+            keys = jax.random.split(rng_key, num_repeats)
+            last_state, info = jax.lax.scan(body_fn, init, keys)
+            return last_state, info
+
+        return kernel
+
+
+
+
+
 def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     num_mcmc_steps: int,
-    n_delete: int = 1,
+    num_delete: int = 1,
     stepper_fn: Callable = default_stepper_fn,
     adapt_direction_params_fn: Callable = default_adapt_direction_params_fn,
     generate_slice_direction_fn: Callable = default_generate_slice_direction_fn,
@@ -146,8 +173,8 @@ def as_top_level_api(
     num_mcmc_steps
         The number of HRSS steps to run for each new particle generation.
         The paper suggests this is `p`, e.g., `3 * d` where `d` is dimension.
-    n_delete
-        The number of particles to delete and replace at each NS step.
+    num_delete
+        The number of particles to delete and replace at each NS step. 
         Defaults to 1.
     stepper_fn
         The stepper function `(x, direction, t) -> x_new` for the HRSS kernel.
@@ -168,12 +195,23 @@ def as_top_level_api(
         the configured Nested Slice Sampler. The state managed by this
         algorithm is `StateWithParameterOverride`.
     """
-    delete_func = partial(delete_fn, n_delete=n_delete)
+    delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
 
-    def mcmc_build_kernel(**kwargs):
-        return build_slice_kernel(partial(generate_slice_direction_fn, **kwargs), stepper_fn)
+    def mcmc_build_kernel(loglikelihood_0, **kwargs):
+        def logdensity_fn(x):
+            constraint = loglikelihood_fn(x) > loglikelihood_0
+            return jnp.where(constraint, logprior_fn(x), -jnp.inf)
 
-    mcmc_init_fn = slice_init
+        def build_inner_kernel(**kwargs):
+            return build_slice_kernel(partial(generate_slice_direction_fn, **kwargs), stepper_fn)
+        return build_repeated_kernel(
+                build_inner_kernel,
+                logdensity_fn,
+                slice_init,
+                num_mcmc_steps,
+                **kwargs
+                )
+
     mcmc_parameter_update_fn = adapt_direction_params_fn
 
     def init_fn(particles: ArrayLikeTree, rng_key=None):
@@ -183,11 +221,9 @@ def as_top_level_api(
     step_fn = build_kernel(
         logprior_fn,
         loglikelihood_fn,
-        delete_func,
+        delete_fn,
         mcmc_build_kernel,
-        mcmc_init_fn,
         mcmc_parameter_update_fn,
-        num_mcmc_steps,
     )
 
     return SamplingAlgorithm(init_fn, step_fn)

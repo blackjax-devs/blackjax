@@ -36,7 +36,7 @@ import jax.numpy as jnp
 from blackjax import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["init", "as_top_level_api", "build_kernel"]
+__all__ = ["init", "build_kernel"]
 
 
 class NSState(NamedTuple):
@@ -72,7 +72,7 @@ class NSState(NamedTuple):
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
-    logprior: Array # The log-prior density of the particles
+    logprior: Array  # The log-prior density of the particles
     pid: Array = Array  # particle ID
     logX: float = 0.0  # The current log-volume estiamte
     logZ_live: float = -jnp.inf  # The current evidence estimate
@@ -101,7 +101,7 @@ class NSInfo(NamedTuple):
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
-    logprior: Array # The log-prior density of the particles
+    logprior: Array  # The log-prior density of the particles
     update_info: NamedTuple
 
 
@@ -144,10 +144,8 @@ def build_kernel(
     loglikelihood_fn: Callable,
     delete_fn: Callable,
     mcmc_build_kernel: Callable,
-    mcmc_init_fn: Callable,
-    num_mcmc_steps: int,
 ) -> Callable:
-    r"""Build a generic Nested Sampling kernel.
+    """Build a generic Nested Sampling kernel.
 
     This kernel implements one step of the Nested Sampling algorithm. In each step:
     1. A set of particles with the lowest log-likelihoods are identified and
@@ -157,9 +155,9 @@ def build_kernel(
     2. Live particles are selected (typically with replacement from the remaining
        live particles, determined by `delete_fn`) to act as starting points for
        the MCMC updates.
-    3. These selected live particles are evolved using an MCMC kernel (`mcmc_build_kernel`,
-       `mcmc_init_fn`) for `num_mcmc_steps`. The MCMC sampling is constrained
-       to the region where `loglikelihood(new_particle) > loglikelihood_0`.
+    3. These selected live particles are evolved using an MCMC kernel
+       `mcmc_build_kernel`. The MCMC sampling is constrained to the region where
+       `loglikelihood(new_particle) > loglikelihood_0`.
     4. The newly generated particles replace the dead ones.
     5. The prior volume `logX` and evidence `logZ` are updated based on the
        number of deleted particles and their likelihoods.
@@ -179,12 +177,6 @@ def build_kernel(
     mcmc_build_kernel
         A function that, when called with MCMC parameters (e.g., step size),
         returns an MCMC kernel function `(rng_key, mcmc_state, logdensity_fn) -> (new_mcmc_state, info)`.
-    mcmc_init_fn
-        A function `(position, logdensity_fn) -> mcmc_state` that initializes
-        the state for the MCMC kernel.
-    num_mcmc_steps
-        The number of MCMC steps to run for each new particle generation.
-        The paper suggests 5 times the dimension of the parameter space.
 
     Returns
     -------
@@ -201,7 +193,7 @@ def build_kernel(
 
         # Delete, and grab all the dead information
         rng_key, delete_fn_key = jax.random.split(rng_key)
-        dead_idx, live_idx = delete_fn(delete_fn_key, state)
+        dead_idx, target_update_idx, start_mcmc_idx = delete_fn(delete_fn_key, state)
 
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
         dead_loglikelihood = state.loglikelihood[dead_idx]
@@ -209,43 +201,31 @@ def build_kernel(
         dead_logprior = state.logprior[dead_idx]
         loglikelihood_0 = dead_loglikelihood.max()
         num_deleted = len(dead_idx)
+        num_updates = len(target_update_idx)
+        num_evolve = len(start_mcmc_idx)
 
         # Resample the live particles
-        kernel = mcmc_build_kernel(**mcmc_parameters)
+        kernel = mcmc_build_kernel(loglikelihood_0, **mcmc_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
-
-        def logdensity_fn(x):
-            return jnp.where(loglikelihood_fn(x) > loglikelihood_0, logprior_fn(x), -jnp.inf)
-
-        def num_mcmc_steps_kernel(rng_key, particles):
-            def body_fn(state, rng_key):
-                new_state, info = kernel(rng_key, state, logdensity_fn)
-                return new_state, info
-
-            init = mcmc_init_fn(particles, logdensity_fn)
-            keys = jax.random.split(rng_key, num_mcmc_steps)
-            last_state, info = jax.lax.scan(body_fn, init, keys)
-            return last_state, info
-
-        new_particles = jax.tree.map(lambda x: x[live_idx], state.particles)
-        sample_keys = jax.random.split(sample_key, num_deleted)
-        new_state, new_state_info = jax.vmap(num_mcmc_steps_kernel)(
+        new_particles = jax.tree.map(lambda x: x[start_mcmc_idx], state.particles)
+        sample_keys = jax.random.split(sample_key, num_evolve)
+        new_state, new_state_info = jax.vmap(kernel)(
             sample_keys, new_particles
         )
 
         # Update the particles
         particles = jax.tree_util.tree_map(
-            lambda p, n: p.at[dead_idx].set(n),
+            lambda p, n: p.at[target_update_idx].set(n),
             state.particles,
             new_state.position,
         )
         new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
         new_state_logprior = jax.vmap(logprior_fn)(new_state.position)
-        loglikelihood = state.loglikelihood.at[dead_idx].set(new_state_loglikelihood)
-        loglikelihood_births = loglikelihood_0 * jnp.ones(num_deleted)
-        loglikelihood_birth = state.loglikelihood_birth.at[dead_idx].set(loglikelihood_births)
-        logprior = state.logprior.at[dead_idx].set(new_state_logprior)
-        pid = state.pid.at[dead_idx].set(state.pid[live_idx])
+        loglikelihood = state.loglikelihood.at[target_update_idx].set(new_state_loglikelihood)
+        loglikelihood_births = loglikelihood_0 * jnp.ones(num_updates)
+        loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(loglikelihood_births)
+        logprior = state.logprior.at[target_update_idx].set(new_state_logprior)
+        pid = state.pid.at[target_update_idx].set(state.pid[start_mcmc_idx])
 
         # Update the logX and logZ
         num_particles = len(state.loglikelihood)
@@ -280,14 +260,14 @@ def build_kernel(
 
 
 def delete_fn(
-    rng_key: PRNGKey, state: NSState, n_delete: int
+    rng_key: PRNGKey, state: NSState, num_delete: int
 ) -> tuple[Array, Array]:
     """Identifies particles to be deleted and selects live particles for resampling.
 
     This function implements a common strategy in Nested Sampling:
-    1. Identify the `n_delete` particles with the lowest log-likelihoods. These
+    1. Identify the `num_delete` particles with the lowest log-likelihoods. These
        are marked as "dead".
-    2. From the remaining live particles (those not marked as dead), `n_delete`
+    2. From the remaining live particles (those not marked as dead), `num_delete`
        particles are chosen (typically with replacement, weighted by their
        current importance weights, here it is uniform from survivors)
        to serve as starting points for generating new particles via MCMC.
@@ -298,88 +278,73 @@ def delete_fn(
         A JAX PRNG key, used here for choosing live particles.
     state
         The current state of the Nested Sampler.
-    n_delete
+    num_delete
         The number of particles to delete and subsequently replace.
 
     Returns
     -------
-    tuple[Array, Array]
+    tuple[Array, Array, Array]
         A tuple containing:
         - `dead_idx`: An array of indices corresponding to the particles
           marked for deletion.
-        - `live_idx`: An array of indices corresponding to the live particles
-          selected to be starting points for MCMC evolution. These are sampled
-          with replacement from the particles that were not deleted.
+        - `target_update_idx`: An array of indices corresponding to the
+          particles to be updated (same as dead_idx in this implementation).
+        - `start_mcmc_idx`: An array of indices corresponding to the particles
+            selected for MCMC initialization. 
     """
     loglikelihood = state.loglikelihood
-    neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, n_delete)
+    neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, num_delete)
     weights = jnp.array(loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32)
-    live_idx = jax.random.choice(
+    start_mcmc_idx = jax.random.choice(
         rng_key,
         len(weights),
-        shape=(n_delete,),
+        shape=(num_delete,),
         p=weights / weights.sum(),
         replace=True,
     )
-    return dead_idx, live_idx
+    target_update_idx = dead_idx
+    return dead_idx, target_update_idx, start_mcmc_idx
 
+def bi_directional_delete_fn(key, state, num_delete):
+    """Selects particles for deletion and MCMC initialization for full state regeneration.
 
-def as_top_level_api(
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    mcmc_build_kernel: Callable,
-    mcmc_init_fn: Callable,
-    mcmc_parameters: dict,
-    num_mcmc_steps: int,
-    n_delete: int = 1,
-) -> SamplingAlgorithm:
-    """Creates a Nested Sampling algorithm with fixed MCMC parameters.
+    This deletion strategy assumes the total number of particles (`N_total`) in the
+    `NSState` is exactly twice `num_delete` (i.e., `N_total = 2 * num_delete`).
+    It operates as follows:
+    1. The `num_delete` particles with the lowest log-likelihoods are marked as 'dead'.
+       These define `loglikelihood_0` and are reported in `NSInfo`.
+    2. All `N_total` particle slots are targeted for replacement.
+    3. The `num_delete` particles with the highest log-likelihoods (the 'live' set)
+       are each duplicated to serve as `N_total` starting points for MCMC evolution.
 
-    This convenience function wraps the `build_kernel` and `init` functions
-    into a `SamplingAlgorithm` object, making it easy to use with BlackJAX's
-    inference loop. This version uses a fixed set of `mcmc_parameters` for
-    the inner MCMC kernel throughout the Nested Sampling run.
+    The `key` (PRNGKey) is unused by this deterministic selection strategy but is
+    included for interface compatibility.
 
     Parameters
     ----------
-    logprior_fn
-        A function that computes the log-prior probability of a single particle.
-    loglikelihood_fn
-        A function that computes the log-likelihood of a single particle.
-    mcmc_build_kernel
-        A function that, when called with MCMC parameters, returns an MCMC kernel.
-    mcmc_init_fn
-        A function that initializes the state for the MCMC kernel.
-    mcmc_parameters
-        A dictionary of fixed parameters for the MCMC kernel.
-    num_mcmc_steps
-        The number of MCMC steps to run for each new particle generation.
-    n_delete
-        The number of particles to delete and replace at each NS step.
-        Defaults to 1.
+    key
+        A JAX PRNG key (unused).
+    state
+        The current `NSState`. `len(state.loglikelihood)` must equal `2 * num_delete`.
+    num_delete
+        The number of lowest-likelihood particles to mark as dead.
 
     Returns
     -------
-    SamplingAlgorithm
-        A `SamplingAlgorithm` tuple containing `init` and `step` functions for
-        the configured Nested Sampler.
+    tuple[Array, Array, Array]
+        - dead_idx: Indices of the `num_delete` lowest-likelihood particles.
+        - target_update_idx: Indices of all `N_total` particles, for replacement.
+        - start_mcmc_idx: `N_total` MCMC starting indices, derived from duplicating
+          the `num_delete` highest-likelihood particles.
     """
-    delete_func = partial(delete_fn, n_delete=n_delete)
+    loglikelihood = state.loglikelihood
+    sorted_indices = jnp.argsort(loglikelihood)
 
-    kernel = build_kernel(
-        logprior_fn,
-        loglikelihood_fn,
-        delete_func,
-        mcmc_build_kernel,
-        mcmc_init_fn,
-        num_mcmc_steps,
+    dead_idx = sorted_indices[:num_delete]
+    live_idx = sorted_indices[num_delete:]
+
+    return (
+        dead_idx,
+        jnp.arange(len(loglikelihood)),
+        jnp.concatenate([live_idx, live_idx])
     )
-
-    def init_fn(particles: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(particles, loglikelihood_fn, logprior_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state, mcmc_parameters)
-
-    return SamplingAlgorithm(init_fn, step_fn)
