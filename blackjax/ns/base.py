@@ -36,7 +36,7 @@ import jax.numpy as jnp
 from blackjax import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["init", "as_top_level_api", "build_kernel"]
+__all__ = ["init", "build_kernel"]
 
 
 class NSState(NamedTuple):
