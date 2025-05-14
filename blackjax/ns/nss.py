@@ -34,7 +34,8 @@ from blackjax.mcmc.ss import default_generate_slice_direction_fn as ss_default_g
 from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel, init
-from blackjax.ns.base import NSInfo, NSState, delete_fn
+from blackjax.ns.base import NSInfo, NSState
+from blackjax.ns.utils import delete_fn as default_delete_fn
 from blackjax.ns.utils import get_first_row
 from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
@@ -125,11 +126,10 @@ def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     num_mcmc_steps: int,
-    n_delete: int = 1,
+    num_delete: int = 1,
     stepper_fn: Callable = default_stepper_fn,
     adapt_direction_params_fn: Callable = default_adapt_direction_params_fn,
     generate_slice_direction_fn: Callable = default_generate_slice_direction_fn,
-    delete_fn: Callable = delete_fn,
 ) -> SamplingAlgorithm:
     """Creates an adaptive Nested Slice Sampling (NSS) algorithm.
 
@@ -147,8 +147,8 @@ def as_top_level_api(
     num_mcmc_steps
         The number of HRSS steps to run for each new particle generation.
         The paper suggests this is `p`, e.g., `3 * d` where `d` is dimension.
-    n_delete
-        The number of particles to delete and replace at each NS step.
+    num_delete
+        The number of particles to delete and replace at each NS step. 
         Defaults to 1.
     stepper_fn
         The stepper function `(x, direction, t) -> x_new` for the HRSS kernel.
@@ -161,10 +161,6 @@ def as_top_level_api(
         A function `(rng_key, **params) -> direction_pytree` that generates a
         normalized direction for HRSS, using parameters from `adapt_direction_params_fn`.
         Defaults to `default_generate_slice_direction_fn`.
-    delete_fn
-        A function `(rng_key, current_ns_state) -> (dead_indices, live_indices_for_resampling)`
-        that identifies particles to be deleted and selects live particles
-        to be starting points for new particle generation.
 
     Returns
     -------
@@ -173,7 +169,7 @@ def as_top_level_api(
         the configured Nested Slice Sampler. The state managed by this
         algorithm is `StateWithParameterOverride`.
     """
-    delete_func = partial(delete_fn, n_delete=n_delete)
+    delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
 
     def mcmc_build_kernel(**kwargs):
         return build_slice_kernel(partial(generate_slice_direction_fn, **kwargs), stepper_fn)

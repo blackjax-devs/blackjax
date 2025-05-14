@@ -305,12 +305,14 @@ def delete_fn(
 
     Returns
     -------
-    dead_idx : jnp.ndarray
-        Indices of particles to be deleted.
-    target_update_idx : jnp.ndarray
-        Indices of particles to be updated (same as dead_idx in this implementation).
-    start_mcmc_idx : jnp.ndarray
-        Indices of particles to use as starting points for MCMC evolution.
+    tuple[Array, Array, Array]
+        A tuple containing:
+        - `dead_idx`: An array of indices corresponding to the particles
+          marked for deletion.
+        - `target_update_idx`: An array of indices corresponding to the
+          particles to be updated (same as dead_idx in this implementation).
+        - `start_mcmc_idx`: An array of indices corresponding to the particles
+            selected for MCMC initialization. 
     """
     loglikelihood = state.loglikelihood
     neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, n_delete)
