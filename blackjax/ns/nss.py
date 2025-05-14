@@ -125,7 +125,7 @@ def default_adapt_direction_params_fn(state: NSState, info: NSInfo) -> Dict[str,
 def build_repeated_kernel(
         build_kernel,
         logdensity_fn,
-        mcmc_init_fn,
+        init_fn,
         num_repeats: int,
         **kwargs
         ):
@@ -134,10 +134,9 @@ def build_repeated_kernel(
 
         def kernel(rng_key: PRNGKey, position: ArrayLikeTree):
             def body_fn(state, rng_key):
-                new_state, info = inner_kernel(rng_key, state, logdensity_fn)
-                return new_state, info
+                return inner_kernel(rng_key, state, logdensity_fn)
 
-            init = mcmc_init_fn(position, logdensity_fn)
+            init = init_fn(position, logdensity_fn)
             keys = jax.random.split(rng_key, num_repeats)
             last_state, info = jax.lax.scan(body_fn, init, keys)
             return last_state, info
@@ -151,7 +150,7 @@ def build_repeated_kernel(
 def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
-    num_mcmc_steps: int,
+    num_inner_steps: int,
     num_delete: int = 1,
     stepper_fn: Callable = default_stepper_fn,
     adapt_direction_params_fn: Callable = default_adapt_direction_params_fn,
@@ -160,7 +159,7 @@ def as_top_level_api(
     """Creates an adaptive Nested Slice Sampling (NSS) algorithm.
 
     This function configures a Nested Sampling algorithm that uses Hit-and-Run
-    Slice Sampling (HRSS) as its inner MCMC kernel. The parameters for the HRSS
+    Slice Sampling (HRSS) as its inner kernel. The parameters for the HRSS
     direction proposal (specifically, the covariance matrix) are adaptively tuned
     at each step using `adapt_direction_params_fn`.
 
@@ -170,9 +169,9 @@ def as_top_level_api(
         A function that computes the log-prior probability of a single particle.
     loglikelihood_fn
         A function that computes the log-likelihood of a single particle.
-    num_mcmc_steps
+    num_inner_steps
         The number of HRSS steps to run for each new particle generation.
-        The paper suggests this is `p`, e.g., `3 * d` where `d` is dimension.
+        This should be a multiple of the dimension of the parameter space.
     num_delete
         The number of particles to delete and replace at each NS step. 
         Defaults to 1.
@@ -197,7 +196,7 @@ def as_top_level_api(
     """
     delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
 
-    def mcmc_build_kernel(constrained_logdensity_fn, **kwargs):
+    def build_inner_kernel(constrained_logdensity_fn, **kwargs):
 
         def build_inner_kernel(**kwargs):
             return build_slice_kernel(partial(generate_slice_direction_fn, **kwargs), stepper_fn)
@@ -206,22 +205,21 @@ def as_top_level_api(
                 build_inner_kernel,
                 constrained_logdensity_fn,
                 slice_init,
-                num_mcmc_steps,
+                num_inner_steps,
                 **kwargs
                 )
 
-    mcmc_parameter_update_fn = adapt_direction_params_fn
+    update_inner_kernel = adapt_direction_params_fn
 
     def init_fn(particles: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(particles, loglikelihood_fn, logprior_fn, mcmc_parameter_update_fn)
+        return init(particles, loglikelihood_fn, logprior_fn, update_inner_kernel)
 
     step_fn = build_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
-        mcmc_build_kernel,
-        mcmc_parameter_update_fn,
+        build_inner_kernel,
+        update_inner_kernel,
     )
 
     return SamplingAlgorithm(init_fn, step_fn)

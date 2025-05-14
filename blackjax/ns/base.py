@@ -25,7 +25,7 @@ achieved by iteratively replacing the point with the lowest likelihood among a
 set of "live" points with a new point sampled from the prior, subject to the
 constraint that its likelihood must be higher than the one just discarded.
 
-This base implementation uses a provided MCMC kernel to perform the constrained
+This base implementation uses a provided kernel to perform the constrained
 sampling.
 """
 from functools import partial
@@ -94,9 +94,9 @@ class NSInfo(NamedTuple):
     logprior
         The log-prior values of the dead particles.
     update_info
-        A NamedTuple containing information from the MCMC update step used to
-        generate new live particles. The content depends on the specific MCMC
-        kernel used.
+        A NamedTuple containing information from the update step used to
+        generate new live particles. The content depends on the specific kernel
+        used.
     """
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
@@ -143,7 +143,7 @@ def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
-    mcmc_build_kernel: Callable,
+    build_inner_kernel: Callable,
 ) -> Callable:
     """Build a generic Nested Sampling kernel.
 
@@ -154,15 +154,15 @@ def build_kernel(
        likelihood constraint `loglikelihood_0`.
     2. Live particles are selected (typically with replacement from the remaining
        live particles, determined by `delete_fn`) to act as starting points for
-       the MCMC updates.
-    3. These selected live particles are evolved using an MCMC kernel
-       `mcmc_build_kernel`. The MCMC sampling is constrained to the region where
+       the updates.
+    3. These selected live particles are evolved using an kernel
+       `build_inner_kernel`. The sampling is constrained to the region where
        `loglikelihood(new_particle) > loglikelihood_0`.
     4. The newly generated particles replace the dead ones.
     5. The prior volume `logX` and evidence `logZ` are updated based on the
        number of deleted particles and their likelihoods.
 
-    This base version does not adapt the MCMC kernel parameters.
+    This base version does not adapt the kernel parameters.
 
     Parameters
     ----------
@@ -174,21 +174,21 @@ def build_kernel(
         A function `(rng_key, current_ns_state) -> (dead_indices, live_indices_for_resampling)`
         that identifies particles to be deleted and selects live particles
         to be starting points for new particle generation.
-    mcmc_build_kernel
-        A function that, when called with MCMC parameters (e.g., step size),
-        returns an MCMC kernel function `(rng_key, mcmc_state, logdensity_fn) -> (new_mcmc_state, info)`.
+    build_inner_kernel
+        A function that, when called with parameters (e.g., step size),
+        returns an kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
 
     Returns
     -------
     Callable
         A kernel function for Nested Sampling:
-        `(rng_key, ns_state, mcmc_parameters) -> (new_ns_state, ns_info)`.
+        `(rng_key, ns_state, inner_kernel_parameters) -> (new_ns_state, ns_info)`.
     """
 
     def kernel(
         rng_key: PRNGKey,
         state: NSState,
-        mcmc_parameters: dict,
+        inner_kernel_parameters: dict,
     ) -> tuple[NSState, NSInfo]:
 
         # Delete, and grab all the dead information
@@ -209,11 +209,11 @@ def build_kernel(
             constraint = loglikelihood_fn(x) > loglikelihood_0
             return jnp.where(constraint, logprior_fn(x), -jnp.inf)
 
-        kernel = mcmc_build_kernel(constrained_logdensity_fn, **mcmc_parameters)
+        inner_kernel = build_inner_kernel(constrained_logdensity_fn, **inner_kernel_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
         new_particles = jax.tree.map(lambda x: x[start_mcmc_idx], state.particles)
         sample_keys = jax.random.split(sample_key, num_evolve)
-        new_state, new_state_info = jax.vmap(kernel)(
+        new_state, new_state_info = jax.vmap(inner_kernel)(
             sample_keys, new_particles
         )
 

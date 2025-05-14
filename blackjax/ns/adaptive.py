@@ -14,11 +14,11 @@
 """Adaptive Nested Sampling for BlackJAX.
 
 This module provides an adaptive version of the Nested Sampling algorithm.
-In this variant, the parameters of the inner MCMC kernel, which is used to
+In this variant, the parameters of the inner kernel, which is used to
 sample new live points, are updated (tuned) at each iteration of the
 Nested Sampling loop. This adaptation is based on the information from the
 current set of live particles or the history of the sampling process,
-allowing the MCMC kernel to adjust to the changing characteristics of the
+allowing the kernel to adjust to the changing characteristics of the
 constrained prior distribution as the likelihood threshold increases.
 """
 from functools import partial
@@ -41,13 +41,13 @@ def init(
     particles: ArrayLikeTree,
     loglikelihood_fn: Callable,
     logprior_fn: Callable,
-    mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
+    update_inner_kernel: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
 ) -> StateWithParameterOverride:
     """Initializes the state for the Adaptive Nested Sampler.
 
     This involves initializing the base Nested Sampler state and then computing
-    the initial set of parameters for the inner MCMC kernel using the
-    `mcmc_parameter_update_fn`.
+    the initial set of parameters for the inner kernel using the
+    `update_inner_kernel`.
 
     Parameters
     ----------
@@ -58,18 +58,19 @@ def init(
         A function that computes the log-likelihood of a single particle.
     logprior_fn
         A function that computes the log-prior of a single particle.
-    mcmc_parameter_update_fn
-        A function that, given the current `NSState` and `NSInfo` (though info might be None at initialization),
-        computes a dictionary of parameters for the inner MCMC kernel.
+    update_inner_kernel
+        A function that, given the current `NSState` and `NSInfo` (though info
+        might be None at initialization), computes a dictionary of parameters
+        for the inner kernel.
 
     Returns
     -------
     StateWithParameterOverride
         The initial state for the adaptive Nested Sampler, including the
-        initial MCMC kernel parameters.
+        initial kernel parameters.
     """
     state = init_base(particles, loglikelihood_fn, logprior_fn)
-    initial_parameter_value = mcmc_parameter_update_fn(state, None)
+    initial_parameter_value = update_inner_kernel(state, None)
     return StateWithParameterOverride(state, initial_parameter_value)
 
 
@@ -77,15 +78,15 @@ def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
-    mcmc_build_kernel: Callable,
-    mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
+    build_inner_kernel: Callable,
+    update_inner_kernel: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
 ) -> Callable:
     """Build an adaptive Nested Sampling kernel.
 
     This kernel extends the base Nested Sampling kernel by re-computing/tuning
-    the parameters for the inner MCMC kernel at each step. The
-    `mcmc_parameter_update_fn` is called after each NS step to determine the
-    MCMC parameters for the *next* NS step.
+    the parameters for the inner kernel at each step. The `update_inner_kernel`
+    is called after each NS step to determine the parameters for the *next* NS
+    step.
 
     Parameters
     ----------
@@ -94,14 +95,15 @@ def build_kernel(
     loglikelihood_fn
         A function that computes the log-likelihood of a single particle.
     delete_fn
-        A function `(rng_key, current_ns_state) -> (dead_indices, live_indices_for_resampling)`
-        that identifies particles to be deleted and selects live particles
-        to be starting points for new particle generation.
-    mcmc_build_kernel
-        A function that, when called with MCMC parameters, returns an MCMC kernel function.
-    mcmc_parameter_update_fn
-        A function that takes the `NSState` and `NSInfo` from the completed NS step
-        and returns a dictionary of parameters to be used for the MCMC kernel
+        A function `(rng_key, current_ns_state) -> (dead_indices,
+        live_indices_for_resampling)` that identifies particles to be deleted
+        and selects live particles to be starting points for new particle
+        generation.
+    build_inner_kernel
+        A function that, when called with parameters, returns an kernel function.
+    update_inner_kernel
+        A function that takes the `NSState` and `NSInfo` from the completed NS
+        step and returns a dictionary of parameters to be used for the kernel
         in the *next* NS step.
 
     Returns
@@ -119,12 +121,12 @@ def build_kernel(
             logprior_fn,
             loglikelihood_fn,
             delete_fn,
-            mcmc_build_kernel,
+            build_inner_kernel,
         )
         new_state, info = step_fn(
             rng_key, state.sampler_state, state.parameter_override
         )
-        new_parameter_override = mcmc_parameter_update_fn(new_state, info)
+        new_parameter_override = update_inner_kernel(new_state, info)
         return (
             StateWithParameterOverride(new_state, new_parameter_override),
             info,
