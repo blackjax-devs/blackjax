@@ -100,9 +100,7 @@ class NSInfo(NamedTuple):
     """
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
-    loglikelihood_birth: (
-        Array  # The hard likelihood threshold of each particle at birth
-    )
+    loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
     logprior: Array  # The log-prior density of the particles
     update_info: NamedTuple
 
@@ -200,6 +198,7 @@ def build_kernel(
         state: NSState,
         mcmc_parameters: dict,
     ) -> tuple[NSState, NSInfo]:
+
         # Delete, and grab all the dead information
         rng_key, delete_fn_key = jax.random.split(rng_key)
         dead_idx, target_update_idx, start_mcmc_idx = delete_fn(delete_fn_key, state)
@@ -209,7 +208,6 @@ def build_kernel(
         dead_loglikelihood_birth = state.loglikelihood_birth[dead_idx]
         dead_logprior = state.logprior[dead_idx]
         loglikelihood_0 = dead_loglikelihood.max()
-
         num_deleted = len(dead_idx)
         num_updates = len(target_update_idx)
         num_evolve = len(start_mcmc_idx)
@@ -246,10 +244,8 @@ def build_kernel(
         new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
         new_state_logprior = jax.vmap(logprior_fn)(new_state.position)
         loglikelihood = state.loglikelihood.at[target_update_idx].set(new_state_loglikelihood)
-
         loglikelihood_births = loglikelihood_0 * jnp.ones(num_updates)
         loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(loglikelihood_births)
-
         logprior = state.logprior.at[target_update_idx].set(new_state_logprior)
         pid = state.pid.at[target_update_idx].set(state.pid[start_mcmc_idx])
 
@@ -266,9 +262,7 @@ def build_kernel(
         logZ_dead = jnp.logaddexp(
             state.logZ, jax.scipy.special.logsumexp(delta_logz_dead)
         )
-        logZ_live = (
-            jax.scipy.special.logsumexp(loglikelihood) - jnp.log(num_particles) + logX
-        )
+        logZ_live = jax.scipy.special.logsumexp(loglikelihood) - jnp.log(num_particles) + logX
 
         # Update the state
         new_state = NSState(
@@ -281,13 +275,7 @@ def build_kernel(
             logZ=logZ_dead,
             logZ_live=logZ_live,
         )
-        info = NSInfo(
-            dead_particles,
-            dead_loglikelihood,
-            dead_loglikelihood_birth,
-            dead_logprior,
-            new_state_info,
-        )
+        info = NSInfo(dead_particles, dead_loglikelihood, dead_loglikelihood_birth, dead_logprior, new_state_info)
         return new_state, info
 
     return kernel
@@ -315,21 +303,18 @@ def delete_fn(
     n_delete
         The number of particles to delete and subsequently replace.
 
-    Returns:
-    --------
+    Returns
+    -------
     dead_idx : jnp.ndarray
         Indices of particles to be deleted.
     target_update_idx : jnp.ndarray
         Indices of particles to be updated (same as dead_idx in this implementation).
     start_mcmc_idx : jnp.ndarray
         Indices of particles to use as starting points for MCMC evolution.
-
     """
     loglikelihood = state.loglikelihood
     neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, n_delete)
-    weights = jnp.array(
-        loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32
-    )
+    weights = jnp.array(loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32)
     start_mcmc_idx = jax.random.choice(
         rng_key,
         len(weights),
@@ -383,66 +368,3 @@ def bi_directional_delete_fn(key, state, n_delete):
         jnp.arange(len(loglikelihood)),
         jnp.concatenate([live_idx, live_idx])
     )
-
-
-
-def as_top_level_api(
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    mcmc_build_kernel: Callable,
-    mcmc_init_fn: Callable,
-    mcmc_parameters: dict,
-    num_mcmc_steps: int,
-    delete_fn: Callable = delete_fn,
-    n_delete: int = 1,
-) -> SamplingAlgorithm:
-    """Creates a Nested Sampling algorithm with fixed MCMC parameters.
-
-    This convenience function wraps the `build_kernel` and `init` functions
-    into a `SamplingAlgorithm` object, making it easy to use with BlackJAX's
-    inference loop. This version uses a fixed set of `mcmc_parameters` for
-    the inner MCMC kernel throughout the Nested Sampling run.
-
-    Parameters
-    ----------
-    logprior_fn
-        A function that computes the log-prior probability of a single particle.
-    loglikelihood_fn
-        A function that computes the log-likelihood of a single particle.
-    mcmc_build_kernel
-        A function that, when called with MCMC parameters, returns an MCMC kernel.
-    mcmc_init_fn
-        A function that initializes the state for the MCMC kernel.
-    mcmc_parameters
-        A dictionary of fixed parameters for the MCMC kernel.
-    num_mcmc_steps
-        The number of MCMC steps to run for each new particle generation.
-    n_delete
-        The number of particles to delete and replace at each NS step.
-        Defaults to 1.
-
-    Returns
-    -------
-    SamplingAlgorithm
-        A `SamplingAlgorithm` tuple containing `init` and `step` functions for
-        the configured Nested Sampler.
-    """
-    delete_func = partial(delete_fn, n_delete=n_delete)
-
-    kernel = build_kernel(
-        logprior_fn,
-        loglikelihood_fn,
-        delete_func,
-        mcmc_build_kernel,
-        mcmc_init_fn,
-        num_mcmc_steps,
-    )
-
-    def init_fn(particles: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(particles, loglikelihood_fn, logprior_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state, mcmc_parameters)
-
-    return SamplingAlgorithm(init_fn, step_fn)

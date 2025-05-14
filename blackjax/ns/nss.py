@@ -22,16 +22,15 @@ sampling tasks. The parameters of the HRSS kernel, specifically the covariance
 matrix for proposing slice directions, are adaptively tuned based on the current
 set of live particles.
 """
-
+import functools
 from functools import partial
 from typing import Callable, Dict
 
 import jax
+import jax.numpy as jnp
 from blackjax import SamplingAlgorithm
 from blackjax.mcmc.ss import build_kernel as build_slice_kernel
-from blackjax.mcmc.ss import (
-    default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn,
-)
+from blackjax.mcmc.ss import default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn
 from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel, init
@@ -47,9 +46,7 @@ from jax.flatten_util import ravel_pytree
 __all__ = ["init", "as_top_level_api"]
 
 
-def default_generate_slice_direction_fn(
-    rng_key: PRNGKey, **kernel_args: ArrayTree
-) -> ArrayTree:
+def default_generate_slice_direction_fn(rng_key: PRNGKey, **kernel_args: ArrayTree) -> ArrayTree:
     """Default function to generate a normalized slice direction for NSS.
 
     This function is designed to work with covariance parameters adapted by
@@ -93,9 +90,7 @@ def default_generate_slice_direction_fn(
     return unravel_fn(d)
 
 
-def default_adapt_direction_params_fn(
-    state: NSState, info: NSInfo
-) -> Dict[str, ArrayTree]:
+def default_adapt_direction_params_fn(state: NSState, info: NSInfo) -> Dict[str, ArrayTree]:
     """Default function to adapt/tune the slice direction proposal parameters.
 
     This function computes the empirical covariance matrix from the current set of
@@ -166,6 +161,10 @@ def as_top_level_api(
         A function `(rng_key, **params) -> direction_pytree` that generates a
         normalized direction for HRSS, using parameters from `adapt_direction_params_fn`.
         Defaults to `default_generate_slice_direction_fn`.
+    delete_fn
+        A function `(rng_key, current_ns_state) -> (dead_indices, live_indices_for_resampling)`
+        that identifies particles to be deleted and selects live particles
+        to be starting points for new particle generation.
 
     Returns
     -------
@@ -177,9 +176,7 @@ def as_top_level_api(
     delete_func = partial(delete_fn, n_delete=n_delete)
 
     def mcmc_build_kernel(**kwargs):
-        return build_slice_kernel(
-            partial(generate_slice_direction_fn, **kwargs), stepper_fn
-        )
+        return build_slice_kernel(partial(generate_slice_direction_fn, **kwargs), stepper_fn)
 
     mcmc_init_fn = slice_init
     mcmc_parameter_update_fn = adapt_direction_params_fn
