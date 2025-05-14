@@ -197,16 +197,14 @@ def as_top_level_api(
     """
     delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
 
-    def mcmc_build_kernel(loglikelihood_0, **kwargs):
-        def logdensity_fn(x):
-            constraint = loglikelihood_fn(x) > loglikelihood_0
-            return jnp.where(constraint, logprior_fn(x), -jnp.inf)
+    def mcmc_build_kernel(constrained_logdensity_fn, **kwargs):
 
         def build_inner_kernel(**kwargs):
             return build_slice_kernel(partial(generate_slice_direction_fn, **kwargs), stepper_fn)
+
         return build_repeated_kernel(
                 build_inner_kernel,
-                logdensity_fn,
+                constrained_logdensity_fn,
                 slice_init,
                 num_mcmc_steps,
                 **kwargs

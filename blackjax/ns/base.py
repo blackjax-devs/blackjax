@@ -205,7 +205,11 @@ def build_kernel(
         num_evolve = len(start_mcmc_idx)
 
         # Resample the live particles
-        kernel = mcmc_build_kernel(loglikelihood_0, **mcmc_parameters)
+        def constrained_logdensity_fn(x):
+            constraint = loglikelihood_fn(x) > loglikelihood_0
+            return jnp.where(constraint, logprior_fn(x), -jnp.inf)
+
+        kernel = mcmc_build_kernel(constrained_logdensity_fn, **mcmc_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
         new_particles = jax.tree.map(lambda x: x[start_mcmc_idx], state.particles)
         sample_keys = jax.random.split(sample_key, num_evolve)
