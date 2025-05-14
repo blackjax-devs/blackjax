@@ -36,7 +36,7 @@ import jax.numpy as jnp
 from blackjax import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["init", "as_top_level_api", "build_kernel"]
+__all__ = ["init", "build_kernel"]
 
 
 class NSState(NamedTuple):
@@ -147,7 +147,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     num_mcmc_steps: int,
 ) -> Callable:
-    r"""Build a generic Nested Sampling kernel.
+    """Build a generic Nested Sampling kernel.
 
     This kernel implements one step of the Nested Sampling algorithm. In each step:
     1. A set of particles with the lowest log-likelihoods are identified and
@@ -322,64 +322,3 @@ def delete_fn(
         replace=True,
     )
     return dead_idx, live_idx
-
-
-def as_top_level_api(
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    mcmc_build_kernel: Callable,
-    mcmc_init_fn: Callable,
-    mcmc_parameters: dict,
-    num_mcmc_steps: int,
-    n_delete: int = 1,
-) -> SamplingAlgorithm:
-    """Creates a Nested Sampling algorithm with fixed MCMC parameters.
-
-    This convenience function wraps the `build_kernel` and `init` functions
-    into a `SamplingAlgorithm` object, making it easy to use with BlackJAX's
-    inference loop. This version uses a fixed set of `mcmc_parameters` for
-    the inner MCMC kernel throughout the Nested Sampling run.
-
-    Parameters
-    ----------
-    logprior_fn
-        A function that computes the log-prior probability of a single particle.
-    loglikelihood_fn
-        A function that computes the log-likelihood of a single particle.
-    mcmc_build_kernel
-        A function that, when called with MCMC parameters, returns an MCMC kernel.
-    mcmc_init_fn
-        A function that initializes the state for the MCMC kernel.
-    mcmc_parameters
-        A dictionary of fixed parameters for the MCMC kernel.
-    num_mcmc_steps
-        The number of MCMC steps to run for each new particle generation.
-    n_delete
-        The number of particles to delete and replace at each NS step.
-        Defaults to 1.
-
-    Returns
-    -------
-    SamplingAlgorithm
-        A `SamplingAlgorithm` tuple containing `init` and `step` functions for
-        the configured Nested Sampler.
-    """
-    delete_func = partial(delete_fn, n_delete=n_delete)
-
-    kernel = build_kernel(
-        logprior_fn,
-        loglikelihood_fn,
-        delete_func,
-        mcmc_build_kernel,
-        mcmc_init_fn,
-        num_mcmc_steps,
-    )
-
-    def init_fn(particles: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(particles, loglikelihood_fn, logprior_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state, mcmc_parameters)
-
-    return SamplingAlgorithm(init_fn, step_fn)

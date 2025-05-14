@@ -34,7 +34,7 @@ from blackjax.ns.base import init as init_base
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["init", "as_top_level_api", "build_kernel"]
+__all__ = ["init", "build_kernel"]
 
 
 def init(
@@ -142,63 +142,3 @@ def build_kernel(
         )
 
     return kernel
-
-
-def as_top_level_api(
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    mcmc_build_kernel: Callable,
-    mcmc_init_fn: Callable,
-    mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
-    num_mcmc_steps: int,
-    n_delete: int = 1,
-) -> SamplingAlgorithm:
-    """Creates an Adaptive Nested Sampling algorithm.
-
-    This convenience function wraps the adaptive `build_kernel` and `init`
-    functions into a `SamplingAlgorithm` object. The inner MCMC kernel's
-    parameters are tuned at each step using `mcmc_parameter_update_fn`.
-
-    Parameters
-    ----------
-    logprior_fn
-        A function that computes the log-prior probability of a single particle.
-    loglikelihood_fn
-        A function that computes the log-likelihood of a single particle.
-    mcmc_build_kernel
-        A function that, when called with MCMC parameters, returns an MCMC kernel.
-    mcmc_init_fn
-        A function that initializes the state for the MCMC kernel.
-    mcmc_parameter_update_fn
-        A function that takes the `NSState` and `NSInfo` from a completed NS step
-        and returns a dictionary of parameters for the MCMC kernel for the next step.
-    num_mcmc_steps
-        The number of MCMC steps to run for each new particle generation.
-    n_delete
-        The number of particles to delete and replace at each NS step.
-        Defaults to 1.
-
-    Returns
-    -------
-    SamplingAlgorithm
-        A `SamplingAlgorithm` tuple containing `init` and `step` functions for
-        the configured Adaptive Nested Sampler. The state managed by this
-        algorithm is of type `StateWithParameterOverride`.
-    """
-    delete_fn = partial(delete_fn, n_delete=n_delete)
-
-    step_fn = build_kernel(
-        logprior_fn,
-        loglikelihood_fn,
-        delete_fn,
-        mcmc_build_kernel,
-        mcmc_init_fn,
-        mcmc_parameter_update_fn,
-        num_mcmc_steps,
-    )
-
-    def init_fn(particles: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(particles, loglikelihood_fn, logprior_fn, mcmc_parameter_update_fn)
-
-    return SamplingAlgorithm(init_fn, step_fn)
