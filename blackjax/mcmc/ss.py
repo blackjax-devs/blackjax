@@ -30,7 +30,7 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
-from blackjax.types import Array, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayTree, ArrayLikeTree, PRNGKey
 
 __all__ = [
     "SliceState",
@@ -44,12 +44,12 @@ __all__ = [
 class SliceState(NamedTuple):
     """State of the Slice Sampling algorithm.
 
-    position: ArrayTree
+    position: ArrayLikeTree
         The current position of the chain.
     logdensity: float
         The log-density of the target distribution at the current position.
     """
-    position: ArrayTree
+    position: ArrayLikeTree
     logdensity: float
 
 

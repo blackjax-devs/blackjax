@@ -111,7 +111,7 @@ def compute_nlive(info: NSInfo):
 
 
 def logX(
-    rng_key: PRNGKey, dead_info: NSInfo, samples: int = 100
+    rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100
 ) -> tuple[Array, Array]:
     """Simulate the stochastic evolution of log prior volumes.
 
@@ -129,24 +129,25 @@ def logX(
         An `NSInfo` object (or compatible PyTree) containing `loglikelihood_birth`
         and `loglikelihood` for all dead particles accumulated during an NS run.
         It's assumed these particles are already sorted by their death log-likelihood.
-    samples
-        The number of Monte Carlo samples to generate for the stochastic
+    shape
+        The shape of Monte Carlo samples to generate for the stochastic
         log-volume sequence. Each sample represents one possible path of
         volume shrinkage. Default is 100.
 
     Returns
     -------
     tuple[Array, Array]
-        - `logX_cumulative`: An array of shape `(num_dead_particles, samples)`
-          containing `samples` simulated sequences of cumulative log prior volumes `log(X_i)`.
-        - `log_dX_elements`: An array of shape `(num_dead_particles, samples)`
-          containing `samples` simulated sequences of log prior volume elements `log(dX_i)`.
+        - `logX_cumulative`: An array of shape `(num_dead_particles, *shape)`
+          containing `shape` simulated sequences of cumulative log prior volumes `log(X_i)`.
+        - `log_dX_elements`: An array of shape `(num_dead_particles, *shape)`
+          containing `shape` simulated sequences of log prior volume elements `log(dX_i)`.
           `dX_i` is approximately `X_i - X_{i+1}`.
     """
     rng_key, subkey = jax.random.split(rng_key)
+    shape = (shape,) if isinstance(shape, int) else shape
     min_val = jnp.finfo(dead_info.loglikelihood.dtype).tiny
     r = jnp.log(
-        jax.random.uniform(subkey, shape=(dead_info.loglikelihood.shape[0], samples)).clip(
+        jax.random.uniform(subkey, shape=(dead_info.loglikelihood.shape[0], *shape)).clip(
             min_val, 1 - min_val
         )
     )
@@ -163,7 +164,7 @@ def logX(
 
 
 def log_weights(
-    rng_key: PRNGKey, dead_info: NSInfo, samples: int = 100, beta: float = 1.0
+    rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100, beta: float = 1.0
 ) -> Array:
     """Calculate the log importance weights for Nested Sampling results.
 
@@ -179,8 +180,8 @@ def log_weights(
     dead_info
         An `NSInfo` object (or compatible PyTree) containing `loglikelihood_birth`
         and `loglikelihood` for all dead particles.
-    samples
-        The number of Monte Carlo samples to use for simulating `log(dX_i)`.
+    shape
+        The shape of Monte Carlo samples to use for simulating `log(dX_i)`.
         Default is 100.
     beta
         The inverse temperature. Typically 1.0 for standard evidence calculation.
@@ -189,14 +190,14 @@ def log_weights(
     Returns
     -------
     Array
-        An array of log importance weights, shape `(num_dead_particles, samples)`.
+        An array of log importance weights, shape `(num_dead_particles, *shape)`.
         The original order of particles in `dead_info` is preserved.
     """
     sort_indices = jnp.argsort(dead_info.loglikelihood)
     unsort_indices = jnp.empty_like(sort_indices)
     unsort_indices = unsort_indices.at[sort_indices].set(jnp.arange(len(sort_indices)))
     dead_info_sorted = jax.tree.map(lambda x: x[sort_indices], dead_info)
-    _, log_dX = logX(rng_key, dead_info_sorted, samples)
+    _, log_dX = logX(rng_key, dead_info_sorted, shape)
     log_w = log_dX + beta * dead_info_sorted.loglikelihood[..., jnp.newaxis]
     return log_w[unsort_indices]
 
@@ -275,12 +276,12 @@ def ess(rng_key: PRNGKey, dead_info_map: NSInfo) -> Array:
 
 
 def sample(
-    rng_key: PRNGKey, dead_info_map: NSInfo, n_samples: int = 1000
+    rng_key: PRNGKey, dead_info_map: NSInfo, shape: int = 1000
 ) -> ArrayTree:
     """Resamples particles according to their importance weights.
 
     This function takes the full set of dead (and final live) particles and
-    their computed importance weights, and draws `n_samples` particles with
+    their computed importance weights, and draws `shape` particles with
     replacement, where the probability of drawing each particle is proportional
     to its weight. This produces an unweighted sample from the target posterior
     distribution.
@@ -292,21 +293,20 @@ def sample(
     dead_info_map
         An `NSInfo` object containing the full set of dead (and final live)
         particles, typically the output of `finalise`.
-    n_samples
+    shape
         The number of posterior samples to draw. Defaults to 1000.
 
     Returns
     -------
     ArrayTree
-        A PyTree of resampled particles, where each leaf has a leading dimension
-        of `n_samples`.
+        A PyTree of resampled particles, where each leaf has `shape`.
     """
     logw = log_weights(rng_key, dead_info_map).mean(axis=-1)
     indices = jax.random.choice(
         rng_key,
         dead_info_map.loglikelihood.shape[0],
         p=jnp.exp(logw.squeeze() - jnp.max(logw)),
-        shape=(n_samples,),
+        shape=shape,
         replace=True,
     )
     return jax.tree.map(lambda leaf: leaf[indices], dead_info_map.particles)

@@ -69,7 +69,7 @@ class NSState(NamedTuple):
         The accumulated evidence estimate from the "dead" points (particles
         that have been replaced).
     """
-    particles: ArrayTree
+    particles: ArrayLikeTree
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
     logprior: Array  # The log-prior density of the particles
