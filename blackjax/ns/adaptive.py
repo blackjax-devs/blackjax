@@ -80,8 +80,6 @@ def build_kernel(
     loglikelihood_fn: Callable,
     delete_fn: Callable,
     mcmc_build_kernel: Callable,
-    mcmc_init_fn: Callable,
-    num_mcmc_steps: int,
     mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
 ) -> Callable:
     """Build an adaptive Nested Sampling kernel.
@@ -103,11 +101,6 @@ def build_kernel(
         to be starting points for new particle generation.
     mcmc_build_kernel
         A function that, when called with MCMC parameters, returns an MCMC kernel function.
-    mcmc_init_fn
-        A function `(position, logdensity_fn) -> mcmc_state` that initializes
-        the state for the MCMC kernel.
-    num_mcmc_steps
-        The number of MCMC steps to run for each new particle generation.
     mcmc_parameter_update_fn
         A function that takes the `NSState` and `NSInfo` from the completed NS step
         and returns a dictionary of parameters to be used for the MCMC kernel
@@ -129,8 +122,6 @@ def build_kernel(
             loglikelihood_fn,
             delete_fn,
             mcmc_build_kernel,
-            mcmc_init_fn,
-            num_mcmc_steps,
         )
         new_state, info = step_fn(
             rng_key, state.sampler_state, state.parameter_override

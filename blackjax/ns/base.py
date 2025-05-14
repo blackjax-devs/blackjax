@@ -144,8 +144,6 @@ def build_kernel(
     loglikelihood_fn: Callable,
     delete_fn: Callable,
     mcmc_build_kernel: Callable,
-    mcmc_init_fn: Callable,
-    num_mcmc_steps: int,
 ) -> Callable:
     """Build a generic Nested Sampling kernel.
 
@@ -157,9 +155,9 @@ def build_kernel(
     2. Live particles are selected (typically with replacement from the remaining
        live particles, determined by `delete_fn`) to act as starting points for
        the MCMC updates.
-    3. These selected live particles are evolved using an MCMC kernel (`mcmc_build_kernel`,
-       `mcmc_init_fn`) for `num_mcmc_steps`. The MCMC sampling is constrained
-       to the region where `loglikelihood(new_particle) > loglikelihood_0`.
+    3. These selected live particles are evolved using an MCMC kernel
+       `mcmc_build_kernel`. The MCMC sampling is constrained to the region where
+       `loglikelihood(new_particle) > loglikelihood_0`.
     4. The newly generated particles replace the dead ones.
     5. The prior volume `logX` and evidence `logZ` are updated based on the
        number of deleted particles and their likelihoods.
@@ -179,12 +177,6 @@ def build_kernel(
     mcmc_build_kernel
         A function that, when called with MCMC parameters (e.g., step size),
         returns an MCMC kernel function `(rng_key, mcmc_state, logdensity_fn) -> (new_mcmc_state, info)`.
-    mcmc_init_fn
-        A function `(position, logdensity_fn) -> mcmc_state` that initializes
-        the state for the MCMC kernel.
-    num_mcmc_steps
-        The number of MCMC steps to run for each new particle generation.
-        The paper suggests 5 times the dimension of the parameter space.
 
     Returns
     -------
@@ -213,25 +205,11 @@ def build_kernel(
         num_evolve = len(start_mcmc_idx)
 
         # Resample the live particles
-        kernel = mcmc_build_kernel(**mcmc_parameters)
+        kernel = mcmc_build_kernel(loglikelihood_0, **mcmc_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
-
-        def logdensity_fn(x):
-            return jnp.where(loglikelihood_fn(x) > loglikelihood_0, logprior_fn(x), -jnp.inf)
-
-        def num_mcmc_steps_kernel(rng_key, particles):
-            def body_fn(state, rng_key):
-                new_state, info = kernel(rng_key, state, logdensity_fn)
-                return new_state, info
-
-            init = mcmc_init_fn(particles, logdensity_fn)
-            keys = jax.random.split(rng_key, num_mcmc_steps)
-            last_state, info = jax.lax.scan(body_fn, init, keys)
-            return last_state, info
-
         new_particles = jax.tree.map(lambda x: x[start_mcmc_idx], state.particles)
         sample_keys = jax.random.split(sample_key, num_evolve)
-        new_state, new_state_info = jax.vmap(num_mcmc_steps_kernel)(
+        new_state, new_state_info = jax.vmap(kernel)(
             sample_keys, new_particles
         )
 

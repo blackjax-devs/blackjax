@@ -122,6 +122,32 @@ def default_adapt_direction_params_fn(state: NSState, info: NSInfo) -> Dict[str,
     return {"cov": jax.vmap(unravel_fn)(cov)}
 
 
+def build_repeated_kernel(
+        build_kernel,
+        logdensity_fn,
+        mcmc_init_fn,
+        num_repeats: int,
+        **kwargs
+        ):
+
+        inner_kernel = build_kernel(**kwargs)
+
+        def kernel(rng_key: PRNGKey, position: ArrayLikeTree):
+            def body_fn(state, rng_key):
+                new_state, info = inner_kernel(rng_key, state, logdensity_fn)
+                return new_state, info
+
+            init = mcmc_init_fn(position, logdensity_fn)
+            keys = jax.random.split(rng_key, num_repeats)
+            last_state, info = jax.lax.scan(body_fn, init, keys)
+            return last_state, info
+
+        return kernel
+
+
+
+
+
 def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
@@ -171,10 +197,21 @@ def as_top_level_api(
     """
     delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
 
-    def mcmc_build_kernel(**kwargs):
-        return build_slice_kernel(partial(generate_slice_direction_fn, **kwargs), stepper_fn)
+    def mcmc_build_kernel(loglikelihood_0, **kwargs):
+        def logdensity_fn(x):
+            constraint = loglikelihood_fn(x) > loglikelihood_0
+            return jnp.where(constraint, logprior_fn(x), -jnp.inf)
 
-    mcmc_init_fn = slice_init
+        def build_inner_kernel(**kwargs):
+            return build_slice_kernel(partial(generate_slice_direction_fn, **kwargs), stepper_fn)
+        return build_repeated_kernel(
+                build_inner_kernel,
+                logdensity_fn,
+                slice_init,
+                num_mcmc_steps,
+                **kwargs
+                )
+
     mcmc_parameter_update_fn = adapt_direction_params_fn
 
     def init_fn(particles: ArrayLikeTree, rng_key=None):
@@ -186,8 +223,6 @@ def as_top_level_api(
         loglikelihood_fn,
         delete_fn,
         mcmc_build_kernel,
-        mcmc_init_fn,
-        num_mcmc_steps,
         mcmc_parameter_update_fn,
     )
 
