@@ -30,6 +30,7 @@ sampling.
 """
 
 from typing import Callable, NamedTuple
+from functools import partial
 
 import jax
 import jax.numpy as jnp
@@ -211,13 +212,12 @@ def build_kernel(
             constraint = loglikelihood_fn(x) > loglikelihood_0
             return jnp.where(constraint, logprior_fn(x), -jnp.inf)
 
-        inner_kernel = build_inner_kernel(
-            constrained_logdensity_fn, **inner_kernel_parameters
-        )
+        inner_kernel = build_inner_kernel(**inner_kernel_parameters)
         rng_key, sample_key = jax.random.split(rng_key)
         new_particles = jax.tree.map(lambda x: x[start_idx], state.particles)
         sample_keys = jax.random.split(sample_key, num_evolve)
-        new_state, new_state_info = jax.vmap(inner_kernel)(sample_keys, new_particles)
+        inner_kernel_fn = partial(inner_kernel, logdensity_fn=constrained_logdensity_fn)
+        new_state, new_state_info = jax.vmap(inner_kernel_fn)(sample_keys, new_particles)
 
         # Update the particles
         particles = jax.tree_util.tree_map(

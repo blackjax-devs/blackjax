@@ -129,11 +129,11 @@ def default_adapt_direction_params_fn(
 
 
 def build_repeated_kernel(
-    build_kernel, logdensity_fn, init_fn, num_repeats: int, **kwargs
+    build_kernel, init_fn, num_repeats: int, **kwargs
 ):
     inner_kernel = build_kernel(**kwargs)
 
-    def kernel(rng_key: PRNGKey, position: ArrayLikeTree):
+    def kernel(rng_key: PRNGKey, position: ArrayLikeTree, logdensity_fn: Callable):
         def body_fn(state, rng_key):
             return inner_kernel(rng_key, state, logdensity_fn)
 
@@ -194,7 +194,7 @@ def as_top_level_api(
     """
     delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
 
-    def build_inner_kernel(constrained_logdensity_fn, **kwargs):
+    def build_inner_kernel(**kwargs):
         def build_inner_kernel(**kwargs):
             return build_slice_kernel(
                 partial(generate_slice_direction_fn, **kwargs), stepper_fn
@@ -202,7 +202,6 @@ def as_top_level_api(
 
         return build_repeated_kernel(
             build_inner_kernel,
-            constrained_logdensity_fn,
             slice_init,
             num_inner_steps,
             **kwargs,
