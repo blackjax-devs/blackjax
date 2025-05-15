@@ -129,17 +129,16 @@ def default_adapt_direction_params_fn(
 
 
 def build_repeated_kernel(
-    build_kernel, init_fn, num_repeats: int, **kwargs
+    build_kernel, num_repeats: int, **kwargs
 ):
     inner_kernel = build_kernel(**kwargs)
 
-    def kernel(rng_key: PRNGKey, position: ArrayLikeTree, logdensity_fn: Callable):
+    def kernel(rng_key: PRNGKey, state, *args, **kwargs):
         def body_fn(state, rng_key):
-            return inner_kernel(rng_key, state, logdensity_fn)
+            return inner_kernel(rng_key, state, *args, **kwargs)
 
-        init = init_fn(position, logdensity_fn)
         keys = jax.random.split(rng_key, num_repeats)
-        last_state, info = jax.lax.scan(body_fn, init, keys)
+        last_state, info = jax.lax.scan(body_fn, state, keys)
         return last_state, info
 
     return kernel
@@ -195,29 +194,33 @@ def as_top_level_api(
     delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
 
     def build_inner_kernel(**kwargs):
-        def build_inner_kernel(**kwargs):
+        def build_inner_kernel(**inner_kernel_args):
             return build_slice_kernel(
-                partial(generate_slice_direction_fn, **kwargs), stepper_fn
+                partial(generate_slice_direction_fn, **inner_kernel_args), stepper_fn
             )
 
         return build_repeated_kernel(
             build_inner_kernel,
-            slice_init,
             num_inner_steps,
             **kwargs,
         )
 
+    inner_init_fn = slice_init
     update_inner_kernel = adapt_direction_params_fn
 
-    def init_fn(particles: ArrayLikeTree, rng_key: PRNGKey = None):
+    def init_fn(particles: ArrayLikeTree, rng_key: PRNGKey = None) -> NSState:
         return init(particles, loglikelihood_fn, logprior_fn, update_inner_kernel)
 
-    step_fn = build_kernel(
+    kernel = build_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
+        inner_init_fn,
         build_inner_kernel,
         update_inner_kernel,
     )
+
+    def step_fn(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
+        return kernel(rng_key, state)
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore

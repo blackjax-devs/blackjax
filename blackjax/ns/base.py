@@ -147,6 +147,7 @@ def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
+    inner_init_fn: Callable,
     build_inner_kernel: Callable,
 ) -> Callable:
     """Build a generic Nested Sampling kernel.
@@ -179,7 +180,7 @@ def build_kernel(
         that identifies particles to be deleted and selects live particles
         to be starting points for new particle generation.
     build_inner_kernel
-        A function that, when called with parameters (e.g., step size),
+        A function that, when called with keywords (e.g., step size),
         returns an kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
 
     Returns
@@ -203,42 +204,43 @@ def build_kernel(
         dead_loglikelihood_birth = state.loglikelihood_birth[dead_idx]
         dead_logprior = state.logprior[dead_idx]
         loglikelihood_0 = dead_loglikelihood.max()
-        num_deleted = len(dead_idx)
-        num_updates = len(target_update_idx)
-        num_evolve = len(start_idx)
 
         # Resample the live particles
-        def constrained_logdensity_fn(x):
+        def logdensity_fn(x):
             constraint = loglikelihood_fn(x) > loglikelihood_0
             return jnp.where(constraint, logprior_fn(x), -jnp.inf)
 
         inner_kernel = build_inner_kernel(**inner_kernel_parameters)
+        step_fn = partial(inner_kernel, logdensity_fn=logdensity_fn)
+        init_fn = partial(inner_init_fn, logdensity_fn=logdensity_fn)
+
         rng_key, sample_key = jax.random.split(rng_key)
-        new_particles = jax.tree.map(lambda x: x[start_idx], state.particles)
-        sample_keys = jax.random.split(sample_key, num_evolve)
-        inner_kernel_fn = partial(inner_kernel, logdensity_fn=constrained_logdensity_fn)
-        new_state, new_state_info = jax.vmap(inner_kernel_fn)(sample_keys, new_particles)
+        sample_keys = jax.random.split(sample_key, len(start_idx))
+        particles = jax.tree.map(lambda x: x[start_idx], state.particles)
+        inner_states = jax.vmap(init_fn)(particles)
+        inner_states, inner_state_infos = jax.vmap(step_fn)(sample_keys, inner_states)
 
         # Update the particles
         particles = jax.tree_util.tree_map(
             lambda p, n: p.at[target_update_idx].set(n),
             state.particles,
-            new_state.position,
+            inner_states.position,
         )
 
         loglikelihood = state.loglikelihood.at[target_update_idx].set(
-            jax.vmap(loglikelihood_fn)(new_state.position)
+            jax.vmap(loglikelihood_fn)(inner_states.position)
         )
         loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(
-            loglikelihood_0 * jnp.ones(num_updates) 
+            loglikelihood_0 * jnp.ones(len(target_update_idx)) 
         )
         logprior = state.logprior.at[target_update_idx].set(
-            jax.vmap(logprior_fn)(new_state.position)
+            jax.vmap(logprior_fn)(inner_states.position)
         )
         pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 
         # Update the logX and logZ
         num_particles = len(state.loglikelihood)
+        num_deleted = len(dead_idx)
         num_lives = jnp.arange(num_particles, num_particles - num_deleted, -1)
         delta_log_X = -1 / num_lives
         logX = state.logX + jnp.cumsum(delta_log_X)
@@ -266,7 +268,7 @@ def build_kernel(
             dead_loglikelihood,
             dead_loglikelihood_birth,
             dead_logprior,
-            new_state_info,
+            inner_state_infos,
         )
         return state, info
 

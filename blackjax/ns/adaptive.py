@@ -74,6 +74,7 @@ def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
+    inner_init_fn: Callable,
     build_inner_kernel: Callable,
     update_inner_kernel: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
 ) -> Callable:
@@ -115,6 +116,7 @@ def build_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
+        inner_init_fn,
         build_inner_kernel,
     )
 
