@@ -9,7 +9,7 @@ from blackjax.ns.utils import log_weights
 # jax.config.update("jax_enable_x64", True)
 
 rng_key = jax.random.PRNGKey(0)
-d = 20
+d = 5
 
 C = jax.random.normal(rng_key, (d, d)) * 0.1
 like_cov = C @ C.T
