@@ -18,6 +18,7 @@ Sampling, such as calculating log-volumes, log-weights, effective sample sizes,
 and post-processing of results.
 """
 
+import functools
 import jax
 import jax.numpy as jnp
 
@@ -327,3 +328,20 @@ def get_first_row(x: ArrayTree) -> ArrayTree:
         first slice `leaf[0]` of the corresponding leaf in `x`.
     """
     return jax.tree.map(lambda x: x[0], x)
+
+
+def repeat_kernel(num_repeats: int):
+    """Decorator to repeat a kernel function multiple times."""
+
+    def decorator(kernel):
+        @functools.wraps(kernel)
+        def repeated_kernel(rng_key: PRNGKey, state, *args, **kwargs):
+            def body_fn(state, rng_key):
+                return kernel(rng_key, state, *args, **kwargs)
+
+            keys = jax.random.split(rng_key, num_repeats)
+            return jax.lax.scan(body_fn, state, keys)
+
+        return repeated_kernel
+
+    return decorator

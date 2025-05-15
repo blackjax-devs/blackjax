@@ -75,7 +75,7 @@ def build_kernel(
     loglikelihood_fn: Callable,
     delete_fn: Callable,
     inner_init_fn: Callable,
-    build_inner_kernel: Callable,
+    inner_kernel: Callable,
     update_inner_kernel: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
 ) -> Callable:
     """Build an adaptive Nested Sampling kernel.
@@ -96,7 +96,7 @@ def build_kernel(
         live_indices_for_resampling)` that identifies particles to be deleted
         and selects live particles to be starting points for new particle
         generation.
-    build_inner_kernel
+    inner_kernel
         A function that, when called with inner_kernel parameters, returns a
         kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
     update_inner_kernel
@@ -117,7 +117,7 @@ def build_kernel(
         loglikelihood_fn,
         delete_fn,
         inner_init_fn,
-        build_inner_kernel,
+        inner_kernel,
     )
 
     def kernel(

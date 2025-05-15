@@ -148,7 +148,7 @@ def build_kernel(
     loglikelihood_fn: Callable,
     delete_fn: Callable,
     inner_init_fn: Callable,
-    build_inner_kernel: Callable,
+    inner_kernel: Callable,
 ) -> Callable:
     """Build a generic Nested Sampling kernel.
 
@@ -161,7 +161,7 @@ def build_kernel(
        live particles, determined by `delete_fn`) to act as starting points for
        the updates.
     3. These selected live particles are evolved using an kernel
-       `build_inner_kernel`. The sampling is constrained to the region where
+       `inner_kernel`. The sampling is constrained to the region where
        `loglikelihood(new_particle) > loglikelihood_0`.
     4. The newly generated particles replace the dead ones.
     5. The prior volume `logX` and evidence `logZ` are updated based on the
@@ -179,7 +179,7 @@ def build_kernel(
         A function `(rng_key, current_ns_state) -> (dead_indices, live_indices_for_resampling)`
         that identifies particles to be deleted and selects live particles
         to be starting points for new particle generation.
-    build_inner_kernel
+    inner_kernel
         A function that, when called with keywords (e.g., step size),
         returns an kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
 
@@ -210,8 +210,9 @@ def build_kernel(
             constraint = loglikelihood_fn(x) > loglikelihood_0
             return jnp.where(constraint, logprior_fn(x), -jnp.inf)
 
-        inner_kernel = build_inner_kernel(**inner_kernel_parameters)
-        step_fn = partial(inner_kernel, logdensity_fn=logdensity_fn)
+        step_fn = partial(
+            inner_kernel, logdensity_fn=logdensity_fn, **inner_kernel_parameters
+        )
         init_fn = partial(inner_init_fn, logdensity_fn=logdensity_fn)
 
         rng_key, sample_key = jax.random.split(rng_key)

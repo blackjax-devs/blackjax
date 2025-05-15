@@ -22,7 +22,6 @@ sampling tasks. The parameters of the HRSS kernel, specifically the covariance
 matrix for proposing slice directions, are adaptively tuned based on the current
 set of live particles.
 """
-import functools
 from functools import partial
 from typing import Callable, Dict
 
@@ -39,7 +38,7 @@ from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel, init
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import delete_fn as default_delete_fn
-from blackjax.ns.utils import get_first_row
+from blackjax.ns.utils import get_first_row, repeat_kernel
 from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
     particles_covariance_matrix,
@@ -129,45 +128,6 @@ def default_adapt_direction_params_fn(
     return {"cov": jax.vmap(unravel_fn)(cov)}
 
 
-def repeated_kernel(num_repeats: int):
-    """Decorator to repeat a kernel function multiple times."""
-
-    def decorator_inner(build_kernel_func):
-        @functools.wraps(build_kernel_func)
-        def wrapper_build_repeated(*build_args, **build_kwargs):
-            inner_kernel = build_kernel_func(*build_args, **build_kwargs)
-
-            def kernel_with_scan(rng_key: PRNGKey, state, *scan_args, **scan_kwargs):
-                def body_fn(current_state, current_rng_key):
-                    return inner_kernel(
-                        current_rng_key, current_state, *scan_args, **scan_kwargs
-                    )
-
-                keys = jax.random.split(rng_key, num_repeats)
-                last_state, info_stack = jax.lax.scan(body_fn, state, keys)
-                return last_state, info_stack
-
-            return kernel_with_scan
-
-        return wrapper_build_repeated
-
-    return decorator_inner
-
-
-def build_repeated_kernel(build_kernel, num_repeats: int, **kwargs):
-    inner_kernel = build_kernel(**kwargs)
-
-    def kernel(rng_key: PRNGKey, state, *args, **kwargs):
-        def body_fn(state, rng_key):
-            return inner_kernel(rng_key, state, *args, **kwargs)
-
-        keys = jax.random.split(rng_key, num_repeats)
-        last_state, info = jax.lax.scan(body_fn, state, keys)
-        return last_state, info
-
-    return kernel
-
-
 def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
@@ -215,12 +175,13 @@ def as_top_level_api(
         the configured Nested Slice Sampler. The state managed by this
         algorithm is `StateWithParameterOverride`.
     """
-    delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
+    delete_fn = partial(default_delete_fn, num_delete=num_delete)
 
-    @repeated_kernel(num_inner_steps)
-    def build_inner_kernel(**kwargs):
+    @repeat_kernel(num_inner_steps)
+    def inner_kernel(rng_key, state, logdensity_fn, **kwargs):
         generate_slice_direction_fn_ = partial(generate_slice_direction_fn, **kwargs)
-        return build_slice_kernel(generate_slice_direction_fn_, stepper_fn)
+        slice_kernel = build_slice_kernel(generate_slice_direction_fn_, stepper_fn)
+        return slice_kernel(rng_key, state, logdensity_fn)
 
     inner_init_fn = slice_init
     update_inner_kernel = adapt_direction_params_fn
@@ -234,7 +195,7 @@ def as_top_level_api(
         loglikelihood_fn,
         delete_fn,
         inner_init_fn,
-        build_inner_kernel,
+        inner_kernel,
         update_inner_kernel,
     )
 
