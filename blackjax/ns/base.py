@@ -38,7 +38,14 @@ from jax.scipy.special import logsumexp
 
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["init", "build_kernel", "NSState", "NSInfo", "delete_fn", "bi_directional_delete_fn"]
+__all__ = [
+    "init",
+    "build_kernel",
+    "NSState",
+    "NSInfo",
+    "delete_fn",
+    "bi_directional_delete_fn",
+]
 
 
 class NSState(NamedTuple):
@@ -104,16 +111,16 @@ class NSInfo(NamedTuple):
 
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the dead particles
-    loglikelihood_birth: Array  # The log-likelihood threshold at birth of dead particles
+    loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the dead particles
-    update_info: Any # Typically a NamedTuple or PyTree from inner MCMC
+    update_info: Any  # Typically a NamedTuple or PyTree from inner MCMC
 
 
 def init(
     particles: ArrayLikeTree,
     loglikelihood_fn: Callable[[ArrayTree], float],
     logprior_fn: Callable[[ArrayTree], float],
-    loglikelihood_birth_init: Array = -jnp.nan, # Renamed to avoid clash
+    loglikelihood_birth: Array = -jnp.nan,
 ) -> NSState:
     """Initializes the Nested Sampler state.
 
@@ -149,7 +156,9 @@ def build_kernel(
     loglikelihood_fn: Callable[[ArrayTree], float],
     delete_fn: Callable[[PRNGKey, NSState], Tuple[Array, Array, Array]],
     inner_init_fn: Callable[[ArrayTree], Any],
-    inner_kernel: Callable[..., Callable[[PRNGKey, Any, Callable[[ArrayTree], float]], Tuple[Any, Any]]],
+    inner_kernel: Callable[
+        ..., Callable[[PRNGKey, Any, Callable[[ArrayTree], float]], Tuple[Any, Any]]
+    ],
 ) -> Callable[[PRNGKey, NSState, Dict[str, Any]], Tuple[NSState, NSInfo]]:
     """Build a generic Nested Sampling kernel.
 
@@ -260,7 +269,7 @@ def build_kernel(
             state.particles,
             inner_states.position,
         )
-        
+
         loglikelihood = state.loglikelihood.at[target_update_idx].set(
             jax.vmap(loglikelihood_fn)(inner_states.position)
         )

@@ -29,15 +29,15 @@ import jax
 from jax.flatten_util import ravel_pytree
 
 from blackjax import SamplingAlgorithm
-from blackjax.mcmc.ss import build_kernel as build_slice_kernel
 from blackjax.mcmc.ss import (
-    default_generate_slice_direction_fn as ss_default_generate_flat_direction_fn, # Renamed for clarity
+    default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn,
+    build_kernel as build_slice_kernel
 )
 from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
 from blackjax.mcmc.ss import SliceState, SliceInfo
-from blackjax.ns.adaptive import build_kernel as build_adaptive_ns_kernel # Renamed for clarity
-from blackjax.ns.adaptive import init as adaptive_ns_init # Renamed for clarity
+from blackjax.ns.adaptive import build_kernel
+from blackjax.ns.adaptive import init
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import delete_fn as default_delete_fn
 from blackjax.ns.utils import get_first_row, repeat_kernel
@@ -48,7 +48,12 @@ from blackjax.smc.tuning.from_particles import (
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey, Array
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 
-__all__ = ["init", "as_top_level_api", "default_generate_slice_direction_fn", "default_adapt_direction_params_fn"]
+__all__ = [
+    "init",
+    "as_top_level_api",
+    "default_generate_slice_direction_fn",
+    "default_adapt_direction_params_fn",
+]
 
 
 def default_generate_slice_direction_fn(
@@ -98,7 +103,7 @@ def default_generate_slice_direction_fn(
 
 
 def default_adapt_direction_params_fn(
-    state: NSState, info: Optional[NSInfo] # info is None at initialization
+    state: NSState, info: Optional[NSInfo]  # info is None at initialization
 ) -> Dict[str, ArrayTree]:
     """Default function to adapt/tune the slice direction proposal parameters.
 
@@ -138,8 +143,12 @@ def as_top_level_api(
     num_inner_steps: int,
     num_delete: int = 1,
     stepper_fn: Callable[[ArrayTree, ArrayTree, float], ArrayTree] = default_stepper_fn,
-    adapt_direction_params_fn: Callable[[NSState, Optional[NSInfo]], Dict[str, ArrayTree]] = default_adapt_direction_params_fn,
-    generate_slice_direction_fn: Callable[[PRNGKey, Any], ArrayTree] = default_generate_slice_direction_fn,
+    adapt_direction_params_fn: Callable[
+        [NSState, Optional[NSInfo]], Dict[str, ArrayTree]
+    ] = default_adapt_direction_params_fn,
+    generate_slice_direction_fn: Callable[
+        [PRNGKey, Any], ArrayTree
+    ] = default_generate_slice_direction_fn,
 ) -> SamplingAlgorithm[StateWithParameterOverride, NSInfo, Any]:
     """Creates an adaptive Nested Slice Sampling (NSS) algorithm.
 
@@ -206,9 +215,10 @@ def as_top_level_api(
     )
 
     def step_fn(
-        rng_key: PRNGKey, state: StateWithParameterOverride[NSState, Dict[str, ArrayTree]]
+        rng_key: PRNGKey,
+        state: StateWithParameterOverride[NSState, Dict[str, ArrayTree]],
     ) -> Tuple[StateWithParameterOverride[NSState, Dict[str, ArrayTree]], NSInfo]:
         """Performs one step of the adaptive Nested Slice Sampling algorithm."""
-        return adaptive_ns_step_kernel(rng_key, state)
+        return kernel(rng_key, state)
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore

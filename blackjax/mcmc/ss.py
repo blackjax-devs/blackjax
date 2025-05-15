@@ -82,7 +82,9 @@ class SliceInfo(NamedTuple):
     evals: Array
 
 
-def init(position: ArrayTree, logdensity_fn: Callable[[ArrayTree], float]) -> SliceState:
+def init(
+    position: ArrayTree, logdensity_fn: Callable[[ArrayTree], float]
+) -> SliceState:
     """Initialize the Slice Sampler state.
 
     Parameters
@@ -104,7 +106,9 @@ def init(position: ArrayTree, logdensity_fn: Callable[[ArrayTree], float]) -> Sl
 def build_kernel(
     generate_slice_direction_fn: Callable[[PRNGKey], ArrayTree],
     stepper_fn: Callable[[ArrayTree, ArrayTree, float], ArrayTree],
-) -> Callable[[PRNGKey, SliceState, Callable[[ArrayTree], float]], Tuple[SliceState, SliceInfo]]:
+) -> Callable[
+    [PRNGKey, SliceState, Callable[[ArrayTree], float]], Tuple[SliceState, SliceInfo]
+]:
     """Build a Hit-and-Run Slice Sampling kernel.
 
     This kernel performs one step of the Hit-and-Run Slice Sampling algorithm,
@@ -331,7 +335,7 @@ def default_generate_slice_direction_fn(rng_key: PRNGKey, cov: Array) -> Array:
 def hrss_as_top_level_api(
     logdensity_fn: Callable[[ArrayTree], float],
     cov: Array,
-) -> SamplingAlgorithm[SliceState, SliceInfo, Any]: # Params type Any for now
+) -> SamplingAlgorithm[SliceState, SliceInfo, Any]:  # Params type Any for now
     """Creates a Hit-and-Run Slice Sampling algorithm.
 
     This function serves as a convenience wrapper to easily construct a

@@ -73,10 +73,15 @@ def build_kernel(
     logprior_fn: Callable[[ArrayTree], float],
     loglikelihood_fn: Callable[[ArrayTree], float],
     delete_fn: Callable[[PRNGKey, NSState], Tuple[Array, Array, Array]],
-    inner_init_fn: Callable[[ArrayTree], Any], # Type of inner state can vary
-    inner_kernel: Callable[..., Callable[[PRNGKey, Any, Callable[[ArrayTree], float]], Tuple[Any, Any]]], # Higher-order fn
+    inner_init_fn: Callable[[ArrayTree], Any],  # Type of inner state can vary
+    inner_kernel: Callable[
+        ..., Callable[[PRNGKey, Any, Callable[[ArrayTree], float]], Tuple[Any, Any]]
+    ],  # Higher-order fn
     update_inner_kernel: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
-) -> Callable[[PRNGKey, StateWithParameterOverride[NSState, Dict[str, ArrayTree]]], Tuple[StateWithParameterOverride[NSState, Dict[str, ArrayTree]], NSInfo]]:
+) -> Callable[
+    [PRNGKey, StateWithParameterOverride[NSState, Dict[str, ArrayTree]]],
+    Tuple[StateWithParameterOverride[NSState, Dict[str, ArrayTree]], NSInfo],
+]:
     """Build an adaptive Nested Sampling kernel.
 
     This kernel extends the base Nested Sampling kernel by re-computing/tuning
@@ -149,7 +154,7 @@ def build_kernel(
             A tuple with the new `StateWithParameterOverride` (including updated
             inner kernel parameters) and the `NSInfo` for this step.
         """
-        new_state, info = basekernel(
+        new_state, info = base_kernel(
             rng_key, state.sampler_state, state.parameter_override
         )
         new_parameter_override = update_inner_kernel(new_state, info)

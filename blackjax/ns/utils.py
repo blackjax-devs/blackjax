@@ -19,14 +19,14 @@ and post-processing of results.
 """
 
 import functools
-from typing import Callable, List, Tuple, Any, Dict # Added Dict
+from typing import Callable, List, Tuple, Any, Dict  # Added Dict
 
 import jax
 import jax.numpy as jnp
 
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.types import Array, ArrayTree, PRNGKey
-from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride # Added import
+from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride  # Added import
 
 
 def log1mexp(x: Array) -> Array:
@@ -125,7 +125,9 @@ def compute_nlive(info: NSInfo) -> Array:
     return nlive
 
 
-def logX(rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100) -> Tuple[Array, Array]: # Renamed shape to num_samples
+def logX(
+    rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100
+) -> Tuple[Array, Array]:  # Renamed shape to num_samples
     """Simulate the stochastic evolution of log prior volumes.
 
     This function estimates the sequence of log prior volumes `log(X_i)` and the
@@ -171,7 +173,7 @@ def logX(rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100) -> Tuple[Array, 
     nlive = compute_nlive(dead_info)
     t = r / nlive[:, jnp.newaxis]
     logX = jnp.cumsum(t, axis=0)
-    
+
     logXp = jnp.concatenate([jnp.zeros((1, logX.shape[1])), logX[:-1]], axis=0)
     logXm = jnp.concatenate([logX[1:], jnp.full((1, logX.shape[1]), -jnp.inf)], axis=0)
     log_diff = logXm - logXp
@@ -220,8 +222,8 @@ def log_weights(
 
 
 def finalise(
-    state: StateWithParameterOverride[NSState, Dict[str, Any]], 
-    dead_info_history: List[NSInfo]
+    state: StateWithParameterOverride[NSState, Dict[str, Any]],
+    dead_info_history: List[NSInfo],
 ) -> NSInfo:
     """Combines the history of dead particle information with the final live points.
 
@@ -259,7 +261,7 @@ def finalise(
             state[0].loglikelihood_birth,  # type: ignore
             state[0].logprior,  # type: ignore
             dead_info_history[-1].update_info,
-    )
+        )
     ]
     combined_dead_info = jax.tree.map(
         lambda *args: jnp.concatenate(args),
@@ -297,9 +299,11 @@ def ess(rng_key: PRNGKey, dead_info_map: NSInfo) -> Array:
     l_sum_w_sq = jax.scipy.special.logsumexp(2 * logw)
     ess = jnp.exp(2 * l_sum_w - l_sum_w_sq)
     return ess
-    
 
-def sample(rng_key: PRNGKey, dead_info_map: NSInfo, shape: int = 1000) -> ArrayTree: # Renamed params
+
+def sample(
+    rng_key: PRNGKey, dead_info_map: NSInfo, shape: int = 1000
+) -> ArrayTree:  # Renamed params
     """Resamples particles according to their importance weights.
 
     This function takes the full set of dead (and final live) particles and
@@ -367,7 +371,7 @@ def repeat_kernel(num_repeats: int) -> Callable[[Callable], Callable]:
 
             keys = jax.random.split(rng_key, num_repeats)
             return jax.lax.scan(body_fn, state, keys)
-        
+
         return repeated_kernel
 
     return decorator
