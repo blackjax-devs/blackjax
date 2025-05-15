@@ -231,7 +231,7 @@ def build_kernel(
             jax.vmap(loglikelihood_fn)(inner_states.position)
         )
         loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(
-            loglikelihood_0 * jnp.ones(len(target_update_idx)) 
+            loglikelihood_0 * jnp.ones(len(target_update_idx))
         )
         logprior = state.logprior.at[target_update_idx].set(
             jax.vmap(logprior_fn)(inner_states.position)
@@ -248,7 +248,7 @@ def build_kernel(
         log_delta_Z = dead_loglikelihood + log_delta_X
 
         delta_logZ = logsumexp(log_delta_Z)
-        logZ= jnp.logaddexp(state.logZ, delta_logZ)
+        logZ = jnp.logaddexp(state.logZ, delta_logZ)
         logmeanlikelihood = logsumexp(loglikelihood) - jnp.log(num_particles)
         logZ_live = logmeanlikelihood + logX[-1]
 
@@ -325,7 +325,7 @@ def delete_fn(
 
 def bi_directional_delete_fn(
     rng_key: PRNGKey, state: NSState, num_delete: int
-        ) -> tuple[Array, Array, Array]:
+) -> tuple[Array, Array, Array]:
     """Selects particles for deletion and initialization for full state regeneration.
 
     This deletion strategy assumes the total number of particles (`N_total`) in the

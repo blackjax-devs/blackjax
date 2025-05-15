@@ -23,7 +23,7 @@ complex likelihood landscapes.
 
 Available modules:
 ------------------
-- `adaptive`: Implements an adaptive Nested Sampling algorithm where inner 
+- `adaptive`: Implements an adaptive Nested Sampling algorithm where inner
               kernel parameters are tuned at each iteration.
 - `base`: Provides core components and a non-adaptive Nested Sampling kernel.
 - `nss`: Implements Nested Slice Sampling, using Hit-and-Run Slice Sampling as

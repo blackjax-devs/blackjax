@@ -45,6 +45,7 @@ from blackjax.smc.tuning.from_particles import (
     particles_covariance_matrix,
 )
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 
 __all__ = ["init", "as_top_level_api"]
 
@@ -128,9 +129,32 @@ def default_adapt_direction_params_fn(
     return {"cov": jax.vmap(unravel_fn)(cov)}
 
 
-def build_repeated_kernel(
-    build_kernel, num_repeats: int, **kwargs
-):
+def repeated_kernel(num_repeats: int):
+    """Decorator to repeat a kernel function multiple times."""
+
+    def decorator_inner(build_kernel_func):
+        @functools.wraps(build_kernel_func)
+        def wrapper_build_repeated(*build_args, **build_kwargs):
+            inner_kernel = build_kernel_func(*build_args, **build_kwargs)
+
+            def kernel_with_scan(rng_key: PRNGKey, state, *scan_args, **scan_kwargs):
+                def body_fn(current_state, current_rng_key):
+                    return inner_kernel(
+                        current_rng_key, current_state, *scan_args, **scan_kwargs
+                    )
+
+                keys = jax.random.split(rng_key, num_repeats)
+                last_state, info_stack = jax.lax.scan(body_fn, state, keys)
+                return last_state, info_stack
+
+            return kernel_with_scan
+
+        return wrapper_build_repeated
+
+    return decorator_inner
+
+
+def build_repeated_kernel(build_kernel, num_repeats: int, **kwargs):
     inner_kernel = build_kernel(**kwargs)
 
     def kernel(rng_key: PRNGKey, state, *args, **kwargs):
@@ -193,22 +217,16 @@ def as_top_level_api(
     """
     delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
 
+    @repeated_kernel(num_inner_steps)
     def build_inner_kernel(**kwargs):
-        def build_inner_kernel(**inner_kernel_args):
-            return build_slice_kernel(
-                partial(generate_slice_direction_fn, **inner_kernel_args), stepper_fn
-            )
-
-        return build_repeated_kernel(
-            build_inner_kernel,
-            num_inner_steps,
-            **kwargs,
-        )
+        generate_slice_direction_fn_ = partial(generate_slice_direction_fn, **kwargs)
+        return build_slice_kernel(generate_slice_direction_fn_, stepper_fn)
 
     inner_init_fn = slice_init
     update_inner_kernel = adapt_direction_params_fn
 
     def init_fn(particles: ArrayLikeTree, rng_key: PRNGKey = None) -> NSState:
+        del rng_key
         return init(particles, loglikelihood_fn, logprior_fn, update_inner_kernel)
 
     kernel = build_kernel(
@@ -220,7 +238,9 @@ def as_top_level_api(
         update_inner_kernel,
     )
 
-    def step_fn(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
+    def step_fn(
+        rng_key: PRNGKey, state: StateWithParameterOverride
+    ) -> tuple[StateWithParameterOverride, NSInfo]:
         return kernel(rng_key, state)
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore
