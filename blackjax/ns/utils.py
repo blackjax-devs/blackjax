@@ -20,6 +20,7 @@ and post-processing of results.
 
 import jax
 import jax.numpy as jnp
+
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.types import Array, ArrayTree, PRNGKey
 
@@ -228,10 +229,10 @@ def finalise(state: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
 
     all_pytrees_to_combine = dead_info_history + [
         NSInfo(  # Assuming NSInfo is your constructor
-            state[0].particles,
-            state[0].loglikelihood,
-            state[0].loglikelihood_birth,
-            state[0].logprior,
+            state[0].particles,  # type: ignore
+            state[0].loglikelihood,  # type: ignore
+            state[0].loglikelihood_birth,  # type: ignore
+            state[0].logprior,  # type: ignore
             dead_info_history[-1].update_info,
         )
     ]

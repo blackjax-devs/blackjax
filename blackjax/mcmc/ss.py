@@ -28,11 +28,12 @@ References
 
 from functools import partial
 from typing import Callable, NamedTuple
-from blackjax.base import SamplingAlgorithm
 
 import jax
 import jax.numpy as jnp
-from blackjax.types import Array, ArrayTree, ArrayLikeTree, PRNGKey
+
+from blackjax.base import SamplingAlgorithm
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "SliceState",
@@ -237,7 +238,7 @@ def horizontal_slice_proposal(
     _, _, r, count_r = jax.lax.while_loop(cond_fun, body_fun, (True, +1, 1 - u, 0))
 
     # Shrink
-    def body_fun(carry):
+    def body_fun_slice(carry):
         _, l, r, _, _, rng_key, count = carry
         count += 1
 
@@ -253,12 +254,12 @@ def horizontal_slice_proposal(
 
         return within, l, r, x, logdensity_x, rng_key, count
 
-    def cond_fun(carry):
+    def cond_fun_slice(carry):
         within = carry[0]
         return ~within
 
     carry = (False, l, r, x0, -jnp.inf, rng_key, 0)
-    carry = jax.lax.while_loop(cond_fun, body_fun, carry)
+    carry = jax.lax.while_loop(cond_fun_slice, body_fun_slice, carry)
     _, l, r, x, logdensity_x, rng_key, count = carry
     slice_state = SliceState(x, logdensity_x)
     slice_info = SliceInfo(count_l, count_r, count, (count_l + count_r + count))

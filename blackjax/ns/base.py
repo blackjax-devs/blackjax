@@ -29,11 +29,11 @@ This base implementation uses a provided kernel to perform the constrained
 sampling.
 """
 
-
 from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["init", "build_kernel"]
@@ -228,6 +228,7 @@ def build_kernel(
             state.particles,
             new_state.position,
         )
+
         new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
         new_state_logprior = jax.vmap(logprior_fn)(new_state.position)
         loglikelihood = state.loglikelihood.at[target_update_idx].set(

@@ -66,7 +66,7 @@ def init(
         initial kernel parameters.
     """
     state = init_base(particles, loglikelihood_fn, logprior_fn)
-    initial_parameter_value = update_inner_kernel(state, None)
+    initial_parameter_value = update_inner_kernel(state, None)  # type: ignore
     return StateWithParameterOverride(state, initial_parameter_value)
 
 

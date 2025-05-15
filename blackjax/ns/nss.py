@@ -27,9 +27,13 @@ from functools import partial
 from typing import Callable, Dict
 
 import jax
+from jax.flatten_util import ravel_pytree
+
 from blackjax import SamplingAlgorithm
 from blackjax.mcmc.ss import build_kernel as build_slice_kernel
-from blackjax.mcmc.ss import default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn
+from blackjax.mcmc.ss import (
+    default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn,
+)
 from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel, init
@@ -40,13 +44,14 @@ from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
     particles_covariance_matrix,
 )
-from blackjax.types import ArrayLikeTree, PRNGKey, ArrayTree
-from jax.flatten_util import ravel_pytree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["init", "as_top_level_api"]
 
 
-def default_generate_slice_direction_fn(rng_key: PRNGKey, **kernel_args: ArrayTree) -> ArrayTree:
+def default_generate_slice_direction_fn(
+    rng_key: PRNGKey, **kernel_args: ArrayTree
+) -> ArrayTree:
     """Default function to generate a normalized slice direction for NSS.
 
     This function is designed to work with covariance parameters adapted by
@@ -90,7 +95,9 @@ def default_generate_slice_direction_fn(rng_key: PRNGKey, **kernel_args: ArrayTr
     return unravel_fn(d)
 
 
-def default_adapt_direction_params_fn(state: NSState, info: NSInfo) -> Dict[str, ArrayTree]:
+def default_adapt_direction_params_fn(
+    state: NSState, info: NSInfo
+) -> Dict[str, ArrayTree]:
     """Default function to adapt/tune the slice direction proposal parameters.
 
     This function computes the empirical covariance matrix from the current set of
@@ -122,28 +129,20 @@ def default_adapt_direction_params_fn(state: NSState, info: NSInfo) -> Dict[str,
 
 
 def build_repeated_kernel(
-        build_kernel,
-        logdensity_fn,
-        init_fn,
-        num_repeats: int,
-        **kwargs
-        ):
+    build_kernel, logdensity_fn, init_fn, num_repeats: int, **kwargs
+):
+    inner_kernel = build_kernel(**kwargs)
 
-        inner_kernel = build_kernel(**kwargs)
+    def kernel(rng_key: PRNGKey, position: ArrayLikeTree):
+        def body_fn(state, rng_key):
+            return inner_kernel(rng_key, state, logdensity_fn)
 
-        def kernel(rng_key: PRNGKey, position: ArrayLikeTree):
-            def body_fn(state, rng_key):
-                return inner_kernel(rng_key, state, logdensity_fn)
+        init = init_fn(position, logdensity_fn)
+        keys = jax.random.split(rng_key, num_repeats)
+        last_state, info = jax.lax.scan(body_fn, init, keys)
+        return last_state, info
 
-            init = init_fn(position, logdensity_fn)
-            keys = jax.random.split(rng_key, num_repeats)
-            last_state, info = jax.lax.scan(body_fn, init, keys)
-            return last_state, info
-
-        return kernel
-
-
-
+    return kernel
 
 
 def as_top_level_api(
@@ -172,7 +171,7 @@ def as_top_level_api(
         The number of HRSS steps to run for each new particle generation.
         This should be a multiple of the dimension of the parameter space.
     num_delete
-        The number of particles to delete and replace at each NS step. 
+        The number of particles to delete and replace at each NS step.
         Defaults to 1.
     stepper_fn
         The stepper function `(x, direction, t) -> x_new` for the HRSS kernel.
@@ -196,21 +195,22 @@ def as_top_level_api(
     delete_fn = functools.partial(default_delete_fn, num_delete=num_delete)
 
     def build_inner_kernel(constrained_logdensity_fn, **kwargs):
-
         def build_inner_kernel(**kwargs):
-            return build_slice_kernel(partial(generate_slice_direction_fn, **kwargs), stepper_fn)
+            return build_slice_kernel(
+                partial(generate_slice_direction_fn, **kwargs), stepper_fn
+            )
 
         return build_repeated_kernel(
-                build_inner_kernel,
-                constrained_logdensity_fn,
-                slice_init,
-                num_inner_steps,
-                **kwargs
-                )
+            build_inner_kernel,
+            constrained_logdensity_fn,
+            slice_init,
+            num_inner_steps,
+            **kwargs,
+        )
 
     update_inner_kernel = adapt_direction_params_fn
 
-    def init_fn(particles: ArrayLikeTree, rng_key=None):
+    def init_fn(particles: ArrayLikeTree, rng_key: PRNGKey = None):
         return init(particles, loglikelihood_fn, logprior_fn, update_inner_kernel)
 
     step_fn = build_kernel(
@@ -221,4 +221,4 @@ def as_top_level_api(
         update_inner_kernel,
     )
 
-    return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)  # type: ignore
