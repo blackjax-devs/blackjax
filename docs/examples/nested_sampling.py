@@ -55,24 +55,24 @@ log_analytic_evidence = compute_logZ(
 
 # n_live is the number of live samples to draw initially and maintain through the run
 n_live = 500
-# n_delete is the number of samples to delete each outer kernel iteration, as the inner kernel is parallelised we do this
+# num_delete is the number of samples to delete each outer kernel iteration, as the inner kernel is parallelised we do this
 # to update all of these points in parallel, useful for GPU acceleration hopefully.
-n_delete = 20
-# num_mcmc_steps is the number of MCMC steps to perform with the inner kernel in order to decorrelate the resampled points
+num_delete = 20
+# num_inner_steps is the number of MCMC steps to perform with the inner kernel in order to decorrelate the resampled points
 # we set this conservatively high here at 5 times the dimension of the parameter space
-num_mcmc_steps = d * 5
+num_inner_steps = d * 5
 
-algo = blackjax.ns.adaptive.nss(
+algo = blackjax.nss(
     logprior_fn=prior,
     loglikelihood_fn=loglikelihood,
-    n_delete=n_delete,
-    num_mcmc_steps=num_mcmc_steps,
+    num_delete=num_delete,
+    num_inner_steps=num_inner_steps,
 )
 
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
 initial_particles = jax.random.multivariate_normal(init_key, prior_mean, prior_cov, (n_live,))
-state = algo.init(initial_particles, loglikelihood)
+state = algo.init(initial_particles)
 
 
 @jax.jit
