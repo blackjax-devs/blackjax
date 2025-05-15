@@ -25,8 +25,10 @@ References
 .. [1] Neal, R. M. (2003). Slice sampling. The Annals of Statistics, 31(3), 705-767.
 
 """
+
 from functools import partial
 from typing import Callable, NamedTuple
+from blackjax.base import SamplingAlgorithm
 
 import jax
 import jax.numpy as jnp
@@ -49,6 +51,7 @@ class SliceState(NamedTuple):
     logdensity: float
         The log-density of the target distribution at the current position.
     """
+
     position: ArrayLikeTree
     logdensity: float
 
@@ -71,6 +74,7 @@ class SliceInfo(NamedTuple):
     evals: Array
         The total number of log-density evaluations performed during the step.
     """
+
     l_steps: Array
     r_steps: Array
     s_steps: Array
@@ -142,7 +146,9 @@ def build_kernel(
     return kernel
 
 
-def vertical_slice(rng_key: PRNGKey, logdensity_fn: Callable, position: ArrayTree) -> float:
+def vertical_slice(
+    rng_key: PRNGKey, logdensity_fn: Callable, position: ArrayTree
+) -> float:
     """Define the vertical slice for the Slice Sampling algorithm.
 
     This function determines the height `y` for the horizontal slice by sampling
@@ -312,7 +318,7 @@ def default_generate_slice_direction_fn(rng_key: PRNGKey, cov: Array) -> Array:
 def hrss_as_top_level_api(
     logdensity_fn: Callable,
     cov: Array,
-) -> Callable: # Should be SamplingAlgorithm
+) -> SamplingAlgorithm:
     """Creates a Hit-and-Run Slice Sampling algorithm.
 
     This function serves as a convenience wrapper to easily construct a
@@ -339,4 +345,3 @@ def hrss_as_top_level_api(
     init_fn = partial(init, logdensity_fn=logdensity_fn)
     step_fn = partial(kernel, logdensity_fn=logdensity_fn)
     return SamplingAlgorithm(init_fn, step_fn)
-

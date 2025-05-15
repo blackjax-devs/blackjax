@@ -27,7 +27,6 @@ from functools import partial
 from typing import Callable, Dict
 
 import jax
-import jax.numpy as jnp
 from blackjax import SamplingAlgorithm
 from blackjax.mcmc.ss import build_kernel as build_slice_kernel
 from blackjax.mcmc.ss import default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn

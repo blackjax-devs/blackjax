@@ -4,7 +4,7 @@ import tqdm
 from jax.scipy.linalg import inv, solve
 
 import blackjax
-from blackjax.ns.utils import log_weights
+from blackjax.ns.utils import log_weights, finalise
 
 # jax.config.update("jax_enable_x64", True)
 
@@ -62,11 +62,11 @@ n_delete = 20
 # we set this conservatively high here at 5 times the dimension of the parameter space
 num_mcmc_steps = d * 5
 
-algo = blackjax.ns.adaptive.nss(
+algo = blackjax.nss(
     logprior_fn=prior,
     loglikelihood_fn=loglikelihood,
-    n_delete=n_delete,
-    num_mcmc_steps=num_mcmc_steps,
+    num_delete=n_delete,
+    num_inner_steps=num_mcmc_steps,
 )
 
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
@@ -110,10 +110,11 @@ for _ in tqdm.trange(1000):
 # It is now not too bad to remap the list of NSInfos into a single instance
 # note in theory we should include the live points, but assuming we have done things correctly and hit the termination criteria,
 # they will contain negligible weight
-dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
+# dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
 
 # From here we can use the utils to compute the log weights and the evidence of the accumulated dead points
 # sampling log weights lets us get a sensible error on the evidence estimate
+dead = finalise(state,dead)
 logw = log_weights(rng_key, dead)  # type: ignore[arg-type]
 logZs = jax.scipy.special.logsumexp(logw, axis=0)
 

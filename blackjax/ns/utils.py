@@ -17,11 +17,11 @@ This module provides helper functions for common tasks associated with Nested
 Sampling, such as calculating log-volumes, log-weights, effective sample sizes,
 and post-processing of results.
 """
+
 import jax
 import jax.numpy as jnp
 from blackjax.ns.base import NSInfo, NSState
-from blackjax.types import Array, ArrayTree, ArrayLikeTree, PRNGKey
-
+from blackjax.types import Array, ArrayTree, PRNGKey
 
 
 def log1mexp(x):
@@ -53,12 +53,13 @@ def log1mexp(x):
         jnp.log1p(-jnp.exp(x)),
     )
 
+
 def compute_nlive(info: NSInfo):
     """Compute the effective number of live points at each death contour.
 
     In Nested Sampling, especially with batch deletions (k > 1), the conceptual
     number of live points changes with each individual particle considered "dead"
-    within that batch. 
+    within that batch.
 
     The function works by:
     1. Creating "birth" events (particle added to live set, count +1) and "death"
@@ -110,9 +111,7 @@ def compute_nlive(info: NSInfo):
     return nlive
 
 
-def logX(
-    rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100
-) -> tuple[Array, Array]:
+def logX(rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100) -> tuple[Array, Array]:
     """Simulate the stochastic evolution of log prior volumes.
 
     This function estimates the sequence of log prior volumes `logX_i` and the
@@ -144,12 +143,11 @@ def logX(
           `dX_i` is approximately `X_i - X_{i+1}`.
     """
     rng_key, subkey = jax.random.split(rng_key)
-    shape = (shape,) if isinstance(shape, int) else shape
     min_val = jnp.finfo(dead_info.loglikelihood.dtype).tiny
     r = jnp.log(
-        jax.random.uniform(subkey, shape=(dead_info.loglikelihood.shape[0], *shape)).clip(
-            min_val, 1 - min_val
-        )
+        jax.random.uniform(
+            subkey, shape=(dead_info.loglikelihood.shape[0], shape)
+        ).clip(min_val, 1 - min_val)
     )
 
     nlive = compute_nlive(dead_info)
@@ -227,22 +225,21 @@ def finalise(state: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
         The `update_info` from the last element of `dead_info_history` is used
         for the final live points' `update_info` (as a placeholder).
     """
+
+    all_pytrees_to_combine = dead_info_history + [
+        NSInfo(  # Assuming NSInfo is your constructor
+            state[0].particles,
+            state[0].loglikelihood,
+            state[0].loglikelihood_birth,
+            state[0].logprior,
+            dead_info_history[-1].update_info,
+        )
+    ]
     combined_dead_info = jax.tree.map(
         lambda *args: jnp.concatenate(args),
-        *(
-            dead_info_history
-            + [
-                NSInfo(
-                    state.sampler_state.particles,
-                    state.sampler_state.loglikelihood,
-                    state.sampler_state.loglikelihood_birth,
-                    state.sampler_state.logprior,
-                    dead_info_history[-1].update_info,
-                )
-            ]
-        ),
+        all_pytrees_to_combine[0],
+        *all_pytrees_to_combine[1:],
     )
-
     return combined_dead_info
 
 
@@ -275,9 +272,7 @@ def ess(rng_key: PRNGKey, dead_info_map: NSInfo) -> Array:
     return ess
 
 
-def sample(
-    rng_key: PRNGKey, dead_info_map: NSInfo, shape: int = 1000
-) -> ArrayTree:
+def sample(rng_key: PRNGKey, dead_info_map: NSInfo, shape: int = 1000) -> ArrayTree:
     """Resamples particles according to their importance weights.
 
     This function takes the full set of dead (and final live) particles and
@@ -306,7 +301,7 @@ def sample(
         rng_key,
         dead_info_map.loglikelihood.shape[0],
         p=jnp.exp(logw.squeeze() - jnp.max(logw)),
-        shape=shape,
+        shape=(shape,),
         replace=True,
     )
     return jax.tree.map(lambda leaf: leaf[indices], dead_info_map.particles)

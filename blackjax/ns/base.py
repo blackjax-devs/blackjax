@@ -28,12 +28,12 @@ constraint that its likelihood must be higher than the one just discarded.
 This base implementation uses a provided kernel to perform the constrained
 sampling.
 """
-from functools import partial
+
+
 from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
-from blackjax import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["init", "build_kernel"]
@@ -69,9 +69,12 @@ class NSState(NamedTuple):
         The accumulated evidence estimate from the "dead" points (particles
         that have been replaced).
     """
+
     particles: ArrayLikeTree
     loglikelihood: Array  # The log-likelihood of the particles
-    loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
+    loglikelihood_birth: (
+        Array  # The hard likelihood threshold of each particle at birth
+    )
     logprior: Array  # The log-prior density of the particles
     pid: Array = Array  # particle ID
     logX: float = 0.0  # The current log-volume estiamte
@@ -98,9 +101,12 @@ class NSInfo(NamedTuple):
         generate new live particles. The content depends on the specific kernel
         used.
     """
+
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
-    loglikelihood_birth: Array  # The hard likelihood threshold of each particle at birth
+    loglikelihood_birth: (
+        Array  # The hard likelihood threshold of each particle at birth
+    )
     logprior: Array  # The log-prior density of the particles
     update_info: NamedTuple
 
@@ -190,7 +196,6 @@ def build_kernel(
         state: NSState,
         inner_kernel_parameters: dict,
     ) -> tuple[NSState, NSInfo]:
-
         # Delete, and grab all the dead information
         rng_key, delete_fn_key = jax.random.split(rng_key)
         dead_idx, target_update_idx, start_idx = delete_fn(delete_fn_key, state)
@@ -209,13 +214,13 @@ def build_kernel(
             constraint = loglikelihood_fn(x) > loglikelihood_0
             return jnp.where(constraint, logprior_fn(x), -jnp.inf)
 
-        inner_kernel = build_inner_kernel(constrained_logdensity_fn, **inner_kernel_parameters)
+        inner_kernel = build_inner_kernel(
+            constrained_logdensity_fn, **inner_kernel_parameters
+        )
         rng_key, sample_key = jax.random.split(rng_key)
         new_particles = jax.tree.map(lambda x: x[start_idx], state.particles)
         sample_keys = jax.random.split(sample_key, num_evolve)
-        new_state, new_state_info = jax.vmap(inner_kernel)(
-            sample_keys, new_particles
-        )
+        new_state, new_state_info = jax.vmap(inner_kernel)(sample_keys, new_particles)
 
         # Update the particles
         particles = jax.tree_util.tree_map(
@@ -225,9 +230,13 @@ def build_kernel(
         )
         new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
         new_state_logprior = jax.vmap(logprior_fn)(new_state.position)
-        loglikelihood = state.loglikelihood.at[target_update_idx].set(new_state_loglikelihood)
+        loglikelihood = state.loglikelihood.at[target_update_idx].set(
+            new_state_loglikelihood
+        )
         loglikelihood_births = loglikelihood_0 * jnp.ones(num_updates)
-        loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(loglikelihood_births)
+        loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(
+            loglikelihood_births
+        )
         logprior = state.logprior.at[target_update_idx].set(new_state_logprior)
         pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 
@@ -244,7 +253,9 @@ def build_kernel(
         logZ_dead = jnp.logaddexp(
             state.logZ, jax.scipy.special.logsumexp(delta_logz_dead)
         )
-        logZ_live = jax.scipy.special.logsumexp(loglikelihood) - jnp.log(num_particles) + logX
+        logZ_live = (
+            jax.scipy.special.logsumexp(loglikelihood) - jnp.log(num_particles) + logX
+        )
 
         # Update the state
         new_state = NSState(
@@ -257,7 +268,13 @@ def build_kernel(
             logZ=logZ_dead,
             logZ_live=logZ_live,
         )
-        info = NSInfo(dead_particles, dead_loglikelihood, dead_loglikelihood_birth, dead_logprior, new_state_info)
+        info = NSInfo(
+            dead_particles,
+            dead_loglikelihood,
+            dead_loglikelihood_birth,
+            dead_logprior,
+            new_state_info,
+        )
         return new_state, info
 
     return kernel
@@ -265,7 +282,7 @@ def build_kernel(
 
 def delete_fn(
     rng_key: PRNGKey, state: NSState, num_delete: int
-) -> tuple[Array, Array]:
+) -> tuple[Array, Array, Array]:
     """Identifies particles to be deleted and selects live particles for resampling.
 
     This function implements a common strategy in Nested Sampling:
@@ -294,11 +311,13 @@ def delete_fn(
         - `target_update_idx`: An array of indices corresponding to the
           particles to be updated (same as dead_idx in this implementation).
         - `start_idx`: An array of indices corresponding to the particles
-            selected for initialization. 
+            selected for initialization.
     """
     loglikelihood = state.loglikelihood
     neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, num_delete)
-    weights = jnp.array(loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32)
+    weights = jnp.array(
+        loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32
+    )
     start_idx = jax.random.choice(
         rng_key,
         len(weights),
@@ -309,7 +328,8 @@ def delete_fn(
     target_update_idx = dead_idx
     return dead_idx, target_update_idx, start_idx
 
-def bi_directional_delete_fn(key, state, num_delete):
+
+def bi_directional_delete_fn(key, state, num_delete) -> tuple[Array, Array, Array]:
     """Selects particles for deletion and initialization for full state regeneration.
 
     This deletion strategy assumes the total number of particles (`N_total`) in the
@@ -350,5 +370,5 @@ def bi_directional_delete_fn(key, state, num_delete):
     return (
         dead_idx,
         jnp.arange(len(loglikelihood)),
-        jnp.concatenate([live_idx, live_idx])
+        jnp.concatenate([live_idx, live_idx]),
     )

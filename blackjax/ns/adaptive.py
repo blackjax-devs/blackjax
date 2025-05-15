@@ -21,15 +21,11 @@ current set of live particles or the history of the sampling process,
 allowing the kernel to adjust to the changing characteristics of the
 constrained prior distribution as the likelihood threshold increases.
 """
-from functools import partial
+
 from typing import Callable, Dict
 
-import jax
-import jax.numpy as jnp
-from blackjax import SamplingAlgorithm
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import build_kernel as base_build_kernel
-from blackjax.ns.base import delete_fn
 from blackjax.ns.base import init as init_base
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
@@ -113,6 +109,7 @@ def build_kernel(
         `(rng_key, current_adapted_ns_state) -> (new_adapted_ns_state, ns_info)`.
         The `current_adapted_ns_state` is of type `StateWithParameterOverride`.
     """
+
     def kernel(
         rng_key: PRNGKey,
         state: StateWithParameterOverride,
