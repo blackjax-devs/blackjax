@@ -19,14 +19,14 @@ and post-processing of results.
 """
 
 import functools
-from typing import Callable, List, Tuple, Any, Dict  # Added Dict
+from typing import Callable, List, Tuple, Any, Dict
 
 import jax
 import jax.numpy as jnp
 
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.types import Array, ArrayTree, PRNGKey
-from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride  # Added import
+from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 
 
 def log1mexp(x: Array) -> Array:
@@ -127,7 +127,7 @@ def compute_nlive(info: NSInfo) -> Array:
 
 def logX(
     rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100
-) -> Tuple[Array, Array]:  # Renamed shape to num_samples
+) -> Tuple[Array, Array]:
     """Simulate the stochastic evolution of log prior volumes.
 
     This function estimates the sequence of log prior volumes `log(X_i)` and the
@@ -250,7 +250,7 @@ def finalise(
     NSInfo
         A single `NSInfo` object where all fields are concatenations of the
         corresponding fields from `dead_info_history` and the final live points.
-        The `update_info` for the final live points is taken from the last
+        The `inner_kernel_info` for the final live points is taken from the last
         element of `dead_info_history` as a placeholder.
     """
 
@@ -260,7 +260,7 @@ def finalise(
             state[0].loglikelihood,  # type: ignore
             state[0].loglikelihood_birth,  # type: ignore
             state[0].logprior,  # type: ignore
-            dead_info_history[-1].update_info,
+            dead_info_history[-1].inner_kernel_info,
         )
     ]
     combined_dead_info = jax.tree.map(

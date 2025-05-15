@@ -31,7 +31,7 @@ from jax.flatten_util import ravel_pytree
 from blackjax import SamplingAlgorithm
 from blackjax.mcmc.ss import (
     default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn,
-    build_kernel as build_slice_kernel
+    build_kernel as build_slice_kernel,
 )
 from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
@@ -103,7 +103,7 @@ def default_generate_slice_direction_fn(
 
 
 def default_adapt_direction_params_fn(
-    state: NSState, info: Optional[NSInfo]  # info is None at initialization
+    state: NSState, info: Optional[NSInfo]
 ) -> Dict[str, ArrayTree]:
     """Default function to adapt/tune the slice direction proposal parameters.
 

@@ -103,9 +103,9 @@ class NSInfo(NamedTuple):
         The birth log-likelihood thresholds of the dead particles.
     logprior
         The log-prior values of the dead particles.
-    update_info
+    inner_kernel_info
         A NamedTuple (or any PyTree) containing information from the update step
-        (inner MCMC kernel) used to generate new live particles. The content
+        (inner kernel) used to generate new live particles. The content
         depends on the specific inner kernel used.
     """
 
@@ -113,7 +113,7 @@ class NSInfo(NamedTuple):
     loglikelihood: Array  # The log-likelihood of the dead particles
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the dead particles
-    update_info: Any  # Typically a NamedTuple or PyTree from inner MCMC
+    inner_kernel_info: Any  # Typically a NamedTuple or PyTree from inner kernel
 
 
 def init(
@@ -156,9 +156,7 @@ def build_kernel(
     loglikelihood_fn: Callable[[ArrayTree], float],
     delete_fn: Callable[[PRNGKey, NSState], Tuple[Array, Array, Array]],
     inner_init_fn: Callable[[ArrayTree], Any],
-    inner_kernel: Callable[
-        ..., Callable[[PRNGKey, Any, Callable[[ArrayTree], float]], Tuple[Any, Any]]
-    ],
+    inner_kernel: Callable[[PRNGKey, Any, Callable[[ArrayTree], float]], Tuple[Any, Any]],
 ) -> Callable[[PRNGKey, NSState, Dict[str, Any]], Tuple[NSState, NSInfo]]:
     """Build a generic Nested Sampling kernel.
 
@@ -195,15 +193,14 @@ def build_kernel(
         live particles (`live_indices_for_resampling`) to be starting points for
         new particle generation.
     inner_init_fn
-        A function `(initial_position: ArrayTree) -> inner_mcmc_state` used to
+        A function `(initial_position: ArrayTree) -> inner_state` used to
         initialize the state for the inner kernel. The `logdensity_fn`
         for this inner kernel will be partially applied before this init function
         is called within the main NS loop.
     inner_kernel
-        A higher-order function. When called with a dictionary of parameters
-        (e.g., `inner_kernel(**params)`), it returns a kernel function.
         This kernel function has the signature
-        `(rng_key, inner_mcmc_state, constrained_logdensity_fn) -> (new_inner_mcmc_state, inner_mcmc_info)`.
+        `(rng_key, inner_state, constrained_logdensity_fn,
+        **inner_kernel_parameters) -> (new_inner_state, inner_info)`.
 
     Returns
     -------
