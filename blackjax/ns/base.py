@@ -33,6 +33,7 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.scipy.special import logsumexp
 
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -72,9 +73,7 @@ class NSState(NamedTuple):
 
     particles: ArrayLikeTree
     loglikelihood: Array  # The log-likelihood of the particles
-    loglikelihood_birth: (
-        Array  # The hard likelihood threshold of each particle at birth
-    )
+    loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
     pid: Array = Array  # particle ID
     logX: float = 0.0  # The current log-volume estiamte
@@ -104,9 +103,7 @@ class NSInfo(NamedTuple):
 
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
-    loglikelihood_birth: (
-        Array  # The hard likelihood threshold of each particle at birth
-    )
+    loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
     update_info: NamedTuple
 
@@ -229,44 +226,39 @@ def build_kernel(
             new_state.position,
         )
 
-        new_state_loglikelihood = jax.vmap(loglikelihood_fn)(new_state.position)
-        new_state_logprior = jax.vmap(logprior_fn)(new_state.position)
         loglikelihood = state.loglikelihood.at[target_update_idx].set(
-            new_state_loglikelihood
+            jax.vmap(loglikelihood_fn)(new_state.position)
         )
-        loglikelihood_births = loglikelihood_0 * jnp.ones(num_updates)
         loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(
-            loglikelihood_births
+            loglikelihood_0 * jnp.ones(num_updates) 
         )
-        logprior = state.logprior.at[target_update_idx].set(new_state_logprior)
+        logprior = state.logprior.at[target_update_idx].set(
+            jax.vmap(logprior_fn)(new_state.position)
+        )
         pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 
         # Update the logX and logZ
         num_particles = len(state.loglikelihood)
         num_lives = jnp.arange(num_particles, num_particles - num_deleted, -1)
-        delta_log_xi = -1 / num_lives
-        log_delta_xi = (
-            state.logX + jnp.cumsum(delta_log_xi) + jnp.log(1 - jnp.exp(delta_log_xi))
-        )
-        delta_logz_dead = dead_loglikelihood + log_delta_xi
+        delta_log_X = -1 / num_lives
+        logX = state.logX + jnp.cumsum(delta_log_X)
+        log_delta_X = logX + jnp.log(1 - jnp.exp(delta_log_X))
+        log_delta_Z = dead_loglikelihood + log_delta_X
 
-        logX = state.logX + delta_log_xi.sum()
-        logZ_dead = jnp.logaddexp(
-            state.logZ, jax.scipy.special.logsumexp(delta_logz_dead)
-        )
-        logZ_live = (
-            jax.scipy.special.logsumexp(loglikelihood) - jnp.log(num_particles) + logX
-        )
+        delta_logZ = logsumexp(log_delta_Z)
+        logZ= jnp.logaddexp(state.logZ, delta_logZ)
+        logmeanlikelihood = logsumexp(loglikelihood) - jnp.log(num_particles)
+        logZ_live = logmeanlikelihood + logX[-1]
 
         # Update the state
-        new_state = NSState(
+        state = NSState(
             particles,
             loglikelihood,
             loglikelihood_birth,
             logprior,
             pid,
-            logX=logX,
-            logZ=logZ_dead,
+            logX=logX[-1],
+            logZ=logZ,
             logZ_live=logZ_live,
         )
         info = NSInfo(
@@ -276,7 +268,7 @@ def build_kernel(
             dead_logprior,
             new_state_info,
         )
-        return new_state, info
+        return state, info
 
     return kernel
 
@@ -316,9 +308,8 @@ def delete_fn(
     """
     loglikelihood = state.loglikelihood
     neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, num_delete)
-    weights = jnp.array(
-        loglikelihood > -neg_dead_loglikelihood.min(), dtype=jnp.float32
-    )
+    constraint = loglikelihood > -neg_dead_loglikelihood.min()
+    weights = jnp.array(constraint, dtype=jnp.float32)
     start_idx = jax.random.choice(
         rng_key,
         len(weights),
@@ -330,7 +321,9 @@ def delete_fn(
     return dead_idx, target_update_idx, start_idx
 
 
-def bi_directional_delete_fn(key, state, num_delete) -> tuple[Array, Array, Array]:
+def bi_directional_delete_fn(
+    rng_key: PRNGKey, state: NSState, num_delete: int
+        ) -> tuple[Array, Array, Array]:
     """Selects particles for deletion and initialization for full state regeneration.
 
     This deletion strategy assumes the total number of particles (`N_total`) in the

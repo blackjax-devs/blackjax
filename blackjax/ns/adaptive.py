@@ -96,7 +96,8 @@ def build_kernel(
         and selects live particles to be starting points for new particle
         generation.
     build_inner_kernel
-        A function that, when called with parameters, returns an kernel function.
+        A function that, when called with inner_kernel parameters, returns a
+        kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
     update_inner_kernel
         A function that takes the `NSState` and `NSInfo` from the completed NS
         step and returns a dictionary of parameters to be used for the kernel
@@ -110,17 +111,18 @@ def build_kernel(
         The `current_adapted_ns_state` is of type `StateWithParameterOverride`.
     """
 
+    base_kernel = base_build_kernel(
+        logprior_fn,
+        loglikelihood_fn,
+        delete_fn,
+        build_inner_kernel,
+    )
+
     def kernel(
         rng_key: PRNGKey,
         state: StateWithParameterOverride,
     ) -> tuple[StateWithParameterOverride, NSInfo]:
-        step_fn = base_build_kernel(
-            logprior_fn,
-            loglikelihood_fn,
-            delete_fn,
-            build_inner_kernel,
-        )
-        new_state, info = step_fn(
+        new_state, info = base_kernel(
             rng_key, state.sampler_state, state.parameter_override
         )
         new_parameter_override = update_inner_kernel(new_state, info)
