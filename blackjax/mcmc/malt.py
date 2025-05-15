@@ -15,7 +15,7 @@
 from typing import Callable, NamedTuple, Union
 
 import jax
-
+import jax.numpy as jnp
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.trajectory as trajectory
@@ -23,6 +23,7 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.mcmc.hmc import HMCState, HMCInfo
 
 __all__ = [
     "HMCState",
@@ -33,57 +34,6 @@ __all__ = [
 ]
 
 
-class HMCState(NamedTuple):
-    """State of the HMC algorithm.
-
-    The HMC algorithm takes one position of the chain and returns another
-    position. In order to make computations more efficient, we also store
-    the current logdensity as well as the current gradient of the logdensity.
-
-    """
-
-    position: ArrayTree
-    logdensity: float
-    logdensity_grad: ArrayTree
-
-
-class HMCInfo(NamedTuple):
-    """Additional information on the HMC transition.
-
-    This additional information can be used for debugging or computing
-    diagnostics.
-
-    momentum:
-        The momentum that was sampled and used to integrate the trajectory.
-    acceptance_rate
-        The acceptance probability of the transition, linked to the energy
-        difference between the original and the proposed states.
-    is_accepted
-        Whether the proposed position was accepted or the original position
-        was returned.
-    is_divergent
-        Whether the difference in energy between the original and the new state
-        exceeded the divergence threshold.
-    energy:
-        Total energy of the transition.
-    proposal
-        The state proposed by the proposal. Typically includes the position and
-        momentum.
-    step_size
-        Size of the integration step.
-    num_integration_steps
-        Number of times we run the symplectic integrator to build the trajectory
-
-    """
-
-    momentum: ArrayTree
-    acceptance_rate: float
-    is_accepted: bool
-    is_divergent: bool
-    energy: float
-    proposal: integrators.IntegratorState
-    num_integration_steps: int
-
 
 def init(position: ArrayLikeTree, logdensity_fn: Callable):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
@@ -93,6 +43,7 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable):
 def build_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: float = 1000,
+    L_proposal_factor = jnp.inf,
 ):
     """Build a HMC kernel.
 
@@ -119,23 +70,32 @@ def build_kernel(
         step_size: float,
         inverse_mass_matrix: metrics.MetricTypes,
         num_integration_steps: int,
+        
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
 
+        L = num_integration_steps * step_size
+        L_proposal = L_proposal_factor * L
+
+        # jax.debug.print("L_proposal {x}",x=L_proposal)
+
+        key_trajectory, key_momentum, key_integrator = jax.random.split(rng_key, 3)
         metric = metrics.default_metric(inverse_mass_matrix)
-        symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
+        symplectic_integrator = lambda state, step_size, rng_key: integrators.with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy, inverse_mass_matrix)(state, step_size, L_proposal=L_proposal, rng_key=rng_key)
         proposal_generator = hmc_proposal(
             symplectic_integrator,
             metric.kinetic_energy,
             step_size,
             num_integration_steps,
             divergence_threshold,
+            rng_key=key_trajectory,
         )
 
-        key_momentum, key_integrator = jax.random.split(rng_key, 2)
 
         position, logdensity, logdensity_grad = state
         momentum = metric.sample_momentum(key_momentum, position)
+        # import jax.numpy as jnp
+        # jax.debug.print("momentum nan? {x}",x=jnp.any(jnp.isnan(momentum)))
 
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
@@ -158,6 +118,7 @@ def as_top_level_api(
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.velocity_verlet,
+    L_proposal_factor = jnp.inf,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the HMC kernel.
 
@@ -247,6 +208,7 @@ def as_top_level_api(
             step_size,
             inverse_mass_matrix,
             num_integration_steps,
+            L_proposal_factor,
         )
 
     return SamplingAlgorithm(init_fn, step_fn)
@@ -260,6 +222,7 @@ def hmc_proposal(
     divergence_threshold: float = 1000,
     *,
     sample_proposal: Callable = static_binomial_sampling,
+    rng_key: PRNGKey,
 ) -> Callable:
     """Vanilla HMC algorithm.
 
@@ -287,19 +250,24 @@ def hmc_proposal(
     A kernel that generates a new chain state and information about the transition.
 
     """
-    build_trajectory = trajectory.static_integration(integrator)
+    build_trajectory = trajectory.langevin_integration(integrator, rng_key)
     hmc_energy_fn = hmc_energy(kinetic_energy)
 
     def generate(
         rng_key, state: integrators.IntegratorState
     ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
         """Generate a new chain state."""
-        end_state = build_trajectory(state, step_size, num_integration_steps)
+        end_state, delta_energy = build_trajectory(state, step_size, num_integration_steps)
         end_state = flip_momentum(end_state)
-        proposal_energy = hmc_energy_fn(state)
+        # proposal_energy = hmc_energy_fn(state)
         new_energy = hmc_energy_fn(end_state)
-        delta_energy = safe_energy_diff(proposal_energy, new_energy)
+        # delta_energy = safe_energy_diff(proposal_energy, new_energy)
+
+        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
+        # jax.debug.print("delta_energy_trajectory {x}",x=(delta_energy_trajectory, delta_energy))
+        # jax.debug.print("delta_energy {x}",x=delta_energy)
         is_diverging = -delta_energy > divergence_threshold
+        # jax.debug.print("is_diverging {x}",x=is_diverging)
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
 

@@ -104,6 +104,7 @@ def adjusted_mclmc_find_L_and_step_size(
             diagonal_preconditioning=diagonal_preconditioning,
             max=max,
             tuning_factor=tuning_factor,
+            euclidean=euclidean,
         )(
             state, params, num_steps, window_key
         )
@@ -164,6 +165,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
     fix_L_first_da=False,
     max="avg",
     tuning_factor=1.0,
+    euclidean=False,
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC"""
 
@@ -215,6 +217,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             step_size = jax.lax.clamp(
                 1e-5, jnp.exp(adaptive_state.log_step_size), params.L / 1.1
             )
+            # jax.debug.print("step size in adaptation {x}",x=step_size)
             adaptive_state = adaptive_state._replace(log_step_size=jnp.log(step_size))
 
             x = ravel_pytree(state.position)[0]
@@ -264,6 +267,8 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             num_steps * frac_tune2
         )
 
+        # jax.debug.print("num steps1 {x}",x=num_steps1)
+
         check_key, rng_key = jax.random.split(rng_key, 2)
 
         rng_key_pass1, rng_key_pass2 = jax.random.split(rng_key, 2)
@@ -309,16 +314,24 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             else:
                 raise ValueError("max should be either 'max' or 'avg'")
 
+            new_L = params.L
+            if euclidean:
+                new_L /= jnp.sqrt(dim)
+
             change = jax.lax.clamp(
                 Lratio_lowerbound,
-                contract(variances) / params.L,
+                contract(variances) / new_L,
                 Lratio_upperbound,
             )
+
             params = params._replace(
                 L=params.L * change, step_size=params.step_size * change
             )
             if diagonal_preconditioning:
-                params = params._replace(inverse_mass_matrix=variances, L=jnp.sqrt(dim))
+                if euclidean:
+                    params = params._replace(inverse_mass_matrix=variances, L=1.)
+                else:
+                    params = params._replace(inverse_mass_matrix=variances, L=jnp.sqrt(dim))
 
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
             (

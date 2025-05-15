@@ -1,4 +1,3 @@
-
 # Copyright 2020- The Blackjax Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -21,8 +20,9 @@ import jax.numpy as jnp
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.hmc import HMCInfo, HMCState
-from blackjax.mcmc.hmc import build_kernel as build_static_hmc_kernel
+from blackjax.mcmc.malt import build_kernel as build_static_hmc_kernel
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.mcmc.dynamic_hmc import DynamicHMCState
 
 __all__ = [
     "DynamicHMCState",
@@ -33,18 +33,6 @@ __all__ = [
 ]
 
 
-class DynamicHMCState(NamedTuple):
-    """State of the dynamic HMC algorithm.
-
-    Adds a utility array for generating a pseudo or quasi-random sequence of
-    number of integration steps.
-
-    """
-
-    position: ArrayTree
-    logdensity: float
-    logdensity_grad: ArrayTree
-    random_generator_arg: Array
 
 
 def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array):
@@ -57,6 +45,7 @@ def build_kernel(
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    L_proposal_factor: float = jnp.inf,
 ):
     """Build a Dynamic HMC kernel where the number of integration steps is chosen randomly.
 
@@ -79,7 +68,7 @@ def build_kernel(
     information about the transition.
 
     """
-    hmc_base = build_static_hmc_kernel(integrator, divergence_threshold)
+    hmc_base = build_static_hmc_kernel(integrator, divergence_threshold, L_proposal_factor)
 
     def kernel(
         rng_key: PRNGKey,
@@ -102,6 +91,10 @@ def build_kernel(
             inverse_mass_matrix,
             num_integration_steps,
         )
+
+        # jax.debug.print("logdensity {x}", x=hmc_proposal.logdensity)
+        # jax.debug.print("acceptance {x}", x=info)
+
         next_random_arg = next_random_arg_fn(state.random_generator_arg)
         return (
             DynamicHMCState(
@@ -125,6 +118,7 @@ def as_top_level_api(
     integrator: Callable = integrators.velocity_verlet,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    L_proposal_factor: float = jnp.inf,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the dynamic HMC kernel.
 
@@ -155,7 +149,7 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
     kernel = build_kernel(
-        integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn
+        integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn, L_proposal_factor
     )
 
     def init_fn(position: ArrayLikeTree, rng_key: Array):

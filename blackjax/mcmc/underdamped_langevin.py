@@ -26,7 +26,7 @@ from blackjax.types import ArrayLike, PRNGKey
 import blackjax.mcmc.metrics as metrics
 import jax.numpy as jnp
 from blackjax.util import pytree_size
-
+from blackjax.adaptation.mclmc_adaptation import handle_high_energy
 __all__ = ["LangevinInfo", "init", "build_kernel", "as_top_level_api"]
 
 
@@ -111,6 +111,24 @@ def build_kernel(
         eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
         ndims = pytree_size(position)
         # jax.debug.print("diagnostics {x}", x=(eev_max_per_dim, jnp.abs(energy_error), jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim)))
+
+        energy_key, rng_key = jax.random.split(rng_key)
+
+        energy, new_state = handle_high_energy(
+            previous_state=state,
+            next_state=IntegratorState(position, momentum, logdensity, logdensitygrad),
+            energy_change=energy_error,
+            key=energy_key,
+            inverse_mass_matrix=inverse_mass_matrix,
+            cutoff=jnp.sqrt(ndims * eev_max_per_dim),
+            euclidean=True
+        )
+
+        return new_state, LangevinInfo(
+            logdensity=new_state.logdensity,
+            energy_change=energy,
+            kinetic_change=kinetic_change
+        )
 
         new_state, new_info = jax.lax.cond(
             jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim),

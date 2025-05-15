@@ -531,8 +531,8 @@ def with_maruyama(integrator, kinetic_energy,inverse_mass_matrix):
         new_state = integrator(state, step_size)
         # jax.debug.print("state 2 {x}",x=state)
         
-        kinetic_change = - kinetic_energy(new_state.momentum) + kinetic_energy(
-            state.momentum
+        kinetic_change = - kinetic_energy(state.momentum) + kinetic_energy(
+            new_state.momentum
         )
         energy_change = kinetic_change - new_state.logdensity + state.logdensity
 

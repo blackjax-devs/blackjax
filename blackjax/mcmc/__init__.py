@@ -1,6 +1,8 @@
 from . import (
     adjusted_mclmc,
     adjusted_mclmc_dynamic,
+    malt,
+    dynamic_malt,
     barker,
     elliptical_slice,
     ghmc,
@@ -30,4 +32,6 @@ __all__ = [
     "underdamped_langevin"
     "adjusted_mclmc_dynamic",
     "adjusted_mclmc",
+    "dynamic_malt",
+    "malt",
 ]

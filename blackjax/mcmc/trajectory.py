@@ -127,6 +127,31 @@ def static_integration(
 
     return integrate
 
+def langevin_integration(
+    integrator: Callable,
+    rng_key: PRNGKey,
+    direction: int = 1,
+) -> Callable:
+    """Generate a trajectory by integrating several times in one direction."""
+
+    def integrate(
+        initial_state: IntegratorState, step_size, num_integration_steps
+    ) -> IntegratorState:
+        directed_step_size = jax.tree_util.tree_map(
+            lambda step_size: direction * step_size, step_size
+        )
+
+        def one_step(_, accum):
+            state, delta_energy, rng_key = accum
+            rng_key, key2 = jax.random.split(rng_key)
+            new_state, (_, delta_energy_new) = integrator(state, directed_step_size, rng_key)
+            return (new_state, delta_energy+delta_energy_new, key2)
+
+        state, delta_energy, _ = jax.lax.fori_loop(0, num_integration_steps, one_step, (initial_state, 0.0, rng_key))
+        return state, -delta_energy
+
+    return integrate
+
 
 class DynamicIntegrationState(NamedTuple):
     step: int

@@ -16,9 +16,11 @@ from .mcmc import adjusted_mclmc as _adjusted_mclmc
 from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
 from .mcmc import barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
+from .mcmc import dynamic_malt as _dynamic_malt
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
+from .mcmc import malt as _malt
 from .mcmc import mala as _mala
 from .mcmc import marginal_latent_gaussian
 from .mcmc import mclmc as _mclmc
@@ -97,12 +99,14 @@ def generate_top_level_api_from(module):
 
 # MCMC
 hmc = generate_top_level_api_from(_hmc)
+malt = generate_top_level_api_from(_malt)
 nuts = generate_top_level_api_from(_nuts)
 rmh = GenerateSamplingAPI(rmh_as_top_level_api, random_walk.init, random_walk.build_rmh)
 irmh = GenerateSamplingAPI(
     irmh_as_top_level_api, random_walk.init, random_walk.build_irmh
 )
 dynamic_hmc = generate_top_level_api_from(_dynamic_hmc)
+dynamic_malt = generate_top_level_api_from(_dynamic_malt)
 rmhmc = generate_top_level_api_from(_rmhmc)
 mala = generate_top_level_api_from(_mala)
 mgrad_gaussian = generate_top_level_api_from(marginal_latent_gaussian)
