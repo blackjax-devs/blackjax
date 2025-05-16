@@ -73,8 +73,10 @@ def build_kernel(
     logprior_fn: Callable[[ArrayTree], float],
     loglikelihood_fn: Callable[[ArrayTree], float],
     delete_fn: Callable[[PRNGKey, NSState], Tuple[Array, Array, Array]],
-    inner_init_fn: Callable[[ArrayTree], Any],
-    inner_kernel: Callable[[PRNGKey, Any, Callable[[ArrayTree], float]], Tuple[Any, Any]],
+    inner_init_fn: Callable[[ArrayTree], Any],  # Type of inner state can vary
+    inner_kernel: Callable[
+        ..., Callable[[PRNGKey, Any, Callable[[ArrayTree], float]], Tuple[Any, Any]]
+    ],  # Higher-order fn
     update_inner_kernel: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
 ) -> Callable[
     [PRNGKey, StateWithParameterOverride[NSState, Dict[str, ArrayTree]]],
@@ -105,8 +107,7 @@ def build_kernel(
         is called within the main NS loop.
     inner_kernel
         This kernel function has the signature
-        `(rng_key, inner_state, constrained_logdensity_fn,
-        **inner_kernel_parameters) -> (new_inner_state, inner_info)`.
+        `(rng_key, inner_mcmc_state, constrained_logdensity_fn, **inner_kernel_parameters) -> (new_inner_state, inner_info)`.
     update_inner_kernel
         A function that takes the `NSState` and `NSInfo` from the completed NS
         step and returns a dictionary of parameters to be used for the inner
