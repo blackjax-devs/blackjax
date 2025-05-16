@@ -19,6 +19,7 @@ and post-processing of results.
 """
 
 import functools
+
 import jax
 import jax.numpy as jnp
 
@@ -56,7 +57,7 @@ def log1mexp(x):
     )
 
 
-def compute_nlive(info: NSInfo):
+def compute_nlive(info: NSInfo) -> Array:
     """Compute the effective number of live points at each death contour.
 
     In Nested Sampling, especially with batch deletions (k > 1), the conceptual
@@ -234,7 +235,7 @@ def finalise(state: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
             state[0].loglikelihood,  # type: ignore
             state[0].loglikelihood_birth,  # type: ignore
             state[0].logprior,  # type: ignore
-            dead_info_history[-1].update_info,
+            dead_info_history[-1].inner_kernel_info,
         )
     ]
     combined_dead_info = jax.tree.map(

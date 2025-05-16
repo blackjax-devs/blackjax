@@ -198,7 +198,7 @@ def horizontal_slice_proposal(
         A JAX PRNG key.
     x0
         The current position (PyTree).
-    direction
+    d
         The direction (PyTree) for proposing moves.
     stepper_fn
         A function `(x0, direction, t) -> x_new` that computes a new point by

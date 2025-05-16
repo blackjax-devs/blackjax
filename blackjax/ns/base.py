@@ -29,8 +29,8 @@ This base implementation uses a provided kernel to perform the constrained
 sampling.
 """
 
-from typing import Callable, NamedTuple
 from functools import partial
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -38,7 +38,14 @@ from jax.scipy.special import logsumexp
 
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["init", "build_kernel"]
+__all__ = [
+    "init",
+    "build_kernel",
+    "NSState",
+    "NSInfo",
+    "delete_fn",
+    "bi_directional_delete_fn",
+]
 
 
 class NSState(NamedTuple):
@@ -96,17 +103,17 @@ class NSInfo(NamedTuple):
         The birth log-likelihood thresholds of the dead particles.
     logprior
         The log-prior values of the dead particles.
-    update_info
-        A NamedTuple containing information from the update step used to
-        generate new live particles. The content depends on the specific kernel
-        used.
+    inner_kernel_info
+        A NamedTuple (or any PyTree) containing information from the update step
+        (inner kernel) used to generate new live particles. The content
+        depends on the specific inner kernel used.
     """
 
     particles: ArrayTree
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
-    update_info: NamedTuple
+    inner_kernel_info: NamedTuple
 
 
 def init(
@@ -179,9 +186,15 @@ def build_kernel(
         A function `(rng_key, current_ns_state) -> (dead_indices, live_indices_for_resampling)`
         that identifies particles to be deleted and selects live particles
         to be starting points for new particle generation.
+    inner_init_fn
+        A function `(initial_position: ArrayTree) -> inner_state` used to
+        initialize the state for the inner kernel. The `logdensity_fn`
+        for this inner kernel will be partially applied before this init function
+        is called within the main NS loop.
     inner_kernel
-        A function that, when called with keywords (e.g., step size),
-        returns an kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
+        This kernel function has the signature
+        `(rng_key, inner_state, constrained_logdensity_fn,
+        **inner_kernel_parameters) -> (new_inner_state, inner_info)`.
 
     Returns
     -------

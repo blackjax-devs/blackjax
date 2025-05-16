@@ -39,14 +39,19 @@ from blackjax.ns.adaptive import build_kernel, init
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import delete_fn as default_delete_fn
 from blackjax.ns.utils import get_first_row, repeat_kernel
+from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
     particles_covariance_matrix,
 )
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 
-__all__ = ["init", "as_top_level_api"]
+__all__ = [
+    "init",
+    "as_top_level_api",
+    "default_generate_slice_direction_fn",
+    "default_adapt_direction_params_fn",
+]
 
 
 def default_generate_slice_direction_fn(
@@ -186,7 +191,9 @@ def as_top_level_api(
     inner_init_fn = slice_init
     update_inner_kernel = adapt_direction_params_fn
 
-    def init_fn(particles: ArrayLikeTree, rng_key: PRNGKey = None) -> NSState:
+    def init_fn(
+        particles: ArrayLikeTree, rng_key: PRNGKey = None
+    ) -> StateWithParameterOverride:
         del rng_key
         return init(particles, loglikelihood_fn, logprior_fn, update_inner_kernel)
 

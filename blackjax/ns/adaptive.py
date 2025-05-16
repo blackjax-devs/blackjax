@@ -96,6 +96,10 @@ def build_kernel(
         live_indices_for_resampling)` that identifies particles to be deleted
         and selects live particles to be starting points for new particle
         generation.
+    inner_init_fn
+        A function `(initial_position: ArrayTree) -> inner_state` used to
+        initialize the state for the inner kernel. The `logdensity_fn`
+        for this inner kernel will be partially applied before this init function is called within the main NS loop.
     inner_kernel
         A function that, when called with inner_kernel parameters, returns a
         kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
@@ -107,9 +111,7 @@ def build_kernel(
     Returns
     -------
     Callable
-        A kernel function for adaptive Nested Sampling:
-        `(rng_key, current_adapted_ns_state) -> (new_adapted_ns_state, ns_info)`.
-        The `current_adapted_ns_state` is of type `StateWithParameterOverride`.
+        A kernel function for adaptive Nested Sampling. It takes an `rng_key` and the current `StateWithParameterOverride` (which bundles the `NSState` and current inner kernel parameters) and returns a tuple containing the new `StateWithParameterOverride` and the `NSInfo` for the step.
     """
 
     base_kernel = base_build_kernel(
