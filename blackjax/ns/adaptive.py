@@ -22,35 +22,31 @@ allowing the kernel to adjust to the changing characteristics of the
 constrained prior distribution as the likelihood threshold increases.
 """
 
-from typing import Callable, Dict, Tuple, Optional, Any
+from typing import Callable, Dict
 
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import build_kernel as base_build_kernel
 from blackjax.ns.base import init
-from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey, Array
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["init", "build_kernel"]
 
 
 
 def build_kernel(
-    logprior_fn: Callable[[ArrayTree], float],
-    loglikelihood_fn: Callable[[ArrayTree], float],
-    delete_fn: Callable[[PRNGKey, NSState], Tuple[Array, Array, Array]],
-    inner_init_fn: Callable[[ArrayTree], Any],
-    inner_kernel: Callable[[PRNGKey, Any, Callable[[ArrayTree], float]], Tuple[Any, Any]],
+    logprior_fn: Callable,
+    loglikelihood_fn: Callable,
+    delete_fn: Callable,
+    inner_init_fn: Callable,
+    inner_kernel: Callable,
     update_inner_kernel: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
-) -> Callable[
-    [PRNGKey, StateWithParameterOverride[NSState, Dict[str, ArrayTree]]],
-    Tuple[StateWithParameterOverride[NSState, Dict[str, ArrayTree]], NSInfo],
-]:
+) -> Callable:
     """Build an adaptive Nested Sampling kernel.
 
     This kernel extends the base Nested Sampling kernel by re-computing/tuning
     the parameters for the inner kernel at each step. The `update_inner_kernel`
-    function is called after each NS step to determine the parameters for the
-    inner kernel in the *next* NS step.
+    is called after each NS step to determine the parameters for the *next* NS
+    step.
 
     Parameters
     ----------
@@ -60,30 +56,28 @@ def build_kernel(
         A function that computes the log-likelihood of a single particle.
     delete_fn
         A function `(rng_key, current_ns_state) -> (dead_indices,
-        target_update_indices, live_indices_for_resampling)` that identifies
-        particles to be deleted and selects live particles to be starting points
-        for new particle generation.
+        live_indices_for_resampling)` that identifies particles to be deleted
+        and selects live particles to be starting points for new particle
+        generation.
     inner_init_fn
         A function `(initial_position: ArrayTree) -> inner_state` used to
         initialize the state for the inner kernel. The `logdensity_fn`
-        for this inner kernel will be partially applied before this init function
-        is called within the main NS loop.
+        for this inner kernel will be partially applied before this init
+        function is called within the main NS loop.
     inner_kernel
-        This kernel function has the signature
-        `(rng_key, inner_state, constrained_logdensity_fn,
-        **inner_kernel_parameters) -> (new_inner_state, inner_info)`.
+        A function that, when called with inner_kernel parameters, returns a
+        kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
     update_inner_kernel
         A function that takes the `NSState` and `NSInfo` from the completed NS
-        step and returns a dictionary of parameters to be used for the inner
-        kernel in the *next* NS step.
+        step and returns a dictionary of parameters to be used for the kernel
+        in the *next* NS step.
 
     Returns
     -------
     Callable
-        A kernel function for adaptive Nested Sampling. It takes an `rng_key`
-        and the current `StateWithParameterOverride` (which bundles the `NSState`
-        and current inner kernel parameters) and returns a tuple containing the
-        new `StateWithParameterOverride` and the `NSInfo` for the step.
+        A kernel function for adaptive Nested Sampling. It takes an `rng_key` and the
+        current `NSState` and returns a tuple containing the new `NSState` and
+        the `NSInfo` for the step.
     """
 
     base_kernel = base_build_kernel(
@@ -94,10 +88,7 @@ def build_kernel(
         inner_kernel,
     )
 
-    def kernel(
-        rng_key: PRNGKey,
-        state: StateWithParameterOverride[NSState, Dict[str, ArrayTree]],
-    ) -> Tuple[StateWithParameterOverride[NSState, Dict[str, ArrayTree]], NSInfo]:
+    def kernel(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
         """Performs one step of adaptive Nested Sampling.
 
         This involves running a step of the base Nested Sampling algorithm using
@@ -109,14 +100,13 @@ def build_kernel(
         rng_key
             A JAX PRNG key.
         state
-            The current `StateWithParameterOverride`, containing the `NSState`
-            and the inner kernel parameters.
+            The current `NSState`.
 
         Returns
         -------
-        tuple[StateWithParameterOverride, NSInfo]
-            A tuple with the new `StateWithParameterOverride` (including updated
-            inner kernel parameters) and the `NSInfo` for this step.
+        tuple[NSState, NSInfo]
+            A tuple with the new `NSState` (including updated inner kernel
+            parameters) and the `NSInfo` for this step.
         """
         inner_kernel_params = update_inner_kernel(state)
         return base_kernel(rng_key, state, inner_kernel_params)

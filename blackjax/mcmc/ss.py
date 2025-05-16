@@ -27,7 +27,7 @@ References
 """
 
 from functools import partial
-from typing import Callable, NamedTuple, Tuple, Any
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -82,9 +82,7 @@ class SliceInfo(NamedTuple):
     evals: Array
 
 
-def init(
-    position: ArrayTree, logdensity_fn: Callable[[ArrayTree], float]
-) -> SliceState:
+def init(position: ArrayTree, logdensity_fn: Callable):
     """Initialize the Slice Sampler state.
 
     Parameters
@@ -92,8 +90,7 @@ def init(
     position
         The initial position of the chain.
     logdensity_fn
-        A function that computes the log-density of the target distribution
-        for a given position.
+        A function that computes the log-density of the target distribution.
 
     Returns
     -------
@@ -104,11 +101,9 @@ def init(
 
 
 def build_kernel(
-    generate_slice_direction_fn: Callable[[PRNGKey], ArrayTree],
-    stepper_fn: Callable[[ArrayTree, ArrayTree, float], ArrayTree],
-) -> Callable[
-    [PRNGKey, SliceState, Callable[[ArrayTree], float]], Tuple[SliceState, SliceInfo]
-]:
+    generate_slice_direction_fn: Callable,
+    stepper_fn: Callable,
+) -> Callable:
     """Build a Hit-and-Run Slice Sampling kernel.
 
     This kernel performs one step of the Hit-and-Run Slice Sampling algorithm,
@@ -131,32 +126,20 @@ def build_kernel(
     Callable
         A kernel function that takes a PRNG key, the current `SliceState`, and
         the log-density function, and returns a new `SliceState` and `SliceInfo`.
+
+    References
+    ----------
+    .. [1] Neal, R. M. (2003). Slice sampling. The Annals of Statistics, 31(3), 705-767.
     """
 
     def kernel(
-        rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable[[ArrayTree], float]
-    ) -> Tuple[SliceState, SliceInfo]:
-        """Perform one step of the Hit-and-Run Slice Sampling algorithm.
-
-        Parameters
-        ----------
-        rng_key
-            A JAX PRNG key.
-        state
-            The current `SliceState` of the sampler.
-        logdensity_fn
-            A function that computes the log-density of the target distribution.
-
-        Returns
-        -------
-        tuple[SliceState, SliceInfo]
-            A tuple containing the new `SliceState` and `SliceInfo` for this step.
-        """
+        rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable
+    ) -> tuple[SliceState, SliceInfo]:
         rng_key, vs_key, prop_key, hs_key = jax.random.split(rng_key, 4)
-        log_slice_height = vertical_slice(vs_key, logdensity_fn, state.position)
+        logdensity = vertical_slice(vs_key, logdensity_fn, state.position)
         d = generate_slice_direction_fn(prop_key)
         slice_state, slice_info = horizontal_slice_proposal(
-            hs_key, state.position, d, stepper_fn, logdensity_fn, log_slice_height
+            hs_key, state.position, d, stepper_fn, logdensity_fn, logdensity
         )
 
         return slice_state, slice_info
@@ -165,7 +148,7 @@ def build_kernel(
 
 
 def vertical_slice(
-    rng_key: PRNGKey, logdensity_fn: Callable[[ArrayTree], float], position: ArrayTree
+    rng_key: PRNGKey, logdensity_fn: Callable, position: ArrayTree
 ) -> float:
     """Define the vertical slice for the Slice Sampling algorithm.
 
@@ -185,7 +168,7 @@ def vertical_slice(
 
     Returns
     -------
-    float
+    Array
         The log-height `log_y` defining the lower bound for the horizontal slice.
         A new sample `x'` will be accepted if `logdensity_fn(x') >= log_y`.
     """
@@ -197,10 +180,10 @@ def horizontal_slice_proposal(
     rng_key: PRNGKey,
     x0: ArrayTree,
     d: ArrayTree,
-    stepper_fn: Callable[[ArrayTree, ArrayTree, float], ArrayTree],
-    logdensity_fn: Callable[[ArrayTree], float],
-    log_slice_height: float,
-) -> Tuple[SliceState, SliceInfo]:
+    stepper_fn: Callable,
+    logdensity_fn: Callable,
+    log_slice_height: Array,
+) -> tuple[SliceState, SliceInfo]:
     """Propose a new sample using the stepping-out and shrinking procedures.
 
     This function implements the core of the Hit-and-Run Slice Sampling algorithm.
@@ -223,8 +206,9 @@ def horizontal_slice_proposal(
     logdensity_fn
         The log-density function of the target distribution.
     log_slice_height
-        The log-height defining the current slice. A new sample `x_new`
-        is accepted if `logdensity_fn(x_new) >= log_slice_height`.
+        The log-height defining the current slice, typically obtained from
+        `vertical_slice`. A new sample `x_new` is accepted if
+        `logdensity_fn(x_new) >= log_slice_height`.
 
     Returns
     -------
@@ -282,7 +266,7 @@ def horizontal_slice_proposal(
     return slice_state, slice_info
 
 
-def default_stepper_fn(x: ArrayTree, d: ArrayTree, t: float) -> ArrayTree:
+def default_stepper_fn(x, d, t):
     """A simple stepper function that moves from `x` along direction `d` by `t` units.
 
     Implements the operation: `x_new = x + t * d`.
@@ -317,8 +301,8 @@ def default_generate_slice_direction_fn(rng_key: PRNGKey, cov: Array) -> Array:
     rng_key
         A JAX PRNG key.
     cov
-        The covariance matrix (a 2D array) for the multivariate Gaussian
-        distribution from which the initial direction is sampled.
+        The covariance matrix for the multivariate Gaussian distribution from which
+        the initial direction is sampled. Assumed to be a 2D array.
 
     Returns
     -------
@@ -333,9 +317,9 @@ def default_generate_slice_direction_fn(rng_key: PRNGKey, cov: Array) -> Array:
 
 
 def hrss_as_top_level_api(
-    logdensity_fn: Callable[[ArrayTree], float],
+    logdensity_fn: Callable,
     cov: Array,
-) -> SamplingAlgorithm[SliceState, SliceInfo, Any]:  # Params type Any for now
+) -> SamplingAlgorithm:
     """Creates a Hit-and-Run Slice Sampling algorithm.
 
     This function serves as a convenience wrapper to easily construct a
@@ -348,7 +332,7 @@ def hrss_as_top_level_api(
         The log-density function of the target distribution to sample from.
     cov
         The covariance matrix used by the default direction proposal function
-        (`default_generate_slice_direction_fn`). This matrix shapes the random
+        (`default_proposal_distribution`). This matrix shapes the random
         directions proposed for the slice sampling steps.
 
     Returns
@@ -357,8 +341,8 @@ def hrss_as_top_level_api(
         A `SamplingAlgorithm` tuple containing `init` and `step` functions for
         the configured Hit-and-Run Slice Sampler.
     """
-    generate_slice_dir_fn = partial(default_generate_slice_direction_fn, cov=cov)
-    kernel = build_kernel(generate_slice_dir_fn, default_stepper_fn)
+    generate_slice_direction_fn = partial(default_generate_slice_direction_fn, cov=cov)
+    kernel = build_kernel(generate_slice_direction_fn, default_stepper_fn)
     init_fn = partial(init, logdensity_fn=logdensity_fn)
     step_fn = partial(kernel, logdensity_fn=logdensity_fn)
     return SamplingAlgorithm(init_fn, step_fn)

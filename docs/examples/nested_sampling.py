@@ -4,7 +4,7 @@ import tqdm
 from jax.scipy.linalg import inv, solve
 
 import blackjax
-from blackjax.ns.utils import log_weights
+from blackjax.ns.utils import log_weights, finalise
 
 # jax.config.update("jax_enable_x64", True)
 
@@ -71,9 +71,7 @@ algo = blackjax.nss(
 
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
-initial_particles = jax.random.multivariate_normal(
-    init_key, prior_mean, prior_cov, (n_live,)
-)
+initial_particles = jax.random.multivariate_normal(init_key, prior_mean, prior_cov, (n_live,))
 state = algo.init(initial_particles)
 
 
@@ -112,15 +110,14 @@ for _ in tqdm.trange(1000):
 # It is now not too bad to remap the list of NSInfos into a single instance
 # note in theory we should include the live points, but assuming we have done things correctly and hit the termination criteria,
 # they will contain negligible weight
-dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
+# dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
 
 # From here we can use the utils to compute the log weights and the evidence of the accumulated dead points
 # sampling log weights lets us get a sensible error on the evidence estimate
+dead = finalise(state,dead)
 logw = log_weights(rng_key, dead)  # type: ignore[arg-type]
 logZs = jax.scipy.special.logsumexp(logw, axis=0)
 
 print(f"Analytic evidence: {log_analytic_evidence:.2f}")
 print(f"Runtime evidence: {state.sampler_state.logZ:.2f}")  # type: ignore[attr-defined]
 print(f"Estimated evidence: {logZs.mean():.2f} +- {logZs.std():.2f}")
-total_calls = dead.inner_kernel_info.evals.sum()
-print(f"Total likelihood calls: {total_calls}")
