@@ -63,7 +63,8 @@ class NSState(NamedTuple):
     loglikelihood_birth
         An array storing the log-likelihood threshold that each current live
         particle was required to exceed when it was "born" (i.e., sampled).
-        This is used for variance reduction techniques in evidence estimation (see `blackjax.ns.utils.compute_nlive`).
+        This is used for variance reduction techniques in evidence estimation
+        (see `blackjax.ns.utils.compute_nlive`).
     logprior
         An array of log-prior values, one for each live particle.
     pid
