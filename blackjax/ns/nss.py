@@ -177,7 +177,6 @@ def as_top_level_api(
         the configured Nested Slice Sampler. The state managed by this
         algorithm is `NSState`.
     """
-    delete_fn = partial(default_delete_fn, num_delete=num_delete)
 
     @repeat_kernel(num_inner_steps)
     def inner_kernel(rng_key, state, logdensity_fn, **kwargs):
@@ -185,14 +184,11 @@ def as_top_level_api(
         slice_kernel = build_slice_kernel(generate_slice_direction_fn_, stepper_fn)
         return slice_kernel(rng_key, state, logdensity_fn)
 
+    delete_fn = partial(default_delete_fn, num_delete=num_delete)
     inner_init_fn = slice_init
     update_inner_kernel = adapt_direction_params_fn
-
-    def init_fn(particles: ArrayLikeTree, rng_key: PRNGKey = None) -> NSState:
-        del rng_key
-        return init(particles, loglikelihood_fn, logprior_fn)
-
-    kernel = build_kernel(
+    init_fn = init
+    step_fn = build_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
@@ -200,8 +196,5 @@ def as_top_level_api(
         inner_kernel,
         update_inner_kernel,
     )
-
-    def step_fn(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
-        return kernel(rng_key, state)
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore

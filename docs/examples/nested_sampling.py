@@ -16,10 +16,10 @@ like_cov = C @ C.T
 like_mean = jax.random.normal(rng_key, (d,))
 prior_mean = jnp.zeros(d)
 prior_cov = jnp.eye(d) * 1
-prior = lambda x: jax.scipy.stats.multivariate_normal.logpdf(x, prior_mean, prior_cov)
+logprior_fn = lambda x: jax.scipy.stats.multivariate_normal.logpdf(x, prior_mean, prior_cov)
 
 
-def loglikelihood(x):
+def loglikelihood_fn(x):
     return jax.scipy.stats.multivariate_normal.logpdf(x, mean=like_mean, cov=like_cov)
 
 
@@ -43,7 +43,7 @@ log_analytic_evidence = compute_logZ(
     like_cov,
     mu_pi=prior_mean,
     Sigma_pi=prior_cov,
-    logLmax=loglikelihood(like_mean),
+    logLmax=loglikelihood_fn(like_mean),
 )
 
 ############################################
@@ -63,8 +63,8 @@ num_delete = 20
 num_inner_steps = d * 5
 
 algo = blackjax.nss(
-    logprior_fn=prior,
-    loglikelihood_fn=loglikelihood,
+    logprior_fn=logprior_fn,
+    loglikelihood_fn=loglikelihood_fn,
     num_delete=num_delete,
     num_inner_steps=num_inner_steps,
 )
@@ -72,16 +72,6 @@ algo = blackjax.nss(
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
 initial_particles = jax.random.multivariate_normal(init_key, prior_mean, prior_cov, (n_live,))
-state = algo.init(initial_particles)
-
-
-@jax.jit
-def one_step(carry, xs):
-    state, k = carry
-    k, subk = jax.random.split(k, 2)
-    state, dead_point = algo.step(subk, state)
-    return (state, k), dead_point
-
 
 # We can run the algorithm for a fixed number of steps but we run into a quirk of nested sampling here. The state after N iterations
 # does not necessarily contain any useful posterior points, it will have accumulated an estimate of the marginal likelihood, and this
@@ -97,14 +87,17 @@ def one_step(carry, xs):
 # how we will reconstruct posterior points, but the lax while loop wrapper won't accumulate well. So we will jit compile the outer step
 # and run it in a python loop
 
+live = algo.init(initial_particles, logprior_fn, loglikelihood_fn)
+step_fn = jax.jit(algo.step)
 dead = []
 # with jax.disable_jit():
 for _ in tqdm.trange(1000):
     # We track the estimate of the evidence in the live points as logZ_live, and the accumulated sum across all steps in logZ
     # this gives a handy termination that allows us to stop early
-    if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:  # type: ignore[attr-defined]
+    if live.logZ_live - live.logZ < -3:  # type: ignore[attr-defined]
         break
-    (state, rng_key), dead_info = one_step((state, rng_key), None)
+    rng_key, subkey = jax.random.split(rng_key, 2)
+    live, dead_info = step_fn(subkey, live)
     dead.append(dead_info)
 
 # It is now not too bad to remap the list of NSInfos into a single instance
@@ -114,10 +107,10 @@ for _ in tqdm.trange(1000):
 
 # From here we can use the utils to compute the log weights and the evidence of the accumulated dead points
 # sampling log weights lets us get a sensible error on the evidence estimate
-dead = finalise(state,dead)
+dead = finalise(live,dead)
 logw = log_weights(rng_key, dead)  # type: ignore[arg-type]
 logZs = jax.scipy.special.logsumexp(logw, axis=0)
 
 print(f"Analytic evidence: {log_analytic_evidence:.2f}")
-print(f"Runtime evidence: {state.sampler_state.logZ:.2f}")  # type: ignore[attr-defined]
+print(f"Runtime evidence: {live.logZ:.2f}")  # type: ignore[attr-defined]
 print(f"Estimated evidence: {logZs.mean():.2f} +- {logZs.std():.2f}")

@@ -203,18 +203,18 @@ def log_weights(
     return log_w[unsort_indices]
 
 
-def finalise(state: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
+def finalise(live: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
     """Combines the history of dead particle information with the final live points.
 
     At the end of a Nested Sampling run, the remaining live points are treated
     as if they were the next set of "dead" points to complete the evidence
     integral and posterior sample set. This function concatenates the `NSInfo`
     objects accumulated for dead particles throughout the run with a new `NSInfo`
-    object created from the final live particles in `state`.
+    object created from the final live particles in `live`.
 
     Parameters
     ----------
-    state
+    live
         The final `NSState` of the Nested Sampler, containing the live particles.
     dead_info_history
         A list of `NSInfo` objects, where each object contains information
@@ -231,10 +231,10 @@ def finalise(state: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
 
     all_pytrees_to_combine = dead_info_history + [
         NSInfo(  # Assuming NSInfo is your constructor
-            state[0].particles,  # type: ignore
-            state[0].loglikelihood,  # type: ignore
-            state[0].loglikelihood_birth,  # type: ignore
-            state[0].logprior,  # type: ignore
+            live.particles,  # type: ignore
+            live.loglikelihood,  # type: ignore
+            live.loglikelihood_birth,  # type: ignore
+            live.logprior,  # type: ignore
             dead_info_history[-1].inner_kernel_info,
         )
     ]

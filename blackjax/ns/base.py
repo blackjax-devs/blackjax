@@ -119,8 +119,8 @@ class NSInfo(NamedTuple):
 
 def init(
     particles: ArrayLikeTree,
-    loglikelihood_fn: Callable,
     logprior_fn: Callable,
+    loglikelihood_fn: Callable,
     loglikelihood_birth: Array = -jnp.nan,
 ) -> NSState:
     """Initializes the Nested Sampler state.
