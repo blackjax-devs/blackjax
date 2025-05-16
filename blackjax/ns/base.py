@@ -249,9 +249,8 @@ def build_kernel(
             constraint = loglikelihood_fn(x) > loglikelihood_0
             return jnp.where(constraint, logprior_fn(x), -jnp.inf)
 
-        step_fn = partial(
-            inner_kernel, logdensity_fn=logdensity_fn, **inner_kernel_parameters
-        )
+        kernel = partial(inner_kernel, **inner_kernel_parameters)
+        step_fn = partial(kernel, logdensity_fn=logdensity_fn)
         init_fn = partial(inner_init_fn, logdensity_fn=logdensity_fn)
 
         rng_key, sample_key = jax.random.split(rng_key)

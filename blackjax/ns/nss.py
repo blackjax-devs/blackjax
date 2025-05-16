@@ -102,9 +102,7 @@ def default_generate_slice_direction_fn(
     return unravel_fn(d)
 
 
-def default_adapt_direction_params_fn(
-    state: NSState, info: Optional[NSInfo]
-) -> Dict[str, ArrayTree]:
+def default_adapt_direction_params_fn(state: NSState) -> Dict[str, ArrayTree]:
     """Default function to adapt/tune the slice direction proposal parameters.
 
     This function computes the empirical covariance matrix from the current set of
@@ -203,7 +201,7 @@ def as_top_level_api(
 
     def init_fn(particles: ArrayLikeTree, rng_key: PRNGKey = None) -> NSState:
         del rng_key
-        return init(particles, loglikelihood_fn, logprior_fn, update_inner_kernel)
+        return init(particles, loglikelihood_fn, logprior_fn)
 
     kernel = build_kernel(
         logprior_fn,

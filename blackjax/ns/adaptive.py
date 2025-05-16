@@ -26,47 +26,12 @@ from typing import Callable, Dict, Tuple, Optional, Any
 
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import build_kernel as base_build_kernel
-from blackjax.ns.base import init as init_base
+from blackjax.ns.base import init
 from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey, Array
 
 __all__ = ["init", "build_kernel"]
 
-
-def init(
-    particles: ArrayLikeTree,
-    loglikelihood_fn: Callable[[ArrayTree], float],
-    logprior_fn: Callable[[ArrayTree], float],
-    update_inner_kernel: Callable[[NSState, Optional[NSInfo]], Dict[str, ArrayTree]],
-) -> StateWithParameterOverride[NSState, Dict[str, ArrayTree]]:
-    """Initializes the state for the Adaptive Nested Sampler.
-
-    This involves initializing the base Nested Sampler state and then computing
-    the initial set of parameters for the inner kernel using `update_inner_kernel`.
-
-    Parameters
-    ----------
-    particles
-        An initial set of particles (PyTree of arrays) drawn from the prior
-        distribution.
-    loglikelihood_fn
-        A function that computes the log-likelihood of a single particle.
-    logprior_fn
-        A function that computes the log-prior of a single particle.
-    update_inner_kernel
-        A function that, given the current `NSState` and `NSInfo` (which will
-        be `None` at initialization), computes a dictionary of parameters
-        for the inner kernel.
-
-    Returns
-    -------
-    StateWithParameterOverride
-        The initial state for the adaptive Nested Sampler, including the
-        initial kernel parameters.
-    """
-    state = init_base(particles, loglikelihood_fn, logprior_fn)
-    initial_parameter_value = update_inner_kernel(state, None)
-    return StateWithParameterOverride(state, initial_parameter_value)
 
 
 def build_kernel(
@@ -153,13 +118,7 @@ def build_kernel(
             A tuple with the new `StateWithParameterOverride` (including updated
             inner kernel parameters) and the `NSInfo` for this step.
         """
-        new_state, info = base_kernel(
-            rng_key, state.sampler_state, state.parameter_override
-        )
-        new_parameter_override = update_inner_kernel(new_state, info)
-        return (
-            StateWithParameterOverride(new_state, new_parameter_override),
-            info,
-        )
+        inner_kernel_params = update_inner_kernel(state)
+        return base_kernel(rng_key, state, inner_kernel_params)
 
     return kernel
