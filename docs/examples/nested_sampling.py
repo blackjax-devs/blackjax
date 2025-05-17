@@ -87,7 +87,7 @@ initial_particles = jax.random.multivariate_normal(init_key, prior_mean, prior_c
 # how we will reconstruct posterior points, but the lax while loop wrapper won't accumulate well. So we will jit compile the outer step
 # and run it in a python loop
 
-live = algo.init(initial_particles, logprior_fn, loglikelihood_fn)
+live = algo.init(initial_particles)
 step_fn = jax.jit(algo.step)
 dead = []
 # with jax.disable_jit():

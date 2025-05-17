@@ -99,7 +99,10 @@ def default_generate_slice_direction_fn(
     return unravel_fn(d)
 
 
-def default_adapt_direction_params_fn(state: NSState) -> Dict[str, ArrayTree]:
+def default_adapt_direction_params_fn(state: NSState,
+                                      info: NSInfo,
+                                      inner_kernel_params: Dict[str, ArrayTree] = {},
+                                      ) -> Dict[str, ArrayTree]:
     """Default function to adapt/tune the slice direction proposal parameters.
 
     This function computes the empirical covariance matrix from the current set of
@@ -113,6 +116,8 @@ def default_adapt_direction_params_fn(state: NSState) -> Dict[str, ArrayTree]:
         The current `NSState` of the Nested Sampler, containing the live particles.
     info
         The `NSInfo` from the last Nested Sampling step (currently unused by this function).
+    inner_kernel_params
+        A dictionary of parameters for the inner kernel (currently unused by this function).
 
     Returns
     -------
@@ -173,20 +178,20 @@ def build_kernel(
 
     @repeat_kernel(num_inner_steps)
     def inner_kernel(rng_key, state, logdensity_fn, **kwargs):
-        generate_slice_direction_fn_ = partial(generate_slice_direction_fn, **kwargs)
-        slice_kernel = build_slice_kernel(generate_slice_direction_fn_, stepper_fn)
+        _generate_slice_direction_fn = partial(generate_slice_direction_fn, **kwargs)
+        slice_kernel = build_slice_kernel(_generate_slice_direction_fn, stepper_fn)
         return slice_kernel(rng_key, state, logdensity_fn)
 
     delete_fn = partial(default_delete_fn, num_delete=num_delete)
     inner_init_fn = slice_init
-    update_inner_kernel = adapt_direction_params_fn
+    update_inner_kernel_params_fn = adapt_direction_params_fn
     kernel = build_adaptive_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
         inner_init_fn,
         inner_kernel,
-        update_inner_kernel,
+        update_inner_kernel_params_fn,
     )
     return kernel
 
@@ -247,7 +252,8 @@ def as_top_level_api(
         adapt_direction_params_fn=adapt_direction_params_fn,
         generate_slice_direction_fn=generate_slice_direction_fn,
     )
-    init_fn = partial(init, logprior_fn=logprior_fn, loglikelihood_fn=loglikelihood_fn)
+    init_fn = partial(init, logprior_fn=logprior_fn, loglikelihood_fn=loglikelihood_fn,
+                      update_inner_kernel_params_fn=adapt_direction_params_fn)
     step_fn = kernel
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore
