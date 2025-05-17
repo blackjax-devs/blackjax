@@ -39,12 +39,12 @@ def build_kernel(
     delete_fn: Callable,
     inner_init_fn: Callable,
     inner_kernel: Callable,
-    update_inner_kernel: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
+    update_inner_kernel_params_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
 ) -> Callable:
     """Build an adaptive Nested Sampling kernel.
 
     This kernel extends the base Nested Sampling kernel by re-computing/tuning
-    the parameters for the inner kernel at each step. The `update_inner_kernel`
+    the parameters for the inner kernel at each step. The `update_inner_kernel_params_fn`
     is called after each NS step to determine the parameters for the *next* NS
     step.
 
@@ -67,7 +67,7 @@ def build_kernel(
     inner_kernel
         A function that, when called with inner_kernel parameters, returns a
         kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
-    update_inner_kernel
+    update_inner_kernel_params_fn
         A function that takes the `NSState` and `NSInfo` from the completed NS
         step and returns a dictionary of parameters to be used for the kernel
         in the *next* NS step.
@@ -108,7 +108,7 @@ def build_kernel(
             A tuple with the new `NSState` (including updated inner kernel
             parameters) and the `NSInfo` for this step.
         """
-        inner_kernel_params = update_inner_kernel(state)
+        inner_kernel_params = update_inner_kernel_params_fn(state)
         return base_kernel(rng_key, state, inner_kernel_params)
 
     return kernel

@@ -35,7 +35,8 @@ from blackjax.mcmc.ss import (
 )
 from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
-from blackjax.ns.adaptive import build_kernel, init
+from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
+from blackjax.ns.adaptive import init
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import delete_fn as default_delete_fn
 from blackjax.ns.utils import get_first_row, repeat_kernel
@@ -48,8 +49,7 @@ from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 __all__ = [
     "init",
     "as_top_level_api",
-    "default_generate_slice_direction_fn",
-    "default_adapt_direction_params_fn",
+    "build_kernel",
 ]
 
 
@@ -130,6 +130,66 @@ def default_adapt_direction_params_fn(state: NSState) -> Dict[str, ArrayTree]:
     return {"cov": jax.vmap(unravel_fn)(cov)}
 
 
+def build_kernel(
+    logprior_fn: Callable,
+    loglikelihood_fn: Callable,
+    num_inner_steps: int,
+    num_delete: int = 1,
+    stepper_fn: Callable = default_stepper_fn,
+    adapt_direction_params_fn: Callable = default_adapt_direction_params_fn,
+    generate_slice_direction_fn: Callable = default_generate_slice_direction_fn,
+        ) -> Callable:
+    """Builds the Nested Slice Sampling kernel.
+    This function creates a Nested Slice Sampling kernel that uses
+    Hit-and-Run Slice Sampling (HRSS) as its inner kernel. The parameters
+    for the HRSS direction proposal (specifically, the covariance matrix)
+    are adaptively tuned at each step using `adapt_direction_params_fn`.
+
+    Parameters
+    ----------
+    logprior_fn
+        A function that computes the log-prior probability of a single particle.
+    loglikelihood_fn
+        A function that computes the log-likelihood of a single particle.
+    num_inner_steps
+        The number of HRSS steps to run for each new particle generation.
+        This should be a multiple of the dimension of the parameter space.
+    num_delete
+        The number of particles to delete and replace at each NS step.
+        Defaults to 1.
+    stepper_fn
+        The stepper function `(x, direction, t) -> x_new` for the HRSS kernel.
+        Defaults to `default_stepper`.
+    adapt_direction_params_fn
+        A function `(ns_state, ns_info) -> dict_of_params` that computes/adapts
+        the parameters (e.g., covariance matrix) for the slice direction proposal,
+        based on the current NS state. Defaults to `default_train_fn`.
+    generate_slice_direction_fn
+        A function `(rng_key, **params) -> direction_pytree` that generates a
+        normalized direction for HRSS, using parameters from `adapt_direction_params_fn`.
+        Defaults to `default_generate_slice_direction_fn`.
+
+    """
+
+    @repeat_kernel(num_inner_steps)
+    def inner_kernel(rng_key, state, logdensity_fn, **kwargs):
+        generate_slice_direction_fn_ = partial(generate_slice_direction_fn, **kwargs)
+        slice_kernel = build_slice_kernel(generate_slice_direction_fn_, stepper_fn)
+        return slice_kernel(rng_key, state, logdensity_fn)
+
+    delete_fn = partial(default_delete_fn, num_delete=num_delete)
+    inner_init_fn = slice_init
+    update_inner_kernel = adapt_direction_params_fn
+    kernel = build_adaptive_kernel(
+        logprior_fn,
+        loglikelihood_fn,
+        delete_fn,
+        inner_init_fn,
+        inner_kernel,
+        update_inner_kernel,
+    )
+    return kernel
+
 def as_top_level_api(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
@@ -178,23 +238,16 @@ def as_top_level_api(
         algorithm is `NSState`.
     """
 
-    @repeat_kernel(num_inner_steps)
-    def inner_kernel(rng_key, state, logdensity_fn, **kwargs):
-        generate_slice_direction_fn_ = partial(generate_slice_direction_fn, **kwargs)
-        slice_kernel = build_slice_kernel(generate_slice_direction_fn_, stepper_fn)
-        return slice_kernel(rng_key, state, logdensity_fn)
-
-    delete_fn = partial(default_delete_fn, num_delete=num_delete)
-    inner_init_fn = slice_init
-    update_inner_kernel = adapt_direction_params_fn
-    init_fn = init
-    step_fn = build_kernel(
+    kernel = build_kernel(
         logprior_fn,
         loglikelihood_fn,
-        delete_fn,
-        inner_init_fn,
-        inner_kernel,
-        update_inner_kernel,
+        num_inner_steps,
+        num_delete,
+        stepper_fn=stepper_fn,
+        adapt_direction_params_fn=adapt_direction_params_fn,
+        generate_slice_direction_fn=generate_slice_direction_fn,
     )
+    init_fn = partial(init, logprior_fn=logprior_fn, loglikelihood_fn=loglikelihood_fn)
+    step_fn = kernel
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore
