@@ -433,13 +433,13 @@ def thin_kernel(
             # when estimating high dimensional autocorrelation length during tuning.
             thinning = 16
 
-            # Adequately aggregate info.energy_change
+            # Adequatly aggregate info.energy_change
             info_transform=lambda info: tree.map(lambda x: (x**2).mean()**.5, info)
             )
 
         state, params, n_steps = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
-            num_steps=1000,
+            num_steps=100,
             state=state,
             rng_key=tune_key,
             )

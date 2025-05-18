@@ -1,27 +1,16 @@
-# from functools import partial
-
 import chex
-
-# import numpy as np
+import jax
+import jax.numpy as jnp
 from absl.testing import absltest, parameterized
 
-# from jax import jit
-from jax import numpy as jnp
-from jax import random as jr
-
 import blackjax
-from blackjax.util import (  # thin_algorithm,; thin_kernel,
-    run_inference_algorithm,
-    store_only_expectation_values,
-)
-
-# from jax import tree
+from blackjax.util import run_inference_algorithm, store_only_expectation_values
 
 
 class RunInferenceAlgorithmTest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jr.key(42)
+        self.key = jax.random.key(42)
         self.algorithm = blackjax.hmc(
             logdensity_fn=self.logdensity_fn,
             inverse_mass_matrix=jnp.eye(2),
@@ -52,7 +41,7 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             10,
         )
 
-        init_key, state_key, run_key = jr.split(self.key, 3)
+        init_key, state_key, run_key = jax.random.split(self.key, 3)
         initial_state = blackjax.mcmc.mclmc.init(
             position=initial_position, logdensity_fn=logdensity_fn, rng_key=state_key
         )
@@ -115,115 +104,6 @@ class RunInferenceAlgorithmTest(chex.TestCase):
     @staticmethod
     def logdensity_fn(x):
         return -0.5 * jnp.sum(jnp.square(x))
-
-
-# class ThinInferenceAlgorithmTest(chex.TestCase):
-#     # logdf = lambda self, x: - (x**2).sum(-1) / 2 # Gaussian
-#     logdf = (
-#         lambda self, x: -((x[::2] - 1) ** 2 + (x[1::2] - x[::2] ** 2) ** 2).sum(-1) / 2
-#     )  # Rosenbrock
-#     d = 2
-#     init_pos = jnp.ones(d)
-#     rng_keys = jr.key(42)
-#     num_steps = 10_000
-
-#     def warmup(self, rng_key, num_steps, thinning: int = 1):
-#         from blackjax.mcmc.integrators import isokinetic_mclachlan
-
-#         init_key, tune_key = jr.split(rng_key, 2)
-
-#         state = blackjax.mcmc.mclmc.init(
-#             position=self.init_pos, logdensity_fn=self.logdf, rng_key=init_key
-#         )
-
-#         if thinning == 1:
-#             kernel = lambda inverse_mass_matrix: blackjax.mcmc.mclmc.build_kernel(
-#                 logdensity_fn=self.logdf,
-#                 integrator=isokinetic_mclachlan,
-#                 inverse_mass_matrix=inverse_mass_matrix,
-#             )
-#         else:
-#             kernel = lambda inverse_mass_matrix: thin_kernel(
-#                 blackjax.mcmc.mclmc.build_kernel(
-#                     logdensity_fn=self.logdf,
-#                     integrator=isokinetic_mclachlan,
-#                     inverse_mass_matrix=inverse_mass_matrix,
-#                 ),
-#                 thinning=thinning,
-#                 info_transform=lambda info: tree.map(
-#                     lambda x: (x**2).mean() ** 0.5, info
-#                 ),
-#             )
-
-#         state, config, n_steps = blackjax.mclmc_find_L_and_step_size(
-#             mclmc_kernel=kernel,
-#             num_steps=num_steps,
-#             state=state,
-#             rng_key=tune_key,
-#             # frac_tune3=0.
-#         )
-#         n_steps *= thinning
-#         config = config._replace(
-#             L=config.L * thinning
-#         )  # NOTE: compensate L for thinning
-#         return state, config, n_steps
-
-#     def run(self, rng_key, state, config, num_steps, thinning: int = 1):
-#         sampler = blackjax.mclmc(
-#             self.logdf,
-#             L=config.L,
-#             step_size=config.step_size,
-#             inverse_mass_matrix=config.inverse_mass_matrix,
-#         )
-#         if thinning != 1:
-#             sampler = thin_algorithm(
-#                 sampler,
-#                 thinning=thinning,
-#                 info_transform=lambda info: tree.map(jnp.mean, info),
-#             )
-
-#         state, history = run_inference_algorithm(
-#             rng_key=rng_key,
-#             initial_state=state,
-#             inference_algorithm=sampler,
-#             num_steps=num_steps,
-#             # progress_bar=True,
-#         )
-#         return state, history
-
-#     def test_thin(self):
-#         # Test thin kernel in warmup
-#         state, config, n_steps = jit(
-#             partial(self.warmup, num_steps=self.num_steps, thinning=1)
-#         )(self.rng_keys)
-#         state_thin, config_thin, n_steps_thin = jit(
-#             partial(self.warmup, num_steps=self.num_steps, thinning=4)
-#         )(self.rng_keys)
-
-#         rtol = 7e-1
-#         np.testing.assert_allclose(config_thin.L, config.L, rtol=rtol)
-#         np.testing.assert_allclose(config_thin.step_size, config.step_size, rtol=rtol)
-#         np.testing.assert_allclose(
-#             config_thin.inverse_mass_matrix, config.inverse_mass_matrix, rtol=rtol
-#         )
-
-#         # Test thin algorithm in run
-#         state, history = jit(
-#             partial(self.run, config=config, num_steps=self.num_steps, thinning=1)
-#         )(self.rng_keys, state)
-#         samples = history[0].position
-#         state_thin, history_thin = jit(
-#             partial(self.run, config=config_thin, num_steps=self.num_steps, thinning=4)
-#         )(self.rng_keys, state_thin)
-#         samples_thin = history_thin[0].position
-
-#         rtol, atol = 1e-1, 1e-1
-#         np.testing.assert_allclose(
-#             samples_thin.mean(0), samples.mean(0), rtol=rtol, atol=atol
-#         )
-#         np.testing.assert_allclose(
-#             jnp.cov(samples_thin.T), jnp.cov(samples.T), rtol=rtol, atol=atol
-#         )
 
 
 if __name__ == "__main__":
