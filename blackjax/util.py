@@ -1,7 +1,7 @@
 """Utility functions for BlackJax."""
 
 from functools import partial
-from typing import Callable, Union, NamedTuple
+from typing import Callable, NamedTuple, Union
 
 import jax.numpy as jnp
 from jax import jit, lax
@@ -316,13 +316,14 @@ def incremental_value_update(
     return total, average
 
 
-
-def thin_algorithm(sampling_algorithm:SamplingAlgorithm, 
-                   thinning:int=1, 
-                   info_transform:Callable=lambda x: x) -> SamplingAlgorithm:
+def thin_algorithm(
+    sampling_algorithm: SamplingAlgorithm,
+    thinning: int = 1,
+    info_transform: Callable = lambda x: x,
+) -> SamplingAlgorithm:
     """
-    Return a new sampling algorithm that performs `thinning` iterations of the given algorithm, 
-    meaning only one state is returned every `thinning` steps. 
+    Return a new sampling algorithm that performs `thinning` iterations of the given algorithm,
+    meaning only one state is returned every `thinning` steps.
     This is useful to reduce computation and memory cost of high throughput samplers, especially in high dimension.
 
     Parameters
@@ -347,23 +348,23 @@ def thin_algorithm(sampling_algorithm:SamplingAlgorithm,
         logdf = lambda x: -(x**2).sum()
         init_pos = jnp.ones(2)
         init_key, run_key = jr.split(jr.key(43), 2)
-        
+
         state = blackjax.mcmc.mclmc.init(
-                    position=init_pos, 
-                    logdensity_fn=logdf, 
+                    position=init_pos,
+                    logdensity_fn=logdf,
                     rng_key=init_key
                     )
 
         sampler = blackjax.mclmc(
-                    logdensity_fn=logdf, 
-                    L=L, 
-                    step_size=step_size, 
+                    logdensity_fn=logdf,
+                    L=L,
+                    step_size=step_size,
                     inverse_mass_matrix=inverse_mass_matrix,
                     )
 
         sampler = thin_algorithm(
-                    sampler, 
-                    thinning=16, 
+                    sampler,
+                    thinning=16,
                     info_transform=lambda info: tree.map(jnp.mean, info),
                     )
 
@@ -375,7 +376,7 @@ def thin_algorithm(sampling_algorithm:SamplingAlgorithm,
                     )
     """
 
-    def step_fn(rng_key:PRNGKey, state:NamedTuple) -> tuple[NamedTuple, NamedTuple]:
+    def step_fn(rng_key: PRNGKey, state: NamedTuple) -> tuple[NamedTuple, NamedTuple]:
         step = lambda state, rng_key: sampling_algorithm.step(rng_key, state)
         keys = split(rng_key, thinning)
         state, info = lax.scan(step, state, keys)
@@ -384,10 +385,9 @@ def thin_algorithm(sampling_algorithm:SamplingAlgorithm,
     return SamplingAlgorithm(sampling_algorithm.init, step_fn)
 
 
-
-def thin_kernel(kernel:Callable, 
-                thinning:int=1, 
-                info_transform=lambda x: x) -> Callable:
+def thin_kernel(
+    kernel: Callable, thinning: int = 1, info_transform=lambda x: x
+) -> Callable:
     """
     Return a thinned version of a kernel that runs the kernel `thinning` times before returning the state.
     This is useful to reduce computation and memory cost of high throughput samplers, especially in high dimension.
@@ -415,10 +415,10 @@ def thin_kernel(kernel:Callable,
         logdf = lambda x: -(x**2).sum()
         init_pos = jnp.ones(2)
         init_key, tune_key = jr.split(jr.key(42), 2)
-        
+
         state = blackjax.mcmc.mclmc.init(
-                    position=init_pos, 
-                    logdensity_fn=logdf, 
+                    position=init_pos,
+                    logdensity_fn=logdf,
                     rng_key=init_key
                     )
 
@@ -427,11 +427,11 @@ def thin_kernel(kernel:Callable,
                                 logdensity_fn=logdf,
                                 integrator=isokinetic_mclachlan,
                                 inverse_mass_matrix=inverse_mass_matrix,
-                                ), 
+                                ),
 
-            # Return every 16th state, especially decreasing computation and memory cost 
+            # Return every 16th state, especially decreasing computation and memory cost
             # when estimating high dimensional autocorrelation length during tuning.
-            thinning = 16 
+            thinning = 16
 
             # Adequatly aggregate info.energy_change
             info_transform=lambda info: tree.map(lambda x: (x**2).mean()**.5, info)
@@ -445,12 +445,12 @@ def thin_kernel(kernel:Callable,
             )
     """
 
-    def thinned_kernel(rng_key:PRNGKey, state:NamedTuple, *args, **kwargs) -> tuple[NamedTuple, NamedTuple]:
-
+    def thinned_kernel(
+        rng_key: PRNGKey, state: NamedTuple, *args, **kwargs
+    ) -> tuple[NamedTuple, NamedTuple]:
         step = lambda state, rng_key: kernel(rng_key, state, *args, **kwargs)
         keys = split(rng_key, thinning)
         state, info = lax.scan(step, state, keys)
         return state, info_transform(info)
 
     return thinned_kernel
-
