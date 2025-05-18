@@ -19,12 +19,14 @@ and post-processing of results.
 """
 
 import functools
+from typing import Type, NamedTuple, get_type_hints
 
 import jax
 import jax.numpy as jnp
 
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.types import Array, ArrayTree, PRNGKey
+
 
 
 def log1mexp(x):
@@ -203,7 +205,7 @@ def log_weights(
     return log_w[unsort_indices]
 
 
-def finalise(live: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
+def finalise(live: NSState, dead: list[NSInfo]) -> NSInfo:
     """Combines the history of dead particle information with the final live points.
 
     At the end of a Nested Sampling run, the remaining live points are treated
@@ -216,7 +218,7 @@ def finalise(live: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
     ----------
     live
         The final `NSState` of the Nested Sampler, containing the live particles.
-    dead_info_history
+    dead
         A list of `NSInfo` objects, where each object contains information
         about the particles that "died" at one step of the NS algorithm.
 
@@ -224,18 +226,18 @@ def finalise(live: NSState, dead_info_history: list[NSInfo]) -> NSInfo:
     -------
     NSInfo
         A single `NSInfo` object where all fields are concatenations of the
-        corresponding fields from `dead_info_history` and the final live points.
-        The `update_info` from the last element of `dead_info_history` is used
+        corresponding fields from `dead` and the final live points.
+        The `update_info` from the last element of `dead` is used
         for the final live points' `update_info` (as a placeholder).
     """
 
-    all_pytrees_to_combine = dead_info_history + [
+    all_pytrees_to_combine = dead + [
         NSInfo(  # Assuming NSInfo is your constructor
             live.particles,  # type: ignore
             live.loglikelihood,  # type: ignore
             live.loglikelihood_birth,  # type: ignore
             live.logprior,  # type: ignore
-            dead_info_history[-1].inner_kernel_info,
+            dead[-1].inner_kernel_info,
         )
     ]
     combined_dead_info = jax.tree.map(
@@ -346,3 +348,16 @@ def repeat_kernel(num_repeats: int):
         return repeated_kernel
 
     return decorator
+
+
+def forward_properties_from(base_attr_name: str):
+    """Decorator to forward properties from a base attribute to the class."""
+    def decorator(cls: Type[NamedTuple]):
+        base_attr_type = get_type_hints(cls)[base_attr_name]
+        for field_name in base_attr_type._fields:
+            if not hasattr(cls, field_name):
+                prop = property(lambda self, fname=field_name: getattr(getattr(self, base_attr_name), fname))
+                setattr(cls, field_name, prop)
+        return cls
+    return decorator
+

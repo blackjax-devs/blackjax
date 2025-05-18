@@ -194,20 +194,18 @@ def build_kernel(
         is called within the main NS loop.
     inner_kernel
         This kernel function has the signature
-        `(rng_key, inner_state, constrained_logdensity_fn,
-        **inner_kernel_parameters) -> (new_inner_state, inner_info)`.
+        `(rng_key, inner_state, constrained_logdensity_fn) -> (new_inner_state, inner_info)`.
 
     Returns
     -------
     Callable
         A kernel function for Nested Sampling:
-        `(rng_key, ns_state, inner_kernel_parameters) -> (new_ns_state, ns_info)`.
+        `(rng_key, ns_state) -> (new_ns_state, ns_info)`.
     """
 
     def kernel(
         rng_key: PRNGKey,
-        state: NSState,
-        inner_kernel_parameters: dict,
+        state: NSState
     ) -> tuple[NSState, NSInfo]:
         # Delete, and grab all the dead information
         rng_key, delete_fn_key = jax.random.split(rng_key)
@@ -224,14 +222,12 @@ def build_kernel(
             constraint = loglikelihood_fn(x) > loglikelihood_0
             return jnp.where(constraint, logprior_fn(x), -jnp.inf)
 
-        kernel = partial(inner_kernel, **inner_kernel_parameters)
-        step_fn = partial(kernel, logdensity_fn=logdensity_fn)
-        init_fn = partial(inner_init_fn, logdensity_fn=logdensity_fn)
-
         rng_key, sample_key = jax.random.split(rng_key)
         sample_keys = jax.random.split(sample_key, len(start_idx))
         particles = jax.tree.map(lambda x: x[start_idx], state.particles)
+        init_fn = partial(inner_init_fn, logdensity_fn=logdensity_fn)
         inner_states = jax.vmap(init_fn)(particles)
+        step_fn = partial(inner_kernel, logdensity_fn=logdensity_fn)
         inner_states, inner_state_infos = jax.vmap(step_fn)(sample_keys, inner_states)
 
         # Update the particles

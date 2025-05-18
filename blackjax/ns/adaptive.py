@@ -23,55 +23,54 @@ constrained prior distribution as the likelihood threshold increases.
 """
 
 from typing import Callable, Dict, NamedTuple
-
+from functools import partial
 
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import build_kernel as base_build_kernel
 from blackjax.ns.base import init as base_init
+from blackjax.ns.utils import forward_properties_from
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey, Array
 import jax.numpy as jnp
 
 __all__ = ["init", "build_kernel"]
 
 
-
+@forward_properties_from("base_state")
 class AdaptiveNSState(NamedTuple):
+    """State of the Nested Sampler, including the inner kernel parameters.
+
+    Attributes
+    ----------
+    particles
+        A PyTree of arrays, where each leaf array has a leading dimension
+        equal to the number of live particles. Stores the current positions of
+        the live particles.
+    loglikelihood
+        An array of log-likelihood values, one for each live particle,
+        corresponding to `state.particles`.
+    loglikelihood_birth
+        An array storing the log-likelihood threshold that each current live
+        particle was required to exceed when it was "born" (i.e., sampled).
+    logprior
+        An array of log-prior values, one for each live particle.
+    pid
+        Particle ID. An array of integers tracking the identity or lineage of
+        particles, primarily for diagnostic purposes.
+    logX
+        The logarithm of the current prior volume estimate. This decreases as
+        the algorithm progresses and likelihood contours shrink.
+    logZ_live
+        The current estimate of the evidence contribution from the live points.
+    logZ
+        The accumulated evidence estimate from the "dead" points (particles
+        that have been replaced).
+    inner_kernel_params
+        A dictionary of parameters for the inner kernel. These parameters are
+        updated at each step of the Nested Sampling algorithm to adapt the
+        sampling process to the current state of the live particles.
+    """
     base_state: NSState
     inner_kernel_params: Dict[str, ArrayTree]
-
-    # Define properties to access base_state fields directly
-    @property
-    def particles(self) -> ArrayLikeTree:
-        return self.base_state.particles
-
-    @property
-    def loglikelihood(self) -> Array:
-        return self.base_state.loglikelihood
-
-    @property
-    def loglikelihood_birth(self) -> Array:
-        return self.base_state.loglikelihood_birth
-
-    @property
-    def logprior(self) -> Array:
-        return self.base_state.logprior
-
-    @property
-    def pid(self) -> Array:
-        return self.base_state.pid
-
-    @property
-    def logX(self) -> float:
-        return self.base_state.logX
-
-    @property
-    def logZ_live(self) -> float:
-        return self.base_state.logZ_live
-
-    @property
-    def logZ(self) -> float:
-        return self.base_state.logZ
-
 
 
 
@@ -155,14 +154,6 @@ def build_kernel(
         the `NSInfo` for the step.
     """
 
-    base_kernel = base_build_kernel(
-        logprior_fn,
-        loglikelihood_fn,
-        delete_fn,
-        inner_init_fn,
-        inner_kernel,
-    )
-
     def kernel(rng_key: PRNGKey, state: AdaptiveNSState) -> tuple[AdaptiveNSState, NSInfo]:
         """Performs one step of adaptive Nested Sampling.
 
@@ -183,9 +174,26 @@ def build_kernel(
             A tuple with the new `AdaptiveNSState` (including updated inner kernel
             parameters) and the `NSInfo` for this step.
         """
+
+        _inner_kernel = partial(inner_kernel, **state.inner_kernel_params)
+
+        base_kernel = base_build_kernel(
+            logprior_fn,
+            loglikelihood_fn,
+            delete_fn,
+            inner_init_fn,
+            _inner_kernel,
+        )
+
         base_state = state.base_state
-        new_base_state, info = base_kernel(rng_key, base_state, state.inner_kernel_params)
-        inner_kernel_params = update_inner_kernel_params_fn(new_base_state, info, state.inner_kernel_params)
+        new_base_state, info = base_kernel(rng_key, base_state)
+
+        inner_kernel_params = update_inner_kernel_params_fn(
+            state=new_base_state,
+            info=info,
+            inner_kernel_params=state.inner_kernel_params
+        )
+
         new_state = AdaptiveNSState(
             base_state=new_base_state,
             inner_kernel_params=inner_kernel_params,
