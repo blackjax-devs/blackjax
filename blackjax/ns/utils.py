@@ -19,7 +19,6 @@ and post-processing of results.
 """
 
 import functools
-from typing import NamedTuple, Type, get_type_hints
 
 import jax
 import jax.numpy as jnp
@@ -345,19 +344,5 @@ def repeat_kernel(num_repeats: int):
             return jax.lax.scan(body_fn, state, keys)
 
         return repeated_kernel
-
-    return decorator
-
-
-def forward_properties_from(base_attr_name: str):
-    """Decorator to forward properties from a base attribute to the class."""
-
-    def decorator(cls: Type[NamedTuple]):
-        base_attr_type = get_type_hints(cls)[base_attr_name]
-        for field_name in base_attr_type._fields:
-            if not hasattr(cls, field_name):
-                prop = property(lambda self, fname=field_name: getattr(getattr(self, base_attr_name), fname))  # type: ignore
-                setattr(cls, field_name, prop)
-        return cls
 
     return decorator
