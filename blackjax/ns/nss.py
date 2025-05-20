@@ -36,8 +36,8 @@ from blackjax.mcmc.ss import (
 from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
-from blackjax.ns.adaptive import init, AdaptiveNSState
-from blackjax.ns.base import NSInfo
+from blackjax.ns.adaptive import init
+from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import delete_fn as default_delete_fn
 from blackjax.ns.utils import get_first_row, repeat_kernel
 from blackjax.smc.tuning.from_particles import (
@@ -99,7 +99,7 @@ def default_generate_slice_direction_fn(
     return unravel_fn(d)
 
 
-def default_adapt_direction_params_fn(state: AdaptiveNSState,
+def default_adapt_direction_params_fn(state: NSState,
                                       info: NSInfo,
                                       inner_kernel_params: Dict[str, ArrayTree] = {},
                                       ) -> Dict[str, ArrayTree]:
@@ -113,7 +113,7 @@ def default_adapt_direction_params_fn(state: AdaptiveNSState,
     Parameters
     ----------
     state
-        The current `AdaptiveNSState` of the Nested Sampler, containing the live particles.
+        The current `NSState` of the Nested Sampler, containing the live particles.
     info
         The `NSInfo` from the last Nested Sampling step (currently unused by this function).
     inner_kernel_params
@@ -240,7 +240,7 @@ def as_top_level_api(
     SamplingAlgorithm
         A `SamplingAlgorithm` tuple containing `init` and `step` functions for
         the configured Nested Slice Sampler. The state managed by this
-        algorithm is `AdaptiveNSState`.
+        algorithm is `NSState`.
     """
 
     kernel = build_kernel(

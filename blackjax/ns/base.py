@@ -43,8 +43,7 @@ __all__ = [
     "build_kernel",
     "NSState",
     "NSInfo",
-    "delete_fn",
-    "bi_directional_delete_fn",
+    "delete_fn"
 ]
 
 
@@ -78,6 +77,8 @@ class NSState(NamedTuple):
     logZ
         The accumulated evidence estimate from the "dead" points (particles
         that have been replaced).
+    inner_kernel_params
+        A dictionary of parameters for the inner kernel.
     """
 
     particles: ArrayLikeTree
@@ -88,6 +89,7 @@ class NSState(NamedTuple):
     logX: float = 0.0  # The current log-volume estiamte
     logZ_live: float = -jnp.inf  # The current evidence estimate
     logZ: float = -jnp.inf  # The accumulated evidence estimate
+    inner_kernel_params: dict = {}  # Parameters for the inner kernel
 
 
 class NSInfo(NamedTuple):
@@ -114,7 +116,7 @@ class NSInfo(NamedTuple):
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
-    inner_kernel_info: NamedTuple
+    inner_kernel_info: NamedTuple # Information from the inner kernel update step
 
 
 def init(
@@ -171,7 +173,8 @@ def build_kernel(
     3. These selected live particles are evolved using an kernel
        `inner_kernel`. The sampling is constrained to the region where
        `loglikelihood(new_particle) > loglikelihood_0`.
-    4. The newly generated particles replace the dead ones.
+    4. The newly generated particles replace particles marked for replacement,
+       (typically the ones that have just been deleted).
     5. The prior volume `logX` and evidence `logZ` are updated based on the
        number of deleted particles and their likelihoods.
 
@@ -184,23 +187,25 @@ def build_kernel(
     loglikelihood_fn
         A function that computes the log-likelihood of a single particle.
     delete_fn
-        A function `(rng_key, current_ns_state) -> (dead_indices, live_indices_for_resampling)`
-        that identifies particles to be deleted and selects live particles
-        to be starting points for new particle generation.
+        this particle deletion function has the signature
+        `(rng_key, current_state) -> (dead_idx, target_update_idx, start_idx)`
+        and identifies particles to be deleted, particles to be updated, and
+        selects live particles to be starting points for the inner kernel
+        for new particle generation.
     inner_init_fn
-        A function `(initial_position: ArrayTree) -> inner_state` used to
-        initialize the state for the inner kernel. The `logdensity_fn`
-        for this inner kernel will be partially applied before this init function
-        is called within the main NS loop.
+        This kernel initialisation function has the signature
+        `(initial_position, logdensity_fn) -> inner_state`
+        and is used to initialize the state for the inner kernel.
     inner_kernel
         This kernel function has the signature
-        `(rng_key, inner_state, constrained_logdensity_fn) -> (new_inner_state, inner_info)`.
+        `(rng_key, inner_state, logdensity_fn) -> (new_inner_state, inner_info)`,
+        and is used to generate new particles.
 
     Returns
     -------
     Callable
         A kernel function for Nested Sampling:
-        `(rng_key, ns_state) -> (new_ns_state, ns_info)`.
+        `(rng_key, state) -> (new_state, ns_info)`.
     """
 
     def kernel(
@@ -226,25 +231,26 @@ def build_kernel(
         sample_keys = jax.random.split(sample_key, len(start_idx))
         particles = jax.tree.map(lambda x: x[start_idx], state.particles)
         init_fn = partial(inner_init_fn, logdensity_fn=logdensity_fn)
-        inner_states = jax.vmap(init_fn)(particles)
-        step_fn = partial(inner_kernel, logdensity_fn=logdensity_fn)
-        inner_states, inner_state_infos = jax.vmap(step_fn)(sample_keys, inner_states)
+        inner_state = jax.vmap(init_fn)(particles)
+        kernel = partial(inner_kernel, **state.inner_kernel_params)
+        step_fn = partial(kernel, logdensity_fn=logdensity_fn)
+        inner_state, inner_state_info = jax.vmap(step_fn)(sample_keys, inner_state)
 
         # Update the particles
         particles = jax.tree_util.tree_map(
             lambda p, n: p.at[target_update_idx].set(n),
             state.particles,
-            inner_states.position,
+            inner_state.position,
         )
 
         loglikelihood = state.loglikelihood.at[target_update_idx].set(
-            jax.vmap(loglikelihood_fn)(inner_states.position)
+            jax.vmap(loglikelihood_fn)(inner_state.position)
         )
         loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(
             loglikelihood_0 * jnp.ones(len(target_update_idx))
         )
         logprior = state.logprior.at[target_update_idx].set(
-            jax.vmap(logprior_fn)(inner_states.position)
+            jax.vmap(logprior_fn)(inner_state.position)
         )
         pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 
@@ -278,7 +284,7 @@ def build_kernel(
             dead_loglikelihood,
             dead_loglikelihood_birth,
             dead_logprior,
-            inner_state_infos,
+            inner_state_info,
         )
         return state, info
 
@@ -331,50 +337,3 @@ def delete_fn(
     )
     target_update_idx = dead_idx
     return dead_idx, target_update_idx, start_idx
-
-
-def bi_directional_delete_fn(
-    rng_key: PRNGKey, state: NSState, num_delete: int
-) -> tuple[Array, Array, Array]:
-    """Selects particles for deletion and initialization for full state regeneration.
-
-    This deletion strategy assumes the total number of particles (`N_total`) in the
-    `NSState` is exactly twice `num_delete` (i.e., `N_total = 2 * num_delete`).
-    It operates as follows:
-    1. The `num_delete` particles with the lowest log-likelihoods are marked as 'dead'.
-       These define `loglikelihood_0` and are reported in `NSInfo`.
-    2. All `N_total` particle slots are targeted for replacement.
-    3. The `num_delete` particles with the highest log-likelihoods (the 'live' set)
-       are each duplicated to serve as `N_total` starting points for resampling.
-
-    The `key` (PRNGKey) is unused by this deterministic selection strategy but is
-    included for interface compatibility.
-
-    Parameters
-    ----------
-    key
-        A JAX PRNG key (unused).
-    state
-        The current `NSState`. `len(state.loglikelihood)` must equal `2 * num_delete`.
-    num_delete
-        The number of lowest-likelihood particles to mark as dead.
-
-    Returns
-    -------
-    tuple[Array, Array, Array]
-        - dead_idx: Indices of the `num_delete` lowest-likelihood particles.
-        - target_update_idx: Indices of all `N_total` particles, for replacement.
-        - start_idx: `N_total` starting indices, derived from duplicating
-          the `num_delete` highest-likelihood particles.
-    """
-    loglikelihood = state.loglikelihood
-    sorted_indices = jnp.argsort(loglikelihood)
-
-    dead_idx = sorted_indices[:num_delete]
-    live_idx = sorted_indices[num_delete:]
-
-    return (
-        dead_idx,
-        jnp.arange(len(loglikelihood)),
-        jnp.concatenate([live_idx, live_idx]),
-    )

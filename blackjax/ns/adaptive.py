@@ -35,52 +35,13 @@ import jax.numpy as jnp
 __all__ = ["init", "build_kernel"]
 
 
-@forward_properties_from("base_state")
-class AdaptiveNSState(NamedTuple):
-    """State of the Nested Sampler, including the inner kernel parameters.
-
-    Attributes
-    ----------
-    particles
-        A PyTree of arrays, where each leaf array has a leading dimension
-        equal to the number of live particles. Stores the current positions of
-        the live particles.
-    loglikelihood
-        An array of log-likelihood values, one for each live particle,
-        corresponding to `state.particles`.
-    loglikelihood_birth
-        An array storing the log-likelihood threshold that each current live
-        particle was required to exceed when it was "born" (i.e., sampled).
-    logprior
-        An array of log-prior values, one for each live particle.
-    pid
-        Particle ID. An array of integers tracking the identity or lineage of
-        particles, primarily for diagnostic purposes.
-    logX
-        The logarithm of the current prior volume estimate. This decreases as
-        the algorithm progresses and likelihood contours shrink.
-    logZ_live
-        The current estimate of the evidence contribution from the live points.
-    logZ
-        The accumulated evidence estimate from the "dead" points (particles
-        that have been replaced).
-    inner_kernel_params
-        A dictionary of parameters for the inner kernel. These parameters are
-        updated at each step of the Nested Sampling algorithm to adapt the
-        sampling process to the current state of the live particles.
-    """
-    base_state: NSState
-    inner_kernel_params: Dict[str, ArrayTree]
-
-
-
 def init(
     particles: ArrayLikeTree,
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     loglikelihood_birth: Array = -jnp.nan,
     update_inner_kernel_params_fn: Callable = lambda state: {},
-) -> AdaptiveNSState:
+) -> NSState:
     """Initializes the Nested Sampler state.
 
     Parameters
@@ -96,15 +57,20 @@ def init(
     loglikelihood_birth
         The initial log-likelihood birth threshold. Defaults to -NaN, which
         implies no initial likelihood constraint beyond the prior.
+    update_inner_kernel_params_fn
+        A function that takes the `NSState` and `NSInfo` from the completed NS
+        step and returns a dictionary of parameters to be used for the kernel
+        in the *next* NS step.
 
     Returns
     -------
-    AdaptiveNSState
+    NSState
         The initial state of the Nested Sampler.
     """
-    base_state = base_init(particles, logprior_fn, loglikelihood_fn, loglikelihood_birth)
-    inner_kernel_params = update_inner_kernel_params_fn(base_state, None)
-    return AdaptiveNSState(base_state, inner_kernel_params)
+    state = base_init(particles, logprior_fn, loglikelihood_fn, loglikelihood_birth)
+    inner_kernel_params = update_inner_kernel_params_fn(state, None)
+    state.inner_kernel_params.update(inner_kernel_params)
+    return state
 
 
 def build_kernel(
@@ -134,13 +100,13 @@ def build_kernel(
         and selects live particles to be starting points for new particle
         generation.
     inner_init_fn
-        A function `(initial_position: ArrayTree) -> inner_state` used to
-        initialize the state for the inner kernel. The `logdensity_fn`
-        for this inner kernel will be partially applied before this init
-        function is called within the main NS loop.
+        This kernel initialisation function has the signature
+        `(initial_position, logdensity_fn) -> inner_state`
+        and is used to initialize the state for the inner kernel.
     inner_kernel
-        A function that, when called with inner_kernel parameters, returns a
-        kernel function `(rng_key, state, logdensity_fn) -> (new_state, info)`.
+        This kernel function has the signature
+        `(rng_key, inner_state, logdensity_fn) -> (new_inner_state, inner_info)`,
+        and is used to generate new particles.
     update_inner_kernel_params_fn
         A function that takes the `NSState` and `NSInfo` from the completed NS
         step and returns a dictionary of parameters to be used for the kernel
@@ -154,7 +120,7 @@ def build_kernel(
         the `NSInfo` for the step.
     """
 
-    def kernel(rng_key: PRNGKey, state: AdaptiveNSState) -> tuple[AdaptiveNSState, NSInfo]:
+    def kernel(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
         """Performs one step of adaptive Nested Sampling.
 
         This involves running a step of the base Nested Sampling algorithm using
@@ -166,38 +132,31 @@ def build_kernel(
         rng_key
             A JAX PRNG key.
         state
-            The current `AdaptiveNSState`.
+            The current `NSState`.
 
         Returns
         -------
-        tuple[AdaptiveNSState, NSInfo]
-            A tuple with the new `AdaptiveNSState` (including updated inner kernel
+        tuple[NSState, NSInfo]
+            A tuple with the new `NSState` (including updated inner kernel
             parameters) and the `NSInfo` for this step.
         """
-
-        _inner_kernel = partial(inner_kernel, **state.inner_kernel_params)
 
         base_kernel = base_build_kernel(
             logprior_fn,
             loglikelihood_fn,
             delete_fn,
             inner_init_fn,
-            _inner_kernel,
+            inner_kernel,
         )
 
-        base_state = state.base_state
-        new_base_state, info = base_kernel(rng_key, base_state)
+        new_state, info = base_kernel(rng_key, state)
 
         inner_kernel_params = update_inner_kernel_params_fn(
-            state=new_base_state,
-            info=info,
-            inner_kernel_params=state.inner_kernel_params
+            state=new_state,
+            info=info
         )
+        new_state.inner_kernel_params.update(inner_kernel_params)
 
-        new_state = AdaptiveNSState(
-            base_state=new_base_state,
-            inner_kernel_params=inner_kernel_params,
-        )
         return new_state, info
 
     return kernel
