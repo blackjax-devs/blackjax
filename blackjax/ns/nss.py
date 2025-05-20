@@ -22,6 +22,7 @@ sampling tasks. The parameters of the HRSS kernel, specifically the covariance
 matrix for proposing slice directions, are adaptively tuned based on the current
 set of live particles.
 """
+
 from functools import partial
 from typing import Callable, Dict
 
@@ -44,7 +45,7 @@ from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
     particles_covariance_matrix,
 )
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayTree, PRNGKey
 
 __all__ = [
     "init",
@@ -99,10 +100,11 @@ def default_generate_slice_direction_fn(
     return unravel_fn(d)
 
 
-def default_adapt_direction_params_fn(state: NSState,
-                                      info: NSInfo,
-                                      inner_kernel_params: Dict[str, ArrayTree] = {},
-                                      ) -> Dict[str, ArrayTree]:
+def default_adapt_direction_params_fn(
+    state: NSState,
+    info: NSInfo,
+    inner_kernel_params: Dict[str, ArrayTree] = {},
+) -> Dict[str, ArrayTree]:
     """Default function to adapt/tune the slice direction proposal parameters.
 
     This function computes the empirical covariance matrix from the current set of
@@ -143,7 +145,7 @@ def build_kernel(
     stepper_fn: Callable = default_stepper_fn,
     adapt_direction_params_fn: Callable = default_adapt_direction_params_fn,
     generate_slice_direction_fn: Callable = default_generate_slice_direction_fn,
-        ) -> Callable:
+) -> Callable:
     """Builds the Nested Slice Sampling kernel.
     This function creates a Nested Slice Sampling kernel that uses
     Hit-and-Run Slice Sampling (HRSS) as its inner kernel. The parameters
@@ -194,6 +196,7 @@ def build_kernel(
         update_inner_kernel_params_fn,
     )
     return kernel
+
 
 def as_top_level_api(
     logprior_fn: Callable,
@@ -252,8 +255,12 @@ def as_top_level_api(
         adapt_direction_params_fn=adapt_direction_params_fn,
         generate_slice_direction_fn=generate_slice_direction_fn,
     )
-    init_fn = partial(init, logprior_fn=logprior_fn, loglikelihood_fn=loglikelihood_fn,
-                      update_inner_kernel_params_fn=adapt_direction_params_fn)
+    init_fn = partial(
+        init,
+        logprior_fn=logprior_fn,
+        loglikelihood_fn=loglikelihood_fn,
+        update_inner_kernel_params_fn=adapt_direction_params_fn,
+    )
     step_fn = kernel
 
     return SamplingAlgorithm(init_fn, step_fn)  # type: ignore

@@ -22,15 +22,14 @@ allowing the kernel to adjust to the changing characteristics of the
 constrained prior distribution as the likelihood threshold increases.
 """
 
-from typing import Callable, Dict, NamedTuple
-from functools import partial
+from typing import Callable, Dict
+
+import jax.numpy as jnp
 
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import build_kernel as base_build_kernel
 from blackjax.ns.base import init as base_init
-from blackjax.ns.utils import forward_properties_from
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey, Array
-import jax.numpy as jnp
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["init", "build_kernel"]
 
@@ -151,9 +150,8 @@ def build_kernel(
 
         new_state, info = base_kernel(rng_key, state)
 
-        inner_kernel_params = update_inner_kernel_params_fn(
-            state=new_state,
-            info=info
+        inner_kernel_params = update_inner_kernel_params_fn(  # type: ignore
+            state=new_state, info=info
         )
         new_state.inner_kernel_params.update(inner_kernel_params)
 
