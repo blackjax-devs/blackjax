@@ -346,3 +346,50 @@ def repeat_kernel(num_repeats: int):
         return repeated_kernel
 
     return decorator
+
+
+def uniform_prior(rng_key, num_live: int, bounds: dict[str, tuple[float, float]]):
+    """Helper function to create a uniform prior for parameters.
+
+    This function generates a set of initial parameter samples uniformly
+    distributed within specified bounds. It also provides a log-prior
+    function that computes the log-prior probability for a given set of
+    parameters.
+
+    Parameters
+    ----------
+    rng_key
+        A JAX PRNG key for random number generation.
+    num_live
+        The number of live particles to sample.
+    bounds
+        A dictionary mapping parameter names to their bounds (tuples of min and max).
+        Each parameter will be sampled uniformly within these bounds.
+        Example: {'param1': (0.0, 1.0), 'param2': (-5.0, 5.0)}
+
+    Returns
+    -------
+    tuple
+        - `particles`: A PyTree of sampled parameters, where each leaf has shape `(num_live,)`.
+        - `logprior_fn`: A function that computes the log-prior probability
+          for a given set of parameters.
+    """
+
+    def logprior_fn(params):
+        logprior = 0.0
+        for p, (a, b) in bounds.items():
+            x = params[p]
+            logprior += jax.scipy.stats.uniform.logpdf(x, a, b - a)
+        return logprior
+
+    def prior_sample(rng_key):
+        init_keys = jax.random.split(rng_key, len(bounds))
+        params = {}
+        for rng_key, (p, (a, b)) in zip(init_keys, bounds.items()):
+            params[p] = jax.random.uniform(rng_key, minval=a, maxval=b)
+        return params
+
+    init_keys = jax.random.split(rng_key, num_live)
+    particles = jax.vmap(prior_sample)(init_keys)
+
+    return particles, logprior_fn
