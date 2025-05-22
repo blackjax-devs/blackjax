@@ -30,7 +30,7 @@ import jax
 from jax.flatten_util import ravel_pytree
 
 from blackjax import SamplingAlgorithm
-from blackjax.mcmc.ss import build_kernel as build_slice_kernel
+from blackjax.mcmc.ss import build_hrss_kernel
 from blackjax.mcmc.ss import (
     default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn,
 )
@@ -181,7 +181,7 @@ def build_kernel(
     @repeat_kernel(num_inner_steps)
     def inner_kernel(rng_key, state, logdensity_fn, **kwargs):
         _generate_slice_direction_fn = partial(generate_slice_direction_fn, **kwargs)
-        slice_kernel = build_slice_kernel(_generate_slice_direction_fn, stepper_fn)
+        slice_kernel = build_hrss_kernel(_generate_slice_direction_fn, stepper_fn)
         return slice_kernel(rng_key, state, logdensity_fn)
 
     delete_fn = partial(default_delete_fn, num_delete=num_delete)
