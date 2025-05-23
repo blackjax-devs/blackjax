@@ -38,13 +38,7 @@ from jax.scipy.special import logsumexp
 
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = [
-    "init",
-    "build_kernel",
-    "NSState",
-    "NSInfo",
-    "delete_fn"
-]
+__all__ = ["init", "build_kernel", "NSState", "NSInfo", "delete_fn"]
 
 
 class NSState(NamedTuple):
@@ -86,10 +80,10 @@ class NSState(NamedTuple):
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
     pid: Array  # particle ID
-    inner_kernel_params: Dict # Parameters for the inner kernel
-    logX: Array # The current log-volume estiamte
-    logZ_live: Array # The current evidence estimate
-    logZ: Array # The accumulated evidence estimate
+    inner_kernel_params: Dict  # Parameters for the inner kernel
+    logX: Array  # The current log-volume estiamte
+    logZ_live: Array  # The current evidence estimate
+    logZ: Array  # The accumulated evidence estimate
 
 
 class NSInfo(NamedTuple):
@@ -116,7 +110,7 @@ class NSInfo(NamedTuple):
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
-    inner_kernel_info: NamedTuple # Information from the inner kernel update step
+    inner_kernel_info: NamedTuple  # Information from the inner kernel update step
 
 
 def init(
@@ -153,16 +147,16 @@ def init(
     inner_kernel_params = {}
     dtype = loglikelihood.dtype
     return NSState(
-            particles,
-            loglikelihood,
-            loglikelihood_birth,
-            logprior,
-            pid,
-            inner_kernel_params,
-            logX=jnp.array(0.0, dtype=dtype),
-            logZ_live=jnp.array(-jnp.inf, dtype=dtype),
-            logZ=jnp.array(-jnp.inf, dtype=dtype),
-            )
+        particles,
+        loglikelihood,
+        loglikelihood_birth,
+        logprior,
+        pid,
+        inner_kernel_params,
+        logX=jnp.array(0.0, dtype=dtype),
+        logZ_live=jnp.array(-jnp.inf, dtype=dtype),
+        logZ=jnp.array(-jnp.inf, dtype=dtype),
+    )
 
 
 def build_kernel(
@@ -220,10 +214,7 @@ def build_kernel(
         `(rng_key, state) -> (new_state, ns_info)`.
     """
 
-    def kernel(
-        rng_key: PRNGKey,
-        state: NSState
-    ) -> tuple[NSState, NSInfo]:
+    def kernel(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
         # Delete, and grab all the dead information
         rng_key, delete_fn_key = jax.random.split(rng_key)
         dead_idx, target_update_idx, start_idx = delete_fn(delete_fn_key, state)

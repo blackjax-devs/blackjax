@@ -265,7 +265,7 @@ def horizontal_slice_proposal(
 def build_hrss_kernel(
     generate_slice_direction_fn: Callable,
     stepper_fn: Callable,
-    ) -> Callable:
+) -> Callable:
     """Build a Hit-and-Run Slice Sampling kernel.
 
     This kernel performs one step of the Hit-and-Run Slice Sampling algorithm,
@@ -280,10 +280,10 @@ def build_hrss_kernel(
         with the same structure as the position) for the "hit-and-run" part of
         the algorithm. This direction is typically normalized.
 
-    stepper_fn  
+    stepper_fn
         A function that computes a new position given an initial position, a
         direction, and a step size `t`. It should implement something analogous
-        to `x_new = x_initial + t * direction`.    
+        to `x_new = x_initial + t * direction`.
 
     Returns
     -------
@@ -299,7 +299,7 @@ def build_hrss_kernel(
         rng_key, prop_key = jax.random.split(rng_key, 2)
         d = generate_slice_direction_fn(prop_key)
         return slice_kernel(rng_key, state, logdensity_fn, d)
-    
+
     return kernel
 
 
