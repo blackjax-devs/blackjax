@@ -11,16 +11,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Nested Slice Sampling (NSS) algorithm.
+"""Gradient Guided Nested Slice Sampling (GGNSS) algorithm.
 
-This module implements the Nested Slice Sampling algorithm, which combines the
-Nested Sampling framework with an inner Hit-and-Run Slice Sampling (HRSS) kernel
-for exploring the constrained prior distribution at each likelihood level.
-
-The key idea is to leverage the efficiency of slice sampling for constrained
-sampling tasks. The parameters of the HRSS kernel, specifically the covariance
-matrix for proposing slice directions, are adaptively tuned based on the current
-set of live particles.
+This module implements the Gradient Guided Nested Slice Sampling algorithm,
+which replaces the randomised directions for hit-and-run slice sampling with a
+gradient reflection.
 """
 
 from functools import partial
@@ -55,12 +50,12 @@ __all__ = [
 
 
 def default_generate_slice_direction_fn(
-    rng_key: PRNGKey, params: ArrayTree
+    rng_key: PRNGKey, **kernel_args: ArrayTree
 ) -> ArrayTree:
     """Default function to generate a normalized slice direction for NSS.
 
     This function is designed to work with covariance parameters adapted by
-    `default_adapt_direction_params_fn`. It expects `params` to contain
+    `default_adapt_direction_params_fn`. It expects `kernel_args` to contain
     'cov', a PyTree structured identically to a single particle. Each leaf
     of this 'cov' PyTree contains rows of the full covariance matrix that
     correspond to that leaf's elements in the flattened particle vector.
@@ -80,7 +75,7 @@ def default_generate_slice_direction_fn(
     ----------
     rng_key
         A JAX PRNG key.
-    params
+    **kernel_args
         Keyword arguments, must contain:
         - `cov`: A PyTree (structured like a particle) whose leaves are rows
                  of the covariance matrix, typically output by
@@ -92,7 +87,7 @@ def default_generate_slice_direction_fn(
         A Mahalanobis-normalized direction vector (PyTree, matching the
         structure of a single particle), to be used by the slice sampler.
     """
-    cov = params["cov"]
+    cov = kernel_args["cov"]
     row = get_first_row(cov)
     _, unravel_fn = ravel_pytree(row)
     cov = particles_as_rows(cov)
@@ -103,7 +98,7 @@ def default_generate_slice_direction_fn(
 def default_adapt_direction_params_fn(
     state: NSState,
     info: NSInfo,
-    inner_kernel_params: Dict[str, ArrayTree] = None,
+    inner_kernel_params: Dict[str, ArrayTree] = {},
 ) -> Dict[str, ArrayTree]:
     """Default function to adapt/tune the slice direction proposal parameters.
 
@@ -178,9 +173,9 @@ def build_kernel(
 
     """
 
-    @repeat_kernel(num_inner_steps)
-    def inner_kernel(rng_key, state, logdensity_fn, params):
-        _generate_slice_direction_fn = partial(generate_slice_direction_fn, params=params)
+    #@repeat_kernel(num_inner_steps)
+    def inner_kernel(rng_key, state, logdensity_fn, **kwargs):
+        _generate_slice_direction_fn = partial(generate_slice_direction_fn, **kwargs)
         slice_kernel = build_hrss_kernel(_generate_slice_direction_fn, stepper_fn)
         return slice_kernel(rng_key, state, logdensity_fn)
 

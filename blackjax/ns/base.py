@@ -30,7 +30,7 @@ sampling.
 """
 
 from functools import partial
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Optional, Dict
 
 import jax
 import jax.numpy as jnp
@@ -85,11 +85,11 @@ class NSState(NamedTuple):
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
-    pid: Array = Array  # particle ID
+    pid: Array  # particle ID
+    inner_kernel_params: Dict # Parameters for the inner kernel
     logX: float = 0.0  # The current log-volume estiamte
     logZ_live: float = -jnp.inf  # The current evidence estimate
     logZ: float = -jnp.inf  # The accumulated evidence estimate
-    inner_kernel_params: dict = {}  # Parameters for the inner kernel
 
 
 class NSInfo(NamedTuple):
@@ -150,7 +150,8 @@ def init(
     loglikelihood_birth = loglikelihood_birth * jnp.ones_like(loglikelihood)
     logprior = jax.vmap(logprior_fn)(particles)
     pid = jnp.arange(len(loglikelihood))
-    return NSState(particles, loglikelihood, loglikelihood_birth, logprior, pid)
+    inner_kernel_params = {}
+    return NSState(particles, loglikelihood, loglikelihood_birth, logprior, pid, inner_kernel_params)
 
 
 def build_kernel(
@@ -232,7 +233,7 @@ def build_kernel(
         particles = jax.tree.map(lambda x: x[start_idx], state.particles)
         init_fn = partial(inner_init_fn, logdensity_fn=logdensity_fn)
         inner_state = jax.vmap(init_fn)(particles)
-        kernel = partial(inner_kernel, **state.inner_kernel_params)
+        kernel = partial(inner_kernel, params=state.inner_kernel_params)
         step_fn = partial(kernel, logdensity_fn=logdensity_fn)
         inner_state, inner_state_info = jax.vmap(step_fn)(sample_keys, inner_state)
 
@@ -275,6 +276,7 @@ def build_kernel(
             loglikelihood_birth,
             logprior,
             pid,
+            state.inner_kernel_params,
             logX=logX[-1],
             logZ=logZ,
             logZ_live=logZ_live,

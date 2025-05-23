@@ -39,7 +39,7 @@ def init(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     loglikelihood_birth: Array = -jnp.nan,
-    update_inner_kernel_params_fn: Callable = lambda state: {},
+    update_inner_kernel_params_fn: Callable = None,
 ) -> NSState:
     """Initializes the Nested Sampler state.
 
@@ -67,8 +67,8 @@ def init(
         The initial state of the Nested Sampler.
     """
     state = base_init(particles, logprior_fn, loglikelihood_fn, loglikelihood_birth)
-    inner_kernel_params = update_inner_kernel_params_fn(state, None)
-    state.inner_kernel_params.update(inner_kernel_params)
+    inner_kernel_params = update_inner_kernel_params_fn(state, None, {})
+    state = state._replace(inner_kernel_params=inner_kernel_params)
     return state
 
 
@@ -150,11 +150,10 @@ def build_kernel(
 
         new_state, info = base_kernel(rng_key, state)
 
-        inner_kernel_params = update_inner_kernel_params_fn(  # type: ignore
-            state=new_state, info=info
+        inner_kernel_params = update_inner_kernel_params_fn(
+            new_state, info, new_state.inner_kernel_params
         )
-        new_state.inner_kernel_params.update(inner_kernel_params)
-
+        new_state = new_state._replace(inner_kernel_params=inner_kernel_params)
         return new_state, info
 
     return kernel
