@@ -102,7 +102,7 @@ def init(position: ArrayTree, logdensity_fn: Callable):
 
 
 def build_kernel(
-    slice_fn: Callable,
+    stepper_fn: Callable,
 ) -> Callable:
     """Build a Slice Sampling kernel.
 
@@ -112,9 +112,10 @@ def build_kernel(
 
     Parameters
     ----------
-    slice_fn
-        A function that computes a new position given an initial position and a
-        slice parameter `t`.
+    stepper_fn
+        A function that computes a new position given an initial position,
+        direction `d` and a slice parameter `t`.
+        `(x0, d, t) -> x_new` where e.g. `x_new = x0 + t * d`.
 
     Returns
     -------
@@ -128,13 +129,14 @@ def build_kernel(
     """
 
     def kernel(
-        rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable
+        rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable, d: ArrayTree
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, vs_key, hs_key = jax.random.split(rng_key, 3)
         logdensity = vertical_slice(vs_key, logdensity_fn, state.position)
         slice_state, slice_info = horizontal_slice_proposal(
-            hs_key, state.position, slice_fn, logdensity_fn, logdensity
+            hs_key, state.position, d, stepper_fn, logdensity_fn, logdensity
         )
+
         return slice_state, slice_info
 
     return kernel
@@ -172,7 +174,8 @@ def vertical_slice(
 def horizontal_slice_proposal(
     rng_key: PRNGKey,
     x0: ArrayTree,
-    slice_fn: Callable,
+    d: ArrayTree,
+    stepper_fn: Callable,
     logdensity_fn: Callable,
     log_slice_height: Array,
 ) -> tuple[SliceState, SliceInfo]:
@@ -180,9 +183,10 @@ def horizontal_slice_proposal(
 
     This function implements the core of the Hit-and-Run Slice Sampling algorithm.
     It first expands an interval (`[l, r]`) along the slice starting
-    from `x0` until both ends are outside the slice defined by `log_slice_height`
-    (stepping-out). Then, it samples points uniformly from this interval and shrinks
-    the interval until a point is found that lies within the slice (shrinking).
+    from `x0` and proceeding along direction `d` until both ends are outside
+    the slice defined by `log_slice_height` (stepping-out). Then, it samples
+    points uniformly from this interval and shrinks the interval until a point
+    is found that lies within the slice (shrinking).
 
     Parameters
     ----------
@@ -190,7 +194,9 @@ def horizontal_slice_proposal(
         A JAX PRNG key.
     x0
         The current position (PyTree).
-    slice_fn
+    d
+        The direction (PyTree) for proposing moves.
+    stepper_fn
         A function `(x0, t) -> x_new` that computes a new point by
         moving `t` units along from `x0`.
     logdensity_fn
@@ -214,7 +220,7 @@ def horizontal_slice_proposal(
     def body_fun(carry):
         _, s, t, count = carry
         t += s
-        x = slice_fn(x0, t)
+        x = stepper_fn(x0, d, t)
         within = logdensity_fn(x) >= log_slice_height
         count += 1
         return within, s, t, count
@@ -228,13 +234,13 @@ def horizontal_slice_proposal(
     _, _, r, count_r = jax.lax.while_loop(cond_fun, body_fun, (True, +1, 1 - u, 0))
 
     # Shrink
-    def body_fun_slice(carry):
+    def body_fun(carry):
         _, l, r, _, _, rng_key, count = carry
         count += 1
 
         rng_key, subkey = jax.random.split(rng_key)
         u = jax.random.uniform(subkey, minval=l, maxval=r)
-        x = slice_fn(x0, u)
+        x = stepper_fn(x0, d, u)
 
         logdensity_x = logdensity_fn(x)
         within = logdensity_x >= log_slice_height
@@ -244,12 +250,12 @@ def horizontal_slice_proposal(
 
         return within, l, r, x, logdensity_x, rng_key, count
 
-    def cond_fun_slice(carry):
+    def cond_fun(carry):
         within = carry[0]
         return ~within
 
     carry = (False, l, r, x0, -jnp.inf, rng_key, 0)
-    carry = jax.lax.while_loop(cond_fun_slice, body_fun_slice, carry)
+    carry = jax.lax.while_loop(cond_fun, body_fun, carry)
     _, l, r, x, logdensity_x, rng_key, count = carry
     slice_state = SliceState(x, logdensity_x)
     slice_info = SliceInfo(count_l, count_r, count, (count_l + count_r + count))
@@ -285,16 +291,14 @@ def build_hrss_kernel(
         A kernel function that takes a PRNG key, the current `SliceState`, and
         the log-density function, and returns a new `SliceState` and `SliceInfo`.
     """
+    slice_kernel = build_kernel(stepper_fn)
 
     def kernel(
         rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, prop_key = jax.random.split(rng_key, 2)
         d = generate_slice_direction_fn(prop_key)
-        def slice_fn(position, t):
-            return stepper_fn(position, d, t)
-        kernel = build_kernel(slice_fn)
-        return kernel(rng_key, state, logdensity_fn)
+        return slice_kernel(rng_key, state, logdensity_fn, d)
     
     return kernel
 

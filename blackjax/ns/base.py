@@ -87,9 +87,9 @@ class NSState(NamedTuple):
     logprior: Array  # The log-prior density of the particles
     pid: Array  # particle ID
     inner_kernel_params: Dict # Parameters for the inner kernel
-    logX: float = 0.0  # The current log-volume estiamte
-    logZ_live: float = -jnp.inf  # The current evidence estimate
-    logZ: float = -jnp.inf  # The accumulated evidence estimate
+    logX: Array # The current log-volume estiamte
+    logZ_live: Array # The current evidence estimate
+    logZ: Array # The accumulated evidence estimate
 
 
 class NSInfo(NamedTuple):
@@ -151,7 +151,18 @@ def init(
     logprior = jax.vmap(logprior_fn)(particles)
     pid = jnp.arange(len(loglikelihood))
     inner_kernel_params = {}
-    return NSState(particles, loglikelihood, loglikelihood_birth, logprior, pid, inner_kernel_params)
+    dtype = loglikelihood.dtype
+    return NSState(
+            particles,
+            loglikelihood,
+            loglikelihood_birth,
+            logprior,
+            pid,
+            inner_kernel_params,
+            logX=jnp.array(0.0, dtype=dtype),
+            logZ_live=jnp.array(-jnp.inf, dtype=dtype),
+            logZ=jnp.array(-jnp.inf, dtype=dtype),
+            )
 
 
 def build_kernel(
@@ -209,6 +220,10 @@ def build_kernel(
         `(rng_key, state) -> (new_state, ns_info)`.
     """
 
+    def constrained_logdensity_fn(x, loglikelihood_0):
+        constraint = loglikelihood_fn(x) > loglikelihood_0
+        return jnp.where(constraint, logprior_fn(x), -jnp.inf)
+
     def kernel(
         rng_key: PRNGKey,
         state: NSState
@@ -224,10 +239,7 @@ def build_kernel(
         loglikelihood_0 = dead_loglikelihood.max()
 
         # Resample the live particles
-        def logdensity_fn(x):
-            constraint = loglikelihood_fn(x) > loglikelihood_0
-            return jnp.where(constraint, logprior_fn(x), -jnp.inf)
-
+        logdensity_fn = partial(constrained_logdensity_fn, loglikelihood_0=loglikelihood_0)
         rng_key, sample_key = jax.random.split(rng_key)
         sample_keys = jax.random.split(sample_key, len(start_idx))
         particles = jax.tree.map(lambda x: x[start_idx], state.particles)
@@ -277,9 +289,9 @@ def build_kernel(
             logprior,
             pid,
             state.inner_kernel_params,
-            logX=logX[-1],
-            logZ=logZ,
-            logZ_live=logZ_live,
+            logX[-1],
+            logZ_live,
+            logZ,
         )
         info = NSInfo(
             dead_particles,

@@ -119,6 +119,14 @@ def build_kernel(
         the `NSInfo` for the step.
     """
 
+    base_kernel = base_build_kernel(
+        logprior_fn,
+        loglikelihood_fn,
+        delete_fn,
+        inner_init_fn,
+        inner_kernel,
+    )
+
     def kernel(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
         """Performs one step of adaptive Nested Sampling.
 
@@ -139,15 +147,6 @@ def build_kernel(
             A tuple with the new `NSState` (including updated inner kernel
             parameters) and the `NSInfo` for this step.
         """
-
-        base_kernel = base_build_kernel(
-            logprior_fn,
-            loglikelihood_fn,
-            delete_fn,
-            inner_init_fn,
-            inner_kernel,
-        )
-
         new_state, info = base_kernel(rng_key, state)
 
         inner_kernel_params = update_inner_kernel_params_fn(
