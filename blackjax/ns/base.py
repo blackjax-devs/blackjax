@@ -220,10 +220,6 @@ def build_kernel(
         `(rng_key, state) -> (new_state, ns_info)`.
     """
 
-    def constrained_logdensity_fn(x, loglikelihood_0):
-        constraint = loglikelihood_fn(x) > loglikelihood_0
-        return jnp.where(constraint, logprior_fn(x), -jnp.inf)
-
     def kernel(
         rng_key: PRNGKey,
         state: NSState
@@ -239,7 +235,10 @@ def build_kernel(
         loglikelihood_0 = dead_loglikelihood.max()
 
         # Resample the live particles
-        logdensity_fn = partial(constrained_logdensity_fn, loglikelihood_0=loglikelihood_0)
+        def logdensity_fn(x):
+            constraint = loglikelihood_fn(x) > loglikelihood_0
+            return jnp.where(constraint, logprior_fn(x), -jnp.inf)
+
         rng_key, sample_key = jax.random.split(rng_key)
         sample_keys = jax.random.split(sample_key, len(start_idx))
         particles = jax.tree.map(lambda x: x[start_idx], state.particles)
