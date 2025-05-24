@@ -379,7 +379,7 @@ def hrss_as_top_level_api(
         the configured Hit-and-Run Slice Sampler.
     """
     generate_slice_direction_fn = partial(default_generate_slice_direction_fn, cov=cov)
-    kernel = build_kernel(generate_slice_direction_fn, default_stepper_fn)
+    kernel = build_hrss_kernel(generate_slice_direction_fn, default_stepper_fn)
     init_fn = partial(init, logdensity_fn=logdensity_fn)
     step_fn = partial(kernel, logdensity_fn=logdensity_fn)
     return SamplingAlgorithm(init_fn, step_fn)

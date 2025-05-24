@@ -51,26 +51,22 @@ class NSState(NamedTuple):
         equal to the number of live particles. Stores the current positions of
         the live particles.
     loglikelihood
-        An array of log-likelihood values, one for each live particle,
-        corresponding to `state.particles`.
+        An array of log-likelihood values, one for each live particle.
     loglikelihood_birth
         An array storing the log-likelihood threshold that each current live
         particle was required to exceed when it was "born" (i.e., sampled).
-        This is used for variance reduction techniques in evidence estimation
-        (see `blackjax.ns.utils.compute_nlive`).
+        This is used for reconstructing the nested sampling path.
     logprior
         An array of log-prior values, one for each live particle.
     pid
         Particle ID. An array of integers tracking the identity or lineage of
         particles, primarily for diagnostic purposes.
     logX
-        The logarithm of the current prior volume estimate. This decreases as
-        the algorithm progresses and likelihood contours shrink.
-    logZ_live
-        The current estimate of the evidence contribution from the live points.
+        The log of the current prior volume estimate.
     logZ
-        The accumulated evidence estimate from the "dead" points (particles
-        that have been replaced).
+        The accumulated log evidence estimate from the "dead" points .
+    logZ_live
+        The current estimate of the log evidence contribution from the live points.
     inner_kernel_params
         A dictionary of parameters for the inner kernel.
     """
@@ -80,10 +76,10 @@ class NSState(NamedTuple):
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
     pid: Array  # particle ID
-    inner_kernel_params: Dict  # Parameters for the inner kernel
     logX: Array  # The current log-volume estiamte
-    logZ_live: Array  # The current evidence estimate
     logZ: Array  # The accumulated evidence estimate
+    logZ_live: Array  # The current evidence estimate
+    inner_kernel_params: Dict  # Parameters for the inner kernel
 
 
 class NSInfo(NamedTuple):
@@ -118,6 +114,8 @@ def init(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     loglikelihood_birth: Array = -jnp.nan,
+    logX: Optional[float] = 0.0,
+    logZ: Optional[float] = -jnp.inf,
 ) -> NSState:
     """Initializes the Nested Sampler state.
 
@@ -144,18 +142,21 @@ def init(
     loglikelihood_birth = loglikelihood_birth * jnp.ones_like(loglikelihood)
     logprior = jax.vmap(logprior_fn)(particles)
     pid = jnp.arange(len(loglikelihood))
-    inner_kernel_params = {}
     dtype = loglikelihood.dtype
+    logX = jnp.array(logX, dtype=dtype)
+    logZ = jnp.array(logZ, dtype=dtype)
+    logZ_live = logmeanexp(loglikelihood) + logX
+    inner_kernel_params = {}
     return NSState(
         particles,
         loglikelihood,
         loglikelihood_birth,
         logprior,
         pid,
+        logX,
+        logZ,
+        logZ_live,
         inner_kernel_params,
-        logX=jnp.array(0.0, dtype=dtype),
-        logZ_live=jnp.array(-jnp.inf, dtype=dtype),
-        logZ=jnp.array(-jnp.inf, dtype=dtype),
     )
 
 
@@ -214,22 +215,24 @@ def build_kernel(
         `(rng_key, state) -> (new_state, ns_info)`.
     """
 
+    def constrained_logdensity_fn(x, loglikelihood_0):
+        constraint = loglikelihood_fn(x) > loglikelihood_0
+        return jnp.where(constraint, logprior_fn(x), -jnp.inf)
+
     def kernel(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
         # Delete, and grab all the dead information
         rng_key, delete_fn_key = jax.random.split(rng_key)
         dead_idx, target_update_idx, start_idx = delete_fn(delete_fn_key, state)
-
         dead_particles = jax.tree.map(lambda x: x[dead_idx], state.particles)
         dead_loglikelihood = state.loglikelihood[dead_idx]
         dead_loglikelihood_birth = state.loglikelihood_birth[dead_idx]
         dead_logprior = state.logprior[dead_idx]
-        loglikelihood_0 = dead_loglikelihood.max()
 
         # Resample the live particles
-        def logdensity_fn(x):
-            constraint = loglikelihood_fn(x) > loglikelihood_0
-            return jnp.where(constraint, logprior_fn(x), -jnp.inf)
-
+        loglikelihood_0 = dead_loglikelihood.max()
+        logdensity_fn = partial(
+            constrained_logdensity_fn, loglikelihood_0=loglikelihood_0
+        )
         rng_key, sample_key = jax.random.split(rng_key)
         sample_keys = jax.random.split(sample_key, len(start_idx))
         particles = jax.tree.map(lambda x: x[start_idx], state.particles)
@@ -245,7 +248,6 @@ def build_kernel(
             state.particles,
             inner_state.position,
         )
-
         loglikelihood = state.loglikelihood.at[target_update_idx].set(
             jax.vmap(loglikelihood_fn)(inner_state.position)
         )
@@ -257,31 +259,22 @@ def build_kernel(
         )
         pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 
-        # Update the logX and logZ
-        num_particles = len(state.loglikelihood)
-        num_deleted = len(dead_idx)
-        num_lives = jnp.arange(num_particles, num_particles - num_deleted, -1)
-        delta_log_X = -1 / num_lives
-        logX = state.logX + jnp.cumsum(delta_log_X)
-        log_delta_X = logX + jnp.log(1 - jnp.exp(delta_log_X))
-        log_delta_Z = dead_loglikelihood + log_delta_X
+        # Update the run-time information
+        logX, logZ, logZ_live = update_ns_run_time_info(
+            state.logX, state.logZ, loglikelihood, dead_loglikelihood
+        )
 
-        delta_logZ = logsumexp(log_delta_Z)
-        logZ = jnp.logaddexp(state.logZ, delta_logZ)
-        logmeanlikelihood = logsumexp(loglikelihood) - jnp.log(num_particles)
-        logZ_live = logmeanlikelihood + logX[-1]
-
-        # Update the state
+        # Return updated state and info
         state = NSState(
             particles,
             loglikelihood,
             loglikelihood_birth,
             logprior,
             pid,
-            state.inner_kernel_params,
-            logX[-1],
-            logZ_live,
+            logX,
             logZ,
+            logZ_live,
+            state.inner_kernel_params,
         )
         info = NSInfo(
             dead_particles,
@@ -341,3 +334,24 @@ def delete_fn(
     )
     target_update_idx = dead_idx
     return dead_idx, target_update_idx, start_idx
+
+
+def update_ns_run_time_info(
+    logX: Array, logZ: Array, loglikelihood: Array, dead_loglikelihood: Array
+):
+    num_particles = len(loglikelihood)
+    num_deleted = len(dead_loglikelihood)
+    num_lives = jnp.arange(num_particles, num_particles - num_deleted, -1)
+    delta_log_X = -1 / num_lives
+    logX = logX + jnp.cumsum(delta_log_X)
+    log_delta_X = logX + jnp.log(1 - jnp.exp(delta_log_X))
+    log_delta_Z = dead_loglikelihood + log_delta_X
+
+    delta_logZ = logsumexp(log_delta_Z)
+    logZ = jnp.logaddexp(logZ, delta_logZ)
+    logZ_live = logmeanexp(loglikelihood) + logX[-1]
+    return logX[-1], logZ, logZ_live
+
+
+def logmeanexp(x: Array):
+    return logsumexp(x) - jnp.log(len(x))
