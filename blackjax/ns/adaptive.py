@@ -104,7 +104,7 @@ def build_kernel(
         and is used to initialize the state for the inner kernel.
     inner_kernel
         This kernel function has the signature
-        `(rng_key, inner_state, logdensity_fn) -> (new_inner_state, inner_info)`,
+        `(rng_key, inner_state, logprior_fn, loglikelihood_fn, loglikelihood_0, inner_kernela_params) -> (new_inner_state, inner_info)`,
         and is used to generate new particles.
     update_inner_kernel_params_fn
         A function that takes the `NSState` and `NSInfo` from the completed NS

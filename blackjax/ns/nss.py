@@ -24,9 +24,10 @@ set of live particles.
 """
 
 from functools import partial
-from typing import Callable, Dict
+from typing import Callable, Dict, NamedTuple
 
 import jax
+import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax import SamplingAlgorithm
@@ -34,7 +35,7 @@ from blackjax.mcmc.ss import build_kernel as build_slice_kernel
 from blackjax.mcmc.ss import (
     default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn,
 )
-from blackjax.mcmc.ss import default_stepper_fn
+from blackjax.mcmc.ss import default_stepper_fn, SliceState
 from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
 from blackjax.ns.adaptive import init
@@ -45,13 +46,45 @@ from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
     particles_covariance_matrix,
 )
-from blackjax.types import ArrayTree, PRNGKey
+from blackjax.types import ArrayTree, PRNGKey, ArrayLikeTree, Array
+
 
 __all__ = [
     "init",
     "as_top_level_api",
     "build_kernel",
 ]
+
+
+class NSSInnerState(NamedTuple):
+    """State of the inner kernel used in Nested Sampling.
+
+    Attributes
+    ----------
+    position
+        A PyTree of arrays representing the current positions of the particles
+        in the inner kernel.
+    logprior
+        An array of log-prior values for the particles in the inner kernel.
+    loglikelihood
+        An array of log-likelihood values for the particles in the inner kernel.
+    """
+
+    position: ArrayLikeTree  # Current positions of particles in the inner kernel
+    logprior: Array  # Log-prior values for particles in the inner kernel
+    loglikelihood: Array  # Log-likelihood values for particles in the inner kernel
+
+
+
+class NSSStepInfo(NamedTuple):
+    """Information about a single step in the Nested Slice Sampling algorithm."""
+    position: ArrayTree
+    logprior: ArrayTree
+    loglikelihood: ArrayTree
+    l_steps: int
+    r_steps: int
+    s_steps: int
+
 
 
 def default_generate_slice_direction_fn(
@@ -181,13 +214,43 @@ def build_kernel(
     slice_kernel = build_slice_kernel(stepper_fn)
 
     @repeat_kernel(num_inner_steps)
-    def inner_kernel(rng_key, state, logdensity_fn, params):
+    def inner_kernel(rng_key, state, logprior_fn, loglikelihood_fn, loglikelihood_0, params):
+        # Get the relevant information from the NSState
+        slice_state = SliceState(position=state.position, logdensity=state.logprior)
+
+        # Do slice sampling
         rng_key, prop_key = jax.random.split(rng_key, 2)
         d = generate_slice_direction_fn(prop_key, params)
-        return slice_kernel(rng_key, state, logdensity_fn, d)
+        logdensity_fn = logprior_fn
+        constraint_fn = lambda x: jnp.array([loglikelihood_fn(x)])
+        constraint = jnp.array([loglikelihood_0])
+        strict = jnp.array([True])
+        slice_state, slice_info = slice_kernel(
+            rng_key, slice_state, logdensity_fn, d, constraint_fn, constraint, strict
+        )
+
+        # Pass the relevant information back to NSState and NSSStepInfo
+        new_state = state._replace(
+            position=slice_state.position,
+            logprior=slice_state.logdensity,
+            loglikelihood=slice_info.constraint[0],
+        )
+        info = NSSStepInfo(
+            position=new_state.position,
+            logprior=new_state.logprior,
+            loglikelihood=new_state.loglikelihood,
+            l_steps=slice_info.l_steps,
+            r_steps=slice_info.r_steps,
+            s_steps=slice_info.s_steps,
+        )
+        return new_state, info
 
     delete_fn = partial(default_delete_fn, num_delete=num_delete)
-    inner_init_fn = slice_init
+
+    def inner_init_fn(position, logprior, loglikelihood):
+        """Initializes the inner kernel state for NSS."""
+        return NSSInnerState(position=position, logprior=logprior, loglikelihood=loglikelihood)
+
     update_inner_kernel_params_fn = adapt_direction_params_fn
     kernel = build_adaptive_kernel(
         logprior_fn,

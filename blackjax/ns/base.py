@@ -201,7 +201,7 @@ def build_kernel(
         for new particle generation.
     inner_init_fn
         This kernel initialisation function has the signature
-        `(initial_position, logdensity_fn) -> inner_state`
+        `(initial_position, logprior, loglikelihood) -> inner_state`
         and is used to initialize the state for the inner kernel.
     inner_kernel
         This kernel function has the signature
@@ -215,10 +215,6 @@ def build_kernel(
         `(rng_key, state) -> (new_state, ns_info)`.
     """
 
-    def constrained_logdensity_fn(x, loglikelihood_0):
-        constraint = loglikelihood_fn(x) > loglikelihood_0
-        return jnp.where(constraint, logprior_fn(x), -jnp.inf)
-
     def kernel(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
         # Delete, and grab all the dead information
         rng_key, delete_fn_key = jax.random.split(rng_key)
@@ -230,16 +226,19 @@ def build_kernel(
 
         # Resample the live particles
         loglikelihood_0 = dead_loglikelihood.max()
-        logdensity_fn = partial(
-            constrained_logdensity_fn, loglikelihood_0=loglikelihood_0
-        )
         rng_key, sample_key = jax.random.split(rng_key)
         sample_keys = jax.random.split(sample_key, len(start_idx))
         particles = jax.tree.map(lambda x: x[start_idx], state.particles)
-        init_fn = partial(inner_init_fn, logdensity_fn=logdensity_fn)
-        inner_state = jax.vmap(init_fn)(particles)
-        kernel = partial(inner_kernel, params=state.inner_kernel_params)
-        step_fn = partial(kernel, logdensity_fn=logdensity_fn)
+        logprior = state.logprior[start_idx]
+        loglikelihood = state.loglikelihood[start_idx]
+        inner_state = jax.vmap(inner_init_fn)(particles, logprior, loglikelihood)
+        step_fn = partial(
+                inner_kernel,
+                logprior_fn=logprior_fn,
+                loglikelihood_fn=loglikelihood_fn,
+                loglikelihood_0=loglikelihood_0,
+                params=state.inner_kernel_params,
+                )
         inner_state, inner_state_info = jax.vmap(step_fn)(sample_keys, inner_state)
 
         # Update the particles
@@ -249,13 +248,13 @@ def build_kernel(
             inner_state.position,
         )
         loglikelihood = state.loglikelihood.at[target_update_idx].set(
-            jax.vmap(loglikelihood_fn)(inner_state.position)
+            inner_state.loglikelihood
         )
         loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(
             loglikelihood_0 * jnp.ones(len(target_update_idx))
         )
         logprior = state.logprior.at[target_update_idx].set(
-            jax.vmap(logprior_fn)(inner_state.position)
+            inner_state.logprior
         )
         pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 

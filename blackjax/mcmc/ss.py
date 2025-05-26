@@ -77,10 +77,11 @@ class SliceInfo(NamedTuple):
         The total number of log-density evaluations performed during the step.
     """
 
-    l_steps: Array
-    r_steps: Array
-    s_steps: Array
-    evals: Array
+    constraint: Array
+    l_steps: int
+    r_steps: int
+    s_steps: int
+    evals: int
 
 
 def init(position: ArrayTree, logdensity_fn: Callable):
@@ -129,13 +130,12 @@ def build_kernel(
     """
 
     def kernel(
-        rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable, d: ArrayTree
+            rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable, d: ArrayTree, constraint_fn: Callable, constraint: Array, strict: Array
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, vs_key, hs_key = jax.random.split(rng_key, 3)
         logdensity = vertical_slice(vs_key, logdensity_fn, state.position)
         slice_state, slice_info = horizontal_slice_proposal(
-            hs_key, state.position, d, stepper_fn, logdensity_fn, logdensity
-        )
+            hs_key, state.position, d, stepper_fn, logdensity_fn, logdensity, constraint_fn, constraint, strict)
 
         return slice_state, slice_info
 
@@ -178,6 +178,9 @@ def horizontal_slice_proposal(
     stepper_fn: Callable,
     logdensity_fn: Callable,
     log_slice_height: Array,
+    constraint_fn: Callable,
+    constraint: Array,
+    strict: Array
 ) -> tuple[SliceState, SliceInfo]:
     """Propose a new sample using the stepping-out and shrinking procedures.
 
@@ -218,47 +221,59 @@ def horizontal_slice_proposal(
     u = jax.random.uniform(subkey)
 
     def body_fun(carry):
-        _, s, t, count = carry
+        _, s, t, n = carry
         t += s
         x = stepper_fn(x0, d, t)
-        within = logdensity_fn(x) >= log_slice_height
-        count += 1
-        return within, s, t, count
+        logdensity_x = logdensity_fn(x)
+        constraint_x = constraint_fn(x)
+        constraints = jnp.where(strict,
+                                constraint_x > constraint,
+                                constraint_x >= constraint)
+        constraints = jnp.append(constraints, logdensity_x >= log_slice_height)
+        within = jnp.all(constraints)
+        n += 1
+        return within, s, t, n
 
     def cond_fun(carry):
         within = carry[0]
         return within
 
     # Expand
-    _, _, l, count_l = jax.lax.while_loop(cond_fun, body_fun, (True, -1, -u, 0))
-    _, _, r, count_r = jax.lax.while_loop(cond_fun, body_fun, (True, +1, 1 - u, 0))
+    _, _, l, l_steps = jax.lax.while_loop(cond_fun, body_fun, (True, -1, -u, 0))
+    _, _, r, r_steps = jax.lax.while_loop(cond_fun, body_fun, (True, +1, 1 - u, 0))
 
     # Shrink
     def body_fun(carry):
-        _, l, r, _, _, rng_key, count = carry
-        count += 1
+        _, l, r, _, _, _, rng_key, s_steps = carry
+        s_steps += 1
 
         rng_key, subkey = jax.random.split(rng_key)
         u = jax.random.uniform(subkey, minval=l, maxval=r)
         x = stepper_fn(x0, d, u)
 
         logdensity_x = logdensity_fn(x)
-        within = logdensity_x >= log_slice_height
+        constraint_x = constraint_fn(x)
+        constraints = jnp.where(strict,
+                                constraint_x > constraint,
+                                constraint_x >= constraint)
+        constraints = jnp.append(constraints, logdensity_x >= log_slice_height)
+        within = jnp.all(constraints)
 
         l = jnp.where(u < 0, u, l)
         r = jnp.where(u > 0, u, r)
 
-        return within, l, r, x, logdensity_x, rng_key, count
+        return within, l, r, x, logdensity_x, constraint_x, rng_key, s_steps
 
     def cond_fun(carry):
         within = carry[0]
         return ~within
 
-    carry = (False, l, r, x0, -jnp.inf, rng_key, 0)
+    carry = (False, l, r, x0, -jnp.inf, constraint, rng_key, 0)
     carry = jax.lax.while_loop(cond_fun, body_fun, carry)
-    _, l, r, x, logdensity_x, rng_key, count = carry
+    _, l, r, x, logdensity_x, constraint_x, rng_key, s_steps = carry
     slice_state = SliceState(x, logdensity_x)
-    slice_info = SliceInfo(count_l, count_r, count, (count_l + count_r + count))
+    evals = l_steps + r_steps + s_steps
+    slice_info = SliceInfo(constraint_x, l_steps, r_steps, s_steps, evals)
     return slice_state, slice_info
 
 
