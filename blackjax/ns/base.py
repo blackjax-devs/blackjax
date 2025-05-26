@@ -76,7 +76,7 @@ class NSState(NamedTuple):
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
     pid: Array  # particle ID
-    logX: Array  # The current log-volume estiamte
+    logX: Array  # The current log-volume estimate
     logZ: Array  # The accumulated evidence estimate
     logZ_live: Array  # The current evidence estimate
     inner_kernel_params: Dict  # Parameters for the inner kernel
@@ -114,8 +114,8 @@ def init(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     loglikelihood_birth: Array = -jnp.nan,
-    logX: Optional[float] = 0.0,
-    logZ: Optional[float] = -jnp.inf,
+    logX: Optional[Array] = 0.0,
+    logZ: Optional[Array] = -jnp.inf,
 ) -> NSState:
     """Initializes the Nested Sampler state.
 
@@ -125,13 +125,17 @@ def init(
         An initial set of particles (PyTree of arrays) drawn from the prior
         distribution. The leading dimension of each leaf array must be equal to
         the number of particles.
-    loglikelihood_fn
-        A function that computes the log-likelihood of a single particle.
     logprior_fn
         A function that computes the log-prior of a single particle.
+    loglikelihood_fn
+        A function that computes the log-likelihood of a single particle.
     loglikelihood_birth
         The initial log-likelihood birth threshold. Defaults to -NaN, which
         implies no initial likelihood constraint beyond the prior.
+    logX
+        The initial log prior volume estimate. Defaults to 0.0.
+    logZ
+        The initial log evidence estimate. Defaults to -inf.
 
     Returns
     -------
@@ -205,7 +209,7 @@ def build_kernel(
         and is used to initialize the state for the inner kernel.
     inner_kernel
         This kernel function has the signature
-        `(rng_key, inner_state, logdensity_fn) -> (new_inner_state, inner_info)`,
+        `(rng_key, inner_state, logprior_fn, loglikelihood_fn, loglikelihood_0, params) -> (new_inner_state, inner_info)`,
         and is used to generate new particles.
 
     Returns
@@ -257,7 +261,7 @@ def build_kernel(
         pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 
         # Update the run-time information
-        logX, logZ, logZ_live = update_ns_run_time_info(
+        logX, logZ, logZ_live = update_ns_runtime_info(
             state.logX, state.logZ, loglikelihood, dead_loglikelihood
         )
 
@@ -333,15 +337,15 @@ def delete_fn(
     return dead_idx, target_update_idx, start_idx
 
 
-def update_ns_run_time_info(
+def update_ns_runtime_info(
     logX: Array, logZ: Array, loglikelihood: Array, dead_loglikelihood: Array
 ):
     num_particles = len(loglikelihood)
     num_deleted = len(dead_loglikelihood)
-    num_lives = jnp.arange(num_particles, num_particles - num_deleted, -1)
-    delta_log_X = -1 / num_lives
-    logX = logX + jnp.cumsum(delta_log_X)
-    log_delta_X = logX + jnp.log(1 - jnp.exp(delta_log_X))
+    num_live = jnp.arange(num_particles, num_particles - num_deleted, -1)
+    delta_logX = -1 / num_live
+    logX = logX + jnp.cumsum(delta_logX)
+    log_delta_X = logX + jnp.log(1 - jnp.exp(delta_logX))
     log_delta_Z = dead_loglikelihood + log_delta_X
 
     delta_logZ = logsumexp(log_delta_Z)

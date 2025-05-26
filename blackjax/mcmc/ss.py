@@ -64,6 +64,8 @@ class SliceInfo(NamedTuple):
     This information can be used for diagnostics and monitoring the sampler's
     performance.
 
+    constraint: Array
+        The constraint values at the final accepted position.
     l_steps: Array
         The number of steps taken to expand the interval to the left during the
         "stepping-out" phase.
@@ -84,7 +86,7 @@ class SliceInfo(NamedTuple):
     evals: int
 
 
-def init(position: ArrayTree, logdensity_fn: Callable):
+def init(position: ArrayTree, logdensity_fn: Callable) -> SliceState:
     """Initialize the Slice Sampler state.
 
     Parameters
@@ -121,8 +123,9 @@ def build_kernel(
     Returns
     -------
     Callable
-        A kernel function that takes a PRNG key, the current `SliceState`, and
-        the log-density function, and returns a new `SliceState` and `SliceInfo`.
+        A kernel function that takes a PRNG key, the current `SliceState`,
+        the log-density function, direction `d`, constraint function, constraint
+        values, and strict flags, and returns a new `SliceState` and `SliceInfo`.
 
     References
     ----------
@@ -140,7 +143,7 @@ def build_kernel(
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, vs_key, hs_key = jax.random.split(rng_key, 3)
         logdensity = vertical_slice(vs_key, logdensity_fn, state.position)
-        slice_state, slice_info = horizontal_slice_proposal(
+        slice_state, slice_info = horizontal_slice(
             hs_key,
             state.position,
             d,
@@ -186,7 +189,7 @@ def vertical_slice(
     return logdensity + jnp.log(jax.random.uniform(rng_key))
 
 
-def horizontal_slice_proposal(
+def horizontal_slice(
     rng_key: PRNGKey,
     x0: ArrayTree,
     d: ArrayTree,
@@ -215,14 +218,29 @@ def horizontal_slice_proposal(
     d
         The direction (PyTree) for proposing moves.
     stepper_fn
-        A function `(x0, t) -> x_new` that computes a new point by
-        moving `t` units along from `x0`.
+        A function `(x0, d, t) -> x_new` that computes a new point by
+        moving `t` units along direction `d` from `x0`.
     logdensity_fn
         The log-density function of the target distribution.
     log_slice_height
         The log-height defining the current slice, typically obtained from
         `vertical_slice`. A new sample `x_new` is accepted if
         `logdensity_fn(x_new) >= log_slice_height`.
+    constraint_fn
+        A function that evaluates additional constraints on the position beyond
+        the target distribution. Takes a position (PyTree) and returns an array
+        of constraint values. These values are compared against `constraint`
+        thresholds to determine if a position is acceptable. For example, in
+        nested sampling, this could evaluate the log-likelihood to ensure it
+        exceeds a minimum threshold.
+    constraint
+        An array of constraint threshold values that must be satisfied.
+        Each constraint value from `constraint_fn(x)` is compared against the
+        corresponding threshold in this array.
+    strict
+        An array of boolean flags indicating whether each constraint should be
+        strict (constraint_fn(x) > constraint) or non-strict 
+        (constraint_fn(x) >= constraint).
 
     Returns
     -------
@@ -328,7 +346,10 @@ def build_hrss_kernel(
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, prop_key = jax.random.split(rng_key, 2)
         d = generate_slice_direction_fn(prop_key)
-        return slice_kernel(rng_key, state, logdensity_fn, d)
+        constraint_fn = lambda x: jnp.array([])
+        constraint = jnp.array([])
+        strict = jnp.array([])
+        return slice_kernel(rng_key, state, logdensity_fn, d, constraint_fn, constraint, strict)
 
     return kernel
 
@@ -355,7 +376,7 @@ def default_stepper_fn(x, d, t):
     return jax.tree.map(lambda x, d: x + t * d, x, d)
 
 
-def default_generate_slice_direction_fn(rng_key: PRNGKey, cov: Array) -> Array:
+def sample_direction_from_covariance(rng_key: PRNGKey, cov: Array) -> Array:
     """Generates a random direction vector, normalized, from a multivariate Gaussian.
 
     This function samples a direction `d` from a zero-mean multivariate Gaussian
@@ -408,7 +429,7 @@ def hrss_as_top_level_api(
         A `SamplingAlgorithm` tuple containing `init` and `step` functions for
         the configured Hit-and-Run Slice Sampler.
     """
-    generate_slice_direction_fn = partial(default_generate_slice_direction_fn, cov=cov)
+    generate_slice_direction_fn = partial(sample_direction_from_covariance, cov=cov)
     kernel = build_hrss_kernel(generate_slice_direction_fn, default_stepper_fn)
     init_fn = partial(init, logdensity_fn=logdensity_fn)
     step_fn = partial(kernel, logdensity_fn=logdensity_fn)

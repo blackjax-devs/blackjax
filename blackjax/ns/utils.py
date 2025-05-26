@@ -19,6 +19,7 @@ and post-processing of results.
 """
 
 import functools
+from typing import Callable, Dict, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -348,7 +349,9 @@ def repeat_kernel(num_repeats: int):
     return decorator
 
 
-def uniform_prior(rng_key, num_live: int, bounds: dict[str, tuple[float, float]]):
+def uniform_prior(
+    rng_key: PRNGKey, num_live: int, bounds: Dict[str, Tuple[float, float]]
+) -> Tuple[ArrayTree, Callable]:
     """Helper function to create a uniform prior for parameters.
 
     This function generates a set of initial parameter samples uniformly
