@@ -130,12 +130,27 @@ def build_kernel(
     """
 
     def kernel(
-            rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable, d: ArrayTree, constraint_fn: Callable, constraint: Array, strict: Array
+        rng_key: PRNGKey,
+        state: SliceState,
+        logdensity_fn: Callable,
+        d: ArrayTree,
+        constraint_fn: Callable,
+        constraint: Array,
+        strict: Array,
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, vs_key, hs_key = jax.random.split(rng_key, 3)
         logdensity = vertical_slice(vs_key, logdensity_fn, state.position)
         slice_state, slice_info = horizontal_slice_proposal(
-            hs_key, state.position, d, stepper_fn, logdensity_fn, logdensity, constraint_fn, constraint, strict)
+            hs_key,
+            state.position,
+            d,
+            stepper_fn,
+            logdensity_fn,
+            logdensity,
+            constraint_fn,
+            constraint,
+            strict,
+        )
 
         return slice_state, slice_info
 
@@ -180,7 +195,7 @@ def horizontal_slice_proposal(
     log_slice_height: Array,
     constraint_fn: Callable,
     constraint: Array,
-    strict: Array
+    strict: Array,
 ) -> tuple[SliceState, SliceInfo]:
     """Propose a new sample using the stepping-out and shrinking procedures.
 
@@ -226,9 +241,9 @@ def horizontal_slice_proposal(
         x = stepper_fn(x0, d, t)
         logdensity_x = logdensity_fn(x)
         constraint_x = constraint_fn(x)
-        constraints = jnp.where(strict,
-                                constraint_x > constraint,
-                                constraint_x >= constraint)
+        constraints = jnp.where(
+            strict, constraint_x > constraint, constraint_x >= constraint
+        )
         constraints = jnp.append(constraints, logdensity_x >= log_slice_height)
         within = jnp.all(constraints)
         n += 1
@@ -253,9 +268,9 @@ def horizontal_slice_proposal(
 
         logdensity_x = logdensity_fn(x)
         constraint_x = constraint_fn(x)
-        constraints = jnp.where(strict,
-                                constraint_x > constraint,
-                                constraint_x >= constraint)
+        constraints = jnp.where(
+            strict, constraint_x > constraint, constraint_x >= constraint
+        )
         constraints = jnp.append(constraints, logdensity_x >= log_slice_height)
         within = jnp.all(constraints)
 

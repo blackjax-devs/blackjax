@@ -233,12 +233,12 @@ def build_kernel(
         loglikelihood = state.loglikelihood[start_idx]
         inner_state = jax.vmap(inner_init_fn)(particles, logprior, loglikelihood)
         step_fn = partial(
-                inner_kernel,
-                logprior_fn=logprior_fn,
-                loglikelihood_fn=loglikelihood_fn,
-                loglikelihood_0=loglikelihood_0,
-                params=state.inner_kernel_params,
-                )
+            inner_kernel,
+            logprior_fn=logprior_fn,
+            loglikelihood_fn=loglikelihood_fn,
+            loglikelihood_0=loglikelihood_0,
+            params=state.inner_kernel_params,
+        )
         inner_state, inner_state_info = jax.vmap(step_fn)(sample_keys, inner_state)
 
         # Update the particles
@@ -253,9 +253,7 @@ def build_kernel(
         loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(
             loglikelihood_0 * jnp.ones(len(target_update_idx))
         )
-        logprior = state.logprior.at[target_update_idx].set(
-            inner_state.logprior
-        )
+        logprior = state.logprior.at[target_update_idx].set(inner_state.logprior)
         pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 
         # Update the run-time information

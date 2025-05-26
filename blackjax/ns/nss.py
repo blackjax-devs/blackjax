@@ -75,16 +75,15 @@ class NSSInnerState(NamedTuple):
     loglikelihood: Array  # Log-likelihood values for particles in the inner kernel
 
 
-
-class NSSStepInfo(NamedTuple):
+class NSSInnerInfo(NamedTuple):
     """Information about a single step in the Nested Slice Sampling algorithm."""
+
     position: ArrayTree
     logprior: ArrayTree
     loglikelihood: ArrayTree
     l_steps: int
     r_steps: int
     s_steps: int
-
 
 
 def default_generate_slice_direction_fn(
@@ -214,11 +213,13 @@ def build_kernel(
     slice_kernel = build_slice_kernel(stepper_fn)
 
     @repeat_kernel(num_inner_steps)
-    def inner_kernel(rng_key, state, logprior_fn, loglikelihood_fn, loglikelihood_0, params):
+    def inner_kernel(
+        rng_key, state, logprior_fn, loglikelihood_fn, loglikelihood_0, params
+    ):
         # Get the relevant information from the NSState
         slice_state = SliceState(position=state.position, logdensity=state.logprior)
 
-        # Do slice sampling
+        # Do constrained slice sampling
         rng_key, prop_key = jax.random.split(rng_key, 2)
         d = generate_slice_direction_fn(prop_key, params)
         logdensity_fn = logprior_fn
@@ -229,13 +230,13 @@ def build_kernel(
             rng_key, slice_state, logdensity_fn, d, constraint_fn, constraint, strict
         )
 
-        # Pass the relevant information back to NSState and NSSStepInfo
+        # Pass the relevant information back to NSSInnerState and NSSInnerInfo
         new_state = state._replace(
             position=slice_state.position,
             logprior=slice_state.logdensity,
             loglikelihood=slice_info.constraint[0],
         )
-        info = NSSStepInfo(
+        info = NSSInnerInfo(
             position=new_state.position,
             logprior=new_state.logprior,
             loglikelihood=new_state.loglikelihood,
@@ -249,7 +250,9 @@ def build_kernel(
 
     def inner_init_fn(position, logprior, loglikelihood):
         """Initializes the inner kernel state for NSS."""
-        return NSSInnerState(position=position, logprior=logprior, loglikelihood=loglikelihood)
+        return NSSInnerState(
+            position=position, logprior=logprior, loglikelihood=loglikelihood
+        )
 
     update_inner_kernel_params_fn = adapt_direction_params_fn
     kernel = build_adaptive_kernel(
