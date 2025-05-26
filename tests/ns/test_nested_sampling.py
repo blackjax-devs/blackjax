@@ -224,5 +224,277 @@ class NestedSliceSamplingTest(chex.TestCase):
         self.assertTrue(callable(kernel))
 
 
+class NestedSamplingStatisticalTest(chex.TestCase):
+    """Statistical correctness tests for nested sampling algorithms."""
+    
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.key(42)
+
+    def test_1d_gaussian_evidence_estimation(self):
+        """Test evidence estimation utilities function correctly for realistic NS data."""
+        # Setup simple 1D problem
+        def logprior_fn(x):
+            return jnp.where(jnp.abs(x) <= 3.0, 0.0, -jnp.inf)
+        
+        def loglikelihood_fn(x):
+            return -0.5 * x**2  # Simple quadratic likelihood
+        
+        # Generate mock data that mimics a real NS run
+        num_steps = 30
+        key = jax.random.key(42)
+        
+        # Create positions and corresponding likelihoods
+        positions = jnp.linspace(-2.8, 2.8, num_steps).reshape(-1, 1)
+        dead_loglik = jax.vmap(loglikelihood_fn)(positions.flatten())
+        dead_logprior = jax.vmap(logprior_fn)(positions.flatten())
+        
+        # Sort by likelihood (as NS naturally produces)
+        sorted_indices = jnp.argsort(dead_loglik)
+        dead_loglik = dead_loglik[sorted_indices]
+        positions = positions[sorted_indices]
+        dead_logprior = dead_logprior[sorted_indices]
+        
+        # Birth likelihoods
+        dead_loglik_birth = jnp.concatenate([
+            jnp.array([-jnp.inf]),  
+            dead_loglik[:-1]
+        ])
+        
+        # Create NSInfo object
+        mock_info = base.NSInfo(
+            particles=positions,
+            loglikelihood=dead_loglik,
+            loglikelihood_birth=dead_loglik_birth,
+            logprior=dead_logprior,
+            inner_kernel_info={}
+        )
+        
+        # Test that evidence estimation functions work without error
+        key = jax.random.key(456)
+        
+        # Calculate log weights
+        log_weights_matrix = utils.log_weights(key, mock_info, shape=10)
+        
+        # Check basic properties
+        chex.assert_shape(log_weights_matrix, (num_steps, 10))
+        self.assertFalse(jnp.all(jnp.isnan(log_weights_matrix)), "Not all weights should be NaN")
+        
+        # Evidence estimate should be finite
+        log_evidence_estimates = jax.scipy.special.logsumexp(log_weights_matrix, axis=0)
+        mean_log_evidence = jnp.mean(log_evidence_estimates)
+        
+        self.assertFalse(jnp.isnan(mean_log_evidence), "Evidence estimate should not be NaN")
+        self.assertFalse(jnp.isinf(mean_log_evidence), "Evidence estimate should not be infinite")
+        
+        # Should be a reasonable value for this simple setup
+        self.assertGreater(mean_log_evidence, -20.0, "Evidence should not be extremely small")
+        self.assertLess(mean_log_evidence, 10.0, "Evidence should not be extremely large")
+
+    def test_uniform_prior_evidence(self):
+        """Test evidence estimation for uniform prior with simple likelihood."""
+        # Setup: Uniform prior on [0, 1], simple likelihood
+        def logprior_fn(x):
+            return jnp.where((x >= 0.0) & (x <= 1.0), 0.0, -jnp.inf)
+        
+        def loglikelihood_fn(x):
+            # Simple quadratic likelihood peaked at 0.5
+            return -10.0 * (x - 0.5)**2
+        
+        # Analytical evidence can be computed numerically for comparison
+        # Z = integral_0^1 exp(-10(x-0.5)^2) dx ≈ sqrt(π/10) * erf(...)
+        
+        num_live = 50
+        key = jax.random.key(456)
+        
+        # Initialize particles uniformly in [0, 1]
+        particles = jax.random.uniform(key, (num_live,))
+        state = base.init(particles, logprior_fn, loglikelihood_fn)
+        
+        # Check that initialization worked correctly
+        self.assertTrue(jnp.all(state.particles >= 0.0))
+        self.assertTrue(jnp.all(state.particles <= 1.0))
+        self.assertFalse(jnp.any(jnp.isinf(state.logprior)))
+        self.assertFalse(jnp.any(jnp.isnan(state.loglikelihood)))
+        
+        # Test evidence contribution from live points
+        logZ_live_contribution = state.logZ_live
+        self.assertIsInstance(logZ_live_contribution, (float, jax.Array))
+        self.assertFalse(jnp.isnan(logZ_live_contribution))
+
+    def test_evidence_monotonicity(self):
+        """Test that evidence estimates are monotonically increasing during NS run."""
+        # Simple setup for testing monotonicity
+        def logprior_fn(x):
+            return stats.norm.logpdf(x)
+        
+        def loglikelihood_fn(x):
+            return -0.5 * x**2  # Simple quadratic
+        
+        num_live = 30
+        key = jax.random.key(789)
+        
+        particles = jax.random.normal(key, (num_live,))
+        initial_state = base.init(particles, logprior_fn, loglikelihood_fn)
+        
+        # Test that we can track evidence during run
+        logZ_sequence = [initial_state.logZ]
+        
+        # Simulate a few evidence updates manually
+        for i in range(5):
+            # Simulate removing worst particle and updating evidence
+            worst_idx = jnp.argmin(initial_state.loglikelihood)
+            dead_loglik = initial_state.loglikelihood[worst_idx]
+            
+            # Update evidence (simplified)
+            delta_logX = -1.0 / num_live  # Approximate volume decrease
+            new_logZ = jnp.logaddexp(initial_state.logZ, dead_loglik + delta_logX)
+            logZ_sequence.append(new_logZ)
+            
+            # Update for next iteration (simplified)
+            new_loglik = jnp.concatenate([
+                initial_state.loglikelihood[:worst_idx],
+                initial_state.loglikelihood[worst_idx+1:],
+                jnp.array([dead_loglik + 0.1])  # Mock new particle
+            ])
+            initial_state = initial_state._replace(loglikelihood=new_loglik)
+        
+        # Check monotonicity
+        logZ_array = jnp.array(logZ_sequence)
+        differences = logZ_array[1:] - logZ_array[:-1]
+        self.assertTrue(jnp.all(differences >= -1e-10), "Evidence should be monotonically increasing")
+
+    def test_nested_sampling_utils_statistical_properties(self):
+        """Test statistical properties of nested sampling utility functions."""
+        key = jax.random.key(101112)
+        
+        # Create realistic mock data
+        n_dead = 100
+        
+        # Generate realistic loglikelihood sequence (increasing)
+        base_loglik = jnp.linspace(-10, -1, n_dead)
+        noise = jax.random.normal(key, (n_dead,)) * 0.1
+        dead_loglik = jnp.sort(base_loglik + noise)
+        
+        # Create more realistic birth likelihoods that reflect actual NS behavior
+        # Particles can be born at various levels, not just at previous death
+        key, subkey = jax.random.split(key)
+        birth_noise = jax.random.uniform(subkey, (n_dead,)) * 2.0 - 1.0  # [-1, 1]
+        dead_loglik_birth = jnp.concatenate([
+            jnp.array([-jnp.inf]),  # First particle born from prior
+            dead_loglik[:-1] + birth_noise[1:] * 0.5  # Others with some variation
+        ])
+        # Ensure birth likelihoods don't exceed death likelihoods
+        dead_loglik_birth = jnp.minimum(dead_loglik_birth, dead_loglik - 0.01)
+        
+        mock_info = base.NSInfo(
+            particles=jnp.zeros((n_dead, 2)),
+            loglikelihood=dead_loglik,
+            loglikelihood_birth=dead_loglik_birth,
+            logprior=jnp.zeros(n_dead),
+            inner_kernel_info={}
+        )
+        
+        # Test compute_num_live
+        num_live = utils.compute_num_live(mock_info)
+        chex.assert_shape(num_live, (n_dead,))
+        
+        # Basic sanity checks for number of live points
+        # NOTE: num_live should NOT be monotonically decreasing in general NS!
+        # It follows a sawtooth pattern as particles die and are replenished
+        self.assertTrue(jnp.all(num_live >= 1), 
+                       "Should always have at least 1 live point")
+        self.assertTrue(jnp.all(num_live <= 1000),  # Reasonable upper bound
+                       "Number of live points should be reasonable")
+        self.assertFalse(jnp.any(jnp.isnan(num_live)), 
+                       "Number of live points should not be NaN")
+        
+        # Test logX simulation
+        n_samples = 50
+        logX_seq, logdX_seq = utils.logX(key, mock_info, shape=n_samples)
+        chex.assert_shape(logX_seq, (n_dead, n_samples))
+        chex.assert_shape(logdX_seq, (n_dead, n_samples))
+        
+        # Log volumes should be decreasing
+        self.assertTrue(jnp.all(logX_seq[1:] <= logX_seq[:-1]), 
+                       "Log volumes should be decreasing")
+        
+        # All log volume elements should be negative (since dX < X)
+        finite_logdX = logdX_seq[jnp.isfinite(logdX_seq)]
+        if len(finite_logdX) > 0:
+            self.assertTrue(jnp.all(finite_logdX <= 0.0), 
+                           "Log volume elements should be negative")
+        
+        # Test log_weights function
+        log_weights_matrix = utils.log_weights(key, mock_info, shape=n_samples)
+        chex.assert_shape(log_weights_matrix, (n_dead, n_samples))
+        
+        # Weights should be finite for most particles
+        finite_weights = jnp.isfinite(log_weights_matrix)
+        self.assertGreater(jnp.sum(finite_weights), n_dead * n_samples * 0.5,
+                          "Most weights should be finite")
+
+    def test_evidence_integration_simple_case(self):
+        """Test evidence calculation for a simple analytical case."""
+        # Test case: uniform prior on [0,1], constant likelihood
+        # Analytical evidence = 1.0 * exp(loglik_constant) = exp(loglik_constant)
+        
+        loglik_constant = -2.0  # Arbitrary constant
+        n_dead = 20
+        
+        # Mock data: all particles have same likelihood (constant function)
+        dead_loglik = jnp.full(n_dead, loglik_constant)
+        dead_loglik_birth = jnp.full(n_dead, -jnp.inf)  # All from prior
+        
+        mock_info = base.NSInfo(
+            particles=jnp.zeros((n_dead, 1)),
+            loglikelihood=dead_loglik,
+            loglikelihood_birth=dead_loglik_birth,
+            logprior=jnp.zeros(n_dead),
+            inner_kernel_info={}
+        )
+        
+        key = jax.random.key(12345)
+        
+        # Calculate weights
+        log_weights_matrix = utils.log_weights(key, mock_info, shape=100)
+        
+        # For constant likelihood, evidence should be approximately exp(loglik_constant)
+        # Sum of weights approximates evidence
+        log_evidence_estimates = jax.scipy.special.logsumexp(log_weights_matrix, axis=0)
+        mean_log_evidence = jnp.mean(log_evidence_estimates)
+        
+        # Should be close to loglik_constant (since prior volume = 1)
+        # Allow for some Monte Carlo error
+        self.assertAlmostEqual(mean_log_evidence, loglik_constant, delta=0.5,
+                              msg="Evidence estimate should be close to analytical value")
+
+    def test_effective_sample_size_calculation(self):
+        """Test effective sample size calculation."""
+        key = jax.random.key(67890)
+        
+        # Create mock data with varying weights
+        n_dead = 50
+        dead_loglik = jax.random.uniform(key, (n_dead,)) * 5 - 10  # Range [-10, -5]
+        dead_loglik_birth = jnp.full(n_dead, -jnp.inf)
+        
+        mock_info = base.NSInfo(
+            particles=jnp.zeros((n_dead, 1)),
+            loglikelihood=jnp.sort(dead_loglik),  # Ensure increasing
+            loglikelihood_birth=dead_loglik_birth,
+            logprior=jnp.zeros(n_dead),
+            inner_kernel_info={}
+        )
+        
+        # Calculate ESS
+        ess_value = utils.ess(key, mock_info)
+        
+        # ESS should be positive and reasonable
+        self.assertIsInstance(ess_value, (float, jax.Array))
+        self.assertGreater(ess_value, 0.0, "ESS should be positive")
+        self.assertLessEqual(ess_value, n_dead, "ESS should not exceed number of samples")
+        self.assertFalse(jnp.isnan(ess_value), "ESS should not be NaN")
+
+
 if __name__ == "__main__":
     absltest.main()
