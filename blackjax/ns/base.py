@@ -75,7 +75,7 @@ class NSState(NamedTuple):
     loglikelihood: Array  # The log-likelihood of the particles
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
-    pid: Array  # particle ID
+    pid: Array  # particle IDs
     logX: Array  # The current log-volume estimate
     logZ: Array  # The accumulated evidence estimate
     logZ_live: Array  # The current evidence estimate
