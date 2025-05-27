@@ -237,21 +237,37 @@ class NestedSamplingStatisticalTest(chex.TestCase):
         self.key = jax.random.key(42)
 
     def test_1d_gaussian_evidence_estimation(self):
-        """Test evidence estimation utilities function correctly for realistic NS data."""
+        """Test evidence estimation with analytic validation for unnormalized Gaussian."""
 
-        # Setup simple 1D problem
+        # Simple case: unnormalized Gaussian likelihood exp(-0.5*x²), uniform prior [-3,3]
+        prior_a, prior_b = -3.0, 3.0
+
         def logprior_fn(x):
-            return jnp.where(jnp.abs(x) <= 3.0, 0.0, -jnp.inf)
+            return jnp.where(
+                (x >= prior_a) & (x <= prior_b), -jnp.log(prior_b - prior_a), -jnp.inf
+            )
 
         def loglikelihood_fn(x):
-            return -0.5 * x**2  # Simple quadratic likelihood
+            # Unnormalized Gaussian: exp(-0.5 * x²)
+            return -0.5 * x**2
 
-        # Generate mock data that mimics a real NS run
-        num_steps = 30
+        # Analytic evidence: Z = ∫[-3,3] (1/6) * exp(-0.5*x²) dx
+        # = (1/6) * √(2π) * [Φ(3) - Φ(-3)]
+        from scipy.stats import norm
+
+        prior_width = prior_b - prior_a
+        integral_part = jnp.sqrt(2 * jnp.pi) * (norm.cdf(3.0) - norm.cdf(-3.0))
+        analytical_evidence = integral_part / prior_width
+        analytical_log_evidence = jnp.log(analytical_evidence)
+
+        # Generate mock nested sampling data
+        num_steps = 60
         key = jax.random.key(42)
 
-        # Create positions and corresponding likelihoods
-        positions = jnp.linspace(-2.8, 2.8, num_steps).reshape(-1, 1)
+        # Create positions spanning the prior range
+        positions = jnp.linspace(prior_a + 0.05, prior_b - 0.05, num_steps).reshape(
+            -1, 1
+        )
         dead_loglik = jax.vmap(loglikelihood_fn)(positions.flatten())
         dead_logprior = jax.vmap(logprior_fn)(positions.flatten())
 
@@ -261,8 +277,8 @@ class NestedSamplingStatisticalTest(chex.TestCase):
         positions = positions[sorted_indices]
         dead_logprior = dead_logprior[sorted_indices]
 
-        # Birth likelihoods
-        dead_loglik_birth = jnp.concatenate([jnp.array([-jnp.inf]), dead_loglik[:-1]])
+        # Birth likelihoods - start from prior
+        dead_loglik_birth = jnp.full_like(dead_loglik, -jnp.inf)
 
         # Create NSInfo object
         mock_info = base.NSInfo(
@@ -273,35 +289,51 @@ class NestedSamplingStatisticalTest(chex.TestCase):
             inner_kernel_info={},
         )
 
-        # Test that evidence estimation functions work without error
-        key = jax.random.key(456)
+        # Generate many evidence estimates for statistical testing
+        n_evidence_samples = 500
+        key = jax.random.key(789)
+        keys = jax.random.split(key, n_evidence_samples)
 
-        # Calculate log weights
-        log_weights_matrix = utils.log_weights(key, mock_info, shape=10)
+        def single_evidence_estimate(rng_key):
+            log_weights_matrix = utils.log_weights(rng_key, mock_info, shape=15)
+            return jax.scipy.special.logsumexp(log_weights_matrix, axis=0)
 
-        # Check basic properties
-        chex.assert_shape(log_weights_matrix, (num_steps, 10))
-        self.assertFalse(
-            jnp.all(jnp.isnan(log_weights_matrix)), "Not all weights should be NaN"
+        # Compute evidence estimates
+        log_evidence_samples = jax.vmap(single_evidence_estimate)(keys)
+        log_evidence_samples = log_evidence_samples.flatten()
+
+        # Statistical validation
+        mean_estimate = jnp.mean(log_evidence_samples)
+        std_estimate = jnp.std(log_evidence_samples)
+
+        # Check statistical consistency with 95% confidence interval
+        # For mock data with simplified NS, expect some bias but should be in ballpark
+        tolerance = 2.0 * std_estimate  # 95% CI
+        bias = jnp.abs(mean_estimate - analytical_log_evidence)
+
+        self.assertLess(
+            bias,
+            tolerance,
+            f"Evidence estimate {mean_estimate:.3f} vs analytic {analytical_log_evidence:.3f} "
+            f"differs by {bias:.3f}, which exceeds 2σ = {tolerance:.3f}",
         )
 
-        # Evidence estimate should be finite
-        log_evidence_estimates = jax.scipy.special.logsumexp(log_weights_matrix, axis=0)
-        mean_log_evidence = jnp.mean(log_evidence_estimates)
-
+        # Also test that individual estimates are reasonable
         self.assertFalse(
-            jnp.isnan(mean_log_evidence), "Evidence estimate should not be NaN"
+            jnp.any(jnp.isnan(log_evidence_samples)),
+            "No evidence estimates should be NaN",
         )
         self.assertFalse(
-            jnp.isinf(mean_log_evidence), "Evidence estimate should not be infinite"
+            jnp.any(jnp.isinf(log_evidence_samples)),
+            "No evidence estimates should be infinite",
         )
 
-        # Should be a reasonable value for this simple setup
+        # Check that estimates are in a reasonable range
         self.assertGreater(
-            mean_log_evidence, -20.0, "Evidence should not be extremely small"
+            mean_estimate, analytical_log_evidence - 1.0, "Mean estimate not too low"
         )
         self.assertLess(
-            mean_log_evidence, 10.0, "Evidence should not be extremely large"
+            mean_estimate, analytical_log_evidence + 1.0, "Mean estimate not too high"
         )
 
     def test_uniform_prior_evidence(self):
@@ -465,13 +497,108 @@ class NestedSamplingStatisticalTest(chex.TestCase):
             "Most weights should be finite",
         )
 
-    def test_evidence_integration_simple_case(self):
-        """Test evidence calculation for a simple analytical case."""
-        # Test case: uniform prior on [0,1], constant likelihood
-        # Analytical evidence = 1.0 * exp(loglik_constant) = exp(loglik_constant)
+    def test_gaussian_evidence_narrow_prior(self):
+        """Test evidence estimation with narrow prior for challenging case."""
 
-        loglik_constant = -2.0  # Arbitrary constant
-        n_dead = 20
+        # Setup: Gaussian likelihood with narrow uniform prior (more challenging)
+        mu_true = 1.2
+        sigma_true = 0.6
+        prior_a, prior_b = 0.8, 1.6  # Narrow prior around the mean
+
+        def logprior_fn(x):
+            return jnp.where(
+                (x >= prior_a) & (x <= prior_b), -jnp.log(prior_b - prior_a), -jnp.inf
+            )
+
+        def loglikelihood_fn(x):
+            return -0.5 * ((x - mu_true) / sigma_true) ** 2 - 0.5 * jnp.log(
+                2 * jnp.pi * sigma_true**2
+            )
+
+        # Analytic evidence
+        from scipy.stats import norm
+
+        analytical_evidence = (
+            norm.cdf((prior_b - mu_true) / sigma_true)
+            - norm.cdf((prior_a - mu_true) / sigma_true)
+        ) / (prior_b - prior_a)
+        analytical_log_evidence = jnp.log(analytical_evidence)
+
+        # Generate mock NS data with higher resolution for narrow prior
+        num_steps = 60
+        key = jax.random.key(12345)
+
+        # Dense sampling in the narrow prior region
+        positions = jnp.linspace(prior_a + 0.01, prior_b - 0.01, num_steps).reshape(
+            -1, 1
+        )
+        dead_loglik = jax.vmap(loglikelihood_fn)(positions.flatten())
+        dead_logprior = jax.vmap(logprior_fn)(positions.flatten())
+
+        # Sort by likelihood
+        sorted_indices = jnp.argsort(dead_loglik)
+        dead_loglik = dead_loglik[sorted_indices]
+        positions = positions[sorted_indices]
+        dead_logprior = dead_logprior[sorted_indices]
+
+        # Birth likelihoods
+        key, subkey = jax.random.split(key)
+        birth_noise = jax.random.uniform(subkey, (num_steps,)) * 0.3 - 0.15
+        dead_loglik_birth = jnp.concatenate(
+            [jnp.array([-jnp.inf]), dead_loglik[:-1] + birth_noise[1:]]
+        )
+        dead_loglik_birth = jnp.minimum(dead_loglik_birth, dead_loglik - 0.01)
+
+        mock_info = base.NSInfo(
+            particles=positions,
+            loglikelihood=dead_loglik,
+            loglikelihood_birth=dead_loglik_birth,
+            logprior=dead_logprior,
+            inner_kernel_info={},
+        )
+
+        # Generate evidence estimates for statistical testing
+        n_evidence_samples = 800
+        key = jax.random.key(555)
+        keys = jax.random.split(key, n_evidence_samples)
+
+        def single_evidence_estimate(rng_key):
+            log_weights_matrix = utils.log_weights(rng_key, mock_info, shape=15)
+            return jax.scipy.special.logsumexp(log_weights_matrix, axis=0)
+
+        log_evidence_samples = jax.vmap(single_evidence_estimate)(keys)
+        log_evidence_samples = log_evidence_samples.flatten()
+
+        # Statistical validation
+        mean_estimate = jnp.mean(log_evidence_samples)
+        std_estimate = jnp.std(log_evidence_samples)
+
+        # 99% confidence interval test
+        lower_bound = mean_estimate - 2.576 * std_estimate  # 99% CI
+        upper_bound = mean_estimate + 2.576 * std_estimate
+
+        self.assertGreater(
+            analytical_log_evidence,
+            lower_bound,
+            f"Analytic evidence {analytical_log_evidence:.3f} below 99% CI lower bound {lower_bound:.3f}",
+        )
+        self.assertLess(
+            analytical_log_evidence,
+            upper_bound,
+            f"Analytic evidence {analytical_log_evidence:.3f} above 99% CI upper bound {upper_bound:.3f}",
+        )
+
+    def test_evidence_integration_simple_case(self):
+        """Test evidence calculation for a simple analytical case with constant likelihood."""
+        # Test case: uniform prior on [0,2], constant likelihood
+        # Evidence = ∫[0,2] (1/width) * exp(loglik_constant) dx = exp(loglik_constant)
+
+        loglik_constant = -1.5
+        prior_width = 2.0  # Prior on [0, 2]
+        n_dead = 40
+
+        # Analytic answer: evidence = ∫[0,2] (1/2) * exp(-1.5) dx = exp(-1.5)
+        analytical_log_evidence = loglik_constant
 
         # Mock data: all particles have same likelihood (constant function)
         dead_loglik = jnp.full(n_dead, loglik_constant)
@@ -481,27 +608,41 @@ class NestedSamplingStatisticalTest(chex.TestCase):
             particles=jnp.zeros((n_dead, 1)),
             loglikelihood=dead_loglik,
             loglikelihood_birth=dead_loglik_birth,
-            logprior=jnp.zeros(n_dead),
+            logprior=jnp.full(
+                n_dead, -jnp.log(prior_width)
+            ),  # Uniform prior log density
             inner_kernel_info={},
         )
 
-        key = jax.random.key(12345)
+        # Generate many evidence estimates
+        n_samples = 500
+        key = jax.random.key(999)
+        keys = jax.random.split(key, n_samples)
 
-        # Calculate weights
-        log_weights_matrix = utils.log_weights(key, mock_info, shape=100)
+        def single_evidence_estimate(rng_key):
+            log_weights_matrix = utils.log_weights(rng_key, mock_info, shape=25)
+            return jax.scipy.special.logsumexp(log_weights_matrix, axis=0)
 
-        # For constant likelihood, evidence should be approximately exp(loglik_constant)
-        # Sum of weights approximates evidence
-        log_evidence_estimates = jax.scipy.special.logsumexp(log_weights_matrix, axis=0)
-        mean_log_evidence = jnp.mean(log_evidence_estimates)
+        log_evidence_samples = jax.vmap(single_evidence_estimate)(keys)
+        log_evidence_samples = log_evidence_samples.flatten()
 
-        # Should be close to loglik_constant (since prior volume = 1)
-        # Allow for some Monte Carlo error
-        self.assertAlmostEqual(
-            mean_log_evidence,
-            loglik_constant,
-            delta=0.5,
-            msg="Evidence estimate should be close to analytical value",
+        mean_estimate = jnp.mean(log_evidence_samples)
+        std_estimate = jnp.std(log_evidence_samples)
+
+        # For constant likelihood case, should be very accurate
+        # 95% confidence interval
+        lower_bound = mean_estimate - 1.96 * std_estimate
+        upper_bound = mean_estimate + 1.96 * std_estimate
+
+        self.assertGreater(
+            analytical_log_evidence,
+            lower_bound,
+            f"Analytic evidence {analytical_log_evidence:.3f} below 95% CI",
+        )
+        self.assertLess(
+            analytical_log_evidence,
+            upper_bound,
+            f"Analytic evidence {analytical_log_evidence:.3f} above 95% CI",
         )
 
     def test_effective_sample_size_calculation(self):
