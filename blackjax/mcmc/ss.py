@@ -239,7 +239,7 @@ def horizontal_slice(
         corresponding threshold in this array.
     strict
         An array of boolean flags indicating whether each constraint should be
-        strict (constraint_fn(x) > constraint) or non-strict 
+        strict (constraint_fn(x) > constraint) or non-strict
         (constraint_fn(x) >= constraint).
 
     Returns
@@ -276,7 +276,7 @@ def horizontal_slice(
     _, _, r, r_steps = jax.lax.while_loop(cond_fun, body_fun, (True, +1, 1 - u, 0))
 
     # Shrink
-    def body_fun(carry):
+    def shrink_body_fun(carry):
         _, l, r, _, _, _, rng_key, s_steps = carry
         s_steps += 1
 
@@ -297,12 +297,12 @@ def horizontal_slice(
 
         return within, l, r, x, logdensity_x, constraint_x, rng_key, s_steps
 
-    def cond_fun(carry):
+    def shrink_cond_fun(carry):
         within = carry[0]
         return ~within
 
     carry = (False, l, r, x0, -jnp.inf, constraint, rng_key, 0)
-    carry = jax.lax.while_loop(cond_fun, body_fun, carry)
+    carry = jax.lax.while_loop(shrink_cond_fun, shrink_body_fun, carry)
     _, l, r, x, logdensity_x, constraint_x, rng_key, s_steps = carry
     slice_state = SliceState(x, logdensity_x)
     evals = l_steps + r_steps + s_steps
@@ -349,7 +349,9 @@ def build_hrss_kernel(
         constraint_fn = lambda x: jnp.array([])
         constraint = jnp.array([])
         strict = jnp.array([])
-        return slice_kernel(rng_key, state, logdensity_fn, d, constraint_fn, constraint, strict)
+        return slice_kernel(
+            rng_key, state, logdensity_fn, d, constraint_fn, constraint, strict
+        )
 
     return kernel
 

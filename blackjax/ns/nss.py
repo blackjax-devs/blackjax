@@ -31,12 +31,12 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax import SamplingAlgorithm
+from blackjax.mcmc.ss import SliceState
 from blackjax.mcmc.ss import build_kernel as build_slice_kernel
+from blackjax.mcmc.ss import default_stepper_fn
 from blackjax.mcmc.ss import (
     sample_direction_from_covariance as ss_sample_direction_from_covariance,
 )
-from blackjax.mcmc.ss import default_stepper_fn, SliceState
-from blackjax.mcmc.ss import init as slice_init
 from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
 from blackjax.ns.adaptive import init
 from blackjax.ns.base import NSInfo, NSState
@@ -46,8 +46,7 @@ from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
     particles_covariance_matrix,
 )
-from blackjax.types import ArrayTree, PRNGKey, ArrayLikeTree, Array
-
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "init",
@@ -87,7 +86,7 @@ class NSSInnerInfo(NamedTuple):
 
 
 def sample_direction_from_covariance(
-    rng_key: PRNGKey, params: ArrayTree
+    rng_key: PRNGKey, params: Dict[str, ArrayTree]
 ) -> ArrayTree:
     """Default function to generate a normalized slice direction for NSS.
 

@@ -58,7 +58,7 @@ def init(
         implies no initial likelihood constraint beyond the prior.
     update_inner_kernel_params_fn
         A function that takes the `NSState`, `NSInfo` from the completed NS
-        step, and the current inner kernel parameters dictionary, and returns 
+        step, and the current inner kernel parameters dictionary, and returns
         a dictionary of parameters to be used for the kernel in the *next* NS step.
 
     Returns
@@ -67,8 +67,9 @@ def init(
         The initial state of the Nested Sampler.
     """
     state = base_init(particles, logprior_fn, loglikelihood_fn, loglikelihood_birth)
-    inner_kernel_params = update_inner_kernel_params_fn(state, None, {})
-    state = state._replace(inner_kernel_params=inner_kernel_params)
+    if update_inner_kernel_params_fn is not None:
+        inner_kernel_params = update_inner_kernel_params_fn(state, None, {})
+        state = state._replace(inner_kernel_params=inner_kernel_params)
     return state
 
 
@@ -78,7 +79,9 @@ def build_kernel(
     delete_fn: Callable,
     inner_init_fn: Callable,
     inner_kernel: Callable,
-    update_inner_kernel_params_fn: Callable[[NSState, NSInfo, Dict[str, ArrayTree]], Dict[str, ArrayTree]],
+    update_inner_kernel_params_fn: Callable[
+        [NSState, NSInfo, Dict[str, ArrayTree]], Dict[str, ArrayTree]
+    ],
 ) -> Callable:
     """Build an adaptive Nested Sampling kernel.
 
@@ -109,7 +112,7 @@ def build_kernel(
         and is used to generate new particles.
     update_inner_kernel_params_fn
         A function that takes the `NSState`, `NSInfo` from the completed NS
-        step, and the current inner kernel parameters dictionary, and returns 
+        step, and the current inner kernel parameters dictionary, and returns
         a dictionary of parameters to be used for the kernel in the *next* NS step.
 
     Returns

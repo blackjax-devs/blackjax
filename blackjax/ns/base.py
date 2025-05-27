@@ -30,7 +30,7 @@ sampling.
 """
 
 from functools import partial
-from typing import Callable, NamedTuple, Optional, Dict
+from typing import Callable, Dict, NamedTuple, Optional
 
 import jax
 import jax.numpy as jnp
@@ -150,7 +150,7 @@ def init(
     logX = jnp.array(logX, dtype=dtype)
     logZ = jnp.array(logZ, dtype=dtype)
     logZ_live = logmeanexp(loglikelihood) + logX
-    inner_kernel_params = {}
+    inner_kernel_params: Dict = {}
     return NSState(
         particles,
         loglikelihood,
