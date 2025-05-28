@@ -39,7 +39,7 @@ from blackjax.mcmc.ss import (
 )
 from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
 from blackjax.ns.adaptive import init
-from blackjax.ns.base import NSInfo, NSState, NSInnerInfo, NSInnerState
+from blackjax.ns.base import NSInfo, NSState, new_state_and_info
 from blackjax.ns.base import delete_fn as default_delete_fn
 from blackjax.ns.utils import get_first_row, repeat_kernel
 from blackjax.smc.tuning.from_particles import (
@@ -186,33 +186,25 @@ def build_kernel(
     def inner_kernel(
         rng_key, state, logprior_fn, loglikelihood_fn, loglikelihood_0, params
     ):
-        # Get the relevant information from the NSState
-        inner_state = SliceState(position=state.position, logdensity=state.logprior)
-
         # Do constrained slice sampling
+        slice_state = SliceState(position=state.position, logdensity=state.logprior)
         rng_key, prop_key = jax.random.split(rng_key, 2)
         d = generate_slice_direction_fn(prop_key, params)
         logdensity_fn = logprior_fn
         constraint_fn = lambda x: jnp.array([loglikelihood_fn(x)])
         constraint = jnp.array([loglikelihood_0])
         strict = jnp.array([True])
-        new_inner_state, inner_info = slice_kernel(
-            rng_key, inner_state, logdensity_fn, d, constraint_fn, constraint, strict
+        new_slice_state, slice_info = slice_kernel(
+            rng_key, slice_state, logdensity_fn, d, constraint_fn, constraint, strict
         )
 
         # Pass the relevant information back to NSInnerState and NSInnerInfo
-        new_state = NSInnerState(
-            position=new_inner_state.position,
-            logprior=new_inner_state.logdensity,
-            loglikelihood=inner_info.constraint[0],
+        return new_state_and_info(
+            position=new_slice_state.position,
+            logprior=new_slice_state.logdensity,
+            loglikelihood=slice_info.constraint[0],
+            info=slice_info,
         )
-        info = NSInnerInfo(
-            position=new_state.position,
-            logprior=new_state.logprior,
-            loglikelihood=new_state.loglikelihood,
-            info=inner_info,
-        )
-        return new_state, info
 
     delete_fn = partial(default_delete_fn, num_delete=num_delete)
 

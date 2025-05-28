@@ -29,7 +29,6 @@ This base implementation uses a provided kernel to perform the constrained
 sampling.
 """
 
-from functools import partial
 from typing import Callable, Dict, NamedTuple, Optional
 
 import jax
@@ -136,6 +135,20 @@ class NSInnerInfo(NamedTuple):
     loglikelihood: ArrayTree
     info: NamedTuple  # Additional information from the inner kernel step
 
+
+def new_state_and_info(position, logprior, loglikelihood, info):
+    new_state = NSInnerState(
+        position=position,
+        logprior=logprior,
+        loglikelihood=loglikelihood,
+    )
+    info = NSInnerInfo(
+        position=position,
+        logprior=logprior,
+        loglikelihood=loglikelihood,
+        info=info,
+    )
+    return new_state, info
 
 def init(
     particles: ArrayLikeTree,
@@ -259,28 +272,29 @@ def build_kernel(
         logprior = state.logprior[start_idx]
         loglikelihood = state.loglikelihood[start_idx]
         inner_state = NSInnerState(particles, logprior, loglikelihood)
-        step_fn = partial(
-            inner_kernel,
-            logprior_fn=logprior_fn,
-            loglikelihood_fn=loglikelihood_fn,
-            loglikelihood_0=loglikelihood_0,
-            params=state.inner_kernel_params,
+        in_axes = (0, None, None, None, None, None)
+        new_inner_state, inner_info = jax.vmap(inner_kernel, in_axes=in_axes)(
+            sample_keys,
+            inner_state,
+            logprior_fn,
+            loglikelihood_fn,
+            loglikelihood_0,
+            state.inner_kernel_params,
         )
-        inner_state, inner_state_info = jax.vmap(step_fn)(sample_keys, inner_state)
 
         # Update the particles
         particles = jax.tree_util.tree_map(
             lambda p, n: p.at[target_update_idx].set(n),
             state.particles,
-            inner_state.position,
+            new_inner_state.position,
         )
         loglikelihood = state.loglikelihood.at[target_update_idx].set(
-            inner_state.loglikelihood
+            new_inner_state.loglikelihood
         )
         loglikelihood_birth = state.loglikelihood_birth.at[target_update_idx].set(
             loglikelihood_0 * jnp.ones(len(target_update_idx))
         )
-        logprior = state.logprior.at[target_update_idx].set(inner_state.logprior)
+        logprior = state.logprior.at[target_update_idx].set(new_inner_state.logprior)
         pid = state.pid.at[target_update_idx].set(state.pid[start_idx])
 
         # Update the run-time information
@@ -305,7 +319,7 @@ def build_kernel(
             dead_loglikelihood,
             dead_loglikelihood_birth,
             dead_logprior,
-            inner_state_info,
+            inner_info,
         )
         return state, info
 

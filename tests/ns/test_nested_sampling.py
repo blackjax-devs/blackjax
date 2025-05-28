@@ -112,20 +112,11 @@ class NestedSamplingTest(chex.TestCase):
             }
             return new_inner_state, {}
 
-        def mock_inner_init(position, logprior, loglikelihood):
-            # Return a simple dict that works with JAX
-            return {
-                "position": position,
-                "logprior": logprior,
-                "loglikelihood": loglikelihood,
-            }
-
         delete_fn = functools.partial(base.delete_fn, num_delete=num_delete)
         kernel = base.build_kernel(
             uniform_logprior_2d,
             gaussian_mixture_loglikelihood,
             delete_fn,
-            mock_inner_init,
             mock_inner_kernel,
         )
 

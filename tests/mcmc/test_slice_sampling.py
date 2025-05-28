@@ -44,19 +44,20 @@ class SliceSamplingTest(chex.TestCase):
         """Test vertical slice height sampling"""
         key = jax.random.key(123)
         position = jnp.array([0.0])
+        state = ss.init(position, logdensity_fn)
 
         # Sample many slice heights
         keys = jax.random.split(key, 1000)
-        slice_heights = jax.vmap(ss.vertical_slice, in_axes=(0, None, None))(
-            keys, logdensity_fn, position
+        new_state, info = jax.vmap(ss.vertical_slice, in_axes=(0, None))(
+            keys, state
         )
 
         # Heights should be below log density at position
         logdens_at_pos = logdensity_fn(position)
-        self.assertTrue(jnp.all(slice_heights <= logdens_at_pos))
+        self.assertTrue(jnp.all(new_state.logslice <= logdens_at_pos))
 
         # Heights should be reasonably distributed
-        mean_height = jnp.mean(slice_heights)
+        mean_height = jnp.mean(new_state.logslice)
         expected_mean = logdens_at_pos - 1.0  # E[log(U)] = -1 for U~Uniform(0,1)
         chex.assert_trees_all_close(mean_height, expected_mean, atol=0.1)
 

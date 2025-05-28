@@ -56,6 +56,7 @@ class SliceState(NamedTuple):
 
     position: ArrayLikeTree
     logdensity: float
+    logslice: float = jnp.inf
 
 
 class SliceInfo(NamedTuple):
@@ -142,27 +143,24 @@ def build_kernel(
         strict: Array,
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, vs_key, hs_key = jax.random.split(rng_key, 3)
-        logdensity = vertical_slice(vs_key, logdensity_fn, state.position)
-        slice_state, slice_info = horizontal_slice(
+        intermediate_state, info = vertical_slice(vs_key, state)
+        new_state, info = horizontal_slice(
             hs_key,
-            state.position,
+            intermediate_state,
             d,
             stepper_fn,
             logdensity_fn,
-            logdensity,
             constraint_fn,
             constraint,
             strict,
         )
 
-        return slice_state, slice_info
+        return new_state, info
 
     return kernel
 
 
-def vertical_slice(
-    rng_key: PRNGKey, logdensity_fn: Callable, position: ArrayTree
-) -> float:
+def vertical_slice(rng_key: PRNGKey, state: SliceState) -> float:
     """Define the vertical slice for the Slice Sampling algorithm.
 
     This function determines the height `y` for the horizontal slice by sampling
@@ -185,17 +183,16 @@ def vertical_slice(
         The log-height `log_y` defining the lower bound for the horizontal slice.
         A new sample `x'` will be accepted if `logdensity_fn(x') >= log_y`.
     """
-    logdensity = logdensity_fn(position)
-    return logdensity + jnp.log(jax.random.uniform(rng_key))
+    logslice = state.logdensity + jnp.log(jax.random.uniform(rng_key))
+    return state._replace(logslice=logslice), None
 
 
 def horizontal_slice(
     rng_key: PRNGKey,
-    x0: ArrayTree,
+    state: SliceState,
     d: ArrayTree,
     stepper_fn: Callable,
     logdensity_fn: Callable,
-    log_slice_height: Array,
     constraint_fn: Callable,
     constraint: Array,
     strict: Array,
@@ -205,7 +202,7 @@ def horizontal_slice(
     This function implements the core of the Hit-and-Run Slice Sampling algorithm.
     It first expands an interval (`[l, r]`) along the slice starting
     from `x0` and proceeding along direction `d` until both ends are outside
-    the slice defined by `log_slice_height` (stepping-out). Then, it samples
+    the slice defined by `logslice` (stepping-out). Then, it samples
     points uniformly from this interval and shrinks the interval until a point
     is found that lies within the slice (shrinking).
 
@@ -222,10 +219,6 @@ def horizontal_slice(
         moving `t` units along direction `d` from `x0`.
     logdensity_fn
         The log-density function of the target distribution.
-    log_slice_height
-        The log-height defining the current slice, typically obtained from
-        `vertical_slice`. A new sample `x_new` is accepted if
-        `logdensity_fn(x_new) >= log_slice_height`.
     constraint_fn
         A function that evaluates additional constraints on the position beyond
         the target distribution. Takes a position (PyTree) and returns an array
@@ -252,6 +245,7 @@ def horizontal_slice(
     # Initial bounds
     rng_key, subkey = jax.random.split(rng_key)
     u = jax.random.uniform(subkey)
+    x0 = state.position
 
     def body_fun(carry):
         _, s, t, n = carry
@@ -262,7 +256,7 @@ def horizontal_slice(
         constraints = jnp.where(
             strict, constraint_x > constraint, constraint_x >= constraint
         )
-        constraints = jnp.append(constraints, logdensity_x >= log_slice_height)
+        constraints = jnp.append(constraints, logdensity_x >= state.logslice)
         within = jnp.all(constraints)
         n += 1
         return within, s, t, n
@@ -289,7 +283,7 @@ def horizontal_slice(
         constraints = jnp.where(
             strict, constraint_x > constraint, constraint_x >= constraint
         )
-        constraints = jnp.append(constraints, logdensity_x >= log_slice_height)
+        constraints = jnp.append(constraints, logdensity_x >= state.logslice)
         within = jnp.all(constraints)
 
         l = jnp.where(u < 0, u, l)
