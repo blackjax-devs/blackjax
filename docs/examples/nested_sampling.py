@@ -1,26 +1,27 @@
-import distrax
 import jax
 import jax.numpy as jnp
 import tqdm
 from jax.scipy.linalg import inv, solve
 
 import blackjax
-from blackjax.ns.utils import log_weights
+from blackjax.ns.utils import finalise, log_weights
 
 # jax.config.update("jax_enable_x64", True)
 
 rng_key = jax.random.PRNGKey(0)
-d = 20
+d = 5
 
 C = jax.random.normal(rng_key, (d, d)) * 0.1
 like_cov = C @ C.T
 like_mean = jax.random.normal(rng_key, (d,))
 prior_mean = jnp.zeros(d)
 prior_cov = jnp.eye(d) * 1
-prior = distrax.MultivariateNormalDiag(loc=jnp.zeros(d), scale_diag=jnp.diag(prior_cov))
+logprior_fn = lambda x: jax.scipy.stats.multivariate_normal.logpdf(
+    x, prior_mean, prior_cov
+)
 
 
-def loglikelihood(x):
+def loglikelihood_fn(x):
     return jax.scipy.stats.multivariate_normal.logpdf(x, mean=like_mean, cov=like_cov)
 
 
@@ -44,7 +45,7 @@ log_analytic_evidence = compute_logZ(
     like_cov,
     mu_pi=prior_mean,
     Sigma_pi=prior_cov,
-    logLmax=loglikelihood(like_mean),
+    logLmax=loglikelihood_fn(like_mean),
 )
 
 ############################################
@@ -56,33 +57,25 @@ log_analytic_evidence = compute_logZ(
 
 # n_live is the number of live samples to draw initially and maintain through the run
 n_live = 500
-# n_delete is the number of samples to delete each outer kernel iteration, as the inner kernel is parallelised we do this
+# num_delete is the number of samples to delete each outer kernel iteration, as the inner kernel is parallelised we do this
 # to update all of these points in parallel, useful for GPU acceleration hopefully.
-n_delete = 20
-# num_mcmc_steps is the number of MCMC steps to perform with the inner kernel in order to decorrelate the resampled points
+num_delete = 20
+# num_inner_steps is the number of MCMC steps to perform with the inner kernel in order to decorrelate the resampled points
 # we set this conservatively high here at 5 times the dimension of the parameter space
-num_mcmc_steps = d * 5
+num_inner_steps = d * 5
 
-algo = blackjax.ns.adaptive.nss(
-    logprior_fn=prior.log_prob,
-    loglikelihood_fn=loglikelihood,
-    n_delete=n_delete,
-    num_mcmc_steps=num_mcmc_steps,
+algo = blackjax.nss(
+    logprior_fn=logprior_fn,
+    loglikelihood_fn=loglikelihood_fn,
+    num_delete=num_delete,
+    num_inner_steps=num_inner_steps,
 )
 
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
-initial_particles = prior.sample(seed=init_key, sample_shape=(n_live,))
-state = algo.init(initial_particles, loglikelihood)
-
-
-@jax.jit
-def one_step(carry, xs):
-    state, k = carry
-    k, subk = jax.random.split(k, 2)
-    state, dead_point = algo.step(subk, state)
-    return (state, k), dead_point
-
+initial_particles = jax.random.multivariate_normal(
+    init_key, prior_mean, prior_cov, (n_live,)
+)
 
 # We can run the algorithm for a fixed number of steps but we run into a quirk of nested sampling here. The state after N iterations
 # does not necessarily contain any useful posterior points, it will have accumulated an estimate of the marginal likelihood, and this
@@ -98,25 +91,30 @@ def one_step(carry, xs):
 # how we will reconstruct posterior points, but the lax while loop wrapper won't accumulate well. So we will jit compile the outer step
 # and run it in a python loop
 
+live = algo.init(initial_particles)
+step_fn = jax.jit(algo.step)
 dead = []
+# with jax.disable_jit():
 for _ in tqdm.trange(1000):
     # We track the estimate of the evidence in the live points as logZ_live, and the accumulated sum across all steps in logZ
     # this gives a handy termination that allows us to stop early
-    if state.sampler_state.logZ_live - state.sampler_state.logZ < -3:  # type: ignore[attr-defined]
+    if live.logZ_live - live.logZ < -3:  # type: ignore[attr-defined]
         break
-    (state, rng_key), dead_info = one_step((state, rng_key), None)
+    rng_key, subkey = jax.random.split(rng_key, 2)
+    live, dead_info = step_fn(subkey, live)
     dead.append(dead_info)
 
 # It is now not too bad to remap the list of NSInfos into a single instance
 # note in theory we should include the live points, but assuming we have done things correctly and hit the termination criteria,
 # they will contain negligible weight
-dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
+# dead = jax.tree.map(lambda *args: jnp.concatenate(args), *dead)
 
 # From here we can use the utils to compute the log weights and the evidence of the accumulated dead points
 # sampling log weights lets us get a sensible error on the evidence estimate
-logw = log_weights(rng_key, dead)  # type: ignore[arg-type]
+nested_samples = finalise(live, dead)
+logw = log_weights(rng_key, nested_samples)
 logZs = jax.scipy.special.logsumexp(logw, axis=0)
 
 print(f"Analytic evidence: {log_analytic_evidence:.2f}")
-print(f"Runtime evidence: {state.sampler_state.logZ:.2f}")  # type: ignore[attr-defined]
+print(f"Runtime evidence: {live.logZ:.2f}")  # type: ignore[attr-defined]
 print(f"Estimated evidence: {logZs.mean():.2f} +- {logZs.std():.2f}")

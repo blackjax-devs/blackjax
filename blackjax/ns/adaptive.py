@@ -1,195 +1,156 @@
-from functools import partial
-from typing import Callable, Dict
+# Copyright 2020- The Blackjax Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Adaptive Nested Sampling for BlackJAX.
+
+This module provides an adaptive version of the Nested Sampling algorithm.
+In this variant, the parameters of the inner kernel, which is used to
+sample new live points, are updated (tuned) at each iteration of the
+Nested Sampling loop. This adaptation is based on the information from the
+current set of live particles or the history of the sampling process,
+allowing the kernel to adjust to the changing characteristics of the
+constrained prior distribution as the likelihood threshold increases.
+"""
+
+from typing import Callable, Dict, Optional
 
 import jax.numpy as jnp
 
-from blackjax import SamplingAlgorithm
 from blackjax.ns.base import NSInfo, NSState
-from blackjax.ns.base import build_kernel as base_ns
-from blackjax.ns.base import delete_fn
-from blackjax.ns.base import init as init_base
-from blackjax.ns.vectorized_slice import build_kernel as slice_kernel
-from blackjax.ns.vectorized_slice import init as slice_init
-from blackjax.smc.inner_kernel_tuning import StateWithParameterOverride
-from blackjax.smc.tuning.from_particles import particles_covariance_matrix
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.ns.base import build_kernel as base_build_kernel
+from blackjax.ns.base import init as base_init
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["init", "as_top_level_api", "build_kernel", "nss"]
+__all__ = ["init", "build_kernel"]
 
 
-def init(position, loglikelihood_fn, parameter_update_function):
-    state = init_base(position, loglikelihood_fn)
-    initial_parameter_value = parameter_update_function(
-        state, NSInfo(state, state, state, None)
-    )
-    return StateWithParameterOverride(state, initial_parameter_value)
+def init(
+    particles: ArrayLikeTree,
+    logprior_fn: Callable,
+    loglikelihood_fn: Callable,
+    loglikelihood_birth: Array = -jnp.nan,
+    update_inner_kernel_params_fn: Optional[Callable] = None,
+) -> NSState:
+    """Initializes the Nested Sampler state.
+
+    Parameters
+    ----------
+    particles
+        An initial set of particles (PyTree of arrays) drawn from the prior
+        distribution. The leading dimension of each leaf array must be equal to
+        the number of particles.
+    loglikelihood_fn
+        A function that computes the log-likelihood of a single particle.
+    logprior_fn
+        A function that computes the log-prior of a single particle.
+    loglikelihood_birth
+        The initial log-likelihood birth threshold. Defaults to -NaN, which
+        implies no initial likelihood constraint beyond the prior.
+    update_inner_kernel_params_fn
+        A function that takes the `NSState`, `NSInfo` from the completed NS
+        step, and the current inner kernel parameters dictionary, and returns
+        a dictionary of parameters to be used for the kernel in the *next* NS step.
+
+    Returns
+    -------
+    NSState
+        The initial state of the Nested Sampler.
+    """
+    state = base_init(particles, logprior_fn, loglikelihood_fn, loglikelihood_birth)
+    if update_inner_kernel_params_fn is not None:
+        inner_kernel_params = update_inner_kernel_params_fn(state, None, {})
+        state = state._replace(inner_kernel_params=inner_kernel_params)
+    return state
 
 
 def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
-    mcmc_step_fn: Callable,
-    mcmc_init_fn: Callable,
-    mcmc_parameter_update_fn: Callable,
-    num_mcmc_steps: int,
+    inner_kernel: Callable,
+    update_inner_kernel_params_fn: Callable[
+        [NSState, NSInfo, Dict[str, ArrayTree]], Dict[str, ArrayTree]
+    ],
 ) -> Callable:
-    r"""Build an adaptive Nested Sampling kernel. Tunes the inner kernel parameters
-    at each iteration.
+    """Build an adaptive Nested Sampling kernel.
+
+    This kernel extends the base Nested Sampling kernel by re-computing/tuning
+    the parameters for the inner kernel at each step. The `update_inner_kernel_params_fn`
+    is called after each NS step to determine the parameters for the *next* NS
+    step.
 
     Parameters
     ----------
-    logprior_fn : Callable
-        A function that computes the log prior probability.
-    loglikelihood_fn : Callable
-        A function that computes the log likelihood.
-    delete_fn : Callable
-        Function that takes an array of log likelihoods and marks particles for deletion and updates.
-    mcmc_step_fn:
-        The initialisation of the transition kernel, should take as parameters.
-        kernel = mcmc_step_fn(logprior, loglikelihood, logL0 (likelihood threshold), **mcmc_parameter_update_fn())
-    mcmc_init_fn
-        A callable that initializes the inner kernel
-    mcmc_parameter_update_fn : Callable[[NSState, NSInfo], Dict[str, ArrayTree]]
-        Function that updates the parameters of the inner kernel.
-    num_mcmc_steps: int
-        Number of MCMC steps to perform. Recommended is 5 times the dimension of the parameter space.
+    logprior_fn
+        A function that computes the log-prior probability of a single particle.
+    loglikelihood_fn
+        A function that computes the log-likelihood of a single particle.
+    delete_fn
+        this particle deletion function has the signature
+        `(rng_key, current_state) -> (dead_idx, target_update_idx, start_idx)`
+        and identifies particles to be deleted, particles to be updated, and
+        selects live particles to be starting points for the inner kernel
+        for new particle generation.
+    inner_kernel
+        This kernel function has the signature
+        `(rng_key, inner_state, logprior_fn, loglikelihood_fn, loglikelihood_0, inner_kernel_params) -> (new_inner_state, inner_info)`,
+        and is used to generate new particles.
+    update_inner_kernel_params_fn
+        A function that takes the `NSState`, `NSInfo` from the completed NS
+        step, and the current inner kernel parameters dictionary, and returns
+        a dictionary of parameters to be used for the kernel in the *next* NS step.
 
     Returns
     -------
     Callable
-        A function that takes a rng_key and a NSState that contains the current state
-        of the chain and returns a new state of the chain along with
-        information about the transition.
+        A kernel function for adaptive Nested Sampling. It takes an `rng_key` and the
+        current `NSState` and returns a tuple containing the new `NSState` and
+        the `NSInfo` for the step.
     """
 
-    def kernel(
-        rng_key: PRNGKey,
-        state: StateWithParameterOverride,
-    ) -> tuple[StateWithParameterOverride, NSInfo]:
-        step_fn = base_ns(
-            logprior_fn,
-            loglikelihood_fn,
-            delete_fn,
-            mcmc_step_fn,
-            mcmc_init_fn,
-            num_mcmc_steps,
+    base_kernel = base_build_kernel(
+        logprior_fn,
+        loglikelihood_fn,
+        delete_fn,
+        inner_kernel,
+    )
+
+    def kernel(rng_key: PRNGKey, state: NSState) -> tuple[NSState, NSInfo]:
+        """Performs one step of adaptive Nested Sampling.
+
+        This involves running a step of the base Nested Sampling algorithm using
+        the current inner kernel parameters, and then updating these parameters
+        for the next step.
+
+        Parameters
+        ----------
+        rng_key
+            A JAX PRNG key.
+        state
+            The current `NSState`.
+
+        Returns
+        -------
+        tuple[NSState, NSInfo]
+            A tuple with the new `NSState` (including updated inner kernel
+            parameters) and the `NSInfo` for this step.
+        """
+        new_state, info = base_kernel(rng_key, state)
+
+        inner_kernel_params = update_inner_kernel_params_fn(
+            new_state, info, new_state.inner_kernel_params
         )
-        new_state, info = step_fn(
-            rng_key, state.sampler_state, state.parameter_override
-        )
-        new_parameter_override = mcmc_parameter_update_fn(new_state, info)
-        return (
-            StateWithParameterOverride(new_state, new_parameter_override),
-            info,
-        )
+        new_state = new_state._replace(inner_kernel_params=inner_kernel_params)
+        return new_state, info
 
     return kernel
-
-
-def as_top_level_api(
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    mcmc_step_fn: Callable,
-    mcmc_init_fn: Callable,
-    mcmc_parameter_update_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
-    num_mcmc_steps: int,
-    n_delete: int = 1,
-) -> SamplingAlgorithm:
-    """Implements the (basic) user interface for the Adaptive Nested Sampling kernel.
-
-    Parameters
-    ----------
-    logprior_fn : Callable
-        A function that computes the log prior probability.
-    loglikelihood_fn : Callable
-        A function that computes the log likelihood.
-    mcmc_step_fn:
-        The initialisation of the transition kernel, should take as parameters.
-        kernel = mcmc_step_fn(logprior, loglikelihood, logL0 (likelihood threshold), **mcmc_parameter_update_fn())
-    mcmc_init_fn
-        A callable that initializes the inner kernel
-    mcmc_parameter_update_fn : Callable[[NSState, NSInfo], Dict[str, ArrayTree]]
-        A function that updates the parameters given the current state and info.
-    num_mcmc_steps: int
-        Number of MCMC steps to perform. Recommended is 5 times the dimension of the parameter space.
-    n_delete : int, optional
-        Number of particles to delete in each iteration. Default is 1.
-
-    Returns
-    -------
-    SamplingAlgorithm
-        A sampling algorithm object.
-    """
-    delete_func = partial(delete_fn, n_delete=n_delete)
-
-    kernel = build_kernel(
-        logprior_fn,
-        loglikelihood_fn,
-        delete_func,
-        mcmc_step_fn,
-        mcmc_init_fn,
-        mcmc_parameter_update_fn,
-        num_mcmc_steps,
-    )
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, loglikelihood_fn, mcmc_parameter_update_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state)
-
-    return SamplingAlgorithm(init_fn, step_fn)
-
-
-def nss(
-    logprior_fn: Callable,
-    loglikelihood_fn: Callable,
-    num_mcmc_steps: int,
-    n_delete: int = 1,
-) -> SamplingAlgorithm:
-    """Implements the a baseline Nested Slice Sampling kernel.
-
-    Parameters
-    ----------
-    logprior_fn: Callable
-        A function that computes the log prior probability.
-    loglikelihood_fn: Callable
-        A function that computes the log likelihood.
-    num_mcmc_steps: int
-        Number of MCMC steps to perform. Recommended is 5 times the dimension of the parameter space.
-    n_delete: int, optional
-        Number of particles to delete in each iteration. Default is 1.
-
-    Returns
-    -------
-    SamplingAlgorithm
-        A sampling algorithm object.
-    """
-    delete_func = partial(delete_fn, n_delete=n_delete)
-    mcmc_step_fn = slice_kernel
-    mcmc_init_fn = slice_init
-
-    def parameter_update_fn(state, _):
-        cov = jnp.atleast_2d(particles_covariance_matrix(state.particles))
-        return {"cov": cov}
-
-    kernel = build_kernel(
-        logprior_fn,
-        loglikelihood_fn,
-        delete_func,
-        mcmc_step_fn,
-        mcmc_init_fn,
-        parameter_update_fn,
-        num_mcmc_steps,
-    )
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, loglikelihood_fn, parameter_update_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state)
-
-    return SamplingAlgorithm(init_fn, step_fn)

@@ -22,12 +22,14 @@ from .mcmc import mclmc as _mclmc
 from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk
 from .mcmc import rmhmc as _rmhmc
+from .mcmc import ss
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
     irmh_as_top_level_api,
     normal_random_walk,
     rmh_as_top_level_api,
 )
+from .ns import nss as _nss
 from .optimizers import dual_averaging, lbfgs
 from .sgmcmc import csgld as _csgld
 from .sgmcmc import sghmc as _sghmc
@@ -37,7 +39,6 @@ from .smc import adaptive_tempered
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import partial_posteriors_path as _partial_posteriors_smc
 from .smc import tempered
-from .ns import adaptive
 from .vi import meanfield_vi as _meanfield_vi
 from .vi import pathfinder as _pathfinder
 from .vi import schrodinger_follmer as _schrodinger_follmer
@@ -110,6 +111,8 @@ additive_step_random_walk = GenerateSamplingAPI(
 
 additive_step_random_walk.register_factory("normal_random_walk", normal_random_walk)
 
+hrss = GenerateSamplingAPI(ss.hrss_as_top_level_api, ss.init, ss.build_kernel)
+
 mclmc = generate_top_level_api_from(_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
 ghmc = generate_top_level_api_from(_ghmc)
@@ -123,7 +126,7 @@ tempered_smc = generate_top_level_api_from(tempered)
 inner_kernel_tuning = generate_top_level_api_from(_inner_kernel_tuning)
 partial_posteriors_smc = generate_top_level_api_from(_partial_posteriors_smc)
 
-adaptive_ns = generate_top_level_api_from(adaptive)
+nss = generate_top_level_api_from(_nss)
 
 smc_family = [tempered_smc, adaptive_tempered_smc, partial_posteriors_smc]
 "Step_fn returning state has a .particles attribute"
