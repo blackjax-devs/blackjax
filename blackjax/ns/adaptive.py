@@ -22,7 +22,7 @@ allowing the kernel to adjust to the changing characteristics of the
 constrained prior distribution as the likelihood threshold increases.
 """
 
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 import jax.numpy as jnp
 
@@ -39,7 +39,7 @@ def init(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     loglikelihood_birth: Array = -jnp.nan,
-    update_inner_kernel_params_fn: Callable = None,
+    update_inner_kernel_params_fn: Optional[Callable] = None,
 ) -> NSState:
     """Initializes the Nested Sampler state.
 
@@ -57,9 +57,9 @@ def init(
         The initial log-likelihood birth threshold. Defaults to -NaN, which
         implies no initial likelihood constraint beyond the prior.
     update_inner_kernel_params_fn
-        A function that takes the `NSState` and `NSInfo` from the completed NS
-        step and returns a dictionary of parameters to be used for the kernel
-        in the *next* NS step.
+        A function that takes the `NSState`, `NSInfo` from the completed NS
+        step, and the current inner kernel parameters dictionary, and returns
+        a dictionary of parameters to be used for the kernel in the *next* NS step.
 
     Returns
     -------
@@ -67,8 +67,9 @@ def init(
         The initial state of the Nested Sampler.
     """
     state = base_init(particles, logprior_fn, loglikelihood_fn, loglikelihood_birth)
-    inner_kernel_params = update_inner_kernel_params_fn(state, None, {})
-    state = state._replace(inner_kernel_params=inner_kernel_params)
+    if update_inner_kernel_params_fn is not None:
+        inner_kernel_params = update_inner_kernel_params_fn(state, None, {})
+        state = state._replace(inner_kernel_params=inner_kernel_params)
     return state
 
 
@@ -76,9 +77,10 @@ def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
-    inner_init_fn: Callable,
     inner_kernel: Callable,
-    update_inner_kernel_params_fn: Callable[[NSState, NSInfo], Dict[str, ArrayTree]],
+    update_inner_kernel_params_fn: Callable[
+        [NSState, NSInfo, Dict[str, ArrayTree]], Dict[str, ArrayTree]
+    ],
 ) -> Callable:
     """Build an adaptive Nested Sampling kernel.
 
@@ -94,22 +96,19 @@ def build_kernel(
     loglikelihood_fn
         A function that computes the log-likelihood of a single particle.
     delete_fn
-        A function `(rng_key, current_ns_state) -> (dead_indices,
-        live_indices_for_resampling)` that identifies particles to be deleted
-        and selects live particles to be starting points for new particle
-        generation.
-    inner_init_fn
-        This kernel initialisation function has the signature
-        `(initial_position, logdensity_fn) -> inner_state`
-        and is used to initialize the state for the inner kernel.
+        this particle deletion function has the signature
+        `(rng_key, current_state) -> (dead_idx, target_update_idx, start_idx)`
+        and identifies particles to be deleted, particles to be updated, and
+        selects live particles to be starting points for the inner kernel
+        for new particle generation.
     inner_kernel
         This kernel function has the signature
-        `(rng_key, inner_state, logdensity_fn) -> (new_inner_state, inner_info)`,
+        `(rng_key, inner_state, logprior_fn, loglikelihood_fn, loglikelihood_0, inner_kernel_params) -> (new_inner_state, inner_info)`,
         and is used to generate new particles.
     update_inner_kernel_params_fn
-        A function that takes the `NSState` and `NSInfo` from the completed NS
-        step and returns a dictionary of parameters to be used for the kernel
-        in the *next* NS step.
+        A function that takes the `NSState`, `NSInfo` from the completed NS
+        step, and the current inner kernel parameters dictionary, and returns
+        a dictionary of parameters to be used for the kernel in the *next* NS step.
 
     Returns
     -------
@@ -123,7 +122,6 @@ def build_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
-        inner_init_fn,
         inner_kernel,
     )
 

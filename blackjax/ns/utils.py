@@ -19,6 +19,7 @@ and post-processing of results.
 """
 
 import functools
+from typing import Callable, Dict, Tuple
 
 import jax
 import jax.numpy as jnp
@@ -27,7 +28,7 @@ from blackjax.ns.base import NSInfo, NSState
 from blackjax.types import Array, ArrayTree, PRNGKey
 
 
-def log1mexp(x):
+def log1mexp(x: Array) -> Array:
     """Computes log(1 - exp(x)) in a numerically stable way.
 
     This function implements the algorithm from Mächler (2012) [1]_ for computing
@@ -57,7 +58,7 @@ def log1mexp(x):
     )
 
 
-def compute_nlive(info: NSInfo) -> Array:
+def compute_num_live(info: NSInfo) -> Array:
     """Compute the effective number of live points at each death contour.
 
     In Nested Sampling, especially with batch deletions (k > 1), the conceptual
@@ -85,7 +86,7 @@ def compute_nlive(info: NSInfo) -> Array:
     Returns
     -------
     Array
-        An array where each element `nlive[j]` is the effective number of live
+        An array where each element `num_live[j]` is the effective number of live
         points `m*_i` when the j-th particle (in the sorted list of dead particles)
         was considered "dead".
     """
@@ -109,9 +110,9 @@ def compute_nlive(info: NSInfo) -> Array:
     cumsum = jnp.cumsum(sorted_n_col)
     cumsum = jnp.maximum(cumsum, 0)
     death_mask_sorted = sorted_n_col == -1
-    nlive = cumsum[death_mask_sorted] + 1
+    num_live = cumsum[death_mask_sorted] + 1
 
-    return nlive
+    return num_live
 
 
 def logX(rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100) -> tuple[Array, Array]:
@@ -153,8 +154,8 @@ def logX(rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100) -> tuple[Array, 
         ).clip(min_val, 1 - min_val)
     )
 
-    nlive = compute_nlive(dead_info)
-    t = r / nlive[:, jnp.newaxis]
+    num_live = compute_num_live(dead_info)
+    t = r / num_live[:, jnp.newaxis]
     logX = jnp.cumsum(t, axis=0)
 
     logXp = jnp.concatenate([jnp.zeros((1, logX.shape[1])), logX[:-1]], axis=0)
@@ -230,11 +231,11 @@ def finalise(live: NSState, dead: list[NSInfo]) -> NSInfo:
     """
 
     all_pytrees_to_combine = dead + [
-        NSInfo(  # Assuming NSInfo is your constructor
-            live.particles,  # type: ignore
-            live.loglikelihood,  # type: ignore
-            live.loglikelihood_birth,  # type: ignore
-            live.logprior,  # type: ignore
+        NSInfo(
+            live.particles,
+            live.loglikelihood,
+            live.loglikelihood_birth,
+            live.logprior,
             dead[-1].inner_kernel_info,
         )
     ]
@@ -348,7 +349,9 @@ def repeat_kernel(num_repeats: int):
     return decorator
 
 
-def uniform_prior(rng_key, num_live: int, bounds: dict[str, tuple[float, float]]):
+def uniform_prior(
+    rng_key: PRNGKey, num_live: int, bounds: Dict[str, Tuple[float, float]]
+) -> Tuple[ArrayTree, Callable]:
     """Helper function to create a uniform prior for parameters.
 
     This function generates a set of initial parameter samples uniformly

@@ -32,7 +32,7 @@ Available modules:
            Sampling results.
 
 """
-from . import adaptive, nss, base, utils
+from . import adaptive, base, nss, utils
 
 __all__ = [
     "adaptive",

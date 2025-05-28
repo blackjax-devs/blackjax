@@ -24,22 +24,24 @@ set of live particles.
 """
 
 from functools import partial
-from typing import Callable, Dict
+from typing import Callable, Dict, Optional
 
 import jax
+import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax import SamplingAlgorithm
+from blackjax.mcmc.ss import SliceState
 from blackjax.mcmc.ss import build_kernel as build_slice_kernel
-from blackjax.mcmc.ss import (
-    default_generate_slice_direction_fn as ss_default_generate_slice_direction_fn,
-)
 from blackjax.mcmc.ss import default_stepper_fn
-from blackjax.mcmc.ss import init as slice_init
+from blackjax.mcmc.ss import (
+    sample_direction_from_covariance as ss_sample_direction_from_covariance,
+)
 from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
 from blackjax.ns.adaptive import init
 from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import delete_fn as default_delete_fn
+from blackjax.ns.base import new_state_and_info
 from blackjax.ns.utils import get_first_row, repeat_kernel
 from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
@@ -54,8 +56,8 @@ __all__ = [
 ]
 
 
-def default_generate_slice_direction_fn(
-    rng_key: PRNGKey, params: ArrayTree
+def sample_direction_from_covariance(
+    rng_key: PRNGKey, params: Dict[str, ArrayTree]
 ) -> ArrayTree:
     """Default function to generate a normalized slice direction for NSS.
 
@@ -84,7 +86,7 @@ def default_generate_slice_direction_fn(
         Keyword arguments, must contain:
         - `cov`: A PyTree (structured like a particle) whose leaves are rows
                  of the covariance matrix, typically output by
-                 `default_adapt_direction_params_fn`.
+                 `compute_covariance_from_particles`.
 
     Returns
     -------
@@ -96,14 +98,14 @@ def default_generate_slice_direction_fn(
     row = get_first_row(cov)
     _, unravel_fn = ravel_pytree(row)
     cov = particles_as_rows(cov)
-    d = ss_default_generate_slice_direction_fn(rng_key, cov)
+    d = ss_sample_direction_from_covariance(rng_key, cov)
     return unravel_fn(d)
 
 
-def default_adapt_direction_params_fn(
+def compute_covariance_from_particles(
     state: NSState,
     info: NSInfo,
-    inner_kernel_params: Dict[str, ArrayTree] = None,
+    inner_kernel_params: Optional[Dict[str, ArrayTree]] = None,
 ) -> Dict[str, ArrayTree]:
     """Default function to adapt/tune the slice direction proposal parameters.
 
@@ -131,10 +133,11 @@ def default_adapt_direction_params_fn(
         `cov_pytree` is equivalent to `jax.vmap(unravel_fn)(M_flat)`.
         This means each leaf of `cov_pytree` will have a shape `(D, *leaf_original_dims)`.
     """
-    cov = particles_covariance_matrix(state.particles)
+    cov_matrix = particles_covariance_matrix(state.particles)
     single_particle = get_first_row(state.particles)
     _, unravel_fn = ravel_pytree(single_particle)
-    return {"cov": jax.vmap(unravel_fn)(cov)}
+    cov_pytree = jax.vmap(unravel_fn)(cov_matrix)
+    return {"cov": cov_pytree}
 
 
 def build_kernel(
@@ -143,10 +146,11 @@ def build_kernel(
     num_inner_steps: int,
     num_delete: int = 1,
     stepper_fn: Callable = default_stepper_fn,
-    adapt_direction_params_fn: Callable = default_adapt_direction_params_fn,
-    generate_slice_direction_fn: Callable = default_generate_slice_direction_fn,
+    adapt_direction_params_fn: Callable = compute_covariance_from_particles,
+    generate_slice_direction_fn: Callable = sample_direction_from_covariance,
 ) -> Callable:
     """Builds the Nested Slice Sampling kernel.
+
     This function creates a Nested Slice Sampling kernel that uses
     Hit-and-Run Slice Sampling (HRSS) as its inner kernel. The parameters
     for the HRSS direction proposal (specifically, the covariance matrix)
@@ -166,34 +170,57 @@ def build_kernel(
         Defaults to 1.
     stepper_fn
         The stepper function `(x, direction, t) -> x_new` for the HRSS kernel.
-        Defaults to `default_stepper`.
+        Defaults to `default_stepper_fn`.
     adapt_direction_params_fn
         A function `(ns_state, ns_info) -> dict_of_params` that computes/adapts
         the parameters (e.g., covariance matrix) for the slice direction proposal,
-        based on the current NS state. Defaults to `default_train_fn`.
+        based on the current NS state. Defaults to `compute_covariance_from_particles`.
     generate_slice_direction_fn
         A function `(rng_key, **params) -> direction_pytree` that generates a
         normalized direction for HRSS, using parameters from `adapt_direction_params_fn`.
-        Defaults to `default_generate_slice_direction_fn`.
+        Defaults to `sample_direction_from_covariance`.
 
+    Returns
+    -------
+    Callable
+        A kernel function for Nested Slice Sampling that takes an `rng_key` and
+        the current `NSState` and returns a tuple containing the new `NSState` and
+        the `NSInfo` for the step.
     """
 
     slice_kernel = build_slice_kernel(stepper_fn)
 
     @repeat_kernel(num_inner_steps)
-    def inner_kernel(rng_key, state, logdensity_fn, params):
+    def inner_kernel(
+        rng_key, state, logprior_fn, loglikelihood_fn, loglikelihood_0, params
+    ):
+        # Do constrained slice sampling
+        slice_state = SliceState(position=state.position, logdensity=state.logprior)
         rng_key, prop_key = jax.random.split(rng_key, 2)
         d = generate_slice_direction_fn(prop_key, params)
-        return slice_kernel(rng_key, state, logdensity_fn, d)
+        logdensity_fn = logprior_fn
+        constraint_fn = lambda x: jnp.array([loglikelihood_fn(x)])
+        constraint = jnp.array([loglikelihood_0])
+        strict = jnp.array([True])
+        new_slice_state, slice_info = slice_kernel(
+            rng_key, slice_state, logdensity_fn, d, constraint_fn, constraint, strict
+        )
+
+        # Pass the relevant information back to PartitionedState and PartitionedInfo
+        return new_state_and_info(
+            position=new_slice_state.position,
+            logprior=new_slice_state.logdensity,
+            loglikelihood=slice_info.constraint[0],
+            info=slice_info,
+        )
 
     delete_fn = partial(default_delete_fn, num_delete=num_delete)
-    inner_init_fn = slice_init
+
     update_inner_kernel_params_fn = adapt_direction_params_fn
     kernel = build_adaptive_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
-        inner_init_fn,
         inner_kernel,
         update_inner_kernel_params_fn,
     )
@@ -206,8 +233,8 @@ def as_top_level_api(
     num_inner_steps: int,
     num_delete: int = 1,
     stepper_fn: Callable = default_stepper_fn,
-    adapt_direction_params_fn: Callable = default_adapt_direction_params_fn,
-    generate_slice_direction_fn: Callable = default_generate_slice_direction_fn,
+    adapt_direction_params_fn: Callable = compute_covariance_from_particles,
+    generate_slice_direction_fn: Callable = sample_direction_from_covariance,
 ) -> SamplingAlgorithm:
     """Creates an adaptive Nested Slice Sampling (NSS) algorithm.
 
@@ -234,11 +261,11 @@ def as_top_level_api(
     adapt_direction_params_fn
         A function `(ns_state, ns_info) -> dict_of_params` that computes/adapts
         the parameters (e.g., covariance matrix) for the slice direction proposal,
-        based on the current NS state. Defaults to `default_train_fn`.
+        based on the current NS state. Defaults to `compute_covariance_from_particles`.
     generate_slice_direction_fn
         A function `(rng_key, **params) -> direction_pytree` that generates a
         normalized direction for HRSS, using parameters from `adapt_direction_params_fn`.
-        Defaults to `default_generate_slice_direction_fn`.
+        Defaults to `sample_direction_from_covariance`.
 
     Returns
     -------
@@ -265,4 +292,4 @@ def as_top_level_api(
     )
     step_fn = kernel
 
-    return SamplingAlgorithm(init_fn, step_fn)  # type: ignore
+    return SamplingAlgorithm(init_fn, step_fn)
