@@ -82,25 +82,6 @@ class NSState(NamedTuple):
     inner_kernel_params: Dict  # Parameters for the inner kernel
 
 
-class NSInnerState(NamedTuple):
-    """State of the inner kernel used in Nested Sampling.
-
-    Attributes
-    ----------
-    position
-        A PyTree of arrays representing the current positions of the particles
-        in the inner kernel.
-    logprior
-        An array of log-prior values for the particles in the inner kernel.
-    loglikelihood
-        An array of log-likelihood values for the particles in the inner kernel.
-    """
-
-    position: ArrayLikeTree  # Current positions of particles in the inner kernel
-    logprior: Array  # Log-prior values for particles in the inner kernel
-    loglikelihood: Array  # Log-likelihood values for particles in the inner kernel
-
-
 class NSInfo(NamedTuple):
     """Additional information returned at each step of the Nested Sampling algorithm.
 
@@ -126,6 +107,34 @@ class NSInfo(NamedTuple):
     loglikelihood_birth: Array  # The log-likelihood threshold at particle birth
     logprior: Array  # The log-prior density of the particles
     inner_kernel_info: NamedTuple  # Information from the inner kernel update step
+
+
+class NSInnerState(NamedTuple):
+    """State of the inner kernel used in Nested Sampling.
+
+    Attributes
+    ----------
+    position
+        A PyTree of arrays representing the current positions of the particles
+        in the inner kernel.
+    logprior
+        An array of log-prior values for the particles in the inner kernel.
+    loglikelihood
+        An array of log-likelihood values for the particles in the inner kernel.
+    """
+
+    position: ArrayLikeTree  # Current positions of particles in the inner kernel
+    logprior: Array  # Log-prior values for particles in the inner kernel
+    loglikelihood: Array  # Log-likelihood values for particles in the inner kernel
+
+
+class NSInnerInfo(NamedTuple):
+    """Information about a single step in the Nested Slice Sampling algorithm."""
+
+    position: ArrayTree
+    logprior: ArrayTree
+    loglikelihood: ArrayTree
+    info: NamedTuple  # Additional information from the inner kernel step
 
 
 def init(

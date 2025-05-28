@@ -39,7 +39,7 @@ from blackjax.mcmc.ss import (
 )
 from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
 from blackjax.ns.adaptive import init
-from blackjax.ns.base import NSInfo, NSState
+from blackjax.ns.base import NSInfo, NSState, NSInnerInfo, NSInnerState
 from blackjax.ns.base import delete_fn as default_delete_fn
 from blackjax.ns.utils import get_first_row, repeat_kernel
 from blackjax.smc.tuning.from_particles import (
@@ -53,17 +53,6 @@ __all__ = [
     "as_top_level_api",
     "build_kernel",
 ]
-
-
-class NSSInnerInfo(NamedTuple):
-    """Information about a single step in the Nested Slice Sampling algorithm."""
-
-    position: ArrayTree
-    logprior: ArrayTree
-    loglikelihood: ArrayTree
-    l_steps: int
-    r_steps: int
-    s_steps: int
 
 
 def sample_direction_from_covariance(
@@ -198,7 +187,7 @@ def build_kernel(
         rng_key, state, logprior_fn, loglikelihood_fn, loglikelihood_0, params
     ):
         # Get the relevant information from the NSState
-        slice_state = SliceState(position=state.position, logdensity=state.logprior)
+        inner_state = SliceState(position=state.position, logdensity=state.logprior)
 
         # Do constrained slice sampling
         rng_key, prop_key = jax.random.split(rng_key, 2)
@@ -207,23 +196,21 @@ def build_kernel(
         constraint_fn = lambda x: jnp.array([loglikelihood_fn(x)])
         constraint = jnp.array([loglikelihood_0])
         strict = jnp.array([True])
-        slice_state, slice_info = slice_kernel(
-            rng_key, slice_state, logdensity_fn, d, constraint_fn, constraint, strict
+        new_inner_state, inner_info = slice_kernel(
+            rng_key, inner_state, logdensity_fn, d, constraint_fn, constraint, strict
         )
 
-        # Pass the relevant information back to NSInnerState and NSSInnerInfo
-        new_state = state._replace(
-            position=slice_state.position,
-            logprior=slice_state.logdensity,
-            loglikelihood=slice_info.constraint[0],
+        # Pass the relevant information back to NSInnerState and NSInnerInfo
+        new_state = NSInnerState(
+            position=new_inner_state.position,
+            logprior=new_inner_state.logdensity,
+            loglikelihood=inner_info.constraint[0],
         )
-        info = NSSInnerInfo(
+        info = NSInnerInfo(
             position=new_state.position,
             logprior=new_state.logprior,
             loglikelihood=new_state.loglikelihood,
-            l_steps=slice_info.l_steps,
-            r_steps=slice_info.r_steps,
-            s_steps=slice_info.s_steps,
+            info=inner_info,
         )
         return new_state, info
 
