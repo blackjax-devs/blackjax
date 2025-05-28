@@ -77,7 +77,6 @@ def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
-    inner_init_fn: Callable,
     inner_kernel: Callable,
     update_inner_kernel_params_fn: Callable[
         [NSState, NSInfo, Dict[str, ArrayTree]], Dict[str, ArrayTree]
@@ -102,10 +101,6 @@ def build_kernel(
         and identifies particles to be deleted, particles to be updated, and
         selects live particles to be starting points for the inner kernel
         for new particle generation.
-    inner_init_fn
-        This kernel initialisation function has the signature
-        `(initial_position, logprior, loglikelihood) -> inner_state`
-        and is used to initialize the state for the inner kernel.
     inner_kernel
         This kernel function has the signature
         `(rng_key, inner_state, logprior_fn, loglikelihood_fn, loglikelihood_0, inner_kernel_params) -> (new_inner_state, inner_info)`,
@@ -127,7 +122,6 @@ def build_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
-        inner_init_fn,
         inner_kernel,
     )
 

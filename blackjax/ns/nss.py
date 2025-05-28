@@ -55,25 +55,6 @@ __all__ = [
 ]
 
 
-class NSSInnerState(NamedTuple):
-    """State of the inner kernel used in Nested Sampling.
-
-    Attributes
-    ----------
-    position
-        A PyTree of arrays representing the current positions of the particles
-        in the inner kernel.
-    logprior
-        An array of log-prior values for the particles in the inner kernel.
-    loglikelihood
-        An array of log-likelihood values for the particles in the inner kernel.
-    """
-
-    position: ArrayLikeTree  # Current positions of particles in the inner kernel
-    logprior: Array  # Log-prior values for particles in the inner kernel
-    loglikelihood: Array  # Log-likelihood values for particles in the inner kernel
-
-
 class NSSInnerInfo(NamedTuple):
     """Information about a single step in the Nested Slice Sampling algorithm."""
 
@@ -230,7 +211,7 @@ def build_kernel(
             rng_key, slice_state, logdensity_fn, d, constraint_fn, constraint, strict
         )
 
-        # Pass the relevant information back to NSSInnerState and NSSInnerInfo
+        # Pass the relevant information back to NSInnerState and NSSInnerInfo
         new_state = state._replace(
             position=slice_state.position,
             logprior=slice_state.logdensity,
@@ -248,18 +229,11 @@ def build_kernel(
 
     delete_fn = partial(default_delete_fn, num_delete=num_delete)
 
-    def inner_init_fn(position, logprior, loglikelihood):
-        """Initializes the inner kernel state for NSS."""
-        return NSSInnerState(
-            position=position, logprior=logprior, loglikelihood=loglikelihood
-        )
-
     update_inner_kernel_params_fn = adapt_direction_params_fn
     kernel = build_adaptive_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
-        inner_init_fn,
         inner_kernel,
         update_inner_kernel_params_fn,
     )

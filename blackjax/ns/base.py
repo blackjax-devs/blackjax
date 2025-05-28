@@ -82,6 +82,25 @@ class NSState(NamedTuple):
     inner_kernel_params: Dict  # Parameters for the inner kernel
 
 
+class NSInnerState(NamedTuple):
+    """State of the inner kernel used in Nested Sampling.
+
+    Attributes
+    ----------
+    position
+        A PyTree of arrays representing the current positions of the particles
+        in the inner kernel.
+    logprior
+        An array of log-prior values for the particles in the inner kernel.
+    loglikelihood
+        An array of log-likelihood values for the particles in the inner kernel.
+    """
+
+    position: ArrayLikeTree  # Current positions of particles in the inner kernel
+    logprior: Array  # Log-prior values for particles in the inner kernel
+    loglikelihood: Array  # Log-likelihood values for particles in the inner kernel
+
+
 class NSInfo(NamedTuple):
     """Additional information returned at each step of the Nested Sampling algorithm.
 
@@ -168,7 +187,6 @@ def build_kernel(
     logprior_fn: Callable,
     loglikelihood_fn: Callable,
     delete_fn: Callable,
-    inner_init_fn: Callable,
     inner_kernel: Callable,
 ) -> Callable:
     """Build a generic Nested Sampling kernel.
@@ -203,10 +221,6 @@ def build_kernel(
         and identifies particles to be deleted, particles to be updated, and
         selects live particles to be starting points for the inner kernel
         for new particle generation.
-    inner_init_fn
-        This kernel initialisation function has the signature
-        `(initial_position, logprior, loglikelihood) -> inner_state`
-        and is used to initialize the state for the inner kernel.
     inner_kernel
         This kernel function has the signature
         `(rng_key, inner_state, logprior_fn, loglikelihood_fn, loglikelihood_0, params) -> (new_inner_state, inner_info)`,
@@ -235,7 +249,7 @@ def build_kernel(
         particles = jax.tree.map(lambda x: x[start_idx], state.particles)
         logprior = state.logprior[start_idx]
         loglikelihood = state.loglikelihood[start_idx]
-        inner_state = jax.vmap(inner_init_fn)(particles, logprior, loglikelihood)
+        inner_state = NSInnerState(particles, logprior, loglikelihood)
         step_fn = partial(
             inner_kernel,
             logprior_fn=logprior_fn,
