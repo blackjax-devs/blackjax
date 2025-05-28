@@ -231,11 +231,11 @@ def finalise(live: NSState, dead: list[NSInfo]) -> NSInfo:
     """
 
     all_pytrees_to_combine = dead + [
-        NSInfo(  # Assuming NSInfo is your constructor
-            live.particles,  # type: ignore
-            live.loglikelihood,  # type: ignore
-            live.loglikelihood_birth,  # type: ignore
-            live.logprior,  # type: ignore
+        NSInfo(
+            live.particles,
+            live.loglikelihood,
+            live.loglikelihood_birth,
+            live.logprior,
             dead[-1].inner_kernel_info,
         )
     ]

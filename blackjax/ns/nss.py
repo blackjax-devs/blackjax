@@ -24,7 +24,7 @@ set of live particles.
 """
 
 from functools import partial
-from typing import Callable, Dict, NamedTuple, Optional
+from typing import Callable, Dict, Optional
 
 import jax
 import jax.numpy as jnp
@@ -39,14 +39,15 @@ from blackjax.mcmc.ss import (
 )
 from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
 from blackjax.ns.adaptive import init
-from blackjax.ns.base import NSInfo, NSState, new_state_and_info
+from blackjax.ns.base import NSInfo, NSState
 from blackjax.ns.base import delete_fn as default_delete_fn
+from blackjax.ns.base import new_state_and_info
 from blackjax.ns.utils import get_first_row, repeat_kernel
 from blackjax.smc.tuning.from_particles import (
     particles_as_rows,
     particles_covariance_matrix,
 )
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayTree, PRNGKey
 
 __all__ = [
     "init",
@@ -149,7 +150,7 @@ def build_kernel(
     generate_slice_direction_fn: Callable = sample_direction_from_covariance,
 ) -> Callable:
     """Builds the Nested Slice Sampling kernel.
-    
+
     This function creates a Nested Slice Sampling kernel that uses
     Hit-and-Run Slice Sampling (HRSS) as its inner kernel. The parameters
     for the HRSS direction proposal (specifically, the covariance matrix)
@@ -291,4 +292,4 @@ def as_top_level_api(
     )
     step_fn = kernel
 
-    return SamplingAlgorithm(init_fn, step_fn)  # type: ignore
+    return SamplingAlgorithm(init_fn, step_fn)

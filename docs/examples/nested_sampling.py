@@ -4,7 +4,7 @@ import tqdm
 from jax.scipy.linalg import inv, solve
 
 import blackjax
-from blackjax.ns.utils import log_weights, finalise
+from blackjax.ns.utils import finalise, log_weights
 
 # jax.config.update("jax_enable_x64", True)
 
@@ -16,7 +16,9 @@ like_cov = C @ C.T
 like_mean = jax.random.normal(rng_key, (d,))
 prior_mean = jnp.zeros(d)
 prior_cov = jnp.eye(d) * 1
-logprior_fn = lambda x: jax.scipy.stats.multivariate_normal.logpdf(x, prior_mean, prior_cov)
+logprior_fn = lambda x: jax.scipy.stats.multivariate_normal.logpdf(
+    x, prior_mean, prior_cov
+)
 
 
 def loglikelihood_fn(x):
@@ -71,7 +73,9 @@ algo = blackjax.nss(
 
 rng_key, init_key, sample_key = jax.random.split(rng_key, 3)
 
-initial_particles = jax.random.multivariate_normal(init_key, prior_mean, prior_cov, (n_live,))
+initial_particles = jax.random.multivariate_normal(
+    init_key, prior_mean, prior_cov, (n_live,)
+)
 
 # We can run the algorithm for a fixed number of steps but we run into a quirk of nested sampling here. The state after N iterations
 # does not necessarily contain any useful posterior points, it will have accumulated an estimate of the marginal likelihood, and this
@@ -107,8 +111,8 @@ for _ in tqdm.trange(1000):
 
 # From here we can use the utils to compute the log weights and the evidence of the accumulated dead points
 # sampling log weights lets us get a sensible error on the evidence estimate
-dead = finalise(live,dead)
-logw = log_weights(rng_key, dead)  # type: ignore[arg-type]
+nested_samples = finalise(live, dead)
+logw = log_weights(rng_key, nested_samples)
 logZs = jax.scipy.special.logsumexp(logw, axis=0)
 
 print(f"Analytic evidence: {log_analytic_evidence:.2f}")

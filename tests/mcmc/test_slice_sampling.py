@@ -48,9 +48,7 @@ class SliceSamplingTest(chex.TestCase):
 
         # Sample many slice heights
         keys = jax.random.split(key, 1000)
-        new_state, info = jax.vmap(ss.vertical_slice, in_axes=(0, None))(
-            keys, state
-        )
+        new_state, info = jax.vmap(ss.vertical_slice, in_axes=(0, None))(keys, state)
 
         # Heights should be below log density at position
         logdens_at_pos = logdensity_fn(position)

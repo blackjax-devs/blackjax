@@ -113,7 +113,7 @@ class PartitionedState(NamedTuple):
 
     This class stores particle states with explicitly separated log-prior and
     log-likelihood components, enabling posterior repartitioning techniques.
-    
+
     Posterior repartitioning leverages nested sampling's ability to separate prior
     and likelihood contributions at the algorithmic level. By maintaining these
     components separately, algorithms can dynamically reweight their relative
@@ -146,7 +146,7 @@ class PartitionedInfo(NamedTuple):
     This class stores comprehensive information about a transition step that
     maintains separated log-prior and log-likelihood components, supporting
     posterior repartitioning techniques for efficient nested sampling.
-    
+
     The separation of prior and likelihood components enables dynamic reweighting
     strategies that can significantly improve sampling efficiency while maintaining
     correct posterior inference.
@@ -178,11 +178,11 @@ class PartitionedInfo(NamedTuple):
 
 def new_state_and_info(position, logprior, loglikelihood, info):
     """Create new PartitionedState and PartitionedInfo from transition results.
-    
+
     This utility function packages the results of a transition into the standard
     partitioned state and info containers, maintaining the separation of log-prior
     and log-likelihood components required for posterior repartitioning techniques.
-    
+
     Parameters
     ----------
     position
@@ -193,7 +193,7 @@ def new_state_and_info(position, logprior, loglikelihood, info):
         The log-likelihood values at the new positions.
     info
         Additional transition-specific information from the step.
-        
+
     Returns
     -------
     tuple[PartitionedState, PartitionedInfo]
@@ -211,6 +211,7 @@ def new_state_and_info(position, logprior, loglikelihood, info):
         info=info,
     )
     return new_state, info
+
 
 def init(
     particles: ArrayLikeTree,

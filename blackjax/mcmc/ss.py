@@ -160,13 +160,13 @@ def build_kernel(
             constraint,
             strict,
         )
-        
+
         info = SliceInfo(
             constraint=hs_info.constraint,
             l_steps=hs_info.l_steps,
             r_steps=hs_info.r_steps,
             s_steps=hs_info.s_steps,
-            evals=vs_info.evals + hs_info.evals
+            evals=vs_info.evals + hs_info.evals,
         )
 
         return new_state, info
