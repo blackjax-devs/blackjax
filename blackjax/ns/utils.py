@@ -28,7 +28,7 @@ from blackjax.ns.base import NSInfo, NSState
 from blackjax.types import Array, ArrayTree, PRNGKey
 
 
-def log1mexp(x):
+def log1mexp(x: Array) -> Array:
     """Computes log(1 - exp(x)) in a numerically stable way.
 
     This function implements the algorithm from Mächler (2012) [1]_ for computing

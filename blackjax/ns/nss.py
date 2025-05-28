@@ -149,6 +149,7 @@ def build_kernel(
     generate_slice_direction_fn: Callable = sample_direction_from_covariance,
 ) -> Callable:
     """Builds the Nested Slice Sampling kernel.
+    
     This function creates a Nested Slice Sampling kernel that uses
     Hit-and-Run Slice Sampling (HRSS) as its inner kernel. The parameters
     for the HRSS direction proposal (specifically, the covariance matrix)
@@ -168,7 +169,7 @@ def build_kernel(
         Defaults to 1.
     stepper_fn
         The stepper function `(x, direction, t) -> x_new` for the HRSS kernel.
-        Defaults to `default_stepper`.
+        Defaults to `default_stepper_fn`.
     adapt_direction_params_fn
         A function `(ns_state, ns_info) -> dict_of_params` that computes/adapts
         the parameters (e.g., covariance matrix) for the slice direction proposal,
@@ -178,6 +179,12 @@ def build_kernel(
         normalized direction for HRSS, using parameters from `adapt_direction_params_fn`.
         Defaults to `sample_direction_from_covariance`.
 
+    Returns
+    -------
+    Callable
+        A kernel function for Nested Slice Sampling that takes an `rng_key` and
+        the current `NSState` and returns a tuple containing the new `NSState` and
+        the `NSInfo` for the step.
     """
 
     slice_kernel = build_slice_kernel(stepper_fn)
@@ -198,7 +205,7 @@ def build_kernel(
             rng_key, slice_state, logdensity_fn, d, constraint_fn, constraint, strict
         )
 
-        # Pass the relevant information back to NSInnerState and NSInnerInfo
+        # Pass the relevant information back to PartitionedState and PartitionedInfo
         return new_state_and_info(
             position=new_slice_state.position,
             logprior=new_slice_state.logdensity,

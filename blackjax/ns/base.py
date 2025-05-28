@@ -108,18 +108,31 @@ class NSInfo(NamedTuple):
     inner_kernel_info: NamedTuple  # Information from the inner kernel update step
 
 
-class NSInnerState(NamedTuple):
-    """State of the inner kernel used in Nested Sampling.
+class PartitionedState(NamedTuple):
+    """State container for posterior repartitioning in nested sampling.
+
+    This class stores particle states with explicitly separated log-prior and
+    log-likelihood components, enabling posterior repartitioning techniques.
+    
+    Posterior repartitioning leverages nested sampling's ability to separate prior
+    and likelihood contributions at the algorithmic level. By maintaining these
+    components separately, algorithms can dynamically reweight their relative
+    importance through a hyperparameter β, allowing for more efficient exploration
+    of parameter space while preserving the correct posterior inference.
 
     Attributes
     ----------
     position
-        A PyTree of arrays representing the current positions of the particles
-        in the inner kernel.
+        A PyTree of arrays representing the current positions of the particles.
+        Each leaf array has a leading dimension corresponding to the number of particles.
     logprior
-        An array of log-prior values for the particles in the inner kernel.
+        An array of log-prior density values evaluated at the particle positions.
+        These are kept separate to enable posterior repartitioning schemes.
+        Shape: (n_particles,)
     loglikelihood
-        An array of log-likelihood values for the particles in the inner kernel.
+        An array of log-likelihood values evaluated at the particle positions.
+        These are kept separate to enable posterior repartitioning schemes.
+        Shape: (n_particles,)
     """
 
     position: ArrayLikeTree  # Current positions of particles in the inner kernel
@@ -127,22 +140,71 @@ class NSInnerState(NamedTuple):
     loglikelihood: Array  # Log-likelihood values for particles in the inner kernel
 
 
-class NSInnerInfo(NamedTuple):
-    """Information about a single step in the Nested Slice Sampling algorithm."""
+class PartitionedInfo(NamedTuple):
+    """Information container for posterior repartitioning transition diagnostics.
+
+    This class stores comprehensive information about a transition step that
+    maintains separated log-prior and log-likelihood components, supporting
+    posterior repartitioning techniques for efficient nested sampling.
+    
+    The separation of prior and likelihood components enables dynamic reweighting
+    strategies that can significantly improve sampling efficiency while maintaining
+    correct posterior inference.
+
+    Attributes
+    ----------
+    position
+        A PyTree of arrays representing the final positions after the transition step.
+        Structure matches the input particle positions.
+    logprior
+        An array of log-prior density values at the final positions.
+        Kept separate to support posterior repartitioning schemes.
+        Shape: (n_particles,)
+    loglikelihood
+        An array of log-likelihood values at the final positions.
+        Kept separate to support posterior repartitioning schemes.
+        Shape: (n_particles,)
+    info
+        Additional transition-specific diagnostic information from the step.
+        The content and structure depend on the specific transition implementation
+        (e.g., acceptance rates, step sizes, number of evaluations, etc.).
+    """
 
     position: ArrayTree
     logprior: ArrayTree
     loglikelihood: ArrayTree
-    info: NamedTuple  # Additional information from the inner kernel step
+    info: NamedTuple
 
 
 def new_state_and_info(position, logprior, loglikelihood, info):
-    new_state = NSInnerState(
+    """Create new PartitionedState and PartitionedInfo from transition results.
+    
+    This utility function packages the results of a transition into the standard
+    partitioned state and info containers, maintaining the separation of log-prior
+    and log-likelihood components required for posterior repartitioning techniques.
+    
+    Parameters
+    ----------
+    position
+        The particle positions after the transition step.
+    logprior
+        The log-prior densities at the new positions.
+    loglikelihood
+        The log-likelihood values at the new positions.
+    info
+        Additional transition-specific information from the step.
+        
+    Returns
+    -------
+    tuple[PartitionedState, PartitionedInfo]
+        A tuple containing the new partitioned state and associated information.
+    """
+    new_state = PartitionedState(
         position=position,
         logprior=logprior,
         loglikelihood=loglikelihood,
     )
-    info = NSInnerInfo(
+    info = PartitionedInfo(
         position=position,
         logprior=logprior,
         loglikelihood=loglikelihood,
@@ -271,7 +333,7 @@ def build_kernel(
         particles = jax.tree.map(lambda x: x[start_idx], state.particles)
         logprior = state.logprior[start_idx]
         loglikelihood = state.loglikelihood[start_idx]
-        inner_state = NSInnerState(particles, logprior, loglikelihood)
+        inner_state = PartitionedState(particles, logprior, loglikelihood)
         in_axes = (0, None, None, None, None, None)
         new_inner_state, inner_info = jax.vmap(inner_kernel, in_axes=in_axes)(
             sample_keys,
@@ -376,7 +438,7 @@ def delete_fn(
 
 def update_ns_runtime_info(
     logX: Array, logZ: Array, loglikelihood: Array, dead_loglikelihood: Array
-):
+) -> tuple[Array, Array, Array]:
     num_particles = len(loglikelihood)
     num_deleted = len(dead_loglikelihood)
     num_live = jnp.arange(num_particles, num_particles - num_deleted, -1)
@@ -391,5 +453,5 @@ def update_ns_runtime_info(
     return logX[-1], logZ, logZ_live
 
 
-def logmeanexp(x: Array):
+def logmeanexp(x: Array) -> Array:
     return logsumexp(x) - jnp.log(len(x))

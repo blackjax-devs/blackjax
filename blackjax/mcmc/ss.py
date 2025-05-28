@@ -48,10 +48,14 @@ __all__ = [
 class SliceState(NamedTuple):
     """State of the Slice Sampling algorithm.
 
-    position: ArrayLikeTree
+    Attributes
+    ----------
+    position
         The current position of the chain.
-    logdensity: float
+    logdensity
         The log-density of the target distribution at the current position.
+    logslice
+        The log-height defining the slice for sampling. Defaults to infinity.
     """
 
     position: ArrayLikeTree
@@ -65,26 +69,28 @@ class SliceInfo(NamedTuple):
     This information can be used for diagnostics and monitoring the sampler's
     performance.
 
-    constraint: Array
+    Attributes
+    ----------
+    constraint
         The constraint values at the final accepted position.
-    l_steps: Array
+    l_steps
         The number of steps taken to expand the interval to the left during the
         "stepping-out" phase.
-    r_steps: Array
+    r_steps
         The number of steps taken to expand the interval to the right during the
         "stepping-out" phase.
-    s_steps: Array
+    s_steps
         The number of steps taken during the "shrinking" phase to find an
         acceptable sample.
-    evals: Array
+    evals
         The total number of log-density evaluations performed during the step.
     """
 
-    constraint: Array
-    l_steps: int
-    r_steps: int
-    s_steps: int
-    evals: int
+    constraint: Array = jnp.array([])
+    l_steps: int = 0
+    r_steps: int = 0
+    s_steps: int = 0
+    evals: int = 0
 
 
 def init(position: ArrayTree, logdensity_fn: Callable) -> SliceState:
@@ -143,8 +149,8 @@ def build_kernel(
         strict: Array,
     ) -> tuple[SliceState, SliceInfo]:
         rng_key, vs_key, hs_key = jax.random.split(rng_key, 3)
-        intermediate_state, info = vertical_slice(vs_key, state)
-        new_state, info = horizontal_slice(
+        intermediate_state, vs_info = vertical_slice(vs_key, state)
+        new_state, hs_info = horizontal_slice(
             hs_key,
             intermediate_state,
             d,
@@ -154,13 +160,21 @@ def build_kernel(
             constraint,
             strict,
         )
+        
+        info = SliceInfo(
+            constraint=hs_info.constraint,
+            l_steps=hs_info.l_steps,
+            r_steps=hs_info.r_steps,
+            s_steps=hs_info.s_steps,
+            evals=vs_info.evals + hs_info.evals
+        )
 
         return new_state, info
 
     return kernel
 
 
-def vertical_slice(rng_key: PRNGKey, state: SliceState) -> float:
+def vertical_slice(rng_key: PRNGKey, state: SliceState) -> tuple[SliceState, SliceInfo]:
     """Define the vertical slice for the Slice Sampling algorithm.
 
     This function determines the height `y` for the horizontal slice by sampling
@@ -172,19 +186,19 @@ def vertical_slice(rng_key: PRNGKey, state: SliceState) -> float:
     ----------
     rng_key
         A JAX PRNG key.
-    logdensity_fn
-        The log-density function of the target distribution.
-    position
-        The current position of the chain.
+    state
+        The current slice sampling state.
 
     Returns
     -------
-    Array
-        The log-height `log_y` defining the lower bound for the horizontal slice.
-        A new sample `x'` will be accepted if `logdensity_fn(x') >= log_y`.
+    tuple[SliceState, SliceInfo]
+        A tuple containing the updated state with the slice height set and
+        info about the vertical slice step.
     """
     logslice = state.logdensity + jnp.log(jax.random.uniform(rng_key))
-    return state._replace(logslice=logslice), None
+    new_state = state._replace(logslice=logslice)
+    info = SliceInfo()
+    return new_state, info
 
 
 def horizontal_slice(
@@ -350,7 +364,7 @@ def build_hrss_kernel(
     return kernel
 
 
-def default_stepper_fn(x, d, t):
+def default_stepper_fn(x: ArrayTree, d: ArrayTree, t: float) -> ArrayTree:
     """A simple stepper function that moves from `x` along direction `d` by `t` units.
 
     Implements the operation: `x_new = x + t * d`.
