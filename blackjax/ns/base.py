@@ -335,7 +335,7 @@ def build_kernel(
         logprior = state.logprior[start_idx]
         loglikelihood = state.loglikelihood[start_idx]
         inner_state = PartitionedState(particles, logprior, loglikelihood)
-        in_axes = (0, None, None, None, None, None)
+        in_axes = (0, 0, None, None, None, None)
         new_inner_state, inner_info = jax.vmap(inner_kernel, in_axes=in_axes)(
             sample_keys,
             inner_state,
