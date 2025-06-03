@@ -25,10 +25,24 @@ from blackjax.mcmc.integrators import (
 from blackjax.types import ArrayLike, PRNGKey
 import blackjax.mcmc.metrics as metrics
 import jax.numpy as jnp
-from blackjax.util import pytree_size
+from blackjax.util import pytree_size, generate_unit_vector
 from blackjax.adaptation.mclmc_adaptation import handle_high_energy
 __all__ = ["LangevinInfo", "init", "build_kernel", "as_top_level_api"]
 
+class UHMCState(NamedTuple):
+    position: ArrayLike
+    momentum: ArrayLike
+    logdensity: float
+    logdensity_grad: ArrayLike
+    steps_until_refresh: int
+
+def integrator_state(state: UHMCState) -> IntegratorState:
+    return IntegratorState(
+        position=state.position,
+        momentum=state.momentum,
+        logdensity=state.logdensity,
+        logdensity_grad=state.logdensity_grad,
+    )
 
 class LangevinInfo(NamedTuple):
     """
@@ -51,11 +65,12 @@ def init(position: ArrayLike, logdensity_fn, metric, rng_key):
     
     l, g = jax.value_and_grad(logdensity_fn)(position)
 
-    return IntegratorState(
+    return UHMCState(
         position=position,
         momentum = metric.sample_momentum(rng_key, position),
         logdensity=l,
         logdensity_grad=g,
+        steps_until_refresh=0,
     )
 
 
@@ -88,34 +103,26 @@ def build_kernel(
     step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy,inverse_mass_matrix)
 
     def kernel(
-        rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
-    ) -> tuple[IntegratorState, LangevinInfo]:
+        rng_key: PRNGKey, state: UHMCState, L: float, step_size: float
+    ) -> tuple[UHMCState, LangevinInfo]:
+        
+        refresh_key, energy_key, run_key = jax.random.split(rng_key, 3)
+
         (position, momentum, logdensity, logdensitygrad), (kinetic_change, energy_error) = step(
-            state, step_size, L, rng_key
+            integrator_state(state), step_size, jnp.inf, run_key
         )
-
-        # jax.debug.print("energy change {x}", x=energy_change)
-
-        
-        # kinetic_change = - momentum@momentum/2 + state.momentum@state.momentum/2
         
 
-        # return IntegratorState(
-        #     position, momentum, logdensity, logdensitygrad
-        # ), LangevinInfo(
-        #     logdensity=logdensity,
-        #     energy_change=energy_change,
-        #     kinetic_change=kinetic_change
-        # )
+        num_steps_per_traj = jnp.ceil(L/step_size).astype(jnp.int64)
+        momentum = (state.steps_until_refresh==0) * metric.sample_momentum(refresh_key, position) + (state.steps_until_refresh>0) * momentum
+        steps_until_refresh = (state.steps_until_refresh==0) * num_steps_per_traj + (state.steps_until_refresh>0) * (state.steps_until_refresh - 1)
 
         eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
         ndims = pytree_size(position)
-        # jax.debug.print("diagnostics {x}", x=(eev_max_per_dim, jnp.abs(energy_error), jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim)))
 
-        energy_key, rng_key = jax.random.split(rng_key)
 
-        energy, new_state = handle_high_energy(
-            previous_state=state,
+        energy, new_integrator_state = handle_high_energy(
+            previous_state=integrator_state(state),
             next_state=IntegratorState(position, momentum, logdensity, logdensitygrad),
             energy_change=energy_error,
             key=energy_key,
@@ -124,33 +131,12 @@ def build_kernel(
             euclidean=True
         )
 
-        return new_state, LangevinInfo(
-            logdensity=new_state.logdensity,
+        return UHMCState(new_integrator_state.position, new_integrator_state.momentum, new_integrator_state.logdensity, new_integrator_state.logdensity_grad, steps_until_refresh), LangevinInfo(
+            logdensity=logdensity,
             energy_change=energy,
             kinetic_change=kinetic_change
         )
 
-        # new_state, new_info = jax.lax.cond(
-        #     jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim),
-        #     lambda: (
-        #         state,
-        #         LangevinInfo(
-        #             logdensity=state.logdensity,
-        #             energy_change=0.0,
-        #             kinetic_change=0.0,
-        #         ),
-        #     ),
-        #     lambda: (
-        #         IntegratorState(position, momentum, logdensity, logdensitygrad),
-        #         LangevinInfo(
-        #             logdensity=logdensity,
-        #             energy_change=energy_error,
-        #             kinetic_change=kinetic_change,
-        #         ),
-        #     ),
-        # )
-
-        # return new_state, new_info
 
     return kernel
 

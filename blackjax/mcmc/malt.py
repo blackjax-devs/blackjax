@@ -270,6 +270,7 @@ def hmc_proposal(
         # jax.debug.print("is_diverging {x}",x=is_diverging)
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
+        jax.debug.print("p_accept {p_accept}", p_accept=(p_accept, delta_energy))
 
         info = HMCInfo(
             state.momentum,

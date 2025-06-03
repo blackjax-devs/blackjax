@@ -167,6 +167,7 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
         coef: float,
         auxiliary_info=None,
     ):
+    
 
         # jax.debug.print("nan? {x}", x=jnp.any(jnp.isnan(kinetic_grad)))
         # jax.debug.print("position {x}", x=position)

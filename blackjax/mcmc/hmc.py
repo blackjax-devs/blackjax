@@ -121,6 +121,7 @@ def build_kernel(
         num_integration_steps: int,
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
+        
 
         metric = metrics.default_metric(inverse_mass_matrix)
         symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
@@ -302,6 +303,7 @@ def hmc_proposal(
         is_diverging = -delta_energy > divergence_threshold
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
+        
 
         info = HMCInfo(
             state.momentum,

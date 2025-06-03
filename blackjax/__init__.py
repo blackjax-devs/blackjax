@@ -20,10 +20,12 @@ from .mcmc import dynamic_malt as _dynamic_malt
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
+from .mcmc import uhmc as _uhmc
 from .mcmc import malt as _malt
 from .mcmc import mala as _mala
 from .mcmc import marginal_latent_gaussian
 from .mcmc import mclmc as _mclmc
+from .mcmc import mchmc as _mchmc
 from .mcmc import underdamped_langevin as _langevin
 from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk
@@ -99,6 +101,7 @@ def generate_top_level_api_from(module):
 
 # MCMC
 hmc = generate_top_level_api_from(_hmc)
+uhmc = generate_top_level_api_from(_uhmc)
 malt = generate_top_level_api_from(_malt)
 nuts = generate_top_level_api_from(_nuts)
 rmh = GenerateSamplingAPI(rmh_as_top_level_api, random_walk.init, random_walk.build_rmh)
@@ -119,6 +122,7 @@ additive_step_random_walk = GenerateSamplingAPI(
 additive_step_random_walk.register_factory("normal_random_walk", normal_random_walk)
 
 mclmc = generate_top_level_api_from(_mclmc)
+mchmc = generate_top_level_api_from(_mchmc)
 langevin = generate_top_level_api_from(_langevin)
 adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
 adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
