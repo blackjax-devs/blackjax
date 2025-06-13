@@ -16,7 +16,6 @@ from blackjax.util import (
     thin_kernel,
 )
 
-
 # class RunInferenceAlgorithmTest(chex.TestCase):
 #     def setUp(self):
 #         super().setUp()
