@@ -2,19 +2,14 @@ from functools import partial
 
 import chex
 import numpy as np
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
 from jax import jit
 from jax import numpy as jnp
 from jax import random as jr
 from jax import tree
 
 import blackjax
-from blackjax.util import (
-    run_inference_algorithm,
-    store_only_expectation_values,
-    thin_algorithm,
-    thin_kernel,
-)
+from blackjax.util import run_inference_algorithm, thin_algorithm, thin_kernel
 
 # class RunInferenceAlgorithmTest(chex.TestCase):
 #     def setUp(self):
