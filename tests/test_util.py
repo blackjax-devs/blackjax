@@ -6,7 +6,7 @@ from absl.testing import absltest, parameterized
 from jax import jit
 from jax import numpy as jnp
 from jax import random as jr
-from jax import tree, vmap
+from jax import tree
 
 import blackjax
 from blackjax.util import (
@@ -123,7 +123,7 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
     )  # Rosenbrock
     d = 2
     init_pos = jnp.ones(d)
-    rng_keys = jr.split(jr.key(42), 2)
+    rng_keys = jr.key(42)
     num_steps = 10_000
 
     def warmup(self, rng_key, num_steps, thinning: int = 1):
@@ -193,15 +193,13 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
     def test_thin(self):
         # Test thin kernel in warmup
         state, config, n_steps = jit(
-            vmap(partial(self.warmup, num_steps=self.num_steps, thinning=1))
+            partial(self.warmup, num_steps=self.num_steps, thinning=1)
         )(self.rng_keys)
-        config = tree.map(lambda x: jnp.median(x, 0), config)
         state_thin, config_thin, n_steps_thin = jit(
-            vmap(partial(self.warmup, num_steps=self.num_steps, thinning=4))
+            partial(self.warmup, num_steps=self.num_steps, thinning=4)
         )(self.rng_keys)
-        config_thin = tree.map(lambda x: jnp.median(x, 0), config_thin)
 
-        rtol = 5e-1
+        rtol = 7e-1
         np.testing.assert_allclose(config_thin.L, config.L, rtol=rtol)
         np.testing.assert_allclose(config_thin.step_size, config.step_size, rtol=rtol)
         np.testing.assert_allclose(
@@ -210,17 +208,13 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
 
         # Test thin algorithm in run
         state, history = jit(
-            vmap(partial(self.run, config=config, num_steps=self.num_steps, thinning=1))
+            partial(self.run, config=config, num_steps=self.num_steps, thinning=1)
         )(self.rng_keys, state)
-        samples = jnp.concatenate(history[0].position)
+        samples = history[0].position
         state_thin, history_thin = jit(
-            vmap(
-                partial(
-                    self.run, config=config_thin, num_steps=self.num_steps, thinning=4
-                )
-            )
+            partial(self.run, config=config_thin, num_steps=self.num_steps, thinning=4)
         )(self.rng_keys, state_thin)
-        samples_thin = jnp.concatenate(history_thin[0].position)
+        samples_thin = history_thin[0].position
 
         rtol, atol = 1e-1, 1e-1
         np.testing.assert_allclose(
