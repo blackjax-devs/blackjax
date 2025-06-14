@@ -84,6 +84,8 @@ class SliceInfo(NamedTuple):
         acceptable sample.
     evals
         The total number of log-density evaluations performed during the step.
+    d
+        The direction vector used for the slice sampling step.
     """
 
     constraint: Array = jnp.array([])
@@ -91,6 +93,7 @@ class SliceInfo(NamedTuple):
     r_steps: int = 0
     s_steps: int = 0
     evals: int = 0
+    d: ArrayTree = None
 
 
 def init(position: ArrayTree, logdensity_fn: Callable) -> SliceState:
@@ -167,6 +170,7 @@ def build_kernel(
             r_steps=hs_info.r_steps,
             s_steps=hs_info.s_steps,
             evals=vs_info.evals + hs_info.evals,
+            d=d,
         )
 
         return new_state, info
