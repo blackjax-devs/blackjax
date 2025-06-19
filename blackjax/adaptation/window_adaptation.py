@@ -251,6 +251,7 @@ def window_adaptation(
     progress_bar: bool = False,
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
+    cos_angle_termination = 0.,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the value of the inverse mass matrix and step size parameters of
@@ -296,7 +297,7 @@ def window_adaptation(
 
     """
 
-    mcmc_kernel = algorithm.build_kernel(integrator)
+    mcmc_kernel = algorithm.build_kernel(integrator, cos_angle_termination= cos_angle_termination)
 
     adapt_init, adapt_step, adapt_final = base(
         is_mass_matrix_diagonal,

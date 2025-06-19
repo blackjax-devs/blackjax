@@ -77,6 +77,7 @@ class NUTSInfo(NamedTuple):
 def build_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: int = 1000,
+    cos_angle_termination = 0.
 ):
     """Build an iterative NUTS kernel.
 
@@ -121,7 +122,7 @@ def build_kernel(
         """Generate a new sample with the NUTS kernel."""
 
 
-        metric = metrics.default_metric(inverse_mass_matrix)
+        metric = metrics.default_metric(inverse_mass_matrix, cos_angle_termination=cos_angle_termination)
         symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
         proposal_generator = iterative_nuts_proposal(
             symplectic_integrator,
@@ -159,6 +160,7 @@ def as_top_level_api(
     max_num_doublings: int = 10,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.velocity_verlet,
+    cos_angle_termination: float = 0.0,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the nuts kernel.
 
@@ -214,7 +216,7 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
 
     """
-    kernel = build_kernel(integrator, divergence_threshold)
+    kernel = build_kernel(integrator, divergence_threshold, cos_angle_termination= cos_angle_termination)
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
         del rng_key
