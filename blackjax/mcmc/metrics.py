@@ -81,7 +81,7 @@ class Metric(NamedTuple):
 MetricTypes = Union[Metric, Array, Callable[[ArrayLikeTree], Array]]
 
 
-def default_metric(metric: MetricTypes, cos_angle_termination= 0.) -> Metric:
+def default_metric(metric: MetricTypes) -> Metric:
     """Convert an input metric into a ``Metric`` object following sensible default rules
 
     The metric can be specified in three different ways:
@@ -102,12 +102,11 @@ def default_metric(metric: MetricTypes, cos_angle_termination= 0.) -> Metric:
 
     # If we make it here then the argument should be an array, and we'll assume
     # that it specifies a static inverse mass matrix.
-    return gaussian_euclidean(metric, cos_angle_termination= cos_angle_termination)
+    return gaussian_euclidean(metric)
 
 
 def gaussian_euclidean(
     inverse_mass_matrix: Array,
-    cos_angle_termination: float,
 ) -> Metric:
     r"""Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
     :cite:p:`betancourt2013general`.
@@ -187,10 +186,8 @@ def gaussian_euclidean(
 
         # rho = m_sum
         rho = m_sum - (m_right + m_left) / 2
-        cos_distance = lambda v1, v2: jnp.dot(v1, v2) / jnp.sqrt(jnp.dot(v1, v1) * jnp.dot(v2, v2))
-
-        turning_at_left = cos_distance(velocity_left, rho) <= cos_angle_termination
-        turning_at_right = cos_distance(velocity_right, rho) <= cos_angle_termination
+        turning_at_left = jnp.dot(velocity_left, rho) <= 0
+        turning_at_right = jnp.dot(velocity_right, rho) <= 0
         return turning_at_left | turning_at_right
 
     def scale(
