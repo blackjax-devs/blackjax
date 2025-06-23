@@ -159,7 +159,7 @@ def while_steps_num(cond):
         return jnp.argmin(cond) + 1
 
 
-def emaus(
+def laps(
     logdensity_fn,
     sample_init,
     ndims,
@@ -258,7 +258,7 @@ def emaus(
     )  # scheme = BABAB..AB scheme has len(scheme)//2 + 1 Bs. The last doesn't count because that gradient can be reused in the next step.
 
     if diagonal_preconditioning:
-        inverse_mass_matrix = jnp.sqrt(final_adaptation_state.inverse_mass_matrix)
+        inverse_mass_matrix = final_adaptation_state.inverse_mass_matrix
 
         # scale the stepsize so that it reflects averag scale change of the preconditioning
         average_scale_change = jnp.sqrt(jnp.average(inverse_mass_matrix))
