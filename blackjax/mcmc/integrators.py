@@ -100,7 +100,11 @@ def generalized_two_stage_integrator(
     """
 
     def one_step(state: IntegratorState, step_size: float):
-        position, momentum, _, logdensity_grad = state
+        # position, momentum, _, logdensity_grad = state
+        position = state.position
+        momentum = state.momentum
+        logdensity_grad = state.logdensity_grad
+        # logdensity = state.logdensity
         # jax.debug.print("initial state {x}", x=jnp.any(jnp.isnan(momentum)))
         # auxiliary infomation generated during integration for diagnostics. It is
         # updated by the operator1 and operator2 at each call.

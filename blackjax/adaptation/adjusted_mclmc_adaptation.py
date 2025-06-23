@@ -268,8 +268,9 @@ def adjusted_mclmc_make_L_step_size_adaptation(
         )
 
         # jax.debug.print("num steps1 {x}",x=num_steps1)
+        # jax.debug.print("num steps 2 {x}",x=num_steps2)
 
-        check_key, rng_key = jax.random.split(rng_key, 2)
+        # check_key, rng_key = jax.random.split(rng_key, 2)
 
         rng_key_pass1, rng_key_pass2 = jax.random.split(rng_key, 2)
         L_step_size_adaptation_keys_pass1 = jax.random.split(
@@ -306,23 +307,34 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             variances = x_squared_average - jnp.square(x_average)
 
             if max == "max":
-                contract = lambda x: jnp.sqrt(jnp.max(x) * dim) * tuning_factor
+                if euclidean:
+                    contract = lambda x: (jnp.sqrt(jnp.max(x) * dim) * tuning_factor) / jnp.sqrt(dim)
+                    
+                else:
+                    contract = lambda x: jnp.sqrt(jnp.max(x) * dim) * tuning_factor
 
             elif max == "avg":
-                contract = lambda x: jnp.sqrt(jnp.sum(x)) * tuning_factor
+                print("avg")
+                if euclidean:
+
+                    contract = lambda x: (jnp.sqrt(jnp.sum(x)) * tuning_factor) / jnp.sqrt(dim)
+                else:
+                    contract = lambda x: jnp.sqrt(jnp.sum(x)) * tuning_factor
 
             else:
                 raise ValueError("max should be either 'max' or 'avg'")
 
             new_L = params.L
-            if euclidean:
-                new_L /= jnp.sqrt(dim)
 
             change = jax.lax.clamp(
                 Lratio_lowerbound,
                 contract(variances) / new_L,
                 Lratio_upperbound,
             )
+            # if euclidean:
+            #     # new_L /= jnp.sqrt(dim)
+            #     change /= jnp.sqrt(dim)
+
 
             params = params._replace(
                 L=params.L * change, step_size=params.step_size * change
@@ -332,6 +344,12 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                     params = params._replace(inverse_mass_matrix=variances, L=1.)
                 else:
                     params = params._replace(inverse_mass_matrix=variances, L=jnp.sqrt(dim))
+            
+            # else:
+            #     if euclidean:
+            #         params = params._replace(L = params.L / jnp.sqrt(dim))
+            
+            # jax.debug.print("params L {x}", x=(params.L, contract(variances), jnp.sum(variances), tuning_factor))
 
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
             (

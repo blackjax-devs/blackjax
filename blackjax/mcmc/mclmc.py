@@ -62,9 +62,10 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
 
 
 def build_kernel(
+    
+    integrator,
     logdensity_fn,
     inverse_mass_matrix,
-    integrator,
     desired_energy_var_max_ratio=jnp.inf,
     desired_energy_var=5e-4,
 ):
@@ -94,6 +95,8 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, MCLMCInfo]:
+        
+
         (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
             state, step_size, L, rng_key
         )
@@ -183,10 +186,11 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(
-        logdensity_fn,
-        inverse_mass_matrix,
+        
         integrator,
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
+        logdensity_fn=logdensity_fn,
+        inverse_mass_matrix=inverse_mass_matrix,
     )
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):

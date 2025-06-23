@@ -23,6 +23,7 @@ from .mcmc import hmc as _hmc
 from .mcmc import uhmc as _uhmc
 from .mcmc import malt as _malt
 from .mcmc import mala as _mala
+from .mcmc import pseudofermion as _pseudofermion
 from .mcmc import marginal_latent_gaussian
 from .mcmc import mclmc as _mclmc
 from .mcmc import mchmc as _mchmc
@@ -129,7 +130,7 @@ adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
 ghmc = generate_top_level_api_from(_ghmc)
 barker_proposal = generate_top_level_api_from(barker)
-
+pseudofermion = generate_top_level_api_from(_pseudofermion)
 hmc_family = [hmc, nuts]
 
 # SMC

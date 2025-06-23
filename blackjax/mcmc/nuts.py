@@ -133,7 +133,10 @@ def build_kernel(
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
 
-        position, logdensity, logdensity_grad = state
+        # position, logdensity, logdensity_grad = state
+        position = state.position
+        logdensity = state.logdensity
+        logdensity_grad = state.logdensity_grad
         momentum = metric.sample_momentum(key_momentum, position)
 
         integrator_state = integrators.IntegratorState(
