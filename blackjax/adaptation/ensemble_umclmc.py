@@ -50,7 +50,7 @@ def build_kernel(logdensity_fn):
 
     def sequential_kernel(key, state, adap):
         new_state, info = mclmc.build_kernel(
-        logdensity_fn=logdensity_fn, integrator=isokinetic_velocity_verlet, inverse_mass_matrix=adap.inverse_mass_matrix
+        logdensity_fn=logdensity_fn, integrator=isokinetic_velocity_verlet, inverse_mass_matrix= jnp.ones(adap.inverse_mass_matrix.shape)
             )(key, state, adap.L, adap.step_size)
 
         # reject the new state if there were nans
@@ -256,6 +256,7 @@ class Adaptation:
             "observables_for_bias": self.observables_for_bias(state.position),
             "observables": self.observables(state.position),
             "entropy": -info["logdensity"],
+            "uturn": jnp.sqrt(jnp.sum(jnp.square(state.logdensity_grad - jnp.dot(state.logdensity_grad, state.momentum) * state.momentum))) / (self.ndims - 1)
         }
 
     def update(self, adaptation_state, Etheta):
@@ -280,9 +281,8 @@ class Adaptation:
         )
         history = History(history_observables, history_stopping, history_weights)
 
-        L = self.alpha * jnp.sqrt(
-            jnp.sum(Etheta["xsq"] - jnp.square(Etheta["x"]))
-        )  # average over the ensemble, sum over parameters (to get sqrt(d))
+        L = self.alpha * jnp.sqrt(jnp.sum(Etheta["xsq"] - jnp.square(Etheta["x"])))  # average over the ensemble, sum over parameters (to get sqrt(d))
+        #L = self.alpha / Etheta["uturn"]
         inverse_mass_matrix = Etheta["xsq"] - jnp.square(Etheta["x"])
         EEVPD = (Etheta["Esq"] - jnp.square(Etheta["E"])) / self.ndims
         true_bias = self.contract(Etheta["observables_for_bias"])
@@ -290,17 +290,13 @@ class Adaptation:
 
         # hyperparameter adaptation
         # estimate bias
-        bias = jnp.array([fluctuations[0], fluctuations[1], equi_full, equi_diag])[
-            self.bias_type
-        ]  # r_max, r_avg, equi_full, equi_diag
+        bias = jnp.array([fluctuations[0], fluctuations[1], equi_full, equi_diag])[self.bias_type]  # r_max, r_avg, equi_full, equi_diag
         EEVPD_wanted = self.C * jnp.power(bias, self.power)
 
         eps_factor = jnp.power(EEVPD_wanted / EEVPD, 1.0 / 6.0)
         eps_factor = jnp.clip(eps_factor, 0.3, 3.0)
 
-        eps_factor = nan_reject(
-            1 - nans, 0.5, eps_factor
-        )  # reduce the stepsize if there were nans
+        eps_factor = nan_reject(1 - nans, 0.5, eps_factor)  # reduce the stepsize if there were nans
 
         # determine if we want to finish this stage (i.e. if loss is no longer decreassing)
         # increasing = history.stopping[0] > history.stopping[-1] # will be false if some elements of history are still nan (have not been filled yet). Do not be tempted to simply change to while_cond = history[0] < history[-1]

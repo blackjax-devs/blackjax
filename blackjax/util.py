@@ -426,13 +426,15 @@ def run_eca(
         entropy = jnp.zeros((num_steps,))
         equi_diag = jnp.zeros((num_steps,))
         equi_full = jnp.zeros((num_steps,))
+        bias0 = jnp.zeros((num_steps,))
+        bias1 = jnp.zeros((num_steps,))
         observables = jnp.zeros((num_steps,))
         r_avg = jnp.zeros((num_steps,))
         r_max = jnp.zeros((num_steps,))
         step_size = jnp.zeros((num_steps,))
 
         def step_while(a):
-            x, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, observables, r_avg, r_max, step_size = a
+            x, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, step_size = a
 
             auxilliary_input = (xs[0][i], xs[1][i], xs[2][i])
 
@@ -443,18 +445,20 @@ def run_eca(
             new_entropy = entropy.at[i].set(info.get("entropy"))
             new_equi_diag = equi_diag.at[i].set(info.get("equi_diag"))
             new_equi_full = equi_full.at[i].set(info.get("equi_full"))
+            new_bias0 = bias0.at[i].set(info.get("bias")[0])
+            new_bias1 = bias1.at[i].set(info.get("bias")[1])
             new_observables = observables.at[i].set(info.get("observables"))
             new_r_avg = r_avg.at[i].set(info.get("r_avg"))
             new_r_max = r_max.at[i].set(info.get("r_max"))
             new_step_size = step_size.at[i].set(info.get("step_size"))
 
-            return (output, i + 1, info.get("while_cond"), new_EEVPD, new_EEVPD_wanted, new_L, new_entropy, new_equi_diag, new_equi_full, new_observables, new_r_avg, new_r_max, new_step_size)
+            return (output, i + 1, info.get("while_cond"), new_EEVPD, new_EEVPD_wanted, new_L, new_entropy, new_equi_diag, new_equi_full, new_bias0, new_bias1, new_observables, new_r_avg, new_r_max, new_step_size)
 
         if early_stop:
-            final_state_all, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, observables, r_avg, r_max, step_size = lax.while_loop(
+            final_state_all, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, step_size = lax.while_loop(
                 lambda a: ((a[1] < num_steps) & a[2]),
                 step_while,
-                (initial_state_all, 0, True, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, observables, r_avg, r_max, step_size),
+                (initial_state_all, 0, True, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, step_size),
             )
             steps_done = i
             info_history = {
@@ -464,6 +468,8 @@ def run_eca(
                 "entropy": entropy,
                 "equi_diag": equi_diag,
                 "equi_full": equi_full,
+                "bias0": bias0,
+                "bias1": bias1,
                 "observables": observables,
                 "r_avg": r_avg,
                 "r_max": r_max,
