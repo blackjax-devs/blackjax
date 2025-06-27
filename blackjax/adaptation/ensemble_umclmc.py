@@ -66,7 +66,7 @@ def build_kernel(logdensity_fn):
     return sequential_kernel
 
 
-def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
+def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh, superchain_size):
     """initialize the chains based on the equipartition of the initial condition.
     We initialize the velocity along grad log p if E_ii > 1 and along -grad log p if E_ii < 1.
     """
@@ -117,14 +117,13 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh):
         num_chains,
         mesh,
         summary_statistics_fn=summary_statistics_fn,
+        superchain_size= superchain_size
     )
 
     flat_equi, _ = ravel_pytree(equipartition)
 
     signs = -2.0 * (flat_equi < 1.0) + 1.0
-    initial_state, _ = ensemble_execute_fn(
-        ensemble_init, key2, num_chains, mesh, x=initial_state, args=signs
-    )
+    initial_state, _ = ensemble_execute_fn(ensemble_init, key2, num_chains, mesh, x=initial_state, args=signs, superchain_size= superchain_size)
 
     return initial_state
 
@@ -298,13 +297,6 @@ class Adaptation:
 
         eps_factor = nan_reject(1 - nans, 0.5, eps_factor)  # reduce the stepsize if there were nans
 
-        # determine if we want to finish this stage (i.e. if loss is no longer decreassing)
-        # increasing = history.stopping[0] > history.stopping[-1] # will be false if some elements of history are still nan (have not been filled yet). Do not be tempted to simply change to while_cond = history[0] < history[-1]
-        # while_cond = ~increasing
-        while_cond = (fluctuations[0] > self.r_end) | (
-            adaptation_state.step_count < self.save_num
-        )
-
         info_to_be_stored = {
             "L": adaptation_state.L,
             "step_size": adaptation_state.step_size,
@@ -315,7 +307,6 @@ class Adaptation:
             "bias": true_bias,
             "r_max": fluctuations[0],
             "r_avg": fluctuations[1],
-            "while_cond": while_cond,
             "entropy": Etheta["entropy"],
             "observables": Etheta["observables"],
         }
@@ -331,3 +322,7 @@ class Adaptation:
         )
 
         return adaptation_state_new, info_to_be_stored
+
+    def while_cond(self, info):
+        """determine if we want to switch to adjustment"""
+        return info['r_max'] > self.r_end

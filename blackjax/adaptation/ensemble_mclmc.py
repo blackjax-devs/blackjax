@@ -181,6 +181,7 @@ def laps(
     ensemble_observables=None,
     diagnostics=True,
     contract=lambda x: 0.0,
+    superchain_size= None,
 ):
     """
     model: the target density object
@@ -207,7 +208,7 @@ def laps(
 
     # initialize the chains
     initial_state = umclmc.initialize(
-        key_init, logdensity_fn, sample_init, num_chains, mesh
+        key_init, logdensity_fn, sample_init, num_chains, mesh, superchain_size=superchain_size
     )
 
     # burn-in with the unadjusted method #
@@ -233,6 +234,7 @@ def laps(
         num_steps1,
         num_chains,
         mesh,
+        superchain_size,
         ensemble_observables,
         early_stop=early_stop,
     )
@@ -302,7 +304,8 @@ def laps(
         num_samples,
         num_chains,
         mesh,
-        ensemble_observables,
+        superchain_size,
+        ensemble_observables
     )
 
     if diagnostics:
