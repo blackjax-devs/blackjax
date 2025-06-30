@@ -46,7 +46,7 @@ class MCLMCInfo(NamedTuple):
     energy_change: float
 
 
-def init(position: ArrayLike, logdensity_fn, rng_key):
+def init(position: ArrayLike, logdensity_fn, random_generator_arg):
     if pytree_size(position) < 2:
         raise ValueError(
             "The target distribution must have more than 1 dimension for MCLMC."
@@ -55,7 +55,7 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
 
     return IntegratorState(
         position=position,
-        momentum=generate_unit_vector(rng_key, position),
+        momentum=generate_unit_vector(random_generator_arg, position),
         logdensity=l,
         logdensity_grad=g,
     )
@@ -63,10 +63,7 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
 
 
 def build_kernel(
-    
     integrator,
-    logdensity_fn,
-    inverse_mass_matrix,
     desired_energy_var_max_ratio=jnp.inf,
     desired_energy_var=5e-4,
 ):
@@ -89,13 +86,14 @@ def build_kernel(
 
     """
 
-    step = with_isokinetic_maruyama(
-        integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
-    )
 
     def kernel(
-        rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
+        rng_key: PRNGKey, state: IntegratorState, logdensity_fn, L: float, step_size: float,
+    inverse_mass_matrix,
     ) -> tuple[IntegratorState, MCLMCInfo]:
+        step = with_isokinetic_maruyama(
+            integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
+        )
         
 
         (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
@@ -190,14 +188,14 @@ def as_top_level_api(
         
         integrator,
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
-        logdensity_fn=logdensity_fn,
-        inverse_mass_matrix=inverse_mass_matrix,
+        # logdensity_fn=logdensity_fn,
+        # inverse_mass_matrix=inverse_mass_matrix,
     )
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
         return init(position, logdensity_fn, rng_key)
 
     def update_fn(rng_key, state):
-        return kernel(rng_key, state, L, step_size)
+        return kernel(rng_key, state, logdensity_fn, L, step_size, inverse_mass_matrix)
 
     return SamplingAlgorithm(init_fn, update_fn)

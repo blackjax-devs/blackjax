@@ -123,6 +123,7 @@ def mclmc_find_L_and_step_size(
             )
 
 
+    # jax.debug.print("params {x}", x=(params, euclidean))
 
 
     part1_key, part2_key = jax.random.split(rng_key, 2)
@@ -326,8 +327,10 @@ def make_L_step_size_adaptation(
             L = jnp.sqrt(jnp.sum(variances)) # lmc: should be jnp.mean
             if euclidean:
                 L /= jnp.sqrt(dim)
+            # jax.debug.print("foo {x}", x=(L, euclidean, variances))
 
             if diagonal_preconditioning:
+                # jax.debug.print("bar")
                 inverse_mass_matrix = variances
                 params = params._replace(inverse_mass_matrix=inverse_mass_matrix)
                 L = jnp.sqrt(dim) # lmc: 1
@@ -340,6 +343,8 @@ def make_L_step_size_adaptation(
                 state, params, _, (_, average) = run_steps(
                     xs=(jnp.ones(steps), keys), state=state, params=params
                 )
+
+        # jax.debug.print("params {x}", x=(MCLMCAdaptationState(L, params.step_size, inverse_mass_matrix), euclidean))
 
         return state, MCLMCAdaptationState(L, params.step_size, inverse_mass_matrix)
 

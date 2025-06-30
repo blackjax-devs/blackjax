@@ -61,13 +61,15 @@ class LangevinInfo(NamedTuple):
     energy_change: float
 
 
-def init(position: ArrayLike, logdensity_fn, metric, rng_key):
+def init(position: ArrayLike, logdensity_fn, random_generator_arg):
     
     l, g = jax.value_and_grad(logdensity_fn)(position)
 
+    metric = metrics.default_metric(jnp.ones_like(position))
+
     return UHMCState(
         position=position,
-        momentum = metric.sample_momentum(rng_key, position),
+        momentum = metric.sample_momentum(random_generator_arg, position),
         logdensity=l,
         logdensity_grad=g,
         steps_until_refresh=0,
@@ -169,10 +171,10 @@ def as_top_level_api(
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
         desired_energy_var=desired_energy_var,
         )
-    metric = metrics.default_metric(inverse_mass_matrix)
+    # metric = metrics.default_metric(inverse_mass_matrix)
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
-        return init(position, logdensity_fn, metric, rng_key)
+        return init(position, logdensity_fn, rng_key)
 
     def update_fn(rng_key, state):
         return kernel(rng_key, state, L, step_size)

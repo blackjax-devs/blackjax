@@ -4,6 +4,8 @@ from . import (
     meads_adaptation,
     pathfinder_adaptation,
     window_adaptation,
+    unadjusted_alba,
+    unadjusted_step_size,
 )
 
 __all__ = [
@@ -12,4 +14,6 @@ __all__ = [
     "window_adaptation",
     "pathfinder_adaptation",
     "mclmc_adaptation",
+    "unadjusted_alba",
+    "robnik_step_size_tuning",
 ]

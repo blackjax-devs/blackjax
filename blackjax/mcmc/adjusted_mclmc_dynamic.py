@@ -34,11 +34,9 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg:
 
 
 def build_kernel(
-    integration_steps_fn,
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
-    inverse_mass_matrix=1.0,
 ):
     """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
@@ -66,6 +64,8 @@ def build_kernel(
         state: DynamicHMCState,
         logdensity_fn: Callable,
         step_size: float,
+        integration_steps_fn,
+        inverse_mass_matrix=1.0,
         L_proposal_factor: float = jnp.inf,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
@@ -142,10 +142,8 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(
-        integration_steps_fn=integration_steps_fn,
         integrator=integrator,
         next_random_arg_fn=next_random_arg_fn,
-        inverse_mass_matrix=inverse_mass_matrix,
         divergence_threshold=divergence_threshold,
     )
 
@@ -154,11 +152,13 @@ def as_top_level_api(
 
     def update_fn(rng_key: PRNGKey, state):
         return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            L_proposal_factor,
+            rng_key=rng_key,
+            state=state,
+            logdensity_fn=logdensity_fn,
+            step_size=step_size,
+            integration_steps_fn=integration_steps_fn,
+            inverse_mass_matrix=inverse_mass_matrix,
+            L_proposal_factor=L_proposal_factor,
         )
 
     return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]

@@ -44,7 +44,6 @@ def build_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
-    integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
     L_proposal_factor: float = jnp.inf,
 ):
     """Build a Dynamic HMC kernel where the number of integration steps is chosen randomly.
@@ -68,6 +67,7 @@ def build_kernel(
     information about the transition.
 
     """
+    
     hmc_base = build_static_hmc_kernel(integrator, divergence_threshold, L_proposal_factor)
 
     def kernel(
@@ -76,12 +76,15 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
+        integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
         **integration_steps_kwargs,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
+        
+        
         num_integration_steps = integration_steps_fn(
             state.random_generator_arg, **integration_steps_kwargs
-        )
+        ).astype(int)
         hmc_state = HMCState(state.position, state.logdensity, state.logdensity_grad)
         hmc_proposal, info = hmc_base(
             rng_key,
@@ -149,7 +152,7 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
     kernel = build_kernel(
-        integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn, L_proposal_factor
+        integrator, divergence_threshold, next_random_arg_fn, L_proposal_factor
     )
 
     def init_fn(position: ArrayLikeTree, rng_key: Array):
@@ -165,6 +168,7 @@ def as_top_level_api(
             logdensity_fn,
             step_size,
             inverse_mass_matrix,
+            integration_steps_fn,
         )
 
     return SamplingAlgorithm(init_fn, step_fn)

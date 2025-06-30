@@ -369,6 +369,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
             params = params._replace(step_size=final_da(dual_avg_state))
 
+        
         return state, params, eigenvector, num_tuning_integrator_steps
 
     return L_step_size_adaptation

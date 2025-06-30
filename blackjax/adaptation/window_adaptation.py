@@ -164,6 +164,7 @@ def base(
 
         """
         new_imm_state = mm_update(warmup_state.imm_state, position)
+        # new_imm_state = warmup_state.imm_state
         new_ss_state = da_update(warmup_state.ss_state, acceptance_rate)
         new_step_size = jnp.exp(new_ss_state.log_step_size)
 

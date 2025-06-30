@@ -53,7 +53,7 @@ class MCLMCInfo(NamedTuple):
     energy_change: float
 
 
-def init(position: ArrayLike, logdensity_fn, rng_key):
+def init(position: ArrayLike, logdensity_fn, random_generator_arg):
     if pytree_size(position) < 2:
         raise ValueError(
             "The target distribution must have more than 1 dimension for MCLMC."
@@ -62,7 +62,7 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
 
     return MCHMCState(
         position=position,
-        momentum=generate_unit_vector(rng_key, position),
+        momentum=generate_unit_vector(random_generator_arg, position),
         logdensity=l,
         logdensity_grad=g,
         steps_until_refresh=0,

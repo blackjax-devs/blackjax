@@ -9,6 +9,9 @@ from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.meads_adaptation import meads_adaptation
 from .adaptation.pathfinder_adaptation import pathfinder_adaptation
 from .adaptation.window_adaptation import window_adaptation
+from .adaptation.unadjusted_alba import unadjusted_alba
+from .adaptation.unadjusted_step_size import robnik_step_size_tuning
+from .adaptation.adjusted_abla import alba_adjusted
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
@@ -180,4 +183,7 @@ __all__ = [
     "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
     "ess",  # diagnostics
     "rhat",
+    "unadjusted_alba",
+    "robnik_step_size_tuning",
+    "alba_adjusted",
 ]

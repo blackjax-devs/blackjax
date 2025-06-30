@@ -47,21 +47,21 @@ class LangevinInfo(NamedTuple):
     energy_change: float
 
 
-def init(position: ArrayLike, logdensity_fn, metric, rng_key):
+def init(position: ArrayLike, logdensity_fn, random_generator_arg):
     
     l, g = jax.value_and_grad(logdensity_fn)(position)
 
+    metric = metrics.default_metric(jnp.ones_like(position))
+
     return IntegratorState(
         position=position,
-        momentum = metric.sample_momentum(rng_key, position),
+        momentum = metric.sample_momentum(random_generator_arg, position),
         logdensity=l,
         logdensity_grad=g,
     )
 
 
 def build_kernel(
-        logdensity_fn, 
-        inverse_mass_matrix, 
         integrator,
         desired_energy_var_max_ratio=jnp.inf,
         desired_energy_var=5e-4,):
@@ -84,12 +84,13 @@ def build_kernel(
 
     """
 
-    metric = metrics.default_metric(inverse_mass_matrix)
-    step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy,inverse_mass_matrix)
 
     def kernel(
-        rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
+        rng_key: PRNGKey, state: IntegratorState, logdensity_fn, L: float, step_size: float, inverse_mass_matrix, 
     ) -> tuple[IntegratorState, LangevinInfo]:
+        metric = metrics.default_metric(inverse_mass_matrix)
+        step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy,inverse_mass_matrix)
+
         (position, momentum, logdensity, logdensitygrad), (kinetic_change, energy_error) = step(
             state, step_size, L, rng_key
         )
@@ -171,24 +172,20 @@ def as_top_level_api(
 
     We also add the general kernel and state generator as an attribute to this class so
     users only need to pass `blackjax.langevin` to SMC, adaptation, etc. algorithms.
-
-
-
     """
 
     kernel = build_kernel(
-        logdensity_fn, 
-        inverse_mass_matrix, 
         integrator,
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
         desired_energy_var=desired_energy_var,
         )
-    metric = metrics.default_metric(inverse_mass_matrix)
+    # metric = metrics.default_metric(inverse_mass_matrix)
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
-        return init(position, logdensity_fn, metric, rng_key)
+        return init(position, logdensity_fn, rng_key)
 
     def update_fn(rng_key, state):
-        return kernel(rng_key, state, L, step_size)
+        return kernel(
+            rng_key=rng_key, state=state, logdensity_fn=logdensity_fn, L=L, step_size=step_size, inverse_mass_matrix=inverse_mass_matrix)
 
     return SamplingAlgorithm(init_fn, update_fn)
