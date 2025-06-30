@@ -14,6 +14,7 @@ from jax.tree_util import tree_leaves, tree_map
 from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.diagnostics import splitR
 
 
 @partial(jit, static_argnames=("precision",), inline=True)
@@ -319,13 +320,13 @@ def incremental_value_update(
 
 
 def eca_step(
-    kernel, summary_statistics_fn, adaptation_update, num_chains, ensemble_info=None
+    kernel, summary_statistics_fn, adaptation_update, num_chains, superchain_size = None, ensemble_info=None
 ):
     """
     Construct a single step of ensemble chain adaptation (eca) to be performed in parallel on multiple devices.
     """
 
-    def _step(state_all, xs):
+    def step(state_all, xs):
         """This function operates on a single device."""
         (
             state,
@@ -355,19 +356,37 @@ def eca_step(
 
         return (state, adaptation_state), info_to_be_stored
 
-    if ensemble_info is not None:
+    return add_ensemble_info(add_splitR(step, num_chains, superchain_size), ensemble_info)
 
-        def step(state_all, xs):
-            (state, adaptation_state), info_to_be_stored = _step(state_all, xs)
-            return (state, adaptation_state), (
-                info_to_be_stored,
-                vmap(ensemble_info)(state.position),
-            )
 
-        return step
+def add_splitR(step, num_chains, superchain_size):
 
-    else:
-        return _step
+    def _step(state_all, xs):
+
+        state_all, info_to_be_stored  = step(state_all, xs)
+        
+        state, adaptation_state = state_all
+
+        R = splitR(state.position, num_chains, superchain_size)
+        split_bavg = jnp.average(jnp.square(R) - 1)
+        split_bmax = jnp.max(jnp.square(R) - 1)
+
+        info_to_be_stored['R_avg'] = split_bavg
+        info_to_be_stored['R_max'] = split_bmax
+
+        return (state, adaptation_state), info_to_be_stored
+
+    return _step if superchain_size is not None else step
+
+
+def add_ensemble_info(step, ensemble_info):
+
+    def _step(state_all, xs):
+        (state, adaptation_state), info_to_be_stored = step(state_all, xs)
+        return (state, adaptation_state), (info_to_be_stored, vmap(ensemble_info)(state.position))
+
+    return _step if ensemble_info is not None else step
+
 
 
 def run_eca(
@@ -378,6 +397,7 @@ def run_eca(
     num_steps,
     num_chains,
     mesh,
+    superchain_size= None,
     ensemble_info=None,
     early_stop=False,
 ):
@@ -405,6 +425,7 @@ def run_eca(
         adaptation.summary_statistics_fn,
         adaptation.update,
         num_chains,
+        superchain_size,
         ensemble_info,
     )
 
@@ -431,10 +452,12 @@ def run_eca(
         observables = jnp.zeros((num_steps,))
         r_avg = jnp.zeros((num_steps,))
         r_max = jnp.zeros((num_steps,))
+        R_avg = jnp.zeros((num_steps,))
+        R_max = jnp.zeros((num_steps,))
         step_size = jnp.zeros((num_steps,))
 
         def step_while(a):
-            x, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, step_size = a
+            x, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, R_avg, R_max, step_size = a
 
             auxilliary_input = (xs[0][i], xs[1][i], xs[2][i])
 
@@ -450,15 +473,19 @@ def run_eca(
             new_observables = observables.at[i].set(info.get("observables"))
             new_r_avg = r_avg.at[i].set(info.get("r_avg"))
             new_r_max = r_max.at[i].set(info.get("r_max"))
+            new_R_avg = R_avg.at[i].set(info.get("R_avg"))
+            new_R_max = R_max.at[i].set(info.get("R_max"))
             new_step_size = step_size.at[i].set(info.get("step_size"))
 
-            return (output, i + 1, info.get("while_cond"), new_EEVPD, new_EEVPD_wanted, new_L, new_entropy, new_equi_diag, new_equi_full, new_bias0, new_bias1, new_observables, new_r_avg, new_r_max, new_step_size)
+            return (output, i + 1, 
+                    True, #info.get("r_max") > adaptation.r_end,x
+                    new_EEVPD, new_EEVPD_wanted, new_L, new_entropy, new_equi_diag, new_equi_full, new_bias0, new_bias1, new_observables, new_r_avg, new_r_max, new_R_avg, new_R_max, new_step_size)
 
         if early_stop:
-            final_state_all, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, step_size = lax.while_loop(
+            final_state_all, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, R_avg, R_max, step_size = lax.while_loop(
                 lambda a: ((a[1] < num_steps) & a[2]),
                 step_while,
-                (initial_state_all, 0, True, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, step_size),
+                (initial_state_all, 0, True, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, R_avg, R_max, step_size),
             )
             steps_done = i
             info_history = {
@@ -473,6 +500,8 @@ def run_eca(
                 "observables": observables,
                 "r_avg": r_avg,
                 "r_max": r_max,
+                "R_avg": R_avg,
+                "R_max": R_max,
                 "step_size": step_size,
                 "steps_done": steps_done,
             }
@@ -524,6 +553,7 @@ def ensemble_execute_fn(
     x=None,
     args=None,
     summary_statistics_fn=lambda y: 0.0,
+    superchain_size = None
 ):
     """Given a sequential function
      func(rng_key, x, args) = y,
@@ -563,8 +593,16 @@ def ensemble_execute_fn(
         F, mesh=mesh, in_specs=(p, p), out_specs=(p, pscalar), check_rep=False
     )
 
-    keys = device_put(
-        split(rng_key, num_chains), NamedSharding(mesh, p)
-    )  # random keys, distributed across devices
+    if superchain_size == None:
+        _keys = split(rng_key, num_chains)
+    
+    else:
+        _keys = jnp.repeat(split(rng_key, num_chains // superchain_size), superchain_size)
+
+
+    keys = device_put(_keys, NamedSharding(mesh, p))  # random keys, distributed across devices
+    
     # apply F in parallel
     return parallel_execute(X, keys)
+
+

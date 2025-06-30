@@ -159,7 +159,7 @@ def while_steps_num(cond):
         return jnp.argmin(cond) + 1
 
 
-def emaus(
+def laps(
     logdensity_fn,
     sample_init,
     ndims,
@@ -181,6 +181,7 @@ def emaus(
     ensemble_observables=None,
     diagnostics=True,
     contract=lambda x: 0.0,
+    superchain_size= None,
 ):
     """
     model: the target density object
@@ -207,7 +208,7 @@ def emaus(
 
     # initialize the chains
     initial_state = umclmc.initialize(
-        key_init, logdensity_fn, sample_init, num_chains, mesh
+        key_init, logdensity_fn, sample_init, num_chains, mesh, superchain_size=superchain_size
     )
 
     # burn-in with the unadjusted method #
@@ -233,6 +234,7 @@ def emaus(
         num_steps1,
         num_chains,
         mesh,
+        superchain_size,
         ensemble_observables,
         early_stop=early_stop,
     )
@@ -258,7 +260,7 @@ def emaus(
     )  # scheme = BABAB..AB scheme has len(scheme)//2 + 1 Bs. The last doesn't count because that gradient can be reused in the next step.
 
     if diagonal_preconditioning:
-        inverse_mass_matrix = jnp.sqrt(final_adaptation_state.inverse_mass_matrix)
+        inverse_mass_matrix = final_adaptation_state.inverse_mass_matrix
 
         # scale the stepsize so that it reflects averag scale change of the preconditioning
         average_scale_change = jnp.sqrt(jnp.average(inverse_mass_matrix))
@@ -302,7 +304,8 @@ def emaus(
         num_samples,
         num_chains,
         mesh,
-        ensemble_observables,
+        superchain_size,
+        ensemble_observables
     )
 
     if diagnostics:
