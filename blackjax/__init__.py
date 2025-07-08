@@ -25,6 +25,7 @@ from .mcmc import mclmc as _mclmc
 from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk
 from .mcmc import rmhmc as _rmhmc
+from .mcmc import stretch as _stretch
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
     irmh_as_top_level_api,
@@ -119,6 +120,7 @@ adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
 ghmc = generate_top_level_api_from(_ghmc)
 barker_proposal = generate_top_level_api_from(barker)
+stretch = generate_top_level_api_from(_stretch)
 
 hmc_family = [hmc, nuts]
 

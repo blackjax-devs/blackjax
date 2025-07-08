@@ -12,6 +12,7 @@ from . import (
     periodic_orbital,
     random_walk,
     rmhmc,
+    stretch,
 )
 
 __all__ = [
@@ -28,4 +29,5 @@ __all__ = [
     "mclmc",
     "adjusted_mclmc_dynamic",
     "adjusted_mclmc",
+    "stretch",
 ]
