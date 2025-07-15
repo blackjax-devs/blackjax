@@ -133,7 +133,7 @@ def compute_covariance_from_particles(
         `cov_pytree` is equivalent to `jax.vmap(unravel_fn)(M_flat)`.
         This means each leaf of `cov_pytree` will have a shape `(D, *leaf_original_dims)`.
     """
-    cov_matrix = particles_covariance_matrix(state.particles)
+    cov_matrix = jnp.atleast_2d(particles_covariance_matrix(state.particles))
     single_particle = get_first_row(state.particles)
     _, unravel_fn = ravel_pytree(single_particle)
     cov_pytree = jax.vmap(unravel_fn)(cov_matrix)
