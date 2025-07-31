@@ -6,6 +6,10 @@ from absl.testing import absltest, parameterized
 import blackjax
 from blackjax.util import run_inference_algorithm, store_only_expectation_values
 
+#     @staticmethod
+#     def logdensity_fn(x):
+#         return -0.5 * jnp.sum(jnp.square(x))
+
 
 class RunInferenceAlgorithmTest(chex.TestCase):
     def setUp(self):
