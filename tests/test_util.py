@@ -106,6 +106,5 @@ class RunInferenceAlgorithmTest(chex.TestCase):
         return -0.5 * jnp.sum(jnp.square(x))
 
 
-
 if __name__ == "__main__":
     absltest.main()
