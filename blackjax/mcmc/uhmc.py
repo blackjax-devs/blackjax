@@ -15,18 +15,17 @@
 from typing import Callable, NamedTuple
 
 import jax
-
+from blackjax.mcmc.adjusted_mclmc_dynamic import make_random_trajectory_length_fn
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import (
     IntegratorState,
-    with_maruyama,
     velocity_verlet,
 )
 from blackjax.types import ArrayLike, PRNGKey
 import blackjax.mcmc.metrics as metrics
 import jax.numpy as jnp
 from blackjax.util import pytree_size, generate_unit_vector
-from blackjax.adaptation.mclmc_adaptation import handle_high_energy
+from blackjax.mcmc.underdamped_langevin import handle_high_energy, handle_nans, LangevinInfo
 __all__ = ["LangevinInfo", "init", "build_kernel", "as_top_level_api"]
 
 class UHMCState(NamedTuple):
@@ -43,22 +42,6 @@ def integrator_state(state: UHMCState) -> IntegratorState:
         logdensity=state.logdensity,
         logdensity_grad=state.logdensity_grad,
     )
-
-class LangevinInfo(NamedTuple):
-    """
-    Additional information on the Langevin transition.
-
-    logdensity
-        The log-density of the distribution at the current step of the Langevin chain.
-    kinetic_change
-        The difference in kinetic energy between the current and previous step.
-    energy_change
-        The difference in energy between the current and previous step.
-    """
-
-    logdensity: float
-    kinetic_change: float
-    energy_change: float
 
 
 def init(position: ArrayLike, logdensity_fn, random_generator_arg):
@@ -77,10 +60,8 @@ def init(position: ArrayLike, logdensity_fn, random_generator_arg):
 
 
 def build_kernel(
-        logdensity_fn, 
-        inverse_mass_matrix, 
         integrator,
-        desired_energy_var_max_ratio=jnp.inf,
+        desired_energy_var_max_ratio=1e3,
         desired_energy_var=5e-4,):
     """Build a HMC kernel.
 
@@ -101,45 +82,43 @@ def build_kernel(
 
     """
 
-    metric = metrics.default_metric(inverse_mass_matrix)
-    step = with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy,inverse_mass_matrix)
 
     def kernel(
-        rng_key: PRNGKey, state: UHMCState, L: float, step_size: float
+        rng_key: PRNGKey, state: UHMCState, logdensity_fn, L: float, step_size: float, inverse_mass_matrix, 
     ) -> tuple[UHMCState, LangevinInfo]:
+        metric = metrics.default_metric(inverse_mass_matrix)
+        step = integrator(logdensity_fn, metric.kinetic_energy)
         
-        refresh_key, energy_key, run_key = jax.random.split(rng_key, 3)
+        refresh_key, energy_cutoff_key, nan_key, randomization_key = jax.random.split(rng_key, 4)
 
-        (position, momentum, logdensity, logdensitygrad), (kinetic_change, energy_error) = step(
-            integrator_state(state), step_size, jnp.inf, run_key
+        (position, momentum, logdensity, logdensitygrad) = step(
+            integrator_state(state), step_size
         )
-        
 
-        num_steps_per_traj = jnp.ceil(L/step_size).astype(jnp.int64)
+        kinetic_change = - metric.kinetic_energy(state.momentum) + metric.kinetic_energy(momentum)
+        energy_change = kinetic_change - logdensity + state.logdensity
+        
+        num_steps_per_traj = make_random_trajectory_length_fn(True)(L/step_size)(randomization_key).astype(jnp.int64)
+
         momentum = (state.steps_until_refresh==0) * metric.sample_momentum(refresh_key, position) + (state.steps_until_refresh>0) * momentum
+        
         steps_until_refresh = (state.steps_until_refresh==0) * num_steps_per_traj + (state.steps_until_refresh>0) * (state.steps_until_refresh - 1)
 
         eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
         ndims = pytree_size(position)
 
 
-        energy, new_integrator_state = handle_high_energy(
-            previous_state=integrator_state(state),
-            next_state=IntegratorState(position, momentum, logdensity, logdensitygrad),
-            energy_change=energy_error,
-            key=energy_key,
-            inverse_mass_matrix=inverse_mass_matrix,
-            cutoff=jnp.sqrt(ndims * eev_max_per_dim),
-            euclidean=True
-        )
 
-        return UHMCState(new_integrator_state.position, new_integrator_state.momentum, new_integrator_state.logdensity, new_integrator_state.logdensity_grad, steps_until_refresh), LangevinInfo(
+        new_state, info = handle_high_energy(state, UHMCState(position, momentum, logdensity, logdensitygrad, steps_until_refresh), LangevinInfo(
             logdensity=logdensity,
-            energy_change=energy,
-            kinetic_change=kinetic_change
-        )
+            energy_change=energy_change,
+            kinetic_change=kinetic_change,
+            nonans=True
+        ), energy_cutoff_key, cutoff = jnp.sqrt(ndims * eev_max_per_dim), inverse_mass_matrix=inverse_mass_matrix)
 
-
+        new_state, info = handle_nans(state, new_state, info, nan_key, inverse_mass_matrix)
+        return new_state, info
+    
     return kernel
 
 
@@ -165,8 +144,6 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(
-        logdensity_fn, 
-        inverse_mass_matrix, 
         integrator,
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
         desired_energy_var=desired_energy_var,
@@ -177,6 +154,8 @@ def as_top_level_api(
         return init(position, logdensity_fn, rng_key)
 
     def update_fn(rng_key, state):
-        return kernel(rng_key, state, L, step_size)
+        return kernel(rng_key, state, logdensity_fn, L, step_size, inverse_mass_matrix)
 
     return SamplingAlgorithm(init_fn, update_fn)
+
+

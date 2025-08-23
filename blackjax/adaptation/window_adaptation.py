@@ -45,6 +45,7 @@ class WindowAdaptationState(NamedTuple):
 def base(
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.80,
+    preconditioning = True,
 ) -> tuple[Callable, Callable, Callable]:
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -100,6 +101,9 @@ def base(
 
     """
     mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
+    if not preconditioning:
+        mm_update = lambda x, y: x
+        mm_final = lambda x: x
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
     def init(
@@ -252,6 +256,7 @@ def window_adaptation(
     progress_bar: bool = False,
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
+    preconditioning = True,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the value of the inverse mass matrix and step size parameters of
@@ -302,6 +307,7 @@ def window_adaptation(
     adapt_init, adapt_step, adapt_final = base(
         is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
+        preconditioning=preconditioning,
     )
 
     def one_step(carry, xs):

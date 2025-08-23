@@ -473,7 +473,7 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L, inverse_mass_mat
     # dim = m.shape[0]
     c1 = jnp.exp(-step_size/L)
     c2 = jnp.sqrt((1-c1**2))
-    z = normal(rng_key, shape=m.shape, dtype=m.dtype)
+    # z = normal(rng_key, shape=m.shape, dtype=m.dtype)
     metric = default_metric(inverse_mass_matrix)
     z = metric.sample_momentum(rng_key, m)
     # normal(rng_key, shape=m.shape, dtype=m.dtype)
@@ -531,7 +531,6 @@ def with_maruyama(integrator, kinetic_energy,inverse_mass_matrix):
             )
         )
         # jax.debug.print("state 1.5 {x}",x=state)
-        # state = init_state # TODO: add noise back!
         # one step of the deterministic dynamics
         new_state = integrator(state, step_size)
         # jax.debug.print("state 2 {x}",x=state)

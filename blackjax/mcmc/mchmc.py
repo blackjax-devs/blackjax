@@ -21,12 +21,11 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import (
     IntegratorState,
     isokinetic_mclachlan,
-    with_isokinetic_maruyama,
 )
 from blackjax.types import ArrayLike, PRNGKey
 from blackjax.util import generate_unit_vector, pytree_size
-from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
-
+from blackjax.mcmc.mclmc import handle_high_energy, handle_nans, MCLMCInfo
+from blackjax.mcmc.adjusted_mclmc_dynamic import make_random_trajectory_length_fn
 __all__ = ["MCLMCInfo", "init", "build_kernel", "as_top_level_api"]
 
 class MCHMCState(NamedTuple):
@@ -36,21 +35,6 @@ class MCHMCState(NamedTuple):
     logdensity_grad: ArrayLike
     steps_until_refresh: int
 
-class MCLMCInfo(NamedTuple):
-    """
-    Additional information on the MCLMC transition.
-
-    logdensity
-        The log-density of the distribution at the current step of the MCLMC chain.
-    kinetic_change
-        The difference in kinetic energy between the current and previous step.
-    energy_change
-        The difference in energy between the current and previous step.
-    """
-
-    logdensity: float
-    kinetic_change: float
-    energy_change: float
 
 
 def init(position: ArrayLike, logdensity_fn, random_generator_arg):
@@ -79,8 +63,6 @@ def integrator_state(state: MCHMCState) -> IntegratorState:
 
 def build_kernel(
     # integration_steps_fn,
-    logdensity_fn,
-    inverse_mass_matrix,
     integrator,
     desired_energy_var_max_ratio=jnp.inf,
     desired_energy_var=5e-4,
@@ -88,60 +70,41 @@ def build_kernel(
     """
     """
 
-    step = integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
 
 
     def kernel(
-        rng_key: PRNGKey, state: MCHMCState, L: float, step_size: float
+        rng_key: PRNGKey, state: MCHMCState, logdensity_fn, L: float, step_size: float, inverse_mass_matrix: ArrayLike
     ) -> tuple[MCHMCState, MCLMCInfo]:
+        step = integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
         (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
             integrator_state(state), step_size
         )
 
-        # num_integration_steps = integration_steps_fn(state.random_generator_arg)
-        jitter_key, refresh_key = jax.random.split(rng_key)
+        randomization_key, refresh_key, energy_cutoff_key, nan_key = jax.random.split(rng_key, 4)
 
-        num_steps_per_traj = jnp.ceil(L/step_size).astype(int)
-
-
-        num_steps_per_traj = jnp.ceil(
-                jax.random.uniform(jitter_key) * rescale(num_steps_per_traj)
-            ).astype(int)
+        num_steps_per_traj = make_random_trajectory_length_fn(True)(L/step_size)(randomization_key).astype(jnp.int64)
         
 
 
-        energy_error = kinetic_change - logdensity + state.logdensity
+        energy_change = kinetic_change - logdensity + state.logdensity
 
         eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
         ndims = pytree_size(position)
 
         momentum=(state.steps_until_refresh==0) * generate_unit_vector(refresh_key, state.position) + (state.steps_until_refresh>0) * momentum
-        # new_state = new_state._replace(momentum=generate_unit_vector(refresh_key, new_state.position))
 
         steps_until_refresh = (state.steps_until_refresh==0) * num_steps_per_traj + (state.steps_until_refresh>0) * (state.steps_until_refresh - 1)
-        # jax.debug.print("steps_until_refresh: {x}", x=steps_until_refresh)
 
-        new_state, new_info = jax.lax.cond(
-            energy_error > jnp.sqrt(ndims * eev_max_per_dim),
-            lambda: (
-                state,
-                MCLMCInfo(
-                    logdensity=state.logdensity,
-                    energy_change=0.0,
-                    kinetic_change=0.0,
-                ),
-            ),
-            lambda: (
-                MCHMCState(position, momentum, logdensity, logdensitygrad, steps_until_refresh),
-                MCLMCInfo(
-                    logdensity=logdensity,
-                    energy_change=energy_error,
-                    kinetic_change=kinetic_change,
-                ),
-            ),
-        )
+        new_state, info = handle_high_energy(state, MCHMCState(position, momentum, logdensity, logdensitygrad, steps_until_refresh), MCLMCInfo(
+            logdensity=logdensity,
+            energy_change=energy_change,
+            kinetic_change=kinetic_change,
+            nonans=True
+        ), energy_cutoff_key, cutoff = jnp.sqrt(ndims * eev_max_per_dim))
 
-        return new_state, new_info
+        new_state, info = handle_nans(state, new_state, info, nan_key)
+
+        return new_state, info
 
     return kernel
 
@@ -158,8 +121,6 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(
-        logdensity_fn,
-        inverse_mass_matrix,
         integrator,
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
     )
@@ -168,6 +129,6 @@ def as_top_level_api(
         return init(position, logdensity_fn, rng_key)
 
     def update_fn(rng_key, state):
-        return kernel(rng_key, state, L, step_size)
+        return kernel(rng_key, state, logdensity_fn, L, step_size, inverse_mass_matrix)
 
     return SamplingAlgorithm(init_fn, update_fn)

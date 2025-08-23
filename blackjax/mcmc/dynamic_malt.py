@@ -85,6 +85,7 @@ def build_kernel(
         num_integration_steps = integration_steps_fn(
             state.random_generator_arg, **integration_steps_kwargs
         ).astype(int)
+
         hmc_state = HMCState(state.position, state.logdensity, state.logdensity_grad)
         hmc_proposal, info = hmc_base(
             rng_key,
@@ -94,9 +95,6 @@ def build_kernel(
             inverse_mass_matrix,
             num_integration_steps,
         )
-
-        # jax.debug.print("logdensity {x}", x=hmc_proposal.logdensity)
-        # jax.debug.print("acceptance {x}", x=info)
 
         next_random_arg = next_random_arg_fn(state.random_generator_arg)
         return (

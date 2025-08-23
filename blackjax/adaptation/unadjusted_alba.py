@@ -29,9 +29,15 @@ def base(
     is_mass_matrix_diagonal: bool,
     v,
     target_eevpd,
+    preconditioning: bool = True,
 ) -> tuple[Callable, Callable, Callable]:
     
     mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
+    # if not preconditioning:
+
+    #     mm_update = lambda x, y: x
+
+    #     mm_final = lambda x: x
 
     # step_size_init, step_size_update, step_size_final = dual_averaging_adaptation(target_eevpd)
     step_size_init, step_size_update, step_size_final = robnik_step_size_tuning(desired_energy_var=target_eevpd)
@@ -55,7 +61,7 @@ def base(
 
     def fast_update(
         position: ArrayLikeTree,
-        value: float,
+        info,
         warmup_state: AlbaAdaptationState,
     ) -> AlbaAdaptationState:
         """Update the adaptation state when in a "fast" window.
@@ -69,38 +75,65 @@ def base(
         del position
 
 
-        new_ss_state =  step_size_update(warmup_state.ss_state, value)
+        new_ss_state =  step_size_update(warmup_state.ss_state, info)
         new_step_size = new_ss_state.step_size # jnp.exp(new_ss_state.log_step_size)
         
+        new_inverse_mass_matrix = jax.lax.cond(
+            preconditioning,
+            lambda: warmup_state.inverse_mass_matrix,
+            lambda: jnp.ones_like(warmup_state.inverse_mass_matrix),
+        )
+
         return AlbaAdaptationState(
             new_ss_state,
             warmup_state.imm_state,
             new_step_size,
-            warmup_state.inverse_mass_matrix,
+            new_inverse_mass_matrix,
             L = warmup_state.L
         )
 
     def slow_update(
         position: ArrayLikeTree,
-        value: float,
+        info,
         warmup_state: AlbaAdaptationState,
     ) -> AlbaAdaptationState:
+        
+        # raise Exception
     
         new_imm_state = mm_update(warmup_state.imm_state, position)
-        new_ss_state = step_size_update(warmup_state.ss_state, value)
+        # jax.debug.print("imm state {x}", x=new_imm_state.inverse_mass_matrix[:3])
+        # jax.debug.print("warmup_state.ss_state: {x}", x=(warmup_state.ss_state.step_size))
+        new_ss_state = step_size_update(warmup_state.ss_state, info)
+        # new_ss_state = warmup_state.ss_state
+        # jax.debug.print("old then new: {new_ss_state}", new_ss_state=(warmup_state.ss_state.step_size, new_ss_state.step_size))
         new_step_size = new_ss_state.step_size # jnp.exp(new_ss_state.log_step_size)
 
+        new_inverse_mass_matrix = jax.lax.cond(
+            preconditioning,
+            lambda: warmup_state.inverse_mass_matrix,
+            lambda: jnp.ones_like(warmup_state.inverse_mass_matrix),
+        )
+
         return AlbaAdaptationState(
-            new_ss_state, new_imm_state, new_step_size, warmup_state.inverse_mass_matrix, L = warmup_state.L
+            new_ss_state, new_imm_state, new_step_size, new_inverse_mass_matrix, L = warmup_state.L
         )
 
     def slow_final(warmup_state: AlbaAdaptationState) -> AlbaAdaptationState:
 
         new_imm_state = mm_final(warmup_state.imm_state)
-        new_ss_state = step_size_init(step_size_final(warmup_state.ss_state), warmup_state.ss_state.num_dimensions)
+        new_ss_state = warmup_state.ss_state
+        # ._replace(step_size=step_size_final(warmup_state.ss_state))
+        # step_size_init(step_size_final(warmup_state.ss_state), warmup_state.ss_state.num_dimensions)
         new_step_size = new_ss_state.step_size # jnp.exp(new_ss_state.log_step_size)
+        # jax.debug.print("new_ss_state: {new_ss_state}", new_ss_state=(new_ss_state.step_size))
 
-        new_L = jnp.sqrt(warmup_state.ss_state.num_dimensions)/v # 
+        new_L = jax.lax.cond(
+            preconditioning,
+            lambda: jnp.sqrt(warmup_state.ss_state.num_dimensions)/v,
+            lambda: jnp.sqrt(jnp.sum(new_imm_state.inverse_mass_matrix)),
+        )
+    
+        # jax.debug.print("new_L: {x}", x=(warmup_state.L, new_L))
 
         return AlbaAdaptationState(
             new_ss_state,
@@ -114,7 +147,7 @@ def base(
         adaptation_state: AlbaAdaptationState,
         adaptation_stage: tuple,
         position: ArrayLikeTree,
-        value: float,
+        info,
     ) -> AlbaAdaptationState:
         """Update the adaptation state and parameter values.
 
@@ -141,7 +174,7 @@ def base(
             stage,
             (fast_update, slow_update),
             position,
-            value,
+            info,
             adaptation_state,
         )
 
@@ -156,7 +189,7 @@ def base(
 
     def final(warmup_state: AlbaAdaptationState) -> tuple[float, Array]:
         """Return the final values for the step size and mass matrix."""
-        step_size = warmup_state.ss_state.step_size 
+        step_size = step_size_final(warmup_state.ss_state)
         # step_size = jnp.exp(warmup_state.ss_state.log_step_size_avg)
         inverse_mass_matrix = warmup_state.imm_state.inverse_mass_matrix
         L = warmup_state.L
@@ -169,6 +202,7 @@ def unadjusted_alba(
     logdensity_fn: Callable,
     target_eevpd,
     v,
+    preconditioning: bool = True,
     is_mass_matrix_diagonal: bool = True,
     progress_bar: bool = False,
     adaptation_info_fn: Callable = return_all_adapt_info,
@@ -182,9 +216,10 @@ def unadjusted_alba(
     mcmc_kernel = algorithm.build_kernel(integrator)
 
     adapt_init, adapt_step, adapt_final = base(
-        is_mass_matrix_diagonal,
+        is_mass_matrix_diagonal=is_mass_matrix_diagonal,
         target_eevpd=target_eevpd,
         v=v,
+        preconditioning=preconditioning
     )
 
     def one_step(carry, xs):
@@ -204,8 +239,9 @@ def unadjusted_alba(
             adaptation_state,
             adaptation_stage,
             new_state.position,
-            info.energy_change,
+            info,
         )
+        # jax.debug.print("step sizes: {x}", x=(adaptation_state.step_size, new_adaptation_state.step_size))
 
         return (
             (new_state, new_adaptation_state),
@@ -232,6 +268,8 @@ def unadjusted_alba(
         last_chain_state, last_warmup_state, *_ = last_state
         step_size, L, inverse_mass_matrix = adapt_final(last_warmup_state)
 
+        jax.debug.print("unadjusted L before alba: {params}", params=(L, step_size))
+
         ###
         ### ALBA TUNING
         ###
@@ -253,16 +291,24 @@ def unadjusted_alba(
             _, samples = jax.lax.scan(step, last_chain_state, keys)
             flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
             ess = effective_sample_size(flat_samples[None, ...])
+            print(jnp.mean(ess), num_alba_steps, "\n\ness (blackjax internal)\n")
 
+            # print("L etc", L, step_size, jnp.mean(ess), num_alba_steps, jnp.mean(num_alba_steps / ess))
             L=alba_factor * step_size * jnp.mean(num_alba_steps / ess)
-        
+            # print("new L", L)
+            # raise Exception("stop")
 
+        max_num_steps = 500
+        
+        # jax.debug.print("L: {x}", x=step_size*50.)
         parameters = {
             "step_size": step_size,
             "inverse_mass_matrix": inverse_mass_matrix,
-            "L": L,
+            "L": jnp.clip(L, max=step_size*max_num_steps),
             **extra_parameters,
         }
+
+        # jax.debug.print("parameters {x}", x=parameters)
 
         return (
             AdaptationResults(

@@ -45,7 +45,7 @@ class LangevinInfo(NamedTuple):
     logdensity: float
     kinetic_change: float
     energy_change: float
-
+    nonans : bool
 
 def init(position: ArrayLike, logdensity_fn, random_generator_arg):
     
@@ -63,7 +63,7 @@ def init(position: ArrayLike, logdensity_fn, random_generator_arg):
 
 def build_kernel(
         integrator,
-        desired_energy_var_max_ratio=jnp.inf,
+        desired_energy_var_max_ratio=1e3,
         desired_energy_var=5e-4,):
     """Build a HMC kernel.
 
@@ -94,64 +94,30 @@ def build_kernel(
         (position, momentum, logdensity, logdensitygrad), (kinetic_change, energy_error) = step(
             state, step_size, L, rng_key
         )
-
-        # jax.debug.print("energy change {x}", x=energy_change)
-
         
-        # kinetic_change = - momentum@momentum/2 + state.momentum@state.momentum/2
-        
-
-        # return IntegratorState(
-        #     position, momentum, logdensity, logdensitygrad
-        # ), LangevinInfo(
-        #     logdensity=logdensity,
-        #     energy_change=energy_change,
-        #     kinetic_change=kinetic_change
-        # )
 
         eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
         ndims = pytree_size(position)
-        # jax.debug.print("diagnostics {x}", x=(eev_max_per_dim, jnp.abs(energy_error), jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim)))
 
-        energy_key, rng_key = jax.random.split(rng_key)
+        energy_key, nan_key = jax.random.split(rng_key)
 
-        energy, new_state = handle_high_energy(
+        new_state, info = handle_high_energy(
             previous_state=state,
             next_state=IntegratorState(position, momentum, logdensity, logdensitygrad),
-            energy_change=energy_error,
+            info=LangevinInfo(
+                logdensity=logdensity,
+                energy_change=energy_error,
+                kinetic_change=kinetic_change,
+                nonans=True
+            ),
             key=energy_key,
             inverse_mass_matrix=inverse_mass_matrix,
             cutoff=jnp.sqrt(ndims * eev_max_per_dim),
-            euclidean=True
         )
 
-        return new_state, LangevinInfo(
-            logdensity=new_state.logdensity,
-            energy_change=energy,
-            kinetic_change=kinetic_change
-        )
+        new_state, info = handle_nans(state, new_state, info, nan_key, inverse_mass_matrix)
+        return new_state, info
 
-        # new_state, new_info = jax.lax.cond(
-        #     jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim),
-        #     lambda: (
-        #         state,
-        #         LangevinInfo(
-        #             logdensity=state.logdensity,
-        #             energy_change=0.0,
-        #             kinetic_change=0.0,
-        #         ),
-        #     ),
-        #     lambda: (
-        #         IntegratorState(position, momentum, logdensity, logdensitygrad),
-        #         LangevinInfo(
-        #             logdensity=logdensity,
-        #             energy_change=energy_error,
-        #             kinetic_change=kinetic_change,
-        #         ),
-        #     ),
-        # )
-
-        # return new_state, new_info
 
     return kernel
 
@@ -179,7 +145,6 @@ def as_top_level_api(
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
         desired_energy_var=desired_energy_var,
         )
-    # metric = metrics.default_metric(inverse_mass_matrix)
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
         return init(position, logdensity_fn, rng_key)
@@ -189,3 +154,50 @@ def as_top_level_api(
             rng_key=rng_key, state=state, logdensity_fn=logdensity_fn, L=L, step_size=step_size, inverse_mass_matrix=inverse_mass_matrix)
 
     return SamplingAlgorithm(init_fn, update_fn)
+
+
+def handle_nans(
+    previous_state, next_state, info, key, inverse_mass_matrix
+):
+    
+    metric = metrics.default_metric(inverse_mass_matrix)
+    new_momentum = metric.sample_momentum(key, previous_state.position) 
+
+    nonans = jnp.logical_and(jnp.all(jnp.isfinite(next_state.position)), jnp.all(jnp.isfinite(next_state.momentum)))
+
+    state, info = jax.lax.cond(
+        nonans,
+        lambda: (next_state, info),
+        lambda: (previous_state._replace(
+            momentum=new_momentum,
+        ), LangevinInfo(
+            logdensity=previous_state.logdensity,
+            energy_change=0.0,
+            kinetic_change=0.0,
+            nonans=nonans
+        )),
+    )
+
+    return state, info
+
+def handle_high_energy(
+    previous_state, next_state, info, key, cutoff, inverse_mass_matrix
+):
+
+    metric = metrics.default_metric(inverse_mass_matrix)
+    new_momentum = metric.sample_momentum(key, previous_state.position)
+
+    state, info = jax.lax.cond(
+        jnp.abs(info.energy_change) > cutoff,
+        lambda: (previous_state._replace(
+            momentum=new_momentum,
+        ), LangevinInfo(
+            logdensity=previous_state.logdensity,
+            energy_change=0.0,
+            kinetic_change=0.0,
+            nonans=False
+        )),
+        lambda: (next_state, info),
+    )
+
+    return state, info

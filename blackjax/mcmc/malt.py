@@ -77,8 +77,6 @@ def build_kernel(
         L = num_integration_steps * step_size
         L_proposal = L_proposal_factor * L
 
-        # jax.debug.print("L_proposal {x}",x=L_proposal)
-
         key_trajectory, key_momentum, key_integrator = jax.random.split(rng_key, 3)
         metric = metrics.default_metric(inverse_mass_matrix)
         symplectic_integrator = lambda state, step_size, rng_key: integrators.with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy, inverse_mass_matrix)(state, step_size, L_proposal=L_proposal, rng_key=rng_key)
@@ -94,8 +92,6 @@ def build_kernel(
 
         position, logdensity, logdensity_grad = state
         momentum = metric.sample_momentum(key_momentum, position)
-        # import jax.numpy as jnp
-        # jax.debug.print("momentum nan? {x}",x=jnp.any(jnp.isnan(momentum)))
 
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
@@ -265,11 +261,11 @@ def hmc_proposal(
 
         delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
         # jax.debug.print("delta_energy_trajectory {x}",x=(delta_energy_trajectory, delta_energy))
-        # jax.debug.print("delta_energy {x}",x=delta_energy)
         is_diverging = -delta_energy > divergence_threshold
         # jax.debug.print("is_diverging {x}",x=is_diverging)
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
+        # jax.debug.print("delta_energy {x}",x=delta_energy)
         # jax.debug.print("p_accept {p_accept}", p_accept=(p_accept, delta_energy))
 
         info = HMCInfo(

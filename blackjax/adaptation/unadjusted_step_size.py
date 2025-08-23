@@ -1,6 +1,6 @@
 import jax.numpy as jnp
 from typing import NamedTuple
-
+import jax
 
 class RobnikStepSizeTuningState(NamedTuple):
     time : jnp.ndarray
@@ -9,14 +9,18 @@ class RobnikStepSizeTuningState(NamedTuple):
     step_size_max: float
     num_dimensions: int
 
-def robnik_step_size_tuning(desired_energy_var, trust_in_estimate=1.5, num_effective_samples=150, step_size_max=jnp.inf):
+def robnik_step_size_tuning(desired_energy_var, trust_in_estimate=1.5, num_effective_samples=150, step_size_max=jnp.inf, step_size_reduction_factor=0.8):
       
     decay_rate = (num_effective_samples - 1.0) / (num_effective_samples + 1.0)
 
     def init(initial_step_size, num_dimensions):
         return RobnikStepSizeTuningState(time=0.0, x_average=0.0, step_size=initial_step_size, step_size_max=step_size_max, num_dimensions=num_dimensions)
       
-    def update(robnik_state, energy_change):
+    def update(robnik_state, info):
+
+
+        energy_change = info.energy_change
+
 
         xi = (
             jnp.square(energy_change) / (robnik_state.num_dimensions * desired_energy_var)
@@ -37,7 +41,25 @@ def robnik_step_size_tuning(desired_energy_var, trust_in_estimate=1.5, num_effec
             step_size > robnik_state.step_size_max
         ) * robnik_state.step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
 
-        return RobnikStepSizeTuningState(time=time, x_average=x_average, step_size=step_size, step_size_max=step_size_max, num_dimensions=robnik_state.num_dimensions)
+        # old_robnik_state = robnik_state
+
+        # old_robnik_step_size = robnik_state.step_size
+        # jax.debug.print("step_size: {x}", x=(old_robnik_step_size, old_robnik_step_size * step_size_reduction_factor, step_size))
+        # jax.debug.print("stuff {x}", x=(x_average, time, robnik_state.time, time))
+        old_robnik_state = robnik_state
+
+
+        
+        robnik_state = jax.lax.cond(
+            info.nonans,
+            lambda: RobnikStepSizeTuningState(time=time, x_average=x_average, step_size=step_size, step_size_max=step_size_max, num_dimensions=robnik_state.num_dimensions),
+            lambda: robnik_state._replace(step_size=robnik_state.step_size * step_size_reduction_factor),
+        )
+        # jax.debug.print("robnik_state: {robnik_state}", robnik_state=(robnik_state.step_size, info.nonans, robnik_state.step_size * step_size_reduction_factor))
+        # jax.debug.print("robnik_state: {x}", x=(old_robnik_state.step_size, robnik_state.step_size))
+        return robnik_state
+
+        # return RobnikStepSizeTuningState(time=time, x_average=x_average, step_size=step_size, step_size_max=step_size_max, num_dimensions=robnik_state.num_dimensions)
 
 
     def final(robnik_state):
