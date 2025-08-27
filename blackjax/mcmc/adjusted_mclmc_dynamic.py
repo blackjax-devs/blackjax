@@ -70,6 +70,7 @@ def build_kernel(
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
 
+        
         num_integration_steps = integration_steps_fn(state.random_generator_arg)
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
