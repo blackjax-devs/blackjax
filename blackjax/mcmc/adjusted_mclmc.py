@@ -11,11 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin".
-
-NOTE: For best performance, we recommend using adjusted_mclmc_dynamic instead of this module, which is primarily intended for use in parallelized versions of the algorithm.
-
-"""
+"""Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin"."""
 from typing import Callable, Union
 
 import jax
@@ -23,9 +19,10 @@ import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.hmc import HMCInfo, HMCState
+from blackjax.mcmc.hmc import HMCState
+from blackjax.mcmc.hmc import HMCInfo
 from blackjax.mcmc.proposal import static_binomial_sampling
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_unit_vector
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
@@ -37,12 +34,12 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable):
 
 
 def build_kernel(
-    logdensity_fn: Callable,
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
-    inverse_mass_matrix=1.0,
+    next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
+    L_proposal_factor: float = jnp.inf,
 ):
-    """Build an MHMCHMC kernel where the number of integration steps is chosen randomly.
+    """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
     Parameters
     ----------
@@ -66,11 +63,16 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey,
         state: HMCState,
+        logdensity_fn: Callable,
         step_size: float,
-        num_integration_steps: int,
-        L_proposal_factor: float = jnp.inf,
+        integration_steps_fn,
+        inverse_mass_matrix=1.0,
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
+
+
+        # num_integration_steps = integration_steps_fn(state.random_generator_arg)
+        num_integration_steps = integration_steps_fn(None)
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
@@ -96,6 +98,7 @@ def build_kernel(
                 proposal.position,
                 proposal.logdensity,
                 proposal.logdensity_grad,
+                # next_random_arg_fn(state.random_generator_arg),
             ),
             info,
         )
@@ -111,9 +114,10 @@ def as_top_level_api(
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.isokinetic_mclachlan,
-    num_integration_steps,
+    next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
+    integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
 ) -> SamplingAlgorithm:
-    """Implements the (basic) user interface for the MHMCHMC kernel.
+    """Implements the (basic) user interface for the dynamic MHMCHMC kernel.
 
     Parameters
     ----------
@@ -140,23 +144,23 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(
-        logdensity_fn=logdensity_fn,
         integrator=integrator,
-        inverse_mass_matrix=inverse_mass_matrix,
+        next_random_arg_fn=next_random_arg_fn,
         divergence_threshold=divergence_threshold,
+        L_proposal_factor=L_proposal_factor,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
+    def init_fn(position: ArrayLikeTree, rng_key: Array):
+        return init(position, logdensity_fn, rng_key)
 
     def update_fn(rng_key: PRNGKey, state):
         return kernel(
             rng_key=rng_key,
             state=state,
+            logdensity_fn=logdensity_fn,
             step_size=step_size,
-            num_integration_steps=num_integration_steps,
-            L_proposal_factor=L_proposal_factor,
+            integration_steps_fn=integration_steps_fn,
+            inverse_mass_matrix=inverse_mass_matrix,
         )
 
     return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
@@ -240,3 +244,29 @@ def adjusted_mclmc_proposal(
         return sampled_state, info, other_proposal_info
 
     return generate
+
+
+def rescale(mu):
+    """returns s, such that
+     round(U(0, 1) * s + 0.5)
+    has expected value mu.
+    """
+    k = jnp.floor(2 * mu - 1)
+    x = k * (mu - 0.5 * (k + 1)) / (k + 1 - mu)
+    return k + x
+
+
+def trajectory_length(t, mu):
+    s = rescale(mu)
+    return jnp.rint(0.5 + halton_sequence(t) * s)
+
+def make_random_trajectory_length_fn(random_trajectory_length : bool):
+    if random_trajectory_length:
+        integration_steps_fn = lambda avg_num_integration_steps: lambda k: (jnp.clip(jnp.ceil(
+            jax.random.uniform(k) * rescale(avg_num_integration_steps)
+        ), min=1)).astype('int32')
+    else:
+        integration_steps_fn = lambda avg_num_integration_steps: lambda _: jnp.clip(jnp.ceil(
+            avg_num_integration_steps
+        ), min=1).astype('int32')
+    return integration_steps_fn

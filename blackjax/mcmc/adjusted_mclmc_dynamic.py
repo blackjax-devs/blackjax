@@ -37,6 +37,7 @@ def build_kernel(
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
+    L_proposal_factor: float = jnp.inf,
 ):
     """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
@@ -66,10 +67,10 @@ def build_kernel(
         step_size: float,
         integration_steps_fn,
         inverse_mass_matrix=1.0,
-        L_proposal_factor: float = jnp.inf,
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
 
+        
         num_integration_steps = integration_steps_fn(state.random_generator_arg)
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
@@ -145,6 +146,7 @@ def as_top_level_api(
         integrator=integrator,
         next_random_arg_fn=next_random_arg_fn,
         divergence_threshold=divergence_threshold,
+        L_proposal_factor=L_proposal_factor,
     )
 
     def init_fn(position: ArrayLikeTree, rng_key: Array):
@@ -158,7 +160,6 @@ def as_top_level_api(
             step_size=step_size,
             integration_steps_fn=integration_steps_fn,
             inverse_mass_matrix=inverse_mass_matrix,
-            L_proposal_factor=L_proposal_factor,
         )
 
     return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
@@ -257,3 +258,14 @@ def rescale(mu):
 def trajectory_length(t, mu):
     s = rescale(mu)
     return jnp.rint(0.5 + halton_sequence(t) * s)
+
+def make_random_trajectory_length_fn(random_trajectory_length : bool):
+    if random_trajectory_length:
+        integration_steps_fn = lambda avg_num_integration_steps: lambda k: (jnp.clip(jnp.ceil(
+            jax.random.uniform(k) * rescale(avg_num_integration_steps)
+        ), min=1)).astype('int32')
+    else:
+        integration_steps_fn = lambda avg_num_integration_steps: lambda _: jnp.clip(jnp.ceil(
+            avg_num_integration_steps
+        ), min=1).astype('int32')
+    return integration_steps_fn

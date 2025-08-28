@@ -141,10 +141,13 @@ def langevin_integration(
             lambda step_size: direction * step_size, step_size
         )
 
+        # jax.debug.print("num_integration_steps {x}", x=num_integration_steps)
+
         def one_step(_, accum):
             state, delta_energy, rng_key = accum
             rng_key, key2 = jax.random.split(rng_key)
             new_state, (_, delta_energy_new) = integrator(state, directed_step_size, rng_key)
+            # jax.debug.print("delta_energy 0 {x}", x=delta_energy_new)
             return (new_state, delta_energy+delta_energy_new, key2)
 
         state, delta_energy, _ = jax.lax.fori_loop(0, num_integration_steps, one_step, (initial_state, 0.0, rng_key))

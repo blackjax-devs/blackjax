@@ -145,7 +145,7 @@ def as_top_level_api(
             fermion_matrix=new_fermion_matrix,
             count=state.count + info.num_integration_steps,
         )
-        jax.debug.print("count {x}", x=full_state.count)
+        # jax.debug.print("count {x}", x=full_state.count)
         return full_state, info
 
     return SamplingAlgorithm(init_fn, step_fn)

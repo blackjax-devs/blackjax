@@ -50,8 +50,8 @@ def build_kernel(logdensity_fn):
 
     def sequential_kernel(key, state, adap):
         new_state, info = mclmc.build_kernel(
-        logdensity_fn=logdensity_fn, integrator=isokinetic_velocity_verlet, inverse_mass_matrix= jnp.ones(adap.inverse_mass_matrix.shape)
-            )(key, state, adap.L, adap.step_size)
+         integrator=isokinetic_velocity_verlet, 
+            )(key, state,logdensity_fn, adap.L, adap.step_size,jnp.ones(adap.inverse_mass_matrix.shape))
 
         # reject the new state if there were nans
         nonans = no_nans(new_state)

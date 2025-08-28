@@ -403,6 +403,8 @@ def handle_nans(
     # new_momentum = euclidean*0.0 + (1-euclidean)*generate_unit_vector(key, previous_state.position)
     new_momentum = generate_unit_vector(key, previous_state.position)
 
+    # new_momentum = euclidean*metric.sample_momentum(key, previous_state.position) + (1-euclidean)*generate_unit_vector(key, previous_state.position)
+
     state = jax.lax.cond(
         jnp.isnan(next_state.logdensity),
         lambda: state._replace(
@@ -418,8 +420,7 @@ def handle_nans(
 def handle_high_energy(
     previous_state, next_state, energy_change, key, inverse_mass_matrix, cutoff, euclidean=False
 ):
-    """if there are nans, let's reduce the stepsize, and not update the state. The
-    function returns the old state in this case."""
+    
 
     metric = metrics.default_metric(inverse_mass_matrix)
 

@@ -50,15 +50,16 @@ class AdaptationState(NamedTuple):
 
 
 build_kernel = lambda logdensity_fn, integrator, inverse_mass_matrix: lambda key, state, adap: build_kernel_malt(
-    logdensity_fn=logdensity_fn,
+    # logdensity_fn=logdensity_fn,
     integrator=integrator,
-    inverse_mass_matrix=inverse_mass_matrix,
+    L_proposal_factor=1.25,
 )(
     rng_key=key,
     state=state,
+    logdensity_fn=logdensity_fn,
     step_size=adap.step_size,
-    num_integration_steps=adap.steps_per_sample,
-    L_proposal_factor=1.25,
+    integration_steps_fn=lambda k:adap.steps_per_sample,
+    inverse_mass_matrix=inverse_mass_matrix,
 )
 
 
@@ -277,6 +278,7 @@ def laps(
 
     initial_state = HMCState(
         final_state.position, final_state.logdensity, final_state.logdensity_grad
+        # jax.random.key(0)
     )
     num_samples = num_steps2 // (gradient_calls_per_step * steps_per_sample)
     num_adaptation_samples = (
