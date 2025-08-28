@@ -181,7 +181,7 @@ def laps(
     ensemble_observables=None,
     diagnostics=True,
     contract=lambda x: 0.0,
-    superchain_size= None,
+    superchain_size= 1,
 ):
     """
     model: the target density object
@@ -203,12 +203,12 @@ def laps(
     ensemble_observables:  observable calculated over the ensemble (for diagnostic use)
     diagnostics: whether to return diagnostics
     """
-
+    
     key_init, key_umclmc, key_mclmc = jax.random.split(rng_key, 3)
 
     # initialize the chains
     initial_state = umclmc.initialize(
-        key_init, logdensity_fn, sample_init, num_chains, mesh, superchain_size=superchain_size
+        key_init, logdensity_fn, sample_init, num_chains, mesh, superchain_size
     )
 
     # burn-in with the unadjusted method #
@@ -220,7 +220,7 @@ def laps(
         bias_type=3,
         save_num=save_num,
         C=C,
-        power=3.0 / 8.0,
+        power= 3.0 / 8.0,
         r_end=r_end,
         observables_for_bias=observables_for_bias,
         contract=contract,

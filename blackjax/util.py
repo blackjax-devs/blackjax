@@ -356,12 +356,14 @@ def eca_step(
 
         return (state, adaptation_state), info_to_be_stored
 
+
     return add_ensemble_info(add_splitR(step, num_chains, superchain_size), ensemble_info)
 
 
 def add_splitR(step, num_chains, superchain_size):
 
-    def _step(state_all, xs):
+    
+    def _step_with_R(state_all, xs):
 
         state_all, info_to_be_stored  = step(state_all, xs)
         
@@ -376,9 +378,25 @@ def add_splitR(step, num_chains, superchain_size):
 
         return (state, adaptation_state), info_to_be_stored
 
-    return _step if superchain_size is not None else step
+    def _step_with_R_1(state_all, xs):
 
+        state_all, info_to_be_stored  = step(state_all, xs)
+        
+        info_to_be_stored['R_avg'] = 0.
+        info_to_be_stored['R_max'] = 0.
 
+        return state_all, info_to_be_stored
+    
+    if superchain_size == None:
+        return step
+    
+    if superchain_size == 1:
+        return _step_with_R_1
+    
+    else:
+        return _step_with_R
+    
+    
 def add_ensemble_info(step, ensemble_info):
 
     def _step(state_all, xs):
@@ -425,8 +443,8 @@ def run_eca(
         adaptation.summary_statistics_fn,
         adaptation.update,
         num_chains,
-        superchain_size,
-        ensemble_info,
+        superchain_size= superchain_size,
+        ensemble_info = ensemble_info,
     )
 
     def all_steps(initial_state, keys_sampling, keys_adaptation):
@@ -593,7 +611,7 @@ def ensemble_execute_fn(
         F, mesh=mesh, in_specs=(p, p), out_specs=(p, pscalar), check_rep=False
     )
 
-    if superchain_size == None:
+    if superchain_size == 1:
         _keys = split(rng_key, num_chains)
     
     else:
