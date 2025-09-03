@@ -34,6 +34,7 @@ import jax.numpy as jnp
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.mcmc.proposal import static_binomial_sampling
 
 __all__ = [
     "SliceState",
@@ -114,6 +115,7 @@ def init(position: ArrayTree, logdensity_fn: Callable) -> SliceState:
 def build_kernel(
     stepper_fn: Callable,
     m: int = 10,
+    max_shrink_steps: int = 1,
 ) -> Callable:
     """Build a Slice Sampling kernel.
 
@@ -161,6 +163,7 @@ def build_kernel(
             constraint,
             strict,
             m,
+            max_shrink_steps,
         )
 
         info = SliceInfo(
@@ -212,7 +215,8 @@ def horizontal_slice(
     constraint_fn: Callable,
     constraint: Array,
     strict: Array,
-    m,
+    m: int,
+    max_shrink_steps: int,
 ) -> tuple[SliceState, SliceInfo]:
     """Propose a new sample using the stepping-out and shrinking procedures.
 
@@ -254,6 +258,8 @@ def horizontal_slice(
         An array of boolean flags indicating whether each constraint should be
         strict (constraint_fn(x) > constraint) or non-strict
         (constraint_fn(x) >= constraint).
+    max_shrink_steps
+        The maximum number of shrinking steps to perform to avoid infinite loops.
 
     Returns
     -------
@@ -319,13 +325,17 @@ def horizontal_slice(
 
     def shrink_cond_fun(carry):
         within = carry[0]
-        return ~within
+        s_steps = carry[-1]
+        return ~within & (s_steps < max_shrink_steps + 1)
 
     carry = (False, l, r, x0, -jnp.inf, constraint, rng_key, 0)
     carry = jax.lax.while_loop(shrink_cond_fun, shrink_body_fun, carry)
     _, l, r, x, logdensity_x, constraint_x, rng_key, s_steps = carry
-    slice_state = SliceState(x, logdensity_x)
-    slice_info = SliceInfo(constraint_x, l_steps, r_steps, s_steps)
+
+    end_state = SliceState(x, logdensity_x)
+    slice_state, (is_accepted, _, _) = static_binomial_sampling(rng_key, jnp.log(s_steps < max_shrink_steps + 1), state, end_state)
+
+    slice_info = SliceInfo(constraint_x, l_steps, r_steps, s_steps, is_accepted)
     return slice_state, slice_info
 
 
