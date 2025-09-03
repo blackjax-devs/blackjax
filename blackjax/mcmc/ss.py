@@ -82,15 +82,16 @@ class SliceInfo(NamedTuple):
     s_steps
         The number of steps taken during the "shrinking" phase to find an
         acceptable sample.
-    evals
-        The total number of log-density evaluations performed during the step.
+    is_accepted
+        A boolean indicating whether the proposed sample was accepted.
     """
 
+    d: ArrayLikeTree = jnp.array([])
     constraint: Array = jnp.array([])
     l_steps: int = 0
     r_steps: int = 0
     s_steps: int = 0
-    evals: int = 0
+    is_accepted: bool = True
 
 
 def init(position: ArrayTree, logdensity_fn: Callable) -> SliceState:
@@ -162,11 +163,12 @@ def build_kernel(
         )
 
         info = SliceInfo(
+            d=d,
             constraint=hs_info.constraint,
             l_steps=hs_info.l_steps,
             r_steps=hs_info.r_steps,
             s_steps=hs_info.s_steps,
-            evals=vs_info.evals + hs_info.evals,
+            is_accepted=True,
         )
 
         return new_state, info
@@ -313,8 +315,7 @@ def horizontal_slice(
     carry = jax.lax.while_loop(shrink_cond_fun, shrink_body_fun, carry)
     _, l, r, x, logdensity_x, constraint_x, rng_key, s_steps = carry
     slice_state = SliceState(x, logdensity_x)
-    evals = l_steps + r_steps + s_steps
-    slice_info = SliceInfo(constraint_x, l_steps, r_steps, s_steps, evals)
+    slice_info = SliceInfo(d, constraint_x, l_steps, r_steps, s_steps)
     return slice_state, slice_info
 
 
