@@ -114,8 +114,8 @@ def init(position: ArrayTree, logdensity_fn: Callable) -> SliceState:
 
 def build_kernel(
     stepper_fn: Callable,
-    m: int = 10,
-    max_shrink_steps: int = 1,
+    max_steps: int = 10,
+    max_shrinkage: int = 100,
 ) -> Callable:
     """Build a Slice Sampling kernel.
 
@@ -162,8 +162,8 @@ def build_kernel(
             constraint_fn,
             constraint,
             strict,
-            m,
-            max_shrink_steps,
+            max_steps,
+            max_shrinkage,
         )
 
         info = SliceInfo(
@@ -216,7 +216,7 @@ def horizontal_slice(
     constraint: Array,
     strict: Array,
     m: int,
-    max_shrink_steps: int,
+    max_shrinkage: int,
 ) -> tuple[SliceState, SliceInfo]:
     """Propose a new sample using the stepping-out and shrinking procedures.
 
@@ -231,13 +231,10 @@ def horizontal_slice(
     ----------
     rng_key
         A JAX PRNG key.
-    x0
-        The current position (PyTree).
+    state
+        The current slice sampling state.
     d
         The direction (PyTree) for proposing moves.
-    m
-        The maximum number of steps to take when expanding the interval in
-        each direction during the stepping-out phase.
     stepper_fn
         A function `(x0, d, t) -> x_new` that computes a new point by
         moving `t` units along direction `d` from `x0`.
@@ -258,7 +255,10 @@ def horizontal_slice(
         An array of boolean flags indicating whether each constraint should be
         strict (constraint_fn(x) > constraint) or non-strict
         (constraint_fn(x) >= constraint).
-    max_shrink_steps
+    m
+        The maximum number of steps to take when expanding the interval in
+        each direction during the stepping-out phase.
+    max_shrinkage
         The maximum number of shrinking steps to perform to avoid infinite loops.
 
     Returns
@@ -275,7 +275,7 @@ def horizontal_slice(
     k = (m - 1) - j
     x0 = state.position
 
-    def body_fun(carry):
+    def step_body_fun(carry):
         _, s, t, i = carry
         t += s
         x = stepper_fn(x0, d, t)
@@ -289,14 +289,14 @@ def horizontal_slice(
         i -= 1
         return within, s, t, i
 
-    def cond_fun(carry):
+    def step_cond_fun(carry):
         within = carry[0]
         i = carry[-1]
         return within & (i > 0)
 
     # Expand
-    _, _, l, j = jax.lax.while_loop(cond_fun, body_fun, (True, -1, -u, j))
-    _, _, r, k = jax.lax.while_loop(cond_fun, body_fun, (True, +1, 1 - u, k))
+    _, _, l, j = jax.lax.while_loop(step_cond_fun, step_body_fun, (True, -1, -u, j))
+    _, _, r, k = jax.lax.while_loop(step_cond_fun, step_body_fun, (True, +1, 1 - u, k))
 
     l_steps = m - 1 - j
     r_steps = m - 1 - k
@@ -326,14 +326,14 @@ def horizontal_slice(
     def shrink_cond_fun(carry):
         within = carry[0]
         s_steps = carry[-1]
-        return ~within & (s_steps < max_shrink_steps + 1)
+        return ~within & (s_steps < max_shrinkage + 1)
 
     carry = (False, l, r, x0, -jnp.inf, constraint, rng_key, 0)
     carry = jax.lax.while_loop(shrink_cond_fun, shrink_body_fun, carry)
     _, l, r, x, logdensity_x, constraint_x, rng_key, s_steps = carry
 
     end_state = SliceState(x, logdensity_x)
-    slice_state, (is_accepted, _, _) = static_binomial_sampling(rng_key, jnp.log(s_steps < max_shrink_steps + 1), state, end_state)
+    slice_state, (is_accepted, _, _) = static_binomial_sampling(rng_key, jnp.log(s_steps < max_shrinkage + 1), state, end_state)
 
     slice_info = SliceInfo(constraint_x, l_steps, r_steps, s_steps, is_accepted)
     return slice_state, slice_info
@@ -342,7 +342,7 @@ def horizontal_slice(
 def build_hrss_kernel(
     generate_slice_direction_fn: Callable,
     stepper_fn: Callable,
-    m: int = 10,
+    max_steps: int = 10,
 ) -> Callable:
     """Build a Hit-and-Run Slice Sampling kernel.
 
@@ -369,7 +369,7 @@ def build_hrss_kernel(
         A kernel function that takes a PRNG key, the current `SliceState`, and
         the log-density function, and returns a new `SliceState` and `SliceInfo`.
     """
-    slice_kernel = build_kernel(stepper_fn, m)
+    slice_kernel = build_kernel(stepper_fn, max_steps)
 
     def kernel(
         rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable

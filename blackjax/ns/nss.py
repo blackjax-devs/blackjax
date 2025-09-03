@@ -148,6 +148,8 @@ def build_kernel(
     stepper_fn: Callable = default_stepper_fn,
     adapt_direction_params_fn: Callable = compute_covariance_from_particles,
     generate_slice_direction_fn: Callable = sample_direction_from_covariance,
+    max_steps: int = 10,
+    max_shrinkage: int = 100,
 ) -> Callable:
     """Builds the Nested Slice Sampling kernel.
 
@@ -179,6 +181,12 @@ def build_kernel(
         A function `(rng_key, **params) -> direction_pytree` that generates a
         normalized direction for HRSS, using parameters from `adapt_direction_params_fn`.
         Defaults to `sample_direction_from_covariance`.
+    max_steps
+        The maximum number of steps to take when expanding the interval in
+        each direction during the stepping-out phase. Defaults to 10.
+    max_shrinkage
+        The maximum number of shrinking steps to perform to avoid infinite loops.
+        Defaults to 100.
 
     Returns
     -------
@@ -188,7 +196,7 @@ def build_kernel(
         the `NSInfo` for the step.
     """
 
-    slice_kernel = build_slice_kernel(stepper_fn)
+    slice_kernel = build_slice_kernel(stepper_fn, max_steps, max_shrinkage)
 
     @repeat_kernel(num_inner_steps)
     def inner_kernel(
@@ -235,6 +243,8 @@ def as_top_level_api(
     stepper_fn: Callable = default_stepper_fn,
     adapt_direction_params_fn: Callable = compute_covariance_from_particles,
     generate_slice_direction_fn: Callable = sample_direction_from_covariance,
+    max_steps: int = 10,
+    max_shrinkage: int = 100,
 ) -> SamplingAlgorithm:
     """Creates an adaptive Nested Slice Sampling (NSS) algorithm.
 
@@ -266,6 +276,12 @@ def as_top_level_api(
         A function `(rng_key, **params) -> direction_pytree` that generates a
         normalized direction for HRSS, using parameters from `adapt_direction_params_fn`.
         Defaults to `sample_direction_from_covariance`.
+    max_steps
+        The maximum number of steps to take when expanding the interval in
+        each direction during the stepping-out phase. Defaults to 10.
+    max_shrinkage
+        The maximum number of shrinking steps to perform to avoid infinite loops.
+        Defaults to 100.
 
     Returns
     -------
@@ -283,6 +299,8 @@ def as_top_level_api(
         stepper_fn=stepper_fn,
         adapt_direction_params_fn=adapt_direction_params_fn,
         generate_slice_direction_fn=generate_slice_direction_fn,
+        max_steps=max_steps,
+        max_shrinkage=max_shrinkage,
     )
     init_fn = partial(
         init,
