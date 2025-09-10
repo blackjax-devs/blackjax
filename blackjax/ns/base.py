@@ -29,6 +29,7 @@ This base implementation uses a provided kernel to perform the constrained
 sampling.
 """
 
+from calendar import c
 from typing import Callable, Dict, NamedTuple, Optional
 
 import jax
@@ -413,9 +414,14 @@ def delete_fn(
             selected for initialization.
     """
     loglikelihood = state.loglikelihood
+    logprior = state.logprior
     neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, num_delete)
-    constraint = loglikelihood > -neg_dead_loglikelihood.min()
+    constraint_loglikelihood = loglikelihood > -neg_dead_loglikelihood.min()
+    constraint_prior = logprior > -jnp.inf
+    constraint = jnp.logical_and(constraint_loglikelihood, constraint_prior)
     weights = jnp.array(constraint, dtype=jnp.float32)
+    weights = jnp.where(weights.sum() > 0., weights, jnp.ones_like(weights))
+
     start_idx = jax.random.choice(
         rng_key,
         len(weights),
