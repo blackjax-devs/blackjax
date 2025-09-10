@@ -29,7 +29,6 @@ This base implementation uses a provided kernel to perform the constrained
 sampling.
 """
 
-from calendar import c
 from typing import Callable, Dict, NamedTuple, Optional
 
 import jax

@@ -27,8 +27,6 @@ References
 """
 
 from functools import partial
-# from logging import info
-# from operator import is_
 from typing import Callable, NamedTuple
 
 import jax
