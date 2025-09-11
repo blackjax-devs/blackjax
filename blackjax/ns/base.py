@@ -236,9 +236,9 @@ def init(
     NSState
         The initial state of the Nested Sampler.
     """
-    loglikelihood = jax.vmap(loglikelihood_fn)(particles)
+    loglikelihood = loglikelihood_fn(particles)
     loglikelihood_birth = loglikelihood_birth * jnp.ones_like(loglikelihood)
-    logprior = jax.vmap(logprior_fn)(particles)
+    logprior = logprior_fn(particles)
     pid = jnp.arange(len(loglikelihood))
     dtype = loglikelihood.dtype
     logX = jnp.array(logX, dtype=dtype)
@@ -325,8 +325,7 @@ def build_kernel(
         logprior = state.logprior[start_idx]
         loglikelihood = state.loglikelihood[start_idx]
         inner_state = PartitionedState(particles, logprior, loglikelihood)
-        in_axes = (0, 0, None, None, None, None)
-        new_inner_state, inner_info = jax.vmap(inner_kernel, in_axes=in_axes)(
+        new_inner_state, inner_info = inner_kernel(
             sample_keys,
             inner_state,
             logprior_fn,

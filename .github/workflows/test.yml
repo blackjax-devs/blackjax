@@ -2,9 +2,9 @@ name: Tests
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, nested_sampling]
   push:
-    branches: [main]
+    branches: [main, nested_sampling]
 
 jobs:
   style:

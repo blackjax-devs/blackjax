@@ -224,12 +224,15 @@ def build_kernel(
 
     delete_fn = partial(default_delete_fn, num_delete=num_delete)
 
+    # Vectorize the inner kernel for parallel execution
+    in_axes = (0, 0, None, None, None, None)
+
     update_inner_kernel_params_fn = adapt_direction_params_fn
     kernel = build_adaptive_kernel(
         logprior_fn,
         loglikelihood_fn,
         delete_fn,
-        inner_kernel,
+        jax.vmap(inner_kernel, in_axes=in_axes),
         update_inner_kernel_params_fn,
     )
     return kernel
@@ -302,12 +305,16 @@ def as_top_level_api(
         max_steps=max_steps,
         max_shrinkage=max_shrinkage,
     )
-    init_fn = partial(
-        init,
-        logprior_fn=logprior_fn,
-        loglikelihood_fn=loglikelihood_fn,
-        update_inner_kernel_params_fn=adapt_direction_params_fn,
-    )
+
+    def init_fn(position, rng_key=None):
+        # Vectorize the functions for parallel evaluation over particles
+        return init(
+            position,
+            logprior_fn=jax.vmap(logprior_fn),
+            loglikelihood_fn=jax.vmap(loglikelihood_fn),
+            update_inner_kernel_params_fn=adapt_direction_params_fn,
+        )
+
     step_fn = kernel
 
     return SamplingAlgorithm(init_fn, step_fn)
