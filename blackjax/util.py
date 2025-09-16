@@ -15,7 +15,8 @@ from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.diagnostics import splitR
-
+import time
+import jax
 
 @partial(jit, static_argnames=("precision",), inline=True)
 def linear_map(diag_or_dense_a, b, *, precision="highest"):
@@ -199,6 +200,7 @@ def run_inference_algorithm(
 
     keys = split(rng_key, num_steps)
 
+    
     def one_step(state, xs):
         _, rng_key = xs
         state, info = inference_algorithm.step(rng_key, state)
@@ -207,7 +209,9 @@ def run_inference_algorithm(
     scan_fn = gen_scan_fn(num_steps, progress_bar)
 
     xs = jnp.arange(num_steps), keys
+    # tic = time.time()
     final_state, history = scan_fn(one_step, initial_state, xs)
+    # toc = time.time()
 
     return final_state, history
 

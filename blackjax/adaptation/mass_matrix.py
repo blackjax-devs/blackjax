@@ -132,7 +132,7 @@ def mass_matrix_adaptation(
         """Final iteration of the mass matrix adaptation.
 
         In this step we compute the mass matrix from the covariance matrix computed
-        by the Welford algorithm, and re-initialize the later.
+        by the Welford algorithm, and re-initialize the latter.
 
         """
         _, wc_state = mm_state

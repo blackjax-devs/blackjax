@@ -128,7 +128,8 @@ def alba_adjusted(
 
         (state, params), adaptation_info = unadjusted_warmup.run(unadjusted_warmup_key, position, num_unadjusted_steps)
 
-        jax.debug.print("unadjusted params: {params}", params=(params["L"], params["step_size"]))
+        # jax.debug.print("unadjusted params: {params}", params=(params["L"], params["step_size"]))
+        # jax.debug.print("unadjusted params: {params}", params=params)
 
         integration_steps_fn = make_random_trajectory_length_fn(random_trajectory_length=True)
 
@@ -145,7 +146,7 @@ def alba_adjusted(
         
         
         state, params, adaptation_info = adjusted_warmup.run(adjusted_warmup_key, state.position, num_steps)
-        jax.debug.print("adjusted params: {params}", params=(params["L"], params["step_size"]))
+        # jax.debug.print("adjusted params: {params}", params=(params["L"], params["step_size"]))
         # raise Exception("stop")
         # return None
         return state, params, adaptation_info

@@ -77,6 +77,8 @@ def build_kernel(
         L = num_integration_steps * step_size
         L_proposal = L_proposal_factor * L
 
+        # jax.debug.print("L_proposal {L_proposal}",L_proposal=L_proposal)
+
         key_trajectory, key_momentum, key_integrator = jax.random.split(rng_key, 3)
         metric = metrics.default_metric(inverse_mass_matrix)
         symplectic_integrator = lambda state, step_size, rng_key: integrators.with_maruyama(integrator(logdensity_fn, metric.kinetic_energy), metric.kinetic_energy, inverse_mass_matrix)(state, step_size, L_proposal=L_proposal, rng_key=rng_key)

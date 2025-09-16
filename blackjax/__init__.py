@@ -10,6 +10,7 @@ from .adaptation.window_adaptation import window_adaptation
 from .adaptation.unadjusted_alba import unadjusted_alba
 from .adaptation.unadjusted_step_size import robnik_step_size_tuning
 from .adaptation.adjusted_abla import alba_adjusted
+from .adaptation.las import las
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
@@ -181,4 +182,5 @@ __all__ = [
     "unadjusted_alba",
     "robnik_step_size_tuning",
     "alba_adjusted",
+    "las",
 ]

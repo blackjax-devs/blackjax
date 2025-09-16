@@ -18,6 +18,11 @@ def robnik_step_size_tuning(desired_energy_var, trust_in_estimate=1.5, num_effec
       
     def update(robnik_state, info):
 
+        # jax.debug.print("robnik state: {x}", x=robnik_state)
+        # jax.debug.print("info: {x}", x=(info.energy_change, info.nonans))
+        # raise Exception("Stop here")
+
+
 
         energy_change = info.energy_change
 
@@ -40,6 +45,7 @@ def robnik_step_size_tuning(desired_energy_var, trust_in_estimate=1.5, num_effec
         step_size = (step_size < robnik_state.step_size_max) * step_size + (
             step_size > robnik_state.step_size_max
         ) * robnik_state.step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
+        # jax.debug.print("new step_size: {x}", x=(step_size))
 
         # old_robnik_state = robnik_state
 

@@ -16,6 +16,7 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+import time
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import (
@@ -93,9 +94,15 @@ def build_kernel(
         rng_key: PRNGKey, state: IntegratorState, logdensity_fn, L: float, step_size: float,
     inverse_mass_matrix,
     ) -> tuple[IntegratorState, MCLMCInfo]:
+        # tic = time.time()
         step = with_isokinetic_maruyama(
             integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
         )
+
+
+        # jax.debug.print("L {x}", x=L)
+        # jax.debug.print("step_size {x}", x=step_size)
+        # jax.debug.print("inverse_mass_matrix {x}", x=inverse_mass_matrix)
 
         kernel_key, energy_cutoff_key, nan_key = jax.random.split(rng_key, 3)
         
@@ -108,6 +115,9 @@ def build_kernel(
         eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
         ndims = pytree_size(position)
 
+        # jax.debug.print("kinetic_change: {x}", x=kinetic_change)
+        # jax.debug.print("potential energy_change: {x}", x=state.logdensity - logdensity)
+
         new_state, info = handle_high_energy(state, IntegratorState(position, momentum, logdensity, logdensitygrad), MCLMCInfo(
             logdensity=logdensity,
             energy_change=energy_change,
@@ -117,6 +127,7 @@ def build_kernel(
 
         new_state, info = handle_nans(state, new_state, info, nan_key)
 
+        # jax.debug.print("Time taken in chain: {x}", x=time.time() - tic)
         return new_state, info
 
     return kernel

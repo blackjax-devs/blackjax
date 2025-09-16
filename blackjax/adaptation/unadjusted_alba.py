@@ -33,11 +33,11 @@ def base(
 ) -> tuple[Callable, Callable, Callable]:
     
     mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
-    # if not preconditioning:
+    if not preconditioning:
 
-    #     mm_update = lambda x, y: x
+        mm_update = lambda x, y: x
 
-    #     mm_final = lambda x: x
+        mm_final = lambda x: x
 
     # step_size_init, step_size_update, step_size_final = dual_averaging_adaptation(target_eevpd)
     step_size_init, step_size_update, step_size_final = robnik_step_size_tuning(desired_energy_var=target_eevpd)
@@ -241,6 +241,7 @@ def unadjusted_alba(
             new_state.position,
             info,
         )
+        # jax.debug.print("info: {x}", x=(new_adaptation_state.step_size, info.energy_change))
         # jax.debug.print("step sizes: {x}", x=(adaptation_state.step_size, new_adaptation_state.step_size))
 
         return (
@@ -268,7 +269,7 @@ def unadjusted_alba(
         last_chain_state, last_warmup_state, *_ = last_state
         step_size, L, inverse_mass_matrix = adapt_final(last_warmup_state)
 
-        jax.debug.print("unadjusted L before alba: {params}", params=(L, step_size))
+        # jax.debug.print("unadjusted L before alba: {params}", params=(L, step_size))
 
         ###
         ### ALBA TUNING
@@ -288,10 +289,12 @@ def unadjusted_alba(
             return next_state, next_state.position
         
         if num_alba_steps > 0:
+            print("params before alba tuning", L, step_size)
             _, samples = jax.lax.scan(step, last_chain_state, keys)
             flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
             ess = effective_sample_size(flat_samples[None, ...])
-            print(jnp.mean(ess), num_alba_steps, "\n\ness (blackjax internal)\n")
+            # print(num_alba_steps/jnp.mean(ess), "ess (blackjax internal)\n")
+            # print( effective_sample_size(flat_samples[None, ...]), "ess (blackjax internal)\n")
 
             # print("L etc", L, step_size, jnp.mean(ess), num_alba_steps, jnp.mean(num_alba_steps / ess))
             L=alba_factor * step_size * jnp.mean(num_alba_steps / ess)
@@ -305,6 +308,7 @@ def unadjusted_alba(
             "step_size": step_size,
             "inverse_mass_matrix": inverse_mass_matrix,
             "L": jnp.clip(L, max=step_size*max_num_steps),
+            "ESS": jnp.mean(ess)/num_alba_steps,
             **extra_parameters,
         }
 
