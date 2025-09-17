@@ -66,8 +66,6 @@ def las(logdensity_fn, key, ndims, num_steps1, num_steps2, num_chains, diagonal_
 
     initial_states = jax.lax.map(lambda x: blackjax.adjusted_mclmc_dynamic.init(x, logdensity_fn, jax.random.key(0)), xs=subsamples)
 
-    print(initial_states, "initial_states")
-
     def make_mams_step(key):
         def mams_step(step_size_positions_info):
 
@@ -108,20 +106,7 @@ def las(logdensity_fn, key, ndims, num_steps1, num_steps2, num_chains, diagonal_
     positions = subsamples
     step_size = blackjax_mclmc_sampler_params['step_size']
 
-
     (step_size, position, infos), (step_sizes, positions, infos) = jax.lax.scan(lambda state, key: (step(key)(state), step(key)(state)), (step_size, subsamples, infos), jax.random.split(jax.random.key(0), 10))
-
-    print(position.shape, "position")
-    print(step_sizes.shape, "step_sizes")
-    print(positions.shape, "positions")
-
-   
-    # for i in range(10):
-    #     step_size, positions = step(jax.random.key(i))((step_size, positions))
-
-
-
-    # step_size, position = feedback(mams_step,tuning_step, 10, (blackjax_mclmc_sampler_params['step_size'], subsamples))
 
     return samples, positions, infos, num_steps
 
