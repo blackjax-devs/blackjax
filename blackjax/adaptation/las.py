@@ -21,8 +21,11 @@ def las(logdensity_fn, key, ndims, num_steps1, num_steps2, num_chains, diagonal_
     init_key, tune_key, run_key = jax.random.split(key, 3)
     initial_position = jax.random.normal(init_key, (ndims,))
 
+    ### Phase 1: unadjusted ###
+
     integrator = blackjax.mcmc.integrators.isokinetic_mclachlan
         
+    # burn-in and adaptation
     num_alba_steps = 10000
     warmup = unadjusted_alba(
         algorithm=blackjax.mclmc, 
@@ -34,9 +37,9 @@ def las(logdensity_fn, key, ndims, num_steps1, num_steps2, num_chains, diagonal_
         alba_factor=0.4,
         )
 
-    # run warmup
     (blackjax_state_after_tuning, blackjax_mclmc_sampler_params), adaptation_info = warmup.run(tune_key, initial_position, 20000)
 
+    # sampling
     ess_per_sample = blackjax_mclmc_sampler_params['ESS']
 
     num_steps = math.ceil(200 // ess_per_sample)
@@ -56,13 +59,15 @@ def las(logdensity_fn, key, ndims, num_steps1, num_steps2, num_chains, diagonal_
             num_steps=num_steps,
             transform=(lambda a, b: a),
             progress_bar=False,
-        )
-    
+        )    
     samples = history.position
+
+
+    ### Phase 2: adjusted ###
+
     subsamples = samples[::math.ceil(1/ess_per_sample)]
 
     integration_steps_fn = make_random_trajectory_length_fn(True)
-
 
     initial_states = jax.lax.map(lambda x: blackjax.adjusted_mclmc_dynamic.init(x, logdensity_fn, jax.random.key(0)), xs=subsamples)
 
