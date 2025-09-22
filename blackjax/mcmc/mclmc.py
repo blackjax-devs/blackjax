@@ -15,6 +15,7 @@
 from typing import Callable, NamedTuple
 
 import jax
+import jax.numpy as jnp
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.integrators import (
@@ -60,7 +61,13 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
     )
 
 
-def build_kernel(logdensity_fn, sqrt_diag_cov, integrator):
+def build_kernel(
+    logdensity_fn,
+    inverse_mass_matrix,
+    integrator,
+    desired_energy_var_max_ratio=jnp.inf,
+    desired_energy_var=5e-4,
+):
     """Build a HMC kernel.
 
     Parameters
@@ -81,7 +88,7 @@ def build_kernel(logdensity_fn, sqrt_diag_cov, integrator):
     """
 
     step = with_isokinetic_maruyama(
-        integrator(logdensity_fn=logdensity_fn, sqrt_diag_cov=sqrt_diag_cov)
+        integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
     )
 
     def kernel(
@@ -91,13 +98,32 @@ def build_kernel(logdensity_fn, sqrt_diag_cov, integrator):
             state, step_size, L, rng_key
         )
 
-        return IntegratorState(
-            position, momentum, logdensity, logdensitygrad
-        ), MCLMCInfo(
-            logdensity=logdensity,
-            energy_change=kinetic_change - logdensity + state.logdensity,
-            kinetic_change=kinetic_change,
+        energy_error = kinetic_change - logdensity + state.logdensity
+
+        eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
+        ndims = pytree_size(position)
+
+        new_state, new_info = jax.lax.cond(
+            jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim),
+            lambda: (
+                state,
+                MCLMCInfo(
+                    logdensity=state.logdensity,
+                    energy_change=0.0,
+                    kinetic_change=0.0,
+                ),
+            ),
+            lambda: (
+                IntegratorState(position, momentum, logdensity, logdensitygrad),
+                MCLMCInfo(
+                    logdensity=logdensity,
+                    energy_change=energy_error,
+                    kinetic_change=kinetic_change,
+                ),
+            ),
         )
+
+        return new_state, new_info
 
     return kernel
 
@@ -107,7 +133,8 @@ def as_top_level_api(
     L,
     step_size,
     integrator=isokinetic_mclachlan,
-    sqrt_diag_cov=1.0,
+    inverse_mass_matrix=1.0,
+    desired_energy_var_max_ratio=jnp.inf,
 ) -> SamplingAlgorithm:
     """The general mclmc kernel builder (:meth:`blackjax.mcmc.mclmc.build_kernel`, alias `blackjax.mclmc.build_kernel`) can be
     cumbersome to manipulate. Since most users only need to specify the kernel
@@ -155,7 +182,12 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
 
-    kernel = build_kernel(logdensity_fn, sqrt_diag_cov, integrator)
+    kernel = build_kernel(
+        logdensity_fn,
+        inverse_mass_matrix,
+        integrator,
+        desired_energy_var_max_ratio=desired_energy_var_max_ratio,
+    )
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
         return init(position, logdensity_fn, rng_key)

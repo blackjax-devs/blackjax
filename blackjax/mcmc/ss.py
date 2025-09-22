@@ -33,8 +33,8 @@ import jax
 import jax.numpy as jnp
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.mcmc.proposal import static_binomial_sampling
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "SliceState",
@@ -86,7 +86,9 @@ class SliceInfo(NamedTuple):
     num_shrink: int
 
 
-def init(position: ArrayTree, logdensity_fn: Callable, constraint_fn: Callable) -> SliceState:
+def init(
+    position: ArrayTree, logdensity_fn: Callable, constraint_fn: Callable
+) -> SliceState:
     """Initialize the Slice Sampler state.
 
     Parameters
@@ -143,7 +145,6 @@ def build_kernel(
         constraint: Array,
         strict: Array,
     ) -> tuple[SliceState, SliceInfo]:
-
         vs_key, hs_key = jax.random.split(rng_key)
         logslice = state.logdensity + jnp.log(jax.random.uniform(vs_key))
         vertical_is_accepted = logslice < state.logdensity
@@ -155,14 +156,16 @@ def build_kernel(
                 jnp.where(
                     strict,
                     new_state.constraint > constraint,
-                    new_state.constraint >= constraint
+                    new_state.constraint >= constraint,
                 )
             )
             in_slice = new_state.logdensity >= logslice
             is_accepted = in_slice & constraints_ok & step_accepted
             return new_state, is_accepted
 
-        new_state, info = horizontal_slice(hs_key, slicer, state, max_steps, max_shrinkage)
+        new_state, info = horizontal_slice(
+            hs_key, slicer, state, max_steps, max_shrinkage
+        )
         info = info._replace(is_accepted=info.is_accepted & vertical_is_accepted)
         return new_state, info
 
@@ -225,8 +228,10 @@ def horizontal_slice(
         i, _, _, is_accepted = carry
         return is_accepted & (i > 0)
 
-    j, _, l, _ = jax.lax.while_loop(step_cond_fun, step_body_fun, (j+1, -1, 1 - u, True))
-    k, _, r, _ = jax.lax.while_loop(step_cond_fun, step_body_fun, (k+1, +1, -u, True))
+    j, _, l, _ = jax.lax.while_loop(
+        step_cond_fun, step_body_fun, (j + 1, -1, 1 - u, True)
+    )
+    k, _, r, _ = jax.lax.while_loop(step_cond_fun, step_body_fun, (k + 1, +1, -u, True))
 
     # Shrink
     def shrink_body_fun(carry):

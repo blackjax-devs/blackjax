@@ -415,7 +415,7 @@ def delete_fn(
     neg_dead_loglikelihood, dead_idx = jax.lax.top_k(-loglikelihood, num_delete)
     constraint_loglikelihood = loglikelihood > -neg_dead_loglikelihood.min()
     weights = jnp.array(constraint_loglikelihood, dtype=jnp.float32)
-    weights = jnp.where(weights.sum() > 0., weights, jnp.ones_like(weights))
+    weights = jnp.where(weights.sum() > 0.0, weights, jnp.ones_like(weights))
     start_idx = jax.random.choice(
         rng_key,
         len(weights),

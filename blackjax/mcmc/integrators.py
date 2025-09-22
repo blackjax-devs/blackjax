@@ -311,7 +311,9 @@ def _normalized_flatten_array(x, tol=1e-13):
     return jnp.where(norm > tol, x / norm, x), norm
 
 
-def esh_dynamics_momentum_update_one_step(sqrt_diag_cov=1.0):
+def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
+    sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
+
     def update(
         momentum: ArrayTree,
         logdensity_grad: ArrayTree,
@@ -330,7 +332,7 @@ def esh_dynamics_momentum_update_one_step(sqrt_diag_cov=1.0):
 
         logdensity_grad = logdensity_grad
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
-        flatten_grads = flatten_grads * sqrt_diag_cov
+        flatten_grads = flatten_grads * sqrt_inverse_mass_matrix
         flatten_momentum, _ = ravel_pytree(momentum)
         dims = flatten_momentum.shape[0]
         normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
@@ -342,7 +344,7 @@ def esh_dynamics_momentum_update_one_step(sqrt_diag_cov=1.0):
             + 2 * zeta * flatten_momentum
         )
         new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
-        gr = unravel_fn(new_momentum_normalized * sqrt_diag_cov)
+        gr = unravel_fn(new_momentum_normalized * sqrt_inverse_mass_matrix)
         next_momentum = unravel_fn(new_momentum_normalized)
         kinetic_energy_change = (
             delta
@@ -374,11 +376,11 @@ def format_isokinetic_state_output(
 
 def generate_isokinetic_integrator(coefficients):
     def isokinetic_integrator(
-        logdensity_fn: Callable, sqrt_diag_cov: ArrayTree = 1.0
+        logdensity_fn: Callable, inverse_mass_matrix: ArrayTree = 1.0
     ) -> GeneralIntegrator:
         position_update_fn = euclidean_position_update_fn(logdensity_fn)
         one_step = generalized_two_stage_integrator(
-            esh_dynamics_momentum_update_one_step(sqrt_diag_cov),
+            esh_dynamics_momentum_update_one_step(inverse_mass_matrix),
             position_update_fn,
             coefficients,
             format_output_fn=format_isokinetic_state_output,
@@ -414,11 +416,19 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     -------
     momentum with random change in angle
     """
+
     m, unravel_fn = ravel_pytree(momentum)
     dim = m.shape[0]
     nu = jnp.sqrt((jnp.exp(2 * step_size / L) - 1.0) / dim)
     z = nu * normal(rng_key, shape=m.shape, dtype=m.dtype)
-    return unravel_fn((m + z) / jnp.linalg.norm(m + z))
+    new_momentum = unravel_fn((m + z) / jnp.linalg.norm(m + z))
+    # return new_momentum
+    return jax.lax.cond(
+        jnp.isinf(L),
+        lambda _: momentum,
+        lambda _: new_momentum,
+        operand=None,
+    )
 
 
 def with_isokinetic_maruyama(integrator):

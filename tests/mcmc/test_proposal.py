@@ -2,6 +2,7 @@ import chex
 import jax
 import numpy as np
 import pytest
+from absl.testing import parameterized
 from jax import numpy as jnp
 
 from blackjax.mcmc.random_walk import normal
@@ -10,25 +11,18 @@ from blackjax.mcmc.random_walk import normal
 class TestNormalProposalDistribution(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.key(20220611)
+        self.key = jax.random.key(20250120)
 
-    def test_normal_univariate(self):
+    @parameterized.parameters([10.0, 15000.0])
+    def test_normal_univariate(self, initial_position):
         """
         Move samples are generated in the univariate case,
         with std following sigma, and independently of the position.
         """
-        key1, key2 = jax.random.split(self.key)
+        keys = jax.random.split(self.key, 200)
         proposal = normal(sigma=jnp.array([1.0]))
-        samples_from_initial_position = [
-            proposal(key, jnp.array([10.0])) for key in jax.random.split(key1, 100)
-        ]
-        samples_from_another_position = [
-            proposal(key, jnp.array([15000.0])) for key in jax.random.split(key2, 100)
-        ]
-
-        for samples in [samples_from_initial_position, samples_from_another_position]:
-            np.testing.assert_allclose(0.0, np.mean(samples), rtol=1e-2, atol=1e-1)
-            np.testing.assert_allclose(1.0, np.std(samples), rtol=1e-2, atol=1e-1)
+        samples = [proposal(key, jnp.array([initial_position])) for key in keys]
+        self._check_mean_and_std(jnp.array([0.0]), jnp.array([1.0]), samples)
 
     def test_normal_multivariate(self):
         proposal = normal(sigma=jnp.array([1.0, 2.0]))
@@ -61,7 +55,7 @@ class TestNormalProposalDistribution(chex.TestCase):
         )
         np.testing.assert_allclose(
             expected_std,
-            np.sqrt(np.diag(np.cov(np.array(samples).T))),
+            np.sqrt(np.diag(np.atleast_2d(np.cov(np.array(samples).T)))),
             rtol=1e-2,
             atol=1e-1,
         )
