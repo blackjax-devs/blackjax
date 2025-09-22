@@ -55,13 +55,11 @@ class SliceState(NamedTuple):
         The current position of the chain.
     logdensity
         The log-density of the target distribution at the current position.
-    logslice
-        The log-height defining the slice for sampling. Defaults to infinity.
     """
 
     position: ArrayLikeTree
     logdensity: float
-    logslice: float = jnp.inf
+    constraint: Array
 
 
 class SliceInfo(NamedTuple):
@@ -76,24 +74,19 @@ class SliceInfo(NamedTuple):
         A boolean indicating whether the proposed sample was accepted.
     constraint
         The constraint values at the final accepted position.
-    l_steps
-        The number of steps taken to expand the interval to the left during the
-        "stepping-out" phase.
-    r_steps
-        The number of steps taken to expand the interval to the right during the
-        "stepping-out" phase.
-    s_steps
+    num_steps
+        The number of steps taken to expand the interval during the "stepping-out" phase.
+    num_shrink
         The number of steps taken during the "shrinking" phase to find an
         acceptable sample.
     """
 
     is_accepted: bool
-    constraint: Array = jnp.array([])
-    num_steps: int = 0
-    num_shrink: int = 0
+    num_steps: int
+    num_shrink: int
 
 
-def init(position: ArrayTree, logdensity_fn: Callable) -> SliceState:
+def init(position: ArrayTree, logdensity_fn: Callable, constraint_fn: Callable) -> SliceState:
     """Initialize the Slice Sampler state.
 
     Parameters
@@ -108,7 +101,7 @@ def init(position: ArrayTree, logdensity_fn: Callable) -> SliceState:
     SliceState
         The initial state of the Slice Sampler.
     """
-    return SliceState(position, logdensity_fn(position))
+    return SliceState(position, logdensity_fn(position), constraint_fn(position))
 
 
 def build_kernel(
@@ -150,77 +143,36 @@ def build_kernel(
         constraint: Array,
         strict: Array,
     ) -> tuple[SliceState, SliceInfo]:
-        rng_key, vs_key, hs_key = jax.random.split(rng_key, 3)
-        intermediate_state, v_info = vertical_slice(vs_key, state)
-        new_state, info = horizontal_slice(
-            hs_key,
-            intermediate_state,
-            d,
-            stepper_fn,
-            logdensity_fn,
-            constraint_fn,
-            constraint,
-            strict,
-            max_steps,
-            max_shrinkage,
-        )
-        info = info._replace(is_accepted=v_info.is_accepted & info.is_accepted)
-        new_state = jax.lax.cond(
-            info.is_accepted,
-            lambda _: new_state,
-            lambda _: state,
-            operand=None,
-        )
-        # info = SliceInfo(
-        #     constraint=hs_info.constraint,
-        #     expanding_steps=hs_info.expanding_steps,
-        #     slice_steps=hs_info.slice_steps,
-        #     shrink_steps=hs_info.shrink_steps,
-            
-        # )
 
+        vs_key, hs_key = jax.random.split(rng_key)
+        logslice = state.logdensity + jnp.log(jax.random.uniform(vs_key))
+        vertical_is_accepted = logslice < state.logdensity
+
+        def slicer(t) -> tuple[SliceState, SliceInfo]:
+            x, step_accepted = stepper_fn(state.position, d, t)
+            new_state = init(x, logdensity_fn, constraint_fn)
+            constraints_ok = jnp.all(
+                jnp.where(
+                    strict,
+                    new_state.constraint > constraint,
+                    new_state.constraint >= constraint
+                )
+            )
+            in_slice = new_state.logdensity >= logslice
+            is_accepted = in_slice & constraints_ok & step_accepted
+            return new_state, is_accepted
+
+        new_state, info = horizontal_slice(hs_key, slicer, state, max_steps, max_shrinkage)
+        info = info._replace(is_accepted=info.is_accepted & vertical_is_accepted)
         return new_state, info
 
     return kernel
 
 
-def vertical_slice(rng_key: PRNGKey, state: SliceState) -> SliceState:
-    """Define the vertical slice for the Slice Sampling algorithm.
-
-    This function determines the height `y` for the horizontal slice by sampling
-    uniformly from `[0, p(x)]`, where `p(x)` is the target density at the current
-    position `x`. This is equivalent to sampling `log_y` uniformly from
-    `(-inf, log_p(x)]`.
-
-    Parameters
-    ----------
-    rng_key
-        A JAX PRNG key.
-    state
-        The current slice sampling state.
-
-    Returns
-    -------
-    tuple[SliceState, SliceInfo]
-        A tuple containing the updated state with the slice height set and
-        info about the vertical slice step.
-    """
-    logslice = state.logdensity + jnp.log(jax.random.uniform(rng_key))
-    new_state = state._replace(logslice=logslice)
-    is_accepted = logslice < state.logdensity
-    info = SliceInfo(is_accepted=is_accepted)
-    return new_state, info
-
-
 def horizontal_slice(
     rng_key: PRNGKey,
+    slicer: Callable,
     state: SliceState,
-    d: ArrayTree,
-    stepper_fn: Callable,
-    logdensity_fn: Callable,
-    constraint_fn: Callable,
-    constraint: Array,
-    strict: Array,
     m: int,
     max_shrinkage: int,
 ) -> tuple[SliceState, SliceInfo]:
@@ -237,30 +189,11 @@ def horizontal_slice(
     ----------
     rng_key
         A JAX PRNG key.
+    slicer
+        A function that takes a scalar `t` and returns a state and info on the
+        slice.
     state
         The current slice sampling state.
-    d
-        The direction (PyTree) for proposing moves.
-    stepper_fn
-        A function `(x0, d, t) -> x_new` that computes a new point by
-        moving `t` units along direction `d` from `x0`.
-    logdensity_fn
-        The log-density function of the target distribution.
-    constraint_fn
-        A function that evaluates additional constraints on the position beyond
-        the target distribution. Takes a position (PyTree) and returns an array
-        of constraint values. These values are compared against `constraint`
-        thresholds to determine if a position is acceptable. For example, in
-        nested sampling, this could evaluate the log-likelihood to ensure it
-        exceeds a minimum threshold.
-    constraint
-        An array of constraint threshold values that must be satisfied.
-        Each constraint value from `constraint_fn(x)` is compared against the
-        corresponding threshold in this array.
-    strict
-        An array of boolean flags indicating whether each constraint should be
-        strict (constraint_fn(x) > constraint) or non-strict
-        (constraint_fn(x) >= constraint).
     m
         The maximum number of steps to take when expanding the interval in
         each direction during the stepping-out phase.
@@ -279,69 +212,49 @@ def horizontal_slice(
     u, v = jax.random.uniform(subkey, 2)
     j = jnp.floor(m * v).astype(int)
     k = (m - 1) - j
-    x0 = state.position
-
-    def step_body_fun(carry):
-        _, s, t, i = carry
-        t += s
-        x = stepper_fn(x0, d, t)
-        logdensity_x = logdensity_fn(x)
-        constraint_x = constraint_fn(x)
-        constraints = jnp.where(
-            strict, constraint_x > constraint, constraint_x >= constraint
-        )
-        constraints = jnp.append(constraints, logdensity_x >= state.logslice)
-        within = jnp.all(constraints)
-        i -= 1
-        return within, s, t, i
-
-    def step_cond_fun(carry):
-        within = carry[0]
-        i = carry[-1]
-        return within & (i > 0)
 
     # Expand
-    _, _, l, j = jax.lax.while_loop(step_cond_fun, step_body_fun, (True, -1, -u, j))
-    _, _, r, k = jax.lax.while_loop(step_cond_fun, step_body_fun, (True, +1, 1 - u, k))
+    def step_body_fun(carry):
+        i, s, t, _ = carry
+        t += s
+        _, is_accepted = slicer(t)
+        i -= 1
+        return i, s, t, is_accepted
+
+    def step_cond_fun(carry):
+        i, _, _, is_accepted = carry
+        return is_accepted & (i > 0)
+
+    j, _, l, _ = jax.lax.while_loop(step_cond_fun, step_body_fun, (j+1, -1, 1 - u, True))
+    k, _, r, _ = jax.lax.while_loop(step_cond_fun, step_body_fun, (k+1, +1, -u, True))
 
     # Shrink
     def shrink_body_fun(carry):
-        _, l, r, _, _, _, rng_key, s = carry
-        s += 1
+        n, rng_key, l, r, state, is_accepted = carry
 
         rng_key, subkey = jax.random.split(rng_key)
         u = jax.random.uniform(subkey, minval=l, maxval=r)
-        x = stepper_fn(x0, d, u)
 
-        logdensity_x = logdensity_fn(x)
-        constraint_x = constraint_fn(x)
-        constraints = jnp.where(
-            strict, constraint_x > constraint, constraint_x >= constraint
-        )
-        constraints = jnp.append(constraints, logdensity_x >= state.logslice)
-        within = jnp.all(constraints)
+        new_state, is_accepted = slicer(u)
+        n += 1
 
         l = jnp.where(u < 0, u, l)
         r = jnp.where(u > 0, u, r)
 
-        return within, l, r, x, logdensity_x, constraint_x, rng_key, s
+        return n, rng_key, l, r, new_state, is_accepted
 
     def shrink_cond_fun(carry):
-        within = carry[0]
-        s = carry[-1]
-        return ~within & (s < max_shrinkage + 1)
+        n, _, _, _, _, is_accepted = carry
+        return ~is_accepted & (n < max_shrinkage)
 
-    carry = (False, l, r, x0, -jnp.inf, constraint, rng_key, 0)
+    carry = 0, rng_key, l, r, state, False
     carry = jax.lax.while_loop(shrink_cond_fun, shrink_body_fun, carry)
-    _, l, r, x, logdensity_x, constraint_x, rng_key, s = carry
-
-    end_state = SliceState(x, logdensity_x)
-    slice_state, (is_accepted, _, _) = static_binomial_sampling(
-        rng_key, jnp.log(s < max_shrinkage + 1), state, end_state
+    n, _, _, _, new_state, is_accepted = carry
+    new_state, (is_accepted, _, _) = static_binomial_sampling(
+        rng_key, jnp.log(is_accepted), state, new_state
     )
-
-    slice_info = SliceInfo(is_accepted, constraint_x, j+k, s)
-    return slice_state, slice_info
+    slice_info = SliceInfo(is_accepted, m + 1 - j - k, n)
+    return new_state, slice_info
 
 
 def build_hrss_kernel(
@@ -383,7 +296,7 @@ def build_hrss_kernel(
         d = generate_slice_direction_fn(prop_key)
         constraint_fn = lambda x: jnp.array([])
         constraint = jnp.array([])
-        strict = jnp.array([])
+        strict = jnp.array([], dtype=bool)
         return slice_kernel(
             rng_key, state, logdensity_fn, d, constraint_fn, constraint, strict
         )
@@ -407,10 +320,9 @@ def default_stepper_fn(x: ArrayTree, d: ArrayTree, t: float) -> ArrayTree:
 
     Returns
     -------
-    ArrayTree
-        The new position.
+    position, is_accepted
     """
-    return jax.tree.map(lambda x, d: x + t * d, x, d)
+    return jax.tree.map(lambda x, d: x + t * d, x, d), True
 
 
 def sample_direction_from_covariance(rng_key: PRNGKey, cov: Array) -> Array:

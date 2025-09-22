@@ -203,7 +203,7 @@ def build_kernel(
         rng_key, state, logprior_fn, loglikelihood_fn, loglikelihood_0, params
     ):
         # Do constrained slice sampling
-        slice_state = SliceState(position=state.position, logdensity=state.logprior)
+        slice_state = SliceState(position=state.position, logdensity=state.logprior, constraint=jnp.array([state.loglikelihood]))
         rng_key, prop_key = jax.random.split(rng_key, 2)
         d = generate_slice_direction_fn(prop_key, params)
         logdensity_fn = logprior_fn
@@ -218,7 +218,7 @@ def build_kernel(
         return new_state_and_info(
             position=new_slice_state.position,
             logprior=new_slice_state.logdensity,
-            loglikelihood=slice_info.constraint[0],
+            loglikelihood=new_slice_state.constraint[0],
             info=slice_info,
         )
 
