@@ -160,6 +160,7 @@ def while_steps_num(cond):
         return jnp.argmin(cond) + 1
 
 
+
 def laps(
     logdensity_fn,
     sample_init,
@@ -173,7 +174,8 @@ def laps(
     save_frac=0.2,
     C=0.1,
     early_stop=True,
-    r_end=5e-3,
+    r_end= 0.01,
+    bias_type= 3,
     diagonal_preconditioning=True,
     integrator_coefficients=None,
     steps_per_sample=15,
@@ -218,10 +220,9 @@ def laps(
     adap = umclmc.Adaptation(
         ndims,
         alpha=alpha,
-        bias_type=3,
+        bias_type=bias_type,
         save_num=save_num,
         C=C,
-        power= 3.0 / 8.0,
         r_end=r_end,
         observables_for_bias=observables_for_bias,
         contract=contract,

@@ -204,7 +204,6 @@ class Adaptation:
         ndims,
         alpha=1.0,
         C=0.1,
-        power=3.0 / 8.0,
         r_end=0.01,
         bias_type=0,
         save_num=10,
@@ -215,7 +214,6 @@ class Adaptation:
         self.ndims = ndims
         self.alpha = alpha
         self.C = C
-        self.power = power
         self.r_end = r_end
         self.observables = observables
         self.observables_for_bias = observables_for_bias
@@ -290,7 +288,9 @@ class Adaptation:
         # hyperparameter adaptation
         # estimate bias
         bias = jnp.array([fluctuations[0], fluctuations[1], equi_full, equi_diag])[self.bias_type]  # r_max, r_avg, equi_full, equi_diag
-        EEVPD_wanted = self.C * jnp.power(bias, self.power)
+        EEVPD_wanted = self.C * jnp.power(bias, 3./8.)
+        # bias_asym_wanted = self.C * bias
+        # EEVPD_wanted = 4 * jnp.power(bias_asym_wanted, 3./2.) / jnp.square(1 + jnp.sqrt(bias_asym_wanted)) # phi function from Robnik et. al., Blackbox Unadjusted Hamiltonian Monte Carlo 
 
         eps_factor = jnp.power(EEVPD_wanted / EEVPD, 1.0 / 6.0)
         eps_factor = jnp.clip(eps_factor, 0.3, 3.0)
