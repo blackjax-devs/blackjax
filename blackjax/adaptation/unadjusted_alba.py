@@ -17,6 +17,7 @@ from blackjax.adaptation.window_adaptation import build_schedule
 from jax.flatten_util import ravel_pytree
 from blackjax.diagnostics import effective_sample_size
 from blackjax.adaptation.unadjusted_step_size import robnik_step_size_tuning, RobnikStepSizeTuningState
+import math 
 
 class AlbaAdaptationState(NamedTuple):
     ss_state: RobnikStepSizeTuningState  # step size
@@ -205,7 +206,7 @@ def unadjusted_alba(
     preconditioning: bool = True,
     is_mass_matrix_diagonal: bool = True,
     progress_bar: bool = False,
-    adaptation_info_fn: Callable = return_all_adapt_info,
+    adaptation_info_fn: Callable = lambda x, y, z : None,
     integrator=mcmc.integrators.velocity_verlet,
     num_alba_steps: int = 500,
     alba_factor: float = 0.4,
@@ -274,32 +275,49 @@ def unadjusted_alba(
         ###
         ### ALBA TUNING
         ###
-        keys = jax.random.split(alba_key, num_alba_steps)
+
+        jax.debug.print("num_alba_steps: {x}", x=num_alba_steps)
+
+        max_num_steps = 200
+        thinning_rate = math.ceil(num_alba_steps / max_num_steps)
+        jax.debug.print("thinning_rate: {x}", x=thinning_rate)
+        new_num_alba_steps = math.ceil(num_alba_steps / thinning_rate)
+        jax.debug.print("new_num_alba_steps: {x}", x=new_num_alba_steps)
+
+        keys = jax.random.split(alba_key, new_num_alba_steps)
         mcmc_kernel = algorithm.build_kernel(integrator)
+
         def step(state, key):
-            next_state, _ = mcmc_kernel(
-                rng_key=key,
-                state=state,
-                logdensity_fn=logdensity_fn,
-                L=L,
-                step_size=step_size,
-                inverse_mass_matrix=inverse_mass_matrix,
-            )
+            next_state=state
+            for i in range(thinning_rate):
+                key = jax.random.fold_in(key, i)
+                next_state, _ = mcmc_kernel(
+                    rng_key=key,
+                    state=state,
+                    logdensity_fn=logdensity_fn,
+                    L=L,
+                    step_size=step_size,
+                    inverse_mass_matrix=inverse_mass_matrix,
+                )
 
             return next_state, next_state.position
         
-        if num_alba_steps > 0:
-            print("params before alba tuning", L, step_size)
+        if new_num_alba_steps > 0:
+            jax.debug.print("params before alba tuning {x}", x=(L, step_size))
             _, samples = jax.lax.scan(step, last_chain_state, keys)
             flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
             ess = effective_sample_size(flat_samples[None, ...])
+            jax.debug.print("ess after alba {x}", x=(L, step_size, ess))
             # print(num_alba_steps/jnp.mean(ess), "ess (blackjax internal)\n")
             # print( effective_sample_size(flat_samples[None, ...]), "ess (blackjax internal)\n")
 
             # print("L etc", L, step_size, jnp.mean(ess), num_alba_steps, jnp.mean(num_alba_steps / ess))
-            L=alba_factor * step_size * jnp.mean(num_alba_steps / ess)
+            L=alba_factor * step_size * jnp.mean(new_num_alba_steps / ess)
             # print("new L", L)
             # raise Exception("stop")
+
+        # else:
+        #     ess = 0.0
 
         max_num_steps = 500
         

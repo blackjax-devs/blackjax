@@ -23,15 +23,25 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.mcmc.hmc import HMCState, HMCInfo
+from blackjax.mcmc.hmc import HMCState
 
 __all__ = [
     "HMCState",
-    "HMCInfo",
     "init",
     "build_kernel",
     "as_top_level_api",
 ]
+
+class MALTInfo(NamedTuple):
+
+    # momentum: ArrayTree
+    acceptance_rate: float
+    is_accepted: bool
+    is_divergent: bool
+    energy: float
+    # proposal: integrators.IntegratorState
+    num_integration_steps: int
+
 
 
 
@@ -71,7 +81,7 @@ def build_kernel(
         inverse_mass_matrix: metrics.MetricTypes,
         num_integration_steps: int,
         
-    ) -> tuple[HMCState, HMCInfo]:
+    ) -> tuple[HMCState, MALTInfo]:
         """Generate a new sample with the HMC kernel."""
 
         L = num_integration_steps * step_size
@@ -253,7 +263,7 @@ def hmc_proposal(
 
     def generate(
         rng_key, state: integrators.IntegratorState
-    ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
+    ) -> tuple[integrators.IntegratorState, MALTInfo, ArrayTree]:
         """Generate a new chain state."""
         end_state, delta_energy = build_trajectory(state, step_size, num_integration_steps)
         end_state = flip_momentum(end_state)
@@ -270,13 +280,13 @@ def hmc_proposal(
         # jax.debug.print("delta_energy {x}",x=delta_energy)
         # jax.debug.print("p_accept {p_accept}", p_accept=(p_accept, delta_energy))
 
-        info = HMCInfo(
-            state.momentum,
+        info = MALTInfo(
+            # state.momentum,
             p_accept,
             do_accept,
             is_diverging,
             new_energy,
-            end_state,
+            # end_state,
             num_integration_steps,
         )
 

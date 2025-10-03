@@ -99,6 +99,17 @@ def build_kernel(
             integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
         )
 
+        # return 0, None
+        
+        # state, MCLMCInfo(
+        
+        #     logdensity=state.logdensity,
+        #     energy_change=0.0,
+        #     kinetic_change=0.0,
+        #     nonans=True
+        # )
+        # raise Exception
+
 
         # jax.debug.print("L {x}", x=L)
         # jax.debug.print("step_size {x}", x=step_size)

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin"."""
-from typing import Callable, Union
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -20,13 +20,22 @@ import jax.numpy as jnp
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.dynamic_hmc import DynamicHMCState, halton_sequence
-from blackjax.mcmc.hmc import HMCInfo
+# from blackjax.mcmc.hmc import HMCInfo
 from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_unit_vector
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
 
+class MAMSInfo(NamedTuple):
+
+    # momentum: ArrayTree
+    acceptance_rate: float
+    is_accepted: bool
+    is_divergent: bool
+    energy: float
+    # proposal: integrators.IntegratorState
+    num_integration_steps: int
 
 def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
@@ -67,11 +76,21 @@ def build_kernel(
         step_size: float,
         integration_steps_fn,
         inverse_mass_matrix=1.0,
-    ) -> tuple[DynamicHMCState, HMCInfo]:
+    ) -> tuple[DynamicHMCState, MAMSInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
 
+        # return state, HMCInfo(
+        #     state.position,
+        #     0.0,
+        #     False,
+        #     False,
+        #     state.logdensity,
+        #     None,
+        #     0,
+        # )
         
         num_integration_steps = integration_steps_fn(state.random_generator_arg)
+
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
@@ -217,7 +236,7 @@ def adjusted_mclmc_proposal(
 
     def generate(
         rng_key, state: integrators.IntegratorState
-    ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
+    ) -> tuple[integrators.IntegratorState, MAMSInfo, ArrayTree]:
         """Generate a new chain state."""
         end_state, kinetic_energy, rng_key = build_trajectory(
             state, num_integration_steps, rng_key
@@ -230,13 +249,13 @@ def adjusted_mclmc_proposal(
         sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
         do_accept, p_accept, other_proposal_info = info
 
-        info = HMCInfo(
-            state.momentum,
+        info = MAMSInfo(
+            # state.momentum,
             p_accept,
             do_accept,
             is_diverging,
             new_energy,
-            end_state,
+            # end_state,
             num_integration_steps,
         )
 
