@@ -500,7 +500,7 @@ def run_eca(
             new_step_size = step_size.at[i].set(info.get("step_size"))
 
             return (output, i + 1, 
-                    True, #info.get("r_max") > adaptation.r_end,x
+                    (info.get("r_max") > adaptation.r_end) | (i < adaptation.save_num), # while is run while this is True
                     new_EEVPD, new_EEVPD_wanted, new_L, new_entropy, new_equi_diag, new_equi_full, new_bias0, new_bias1, new_observables, new_r_avg, new_r_max, new_R_avg, new_R_max, new_step_size)
 
         if early_stop:
