@@ -87,17 +87,25 @@ def build_kernel(logdensity_fn, sqrt_diag_cov, integrator):
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, MCLMCInfo]:
+        step = with_isokinetic_maruyama(
+            integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
+        )
+        kernel_key, energy_cutoff_key, nan_key = jax.random.split(rng_key, 3)
         (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
-            state, step_size, L, rng_key
+            state, step_size, L, kernel_key
         )
-
-        return IntegratorState(
-            position, momentum, logdensity, logdensitygrad
-        ), MCLMCInfo(
+        energy_change = kinetic_change - logdensity + state.logdensity
+        eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
+        ndims = pytree_size(position)
+        new_state, info = handle_high_energy(state, IntegratorState(position, momentum, logdensity, logdensitygrad), MCLMCInfo(
             logdensity=logdensity,
-            energy_change=kinetic_change - logdensity + state.logdensity,
+            energy_change=energy_change,
             kinetic_change=kinetic_change,
-        )
+            nonans=True
+        ), energy_cutoff_key, cutoff = jnp.sqrt(ndims * eev_max_per_dim))
+
+        new_state, info = handle_nans(state, new_state, info, nan_key)
+        return new_state, info
 
     return kernel
 
@@ -164,3 +172,25 @@ def as_top_level_api(
         return kernel(rng_key, state, L, step_size)
 
     return SamplingAlgorithm(init_fn, update_fn)
+
+
+def handle_high_energy(
+    previous_state, next_state, info, key, cutoff
+):
+
+    new_momentum = generate_unit_vector(key, previous_state.position)
+
+    state, info = jax.lax.cond(
+        jnp.abs(info.energy_change) > cutoff,
+        lambda: (previous_state._replace(
+            momentum=new_momentum,
+        ), MCLMCInfo(
+            logdensity=previous_state.logdensity,
+            energy_change=0.0,
+            kinetic_change=0.0,
+            nonans=info.nonans
+        )),
+        lambda: (next_state, info),
+    )
+
+    return state, info
