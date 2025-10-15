@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Core functionality for ensemble MCMC algorithms."""
+import warnings
 from typing import Callable, NamedTuple, Optional
 
 import jax
@@ -44,6 +45,7 @@ class EnsembleState(NamedTuple):
         An optional PyTree that stores metadata returned by the log-probability
         function.
     """
+
     coords: ArrayTree
     log_probs: Array
     blobs: Optional[ArrayTree] = None
@@ -58,6 +60,7 @@ class EnsembleInfo(NamedTuple):
         A boolean array of shape `(n_walkers,)` indicating whether each walker's
         proposal was accepted.
     """
+
     acceptance_rate: Array
     accepted: Array
 
@@ -74,68 +77,118 @@ def stretch_move(
     ensemble and moving the current walker along the line connecting the two.
     """
     key_select, key_stretch = jax.random.split(rng_key)
-    
+
     # Ravel coordinates to handle PyTrees
     walker_flat, unravel_fn = ravel_pytree(walker_coords)
-    
+
     # Get the shape of the complementary ensemble
     # complementary_coords should have shape (n_walkers, ...) where ... matches walker_coords
     comp_leaves, comp_treedef = jax.tree_util.tree_flatten(complementary_coords)
     n_walkers_comp = comp_leaves[0].shape[0]
-    
+
     # Select a random walker from the complementary ensemble
     idx = jax.random.randint(key_select, (), 0, n_walkers_comp)
     complementary_walker = jax.tree.map(lambda x: x[idx], complementary_coords)
-    
+
     # Ravel the selected complementary walker
     complementary_walker_flat, _ = ravel_pytree(complementary_walker)
-    
+
     # Generate the stretch factor `Z` from g(z)
     z = ((a - 1.0) * jax.random.uniform(key_stretch) + 1) ** 2.0 / a
-    
+
     # Generate the proposal (Eq. 10)
-    proposal_flat = complementary_walker_flat + z * (walker_flat - complementary_walker_flat)
-    
+    proposal_flat = complementary_walker_flat + z * (
+        walker_flat - complementary_walker_flat
+    )
+
     # The log of the Hastings ratio (Eq. 11)
     # Number of dimensions is the length of the flattened walker
     n_dims = walker_flat.shape[0]
     log_hastings_ratio = (n_dims - 1.0) * jnp.log(z)
-    
+
     return unravel_fn(proposal_flat), log_hastings_ratio
 
 
-def build_kernel(move_fn: Callable) -> Callable:
-    """Builds a generic ensemble MCMC kernel."""
+def build_kernel(move_fn: Callable, randomize_split: bool = True) -> Callable:
+    """Builds a generic ensemble MCMC kernel.
+
+    Parameters
+    ----------
+    move_fn
+        The move function to use (e.g., stretch_move).
+    randomize_split
+        If True, randomly shuffle walker indices before splitting into red/blue sets
+        each iteration. This improves mixing and matches emcee's default behavior.
+        If False, uses a fixed contiguous split.
+    """
 
     def kernel(
         rng_key: PRNGKey, state: EnsembleState, logdensity_fn: Callable
     ) -> tuple[EnsembleState, EnsembleInfo]:
-        
         n_walkers, *_ = jax.tree_util.tree_flatten(state.coords)[0][0].shape
         half_n = n_walkers // 2
-        
+
+        # Optionally randomize the red-blue split
+        if randomize_split:
+            key_shuffle, key_red, key_blue = jax.random.split(rng_key, 3)
+            indices = jax.random.permutation(key_shuffle, n_walkers)
+            shuffled_state = jax.tree.map(lambda x: x[indices], state)
+        else:
+            key_red, key_blue = jax.random.split(rng_key)
+            shuffled_state = state
+            indices = jnp.arange(n_walkers)
+
         # Red-Blue Split
-        walkers_red = jax.tree.map(lambda x: x[:half_n], state)
-        walkers_blue = jax.tree.map(lambda x: x[half_n:], state)
+        walkers_red = jax.tree.map(lambda x: x[:half_n], shuffled_state)
+        walkers_blue = jax.tree.map(lambda x: x[half_n:], shuffled_state)
 
         # Update Red walkers using Blue as complementary
-        key_red, key_blue = jax.random.split(rng_key)
-        new_walkers_red, accepted_red = _update_half(key_red, walkers_red, walkers_blue, logdensity_fn, move_fn)
+        new_walkers_red, accepted_red = _update_half(
+            key_red, walkers_red, walkers_blue, logdensity_fn, move_fn
+        )
 
         # Update Blue walkers using updated Red as complementary
-        new_walkers_blue, accepted_blue = _update_half(key_blue, walkers_blue, new_walkers_red, logdensity_fn, move_fn)
-        
-        # Combine back
-        new_coords = jax.tree.map(lambda r, b: jnp.concatenate([r, b], axis=0), new_walkers_red.coords, new_walkers_blue.coords)
-        new_log_probs = jnp.concatenate([new_walkers_red.log_probs, new_walkers_blue.log_probs])
-        
+        new_walkers_blue, accepted_blue = _update_half(
+            key_blue, walkers_blue, new_walkers_red, logdensity_fn, move_fn
+        )
+
+        # Combine back in the shuffled order
+        shuffled_coords = jax.tree.map(
+            lambda r, b: jnp.concatenate([r, b], axis=0),
+            new_walkers_red.coords,
+            new_walkers_blue.coords,
+        )
+        shuffled_log_probs = jnp.concatenate(
+            [new_walkers_red.log_probs, new_walkers_blue.log_probs]
+        )
+        shuffled_accepted = jnp.concatenate([accepted_red, accepted_blue])
+
         if state.blobs is not None:
-            new_blobs = jax.tree.map(lambda r, b: jnp.concatenate([r, b], axis=0), new_walkers_red.blobs, new_walkers_blue.blobs)
+            shuffled_blobs = jax.tree.map(
+                lambda r, b: jnp.concatenate([r, b], axis=0),
+                new_walkers_red.blobs,
+                new_walkers_blue.blobs,
+            )
         else:
-            new_blobs = None
+            shuffled_blobs = None
+
+        # Unshuffle to restore original ordering
+        if randomize_split:
+            inverse_indices = jnp.argsort(indices)
+            new_coords = jax.tree.map(lambda x: x[inverse_indices], shuffled_coords)
+            new_log_probs = shuffled_log_probs[inverse_indices]
+            accepted = shuffled_accepted[inverse_indices]
+            if shuffled_blobs is not None:
+                new_blobs = jax.tree.map(lambda x: x[inverse_indices], shuffled_blobs)
+            else:
+                new_blobs = None
+        else:
+            new_coords = shuffled_coords
+            new_log_probs = shuffled_log_probs
+            accepted = shuffled_accepted
+            new_blobs = shuffled_blobs
 
         new_state = EnsembleState(new_coords, new_log_probs, new_blobs)
-        accepted = jnp.concatenate([accepted_red, accepted_blue])
         acceptance_rate = jnp.mean(accepted.astype(jnp.float32))
         info = EnsembleInfo(acceptance_rate, accepted)
 
@@ -144,16 +197,21 @@ def build_kernel(move_fn: Callable) -> Callable:
     return kernel
 
 
-def _update_half(rng_key, walkers_to_update, complementary_walkers, logdensity_fn, move_fn):
+def _update_half(
+    rng_key, walkers_to_update, complementary_walkers, logdensity_fn, move_fn
+):
     """Helper to update one half of the ensemble."""
     n_update, *_ = jax.tree_util.tree_flatten(walkers_to_update.coords)[0][0].shape
-    keys = jax.random.split(rng_key, n_update)
+
+    # Split key for moves and acceptance to avoid key reuse
+    key_moves, key_accept = jax.random.split(rng_key)
+    keys = jax.random.split(key_moves, n_update)
 
     # Vectorize the move over the walkers to be updated
     proposals, log_hastings_ratios = jax.vmap(
         lambda k, w_coords: move_fn(k, w_coords, complementary_walkers.coords)
     )(keys, walkers_to_update.coords)
-    
+
     # Compute log-probabilities for proposals
     logdensity_outputs = jax.vmap(logdensity_fn)(proposals)
     if isinstance(logdensity_outputs, tuple):
@@ -161,20 +219,39 @@ def _update_half(rng_key, walkers_to_update, complementary_walkers, logdensity_f
     else:
         log_probs_proposal = logdensity_outputs
         blobs_proposal = None
-    
+
     # MH accept/reject step (Eq. 11)
-    log_p_accept = log_hastings_ratios + log_probs_proposal - walkers_to_update.log_probs
-    
-    # To avoid -inf - (-inf) = NaN, replace -inf with a large negative number.
-    log_p_accept = jnp.where(jnp.isneginf(walkers_to_update.log_probs), -jnp.inf, log_p_accept)
-    
-    u = jax.random.uniform(rng_key, shape=(n_update,))
+    log_p_accept = (
+        log_hastings_ratios + log_probs_proposal - walkers_to_update.log_probs
+    )
+
+    # Handle -inf log probabilities correctly:
+    # - If current is -inf and proposal is finite: accept (log_p_accept = +inf)
+    # - If proposal is -inf: reject (log_p_accept = -inf)
+    # - If both are -inf: reject (log_p_accept = -inf)
+    is_curr_fin = jnp.isfinite(walkers_to_update.log_probs)
+    is_prop_fin = jnp.isfinite(log_probs_proposal)
+    log_p_accept = jnp.where(
+        ~is_curr_fin & is_prop_fin,
+        jnp.inf,
+        jnp.where(
+            is_curr_fin & ~is_prop_fin,
+            -jnp.inf,
+            jnp.where(~is_curr_fin & ~is_prop_fin, -jnp.inf, log_p_accept),
+        ),
+    )
+
+    u = jax.random.uniform(key_accept, shape=(n_update,))
     accepted = jnp.log(u) < log_p_accept
 
     # Build the new state for the half
-    new_coords = jax.tree.map(lambda prop, old: jnp.where(accepted[:, None], prop, old), proposals, walkers_to_update.coords)
+    new_coords = jax.tree.map(
+        lambda prop, old: jnp.where(accepted[:, None], prop, old),
+        proposals,
+        walkers_to_update.coords,
+    )
     new_log_probs = jnp.where(accepted, log_probs_proposal, walkers_to_update.log_probs)
-    
+
     if walkers_to_update.blobs is not None:
         new_blobs = jax.tree.map(
             lambda prop, old: jnp.where(accepted, prop, old),
@@ -183,13 +260,47 @@ def _update_half(rng_key, walkers_to_update, complementary_walkers, logdensity_f
         )
     else:
         new_blobs = None
-    
+
     new_walkers = EnsembleState(new_coords, new_log_probs, new_blobs)
     return new_walkers, accepted
 
 
-def init(position: ArrayTree, logdensity_fn: Callable, has_blobs: bool = False) -> EnsembleState:
-    """Initializes the ensemble."""
+def init(
+    position: ArrayTree,
+    logdensity_fn: Callable,
+    has_blobs: bool = False,
+    live_dangerously: bool = False,
+) -> EnsembleState:
+    """Initializes the ensemble.
+
+    Parameters
+    ----------
+    position
+        Initial positions for all walkers, with shape (n_walkers, ...).
+    logdensity_fn
+        The log-density function to evaluate.
+    has_blobs
+        Whether the log-density function returns additional metadata (blobs).
+    live_dangerously
+        If False (default), warns when n_walkers < 2*ndim, which can lead to poor
+        mixing. Set to True to suppress this warning.
+    """
+    # Get number of walkers and dimensions
+    leaves, _ = jax.tree_util.tree_flatten(position)
+    n_walkers = leaves[0].shape[0]
+    flat_sample, _ = ravel_pytree(jax.tree.map(lambda x: x[0], position))
+    ndim = flat_sample.shape[0]
+
+    # Warn if n_walkers < 2*ndim (following emcee's recommendation)
+    if not live_dangerously and n_walkers < 2 * ndim:
+        warnings.warn(
+            f"Running ensemble sampler with {n_walkers} walkers for {ndim} dimensions. "
+            f"For optimal performance and mixing, emcee recommends at least {2 * ndim} walkers. "
+            f"Set live_dangerously=True to suppress this warning.",
+            UserWarning,
+            stacklevel=2,
+        )
+
     logdensity_outputs = jax.vmap(logdensity_fn)(position)
     if isinstance(logdensity_outputs, tuple):
         log_probs, blobs = logdensity_outputs
@@ -200,13 +311,32 @@ def init(position: ArrayTree, logdensity_fn: Callable, has_blobs: bool = False) 
 
 
 def as_top_level_api(
-    logdensity_fn: Callable, move_fn: Callable, has_blobs: bool = False
+    logdensity_fn: Callable,
+    move_fn: Callable,
+    has_blobs: bool = False,
+    randomize_split: bool = True,
+    live_dangerously: bool = False,
 ) -> SamplingAlgorithm:
-    """Implements the user-facing API for ensemble samplers."""
-    kernel = build_kernel(move_fn)
+    """Implements the user-facing API for ensemble samplers.
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log-density function to sample from.
+    move_fn
+        The move function to use (e.g., stretch_move).
+    has_blobs
+        Whether the log-density function returns additional metadata (blobs).
+    randomize_split
+        If True, randomly shuffle walker indices before splitting into red/blue sets
+        each iteration. This improves mixing and matches emcee's default behavior.
+    live_dangerously
+        If False (default), warns when n_walkers < 2*ndim. Set to True to suppress.
+    """
+    kernel = build_kernel(move_fn, randomize_split=randomize_split)
 
     def init_fn(position: ArrayTree, rng_key=None):
-        return init(position, logdensity_fn, has_blobs)
+        return init(position, logdensity_fn, has_blobs, live_dangerously)
 
     def step_fn(rng_key: PRNGKey, state: EnsembleState):
         return kernel(rng_key, state, logdensity_fn)
