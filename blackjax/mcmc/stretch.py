@@ -28,7 +28,6 @@ def as_top_level_api(
     a: float = 2.0,
     has_blobs: bool = False,
     randomize_split: bool = True,
-    live_dangerously: bool = False,
     nsplits: int = 2,
 ) -> SamplingAlgorithm:
     """A user-facing API for the stretch move algorithm.
@@ -44,8 +43,6 @@ def as_top_level_api(
     randomize_split
         If True, randomly shuffle walker indices before splitting into groups
         each iteration. This improves mixing and matches emcee's default behavior.
-    live_dangerously
-        If False (default), warns when n_walkers < 2*ndim. Set to True to suppress.
     nsplits
         Number of groups to split the ensemble into. Default is 2 (red-blue).
         Each group is updated sequentially using all other groups as complementary.
@@ -60,14 +57,11 @@ def as_top_level_api(
         move,
         has_blobs,
         randomize_split=randomize_split,
-        live_dangerously=live_dangerously,
         nsplits=nsplits,
     )
 
 
-def init(
-    position, logdensity_fn, has_blobs: bool = False, live_dangerously: bool = False
-):
+def init(position, logdensity_fn, has_blobs: bool = False):
     """Initialize the stretch move algorithm.
 
     Parameters
@@ -78,10 +72,8 @@ def init(
         The log-density function to evaluate.
     has_blobs
         Whether the log-density function returns additional metadata (blobs).
-    live_dangerously
-        If False (default), warns when n_walkers < 2*ndim. Set to True to suppress.
     """
-    return ensemble_init(position, logdensity_fn, has_blobs, live_dangerously)
+    return ensemble_init(position, logdensity_fn, has_blobs)
 
 
 def build_kernel(
