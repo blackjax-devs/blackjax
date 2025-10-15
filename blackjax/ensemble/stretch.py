@@ -182,12 +182,7 @@ def _update_half(
         lambda k, w_coords: move_fn(k, w_coords, complementary_walkers.coords)
     )(keys, walkers_to_update.coords)
 
-    logdensity_outputs = jax.vmap(logdensity_fn)(proposals)
-    if isinstance(logdensity_outputs, tuple):
-        log_probs_proposal, blobs_proposal = logdensity_outputs
-    else:
-        log_probs_proposal = logdensity_outputs
-        blobs_proposal = None
+    log_probs_proposal, blobs_proposal = vmapped_logdensity(logdensity_fn, proposals)
 
     log_p_accept = (
         log_hastings_ratios + log_probs_proposal - walkers_to_update.log_probs
