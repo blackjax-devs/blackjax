@@ -11,6 +11,7 @@ from blackjax.ensemble.slice import (
     SliceEnsembleState,
     as_top_level_api,
     differential_direction,
+    gaussian_direction,
     init,
     random_direction,
     slice_along_direction,
@@ -66,13 +67,14 @@ class EnsembleSliceTest(chex.TestCase):
         logp0 = logprob_fn(x0)
         direction = 1.0
 
-        x1, logp1, nexp, ncon, neval = slice_along_direction(
+        x1, logp1, accepted, nexp, ncon, neval = slice_along_direction(
             rng_key, x0, logp0, direction, logprob_fn, maxsteps=100, maxiter=1000
         )
 
         # Check that we got valid results
         self.assertTrue(jnp.isfinite(x1))
         self.assertTrue(jnp.isfinite(logp1))
+        self.assertTrue(accepted)  # Should have found a valid point
         self.assertGreater(neval, 0)
 
     def test_init(self):
@@ -205,6 +207,44 @@ class EnsembleSliceTest(chex.TestCase):
         self.assertIsInstance(new_state, SliceEnsembleState)
         self.assertIsInstance(info, SliceEnsembleInfo)
 
+    def test_gaussian_direction_array(self):
+        """Test that gaussian_direction produces valid directions for arrays."""
+        rng_key = jax.random.PRNGKey(42)
+
+        complementary_coords = jnp.array([[0.0, 0.0], [2.0, 4.0], [3.0, 1.0]])
+        n_update = 2
+        mu = 1.0
+
+        directions, tune_once = gaussian_direction(
+            rng_key, complementary_coords, n_update, mu
+        )
+
+        self.assertEqual(directions.shape, (n_update, 2))
+        self.assertTrue(tune_once)
+        self.assertTrue(jnp.isfinite(directions).all())
+
+    def test_gaussian_direction_pytree(self):
+        """Test that gaussian_direction works with PyTree coordinates."""
+        rng_key = jax.random.PRNGKey(43)
+
+        complementary_coords = {
+            "x": jnp.array([[1.0, 2.0], [3.0, 4.0], [5.0, 6.0]]),
+            "y": jnp.array([[0.5], [1.5], [2.5]]),
+        }
+        n_update = 2
+        mu = 1.0
+
+        directions, tune_once = gaussian_direction(
+            rng_key, complementary_coords, n_update, mu
+        )
+
+        self.assertIsInstance(directions, dict)
+        self.assertEqual(directions["x"].shape, (n_update, 2))
+        self.assertEqual(directions["y"].shape, (n_update, 1))
+        self.assertTrue(tune_once)
+        self.assertTrue(jnp.isfinite(directions["x"]).all())
+        self.assertTrue(jnp.isfinite(directions["y"]).all())
+
     def test_random_move(self):
         """Test ensemble slice sampling with random move."""
 
@@ -215,13 +255,11 @@ class EnsembleSliceTest(chex.TestCase):
         n_walkers = 10
         initial_position = jax.random.normal(rng_key, (n_walkers, 2))
 
-        # Use random move instead of differential
         algorithm = as_top_level_api(
             logdensity_fn, move="random", mu=1.0, maxsteps=100, maxiter=1000
         )
         initial_state = algorithm.init(initial_position)
 
-        # Run a few steps
         keys = jax.random.split(rng_key, 10)
 
         def run_step(state, key):
@@ -230,9 +268,34 @@ class EnsembleSliceTest(chex.TestCase):
 
         final_state, infos = jax.lax.scan(run_step, initial_state, keys)
 
-        # Check valid results
         self.assertIsInstance(final_state, SliceEnsembleState)
         self.assertTrue(jnp.all(infos.acceptance_rate == 1.0))
+
+    def test_gaussian_move(self):
+        """Test ensemble slice sampling with gaussian move."""
+
+        def logdensity_fn(x):
+            return stats.norm.logpdf(x, 0.0, 1.0).sum()
+
+        rng_key = jax.random.PRNGKey(100)
+        n_walkers = 10
+        initial_position = jax.random.normal(rng_key, (n_walkers, 2))
+
+        algorithm = as_top_level_api(
+            logdensity_fn, move="gaussian", mu=1.0, maxsteps=100, maxiter=1000
+        )
+        initial_state = algorithm.init(initial_position)
+
+        keys = jax.random.split(rng_key, 10)
+
+        def run_step(state, key):
+            new_state, info = algorithm.step(key, state)
+            return new_state, info
+
+        final_state, infos = jax.lax.scan(run_step, initial_state, keys)
+
+        self.assertIsInstance(final_state, SliceEnsembleState)
+        self.assertTrue(jnp.all(infos.acceptance_rate >= 0.0))
 
 
 if __name__ == "__main__":

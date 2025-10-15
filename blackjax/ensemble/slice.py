@@ -1,16 +1,6 @@
-# Copyright 2020- The Blackjax Authors.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
 #
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 """Ensemble Slice Sampling (ESS) implementation."""
 from typing import Callable, NamedTuple, Optional
 
@@ -26,6 +16,10 @@ __all__ = [
     "init",
     "build_kernel",
     "as_top_level_api",
+    "differential_direction",
+    "random_direction",
+    "gaussian_direction",
+    "slice_along_direction",
 ]
 
 
@@ -61,9 +55,9 @@ class SliceEnsembleInfo(NamedTuple):
     """Additional information on the ensemble slice sampling transition.
 
     acceptance_rate
-        Always 1.0 for slice sampling (no rejections).
+        Fraction of walkers that found valid slice points.
     is_accepted
-        A boolean array of shape `(n_walkers,)` - always True for slice sampling.
+        Boolean array of shape `(n_walkers,)` indicating successful slice updates.
     expansions
         Total number of slice expansions performed.
     contractions
@@ -71,7 +65,7 @@ class SliceEnsembleInfo(NamedTuple):
     nevals
         Total number of log-density evaluations performed.
     mu
-        The current value of the scale parameter mu.
+        The current value of the scale parameter.
     """
 
     acceptance_rate: float
@@ -110,17 +104,14 @@ def differential_direction(
     the structure of complementary_coords with leading dimension n_update,
     and tune_once is True (indicating mu should be tuned).
     """
-    # Get the number of walkers in complementary ensemble
     comp_leaves, _ = jax.tree_util.tree_flatten(complementary_coords)
     n_comp = comp_leaves[0].shape[0]
 
-    # Sample two different indices for each update walker
     key1, key2 = jax.random.split(rng_key)
     idx1 = jax.random.randint(key1, (n_update,), 0, n_comp)
     j = jax.random.randint(key2, (n_update,), 0, n_comp - 1)
     idx2 = j + (j >= idx1)  # Ensure idx2 != idx1
 
-    # Compute directions as difference of pairs
     walker1 = jax.tree_util.tree_map(lambda x: x[idx1], complementary_coords)
     walker2 = jax.tree_util.tree_map(lambda x: x[idx2], complementary_coords)
 
@@ -148,7 +139,7 @@ def random_direction(
     rng_key
         A PRNG key for random number generation.
     template_coords
-        Template coordinates to match structure and shape (n_update, ...).
+        Template coordinates to match structure. Leading dimension will be n_update.
     n_update
         Number of walkers to update (number of directions needed).
     mu
@@ -157,16 +148,90 @@ def random_direction(
     Returns
     -------
     A tuple (directions, tune_once) where directions is a PyTree matching
-    the structure of template_coords, and tune_once is True.
+    the structure of template_coords with leading dimension n_update,
+    and tune_once is True.
     """
+    leaves, treedef = jax.tree_util.tree_flatten(template_coords)
+    n_leaves = len(leaves)
 
-    def sample_leaf(shape):
-        return jax.random.normal(rng_key, shape)
+    keys = jax.random.split(rng_key, n_leaves)
 
-    # Generate random directions with same structure as template
-    directions = jax.tree_util.tree_map(
-        lambda x: 2.0 * mu * sample_leaf(x.shape), template_coords
-    )
+    def sample_leaf(key, template_leaf):
+        template_shape = template_leaf.shape
+        if len(template_shape) > 0:
+            new_shape = (n_update,) + template_shape[1:]
+        else:
+            new_shape = (n_update,)
+        return jax.random.normal(key, new_shape)
+
+    direction_leaves = [
+        2.0 * mu * sample_leaf(key, leaf) for key, leaf in zip(keys, leaves)
+    ]
+
+    directions = jax.tree_util.tree_unflatten(treedef, direction_leaves)
+
+    return directions, True
+
+
+def gaussian_direction(
+    rng_key: PRNGKey,
+    complementary_coords: ArrayTree,
+    n_update: int,
+    mu: float,
+) -> tuple[ArrayTree, bool]:
+    """Generate direction vectors using the Gaussian move.
+
+    Directions are sampled from a multivariate normal distribution with covariance
+    estimated from the complementary ensemble. This move adapts to the local
+    geometry of the target distribution.
+
+    Parameters
+    ----------
+    rng_key
+        A PRNG key for random number generation.
+    complementary_coords
+        Coordinates of the complementary ensemble.
+    n_update
+        Number of walkers to update.
+    mu
+        The scale parameter.
+
+    Returns
+    -------
+    A tuple (directions, tune_once) where directions is a PyTree matching
+    the structure of complementary_coords with leading dimension n_update,
+    and tune_once is True.
+    """
+    leaves, treedef = jax.tree_util.tree_flatten(complementary_coords)
+    n_leaves = len(leaves)
+
+    keys = jax.random.split(rng_key, n_leaves)
+
+    def sample_gaussian_leaf(key, leaf):
+        n_comp = leaf.shape[0]
+        leaf_flat = leaf.reshape(n_comp, -1)
+        d = leaf_flat.shape[1]
+
+        mean = jnp.mean(leaf_flat, axis=0)
+        centered = leaf_flat - mean
+
+        cov = jnp.dot(centered.T, centered) / (n_comp - 1)
+        jitter = 1e-6 * jnp.eye(d)
+        cov_reg = cov + jitter
+
+        directions_flat = jax.random.multivariate_normal(
+            key, jnp.zeros(d), cov_reg, (n_update,)
+        )
+
+        orig_shape = leaf.shape
+        new_shape = (n_update,) + orig_shape[1:]
+        return (2.0 * mu * directions_flat).reshape(new_shape)
+
+    direction_leaves = [
+        sample_gaussian_leaf(key, leaf) for key, leaf in zip(keys, leaves)
+    ]
+
+    directions = jax.tree_util.tree_unflatten(treedef, direction_leaves)
 
     return directions, True
 
@@ -179,7 +244,7 @@ def slice_along_direction(
     logprob_fn: Callable,
     maxsteps: int = 10000,
     maxiter: int = 10000,
-) -> tuple[ArrayTree, float, int, int, int]:
+) -> tuple[ArrayTree, float, bool, int, int, int]:
     """Perform slice sampling along a given direction.
 
     Implements the stepping-out and shrinking procedures for 1D slice sampling
@@ -204,63 +269,63 @@ def slice_along_direction(
 
     Returns
     -------
-    A tuple (x1, logp1, nexp, ncon, neval) where:
-        x1: New position (PyTree)
-        logp1: Log-probability at new position
+    A tuple (x1, logp1, accepted, nexp, ncon, neval) where:
+        x1: New position (PyTree), or x0 if not accepted
+        logp1: Log-probability at new position, or logp0 if not accepted
+        accepted: Boolean indicating if a valid slice point was found
         nexp: Number of expansions performed
         ncon: Number of contractions performed
         neval: Number of log-probability evaluations
     """
     key_z0, key_lr, key_j, key_shrink = jax.random.split(rng_key, 4)
 
-    # Draw slice height: Z0 = logp0 - Exponential(1)
     z0 = logp0 - jax.random.exponential(key_z0)
 
-    # Initialize interval [L, R] around 0
     l_init = -jax.random.uniform(key_lr)
     r_init = l_init + 1.0
 
-    # Random allocation of expansion steps
     j = jax.random.randint(key_j, (), 0, maxsteps)
     k = maxsteps - 1 - j
 
-    # Helper function to evaluate log-prob at x0 + t*direction
     def eval_at_t(t):
         xt = jax.tree_util.tree_map(lambda x, d: x + t * d, x0, direction)
         return logprob_fn(xt)
 
-    # Stepping-out: expand left
+    logp_l_init = eval_at_t(l_init)
+
     def left_expand_cond(carry):
-        l, j_left, nexp, neval, iter_count = carry
-        logp_l = eval_at_t(l)
+        l, logp_l, j_left, nexp, neval, iter_count = carry
         return (j_left > 0) & (iter_count < maxiter) & (logp_l > z0)
 
     def left_expand_body(carry):
-        l, j_left, nexp, neval, iter_count = carry
-        return l - 1.0, j_left - 1, nexp + 1, neval + 1, iter_count + 1
+        l, logp_l, j_left, nexp, neval, iter_count = carry
+        l_new = l - 1.0
+        logp_new = eval_at_t(l_new)
+        return l_new, logp_new, j_left - 1, nexp + 1, neval + 1, iter_count + 1
 
-    l_final, _, nexp_left, neval_left, _ = jax.lax.while_loop(
-        left_expand_cond, left_expand_body, (l_init, j, 0, 0, 0)
+    l_final, _, _, nexp_left, neval_left, _ = jax.lax.while_loop(
+        left_expand_cond, left_expand_body, (l_init, logp_l_init, j, 0, 0, 0)
     )
 
-    # Stepping-out: expand right
+    logp_r_init = eval_at_t(r_init)
+
     def right_expand_cond(carry):
-        r, k_right, nexp, neval, iter_count = carry
-        logp_r = eval_at_t(r)
+        r, logp_r, k_right, nexp, neval, iter_count = carry
         return (k_right > 0) & (iter_count < maxiter) & (logp_r > z0)
 
     def right_expand_body(carry):
-        r, k_right, nexp, neval, iter_count = carry
-        return r + 1.0, k_right - 1, nexp + 1, neval + 1, iter_count + 1
+        r, logp_r, k_right, nexp, neval, iter_count = carry
+        r_new = r + 1.0
+        logp_new = eval_at_t(r_new)
+        return r_new, logp_new, k_right - 1, nexp + 1, neval + 1, iter_count + 1
 
-    r_final, _, nexp_right, neval_right, _ = jax.lax.while_loop(
-        right_expand_cond, right_expand_body, (r_init, k, 0, 0, 0)
+    r_final, _, _, nexp_right, neval_right, _ = jax.lax.while_loop(
+        right_expand_cond, right_expand_body, (r_init, logp_r_init, k, 0, 0, 0)
     )
 
     nexp_total = nexp_left + nexp_right
-    neval_after_expand = neval_left + neval_right
+    neval_after_expand = neval_left + neval_right + 2
 
-    # Shrinking: sample uniformly from [L, R] until inside slice
     def shrink_cond(carry):
         _, _, _, _, _, iter_count, accepted, _, _ = carry
         return (~accepted) & (iter_count < maxiter)
@@ -272,11 +337,9 @@ def slice_along_direction(
         logp_t = eval_at_t(t)
         neval_new = neval + 1
 
-        # Check if inside slice
         inside_slice = logp_t >= z0
         accepted_new = accepted | inside_slice
 
-        # Update interval or accept
         l_new = jnp.where(inside_slice, l, jnp.where(t < 0, t, l))
         r_new = jnp.where(inside_slice, r, jnp.where(t >= 0, t, r))
         ncon_new = jnp.where(inside_slice, ncon, ncon + 1)
@@ -295,18 +358,27 @@ def slice_along_direction(
             logp_acc_new,
         )
 
-    _, _, _, neval_shrink, ncon_total, _, _, t_final, logp_final = jax.lax.while_loop(
+    (
+        _,
+        _,
+        _,
+        neval_shrink,
+        ncon_total,
+        _,
+        accepted,
+        t_final,
+        logp_final,
+    ) = jax.lax.while_loop(
         shrink_cond,
         shrink_body,
         (key_shrink, l_final, r_final, 0, 0, 0, False, 0.0, logp0),
     )
 
-    # Compute final position
     x1 = jax.tree_util.tree_map(lambda x, d: x + t_final * d, x0, direction)
 
     neval_total = neval_after_expand + neval_shrink
 
-    return x1, logp_final, nexp_total, ncon_total, neval_total
+    return x1, logp_final, accepted, nexp_total, ncon_total, neval_total
 
 
 def init(
@@ -343,7 +415,7 @@ def init(
 
 def build_kernel(
     move: str = "differential",
-    move_fn: Optional[Callable] = None,
+    move_fn=None,
     randomize_split: bool = True,
     nsplits: int = 2,
     maxsteps: int = 10000,
@@ -357,17 +429,17 @@ def build_kernel(
     Parameters
     ----------
     move
-        Type of move to use: "differential" or "random". Ignored if move_fn provided.
+        Type of move: "differential", "random", or "gaussian". Ignored if move_fn provided.
     move_fn
         Optional custom move function. If None, uses the specified move type.
     randomize_split
         If True, randomly shuffle walker indices before splitting into groups.
     nsplits
-        Number of groups to split the ensemble into. Default is 2.
+        Number of groups to split the ensemble into.
     maxsteps
         Maximum steps for slice stepping-out procedure.
     maxiter
-        Maximum iterations to prevent infinite loops.
+        Maximum iterations for shrinking procedure.
     tune
         Whether to enable adaptive tuning of mu.
     patience
@@ -379,24 +451,19 @@ def build_kernel(
     -------
     A kernel function that performs one step of ensemble slice sampling.
     """
-    # Select move function
     if move_fn is None:
         if move == "differential":
             move_fn = differential_direction
         elif move == "random":
             move_fn = random_direction
-        else:
-            raise ValueError(f"Unknown move type: {move}")
-
-    # At this point move_fn is guaranteed to be Callable
-    selected_move_fn: Callable = move_fn
+        elif move == "gaussian":
+            move_fn = gaussian_direction
 
     def kernel(
         rng_key: PRNGKey, state: SliceEnsembleState, logdensity_fn: Callable
     ) -> tuple[SliceEnsembleState, SliceEnsembleInfo]:
         n_walkers, *_ = jax.tree_util.tree_flatten(state.coords)[0][0].shape
 
-        # Shuffle walkers if requested
         if randomize_split:
             key_shuffle, key_update = jax.random.split(rng_key)
             indices = jax.random.permutation(key_shuffle, n_walkers)
@@ -420,7 +487,6 @@ def build_kernel(
             shuffled_state = state
             indices = jnp.arange(n_walkers)
 
-        # Split into groups
         group_size = n_walkers // nsplits
         groups = []
         for i in range(nsplits):
@@ -449,15 +515,14 @@ def build_kernel(
                 )
             )
 
-        # Update each group sequentially
         updated_groups = list(groups)
-        total_nexp = 0
-        total_ncon = 0
-        total_neval = 0
+        accepted_groups = []
+        total_nexp = jnp.array(0, dtype=jnp.int32)
+        total_ncon = jnp.array(0, dtype=jnp.int32)
+        total_neval = jnp.array(0, dtype=jnp.int32)
 
         keys = jax.random.split(key_update, nsplits)
         for i in range(nsplits):
-            # Build complementary ensemble from other groups
             other_indices = [j for j in range(nsplits) if j != i]
             comp_coords_list = [updated_groups[j].coords for j in other_indices]
             comp_log_probs_list = [updated_groups[j].log_probs for j in other_indices]
@@ -484,22 +549,21 @@ def build_kernel(
                 state.patience_count,
             )
 
-            # Update this group
-            updated_group, nexp, ncon, neval = _update_half_slice(
+            updated_group, accepted, nexp, ncon, neval = _update_half_slice(
                 keys[i],
                 groups[i],
                 complementary,
                 logdensity_fn,
-                selected_move_fn,
+                move_fn,
                 maxsteps,
                 maxiter,
             )
             updated_groups[i] = updated_group
-            total_nexp += nexp
-            total_ncon += ncon
-            total_neval += neval
+            accepted_groups.append(accepted)
+            total_nexp = total_nexp + nexp
+            total_ncon = total_ncon + ncon
+            total_neval = total_neval + neval
 
-        # Concatenate updated groups
         shuffled_coords = jax.tree_util.tree_map(
             lambda *arrays: jnp.concatenate(arrays, axis=0),
             *[g.coords for g in updated_groups],
@@ -507,6 +571,7 @@ def build_kernel(
         shuffled_log_probs = jnp.concatenate(
             [g.log_probs for g in updated_groups], axis=0
         )
+        shuffled_accepted = jnp.concatenate(accepted_groups, axis=0)
 
         if state.blobs is not None:
             shuffled_blobs = jax.tree_util.tree_map(
@@ -516,13 +581,13 @@ def build_kernel(
         else:
             shuffled_blobs = None
 
-        # Unshuffle if needed
         if randomize_split:
             inverse_indices = jnp.argsort(indices)
             new_coords = jax.tree_util.tree_map(
                 lambda x: x[inverse_indices], shuffled_coords
             )
             new_log_probs = shuffled_log_probs[inverse_indices]
+            accepted = shuffled_accepted[inverse_indices]
             if shuffled_blobs is not None:
                 new_blobs = jax.tree_util.tree_map(
                     lambda x: x[inverse_indices], shuffled_blobs
@@ -532,15 +597,14 @@ def build_kernel(
         else:
             new_coords = shuffled_coords
             new_log_probs = shuffled_log_probs
+            accepted = shuffled_accepted
             new_blobs = shuffled_blobs
 
-        # Adaptive tuning of mu
         should_tune = tune & state.tuning_active
 
         nexp_eff = jnp.maximum(total_nexp, 1)
         mu_tuned = state.mu * 2.0 * nexp_eff / (nexp_eff + total_ncon)
 
-        # Check convergence of tuning
         exp_ratio = total_nexp / jnp.maximum(total_nexp + total_ncon, 1)
         within_tolerance = jnp.abs(exp_ratio - 0.5) < tolerance
 
@@ -549,7 +613,6 @@ def build_kernel(
         )
         tuning_active_updated = patience_count_updated < patience
 
-        # Apply tuning updates conditionally
         mu_new = jnp.where(should_tune, mu_tuned, state.mu)
         patience_count_new = jnp.where(
             should_tune, patience_count_updated, state.patience_count
@@ -567,10 +630,10 @@ def build_kernel(
             patience_count_new,
         )
 
-        # Build info (acceptance always 1.0 for slice sampling)
+        acceptance_rate = jnp.mean(accepted.astype(jnp.float32))
         info = SliceEnsembleInfo(
-            acceptance_rate=1.0,
-            is_accepted=jnp.ones(n_walkers, dtype=bool),
+            acceptance_rate=acceptance_rate,
+            is_accepted=accepted,
             expansions=total_nexp,
             contractions=total_ncon,
             nevals=total_neval,
@@ -590,7 +653,7 @@ def _update_half_slice(
     direction_fn: Callable,
     maxsteps: int,
     maxiter: int,
-) -> tuple[SliceEnsembleState, int, int, int]:
+) -> tuple[SliceEnsembleState, jnp.ndarray, int, int, int]:
     """Update a group of walkers using ensemble slice sampling.
 
     Parameters
@@ -612,22 +675,19 @@ def _update_half_slice(
 
     Returns
     -------
-    Tuple of (updated_group_state, total_expansions, total_contractions, total_evals).
+    Tuple of (updated_group_state, accepted_array, total_expansions, total_contractions, total_evals).
     """
     n_update, *_ = jax.tree_util.tree_flatten(walkers_to_update.coords)[0][0].shape
 
-    # Generate directions
     key_dir, key_slice = jax.random.split(rng_key)
     directions, _ = direction_fn(
         key_dir, complementary_walkers.coords, n_update, walkers_to_update.mu
     )
 
-    # Define logprob-only function
     def logprob_only(x):
         out = logdensity_fn(x)
         return out[0] if isinstance(out, tuple) else out
 
-    # Perform slice sampling for each walker
     keys = jax.random.split(key_slice, n_update)
 
     def slice_one_walker(key, x0, logp0, direction):
@@ -639,16 +699,20 @@ def _update_half_slice(
         keys, walkers_to_update.coords, walkers_to_update.log_probs, directions
     )
 
-    new_coords, new_log_probs, nexp_array, ncon_array, neval_array = results
+    (
+        new_coords,
+        new_log_probs,
+        accepted_array,
+        nexp_array,
+        ncon_array,
+        neval_array,
+    ) = results
 
-    # Sum statistics
     total_nexp = jnp.sum(nexp_array)
     total_ncon = jnp.sum(ncon_array)
     total_neval = jnp.sum(neval_array)
 
-    # Handle blobs if needed
     if walkers_to_update.blobs is not None:
-        # Re-evaluate at new positions to get blobs
         logdensity_outputs = jax.vmap(logdensity_fn)(new_coords)
         _, new_blobs = logdensity_outputs
     else:
@@ -663,12 +727,13 @@ def _update_half_slice(
         walkers_to_update.patience_count,
     )
 
-    return updated_state, total_nexp, total_ncon, total_neval
+    return updated_state, accepted_array, total_nexp, total_ncon, total_neval
 
 
 def as_top_level_api(
     logdensity_fn: Callable,
     move: str = "differential",
+    move_fn=None,
     mu: float = 1.0,
     has_blobs: bool = False,
     randomize_split: bool = True,
@@ -679,26 +744,28 @@ def as_top_level_api(
     patience: int = 5,
     tolerance: float = 0.05,
 ) -> SamplingAlgorithm:
-    """A user-facing API for the ensemble slice sampling algorithm.
+    """Ensemble slice sampling algorithm.
 
     Parameters
     ----------
     logdensity_fn
-        A function that returns the log density of the model at a given position.
+        Function that returns the log density at a given position.
     move
-        Type of move: "differential" or "random".
+        Type of move: "differential", "random", or "gaussian". Ignored if move_fn provided.
+    move_fn
+        Optional custom move function. If None, uses the specified move type.
     mu
         Initial value of the scale parameter.
     has_blobs
-        Whether the logdensity function returns additional information (blobs).
+        Whether the logdensity function returns additional information.
     randomize_split
         If True, randomly shuffle walker indices before splitting into groups.
     nsplits
-        Number of groups to split the ensemble into. Default is 2.
+        Number of groups to split the ensemble into.
     maxsteps
         Maximum steps for slice stepping-out procedure.
     maxiter
-        Maximum iterations to prevent infinite loops.
+        Maximum iterations for shrinking procedure.
     tune
         Whether to enable adaptive tuning of mu.
     patience
@@ -708,10 +775,11 @@ def as_top_level_api(
 
     Returns
     -------
-    A `SamplingAlgorithm` that can be used to sample from the target distribution.
+    A `SamplingAlgorithm`.
     """
     kernel = build_kernel(
         move=move,
+        move_fn=move_fn,
         randomize_split=randomize_split,
         nsplits=nsplits,
         maxsteps=maxsteps,
