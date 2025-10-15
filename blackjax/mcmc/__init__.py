@@ -15,11 +15,10 @@ from . import (
     rmhmc,
 )
 
-stretch = ensemble
-
 __all__ = [
     "barker",
     "elliptical_slice",
+    "ensemble",
     "ghmc",
     "hmc",
     "rmhmc",
@@ -31,5 +30,4 @@ __all__ = [
     "mclmc",
     "adjusted_mclmc_dynamic",
     "adjusted_mclmc",
-    "stretch",
 ]

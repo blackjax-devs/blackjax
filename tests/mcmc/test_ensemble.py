@@ -72,7 +72,7 @@ class EnsembleTest(chex.TestCase):
         initial_position = jax.random.normal(init_key, (n_walkers, 2))
 
         # Create algorithm
-        algorithm = blackjax.stretch(logdensity_fn, a=2.0)
+        algorithm = blackjax.ensemble(logdensity_fn, a=2.0)
         initial_state = algorithm.init(initial_position)
 
         # Run a few steps
@@ -110,7 +110,7 @@ class EnsembleTest(chex.TestCase):
         initial_position = jax.random.normal(init_key, (n_walkers, 1))
 
         # Run algorithm
-        algorithm = blackjax.stretch(logdensity_fn, a=2.0)
+        algorithm = blackjax.ensemble(logdensity_fn, a=2.0)
         initial_state = algorithm.init(initial_position)
 
         def run_step(state, key):
