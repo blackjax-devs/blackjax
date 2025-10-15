@@ -3,7 +3,6 @@ from . import (
     adjusted_mclmc_dynamic,
     barker,
     elliptical_slice,
-    ensemble,
     ghmc,
     hmc,
     mala,
@@ -18,7 +17,6 @@ from . import (
 __all__ = [
     "barker",
     "elliptical_slice",
-    "ensemble",
     "ghmc",
     "hmc",
     "rmhmc",

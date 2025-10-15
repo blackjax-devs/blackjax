@@ -11,57 +11,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Public API for the Stretch Move ensemble sampler."""
-from typing import Callable, NamedTuple, Optional
+"""Stretch move ensemble sampler (affine-invariant MCMC)."""
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.ensemble.base import EnsembleInfo, EnsembleState
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
-    "EnsembleState",
-    "EnsembleInfo",
     "init",
     "build_kernel",
     "as_top_level_api",
     "stretch_move",
 ]
-
-
-class EnsembleState(NamedTuple):
-    """State of an ensemble sampler.
-
-    coords
-        An array or PyTree of arrays of shape `(n_walkers, ...)` that
-        stores the current position of the walkers.
-    log_probs
-        An array of shape `(n_walkers,)` that stores the log-probability of
-        each walker.
-    blobs
-        An optional PyTree that stores metadata returned by the log-probability
-        function.
-    """
-
-    coords: ArrayTree
-    log_probs: Array
-    blobs: Optional[ArrayTree] = None
-
-
-class EnsembleInfo(NamedTuple):
-    """Additional information on the ensemble transition.
-
-    acceptance_rate
-        The acceptance rate of the ensemble.
-    is_accepted
-        A boolean array of shape `(n_walkers,)` indicating whether each walker's
-        proposal was accepted.
-    """
-
-    acceptance_rate: float
-    is_accepted: Array
 
 
 def stretch_move(

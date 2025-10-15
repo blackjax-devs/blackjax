@@ -12,12 +12,13 @@ from .adaptation.window_adaptation import window_adaptation
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
+from .ensemble import slice as _ensemble_slice
+from .ensemble import stretch as _ensemble
 from .mcmc import adjusted_mclmc as _adjusted_mclmc
 from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
 from .mcmc import barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
-from .mcmc import ensemble as _ensemble
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
 from .mcmc import mala as _mala
@@ -121,6 +122,7 @@ elliptical_slice = generate_top_level_api_from(_elliptical_slice)
 ghmc = generate_top_level_api_from(_ghmc)
 barker_proposal = generate_top_level_api_from(barker)
 ensemble = generate_top_level_api_from(_ensemble)
+ensemble_slice = generate_top_level_api_from(_ensemble_slice)
 
 hmc_family = [hmc, nuts]
 
