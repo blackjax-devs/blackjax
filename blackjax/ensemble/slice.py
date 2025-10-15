@@ -19,12 +19,14 @@ import jax.numpy as jnp
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.ensemble.base import (
+    build_states_from_triples,
     complementary_triple,
     concat_triple_groups,
     get_nwalkers,
-    shuffle_triple,
-    split_triple,
+    prepare_split,
+    unshuffle_1d,
     unshuffle_triple,
+    vmapped_logdensity,
 )
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -422,13 +424,8 @@ def init(
     -------
     Initial SliceEnsembleState.
     """
-    logdensity_outputs = jax.vmap(logdensity_fn)(position)
-    if isinstance(logdensity_outputs, tuple):
-        log_probs, blobs = logdensity_outputs
-        return SliceEnsembleState(position, log_probs, blobs, mu, True, 0)
-    else:
-        log_probs = logdensity_outputs
-        return SliceEnsembleState(position, log_probs, None, mu, True, 0)
+    log_probs, blobs = vmapped_logdensity(logdensity_fn, position)
+    return SliceEnsembleState(position, log_probs, blobs, mu, True, 0)
 
 
 def build_kernel(
@@ -480,37 +477,19 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey, state: SliceEnsembleState, logdensity_fn: Callable
     ) -> tuple[SliceEnsembleState, SliceEnsembleInfo]:
-        if randomize_split:
-            key_shuffle, key_update = jax.random.split(rng_key)
-            coords_s, logp_s, blobs_s, indices = shuffle_triple(
-                key_shuffle, state.coords, state.log_probs, state.blobs
-            )
-        else:
-            key_update = rng_key
-            coords_s, logp_s, blobs_s = state.coords, state.log_probs, state.blobs
-            indices = jnp.arange(get_nwalkers(state.coords))
-
-        shuffled_state = SliceEnsembleState(
-            coords_s,
-            logp_s,
-            blobs_s,
-            state.mu,
-            state.tuning_active,
-            state.patience_count,
-        )
-
-        group_triples = split_triple(
-            shuffled_state.coords,
-            shuffled_state.log_probs,
-            shuffled_state.blobs,
+        key_update, group_triples, indices = prepare_split(
+            rng_key,
+            state.coords,
+            state.log_probs,
+            state.blobs,
+            randomize_split,
             nsplits,
         )
-        groups = [
-            SliceEnsembleState(
-                t[0], t[1], t[2], state.mu, state.tuning_active, state.patience_count
-            )
-            for t in group_triples
-        ]
+        groups = build_states_from_triples(
+            group_triples,
+            SliceEnsembleState,
+            (state.mu, state.tuning_active, state.patience_count),
+        )
 
         updated_groups = list(groups)
         accepted_groups = []
@@ -556,7 +535,7 @@ def build_kernel(
             new_coords, new_log_probs, new_blobs = unshuffle_triple(
                 coords_cat, logp_cat, blobs_cat, indices
             )
-            accepted = shuffled_accepted[jnp.argsort(indices)]
+            accepted = unshuffle_1d(shuffled_accepted, indices)
         else:
             new_coords, new_log_probs, new_blobs = coords_cat, logp_cat, blobs_cat
             accepted = shuffled_accepted
@@ -638,7 +617,7 @@ def _update_half_slice(
     -------
     Tuple of (updated_group_state, accepted_array, total_expansions, total_contractions, total_evals).
     """
-    n_update, *_ = jax.tree_util.tree_flatten(walkers_to_update.coords)[0][0].shape
+    n_update = get_nwalkers(walkers_to_update.coords)
 
     key_dir, key_slice = jax.random.split(rng_key)
     directions, _ = direction_fn(
@@ -674,8 +653,7 @@ def _update_half_slice(
     total_neval = jnp.sum(neval_array)
 
     if walkers_to_update.blobs is not None:
-        logdensity_outputs = jax.vmap(logdensity_fn)(new_coords)
-        _, new_blobs = logdensity_outputs
+        _, new_blobs = vmapped_logdensity(logdensity_fn, new_coords)
     else:
         new_blobs = None
 

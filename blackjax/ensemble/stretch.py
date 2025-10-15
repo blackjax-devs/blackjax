@@ -22,12 +22,15 @@ from blackjax.base import SamplingAlgorithm
 from blackjax.ensemble.base import (
     EnsembleInfo,
     EnsembleState,
+    build_states_from_triples,
     complementary_triple,
     concat_triple_groups,
     get_nwalkers,
-    shuffle_triple,
-    split_triple,
+    masked_select,
+    prepare_split,
+    unshuffle_1d,
     unshuffle_triple,
+    vmapped_logdensity,
 )
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -118,18 +121,15 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey, state: EnsembleState, logdensity_fn: Callable
     ) -> tuple[EnsembleState, EnsembleInfo]:
-        if randomize_split:
-            key_shuffle, key_update = jax.random.split(rng_key)
-            coords_s, logp_s, blobs_s, indices = shuffle_triple(
-                key_shuffle, state.coords, state.log_probs, state.blobs
-            )
-        else:
-            key_update = rng_key
-            coords_s, logp_s, blobs_s = state.coords, state.log_probs, state.blobs
-            indices = jnp.arange(get_nwalkers(state.coords))
-
-        group_triples = split_triple(coords_s, logp_s, blobs_s, nsplits)
-        groups = [EnsembleState(*t) for t in group_triples]
+        key_update, group_triples, indices = prepare_split(
+            rng_key,
+            state.coords,
+            state.log_probs,
+            state.blobs,
+            randomize_split,
+            nsplits,
+        )
+        groups = build_states_from_triples(group_triples, EnsembleState)
 
         updated_groups = list(groups)
         accepted_groups = []
@@ -156,7 +156,7 @@ def build_kernel(
             new_coords, new_log_probs, new_blobs = unshuffle_triple(
                 coords_cat, logp_cat, blobs_cat, indices
             )
-            accepted = accepted_cat[jnp.argsort(indices)]
+            accepted = unshuffle_1d(accepted_cat, indices)
         else:
             new_coords, new_log_probs, new_blobs = coords_cat, logp_cat, blobs_cat
             accepted = accepted_cat
@@ -170,32 +170,11 @@ def build_kernel(
     return kernel
 
 
-def _masked_select(mask, new_val, old_val):
-    """Helper to broadcast mask to match array rank for jnp.where.
-
-    Parameters
-    ----------
-    mask
-        Boolean mask with shape (n_walkers,)
-    new_val
-        New values to select when mask is True
-    old_val
-        Old values to select when mask is False
-
-    Returns
-    -------
-    Array with same shape as new_val/old_val, with values selected per mask
-    """
-    expand_dims = (1,) * (new_val.ndim - 1)
-    mask_expanded = mask.reshape((mask.shape[0],) + expand_dims)
-    return jnp.where(mask_expanded, new_val, old_val)
-
-
 def _update_half(
     rng_key, walkers_to_update, complementary_walkers, logdensity_fn, move_fn
 ):
     """Helper to update one half of the ensemble."""
-    n_update, *_ = jax.tree_util.tree_flatten(walkers_to_update.coords)[0][0].shape
+    n_update = get_nwalkers(walkers_to_update.coords)
 
     key_moves, key_accept = jax.random.split(rng_key)
     keys = jax.random.split(key_moves, n_update)
@@ -231,7 +210,7 @@ def _update_half(
     accepted = jnp.log(u) < log_p_accept
 
     new_coords = jax.tree_util.tree_map(
-        lambda prop, old: _masked_select(accepted, prop, old),
+        lambda prop, old: masked_select(accepted, prop, old),
         proposals,
         walkers_to_update.coords,
     )
@@ -239,7 +218,7 @@ def _update_half(
 
     if walkers_to_update.blobs is not None:
         new_blobs = jax.tree_util.tree_map(
-            lambda prop, old: _masked_select(accepted, prop, old),
+            lambda prop, old: masked_select(accepted, prop, old),
             blobs_proposal,
             walkers_to_update.blobs,
         )
@@ -266,13 +245,8 @@ def init(
     has_blobs
         Whether the log-density function returns additional metadata (blobs).
     """
-    logdensity_outputs = jax.vmap(logdensity_fn)(position)
-    if isinstance(logdensity_outputs, tuple):
-        log_probs, blobs = logdensity_outputs
-        return EnsembleState(position, log_probs, blobs)
-    else:
-        log_probs = logdensity_outputs
-        return EnsembleState(position, log_probs, None)
+    log_probs, blobs = vmapped_logdensity(logdensity_fn, position)
+    return EnsembleState(position, log_probs, blobs)
 
 
 def as_top_level_api(

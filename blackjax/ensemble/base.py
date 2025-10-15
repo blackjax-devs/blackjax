@@ -31,6 +31,9 @@ __all__ = [
     "complementary_triple",
     "masked_select",
     "vmapped_logdensity",
+    "prepare_split",
+    "unshuffle_1d",
+    "build_states_from_triples",
 ]
 
 
@@ -146,3 +149,36 @@ def vmapped_logdensity(logdensity_fn, coords):
     """Evaluate logdensity function on ensemble coordinates with vmap."""
     outs = jax.vmap(logdensity_fn)(coords)
     return outs if isinstance(outs, tuple) else (outs, None)
+
+
+def prepare_split(rng_key, coords, log_probs, blobs, randomize_split, nsplits):
+    """Prepare ensemble for splitting into groups.
+
+    Handles optional randomization, splitting, and returns components needed
+    for group-wise updates and subsequent unshuffling.
+    """
+    if randomize_split:
+        key_shuffle, key_update = jax.random.split(rng_key)
+        coords_s, logp_s, blobs_s, indices = shuffle_triple(
+            key_shuffle, coords, log_probs, blobs
+        )
+    else:
+        key_update = rng_key
+        coords_s, logp_s, blobs_s = coords, log_probs, blobs
+        indices = jnp.arange(get_nwalkers(coords))
+    group_triples = split_triple(coords_s, logp_s, blobs_s, nsplits)
+    return key_update, group_triples, indices
+
+
+def unshuffle_1d(arr, indices):
+    """Reverse shuffle operation on a 1D per-walker array."""
+    return arr[jnp.argsort(indices)]
+
+
+def build_states_from_triples(group_triples, state_ctor, extra_fields=()):
+    """Build state objects from triples with optional extra fields.
+
+    Handles both base EnsembleState and algorithm-specific states like
+    SliceEnsembleState that have additional fields.
+    """
+    return [state_ctor(t[0], t[1], t[2], *extra_fields) for t in group_triples]
