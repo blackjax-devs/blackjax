@@ -109,7 +109,9 @@ def stretch_move(
     return unravel_fn(proposal_flat), log_hastings_ratio
 
 
-def build_kernel(move_fn: Callable, randomize_split: bool = True) -> Callable:
+def build_kernel(
+    move_fn: Callable, randomize_split: bool = True, nsplits: int = 2
+) -> Callable:
     """Builds a generic ensemble MCMC kernel.
 
     Parameters
@@ -117,57 +119,106 @@ def build_kernel(move_fn: Callable, randomize_split: bool = True) -> Callable:
     move_fn
         The move function to use (e.g., stretch_move).
     randomize_split
-        If True, randomly shuffle walker indices before splitting into red/blue sets
+        If True, randomly shuffle walker indices before splitting into groups
         each iteration. This improves mixing and matches emcee's default behavior.
         If False, uses a fixed contiguous split.
+    nsplits
+        Number of groups to split the ensemble into. Default is 2 (red-blue).
+        Each group is updated sequentially using all other groups as complementary.
     """
 
     def kernel(
         rng_key: PRNGKey, state: EnsembleState, logdensity_fn: Callable
     ) -> tuple[EnsembleState, EnsembleInfo]:
         n_walkers, *_ = jax.tree_util.tree_flatten(state.coords)[0][0].shape
-        half_n = n_walkers // 2
 
-        # Optionally randomize the red-blue split
+        # Optionally randomize the split
         if randomize_split:
-            key_shuffle, key_red, key_blue = jax.random.split(rng_key, 3)
+            key_shuffle, key_update = jax.random.split(rng_key)
             indices = jax.random.permutation(key_shuffle, n_walkers)
-            shuffled_state = jax.tree.map(lambda x: x[indices], state)
+            shuffled_coords = jax.tree.map(lambda x: x[indices], state.coords)
+            shuffled_log_probs = state.log_probs[indices]
+            shuffled_blobs = (
+                None
+                if state.blobs is None
+                else jax.tree.map(lambda x: x[indices], state.blobs)
+            )
+            shuffled_state = EnsembleState(
+                shuffled_coords, shuffled_log_probs, shuffled_blobs
+            )
         else:
-            key_red, key_blue = jax.random.split(rng_key)
+            key_update = rng_key
             shuffled_state = state
             indices = jnp.arange(n_walkers)
 
-        # Red-Blue Split
-        walkers_red = jax.tree.map(lambda x: x[:half_n], shuffled_state)
-        walkers_blue = jax.tree.map(lambda x: x[half_n:], shuffled_state)
+        # Split into nsplits groups
+        group_size = n_walkers // nsplits
+        groups = []
+        for i in range(nsplits):
+            start_idx = i * group_size
+            end_idx = (i + 1) * group_size if i < nsplits - 1 else n_walkers
 
-        # Update Red walkers using Blue as complementary
-        new_walkers_red, accepted_red = _update_half(
-            key_red, walkers_red, walkers_blue, logdensity_fn, move_fn
-        )
+            group_coords = jax.tree.map(
+                lambda x: x[start_idx:end_idx], shuffled_state.coords
+            )
+            group_log_probs = shuffled_state.log_probs[start_idx:end_idx]
+            group_blobs = (
+                None
+                if shuffled_state.blobs is None
+                else jax.tree.map(lambda x: x[start_idx:end_idx], shuffled_state.blobs)
+            )
+            groups.append(EnsembleState(group_coords, group_log_probs, group_blobs))
 
-        # Update Blue walkers using updated Red as complementary
-        new_walkers_blue, accepted_blue = _update_half(
-            key_blue, walkers_blue, new_walkers_red, logdensity_fn, move_fn
-        )
+        # Update each group sequentially using all other groups as complementary
+        updated_groups = list(groups)
+        accepted_groups = []
 
-        # Combine back in the shuffled order
+        keys = jax.random.split(key_update, nsplits)
+        for i in range(nsplits):
+            # Build complementary ensemble from all other groups
+            other_indices = [j for j in range(nsplits) if j != i]
+            comp_coords_list = [updated_groups[j].coords for j in other_indices]
+            comp_log_probs_list = [updated_groups[j].log_probs for j in other_indices]
+            comp_blobs_list = [updated_groups[j].blobs for j in other_indices]
+
+            # Concatenate complementary groups
+            complementary_coords = jax.tree.map(
+                lambda *arrays: jnp.concatenate(arrays, axis=0), *comp_coords_list
+            )
+            complementary_log_probs = jnp.concatenate(comp_log_probs_list, axis=0)
+
+            if state.blobs is not None:
+                complementary_blobs = jax.tree.map(
+                    lambda *arrays: jnp.concatenate(arrays, axis=0), *comp_blobs_list
+                )
+            else:
+                complementary_blobs = None
+
+            complementary = EnsembleState(
+                complementary_coords, complementary_log_probs, complementary_blobs
+            )
+
+            # Update this group
+            updated_group, accepted = _update_half(
+                keys[i], groups[i], complementary, logdensity_fn, move_fn
+            )
+            updated_groups[i] = updated_group
+            accepted_groups.append(accepted)
+
+        # Combine all updated groups
         shuffled_coords = jax.tree.map(
-            lambda r, b: jnp.concatenate([r, b], axis=0),
-            new_walkers_red.coords,
-            new_walkers_blue.coords,
+            lambda *arrays: jnp.concatenate(arrays, axis=0),
+            *[g.coords for g in updated_groups],
         )
         shuffled_log_probs = jnp.concatenate(
-            [new_walkers_red.log_probs, new_walkers_blue.log_probs]
+            [g.log_probs for g in updated_groups], axis=0
         )
-        shuffled_accepted = jnp.concatenate([accepted_red, accepted_blue])
+        shuffled_accepted = jnp.concatenate(accepted_groups, axis=0)
 
         if state.blobs is not None:
             shuffled_blobs = jax.tree.map(
-                lambda r, b: jnp.concatenate([r, b], axis=0),
-                new_walkers_red.blobs,
-                new_walkers_blue.blobs,
+                lambda *arrays: jnp.concatenate(arrays, axis=0),
+                *[g.blobs for g in updated_groups],
             )
         else:
             shuffled_blobs = None
@@ -195,6 +246,28 @@ def build_kernel(move_fn: Callable, randomize_split: bool = True) -> Callable:
         return new_state, info
 
     return kernel
+
+
+def _masked_select(mask, new_val, old_val):
+    """Helper to broadcast mask to match array rank for jnp.where.
+
+    Parameters
+    ----------
+    mask
+        Boolean mask with shape (n_walkers,)
+    new_val
+        New values to select when mask is True
+    old_val
+        Old values to select when mask is False
+
+    Returns
+    -------
+    Array with same shape as new_val/old_val, with values selected per mask
+    """
+    # Reshape mask to (n_walkers, 1, 1, ...) to match the rank of new_val
+    expand_dims = (1,) * (new_val.ndim - 1)
+    mask_expanded = mask.reshape((mask.shape[0],) + expand_dims)
+    return jnp.where(mask_expanded, new_val, old_val)
 
 
 def _update_half(
@@ -246,7 +319,7 @@ def _update_half(
 
     # Build the new state for the half
     new_coords = jax.tree.map(
-        lambda prop, old: jnp.where(accepted[:, None], prop, old),
+        lambda prop, old: _masked_select(accepted, prop, old),
         proposals,
         walkers_to_update.coords,
     )
@@ -254,7 +327,7 @@ def _update_half(
 
     if walkers_to_update.blobs is not None:
         new_blobs = jax.tree.map(
-            lambda prop, old: jnp.where(accepted, prop, old),
+            lambda prop, old: _masked_select(accepted, prop, old),
             blobs_proposal,
             walkers_to_update.blobs,
         )
@@ -316,6 +389,7 @@ def as_top_level_api(
     has_blobs: bool = False,
     randomize_split: bool = True,
     live_dangerously: bool = False,
+    nsplits: int = 2,
 ) -> SamplingAlgorithm:
     """Implements the user-facing API for ensemble samplers.
 
@@ -328,12 +402,15 @@ def as_top_level_api(
     has_blobs
         Whether the log-density function returns additional metadata (blobs).
     randomize_split
-        If True, randomly shuffle walker indices before splitting into red/blue sets
+        If True, randomly shuffle walker indices before splitting into groups
         each iteration. This improves mixing and matches emcee's default behavior.
     live_dangerously
         If False (default), warns when n_walkers < 2*ndim. Set to True to suppress.
+    nsplits
+        Number of groups to split the ensemble into. Default is 2 (red-blue).
+        Each group is updated sequentially using all other groups as complementary.
     """
-    kernel = build_kernel(move_fn, randomize_split=randomize_split)
+    kernel = build_kernel(move_fn, randomize_split=randomize_split, nsplits=nsplits)
 
     def init_fn(position: ArrayTree, rng_key=None):
         return init(position, logdensity_fn, has_blobs, live_dangerously)

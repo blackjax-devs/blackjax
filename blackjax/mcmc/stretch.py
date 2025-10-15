@@ -29,6 +29,7 @@ def as_top_level_api(
     has_blobs: bool = False,
     randomize_split: bool = True,
     live_dangerously: bool = False,
+    nsplits: int = 2,
 ) -> SamplingAlgorithm:
     """A user-facing API for the stretch move algorithm.
 
@@ -41,10 +42,13 @@ def as_top_level_api(
     has_blobs
         Whether the logdensity function returns additional information (blobs).
     randomize_split
-        If True, randomly shuffle walker indices before splitting into red/blue sets
+        If True, randomly shuffle walker indices before splitting into groups
         each iteration. This improves mixing and matches emcee's default behavior.
     live_dangerously
         If False (default), warns when n_walkers < 2*ndim. Set to True to suppress.
+    nsplits
+        Number of groups to split the ensemble into. Default is 2 (red-blue).
+        Each group is updated sequentially using all other groups as complementary.
 
     Returns
     -------
@@ -57,6 +61,7 @@ def as_top_level_api(
         has_blobs,
         randomize_split=randomize_split,
         live_dangerously=live_dangerously,
+        nsplits=nsplits,
     )
 
 
@@ -79,7 +84,9 @@ def init(
     return ensemble_init(position, logdensity_fn, has_blobs, live_dangerously)
 
 
-def build_kernel(move_fn=None, a: float = 2.0, randomize_split: bool = True):
+def build_kernel(
+    move_fn=None, a: float = 2.0, randomize_split: bool = True, nsplits: int = 2
+):
     """Build the stretch move kernel.
 
     Parameters
@@ -89,9 +96,13 @@ def build_kernel(move_fn=None, a: float = 2.0, randomize_split: bool = True):
     a
         The stretch parameter. Must be > 1. Default is 2.0.
     randomize_split
-        If True, randomly shuffle walker indices before splitting into red/blue sets
+        If True, randomly shuffle walker indices before splitting into groups
         each iteration. This improves mixing and matches emcee's default behavior.
+    nsplits
+        Number of groups to split the ensemble into. Default is 2 (red-blue).
     """
     if move_fn is None:
         move_fn = lambda key, w, c: stretch_move(key, w, c, a)
-    return ensemble_build_kernel(move_fn, randomize_split=randomize_split)
+    return ensemble_build_kernel(
+        move_fn, randomize_split=randomize_split, nsplits=nsplits
+    )
