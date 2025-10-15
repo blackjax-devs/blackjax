@@ -28,7 +28,6 @@ from blackjax.ensemble.base import (
     get_nwalkers,
     masked_select,
     prepare_split,
-    unshuffle_1d,
     unshuffle_triple,
     vmapped_logdensity,
 )
@@ -156,7 +155,7 @@ def build_kernel(
             new_coords, new_log_probs, new_blobs = unshuffle_triple(
                 coords_cat, logp_cat, blobs_cat, indices
             )
-            accepted = unshuffle_1d(accepted_cat, indices)
+            accepted = accepted_cat[jnp.argsort(indices)]
         else:
             new_coords, new_log_probs, new_blobs = coords_cat, logp_cat, blobs_cat
             accepted = accepted_cat

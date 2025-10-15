@@ -32,7 +32,6 @@ __all__ = [
     "masked_select",
     "vmapped_logdensity",
     "prepare_split",
-    "unshuffle_1d",
     "build_states_from_triples",
 ]
 
@@ -168,11 +167,6 @@ def prepare_split(rng_key, coords, log_probs, blobs, randomize_split, nsplits):
         indices = jnp.arange(get_nwalkers(coords))
     group_triples = split_triple(coords_s, logp_s, blobs_s, nsplits)
     return key_update, group_triples, indices
-
-
-def unshuffle_1d(arr, indices):
-    """Reverse shuffle operation on a 1D per-walker array."""
-    return arr[jnp.argsort(indices)]
 
 
 def build_states_from_triples(group_triples, state_ctor, extra_fields=()):

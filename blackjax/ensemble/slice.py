@@ -24,7 +24,6 @@ from blackjax.ensemble.base import (
     concat_triple_groups,
     get_nwalkers,
     prepare_split,
-    unshuffle_1d,
     unshuffle_triple,
     vmapped_logdensity,
 )
@@ -535,7 +534,7 @@ def build_kernel(
             new_coords, new_log_probs, new_blobs = unshuffle_triple(
                 coords_cat, logp_cat, blobs_cat, indices
             )
-            accepted = unshuffle_1d(shuffled_accepted, indices)
+            accepted = shuffled_accepted[jnp.argsort(indices)]
         else:
             new_coords, new_log_probs, new_blobs = coords_cat, logp_cat, blobs_cat
             accepted = shuffled_accepted
