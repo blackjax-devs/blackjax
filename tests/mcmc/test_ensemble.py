@@ -7,7 +7,7 @@ import jax.scipy.stats as stats
 from absl.testing import absltest
 
 import blackjax
-from blackjax.mcmc.stretch import EnsembleState, stretch_move
+from blackjax.mcmc.ensemble import EnsembleState, stretch_move
 
 
 class EnsembleTest(chex.TestCase):

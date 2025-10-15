@@ -3,6 +3,7 @@ from . import (
     adjusted_mclmc_dynamic,
     barker,
     elliptical_slice,
+    ensemble,
     ghmc,
     hmc,
     mala,
@@ -12,8 +13,9 @@ from . import (
     periodic_orbital,
     random_walk,
     rmhmc,
-    stretch,
 )
+
+stretch = ensemble
 
 __all__ = [
     "barker",
