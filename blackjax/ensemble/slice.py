@@ -1,6 +1,16 @@
+# Copyright 2020- The Blackjax Authors.
 #
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
 #
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Ensemble Slice Sampling (ESS) implementation."""
 from typing import Callable, NamedTuple, Optional
 
@@ -8,6 +18,14 @@ import jax
 import jax.numpy as jnp
 
 from blackjax.base import SamplingAlgorithm
+from blackjax.ensemble.base import (
+    complementary_triple,
+    concat_triple_groups,
+    get_nwalkers,
+    shuffle_triple,
+    split_triple,
+    unshuffle_triple,
+)
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
@@ -462,58 +480,37 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey, state: SliceEnsembleState, logdensity_fn: Callable
     ) -> tuple[SliceEnsembleState, SliceEnsembleInfo]:
-        n_walkers, *_ = jax.tree_util.tree_flatten(state.coords)[0][0].shape
-
         if randomize_split:
             key_shuffle, key_update = jax.random.split(rng_key)
-            indices = jax.random.permutation(key_shuffle, n_walkers)
-            shuffled_coords = jax.tree_util.tree_map(lambda x: x[indices], state.coords)
-            shuffled_log_probs = state.log_probs[indices]
-            shuffled_blobs = (
-                None
-                if state.blobs is None
-                else jax.tree_util.tree_map(lambda x: x[indices], state.blobs)
-            )
-            shuffled_state = SliceEnsembleState(
-                shuffled_coords,
-                shuffled_log_probs,
-                shuffled_blobs,
-                state.mu,
-                state.tuning_active,
-                state.patience_count,
+            coords_s, logp_s, blobs_s, indices = shuffle_triple(
+                key_shuffle, state.coords, state.log_probs, state.blobs
             )
         else:
             key_update = rng_key
-            shuffled_state = state
-            indices = jnp.arange(n_walkers)
+            coords_s, logp_s, blobs_s = state.coords, state.log_probs, state.blobs
+            indices = jnp.arange(get_nwalkers(state.coords))
 
-        group_size = n_walkers // nsplits
-        groups = []
-        for i in range(nsplits):
-            start_idx = i * group_size
-            end_idx = (i + 1) * group_size if i < nsplits - 1 else n_walkers
+        shuffled_state = SliceEnsembleState(
+            coords_s,
+            logp_s,
+            blobs_s,
+            state.mu,
+            state.tuning_active,
+            state.patience_count,
+        )
 
-            group_coords = jax.tree_util.tree_map(
-                lambda x: x[start_idx:end_idx], shuffled_state.coords
+        group_triples = split_triple(
+            shuffled_state.coords,
+            shuffled_state.log_probs,
+            shuffled_state.blobs,
+            nsplits,
+        )
+        groups = [
+            SliceEnsembleState(
+                t[0], t[1], t[2], state.mu, state.tuning_active, state.patience_count
             )
-            group_log_probs = shuffled_state.log_probs[start_idx:end_idx]
-            group_blobs = (
-                None
-                if shuffled_state.blobs is None
-                else jax.tree_util.tree_map(
-                    lambda x: x[start_idx:end_idx], shuffled_state.blobs
-                )
-            )
-            groups.append(
-                SliceEnsembleState(
-                    group_coords,
-                    group_log_probs,
-                    group_blobs,
-                    state.mu,
-                    state.tuning_active,
-                    state.patience_count,
-                )
-            )
+            for t in group_triples
+        ]
 
         updated_groups = list(groups)
         accepted_groups = []
@@ -523,27 +520,13 @@ def build_kernel(
 
         keys = jax.random.split(key_update, nsplits)
         for i in range(nsplits):
-            other_indices = [j for j in range(nsplits) if j != i]
-            comp_coords_list = [updated_groups[j].coords for j in other_indices]
-            comp_log_probs_list = [updated_groups[j].log_probs for j in other_indices]
-            comp_blobs_list = [updated_groups[j].blobs for j in other_indices]
-
-            complementary_coords = jax.tree_util.tree_map(
-                lambda *arrays: jnp.concatenate(arrays, axis=0), *comp_coords_list
+            comp_triple = complementary_triple(
+                [(g.coords, g.log_probs, g.blobs) for g in updated_groups], i
             )
-            complementary_log_probs = jnp.concatenate(comp_log_probs_list, axis=0)
-
-            if state.blobs is not None:
-                complementary_blobs = jax.tree_util.tree_map(
-                    lambda *arrays: jnp.concatenate(arrays, axis=0), *comp_blobs_list
-                )
-            else:
-                complementary_blobs = None
-
             complementary = SliceEnsembleState(
-                complementary_coords,
-                complementary_log_probs,
-                complementary_blobs,
+                comp_triple[0],
+                comp_triple[1],
+                comp_triple[2],
                 state.mu,
                 state.tuning_active,
                 state.patience_count,
@@ -564,41 +547,19 @@ def build_kernel(
             total_ncon = total_ncon + ncon
             total_neval = total_neval + neval
 
-        shuffled_coords = jax.tree_util.tree_map(
-            lambda *arrays: jnp.concatenate(arrays, axis=0),
-            *[g.coords for g in updated_groups],
-        )
-        shuffled_log_probs = jnp.concatenate(
-            [g.log_probs for g in updated_groups], axis=0
+        coords_cat, logp_cat, blobs_cat = concat_triple_groups(
+            [(g.coords, g.log_probs, g.blobs) for g in updated_groups]
         )
         shuffled_accepted = jnp.concatenate(accepted_groups, axis=0)
 
-        if state.blobs is not None:
-            shuffled_blobs = jax.tree_util.tree_map(
-                lambda *arrays: jnp.concatenate(arrays, axis=0),
-                *[g.blobs for g in updated_groups],
-            )
-        else:
-            shuffled_blobs = None
-
         if randomize_split:
-            inverse_indices = jnp.argsort(indices)
-            new_coords = jax.tree_util.tree_map(
-                lambda x: x[inverse_indices], shuffled_coords
+            new_coords, new_log_probs, new_blobs = unshuffle_triple(
+                coords_cat, logp_cat, blobs_cat, indices
             )
-            new_log_probs = shuffled_log_probs[inverse_indices]
-            accepted = shuffled_accepted[inverse_indices]
-            if shuffled_blobs is not None:
-                new_blobs = jax.tree_util.tree_map(
-                    lambda x: x[inverse_indices], shuffled_blobs
-                )
-            else:
-                new_blobs = None
+            accepted = shuffled_accepted[jnp.argsort(indices)]
         else:
-            new_coords = shuffled_coords
-            new_log_probs = shuffled_log_probs
+            new_coords, new_log_probs, new_blobs = coords_cat, logp_cat, blobs_cat
             accepted = shuffled_accepted
-            new_blobs = shuffled_blobs
 
         should_tune = tune & state.tuning_active
 
@@ -630,7 +591,7 @@ def build_kernel(
             patience_count_new,
         )
 
-        acceptance_rate = jnp.mean(accepted.astype(jnp.float32))
+        acceptance_rate = jnp.mean(accepted)
         info = SliceEnsembleInfo(
             acceptance_rate=acceptance_rate,
             is_accepted=accepted,

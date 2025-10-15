@@ -14,9 +14,24 @@
 """Base classes and utilities for ensemble sampling methods."""
 from typing import NamedTuple, Optional
 
+import jax
+import jax.numpy as jnp
+
 from blackjax.types import Array, ArrayTree
 
-__all__ = ["EnsembleState", "EnsembleInfo"]
+__all__ = [
+    "EnsembleState",
+    "EnsembleInfo",
+    "get_nwalkers",
+    "tree_take",
+    "shuffle_triple",
+    "unshuffle_triple",
+    "split_triple",
+    "concat_triple_groups",
+    "complementary_triple",
+    "masked_select",
+    "vmapped_logdensity",
+]
 
 
 class EnsembleState(NamedTuple):
@@ -50,3 +65,84 @@ class EnsembleInfo(NamedTuple):
 
     acceptance_rate: float
     is_accepted: Array
+
+
+def get_nwalkers(coords: ArrayTree) -> int:
+    """Get the number of walkers from ensemble coordinates."""
+    return jax.tree_util.tree_flatten(coords)[0][0].shape[0]
+
+
+def tree_take(tree: ArrayTree, idx: jnp.ndarray) -> ArrayTree:
+    """Index into a PyTree along the leading dimension."""
+    return jax.tree_util.tree_map(lambda a: a[idx], tree)
+
+
+def shuffle_triple(key, coords, log_probs, blobs):
+    """Shuffle ensemble coordinates, log_probs, and blobs."""
+    n = get_nwalkers(coords)
+    idx = jax.random.permutation(key, n)
+    coords_s = tree_take(coords, idx)
+    log_probs_s = log_probs[idx]
+    blobs_s = None if blobs is None else tree_take(blobs, idx)
+    return coords_s, log_probs_s, blobs_s, idx
+
+
+def unshuffle_triple(coords, log_probs, blobs, indices):
+    """Reverse a shuffle operation on ensemble coordinates, log_probs, and blobs."""
+    inv = jnp.argsort(indices)
+    coords_u = tree_take(coords, inv)
+    log_probs_u = log_probs[inv]
+    blobs_u = None if blobs is None else tree_take(blobs, inv)
+    return coords_u, log_probs_u, blobs_u
+
+
+def split_triple(coords, log_probs, blobs, nsplits):
+    """Split ensemble into nsplits contiguous groups."""
+    n = get_nwalkers(coords)
+    group_size = n // nsplits
+    groups = []
+    for i in range(nsplits):
+        s = i * group_size
+        e = (i + 1) * group_size if i < nsplits - 1 else n
+        coords_i = jax.tree_util.tree_map(lambda a: a[s:e], coords)
+        log_probs_i = log_probs[s:e]
+        blobs_i = (
+            None if blobs is None else jax.tree_util.tree_map(lambda a: a[s:e], blobs)
+        )
+        groups.append((coords_i, log_probs_i, blobs_i))
+    return groups
+
+
+def concat_triple_groups(group_triples):
+    """Concatenate groups of (coords, log_probs, blobs) triples."""
+    coords_list, logp_list, blobs_list = zip(*group_triples)
+    coords = jax.tree_util.tree_map(
+        lambda *xs: jnp.concatenate(xs, axis=0), *coords_list
+    )
+    logp = jnp.concatenate(logp_list, axis=0)
+    blobs = (
+        None
+        if all(b is None for b in blobs_list)
+        else jax.tree_util.tree_map(
+            lambda *xs: jnp.concatenate(xs, axis=0), *blobs_list
+        )
+    )
+    return coords, logp, blobs
+
+
+def complementary_triple(groups, i):
+    """Build complementary ensemble from all groups except group i."""
+    return concat_triple_groups([g for j, g in enumerate(groups) if j != i])
+
+
+def masked_select(mask, new_val, old_val):
+    """Select between new and old values based on mask."""
+    expand_dims = (1,) * (new_val.ndim - 1)
+    mask_expanded = mask.reshape((mask.shape[0],) + expand_dims)
+    return jnp.where(mask_expanded, new_val, old_val)
+
+
+def vmapped_logdensity(logdensity_fn, coords):
+    """Evaluate logdensity function on ensemble coordinates with vmap."""
+    outs = jax.vmap(logdensity_fn)(coords)
+    return outs if isinstance(outs, tuple) else (outs, None)
