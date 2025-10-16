@@ -25,6 +25,7 @@ repos:
   rev: 6.0.0
   hooks:
    - id: flake8
+     args: ['--ignore=E501,E203,E302,E402,E731,W503,E221,E222']
 - repo: https://github.com/psf/black
   rev: 23.1.0
   hooks:
@@ -42,7 +43,6 @@ repos:
     - id: nbqa-isort
       args: ['--profile=black']
     - id: nbqa-flake8
-      args: ['--ignore=E501,E203,E302,E402,E731,W503']
 - repo: https://github.com/jorisroovers/gitlint
   rev: v0.18.0
   hooks:
