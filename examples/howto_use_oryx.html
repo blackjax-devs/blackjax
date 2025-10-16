@@ -30,7 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
@@ -393,10 +393,10 @@ document.write(`
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell source</span>
-<span class="expanded">Hide code cell source</span>
+<p class="collapsed admonition-title">Show code cell source</p>
+<p class="expanded admonition-title">Hide code cell source</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of features: </span><span class="si">{</span><span class="n">num_features</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
@@ -454,6 +454,132 @@ Number of data points: 150
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
+<span class="ne">----&gt; </span><span class="mi">1</span> <span class="kn">from</span><span class="w"> </span><span class="nn">oryx.core.ppl</span><span class="w"> </span><span class="kn">import</span> <span class="n">random_variable</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates</span><span class="w"> </span><span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">16</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2024 The oryx Authors.</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>     <span class="mi">12</span> <span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="g g-Whitespace">     </span><span class="mi">13</span> <span class="c1"># limitations under the License.</span>
+<span class="g g-Whitespace">     </span><span class="mi">15</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;Oryx imports.&quot;&quot;&quot;</span>
+<span class="ne">---&gt; </span><span class="mi">16</span> <span class="kn">from</span><span class="w"> </span><span class="nn">oryx</span><span class="w"> </span><span class="kn">import</span> <span class="n">bijectors</span>
+<span class="g g-Whitespace">     </span><span class="mi">17</span> <span class="kn">from</span><span class="w"> </span><span class="nn">oryx</span><span class="w"> </span><span class="kn">import</span> <span class="n">core</span>
+<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span><span class="w"> </span><span class="nn">oryx</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="n">bijectors</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">20</span>
+<span class="g g-Whitespace">     </span><span class="mi">16</span> <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates</span><span class="w"> </span><span class="kn">import</span> <span class="n">jax</span> <span class="k">as</span> <span class="n">tfp</span>  <span class="c1"># pylint: disable=g-importing-member</span>
+<span class="ne">---&gt; </span><span class="mi">20</span> <span class="n">tfb</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">bijectors</span>
+<span class="g g-Whitespace">     </span><span class="mi">22</span> <span class="n">__all__</span> <span class="o">=</span> <span class="n">tfb</span><span class="o">.</span><span class="n">__all__</span>
+<span class="g g-Whitespace">     </span><span class="mi">23</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">__all__</span><span class="p">:</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/lazy_loader.py:56,</span> in <span class="ni">LazyLoader.__getattr__</span><span class="nt">(self, item)</span>
+<span class="g g-Whitespace">     </span><span class="mi">55</span> <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+<span class="ne">---&gt; </span><span class="mi">56</span>   <span class="n">module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load</span><span class="p">()</span>
+<span class="g g-Whitespace">     </span><span class="mi">57</span>   <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/lazy_loader.py:43,</span> in <span class="ni">LazyLoader._load</span><span class="nt">(self)</span>
+<span class="g g-Whitespace">     </span><span class="mi">41</span>   <span class="bp">self</span><span class="o">.</span><span class="n">_on_first_access</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="g g-Whitespace">     </span><span class="mi">42</span> <span class="c1"># Import the target module and insert it into the parent&#39;s namespace</span>
+<span class="ne">---&gt; </span><span class="mi">43</span> <span class="n">module</span> <span class="o">=</span> <span class="n">importlib</span><span class="o">.</span><span class="n">import_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">44</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parent_module_globals</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+<span class="g g-Whitespace">     </span><span class="mi">45</span>   <span class="bp">self</span><span class="o">.</span><span class="n">_parent_module_globals</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_local_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">module</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/importlib/__init__.py:90,</span> in <span class="ni">import_module</span><span class="nt">(name, package)</span>
+<span class="g g-Whitespace">     </span><span class="mi">88</span>             <span class="k">break</span>
+<span class="g g-Whitespace">     </span><span class="mi">89</span>         <span class="n">level</span> <span class="o">+=</span> <span class="mi">1</span>
+<span class="ne">---&gt; </span><span class="mi">90</span> <span class="k">return</span> <span class="n">_bootstrap</span><span class="o">.</span><span class="n">_gcd_import</span><span class="p">(</span><span class="n">name</span><span class="p">[</span><span class="n">level</span><span class="p">:],</span> <span class="n">package</span><span class="p">,</span> <span class="n">level</span><span class="p">)</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">tensorflow_probability</span><span class="o">/</span><span class="n">substrates</span><span class="o">/</span><span class="n">jax</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">42</span>
+<span class="g g-Whitespace">     </span><span class="mi">39</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.version</span><span class="w"> </span><span class="kn">import</span> <span class="n">__version__</span>
+<span class="g g-Whitespace">     </span><span class="mi">40</span> <span class="c1"># from tensorflow_probability.substrates.jax.google import autosts  # DisableOnExport  # pylint:disable=line-too-long</span>
+<span class="g g-Whitespace">     </span><span class="mi">41</span> <span class="c1"># from tensorflow_probability.substrates.jax.google import staging  # DisableOnExport  # pylint:disable=line-too-long</span>
+<span class="ne">---&gt; </span><span class="mi">42</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">bijectors</span>
+<span class="g g-Whitespace">     </span><span class="mi">43</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">distributions</span>
+<span class="g g-Whitespace">     </span><span class="mi">44</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">experimental</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">tensorflow_probability</span><span class="o">/</span><span class="n">substrates</span><span class="o">/</span><span class="n">jax</span><span class="o">/</span><span class="n">bijectors</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">19</span>
+<span class="g g-Whitespace">     </span><span class="mi">15</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;Bijective transformations.&quot;&quot;&quot;</span>
+<span class="g g-Whitespace">     </span><span class="mi">17</span> <span class="c1"># pylint: disable=unused-import,wildcard-import,line-too-long,g-importing-member</span>
+<span class="ne">---&gt; </span><span class="mi">19</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.bijectors.absolute_value</span><span class="w"> </span><span class="kn">import</span> <span class="n">AbsoluteValue</span>
+<span class="g g-Whitespace">     </span><span class="mi">20</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.bijectors.ascending</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ascending</span>
+<span class="g g-Whitespace">     </span><span class="mi">21</span> <span class="c1"># from tensorflow_probability.substrates.jax.bijectors.batch_normalization import BatchNormalization</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">tensorflow_probability</span><span class="o">/</span><span class="n">substrates</span><span class="o">/</span><span class="n">jax</span><span class="o">/</span><span class="n">bijectors</span><span class="o">/</span><span class="n">absolute_value</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">17</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2018 The TensorFlow Probability Authors.</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>     <span class="mi">13</span> <span class="c1"># limitations under the License.</span>
+<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="c1"># ============================================================================</span>
+<span class="g g-Whitespace">     </span><span class="mi">15</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;AbsoluteValue bijector.&quot;&quot;&quot;</span>
+<span class="ne">---&gt; </span><span class="mi">17</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax.compat</span><span class="w"> </span><span class="kn">import</span> <span class="n">v2</span> <span class="k">as</span> <span class="n">tf</span>
+<span class="g g-Whitespace">     </span><span class="mi">19</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.bijectors</span><span class="w"> </span><span class="kn">import</span> <span class="n">bijector</span>
+<span class="g g-Whitespace">     </span><span class="mi">20</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.substrates.jax.internal</span><span class="w"> </span><span class="kn">import</span> <span class="n">assert_util</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">tensorflow_probability</span><span class="o">/</span><span class="n">python</span><span class="o">/</span><span class="n">internal</span><span class="o">/</span><span class="n">backend</span><span class="o">/</span><span class="n">jax</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">19</span>
+<span class="g g-Whitespace">     </span><span class="mi">17</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">__internal__</span>
+<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">bitwise</span>
+<span class="ne">---&gt; </span><span class="mi">19</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">compat</span>
+<span class="g g-Whitespace">     </span><span class="mi">20</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
+<span class="g g-Whitespace">     </span><span class="mi">21</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">debugging</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">tensorflow_probability</span><span class="o">/</span><span class="n">python</span><span class="o">/</span><span class="n">internal</span><span class="o">/</span><span class="n">backend</span><span class="o">/</span><span class="n">jax</span><span class="o">/</span><span class="n">compat</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">17</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2018 The TensorFlow Probability Authors.</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>     <span class="mi">13</span> <span class="c1"># limitations under the License.</span>
+<span class="g g-Whitespace">     </span><span class="mi">14</span> <span class="c1"># ============================================================================</span>
+<span class="g g-Whitespace">     </span><span class="mi">15</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;Experimental Numpy backend.&quot;&quot;&quot;</span>
+<span class="ne">---&gt; </span><span class="mi">17</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">v1</span>
+<span class="g g-Whitespace">     </span><span class="mi">18</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">v2</span>
+<span class="g g-Whitespace">     </span><span class="mi">19</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax.gen.tensor_shape</span><span class="w"> </span><span class="kn">import</span> <span class="n">dimension_value</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">tensorflow_probability</span><span class="o">/</span><span class="n">python</span><span class="o">/</span><span class="n">internal</span><span class="o">/</span><span class="n">backend</span><span class="o">/</span><span class="n">jax</span><span class="o">/</span><span class="n">v1</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">23</span>
+<span class="g g-Whitespace">     </span><span class="mi">21</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">_utils</span> <span class="k">as</span> <span class="n">utils</span>
+<span class="g g-Whitespace">     </span><span class="mi">22</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">initializers</span>
+<span class="ne">---&gt; </span><span class="mi">23</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">linalg_impl</span>
+<span class="g g-Whitespace">     </span><span class="mi">24</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">numpy_logging</span> <span class="k">as</span> <span class="n">logging</span>
+<span class="g g-Whitespace">     </span><span class="mi">25</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax.gen.tensor_shape</span><span class="w"> </span><span class="kn">import</span> <span class="n">Dimension</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">tensorflow_probability</span><span class="o">/</span><span class="n">python</span><span class="o">/</span><span class="n">internal</span><span class="o">/</span><span class="n">backend</span><span class="o">/</span><span class="n">jax</span><span class="o">/</span><span class="n">linalg_impl</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">23</span>
+<span class="g g-Whitespace">     </span><span class="mi">20</span> <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">onp</span><span class="p">;</span> <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="g g-Whitespace">     </span><span class="mi">22</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">_utils</span> <span class="k">as</span> <span class="n">utils</span>
+<span class="ne">---&gt; </span><span class="mi">23</span> <span class="kn">from</span><span class="w"> </span><span class="nn">tensorflow_probability.python.internal.backend.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">ops</span>
+<span class="g g-Whitespace">     </span><span class="mi">25</span> <span class="n">scipy_linalg</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">try_import</span><span class="p">(</span><span class="s1">&#39;jax.scipy.linalg&#39;</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">28</span> <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+<span class="g g-Whitespace">     </span><span class="mi">29</span>     <span class="s1">&#39;adjoint&#39;</span><span class="p">,</span>
+<span class="g g-Whitespace">     </span><span class="mi">30</span>     <span class="s1">&#39;band_part&#39;</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>     <span class="mi">68</span>     <span class="c1"># &#39;tridiagonal_solve&#39;,</span>
+<span class="g g-Whitespace">     </span><span class="mi">69</span> <span class="p">]</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">tensorflow_probability</span><span class="o">/</span><span class="n">python</span><span class="o">/</span><span class="n">internal</span><span class="o">/</span><span class="n">backend</span><span class="o">/</span><span class="n">jax</span><span class="o">/</span><span class="n">ops</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">681</span>
+<span class="g g-Whitespace">    </span><span class="mi">677</span> <span class="k">if</span> <span class="n">JAX_MODE</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">678</span>   <span class="n">jax</span><span class="o">.</span><span class="n">interpreters</span><span class="o">.</span><span class="n">xla</span><span class="o">.</span><span class="n">canonicalize_dtype_handlers</span><span class="p">[</span><span class="n">NumpyVariable</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">679</span>       <span class="n">jax</span><span class="o">.</span><span class="n">interpreters</span><span class="o">.</span><span class="n">xla</span><span class="o">.</span><span class="n">canonicalize_dtype_handlers</span><span class="p">[</span><span class="n">onp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span>
+<span class="g g-Whitespace">    </span><span class="mi">680</span>   <span class="n">jax</span><span class="o">.</span><span class="n">interpreters</span><span class="o">.</span><span class="n">xla</span><span class="o">.</span><span class="n">pytype_aval_mappings</span><span class="p">[</span><span class="n">NumpyVariable</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+<span class="ne">--&gt; </span><span class="mi">681</span>       <span class="n">jax</span><span class="o">.</span><span class="n">interpreters</span><span class="o">.</span><span class="n">xla</span><span class="o">.</span><span class="n">pytype_aval_mappings</span><span class="p">[</span><span class="n">onp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span>
+<span class="g g-Whitespace">    </span><span class="mi">682</span>   <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">pytype_aval_mappings</span><span class="p">[</span><span class="n">NumpyVariable</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">683</span>       <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">pytype_aval_mappings</span><span class="p">[</span><span class="n">onp</span><span class="o">.</span><span class="n">ndarray</span><span class="p">])</span>
+<span class="g g-Whitespace">    </span><span class="mi">686</span> <span class="n">Variable</span> <span class="o">=</span> <span class="n">NumpyVariable</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/jax/_src/deprecations.py:54,</span> in <span class="ni">deprecation_getattr.&lt;locals&gt;.getattr</span><span class="nt">(name)</span>
+<span class="g g-Whitespace">     </span><span class="mi">52</span> <span class="n">message</span><span class="p">,</span> <span class="n">fn</span> <span class="o">=</span> <span class="n">deprecations</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+<span class="g g-Whitespace">     </span><span class="mi">53</span> <span class="k">if</span> <span class="n">fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># Is the deprecation accelerated?</span>
+<span class="ne">---&gt; </span><span class="mi">54</span>   <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">55</span> <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="g g-Whitespace">     </span><span class="mi">56</span> <span class="k">return</span> <span class="n">fn</span>
+
+<span class="ne">AttributeError</span>: jax.interpreters.xla.pytype_aval_mappings was deprecated in JAX v0.5.0 and removed in JAX v0.7.0. jax.core.pytype_aval_mappings can be used as a replacement in most cases.
+</pre></div>
+</div>
+</div>
 </div>
 <p>We now use this layer to build a multi-layer perceptron. The <code class="docutils literal notranslate"><span class="pre">nest</span></code> function is used to create “scope tags” that allows in this context to re-use our <code class="docutils literal notranslate"><span class="pre">dense</span></code> layer multiple times without name collision in the dictionary that will contain the parameters:</p>
 <div class="cell docutils container">
@@ -506,94 +632,12 @@ Number of data points: 150
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">line</span> <span class="mi">5</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="n">bnn</span> <span class="o">=</span> <span class="n">mlp</span><span class="p">([</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">],</span> <span class="n">num_classes</span><span class="p">)</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">init_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-<span class="ne">----&gt; </span><span class="mi">5</span> <span class="n">initial_weights</span> <span class="o">=</span> <span class="n">joint_sample</span><span class="p">(</span><span class="n">bnn</span><span class="p">)(</span><span class="n">init_key</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_features</span><span class="p">))</span>
-<span class="g g-Whitespace">      </span><span class="mi">7</span> <span class="nb">print</span><span class="p">(</span><span class="n">initial_weights</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:768,</span> in <span class="ni">reap.&lt;locals&gt;.wrapped</span><span class="nt">(*args, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">767</span> <span class="k">def</span><span class="w"> </span><span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="ne">--&gt; </span><span class="mi">768</span>   <span class="k">return</span> <span class="n">call_and_reap</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">769</span>       <span class="n">f</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">770</span>       <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">771</span>       <span class="n">allowlist</span><span class="o">=</span><span class="n">allowlist</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">772</span>       <span class="n">blocklist</span><span class="o">=</span><span class="n">blocklist</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">773</span>       <span class="n">exclusive</span><span class="o">=</span><span class="n">exclusive</span><span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:703,</span> in <span class="ni">call_and_reap.&lt;locals&gt;.wrapped</span><span class="nt">(*args, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">702</span> <span class="k">def</span><span class="w"> </span><span class="nf">wrapped</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="ne">--&gt; </span><span class="mi">703</span>   <span class="n">out</span><span class="p">,</span> <span class="n">reaps</span><span class="p">,</span> <span class="n">preds</span> <span class="o">=</span> <span class="n">_call_and_reap</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">704</span>       <span class="n">f</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">705</span>       <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">706</span>       <span class="n">allowlist</span><span class="o">=</span><span class="n">allowlist</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">707</span>       <span class="n">blocklist</span><span class="o">=</span><span class="n">blocklist</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">708</span>       <span class="n">exclusive</span><span class="o">=</span><span class="n">exclusive</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">709</span>   <span class="p">)(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">711</span>   <span class="k">def</span><span class="w"> </span><span class="nf">select_from_pred</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-<span class="g g-Whitespace">    </span><span class="mi">712</span>     <span class="k">if</span> <span class="n">pred</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:739,</span> in <span class="ni">_call_and_reap.&lt;locals&gt;.wrapped</span><span class="nt">(*args, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">737</span> <span class="n">flat_fun</span><span class="p">,</span> <span class="n">out_tree</span> <span class="o">=</span> <span class="n">api_util</span><span class="o">.</span><span class="n">flatten_fun_nokwargs</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">in_tree</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">738</span> <span class="n">flat_fun</span> <span class="o">=</span> <span class="n">reap_function</span><span class="p">(</span><span class="n">flat_fun</span><span class="p">,</span> <span class="n">settings</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">739</span> <span class="n">out_flat</span><span class="p">,</span> <span class="n">reaps</span><span class="p">,</span> <span class="n">preds</span> <span class="o">=</span> <span class="n">flat_fun</span><span class="o">.</span><span class="n">call_wrapped</span><span class="p">(</span><span class="n">flat_args</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">740</span> <span class="k">return</span> <span class="n">tree_util</span><span class="o">.</span><span class="n">tree_unflatten</span><span class="p">(</span><span class="n">out_tree</span><span class="p">(),</span> <span class="n">out_flat</span><span class="p">),</span> <span class="n">reaps</span><span class="p">,</span> <span class="n">preds</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/linear_util.py:211,</span> in <span class="ni">WrappedFun.call_wrapped</span><span class="nt">(self, *args, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">209</span> <span class="k">def</span><span class="w"> </span><span class="nf">call_wrapped</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="g g-Whitespace">    </span><span class="mi">210</span><span class="w">   </span><span class="sd">&quot;&quot;&quot;Calls the transformed function&quot;&quot;&quot;</span>
-<span class="ne">--&gt; </span><span class="mi">211</span>   <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">f_transformed</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/linear_util.py:245,</span> in <span class="ni">transformation.&lt;locals&gt;.gen2</span><span class="nt">(f, *args, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">243</span> <span class="k">def</span><span class="w"> </span><span class="nf">gen2</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="g g-Whitespace">    </span><span class="mi">244</span>   <span class="n">gen_inst</span> <span class="o">=</span> <span class="n">gen</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">245</span>   <span class="n">args_</span><span class="p">,</span> <span class="n">kwargs_</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">gen_inst</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">246</span>   <span class="k">return</span> <span class="n">gen_inst</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args_</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs_</span><span class="p">))</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:646,</span> in <span class="ni">reap_function</span><span class="nt">(settings, return_metadata, args)</span>
-<span class="g g-Whitespace">    </span><span class="mi">644</span><span class="w"> </span><span class="sd">&quot;&quot;&quot;A function transformation that returns reap values and predicates.&quot;&quot;&quot;</span>
-<span class="g g-Whitespace">    </span><span class="mi">645</span> <span class="n">context</span> <span class="o">=</span> <span class="n">ReapContext</span><span class="p">(</span><span class="n">settings</span><span class="p">,</span> <span class="p">{})</span>
-<span class="ne">--&gt; </span><span class="mi">646</span> <span class="k">with</span> <span class="n">harvest_trace</span><span class="p">(</span><span class="n">context</span><span class="p">):</span>
-<span class="g g-Whitespace">    </span><span class="mi">647</span>   <span class="n">out_values</span> <span class="o">=</span> <span class="k">yield</span> <span class="n">args</span><span class="p">,</span> <span class="p">{}</span>
-<span class="g g-Whitespace">    </span><span class="mi">648</span>   <span class="n">reap_values</span> <span class="o">=</span> <span class="n">tree_util</span><span class="o">.</span><span class="n">tree_map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">context</span><span class="o">.</span><span class="n">reaps</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/contextlib.py:137,</span> in <span class="ni">_GeneratorContextManager.__enter__</span><span class="nt">(self)</span>
-<span class="g g-Whitespace">    </span><span class="mi">135</span> <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span>
-<span class="g g-Whitespace">    </span><span class="mi">136</span> <span class="k">try</span><span class="p">:</span>
-<span class="ne">--&gt; </span><span class="mi">137</span>     <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">138</span> <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">139</span>     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;generator didn&#39;t yield&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:1232,</span> in <span class="ni">harvest_trace</span><span class="nt">(context)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1230</span> <span class="k">with</span> <span class="n">jax_core</span><span class="o">.</span><span class="n">take_current_trace</span><span class="p">()</span> <span class="k">as</span> <span class="n">parent_trace</span><span class="p">:</span>
-<span class="g g-Whitespace">   </span><span class="mi">1231</span>   <span class="n">trace</span> <span class="o">=</span> <span class="n">HarvestTrace</span><span class="p">(</span><span class="n">parent_trace</span><span class="p">,</span> <span class="n">context</span><span class="p">)</span>
-<span class="ne">-&gt; </span><span class="mi">1232</span>   <span class="k">with</span> <span class="n">jax_core</span><span class="o">.</span><span class="n">set_current_trace</span><span class="p">(</span><span class="n">trace</span><span class="p">):</span>
-<span class="g g-Whitespace">   </span><span class="mi">1233</span>     <span class="k">yield</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/core.py:1155,</span> in <span class="ni">SetCurrentTraceContextManager.__enter__</span><span class="nt">(self)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1153</span> <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-<span class="g g-Whitespace">   </span><span class="mi">1154</span>   <span class="bp">self</span><span class="o">.</span><span class="n">prev</span> <span class="o">=</span> <span class="n">trace_ctx</span><span class="o">.</span><span class="n">trace</span>
-<span class="ne">-&gt; </span><span class="mi">1155</span>   <span class="n">trace_ctx</span><span class="o">.</span><span class="n">set_trace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">trace</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/core.py:1117,</span> in <span class="ni">TracingContext.set_trace</span><span class="nt">(self, trace)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1115</span> <span class="k">def</span><span class="w"> </span><span class="nf">set_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trace</span><span class="p">):</span>
-<span class="g g-Whitespace">   </span><span class="mi">1116</span>   <span class="bp">self</span><span class="o">.</span><span class="n">trace</span> <span class="o">=</span> <span class="n">trace</span>
-<span class="ne">-&gt; </span><span class="mi">1117</span>   <span class="n">ts</span> <span class="o">=</span> <span class="n">trace</span><span class="o">.</span><span class="n">_weakref</span> <span class="k">if</span> <span class="n">trace</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
-<span class="g g-Whitespace">   </span><span class="mi">1118</span>   <span class="n">config</span><span class="o">.</span><span class="n">trace_state</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="n">ts</span><span class="p">)</span>
-
-<span class="ne">AttributeError</span>: &#39;HarvestTrace&#39; object has no attribute &#39;_weakref&#39;
-</pre></div>
-</div>
-</div>
 </div>
 <div class="cell tag_hide-input docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell source</span>
-<span class="expanded">Hide code cell source</span>
+<p class="collapsed admonition-title">Show code cell source</p>
+<p class="expanded admonition-title">Hide code cell source</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">num_parameters</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">layer</span><span class="o">.</span><span class="n">size</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">initial_weights</span><span class="p">)[</span><span class="mi">0</span><span class="p">]])</span>
@@ -630,10 +674,10 @@ Number of data points: 150
 </div>
 <p>and sample from the model’s posterior distribution:</p>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
@@ -680,10 +724,10 @@ Number of data points: 150
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell source</span>
-<span class="expanded">Hide code cell source</span>
+<p class="collapsed admonition-title">Show code cell source</p>
+<p class="expanded admonition-title">Hide code cell source</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Average sample accuracy:&#39;</span><span class="p">,</span> <span class="p">(</span>

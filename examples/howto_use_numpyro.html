@@ -30,7 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
@@ -385,10 +385,10 @@ document.write(`
 </div>
 <p>We reproduce the Eight Schools example from the <a class="reference external" href="https://github.com/pyro-ppl/numpyro">Numpyro documentation</a> (all credit for the model goes to the Numpyro team).</p>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -484,10 +484,10 @@ document.write(`
 </div>
 <p>Let us now perform inference with the tuned kernel:</p>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">inference_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
@@ -521,10 +521,10 @@ document.write(`
 </div>
 <p>To make sure that the model sampled correctly, let’s compute the average acceptance rate and the number of divergences:</p>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">acceptance_rate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">infos</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
@@ -536,7 +536,7 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>\Average acceptance rate: 0.92
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>\Average acceptance rate: 0.85
 There were 0.00% divergent transitions
 </pre></div>
 </div>
@@ -561,7 +561,7 @@ There were 0.00% divergent transitions
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/617445af1deedac0980a0fb56ba0ee0d16b837f8cce2a50b0079a834714863da.png" src="../_images/617445af1deedac0980a0fb56ba0ee0d16b837f8cce2a50b0079a834714863da.png" />
+<img alt="../_images/3f7b4caaff19fde7f7ae4fbce51705c3325f3aea7651ac6786e688bd904ec075.png" src="../_images/3f7b4caaff19fde7f7ae4fbce51705c3325f3aea7651ac6786e688bd904ec075.png" />
 </div>
 </div>
 <div class="cell docutils container">
@@ -572,14 +572,14 @@ There were 0.00% divergent transitions
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/32e3360a0b1b224045b45d465ced7a00e2e542cc547dbf2bc043058c2c2c94bd.png" src="../_images/32e3360a0b1b224045b45d465ced7a00e2e542cc547dbf2bc043058c2c2c94bd.png" />
+<img alt="../_images/b4902213eaac737e5c3041c9c8607e52076dad15cd0195417004dae96d83392a.png" src="../_images/b4902213eaac737e5c3041c9c8607e52076dad15cd0195417004dae96d83392a.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell source</span>
-<span class="expanded">Hide code cell source</span>
+<p class="collapsed admonition-title">Show code cell source</p>
+<p class="expanded admonition-title">Hide code cell source</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">J</span><span class="p">):</span>
@@ -591,14 +591,14 @@ There were 0.00% divergent transitions
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Relative treatment effect for school 0: 0.47
-Relative treatment effect for school 1: 0.31
-Relative treatment effect for school 2: -0.38
-Relative treatment effect for school 3: 0.45
-Relative treatment effect for school 4: 0.38
-Relative treatment effect for school 5: 0.07
-Relative treatment effect for school 6: 0.43
-Relative treatment effect for school 7: -0.37
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Relative treatment effect for school 0: 0.00
+Relative treatment effect for school 1: -0.06
+Relative treatment effect for school 2: -0.32
+Relative treatment effect for school 3: 0.49
+Relative treatment effect for school 4: -0.42
+Relative treatment effect for school 5: -0.00
+Relative treatment effect for school 6: 0.11
+Relative treatment effect for school 7: 0.02
 </pre></div>
 </div>
 </div>

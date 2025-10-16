@@ -30,7 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
@@ -392,10 +392,10 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 \alpha, \beta &amp;\sim \frac{1}{(\alpha + \beta)^{2.5}}
 \end{align*}\end{split}\]</div>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># index of array is type of tumor and value shows number of total people tested.</span>
@@ -450,16 +450,6 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[17 20  6  0  4 20  1 19  9  4  7  1 16  7 19  6 15  0 18 19 17  0  7  6
-  2  0 20  0 20 10  1  2 17 15  0  6 12 49  0  0  8 13 27 35 20 15 17 10
- 16 18  3 13 17  7  2  6  1  0 14  0 15 12  1  8 12 18  6 41 33 17  8]
-[ 0  0  0  8  0  0  1 17  0  0  2 17  5  0  0  0  0 13 19  0 18  0  7 22
-  0  0 20  0 16 13 20  0  0  0  0 10  0  0 44  0  0  0  0  6  0 20  0  0
-  0 15  8  0  0  5  0  0  0 19 12  6  0 19  0  0 20 20 24  9 46  0  0]
-</pre></div>
-</div>
-</div>
 </div>
 <p>To sample from the posterior distribution of <code class="docutils literal notranslate"><span class="pre">theta_rv</span></code>, <code class="docutils literal notranslate"><span class="pre">a_rv</span></code> and <code class="docutils literal notranslate"><span class="pre">b_rv</span></code> we need to be able to compute the model’s joint log-density. In AePPL, we use <code class="docutils literal notranslate"><span class="pre">joint_logprob</span></code> to build the graph of the joint log-density from the model graph:</p>
 <div class="cell docutils container">
@@ -492,180 +482,6 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 <div class="cell tag_output_scroll docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">aesara</span><span class="o">.</span><span class="n">dprint</span><span class="p">(</span><span class="n">logprob</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Elemwise{add,no_inplace} [id A]
- |Elemwise{mul,no_inplace} [id B]
- | |TensorConstant{-2.5} [id C]
- | |Elemwise{log,no_inplace} [id D]
- |   |Elemwise{add,no_inplace} [id E]
- |     |a [id F]
- |     |b [id G]
- |Sum{acc_dtype=float64} [id H]
-   |MakeVector{dtype=&#39;float64&#39;} [id I]
-     |Sum{acc_dtype=float64} [id J]
-     | |Check{0 &lt;= p, p &lt;= 1} [id K]
-     |   |Elemwise{switch,no_inplace} [id L]
-     |   | |Elemwise{and_,no_inplace} [id M]
-     |   | | |Elemwise{le,no_inplace} [id N]
-     |   | | | |InplaceDimShuffle{x} [id O]
-     |   | | | | |TensorConstant{0} [id P]
-     |   | | | |&lt;TensorType(int64, (71,))&gt; [id Q]
-     |   | | |Elemwise{le,no_inplace} [id R]
-     |   | |   |&lt;TensorType(int64, (71,))&gt; [id Q]
-     |   | |   |TensorConstant{[20 20 20 .. 47 24 14]} [id S]
-     |   | |Elemwise{add,no_inplace} [id T]
-     |   | | |Elemwise{add,no_inplace} [id U]
-     |   | | | |Elemwise{sub,no_inplace} [id V]
-     |   | | | | |Elemwise{sub,no_inplace} [id W]
-     |   | | | | | |Elemwise{gammaln,no_inplace} [id X]
-     |   | | | | | | |Elemwise{add,no_inplace} [id Y]
-     |   | | | | | |   |TensorConstant{[20 20 20 .. 47 24 14]} [id S]
-     |   | | | | | |   |InplaceDimShuffle{x} [id Z]
-     |   | | | | | |     |TensorConstant{1} [id BA]
-     |   | | | | | |Elemwise{gammaln,no_inplace} [id BB]
-     |   | | | | |   |Elemwise{add,no_inplace} [id BC]
-     |   | | | | |     |&lt;TensorType(int64, (71,))&gt; [id Q]
-     |   | | | | |     |InplaceDimShuffle{x} [id BD]
-     |   | | | | |       |TensorConstant{1} [id BE]
-     |   | | | | |Elemwise{gammaln,no_inplace} [id BF]
-     |   | | | |   |Elemwise{add,no_inplace} [id BG]
-     |   | | | |     |Elemwise{sub,no_inplace} [id BH]
-     |   | | | |     | |TensorConstant{[20 20 20 .. 47 24 14]} [id S]
-     |   | | | |     | |&lt;TensorType(int64, (71,))&gt; [id Q]
-     |   | | | |     |InplaceDimShuffle{x} [id BI]
-     |   | | | |       |TensorConstant{1} [id BJ]
-     |   | | | |Elemwise{switch,no_inplace} [id BK]
-     |   | | |   |Elemwise{eq,no_inplace} [id BL]
-     |   | | |   | |Elemwise{sigmoid,no_inplace} [id BM]
-     |   | | |   | | |val_clone-trans [id BN]
-     |   | | |   | |InplaceDimShuffle{x} [id BO]
-     |   | | |   |   |TensorConstant{0} [id BP]
-     |   | | |   |Elemwise{switch,no_inplace} [id BQ]
-     |   | | |   | |Elemwise{eq,no_inplace} [id BR]
-     |   | | |   | | |&lt;TensorType(int64, (71,))&gt; [id Q]
-     |   | | |   | | |InplaceDimShuffle{x} [id BS]
-     |   | | |   | |   |TensorConstant{0} [id BT]
-     |   | | |   | |InplaceDimShuffle{x} [id BU]
-     |   | | |   | | |TensorConstant{0.0} [id BV]
-     |   | | |   | |InplaceDimShuffle{x} [id BW]
-     |   | | |   |   |TensorConstant{-inf} [id BX]
-     |   | | |   |Elemwise{mul,no_inplace} [id BY]
-     |   | | |     |&lt;TensorType(int64, (71,))&gt; [id Q]
-     |   | | |     |Elemwise{log,no_inplace} [id BZ]
-     |   | | |       |Elemwise{sigmoid,no_inplace} [id BM]
-     |   | | |Elemwise{switch,no_inplace} [id CA]
-     |   | |   |Elemwise{eq,no_inplace} [id CB]
-     |   | |   | |Elemwise{sub,no_inplace} [id CC]
-     |   | |   | | |InplaceDimShuffle{x} [id CD]
-     |   | |   | | | |TensorConstant{1.0} [id CE]
-     |   | |   | | |Elemwise{sigmoid,no_inplace} [id BM]
-     |   | |   | |InplaceDimShuffle{x} [id CF]
-     |   | |   |   |TensorConstant{0} [id CG]
-     |   | |   |Elemwise{switch,no_inplace} [id CH]
-     |   | |   | |Elemwise{eq,no_inplace} [id CI]
-     |   | |   | | |Elemwise{sub,no_inplace} [id CJ]
-     |   | |   | | | |TensorConstant{[20 20 20 .. 47 24 14]} [id S]
-     |   | |   | | | |&lt;TensorType(int64, (71,))&gt; [id Q]
-     |   | |   | | |InplaceDimShuffle{x} [id CK]
-     |   | |   | |   |TensorConstant{0} [id CL]
-     |   | |   | |InplaceDimShuffle{x} [id CM]
-     |   | |   | | |TensorConstant{0.0} [id CN]
-     |   | |   | |InplaceDimShuffle{x} [id CO]
-     |   | |   |   |TensorConstant{-inf} [id CP]
-     |   | |   |Elemwise{mul,no_inplace} [id CQ]
-     |   | |     |Elemwise{sub,no_inplace} [id CJ]
-     |   | |     |Elemwise{log,no_inplace} [id CR]
-     |   | |       |Elemwise{sub,no_inplace} [id CC]
-     |   | |InplaceDimShuffle{x} [id CS]
-     |   |   |TensorConstant{-inf} [id CT]
-     |   |All [id CU]
-     |   | |Elemwise{le,no_inplace} [id CV]
-     |   |   |InplaceDimShuffle{x} [id CW]
-     |   |   | |TensorConstant{0.0} [id CX]
-     |   |   |Elemwise{sigmoid,no_inplace} [id BM]
-     |   |All [id CY]
-     |     |Elemwise{le,no_inplace} [id CZ]
-     |       |Elemwise{sigmoid,no_inplace} [id BM]
-     |       |InplaceDimShuffle{x} [id DA]
-     |         |TensorConstant{1.0} [id DB]
-     |Sum{acc_dtype=float64} [id DC]
-       |Elemwise{add,no_inplace} [id DD]
-         |Check{0 &lt;= value &lt;= 1, alpha &gt; 0, beta &gt; 0} [id DE]
-         | |Elemwise{switch,no_inplace} [id DF]
-         | | |Elemwise{and_,no_inplace} [id DG]
-         | | | |Elemwise{ge,no_inplace} [id DH]
-         | | | | |Elemwise{sigmoid,no_inplace} [id BM]
-         | | | | |InplaceDimShuffle{x} [id DI]
-         | | | |   |TensorConstant{0.0} [id DJ]
-         | | | |Elemwise{le,no_inplace} [id DK]
-         | | |   |Elemwise{sigmoid,no_inplace} [id BM]
-         | | |   |InplaceDimShuffle{x} [id DL]
-         | | |     |TensorConstant{1.0} [id DM]
-         | | |Elemwise{sub,no_inplace} [id DN]
-         | | | |Elemwise{add,no_inplace} [id DO]
-         | | | | |Elemwise{switch,no_inplace} [id DP]
-         | | | | | |InplaceDimShuffle{x} [id DQ]
-         | | | | | | |Elemwise{eq,no_inplace} [id DR]
-         | | | | | |   |a [id F]
-         | | | | | |   |TensorConstant{1.0} [id DS]
-         | | | | | |InplaceDimShuffle{x} [id DT]
-         | | | | | | |TensorConstant{0.0} [id DU]
-         | | | | | |Elemwise{mul,no_inplace} [id DV]
-         | | | | |   |InplaceDimShuffle{x} [id DW]
-         | | | | |   | |Elemwise{sub,no_inplace} [id DX]
-         | | | | |   |   |a [id F]
-         | | | | |   |   |TensorConstant{1.0} [id DY]
-         | | | | |   |Elemwise{log,no_inplace} [id DZ]
-         | | | | |     |Elemwise{sigmoid,no_inplace} [id BM]
-         | | | | |Elemwise{switch,no_inplace} [id EA]
-         | | | |   |InplaceDimShuffle{x} [id EB]
-         | | | |   | |Elemwise{eq,no_inplace} [id EC]
-         | | | |   |   |b [id G]
-         | | | |   |   |TensorConstant{1.0} [id ED]
-         | | | |   |InplaceDimShuffle{x} [id EE]
-         | | | |   | |TensorConstant{0.0} [id EF]
-         | | | |   |Elemwise{mul,no_inplace} [id EG]
-         | | | |     |InplaceDimShuffle{x} [id EH]
-         | | | |     | |Elemwise{sub,no_inplace} [id EI]
-         | | | |     |   |b [id G]
-         | | | |     |   |TensorConstant{1.0} [id EJ]
-         | | | |     |Elemwise{log1p,no_inplace} [id EK]
-         | | | |       |Elemwise{neg,no_inplace} [id EL]
-         | | | |         |Elemwise{sigmoid,no_inplace} [id BM]
-         | | | |InplaceDimShuffle{x} [id EM]
-         | | |   |Elemwise{sub,no_inplace} [id EN]
-         | | |     |Elemwise{add,no_inplace} [id EO]
-         | | |     | |Elemwise{gammaln,no_inplace} [id EP]
-         | | |     | | |a [id F]
-         | | |     | |Elemwise{gammaln,no_inplace} [id EQ]
-         | | |     |   |b [id G]
-         | | |     |Elemwise{gammaln,no_inplace} [id ER]
-         | | |       |Elemwise{add,no_inplace} [id ES]
-         | | |         |a [id F]
-         | | |         |b [id G]
-         | | |InplaceDimShuffle{x} [id ET]
-         | |   |TensorConstant{-inf} [id EU]
-         | |All [id EV]
-         | | |Elemwise{gt,no_inplace} [id EW]
-         | |   |a [id F]
-         | |   |TensorConstant{0.0} [id EX]
-         | |All [id EY]
-         |   |Elemwise{gt,no_inplace} [id EZ]
-         |     |b [id G]
-         |     |TensorConstant{0.0} [id FA]
-         |Elemwise{add,no_inplace} [id FB]
-           |Elemwise{log,no_inplace} [id FC]
-           | |Elemwise{sigmoid,no_inplace} [id FD]
-           |   |val_clone-trans [id BN]
-           |Elemwise{log1p,no_inplace} [id FE]
-             |Elemwise{neg,no_inplace} [id FF]
-               |Elemwise{sigmoid,no_inplace} [id FD]
-</pre></div>
-</div>
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>&lt;ipykernel.iostream.OutStream at 0x7f26b6a9fd00&gt;
 </pre></div>
 </div>
 </div>
@@ -716,10 +532,10 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 </div>
 <p>And finally sample using Blackjax:</p>
 <div class="cell tag_hide-cell docutils container">
-<details class="hide above-input">
+<details class="admonition hide above-input">
 <summary aria-label="Toggle hidden content">
-<span class="collapsed">Show code cell content</span>
-<span class="expanded">Hide code cell content</span>
+<p class="collapsed admonition-title">Show code cell content</p>
+<p class="expanded admonition-title">Hide code cell content</p>
 </summary>
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">inference_loop</span><span class="p">(</span>
@@ -765,9 +581,6 @@ Y &amp;\sim \operatorname{Binomial}(N, \theta)\\
 <span class="n">az</span><span class="o">.</span><span class="n">plot_trace</span><span class="p">(</span><span class="n">idata</span><span class="p">);</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/2842bcb8f937cee184be74028008b9f93ef619ba9d1ba0159bf54b57119afd0e.png" src="../_images/2842bcb8f937cee184be74028008b9f93ef619ba9d1ba0159bf54b57119afd0e.png" />
 </div>
 </div>
 </section>

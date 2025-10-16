@@ -30,7 +30,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=eba8b062" />
-    <link rel="stylesheet" type="text/css" href="../_static/mystnb.4510f1fc1dee50b3e5859aac5469c37c29e427902b24a333a5f9fcb2f0b3ac41.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
@@ -423,27 +423,113 @@ document.write(`
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
-    Optimized (vendor) Blas libraries are not found.
-    Falls back to netlib Blas library which has worse performance.
-    A better performance should be easily gained by switching
-    Blas library.
-  if self._calc_info(blas):
-/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
-    Blas (http://www.netlib.org/blas/) libraries not found.
-    Directories to search for the libraries can be specified in the
-    numpy/distutils/site.cfg file (section [blas]) or by setting
-    the BLAS environment variable.
-  if self._calc_info(blas):
-/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/numpy/distutils/system_info.py:2159: UserWarning: 
-    Blas (http://www.netlib.org/blas/) sources not found.
-    Directories to search for the sources can be specified in the
-    numpy/distutils/site.cfg file (section [blas_src]) or by setting
-    the BLAS_SRC environment variable.
-  if self._calc_info(blas):
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>WARNING (aesara.tensor.blas): Using NumPy C-API based implementation for BLAS functions.
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">NoSectionError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/configparser.py:234,</span> in <span class="ni">AesaraConfigParser.fetch_val_for_key</span><span class="nt">(self, key, delete_key)</span>
+<span class="g g-Whitespace">    </span><span class="mi">233</span> <span class="k">try</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">234</span>     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_aesara_cfg</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="n">option</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">235</span> <span class="k">except</span> <span class="n">InterpolationError</span><span class="p">:</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/configparser.py:759,</span> in <span class="ni">RawConfigParser.get</span><span class="nt">(self, section, option, raw, vars, fallback)</span>
+<span class="g g-Whitespace">    </span><span class="mi">758</span> <span class="k">try</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">759</span>     <span class="n">d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unify_values</span><span class="p">(</span><span class="n">section</span><span class="p">,</span> <span class="nb">vars</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">760</span> <span class="k">except</span> <span class="n">NoSectionError</span><span class="p">:</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/configparser.py:1132,</span> in <span class="ni">RawConfigParser._unify_values</span><span class="nt">(self, section, vars)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1131</span>     <span class="k">if</span> <span class="n">section</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default_section</span><span class="p">:</span>
+<span class="ne">-&gt; </span><span class="mi">1132</span>         <span class="k">raise</span> <span class="n">NoSectionError</span><span class="p">(</span><span class="n">section</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+<span class="g g-Whitespace">   </span><span class="mi">1133</span> <span class="c1"># Update with the entry specific variables</span>
+
+<span class="ne">NoSectionError</span>: No section: &#39;blas&#39;
+
+<span class="n">During</span> <span class="n">handling</span> <span class="n">of</span> <span class="n">the</span> <span class="n">above</span> <span class="n">exception</span><span class="p">,</span> <span class="n">another</span> <span class="n">exception</span> <span class="n">occurred</span><span class="p">:</span>
+
+<span class="ne">KeyError</span><span class="g g-Whitespace">                                  </span>Traceback (most recent call last)
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/configparser.py:350,</span> in <span class="ni">ConfigParam.__get__</span><span class="nt">(self, cls, type_, delete_key)</span>
+<span class="g g-Whitespace">    </span><span class="mi">349</span> <span class="k">try</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">350</span>     <span class="n">val_str</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">fetch_val_for_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">delete_key</span><span class="o">=</span><span class="n">delete_key</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">351</span>     <span class="bp">self</span><span class="o">.</span><span class="n">is_default</span> <span class="o">=</span> <span class="kc">False</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/configparser.py:238,</span> in <span class="ni">AesaraConfigParser.fetch_val_for_key</span><span class="nt">(self, key, delete_key)</span>
+<span class="g g-Whitespace">    </span><span class="mi">237</span> <span class="k">except</span> <span class="p">(</span><span class="n">NoOptionError</span><span class="p">,</span> <span class="n">NoSectionError</span><span class="p">):</span>
+<span class="ne">--&gt; </span><span class="mi">238</span>     <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+<span class="ne">KeyError</span>: &#39;blas__ldflags&#39;
+
+<span class="n">During</span> <span class="n">handling</span> <span class="n">of</span> <span class="n">the</span> <span class="n">above</span> <span class="n">exception</span><span class="p">,</span> <span class="n">another</span> <span class="n">exception</span> <span class="n">occurred</span><span class="p">:</span>
+
+<span class="ne">AttributeError</span><span class="g g-Whitespace">                            </span>Traceback (most recent call last)
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/link/c/cmodule.py:2726,</span> in <span class="ni">default_blas_ldflags</span><span class="nt">()</span>
+<span class="g g-Whitespace">   </span><span class="mi">2725</span> <span class="k">try</span><span class="p">:</span>
+<span class="ne">-&gt; </span><span class="mi">2726</span>     <span class="n">blas_info</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">__config__</span><span class="o">.</span><span class="n">get_info</span><span class="p">(</span><span class="s2">&quot;blas_opt&quot;</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">2727</span> <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+
+<span class="ne">AttributeError</span>: module &#39;numpy.__config__&#39; has no attribute &#39;get_info&#39;
+
+<span class="n">During</span> <span class="n">handling</span> <span class="n">of</span> <span class="n">the</span> <span class="n">above</span> <span class="n">exception</span><span class="p">,</span> <span class="n">another</span> <span class="n">exception</span> <span class="n">occurred</span><span class="p">:</span>
+
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
+<span class="ne">----&gt; </span><span class="mi">1</span> <span class="kn">import</span><span class="w"> </span><span class="nn">aesara.tensor</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">at</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="n">srng</span> <span class="o">=</span> <span class="n">at</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomStream</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">120</span>
+<span class="g g-Whitespace">    </span><span class="mi">116</span>     <span class="k">return</span> <span class="n">as_tensor_variable</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">119</span> <span class="c1"># isort: off</span>
+<span class="ne">--&gt; </span><span class="mi">120</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara</span><span class="w"> </span><span class="kn">import</span> <span class="n">scalar</span><span class="p">,</span> <span class="n">tensor</span>
+<span class="g g-Whitespace">    </span><span class="mi">121</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.compile</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">122</span>     <span class="n">In</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">123</span>     <span class="n">Mode</span><span class="p">,</span>
+   <span class="p">(</span><span class="o">...</span><span class="p">)</span>    <span class="mi">129</span>     <span class="n">shared</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">130</span> <span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">131</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.compile.function</span><span class="w"> </span><span class="kn">import</span> <span class="n">function</span><span class="p">,</span> <span class="n">function_dump</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="n">tensor</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">106</span>
+<span class="g g-Whitespace">    </span><span class="mi">104</span> <span class="c1"># adds shared-variable constructors</span>
+<span class="g g-Whitespace">    </span><span class="mi">105</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.tensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">sharedvar</span>  <span class="c1"># noqa</span>
+<span class="ne">--&gt; </span><span class="mi">106</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.tensor</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa</span>
+<span class="g g-Whitespace">    </span><span class="mi">107</span>     <span class="n">blas</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">108</span>     <span class="n">blas_c</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">109</span>     <span class="n">blas_scipy</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">110</span>     <span class="n">xlogx</span><span class="p">,</span>
+<span class="g g-Whitespace">    </span><span class="mi">111</span> <span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">112</span> <span class="kn">import</span><span class="w"> </span><span class="nn">aesara.tensor.rewriting</span>
+<span class="g g-Whitespace">    </span><span class="mi">115</span> <span class="c1"># isort: off</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="n">tensor</span><span class="o">/</span><span class="n">blas</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">162</span>
+<span class="g g-Whitespace">    </span><span class="mi">160</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.scalar</span><span class="w"> </span><span class="kn">import</span> <span class="nb">bool</span> <span class="k">as</span> <span class="n">bool_t</span>
+<span class="g g-Whitespace">    </span><span class="mi">161</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.tensor</span><span class="w"> </span><span class="kn">import</span> <span class="n">basic</span> <span class="k">as</span> <span class="n">at</span>
+<span class="ne">--&gt; </span><span class="mi">162</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.tensor.blas_headers</span><span class="w"> </span><span class="kn">import</span> <span class="n">blas_header_text</span><span class="p">,</span> <span class="n">blas_header_version</span>
+<span class="g g-Whitespace">    </span><span class="mi">163</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.tensor.elemwise</span><span class="w"> </span><span class="kn">import</span> <span class="n">DimShuffle</span><span class="p">,</span> <span class="n">Elemwise</span>
+<span class="g g-Whitespace">    </span><span class="mi">164</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.tensor.exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="n">NotScalarConstantError</span>
+
+<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.11</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="n">tensor</span><span class="o">/</span><span class="n">blas_headers</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">1015</span>
+<span class="g g-Whitespace">    </span><span class="mi">997</span>             <span class="n">header</span> <span class="o">+=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">dedent</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">998</span><span class="w">                 </span><span class="sd">&quot;&quot;&quot;\</span>
+<span class="g g-Whitespace">    </span><span class="mi">999</span><span class="sd">                     static float sdot_(int* Nx, float* x, int* Sx, float* y, int* Sy)</span>
+<span class="sd">   (...)   1009                     &quot;&quot;&quot;</span>
+<span class="g g-Whitespace">   </span><span class="mi">1010</span>             <span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1012</span>     <span class="k">return</span> <span class="n">header</span> <span class="o">+</span> <span class="n">blas_code</span>
+<span class="ne">-&gt; </span><span class="mi">1015</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">blas__ldflags</span><span class="p">:</span>
+<span class="g g-Whitespace">   </span><span class="mi">1016</span>     <span class="n">_logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Using NumPy C-API based implementation for BLAS functions.&quot;</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">1019</span> <span class="k">def</span><span class="w"> </span><span class="nf">mkl_threads_text</span><span class="p">():</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/configparser.py:354,</span> in <span class="ni">ConfigParam.__get__</span><span class="nt">(self, cls, type_, delete_key)</span>
+<span class="g g-Whitespace">    </span><span class="mi">352</span> <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">353</span>     <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">):</span>
+<span class="ne">--&gt; </span><span class="mi">354</span>         <span class="n">val_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span><span class="p">()</span>
+<span class="g g-Whitespace">    </span><span class="mi">355</span>     <span class="k">else</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">356</span>         <span class="n">val_str</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">default</span>
+
+<span class="nn">File /opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/link/c/cmodule.py:2728,</span> in <span class="ni">default_blas_ldflags</span><span class="nt">()</span>
+<span class="g g-Whitespace">   </span><span class="mi">2726</span>     <span class="n">blas_info</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">__config__</span><span class="o">.</span><span class="n">get_info</span><span class="p">(</span><span class="s2">&quot;blas_opt&quot;</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">2727</span> <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+<span class="ne">-&gt; </span><span class="mi">2728</span>     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy.distutils.system_info</span>
+<span class="g g-Whitespace">   </span><span class="mi">2730</span>     <span class="n">blas_info</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">distutils</span><span class="o">.</span><span class="n">system_info</span><span class="o">.</span><span class="n">get_info</span><span class="p">(</span><span class="s2">&quot;blas_opt&quot;</span><span class="p">)</span>
+<span class="g g-Whitespace">   </span><span class="mi">2732</span> <span class="c1"># If we are in a EPD installation, mkl is available</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;numpy.distutils&#39;
 </pre></div>
 </div>
 </div>
@@ -456,12 +542,6 @@ document.write(`
 <span class="n">sampling_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((),</span> <span class="n">Y_rv</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sampling_fn</span><span class="p">())</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sampling_fn</span><span class="p">())</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>2.516455713134264
-0.1609480326942554
 </pre></div>
 </div>
 </div>
@@ -491,146 +571,6 @@ document.write(`
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">logdensity_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">y_vv</span><span class="p">,),</span> <span class="n">total_logdensity</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;NUMBA&quot;</span><span class="p">)</span>
 <span class="n">logdensity_fn</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
-<span class="ne">TypeError</span><span class="g g-Whitespace">                                 </span>Traceback (most recent call last)
-<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">line</span> <span class="mi">1</span>
-<span class="ne">----&gt; </span><span class="mi">1</span> <span class="n">logdensity_fn</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">function</span><span class="p">((</span><span class="n">y_vv</span><span class="p">,),</span> <span class="n">total_logdensity</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;NUMBA&quot;</span><span class="p">)</span>
-<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="mf">1.</span><span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/compile/function/__init__.py:317,</span> in <span class="ni">function</span><span class="nt">(inputs, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input)</span>
-<span class="g g-Whitespace">    </span><span class="mi">311</span>     <span class="n">fn</span> <span class="o">=</span> <span class="n">orig_function</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">312</span>         <span class="n">inputs</span><span class="p">,</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span> <span class="n">accept_inplace</span><span class="o">=</span><span class="n">accept_inplace</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span>
-<span class="g g-Whitespace">    </span><span class="mi">313</span>     <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">314</span> <span class="k">else</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">315</span>     <span class="c1"># note: pfunc will also call orig_function -- orig_function is</span>
-<span class="g g-Whitespace">    </span><span class="mi">316</span>     <span class="c1">#      a choke point that all compilation must pass through</span>
-<span class="ne">--&gt; </span><span class="mi">317</span>     <span class="n">fn</span> <span class="o">=</span> <span class="n">pfunc</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">318</span>         <span class="n">params</span><span class="o">=</span><span class="n">inputs</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">319</span>         <span class="n">outputs</span><span class="o">=</span><span class="n">outputs</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">320</span>         <span class="n">mode</span><span class="o">=</span><span class="n">mode</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">321</span>         <span class="n">updates</span><span class="o">=</span><span class="n">updates</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">322</span>         <span class="n">givens</span><span class="o">=</span><span class="n">givens</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">323</span>         <span class="n">no_default_updates</span><span class="o">=</span><span class="n">no_default_updates</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">324</span>         <span class="n">accept_inplace</span><span class="o">=</span><span class="n">accept_inplace</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">325</span>         <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">326</span>         <span class="n">rebuild_strict</span><span class="o">=</span><span class="n">rebuild_strict</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">327</span>         <span class="n">allow_input_downcast</span><span class="o">=</span><span class="n">allow_input_downcast</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">328</span>         <span class="n">on_unused_input</span><span class="o">=</span><span class="n">on_unused_input</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">329</span>         <span class="n">profile</span><span class="o">=</span><span class="n">profile</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">330</span>         <span class="n">output_keys</span><span class="o">=</span><span class="n">output_keys</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">331</span>     <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">332</span> <span class="k">return</span> <span class="n">fn</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/compile/function/pfunc.py:367,</span> in <span class="ni">pfunc</span><span class="nt">(params, outputs, mode, updates, givens, no_default_updates, accept_inplace, name, rebuild_strict, allow_input_downcast, profile, on_unused_input, output_keys, fgraph)</span>
-<span class="g g-Whitespace">    </span><span class="mi">353</span>     <span class="n">profile</span> <span class="o">=</span> <span class="n">ProfileStats</span><span class="p">(</span><span class="n">message</span><span class="o">=</span><span class="n">profile</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">355</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">cloned_outputs</span> <span class="o">=</span> <span class="n">construct_pfunc_ins_and_outs</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">356</span>     <span class="n">params</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">357</span>     <span class="n">outputs</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>    <span class="mi">364</span>     <span class="n">fgraph</span><span class="o">=</span><span class="n">fgraph</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">365</span> <span class="p">)</span>
-<span class="ne">--&gt; </span><span class="mi">367</span> <span class="k">return</span> <span class="n">orig_function</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">368</span>     <span class="n">inputs</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">369</span>     <span class="n">cloned_outputs</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">370</span>     <span class="n">mode</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">371</span>     <span class="n">accept_inplace</span><span class="o">=</span><span class="n">accept_inplace</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">372</span>     <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">373</span>     <span class="n">profile</span><span class="o">=</span><span class="n">profile</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">374</span>     <span class="n">on_unused_input</span><span class="o">=</span><span class="n">on_unused_input</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">375</span>     <span class="n">output_keys</span><span class="o">=</span><span class="n">output_keys</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">376</span>     <span class="n">fgraph</span><span class="o">=</span><span class="n">fgraph</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">377</span> <span class="p">)</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/compile/function/types.py:1815,</span> in <span class="ni">orig_function</span><span class="nt">(inputs, outputs, mode, accept_inplace, name, profile, on_unused_input, output_keys, fgraph)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1803</span>     <span class="n">m</span> <span class="o">=</span> <span class="n">Maker</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">1804</span>         <span class="n">inputs</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1805</span>         <span class="n">outputs</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>   <span class="mi">1812</span>         <span class="n">fgraph</span><span class="o">=</span><span class="n">fgraph</span><span class="p">,</span>
-<span class="g g-Whitespace">   </span><span class="mi">1813</span>     <span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1814</span>     <span class="k">with</span> <span class="n">config</span><span class="o">.</span><span class="n">change_flags</span><span class="p">(</span><span class="n">compute_test_value</span><span class="o">=</span><span class="s2">&quot;off&quot;</span><span class="p">):</span>
-<span class="ne">-&gt; </span><span class="mi">1815</span>         <span class="n">fn</span> <span class="o">=</span> <span class="n">m</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">defaults</span><span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1816</span> <span class="k">finally</span><span class="p">:</span>
-<span class="g g-Whitespace">   </span><span class="mi">1817</span>     <span class="n">t2</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/compile/function/types.py:1708,</span> in <span class="ni">FunctionMaker.create</span><span class="nt">(self, input_storage, trustme, storage_map)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1705</span> <span class="n">start_import_time</span> <span class="o">=</span> <span class="n">aesara</span><span class="o">.</span><span class="n">link</span><span class="o">.</span><span class="n">c</span><span class="o">.</span><span class="n">cmodule</span><span class="o">.</span><span class="n">import_time</span>
-<span class="g g-Whitespace">   </span><span class="mi">1707</span> <span class="k">with</span> <span class="n">config</span><span class="o">.</span><span class="n">change_flags</span><span class="p">(</span><span class="n">traceback__limit</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">traceback__compile_limit</span><span class="p">):</span>
-<span class="ne">-&gt; </span><span class="mi">1708</span>     <span class="n">_fn</span><span class="p">,</span> <span class="n">_i</span><span class="p">,</span> <span class="n">_o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">linker</span><span class="o">.</span><span class="n">make_thunk</span><span class="p">(</span>
-<span class="g g-Whitespace">   </span><span class="mi">1709</span>         <span class="n">input_storage</span><span class="o">=</span><span class="n">input_storage_lists</span><span class="p">,</span> <span class="n">storage_map</span><span class="o">=</span><span class="n">storage_map</span>
-<span class="g g-Whitespace">   </span><span class="mi">1710</span>     <span class="p">)</span>
-<span class="g g-Whitespace">   </span><span class="mi">1712</span> <span class="n">end_linker</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">perf_counter</span><span class="p">()</span>
-<span class="g g-Whitespace">   </span><span class="mi">1714</span> <span class="n">linker_time</span> <span class="o">=</span> <span class="n">end_linker</span> <span class="o">-</span> <span class="n">start_linker</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/link/basic.py:254,</span> in <span class="ni">LocalLinker.make_thunk</span><span class="nt">(self, input_storage, output_storage, storage_map, **kwargs)</span>
-<span class="g g-Whitespace">    </span><span class="mi">247</span> <span class="k">def</span><span class="w"> </span><span class="nf">make_thunk</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">248</span>     <span class="bp">self</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">249</span>     <span class="n">input_storage</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;InputStorageType&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-   <span class="p">(</span><span class="o">...</span><span class="p">)</span>    <span class="mi">252</span>     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">253</span> <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="s2">&quot;BasicThunkType&quot;</span><span class="p">,</span> <span class="s2">&quot;InputStorageType&quot;</span><span class="p">,</span> <span class="s2">&quot;OutputStorageType&quot;</span><span class="p">]:</span>
-<span class="ne">--&gt; </span><span class="mi">254</span>     <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">make_all</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">255</span>         <span class="n">input_storage</span><span class="o">=</span><span class="n">input_storage</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">256</span>         <span class="n">output_storage</span><span class="o">=</span><span class="n">output_storage</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">257</span>         <span class="n">storage_map</span><span class="o">=</span><span class="n">storage_map</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">258</span>     <span class="p">)[:</span><span class="mi">3</span><span class="p">]</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/link/basic.py:697,</span> in <span class="ni">JITLinker.make_all</span><span class="nt">(self, input_storage, output_storage, storage_map)</span>
-<span class="g g-Whitespace">    </span><span class="mi">694</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">storage_map</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">695</span>     <span class="n">compute_map</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span><span class="o">.</span><span class="n">owner</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">]</span>
-<span class="ne">--&gt; </span><span class="mi">697</span> <span class="n">thunks</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">jit_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_jitable_thunk</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">698</span>     <span class="n">compute_map</span><span class="p">,</span> <span class="n">nodes</span><span class="p">,</span> <span class="n">input_storage</span><span class="p">,</span> <span class="n">output_storage</span><span class="p">,</span> <span class="n">storage_map</span>
-<span class="g g-Whitespace">    </span><span class="mi">699</span> <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">701</span> <span class="n">computed</span><span class="p">,</span> <span class="n">last_user</span> <span class="o">=</span> <span class="n">gc_helper</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">703</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">allow_gc</span><span class="p">:</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/link/basic.py:647,</span> in <span class="ni">JITLinker.create_jitable_thunk</span><span class="nt">(self, compute_map, order, input_storage, output_storage, storage_map)</span>
-<span class="g g-Whitespace">    </span><span class="mi">644</span> <span class="c1"># This is a bit hackish, but we only return one of the output nodes</span>
-<span class="g g-Whitespace">    </span><span class="mi">645</span> <span class="n">output_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">o</span><span class="o">.</span><span class="n">owner</span> <span class="k">for</span> <span class="n">o</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">fgraph</span><span class="o">.</span><span class="n">outputs</span> <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">owner</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">][:</span><span class="mi">1</span><span class="p">]</span>
-<span class="ne">--&gt; </span><span class="mi">647</span> <span class="n">converted_fgraph</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">fgraph_convert</span><span class="p">(</span>
-<span class="g g-Whitespace">    </span><span class="mi">648</span>     <span class="bp">self</span><span class="o">.</span><span class="n">fgraph</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">649</span>     <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">650</span>     <span class="n">input_storage</span><span class="o">=</span><span class="n">input_storage</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">651</span>     <span class="n">output_storage</span><span class="o">=</span><span class="n">output_storage</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">652</span>     <span class="n">storage_map</span><span class="o">=</span><span class="n">storage_map</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">653</span> <span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">655</span> <span class="n">thunk_inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_thunk_inputs</span><span class="p">(</span><span class="n">storage_map</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">657</span> <span class="n">thunks</span> <span class="o">=</span> <span class="p">[]</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/aesara/link/numba/linker.py:25,</span> in <span class="ni">NumbaLinker.fgraph_convert</span><span class="nt">(self, fgraph, **kwargs)</span>
-<span class="g g-Whitespace">     </span><span class="mi">24</span> <span class="k">def</span><span class="w"> </span><span class="nf">fgraph_convert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fgraph</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-<span class="ne">---&gt; </span><span class="mi">25</span>     <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.link.numba.dispatch</span><span class="w"> </span><span class="kn">import</span> <span class="n">numba_funcify</span>
-<span class="g g-Whitespace">     </span><span class="mi">27</span>     <span class="k">return</span> <span class="n">numba_funcify</span><span class="p">(</span><span class="n">fgraph</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.11.12</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.11</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="n">link</span><span class="o">/</span><span class="n">numba</span><span class="o">/</span><span class="n">dispatch</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">2</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># isort: off</span>
-<span class="ne">----&gt; </span><span class="mi">2</span> <span class="kn">from</span><span class="w"> </span><span class="nn">aesara.link.numba.dispatch.basic</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<span class="g g-Whitespace">      </span><span class="mi">3</span>     <span class="n">numba_funcify</span><span class="p">,</span>
-<span class="g g-Whitespace">      </span><span class="mi">4</span>     <span class="n">numba_const_convert</span><span class="p">,</span>
-<span class="g g-Whitespace">      </span><span class="mi">5</span>     <span class="n">numba_njit</span><span class="p">,</span>
-<span class="g g-Whitespace">      </span><span class="mi">6</span> <span class="p">)</span>
-<span class="g g-Whitespace">      </span><span class="mi">8</span> <span class="c1"># Load dispatch specializations</span>
-<span class="g g-Whitespace">      </span><span class="mi">9</span> <span class="kn">import</span><span class="w"> </span><span class="nn">aesara.link.numba.dispatch.scalar</span>
-
-<span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.11.12</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.11</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">aesara</span><span class="o">/</span><span class="n">link</span><span class="o">/</span><span class="n">numba</span><span class="o">/</span><span class="n">dispatch</span><span class="o">/</span><span class="n">basic</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">198</span>
-<span class="g g-Whitespace">    </span><span class="mi">192</span>             <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">:</span> <span class="kc">False</span>
-<span class="g g-Whitespace">    </span><span class="mi">195</span> <span class="n">enable_slice_boxing</span><span class="p">()</span>
-<span class="ne">--&gt; </span><span class="mi">198</span> <span class="nd">@generated_jit</span>
-<span class="g g-Whitespace">    </span><span class="mi">199</span> <span class="k">def</span><span class="w"> </span><span class="nf">to_scalar</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-<span class="g g-Whitespace">    </span><span class="mi">200</span>     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">numba</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Number</span><span class="p">,</span> <span class="n">numba</span><span class="o">.</span><span class="n">types</span><span class="o">.</span><span class="n">Boolean</span><span class="p">)):</span>
-<span class="g g-Whitespace">    </span><span class="mi">201</span>         <span class="k">return</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span>
-
-<span class="nn">File /opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/numba/core/decorators.py:221,</span> in <span class="ni">_jit.&lt;locals&gt;.wrapper</span><span class="nt">(func)</span>
-<span class="g g-Whitespace">    </span><span class="mi">219</span> <span class="k">if</span> <span class="n">config</span><span class="o">.</span><span class="n">DISABLE_JIT</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">target</span> <span class="o">==</span> <span class="s1">&#39;npyufunc&#39;</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">220</span>     <span class="k">return</span> <span class="n">func</span>
-<span class="ne">--&gt; </span><span class="mi">221</span> <span class="n">disp</span> <span class="o">=</span> <span class="n">dispatcher</span><span class="p">(</span><span class="n">py_func</span><span class="o">=</span><span class="n">func</span><span class="p">,</span> <span class="nb">locals</span><span class="o">=</span><span class="nb">locals</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">222</span>                   <span class="n">targetoptions</span><span class="o">=</span><span class="n">targetoptions</span><span class="p">,</span>
-<span class="g g-Whitespace">    </span><span class="mi">223</span>                   <span class="o">**</span><span class="n">dispatcher_args</span><span class="p">)</span>
-<span class="g g-Whitespace">    </span><span class="mi">224</span> <span class="k">if</span> <span class="n">cache</span><span class="p">:</span>
-<span class="g g-Whitespace">    </span><span class="mi">225</span>     <span class="n">disp</span><span class="o">.</span><span class="n">enable_caching</span><span class="p">()</span>
-
-<span class="ne">TypeError</span>: Dispatcher.__init__() got an unexpected keyword argument &#39;impl_kind&#39;
 </pre></div>
 </div>
 </div>

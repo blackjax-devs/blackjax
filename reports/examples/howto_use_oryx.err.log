@@ -1,109 +1,176 @@
 Traceback (most recent call last):
-  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 154, in wrapped
+    asyncio.get_running_loop()
+RuntimeError: no running event loop
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
     executenb(
-  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/nbclient/client.py", line 1319, in execute
+  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/nbclient/client.py", line 1319, in execute
     return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 158, in wrapped
     return loop.run_until_complete(inner)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
     return future.result()
            ^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/nbclient/client.py", line 709, in async_execute
+  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/nbclient/client.py", line 709, in async_execute
     await self.async_execute_cell(
-  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/nbclient/client.py", line 1062, in async_execute_cell
     await self._check_raise_for_error(cell, cell_index, exec_reply)
-  File "/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
-from oryx.core.ppl import joint_sample
+from oryx.core.ppl import random_variable
 
-bnn = mlp([50, 50], num_classes)
-rng_key, init_key = jax.random.split(rng_key)
-initial_weights = joint_sample(bnn)(init_key, jnp.ones(num_features))
+from tensorflow_probability.substrates import jax as tfp
+tfd = tfp.distributions
 
-print(initial_weights.keys())
+
+def dense(dim_out, activation=jax.nn.relu):
+
+    def forward(key, x):
+        dim_in = x.shape[-1]
+        w_key, b_key = jax.random.split(key)
+        w = random_variable(
+            tfd.Sample(tfd.Normal(0., 1.), sample_shape=(dim_out, dim_in)),
+            name='w'
+        )(w_key)
+        b = random_variable(
+            tfd.Sample(tfd.Normal(0., 1.), sample_shape=(dim_out,)),
+            name='b'
+        )(b_key)
+
+        return activation(jnp.dot(w, x) + b)
+
+    return forward
 ------------------
 
 
 [31m---------------------------------------------------------------------------[39m
 [31mAttributeError[39m                            Traceback (most recent call last)
-[36mCell[39m[36m [39m[32mIn[7][39m[32m, line 5[39m
-[32m      3[39m bnn = mlp([[32m50[39m, [32m50[39m], num_classes)
-[32m      4[39m rng_key, init_key = jax.random.split(rng_key)
-[32m----> [39m[32m5[39m initial_weights = [43mjoint_sample[49m[43m([49m[43mbnn[49m[43m)[49m[43m([49m[43minit_key[49m[43m,[49m[43m [49m[43mjnp[49m[43m.[49m[43mones[49m[43m([49m[43mnum_features[49m[43m)[49m[43m)[49m
-[32m      7[39m [38;5;28mprint[39m(initial_weights.keys())
+[36mCell[39m[36m [39m[32mIn[4][39m[32m, line 1[39m
+[32m----> [39m[32m1[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01moryx[39;00m[34;01m.[39;00m[34;01mcore[39;00m[34;01m.[39;00m[34;01mppl[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m random_variable
+[32m      3[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp
+[32m      4[39m tfd = tfp.distributions
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:768[39m, in [36mreap.<locals>.wrapped[39m[34m(*args, **kwargs)[39m
-[32m    767[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mwrapped[39m(*args, **kwargs):
-[32m--> [39m[32m768[39m   [38;5;28;01mreturn[39;00m [43mcall_and_reap[49m[43m([49m
-[32m    769[39m [43m      [49m[43mf[49m[43m,[49m
-[32m    770[39m [43m      [49m[43mtag[49m[43m=[49m[43mtag[49m[43m,[49m
-[32m    771[39m [43m      [49m[43mallowlist[49m[43m=[49m[43mallowlist[49m[43m,[49m
-[32m    772[39m [43m      [49m[43mblocklist[49m[43m=[49m[43mblocklist[49m[43m,[49m
-[32m    773[39m [43m      [49m[43mexclusive[49m[43m=[49m[43mexclusive[49m[43m)[49m[43m([49m[43m*[49m[43margs[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mkwargs[49m[43m)[49m[[32m1[39m]
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/oryx/__init__.py:16[39m
+[32m      1[39m [38;5;66;03m# Copyright 2024 The oryx Authors.[39;00m
+[32m      2[39m [38;5;66;03m#[39;00m
+[32m      3[39m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
+[32m   (...)[39m[32m     12[39m [38;5;66;03m# See the License for the specific language governing permissions and[39;00m
+[32m     13[39m [38;5;66;03m# limitations under the License.[39;00m
+[32m     15[39m [33;03m"""Oryx imports."""[39;00m
+[32m---> [39m[32m16[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01moryx[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m bijectors
+[32m     17[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01moryx[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m core
+[32m     18[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01moryx[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m distributions
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:703[39m, in [36mcall_and_reap.<locals>.wrapped[39m[34m(*args, **kwargs)[39m
-[32m    702[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mwrapped[39m(*args, **kwargs):
-[32m--> [39m[32m703[39m   out, reaps, preds = [43m_call_and_reap[49m[43m([49m
-[32m    704[39m [43m      [49m[43mf[49m[43m,[49m
-[32m    705[39m [43m      [49m[43mtag[49m[43m=[49m[43mtag[49m[43m,[49m
-[32m    706[39m [43m      [49m[43mallowlist[49m[43m=[49m[43mallowlist[49m[43m,[49m
-[32m    707[39m [43m      [49m[43mblocklist[49m[43m=[49m[43mblocklist[49m[43m,[49m
-[32m    708[39m [43m      [49m[43mexclusive[49m[43m=[49m[43mexclusive[49m[43m,[49m
-[32m    709[39m [43m  [49m[43m)[49m[43m([49m[43m*[49m[43margs[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mkwargs[49m[43m)[49m
-[32m    711[39m   [38;5;28;01mdef[39;00m[38;5;250m [39m[34mselect_from_pred[39m(pred, value):
-[32m    712[39m     [38;5;28;01mif[39;00m pred [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m:
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/oryx/bijectors/__init__.py:20[39m
+[32m     16[39m [38;5;28;01mimport[39;00m[38;5;250m [39m[34;01minspect[39;00m
+[32m     18[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m jax [38;5;28;01mas[39;00m tfp  [38;5;66;03m# pylint: disable=g-importing-member[39;00m
+[32m---> [39m[32m20[39m tfb = [43mtfp[49m[43m.[49m[43mbijectors[49m
+[32m     22[39m __all__ = tfb.__all__
+[32m     23[39m [38;5;28;01mfor[39;00m name [38;5;129;01min[39;00m __all__:
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:739[39m, in [36m_call_and_reap.<locals>.wrapped[39m[34m(*args, **kwargs)[39m
-[32m    737[39m flat_fun, out_tree = api_util.flatten_fun_nokwargs(fun, in_tree)
-[32m    738[39m flat_fun = reap_function(flat_fun, settings, [38;5;28;01mFalse[39;00m)
-[32m--> [39m[32m739[39m out_flat, reaps, preds = [43mflat_fun[49m[43m.[49m[43mcall_wrapped[49m[43m([49m[43mflat_args[49m[43m)[49m
-[32m    740[39m [38;5;28;01mreturn[39;00m tree_util.tree_unflatten(out_tree(), out_flat), reaps, preds
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/lazy_loader.py:56[39m, in [36mLazyLoader.__getattr__[39m[34m(self, item)[39m
+[32m     55[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34m__getattr__[39m([38;5;28mself[39m, item):
+[32m---> [39m[32m56[39m   module = [38;5;28;43mself[39;49m[43m.[49m[43m_load[49m[43m([49m[43m)[49m
+[32m     57[39m   [38;5;28;01mreturn[39;00m [38;5;28mgetattr[39m(module, item)
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/linear_util.py:211[39m, in [36mWrappedFun.call_wrapped[39m[34m(self, *args, **kwargs)[39m
-[32m    209[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mcall_wrapped[39m([38;5;28mself[39m, *args, **kwargs):
-[32m    210[39m [38;5;250m  [39m[33;03m"""Calls the transformed function"""[39;00m
-[32m--> [39m[32m211[39m   [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[43m.[49m[43mf_transformed[49m[43m([49m[43m*[49m[43margs[49m[43m,[49m[43m [49m[43m*[49m[43m*[49m[43mkwargs[49m[43m)[49m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/lazy_loader.py:43[39m, in [36mLazyLoader._load[39m[34m(self)[39m
+[32m     41[39m   [38;5;28mself[39m._on_first_access = [38;5;28;01mNone[39;00m
+[32m     42[39m [38;5;66;03m# Import the target module and insert it into the parent's namespace[39;00m
+[32m---> [39m[32m43[39m module = [43mimportlib[49m[43m.[49m[43mimport_module[49m[43m([49m[38;5;28;43mself[39;49m[43m.[49m[34;43m__name__[39;49m[43m)[49m
+[32m     44[39m [38;5;28;01mif[39;00m [38;5;28mself[39m._parent_module_globals [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
+[32m     45[39m   [38;5;28mself[39m._parent_module_globals[[38;5;28mself[39m._local_name] = module
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/linear_util.py:245[39m, in [36mtransformation.<locals>.gen2[39m[34m(f, *args, **kwargs)[39m
-[32m    243[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mgen2[39m(f, *args, **kwargs):
-[32m    244[39m   gen_inst = gen(*args, **kwargs)
-[32m--> [39m[32m245[39m   args_, kwargs_ = [38;5;28;43mnext[39;49m[43m([49m[43mgen_inst[49m[43m)[49m
-[32m    246[39m   [38;5;28;01mreturn[39;00m gen_inst.send(f(*args_, **kwargs_))
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/importlib/__init__.py:90[39m, in [36mimport_module[39m[34m(name, package)[39m
+[32m     88[39m             [38;5;28;01mbreak[39;00m
+[32m     89[39m         level += [32m1[39m
+[32m---> [39m[32m90[39m [38;5;28;01mreturn[39;00m [43m_bootstrap[49m[43m.[49m[43m_gcd_import[49m[43m([49m[43mname[49m[43m[[49m[43mlevel[49m[43m:[49m[43m][49m[43m,[49m[43m [49m[43mpackage[49m[43m,[49m[43m [49m[43mlevel[49m[43m)[49m
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:646[39m, in [36mreap_function[39m[34m(settings, return_metadata, args)[39m
-[32m    644[39m [38;5;250m[39m[33;03m"""A function transformation that returns reap values and predicates."""[39;00m
-[32m    645[39m context = ReapContext(settings, {})
-[32m--> [39m[32m646[39m [43m[49m[38;5;28;43;01mwith[39;49;00m[43m [49m[43mharvest_trace[49m[43m([49m[43mcontext[49m[43m)[49m[43m:[49m
-[32m    647[39m [43m  [49m[43mout_values[49m[43m [49m[43m=[49m[43m [49m[38;5;28;43;01myield[39;49;00m[43m [49m[43margs[49m[43m,[49m[43m [49m[43m{[49m[43m}[49m
-[32m    648[39m [43m  [49m[43mreap_values[49m[43m [49m[43m=[49m[43m [49m[43mtree_util[49m[43m.[49m[43mtree_map[49m[43m([49m[38;5;28;43;01mlambda[39;49;00m[43m [49m[43mx[49m[43m:[49m[43m [49m[43mx[49m[43m.[49m[43mvalue[49m[43m,[49m[43m [49m[43mcontext[49m[43m.[49m[43mreaps[49m[43m)[49m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/__init__.py:42[39m
+[32m     39[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01mversion[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m __version__
+[32m     40[39m [38;5;66;03m# from tensorflow_probability.substrates.jax.google import autosts  # DisableOnExport  # pylint:disable=line-too-long[39;00m
+[32m     41[39m [38;5;66;03m# from tensorflow_probability.substrates.jax.google import staging  # DisableOnExport  # pylint:disable=line-too-long[39;00m
+[32m---> [39m[32m42[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m bijectors
+[32m     43[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m distributions
+[32m     44[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m experimental
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/contextlib.py:137[39m, in [36m_GeneratorContextManager.__enter__[39m[34m(self)[39m
-[32m    135[39m [38;5;28;01mdel[39;00m [38;5;28mself[39m.args, [38;5;28mself[39m.kwds, [38;5;28mself[39m.func
-[32m    136[39m [38;5;28;01mtry[39;00m:
-[32m--> [39m[32m137[39m     [38;5;28;01mreturn[39;00m [38;5;28mnext[39m([38;5;28mself[39m.gen)
-[32m    138[39m [38;5;28;01mexcept[39;00m [38;5;167;01mStopIteration[39;00m:
-[32m    139[39m     [38;5;28;01mraise[39;00m [38;5;167;01mRuntimeError[39;00m([33m"[39m[33mgenerator didn[39m[33m'[39m[33mt yield[39m[33m"[39m) [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;28;01mNone[39;00m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/bijectors/__init__.py:19[39m
+[32m     15[39m [33;03m"""Bijective transformations."""[39;00m
+[32m     17[39m [38;5;66;03m# pylint: disable=unused-import,wildcard-import,line-too-long,g-importing-member[39;00m
+[32m---> [39m[32m19[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[34;01m.[39;00m[34;01mjax[39;00m[34;01m.[39;00m[34;01mbijectors[39;00m[34;01m.[39;00m[34;01mabsolute_value[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m AbsoluteValue
+[32m     20[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[34;01m.[39;00m[34;01mjax[39;00m[34;01m.[39;00m[34;01mbijectors[39;00m[34;01m.[39;00m[34;01mascending[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m Ascending
+[32m     21[39m [38;5;66;03m# from tensorflow_probability.substrates.jax.bijectors.batch_normalization import BatchNormalization[39;00m
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/oryx/core/interpreters/harvest.py:1232[39m, in [36mharvest_trace[39m[34m(context)[39m
-[32m   1230[39m [38;5;28;01mwith[39;00m jax_core.take_current_trace() [38;5;28;01mas[39;00m parent_trace:
-[32m   1231[39m   trace = HarvestTrace(parent_trace, context)
-[32m-> [39m[32m1232[39m [43m  [49m[38;5;28;43;01mwith[39;49;00m[43m [49m[43mjax_core[49m[43m.[49m[43mset_current_trace[49m[43m([49m[43mtrace[49m[43m)[49m[43m:[49m
-[32m   1233[39m [43m    [49m[38;5;28;43;01myield[39;49;00m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/substrates/jax/bijectors/absolute_value.py:17[39m
+[32m      1[39m [38;5;66;03m# Copyright 2018 The TensorFlow Probability Authors.[39;00m
+[32m      2[39m [38;5;66;03m#[39;00m
+[32m      3[39m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
+[32m   (...)[39m[32m     13[39m [38;5;66;03m# limitations under the License.[39;00m
+[32m     14[39m [38;5;66;03m# ============================================================================[39;00m
+[32m     15[39m [33;03m"""AbsoluteValue bijector."""[39;00m
+[32m---> [39m[32m17[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[34;01m.[39;00m[34;01mcompat[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m v2 [38;5;28;01mas[39;00m tf
+[32m     19[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[34;01m.[39;00m[34;01mjax[39;00m[34;01m.[39;00m[34;01mbijectors[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m bijector
+[32m     20[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01msubstrates[39;00m[34;01m.[39;00m[34;01mjax[39;00m[34;01m.[39;00m[34;01minternal[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m assert_util
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/core.py:1155[39m, in [36mSetCurrentTraceContextManager.__enter__[39m[34m(self)[39m
-[32m   1153[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34m__enter__[39m([38;5;28mself[39m):
-[32m   1154[39m   [38;5;28mself[39m.prev = trace_ctx.trace
-[32m-> [39m[32m1155[39m   [43mtrace_ctx[49m[43m.[49m[43mset_trace[49m[43m([49m[38;5;28;43mself[39;49m[43m.[49m[43mtrace[49m[43m)[49m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/backend/jax/__init__.py:19[39m
+[32m     17[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m __internal__
+[32m     18[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m bitwise
+[32m---> [39m[32m19[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m compat
+[32m     20[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m config
+[32m     21[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m debugging
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.11.12/x64/lib/python3.11/site-packages/jax/_src/core.py:1117[39m, in [36mTracingContext.set_trace[39m[34m(self, trace)[39m
-[32m   1115[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mset_trace[39m([38;5;28mself[39m, trace):
-[32m   1116[39m   [38;5;28mself[39m.trace = trace
-[32m-> [39m[32m1117[39m   ts = [43mtrace[49m[43m.[49m[43m_weakref[49m [38;5;28;01mif[39;00m trace [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m [38;5;28;01melse[39;00m [38;5;28;01mNone[39;00m
-[32m   1118[39m   config.trace_state.set_local(ts)
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/backend/jax/compat.py:17[39m
+[32m      1[39m [38;5;66;03m# Copyright 2018 The TensorFlow Probability Authors.[39;00m
+[32m      2[39m [38;5;66;03m#[39;00m
+[32m      3[39m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
+[32m   (...)[39m[32m     13[39m [38;5;66;03m# limitations under the License.[39;00m
+[32m     14[39m [38;5;66;03m# ============================================================================[39;00m
+[32m     15[39m [33;03m"""Experimental Numpy backend."""[39;00m
+[32m---> [39m[32m17[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m v1
+[32m     18[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m v2
+[32m     19[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[34;01m.[39;00m[34;01mgen[39;00m[34;01m.[39;00m[34;01mtensor_shape[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m dimension_value
 
-[31mAttributeError[39m: 'HarvestTrace' object has no attribute '_weakref'
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/backend/jax/v1.py:23[39m
+[32m     21[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m _utils [38;5;28;01mas[39;00m utils
+[32m     22[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m initializers
+[32m---> [39m[32m23[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m linalg_impl
+[32m     24[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m numpy_logging [38;5;28;01mas[39;00m logging
+[32m     25[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[34;01m.[39;00m[34;01mgen[39;00m[34;01m.[39;00m[34;01mtensor_shape[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m Dimension
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/backend/jax/linalg_impl.py:23[39m
+[32m     20[39m [38;5;28;01mimport[39;00m[38;5;250m [39m[34;01mnumpy[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[34;01monp[39;00m; [38;5;28;01mimport[39;00m[38;5;250m [39m[34;01mjax[39;00m[34;01m.[39;00m[34;01mnumpy[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[34;01mnp[39;00m
+[32m     22[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m _utils [38;5;28;01mas[39;00m utils
+[32m---> [39m[32m23[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mtensorflow_probability[39;00m[34;01m.[39;00m[34;01mpython[39;00m[34;01m.[39;00m[34;01minternal[39;00m[34;01m.[39;00m[34;01mbackend[39;00m[34;01m.[39;00m[34;01mjax[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m ops
+[32m     25[39m scipy_linalg = utils.try_import([33m'[39m[33mjax.scipy.linalg[39m[33m'[39m)
+[32m     28[39m __all__ = [
+[32m     29[39m     [33m'[39m[33madjoint[39m[33m'[39m,
+[32m     30[39m     [33m'[39m[33mband_part[39m[33m'[39m,
+[32m   (...)[39m[32m     68[39m     [38;5;66;03m# 'tridiagonal_solve',[39;00m
+[32m     69[39m ]
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/backend/jax/ops.py:681[39m
+[32m    677[39m [38;5;28;01mif[39;00m JAX_MODE:
+[32m    678[39m   jax.interpreters.xla.canonicalize_dtype_handlers[NumpyVariable] = (
+[32m    679[39m       jax.interpreters.xla.canonicalize_dtype_handlers[onp.ndarray])
+[32m    680[39m   jax.interpreters.xla.pytype_aval_mappings[NumpyVariable] = (
+[32m--> [39m[32m681[39m       [43mjax[49m[43m.[49m[43minterpreters[49m[43m.[49m[43mxla[49m[43m.[49m[43mpytype_aval_mappings[49m[onp.ndarray])
+[32m    682[39m   jax.core.pytype_aval_mappings[NumpyVariable] = (
+[32m    683[39m       jax.core.pytype_aval_mappings[onp.ndarray])
+[32m    686[39m Variable = NumpyVariable
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/jax/_src/deprecations.py:54[39m, in [36mdeprecation_getattr.<locals>.getattr[39m[34m(name)[39m
+[32m     52[39m message, fn = deprecations[name]
+[32m     53[39m [38;5;28;01mif[39;00m fn [38;5;129;01mis[39;00m [38;5;28;01mNone[39;00m:  [38;5;66;03m# Is the deprecation accelerated?[39;00m
+[32m---> [39m[32m54[39m   [38;5;28;01mraise[39;00m [38;5;167;01mAttributeError[39;00m(message)
+[32m     55[39m warnings.warn(message, [38;5;167;01mDeprecationWarning[39;00m, stacklevel=[32m2[39m)
+[32m     56[39m [38;5;28;01mreturn[39;00m fn
+
+[31mAttributeError[39m: jax.interpreters.xla.pytype_aval_mappings was deprecated in JAX v0.5.0 and removed in JAX v0.7.0. jax.core.pytype_aval_mappings can be used as a replacement in most cases.
 
