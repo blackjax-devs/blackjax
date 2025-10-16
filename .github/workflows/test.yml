@@ -38,7 +38,7 @@ jobs:
         less requirements.txt | grep 'pytest\|chex' | xargs -i -t pip install {}
     - name: Run tests
       run: |
-        pytest -n auto -vv -m "not benchmark" --cov=blackjax --cov-report=xml --cov-report=term tests
+        pytest -n auto -vv --benchmark-disable --cov=blackjax --cov-report=xml --cov-report=term tests
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
