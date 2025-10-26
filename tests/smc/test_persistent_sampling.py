@@ -839,12 +839,9 @@ class NormalizingConstantTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.key(2356)
 
-    def _setup_test_problem(self, num_dim: int) -> tuple[
-        PRNGKey,
-        jnp.ndarray,
-        Callable,
-        Callable,
-    ]:
+    def _setup_test_problem(
+        self, num_dim: int
+    ) -> tuple[PRNGKey, jnp.ndarray, Callable, Callable,]:
         """Setup common test problem: random covariance and log functions."""
         rng_key, cov_key = jax.random.split(self.key, 2)
         chol_cov = jax.random.uniform(cov_key, shape=(num_dim, num_dim))

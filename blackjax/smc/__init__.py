@@ -1,9 +1,9 @@
 from . import (
+    adaptive_persistent_sampling,
     adaptive_tempered,
     inner_kernel_tuning,
-    tempered,
     persistent_sampling,
-    adaptive_persistent_sampling,
+    tempered,
 )
 from .base import extend_params
 
