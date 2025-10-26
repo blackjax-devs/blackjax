@@ -36,9 +36,11 @@ from .sgmcmc import csgld as _csgld
 from .sgmcmc import sghmc as _sghmc
 from .sgmcmc import sgld as _sgld
 from .sgmcmc import sgnht as _sgnht
+from .smc import adaptive_persistent_sampling
 from .smc import adaptive_tempered
 from .smc import inner_kernel_tuning as _inner_kernel_tuning
 from .smc import partial_posteriors_path as _partial_posteriors_smc
+from .smc import persistent_sampling
 from .smc import pretuning as _pretuning
 from .smc import tempered
 from .vi import meanfield_vi as _meanfield_vi
@@ -123,12 +125,22 @@ barker_proposal = generate_top_level_api_from(barker)
 hmc_family = [hmc, nuts]
 
 # SMC
+adaptive_persistent_sampling_smc = generate_top_level_api_from(
+    adaptive_persistent_sampling
+)
 adaptive_tempered_smc = generate_top_level_api_from(adaptive_tempered)
 tempered_smc = generate_top_level_api_from(tempered)
 inner_kernel_tuning = generate_top_level_api_from(_inner_kernel_tuning)
 partial_posteriors_smc = generate_top_level_api_from(_partial_posteriors_smc)
+persistent_sampling_smc = generate_top_level_api_from(persistent_sampling)
 pretuning = generate_top_level_api_from(_pretuning)
-smc_family = [tempered_smc, adaptive_tempered_smc, partial_posteriors_smc]
+smc_family = [
+    tempered_smc,
+    adaptive_tempered_smc,
+    partial_posteriors_smc,
+    persistent_sampling_smc,
+    adaptive_persistent_sampling_smc,
+]
 "Step_fn returning state has a .particles attribute"
 
 # stochastic gradient mcmc
