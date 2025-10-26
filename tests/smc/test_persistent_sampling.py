@@ -597,12 +597,6 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
                     future_log_liks, 0.0
                 ), "Future log-likelihoods should still be zero-padded"
 
-            print(
-                f"✓ Iteration {expected_iteration}: lambda={lmbda:.2f}, "
-                f"ESS={ess:.2f}, log_Z={current_log_Z:.4f}, "
-                f"weights_sum={actual_sum:.1f}"
-            )
-
 
 def inference_loop_adaptive(
     rng_key: PRNGKey,
@@ -806,7 +800,6 @@ class PersistentSamplingPosteriorTest(SMCLinearRegressionTestCase):
             self.assert_linear_regression_test_case(result)
 
         # Check that higher ESS leads to more iterations
-        print(f"Iterations for ESS targets: {iterates}")
         assert iterates[1] >= iterates[0]
         assert iterates[2] >= iterates[1]
 
@@ -839,9 +832,12 @@ class NormalizingConstantTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.key(2356)
 
-    def _setup_test_problem(
-        self, num_dim: int
-    ) -> tuple[PRNGKey, jnp.ndarray, Callable, Callable,]:
+    def _setup_test_problem(self, num_dim: int) -> tuple[
+        PRNGKey,
+        jnp.ndarray,
+        Callable,
+        Callable,
+    ]:
         """Setup common test problem: random covariance and log functions."""
         rng_key, cov_key = jax.random.split(self.key, 2)
         chol_cov = jax.random.uniform(cov_key, shape=(num_dim, num_dim))
