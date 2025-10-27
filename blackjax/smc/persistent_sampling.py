@@ -18,6 +18,7 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.scipy.special import logsumexp
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.smc.base import update_and_take_last
@@ -25,8 +26,8 @@ from blackjax.smc.from_mcmc import unshared_parameters_and_step_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
-    "PSState",
-    "PSInfo",
+    "PersistentSMCState",
+    "PersistentStateInfo",
     "init",
     "remove_padding",
     "compute_log_Z",
@@ -39,7 +40,7 @@ __all__ = [
 ]
 
 
-class PSState(NamedTuple):
+class PersistentSMCState(NamedTuple):
     """State of the Persistent Sampling algorithm.
 
     Contains all particles from all iterations, their weights,
@@ -131,7 +132,7 @@ class PSState(NamedTuple):
         return self.persistent_log_likelihoods.shape[1]
 
 
-class PSInfo(NamedTuple):
+class PersistentStateInfo(NamedTuple):
     """Information from one step of Persistent Sampling.
 
     Parameters
@@ -150,7 +151,7 @@ def init(
     particles: ArrayLikeTree,
     loglikelihood_fn: Callable,
     n_schedule: int | Array,
-) -> PSState:
+) -> PersistentSMCState:
     """Initialize the Persistent Sampling state.
 
     The arrays are padded with zeros to alow for JIT compilation.
@@ -169,7 +170,7 @@ def init(
 
     Returns
     -------
-    PSState
+    PersistentSMCState
         Initial state, with
         - particles set to input particles,
         - weights set to uniform weights,
@@ -179,8 +180,8 @@ def init(
         - tempering parameters set to 0.0 (initial distribution is prior).
         - set iteration to 0.
 
-        NOTE: All arrays in the PSState are padded with zeros up to the length of
-        the tempering schedule.
+        NOTE: All arrays in the PersistentSMCState are padded with zeros up
+        to the length of the tempering schedule.
     """
 
     # Infer the number of particles from the size of the leading dimension of
@@ -198,7 +199,7 @@ def init(
         lambda x: jnp.zeros((n_schedule + 1, *x.shape)).at[0].set(x), particles
     )
 
-    return PSState(
+    return PersistentSMCState(
         padded_particles,
         padded_log_likelihoods,
         jnp.zeros(n_schedule + 1),  # log(1.0) = 0.0, so already set correctly
@@ -207,21 +208,21 @@ def init(
     )
 
 
-def remove_padding(state: PSState) -> PSState:
-    """Remove padding from PSState arrays up to current iteration.
+def remove_padding(state: PersistentSMCState) -> PersistentSMCState:
+    """Remove padding from PersistentSMCState arrays up to current iteration.
 
     Parameters
     ----------
-    state: PSState
-        The PSState with padded arrays.
+    state: PersistentSMCState
+        The PersistentSMCState with padded arrays.
 
     Returns
     -------
-    PSState
-        New PSState with arrays trimmed to current iteration.
+    PersistentSMCState
+        New PersistentSMCState with arrays trimmed to current iteration.
     """
     iteration = state.iteration
-    return PSState(
+    return PersistentSMCState(
         persistent_particles=jax.tree.map(
             lambda x: x[: iteration + 1], state.persistent_particles
         ),
@@ -257,9 +258,7 @@ def compute_log_Z(
 
     num_particles = log_weights.shape[1]
     log_normalization_constant = (
-        jax.scipy.special.logsumexp(log_weights)
-        - jnp.log(num_particles)
-        - jnp.log(iteration)
+        logsumexp(log_weights) - jnp.log(num_particles) - jnp.log(iteration)
     )
     return log_normalization_constant
 
@@ -453,13 +452,13 @@ def compute_persistent_ess(
 
 def step(
     rng_key: PRNGKey,
-    state: PSState,
+    state: PersistentSMCState,
     lmbda: float | Array,
     loglikelihood_fn: Callable,
     update_fn: Callable,
     resample_fn: Callable,
     weight_fn: Callable = compute_log_persistent_weights,
-) -> tuple[PSState, PSInfo]:
+) -> tuple[PersistentSMCState, PersistentStateInfo]:
     """One step of the Persistent Sampling algorithm, as
     described in algorithm 2 of Karamanis et al. (2025).
 
@@ -468,7 +467,7 @@ def step(
     rng_key
         Key used for random number generation.
     state
-        Current state of the PS sampler described by a PSState.
+        Current state of the PS sampler described by a PersistentSMCState.
     lmbda: float | Array
         New tempering parameter :math:`\\lambda_t` for current iteration.
     loglikelihood_fn: Callable
@@ -488,8 +487,8 @@ def step(
 
     Returns
     -------
-    new_state: PSState
-        The updated PSState. Updated fields are:
+    new_state: PersistentSMCState
+        The updated PersistentSMCState. Updated fields are:
         - particles: particles from all iterations, with current iteration's
           particles added.
         - weights: normalized weights for all persistent particles at current
@@ -501,8 +500,8 @@ def step(
         - tempering_schedule: tempering parameters, with current iteration's
           parameter added.
         - iteration: incremented by 1.
-    info: PSInfo
-        An `PSInfo` object that contains extra information about the PS
+    info: PersistentStateInfo
+        An `PersistentStateInfo` object that contains extra information about the PS
         transition. Contains:
         - ancestors: indices of the particles selected by the resampling step.
         - ess: effective sample size of the persistent ensemble.
@@ -559,7 +558,7 @@ def step(
         iteration_log_likelihoods
     )
 
-    new_state = PSState(
+    new_state = PersistentSMCState(
         persistent_particles=persistent_particles,
         persistent_log_likelihoods=persistent_log_likelihoods,
         persistent_log_Z=persistent_log_Z,
@@ -568,7 +567,7 @@ def step(
     )
 
     # calculate effective sample size
-    return new_state, PSInfo(resample_idx, update_info)
+    return new_state, PersistentStateInfo(resample_idx, update_info)
 
 
 def build_kernel(
@@ -622,9 +621,9 @@ def build_kernel(
     Returns
     -------
     kernel: Callable
-        A callable that takes a rng_key, a PSState, a tempering parameter lmbda,
-        and a dictionary of mcmc_parameters, and that returns a the PSState after
-        the step along with information about the transition.
+        A callable that takes a rng_key, a PersistentSMCState, a tempering parameter
+        lmbda, and a dictionary of mcmc_parameters, and that returns a the
+        PersistentSMCState after the step along with information about the transition.
     """
 
     def update_fn(
@@ -652,11 +651,11 @@ def build_kernel(
 
     def kernel(
         rng_key: PRNGKey,
-        state: PSState,
+        state: PersistentSMCState,
         num_mcmc_steps: int | Array,
         lmbda: float | Array,
         mcmc_parameters: dict,
-    ) -> tuple[PSState, PSInfo]:
+    ) -> tuple[PersistentSMCState, PersistentStateInfo]:
         """Kernel to move the particles one step using the
         Persistent Sampling algorithm.
 
@@ -664,7 +663,7 @@ def build_kernel(
         ----------
         rng_key : PRNGKey
             Key used for random number generation.
-        state : PSState
+        state : PersistentSMCState
             The sampling state from the previous iteration.
         num_mcmc_steps : int | Array
             Number of MCMC steps to apply to each particle.
@@ -675,9 +674,9 @@ def build_kernel(
 
         Returns
         -------
-        new_state : PSState
+        new_state : PersistentSMCState
             The new sampling state after one step of Persistent Sampling.
-        info : PSInfo
+        info : PersistentStateInfo
             Additional information on the PS step.
         """
 
@@ -769,10 +768,10 @@ def as_top_level_api(
         A ``SamplingAlgorithm`` instance with init and step methods. See
         blackjax.base.SamplingAlgorithm for details.
         The init method has signature
-        (position: ArrayLikeTree) -> PSState
+        (position: ArrayLikeTree) -> PersistentSMCState
         The step method has signature
-        (rng_key: PRNGKey, state: PSState, lmbda: float | Array) ->
-        (new_state: PSState, info: PSInfo)
+        (rng_key: PRNGKey, state: PersistentSMCState, lmbda: float | Array) ->
+        (new_state: PersistentSMCState, info: PersistentStateInfo)
     """
 
     kernel = build_kernel(
@@ -784,14 +783,14 @@ def as_top_level_api(
         update_strategy,
     )
 
-    def init_fn(position: ArrayLikeTree) -> PSState:
+    def init_fn(position: ArrayLikeTree) -> PersistentSMCState:
         return init(position, loglikelihood_fn, n_schedule)
 
     def step_fn(
         rng_key: PRNGKey,
-        state: PSState,
+        state: PersistentSMCState,
         lmbda: float | Array,
-    ) -> tuple[PSState, PSInfo]:
+    ) -> tuple[PersistentSMCState, PersistentStateInfo]:
         return kernel(
             rng_key,
             state,

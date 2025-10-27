@@ -9,14 +9,15 @@ import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
+from jax.scipy.special import logsumexp
 
 import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax import adaptive_persistent_sampling_smc, persistent_sampling_smc
 from blackjax.smc import extend_params
 from blackjax.smc.persistent_sampling import (
-    PSInfo,
-    PSState,
+    PersistentSMCState,
+    PersistentStateInfo,
     compute_log_persistent_weights,
     compute_log_Z,
     compute_persistent_ess,
@@ -85,7 +86,8 @@ class PersistentSamplingUnitTest(chex.TestCase):
         ),
     )
     def test_init(self, particle_generator: Callable) -> None:
-        """Test that init properly sets up the PSState with different pytree shapes."""
+        """Test that init properly sets up the PersistentSMCState with different pytree
+        shapes."""
         num_particles = 10
         n_schedule = 5
 
@@ -100,7 +102,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
         state = init(particles, loglikelihood_fn, n_schedule)
 
         # Check state properties
-        assert isinstance(state, PSState)
+        assert isinstance(state, PersistentSMCState)
         assert state.iteration == 0
         assert state.tempering_schedule[0] == 0.0
         assert state.persistent_log_Z[0] == 0.0
@@ -219,7 +221,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
 
         # Uniform weights (in log space, normalized)
         log_weights = jnp.ones((num_iterations, num_particles))
-        norm_log_weights = log_weights - jax.scipy.special.logsumexp(log_weights)
+        norm_log_weights = log_weights - logsumexp(log_weights)
 
         # Compute ESS with normalized weights and unnormalized weights, testing if
         # normalization inside the function works correctly (with and without JIT)
@@ -601,13 +603,13 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
 def inference_loop_adaptive(
     rng_key: PRNGKey,
     kernel: Callable,
-    initial_state: PSState,
+    initial_state: PersistentSMCState,
     target_ess: float,
     max_iterations: int,
-) -> PSState:
+) -> PersistentSMCState:
     """Run adaptive SMC until condition is met."""
 
-    def cond(carry: tuple[PSState, PRNGKey]) -> jnp.ndarray:
+    def cond(carry: tuple[PersistentSMCState, PRNGKey]) -> jnp.ndarray:
         """Returns True while lambda < 1.0 or ESS < target_ess and
         iteration < max_iterations."""
         state, _ = carry
@@ -620,7 +622,9 @@ def inference_loop_adaptive(
             state.iteration < max_iterations,
         )
 
-    def one_step(carry: tuple[PSState, PRNGKey]) -> tuple[PSState, PRNGKey]:
+    def one_step(
+        carry: tuple[PersistentSMCState, PRNGKey],
+    ) -> tuple[PersistentSMCState, PRNGKey]:
         state, key = carry
         key, subkey = jax.random.split(key)
         state, _ = kernel(subkey, state)
@@ -643,15 +647,17 @@ def inference_loop_adaptive(
 def inference_loop_fixed(
     rng_key: PRNGKey,
     kernel: Callable,
-    initial_state: PSState,
+    initial_state: PersistentSMCState,
     tempering_schedule: jnp.ndarray,
-) -> PSState:
+) -> PersistentSMCState:
     """Inference loop for fixed schedule persistent sampling."""
 
     def body_fn(
-        carry: tuple[int, PSState],
+        carry: tuple[int, PersistentSMCState],
         lmbda: float,
-    ) -> tuple[tuple[int, PSState], tuple[PSState, PSInfo]]:
+    ) -> tuple[
+        tuple[int, PersistentSMCState], tuple[PersistentSMCState, PersistentStateInfo]
+    ]:
         i, state = carry
         subkey = jax.random.fold_in(rng_key, i)
         new_state, info = kernel(subkey, state, lmbda)

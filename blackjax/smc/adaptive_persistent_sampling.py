@@ -81,12 +81,12 @@ def build_kernel(
     Returns
     -------
     kernel: Callable
-        A callable that takes a rng_key, a PSState, and a dictionary of
-        mcmc_parameters, and that returns a the PSState after
+        A callable that takes a rng_key, a PersistentSMCState, and a dictionary of
+        mcmc_parameters, and that returns a the PersistentSMCState after
         the step along with information about the transition.
     """
 
-    def calculate_lambda(state: persistent_sampling.PSState) -> Array:
+    def calculate_lambda(state: persistent_sampling.PersistentSMCState) -> Array:
         """Calculate the next tempering parameter based on the target ESS."""
 
         n_particles = state.persistent_weights.shape[1]
@@ -134,10 +134,10 @@ def build_kernel(
 
     def kernel(
         rng_key: PRNGKey,
-        state: persistent_sampling.PSState,
+        state: persistent_sampling.PersistentSMCState,
         num_mcmc_steps: int | Array,
         mcmc_parameters: dict,
-    ) -> persistent_sampling.PSState:
+    ) -> persistent_sampling.PersistentSMCState:
         """The adaptive Persistent Sampling kernel. See kernel function in
         blackjax.smc.persistent_sampling.build_kernel for more details."""
 
@@ -221,10 +221,10 @@ def as_top_level_api(
         A ``SamplingAlgorithm`` instance with init and step methods. See
         blackjax.base.SamplingAlgorithm for details.
         The init method has signature
-        (position: ArrayLikeTree) -> PSState
+        (position: ArrayLikeTree) -> PersistentSMCState
         The step method has signature
-        (rng_key: PRNGKey, state: PSState, lmbda: float | Array) ->
-        (new_state: PSState, info: PSInfo)
+        (rng_key: PRNGKey, state: PersistentSMCState, lmbda: float | Array) ->
+        (new_state: PersistentSMCState, info: PersistentStateInfo)
     """
 
     kernel = build_kernel(
@@ -238,13 +238,16 @@ def as_top_level_api(
         root_solver,
     )
 
-    def init_fn(position: ArrayLikeTree) -> persistent_sampling.PSState:
+    def init_fn(position: ArrayLikeTree) -> persistent_sampling.PersistentSMCState:
         return init(position, loglikelihood_fn, max_iterations)
 
     def step_fn(
         rng_key: PRNGKey,
-        state: persistent_sampling.PSState,
-    ) -> tuple[persistent_sampling.PSState, persistent_sampling.PSInfo]:
+        state: persistent_sampling.PersistentSMCState,
+    ) -> tuple[
+        persistent_sampling.PersistentSMCState,
+        persistent_sampling.PersistentStateInfo,
+    ]:
         return kernel(
             rng_key,
             state,
