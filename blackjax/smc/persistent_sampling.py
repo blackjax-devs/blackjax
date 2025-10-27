@@ -73,7 +73,7 @@ class PersistentSMCState(NamedTuple):
     ------------------
     particles: ArrayLikeTree
         Particles in current iteration (i.e. at index `iteration`).
-    lmbda: float | Array
+    tempering_param: float | Array
         Tempering parameter in current iteration.
     log_Z: float | Array
         Log normalizing constant in current iteration.
@@ -103,7 +103,7 @@ class PersistentSMCState(NamedTuple):
         return jax.tree.map(lambda x: x[self.iteration], self.persistent_particles)
 
     @property
-    def lmbda(self) -> float | Array:
+    def tempering_param(self) -> float | Array:
         """Tempering parameter in current iteration."""
         return self.tempering_schedule[self.iteration]
 
@@ -443,7 +443,7 @@ def compute_persistent_ess(
         Effective sample size of the persistent ensemble.
     """
     if normalize_weights:
-        log_persistent_weights = log_persistent_weights - jax.scipy.special.logsumexp(
+        log_persistent_weights = log_persistent_weights - logsumexp(
             log_persistent_weights
         )
 

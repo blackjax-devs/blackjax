@@ -465,7 +465,7 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
 
             # 3. Check that lambda is set correctly in the schedule
             np.testing.assert_allclose(
-                state.lmbda,
+                state.tempering_param,
                 lmbda,
                 rtol=1e-5,
                 err_msg=f"Lambda at iteration {expected_iteration} should be {lmbda}",
@@ -618,7 +618,9 @@ def inference_loop_adaptive(
             normalize_weights=True,
         )
         return jnp.logical_and(
-            jnp.logical_or(state.lmbda < 1.0, ess < target_ess * state.num_particles),
+            jnp.logical_or(
+                state.tempering_param < 1.0, ess < target_ess * state.num_particles
+            ),
             state.iteration < max_iterations,
         )
 
