@@ -138,10 +138,10 @@ def smc_inference_loop(loop_key, smc_kernel, init_state, schedule):
     """Run the tempered SMC algorithm.
     """
 
-    def body_fn(carry, lmbda):
+    def body_fn(carry, tempering_param):
         i, state = carry
         subkey = jax.random.fold_in(loop_key, i)
-        new_state, info = smc_kernel(subkey, state, lmbda)
+        new_state, info = smc_kernel(subkey, state, tempering_param)
         return (i + 1, new_state), (new_state, info)
 
     _, (all_samples, _) = jax.lax.scan(body_fn, (0, init_state), schedule)
