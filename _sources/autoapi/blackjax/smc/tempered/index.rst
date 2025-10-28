@@ -33,7 +33,7 @@ Module Contents
 
    particles: PyTree
        The particles' positions.
-   lmbda: float
+   tempering_param: float
        Current value of the tempering parameter.
 
 
@@ -46,7 +46,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-   .. py:attribute:: lmbda
+   .. py:attribute:: tempering_param
       :type:  float
 
 

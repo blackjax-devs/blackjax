@@ -450,8 +450,8 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">compute_delta</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">tempered</span><span class="o">.</span><span class="n">TemperedSMCState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">lmbda</span>
-        <span class="n">max_delta</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">lmbda</span>
+        <span class="n">tempering_param</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tempering_param</span>
+        <span class="n">max_delta</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">tempering_param</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">ess</span><span class="o">.</span><span class="n">ess_solver</span><span class="p">(</span>
             <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">loglikelihood_fn</span><span class="p">),</span>
             <span class="n">state</span><span class="o">.</span><span class="n">particles</span><span class="p">,</span>
@@ -479,8 +479,10 @@ document.write(`
         <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">tempered</span><span class="o">.</span><span class="n">TemperedSMCState</span><span class="p">,</span> <span class="n">base</span><span class="o">.</span><span class="n">SMCInfo</span><span class="p">]:</span>
         <span class="n">delta</span> <span class="o">=</span> <span class="n">compute_delta</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
-        <span class="n">lmbda</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">+</span> <span class="n">state</span><span class="o">.</span><span class="n">lmbda</span>
-        <span class="k">return</span> <span class="n">tempered_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">num_mcmc_steps</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">,</span> <span class="n">mcmc_parameters</span><span class="p">)</span>
+        <span class="n">tempering_param</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">+</span> <span class="n">state</span><span class="o">.</span><span class="n">tempering_param</span>
+        <span class="k">return</span> <span class="n">tempered_kernel</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">num_mcmc_steps</span><span class="p">,</span> <span class="n">tempering_param</span><span class="p">,</span> <span class="n">mcmc_parameters</span>
+        <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
 

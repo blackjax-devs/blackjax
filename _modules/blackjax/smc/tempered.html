@@ -410,7 +410,7 @@ document.write(`
 
 <span class="sd">    particles: PyTree</span>
 <span class="sd">        The particles&#39; positions.</span>
-<span class="sd">    lmbda: float</span>
+<span class="sd">    tempering_param: float</span>
 <span class="sd">        Current value of the tempering parameter.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -423,9 +423,9 @@ document.write(`
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.weights">[docs]</a>
     <span class="n">weights</span><span class="p">:</span> <span class="n">Array</span></div>
 
-<div class="viewcode-block" id="TemperedSMCState.lmbda">
-<a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.lmbda">[docs]</a>
-    <span class="n">lmbda</span><span class="p">:</span> <span class="nb">float</span></div>
+<div class="viewcode-block" id="TemperedSMCState.tempering_param">
+<a class="viewcode-back" href="../../../autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.tempering_param">[docs]</a>
+    <span class="n">tempering_param</span><span class="p">:</span> <span class="nb">float</span></div>
 </div>
 
 
@@ -500,7 +500,7 @@ document.write(`
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
         <span class="n">state</span><span class="p">:</span> <span class="n">TemperedSMCState</span><span class="p">,</span>
         <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">lmbda</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">tempering_param</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">mcmc_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">TemperedSMCState</span><span class="p">,</span> <span class="n">smc</span><span class="o">.</span><span class="n">base</span><span class="o">.</span><span class="n">SMCInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Move the particles one step using the Tempered SMC algorithm.</span>
@@ -511,7 +511,7 @@ document.write(`
 <span class="sd">            JAX PRNGKey for randomness</span>
 <span class="sd">        state</span>
 <span class="sd">            Current state of the tempered SMC algorithm</span>
-<span class="sd">        lmbda</span>
+<span class="sd">        tempering_param</span>
 <span class="sd">            Current value of the tempering parameter</span>
 <span class="sd">        mcmc_parameters</span>
 <span class="sd">            The parameters of the MCMC step function.  Parameters with leading dimension</span>
@@ -525,14 +525,14 @@ document.write(`
 <span class="sd">            Additional information on the SMC step</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">delta</span> <span class="o">=</span> <span class="n">lmbda</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">lmbda</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">tempering_param</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">tempering_param</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">log_weights_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">tempered_logposterior_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
             <span class="n">logprior</span> <span class="o">=</span> <span class="n">logprior_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-            <span class="n">tempered_loglikelihood</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">lmbda</span> <span class="o">*</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+            <span class="n">tempered_loglikelihood</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">tempering_param</span> <span class="o">*</span> <span class="n">loglikelihood_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">logprior</span> <span class="o">+</span> <span class="n">tempered_loglikelihood</span>
 
         <span class="n">smc_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">update_particles</span><span class="p">(</span>
@@ -545,7 +545,7 @@ document.write(`
         <span class="p">)</span>
 
         <span class="n">tempered_state</span> <span class="o">=</span> <span class="n">TemperedSMCState</span><span class="p">(</span>
-            <span class="n">smc_state</span><span class="o">.</span><span class="n">particles</span><span class="p">,</span> <span class="n">smc_state</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">lmbda</span> <span class="o">+</span> <span class="n">delta</span>
+            <span class="n">smc_state</span><span class="o">.</span><span class="n">particles</span><span class="p">,</span> <span class="n">smc_state</span><span class="o">.</span><span class="n">weights</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">tempering_param</span> <span class="o">+</span> <span class="n">delta</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">tempered_state</span><span class="p">,</span> <span class="n">info</span>
@@ -607,12 +607,12 @@ document.write(`
         <span class="k">del</span> <span class="n">rng_key</span>
         <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">tempering_param</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span>
             <span class="n">state</span><span class="p">,</span>
             <span class="n">num_mcmc_steps</span><span class="p">,</span>
-            <span class="n">lmbda</span><span class="p">,</span>
+            <span class="n">tempering_param</span><span class="p">,</span>
             <span class="n">mcmc_parameters</span><span class="p">,</span>
         <span class="p">)</span>
 
