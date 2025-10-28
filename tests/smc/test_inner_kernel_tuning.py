@@ -81,7 +81,9 @@ class SMCParameterTuningTest(chex.TestCase):
 
     def test_smc_inner_kernel_tempered(self):
         self.smc_inner_kernel_tuning_test_case(
-            blackjax.tempered_smc, smc_parameters={}, step_parameters={"tempering_param": 0.75}
+            blackjax.tempered_smc,
+            smc_parameters={},
+            step_parameters={"tempering_param": 0.75},
         )
 
     def smc_inner_kernel_tuning_test_case(

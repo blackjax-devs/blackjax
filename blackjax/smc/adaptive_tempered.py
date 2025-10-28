@@ -100,7 +100,9 @@ def build_kernel(
     ) -> tuple[tempered.TemperedSMCState, base.SMCInfo]:
         delta = compute_delta(state)
         tempering_param = delta + state.tempering_param
-        return tempered_kernel(rng_key, state, num_mcmc_steps, tempering_param, mcmc_parameters)
+        return tempered_kernel(
+            rng_key, state, num_mcmc_steps, tempering_param, mcmc_parameters
+        )
 
     return kernel
 

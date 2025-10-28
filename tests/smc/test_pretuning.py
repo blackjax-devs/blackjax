@@ -188,7 +188,9 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             def body_fn(carry, tempering_param):
                 i, state = carry
                 subkey = jax.random.fold_in(self.key, i)
-                new_state, info = smc_kernel(subkey, state, tempering_param=tempering_param)
+                new_state, info = smc_kernel(
+                    subkey, state, tempering_param=tempering_param
+                )
                 return (i + 1, new_state), (new_state, info)
 
             num_tempering_steps = 10
