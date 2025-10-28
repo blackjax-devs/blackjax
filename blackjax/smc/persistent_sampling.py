@@ -108,11 +108,6 @@ class PersistentSMCState(NamedTuple):
         return self.tempering_schedule[self.iteration]
 
     @property
-    def lmbda(self) -> float | Array:
-        """Alias for tempering_param, to match TemperedSMCState interface."""
-        return self.tempering_schedule[self.iteration]
-
-    @property
     def log_Z(self) -> float | Array:
         """Log normalizing constant in current iteration."""
         return self.persistent_log_Z[self.iteration]
