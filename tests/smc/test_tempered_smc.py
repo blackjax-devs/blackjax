@@ -19,7 +19,7 @@ from tests.smc import SMCLinearRegressionTestCase
 def inference_loop(kernel, rng_key, initial_state):
     def cond(carry):
         _, state, *_ = carry
-        return state.lmbda < 1
+        return state.tempering_param < 1
 
     def body(carry):
         i, state, curr_loglikelihood = carry
@@ -146,10 +146,10 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         init_state = tempering.init(init_particles)
         smc_kernel = self.variant(tempering.step)
 
-        def body_fn(carry, lmbda):
+        def body_fn(carry, tempering_param):
             i, state = carry
             subkey = jax.random.fold_in(self.key, i)
-            new_state, info = smc_kernel(subkey, state, lmbda)
+            new_state, info = smc_kernel(subkey, state, tempering_param)
             return (i + 1, new_state), (new_state, info)
 
         (_, result), _ = jax.lax.scan(body_fn, (0, init_state), lambda_schedule)
