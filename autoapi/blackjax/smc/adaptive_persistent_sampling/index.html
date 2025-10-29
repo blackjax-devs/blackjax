@@ -1,0 +1,650 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>blackjax.smc.adaptive_persistent_sampling</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/smc/adaptive_persistent_sampling/index';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.smc.adaptive_tempered" href="../adaptive_tempered/index.html" />
+    <link rel="prev" title="blackjax.smc" href="../index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../../../_static/blackjax.png" class="logo__image only-dark" alt=" - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">blackjax.smc</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>blackjax.smc.adaptive_persistent_sampling</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_persistent_sampling.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_persistent_sampling.init"><code class="docutils literal notranslate"><span class="pre">init</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_persistent_sampling.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-blackjax.smc.adaptive_persistent_sampling">
+<span id="blackjax-smc-adaptive-persistent-sampling"></span><h1>blackjax.smc.adaptive_persistent_sampling<a class="headerlink" href="#module-blackjax.smc.adaptive_persistent_sampling" title="Link to this heading">#</a></h1>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.adaptive_persistent_sampling.init" title="blackjax.smc.adaptive_persistent_sampling.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.adaptive_persistent_sampling.build_kernel" title="blackjax.smc.adaptive_persistent_sampling.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
+<td><p>Build an adaptive Persistent Sampling kernel, with signature</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.adaptive_persistent_sampling.as_top_level_api" title="blackjax.smc.adaptive_persistent_sampling.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
+<td><p>Implements the user interface for the adaptive Persistent Sampling</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.adaptive_persistent_sampling.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprior_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_ess</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">update_and_take_last</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">solver.dichotomy</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/adaptive_persistent_sampling.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.adaptive_persistent_sampling.build_kernel" title="Link to this definition">#</a></dt>
+<dd><p>Build an adaptive Persistent Sampling kernel, with signature
+(rng_key,
+state,
+num_mcmc_steps,
+mcmc_parameters,) -&gt; (new_state, info).</p>
+<p>The function implements the Persistent Sampling algorithm as described
+in Karamanis et al. (2025), with an adaptive tempering schedule. See
+blackjax.smc.persistent_sampling.build_kernel for more details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprior_fn</strong> (<em>Callable</em>) – Log prior probability function.
+NOTE: This function must be normalized (<span class="math notranslate nohighlight">\(Z_0 = 1\)</span>), in order
+for the weighting scheme to function correctly.</p></li>
+<li><p><strong>loglikelihood_fn</strong> (<em>Callable</em>) – Log likelihood function.</p></li>
+<li><p><strong>mcmc_step_fn</strong> (<em>Callable</em>) – Function that creates MCMC step from log-probability density function.</p></li>
+<li><p><strong>mcmc_init_fn</strong> (<em>Callable</em>) – A function that creates a new mcmc state from a position and a
+log-probability density function.</p></li>
+<li><p><strong>resampling_fn</strong> (<em>Callable</em>) – Resampling function (from blackjax.smc.resampling).</p></li>
+<li><p><strong>target_ess</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>Array</em>) – Target effective sample size (ESS) to determine the next tempering
+parameter.
+NOTE: In persistent sampling, the ESS is computed over all particles
+from all previous iterations and can be &gt; 1.</p></li>
+<li><p><strong>update_strategy</strong> (<em>Callable</em>) – Strategy to update particles using MCMC kernels, by default
+‘update_and_take_last’ from blackjax.smc.base. The function signature must be
+(mcmc_init_fn,
+loggerposterior_fn,
+mcmc_step_fn,
+num_mcmc_steps,
+n_particles,) -&gt; (mcmc_kernel, n_particles), like ‘update_and_take_last’.
+The mcmc_kernel must have signature
+(rng_key, position, mcmc_parameters) -&gt; (new_position, info).</p></li>
+<li><p><strong>root_solver</strong> – The solver used to adaptively compute the temperature given a target number
+of effective samples. By default, blackjax.smc.solver.dichotomy.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>kernel</strong> – A callable that takes a rng_key, a PersistentSMCState, and a dictionary of
+mcmc_parameters, and that returns a the PersistentSMCState after
+the step along with information about the transition.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blackjax.smc.adaptive_persistent_sampling.init">
+<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/adaptive_persistent_sampling.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.adaptive_persistent_sampling.init" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.adaptive_persistent_sampling.as_top_level_api">
+<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprior_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_ess</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_mcmc_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">update_and_take_last</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">root_solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">solver.dichotomy</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/adaptive_persistent_sampling.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.adaptive_persistent_sampling.as_top_level_api" title="Link to this definition">#</a></dt>
+<dd><p>Implements the user interface for the adaptive Persistent Sampling
+kernel from Karamanis et al. 2025. See build_kernel and
+blackjax.smc.persistent_sampling for more details.</p>
+<p>NOTE: For this algorithm, we need to keep track of all particles
+from all previous iterations. Since the number of tempering steps (and
+therefore the number of particles) is not known in advance, we need to
+define a maximum number of iterations (max_iterations). The inference
+loop should be written in such a way that it breaks if this maximum
+number of iterations is exceeded, even if the algorithm has not yet
+converged to the final posterior (lambda = 1). There is no internal
+check for this.</p>
+<p>Also note that the arrays are preallocated to their maximum size, so
+higher max_iterations will lead to higher memory usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprior_fn</strong> (<em>Callable</em>) – The log-prior function of the model we wish to draw samples from.
+NOTE: This function must be normalized (<span class="math notranslate nohighlight">\(Z_0 = 1\)</span>), in order
+for the weighting scheme to function correctly.</p></li>
+<li><p><strong>loglikelihood_fn</strong> (<em>Callable</em>) – The log-likelihood function of the model we wish to draw samples from.</p></li>
+<li><p><strong>max_iterations</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>Array</em>) – The maximum number of iterations (tempering steps) to perform.</p></li>
+<li><p><strong>mcmc_step_fn</strong> (<em>Callable</em>) – The MCMC step function used to update the particles.</p></li>
+<li><p><strong>mcmc_init_fn</strong> (<em>Callable</em>) – The MCMC initialization function used to initialize the MCMC state
+from a position.</p></li>
+<li><p><strong>mcmc_parameters</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – The parameters for the MCMC kernel.</p></li>
+<li><p><strong>resampling_fn</strong> (<em>Callable</em>) – Resampling function (from blackjax.smc.resampling).</p></li>
+<li><p><strong>target_ess</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>Array</em><em>, </em><em>optional</em>) – Target effective sample size (ESS) to determine the next tempering
+parameter, by default 3.
+NOTE: In persistent sampling, the ESS is computed over all
+particles from all previous iterations and can be &gt; 1.</p></li>
+<li><p><strong>num_mcmc_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Number of MCMC steps to apply to each particle at each iteration,
+by default 10.</p></li>
+<li><p><strong>update_strategy</strong> (<em>Callable</em><em>, </em><em>optional</em>) – The strategy to update particles using MCMC kernels, by default
+‘update_and_take_last’ from blackjax.smc.base. See build_kernel for
+details.</p></li>
+<li><p><strong>root_solver</strong> (<em>Callable</em><em>, </em><em>optional</em>) – The solver used to adaptively compute the temperature given a target
+number of effective samples. By default, blackjax.smc.solver.dichotomy.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> instance with init and step methods. See
+blackjax.base.SamplingAlgorithm for details.
+The init method has signature
+(position: ArrayLikeTree) -&gt; PersistentSMCState
+The step method has signature
+(rng_key: PRNGKey, state: PersistentSMCState, lmbda: float | Array) -&gt;
+(new_state: PersistentSMCState, info: PersistentStateInfo)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>SamplingAlgorithm</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">blackjax.smc</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../adaptive_tempered/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">blackjax.smc.adaptive_tempered</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_persistent_sampling.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_persistent_sampling.init"><code class="docutils literal notranslate"><span class="pre">init</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.adaptive_persistent_sampling.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

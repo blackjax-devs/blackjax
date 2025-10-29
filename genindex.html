@@ -230,12 +230,14 @@
 </ul>
 </details></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
@@ -441,8 +443,12 @@ document.write(`
         <li><a href="autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.alpha">(PathfinderState attribute)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.ancestors">ancestors (SMCInfo attribute)</a>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentStateInfo.ancestors">ancestors (PersistentStateInfo attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.ancestors">(SMCInfo attribute)</a>
 </li>
+      </ul></li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.append_to_trajectory">append_to_trajectory() (in module blackjax.mcmc.trajectory)</a>
 </li>
       <li><a href="autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.approximate">approximate() (in module blackjax.vi.pathfinder)</a>
@@ -482,11 +488,15 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/sgmcmc/sgnht/index.html#blackjax.sgmcmc.sgnht.as_top_level_api">(in module blackjax.sgmcmc.sgnht)</a>
 </li>
+        <li><a href="autoapi/blackjax/smc/adaptive_persistent_sampling/index.html#blackjax.smc.adaptive_persistent_sampling.as_top_level_api">(in module blackjax.smc.adaptive_persistent_sampling)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.as_top_level_api">(in module blackjax.smc.adaptive_tempered)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.as_top_level_api">(in module blackjax.smc.inner_kernel_tuning)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.as_top_level_api">(in module blackjax.smc.partial_posteriors_path)</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.as_top_level_api">(in module blackjax.smc.persistent_sampling)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.as_top_level_api">(in module blackjax.smc.pretuning)</a>
 </li>
@@ -777,8 +787,6 @@ document.write(`
         <li><a href="autoapi/blackjax/sgmcmc/diffusions/index.html#module-blackjax.sgmcmc.diffusions">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.gradients
 
@@ -786,6 +794,8 @@ document.write(`
         <li><a href="autoapi/blackjax/sgmcmc/gradients/index.html#module-blackjax.sgmcmc.gradients">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.sghmc
 
@@ -812,6 +822,13 @@ document.write(`
 
       <ul>
         <li><a href="autoapi/blackjax/smc/index.html#module-blackjax.smc">module</a>
+</li>
+      </ul></li>
+      <li>
+    blackjax.smc.adaptive_persistent_sampling
+
+      <ul>
+        <li><a href="autoapi/blackjax/smc/adaptive_persistent_sampling/index.html#module-blackjax.smc.adaptive_persistent_sampling">module</a>
 </li>
       </ul></li>
       <li>
@@ -854,6 +871,13 @@ document.write(`
 
       <ul>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#module-blackjax.smc.partial_posteriors_path">module</a>
+</li>
+      </ul></li>
+      <li>
+    blackjax.smc.persistent_sampling
+
+      <ul>
+        <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#module-blackjax.smc.persistent_sampling">module</a>
 </li>
       </ul></li>
       <li>
@@ -986,6 +1010,8 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/sgmcmc/sgnht/index.html#blackjax.sgmcmc.sgnht.build_kernel">(in module blackjax.sgmcmc.sgnht)</a>
 </li>
+        <li><a href="autoapi/blackjax/smc/adaptive_persistent_sampling/index.html#blackjax.smc.adaptive_persistent_sampling.build_kernel">(in module blackjax.smc.adaptive_persistent_sampling)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.build_kernel">(in module blackjax.smc.adaptive_tempered)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/from_mcmc/index.html#blackjax.smc.from_mcmc.build_kernel">(in module blackjax.smc.from_mcmc)</a>
@@ -993,6 +1019,8 @@ document.write(`
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.build_kernel">(in module blackjax.smc.inner_kernel_tuning)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.build_kernel">(in module blackjax.smc.partial_posteriors_path)</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.build_kernel">(in module blackjax.smc.persistent_sampling)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.build_kernel">(in module blackjax.smc.pretuning)</a>
 </li>
@@ -1021,8 +1049,14 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio">compute_asymmetric_acceptance_ratio() (in module blackjax.mcmc.proposal)</a>
 </li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.compute_log_persistent_weights">compute_log_persistent_weights() (in module blackjax.smc.persistent_sampling)</a>
+</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.compute_log_Z">compute_log_Z() (in module blackjax.smc.persistent_sampling)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.compute_persistent_ess">compute_persistent_ess() (in module blackjax.smc.persistent_sampling)</a>
+</li>
       <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState">ContourSGLDState (class in blackjax.sgmcmc.csgld)</a>
 </li>
       <li><a href="autoapi/blackjax/sgmcmc/gradients/index.html#blackjax.sgmcmc.gradients.control_variates">control_variates() (in module blackjax.sgmcmc.gradients)</a>
@@ -1184,6 +1218,8 @@ document.write(`
       <ul>
         <li><a href="autoapi/blackjax/mcmc/rmhmc/index.html#blackjax.mcmc.rmhmc.init">(in module blackjax.mcmc.rmhmc)</a>
 </li>
+        <li><a href="autoapi/blackjax/smc/adaptive_persistent_sampling/index.html#blackjax.smc.adaptive_persistent_sampling.init">(in module blackjax.smc.adaptive_persistent_sampling)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/adaptive_tempered/index.html#blackjax.smc.adaptive_tempered.init">(in module blackjax.smc.adaptive_tempered)</a>
 </li>
       </ul></li>
@@ -1223,6 +1259,8 @@ document.write(`
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.init">(in module blackjax.smc.inner_kernel_tuning)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.init">(in module blackjax.smc.partial_posteriors_path)</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.init">(in module blackjax.smc.persistent_sampling)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.init">(in module blackjax.smc.pretuning)</a>
 </li>
@@ -1277,6 +1315,8 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.isokinetic_yoshida">isokinetic_yoshida (in module blackjax.mcmc.integrators)</a>
 </li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.iteration">iteration (PersistentSMCState attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/termination/index.html#blackjax.mcmc.termination.iterative_uturn_numpyro">iterative_uturn_numpyro() (in module blackjax.mcmc.termination)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/termination/index.html#blackjax.mcmc.termination.IterativeUTurnState">IterativeUTurnState (class in blackjax.mcmc.termination)</a>
@@ -1310,6 +1350,8 @@ document.write(`
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.log_step_size_moving_average">log_step_size_moving_average (ChEESAdaptationState attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.log_trajectory_length_moving_average">log_trajectory_length_moving_average (ChEESAdaptationState attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.log_Z">log_Z (PersistentSMCState property)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState.logdensities">logdensities (PeriodicOrbitalState attribute)</a>
 </li>
@@ -1489,6 +1531,8 @@ document.write(`
 </li>
         <li><a href="autoapi/blackjax/smc/index.html#module-blackjax.smc">blackjax.smc</a>
 </li>
+        <li><a href="autoapi/blackjax/smc/adaptive_persistent_sampling/index.html#module-blackjax.smc.adaptive_persistent_sampling">blackjax.smc.adaptive_persistent_sampling</a>
+</li>
         <li><a href="autoapi/blackjax/smc/adaptive_tempered/index.html#module-blackjax.smc.adaptive_tempered">blackjax.smc.adaptive_tempered</a>
 </li>
         <li><a href="autoapi/blackjax/smc/base/index.html#module-blackjax.smc.base">blackjax.smc.base</a>
@@ -1500,6 +1544,8 @@ document.write(`
         <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#module-blackjax.smc.inner_kernel_tuning">blackjax.smc.inner_kernel_tuning</a>
 </li>
         <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#module-blackjax.smc.partial_posteriors_path">blackjax.smc.partial_posteriors_path</a>
+</li>
+        <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#module-blackjax.smc.persistent_sampling">blackjax.smc.persistent_sampling</a>
 </li>
         <li><a href="autoapi/blackjax/smc/pretuning/index.html#module-blackjax.smc.pretuning">blackjax.smc.pretuning</a>
 </li>
@@ -1578,6 +1624,8 @@ document.write(`
       </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.num_particles">num_particles (PersistentSMCState property)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.num_states">num_states (Trajectory attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/nuts/index.html#blackjax.mcmc.nuts.NUTSInfo.num_trajectory_expansions">num_trajectory_expansions (NUTSInfo attribute)</a>
@@ -1625,6 +1673,8 @@ document.write(`
       <li><a href="autoapi/blackjax/smc/partial_posteriors_path/index.html#blackjax.smc.partial_posteriors_path.PartialPosteriorsSMCState.particles">particles (PartialPosteriorsSMCState attribute)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.particles">(PersistentSMCState property)</a>
+</li>
         <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.particles">(SMCState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.particles">(TemperedSMCState attribute)</a>
@@ -1643,6 +1693,18 @@ document.write(`
       <li><a href="autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState">PathfinderState (class in blackjax.vi.pathfinder)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState">PeriodicOrbitalState (class in blackjax.mcmc.periodic_orbital)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_likelihoods">persistent_log_likelihoods (PersistentSMCState attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_Z">persistent_log_Z (PersistentSMCState attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_particles">persistent_particles (PersistentSMCState attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_weights">persistent_weights (PersistentSMCState property)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState">PersistentSMCState (class in blackjax.smc.persistent_sampling)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentStateInfo">PersistentStateInfo (class in blackjax.smc.persistent_sampling)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/barker/index.html#blackjax.mcmc.barker.BarkerState.position">position (BarkerState attribute)</a>
 
@@ -1714,14 +1776,18 @@ document.write(`
       </ul></li>
       <li><a href="autoapi/blackjax/vi/svgd/index.html#blackjax.vi.svgd.rbf_kernel">rbf_kernel() (in module blackjax.vi.svgd)</a>
 </li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.remove_padding">remove_padding() (in module blackjax.smc.persistent_sampling)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.reorder_trajectories">reorder_trajectories() (in module blackjax.mcmc.trajectory)</a>
+</li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.resample_from_persistent">resample_from_persistent() (in module blackjax.smc.persistent_sampling)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/resampling/index.html#blackjax.smc.resampling.residual">residual() (in module blackjax.smc.resampling)</a>
 </li>
-      <li><a href="autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.return_all_adapt_info">return_all_adapt_info() (in module blackjax.adaptation.base)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.return_all_adapt_info">return_all_adapt_info() (in module blackjax.adaptation.base)</a>
+</li>
       <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState.rho">rho (MFVIState attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.rightmost_state">rightmost_state (Trajectory attribute)</a>
@@ -1807,6 +1873,8 @@ document.write(`
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.step">step() (in module blackjax.smc.base)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.step">(in module blackjax.smc.persistent_sampling)</a>
+</li>
         <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.step">(in module blackjax.vi.meanfield_vi)</a>
 </li>
         <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.step">(in module blackjax.vi.schrodinger_follmer)</a>
@@ -1840,7 +1908,13 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState">TemperedSMCState (class in blackjax.smc.tempered)</a>
 </li>
-      <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.tempering_param">tempering_param (TemperedSMCState attribute)</a>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.tempering_param">tempering_param (PersistentSMCState property)</a>
+
+      <ul>
+        <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.TemperedSMCState.tempering_param">(TemperedSMCState attribute)</a>
+</li>
+      </ul></li>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentSMCState.tempering_schedule">tempering_schedule (PersistentSMCState attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicExpansionState.termination_state">termination_state (DynamicExpansionState attribute)</a>
 
@@ -1850,10 +1924,10 @@ document.write(`
       </ul></li>
       <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceInfo.theta">theta (EllipSliceInfo attribute)</a>
 </li>
-      <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState.time">time (SchrodingerFollmerState attribute)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.SchrodingerFollmerState.time">time (SchrodingerFollmerState attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory">Trajectory (class in blackjax.mcmc.trajectory)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.DynamicExpansionState.trajectory">trajectory (DynamicExpansionState attribute)</a>
@@ -1884,8 +1958,12 @@ document.write(`
 </li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.update_and_take_last">update_and_take_last() (in module blackjax.smc.base)</a>
 </li>
-      <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.update_info">update_info (SMCInfo attribute)</a>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.PersistentStateInfo.update_info">update_info (PersistentStateInfo attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.update_info">(SMCInfo attribute)</a>
 </li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/vi/svgd/index.html#blackjax.vi.svgd.update_median_heuristic">update_median_heuristic() (in module blackjax.vi.svgd)</a>

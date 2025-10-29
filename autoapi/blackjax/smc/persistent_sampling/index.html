@@ -1,0 +1,1061 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>blackjax.smc.persistent_sampling</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../../_static/styles/bootstrap.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+
+  
+  <link href="../../../../_static/vendor/fontawesome/6.5.2/css/all.min.css?digest=dfe6caa3a7d634c4db9b" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../_static/vendor/fontawesome/6.5.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=eba8b062" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.8ecb98da25f57f5357bf6f572d296f466b2cfe2517ffebfabe82451661e28f02.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b" />
+  <script src="../../../../_static/vendor/fontawesome/6.5.2/js/all.min.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=887ef09a"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/smc/persistent_sampling/index';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.smc.pretuning" href="../pretuning/index.html" />
+    <link rel="prev" title="blackjax.smc.partial_posteriors_path" href="../partial_posteriors_path/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-primary-sidebar-checkbox"/>
+  <label class="overlay overlay-primary" for="pst-primary-sidebar-checkbox"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          id="pst-secondary-sidebar-checkbox"/>
+  <label class="overlay overlay-secondary" for="pst-secondary-sidebar-checkbox"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <script>document.write(`<img src="../../../../_static/blackjax.png" class="logo__image only-dark" alt=" - Home"/>`);</script>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+ <script>
+ document.write(`
+   <button class="btn search-button-field search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+    <span class="search-button__default-text">Search</span>
+    <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+   </button>
+ `);
+ </script></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">blackjax.smc</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"></i>
+  </button>
+`);
+</script>
+
+
+<script>
+document.write(`
+  <button class="btn btn-sm pst-navbar-icon search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+  </button>
+`);
+</script>
+<button class="sidebar-toggle secondary-toggle btn btn-sm" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>blackjax.smc.persistent_sampling</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_particles"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.persistent_particles</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_likelihoods"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.persistent_log_likelihoods</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_Z"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.persistent_log_Z</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.tempering_schedule"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.tempering_schedule</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.iteration"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.iteration</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.particles"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.particles</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.tempering_param"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.tempering_param</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.log_Z"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.log_Z</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_weights"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.persistent_weights</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.num_particles"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.num_particles</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentStateInfo"><code class="docutils literal notranslate"><span class="pre">PersistentStateInfo</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentStateInfo.ancestors"><code class="docutils literal notranslate"><span class="pre">PersistentStateInfo.ancestors</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentStateInfo.update_info"><code class="docutils literal notranslate"><span class="pre">PersistentStateInfo.update_info</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.remove_padding"><code class="docutils literal notranslate"><span class="pre">remove_padding()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.compute_log_Z"><code class="docutils literal notranslate"><span class="pre">compute_log_Z()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.compute_log_persistent_weights"><code class="docutils literal notranslate"><span class="pre">compute_log_persistent_weights()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.resample_from_persistent"><code class="docutils literal notranslate"><span class="pre">resample_from_persistent()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.compute_persistent_ess"><code class="docutils literal notranslate"><span class="pre">compute_persistent_ess()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.step"><code class="docutils literal notranslate"><span class="pre">step()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-blackjax.smc.persistent_sampling">
+<span id="blackjax-smc-persistent-sampling"></span><h1>blackjax.smc.persistent_sampling<a class="headerlink" href="#module-blackjax.smc.persistent_sampling" title="Link to this heading">#</a></h1>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PersistentSMCState</span></code></a></p></td>
+<td><p>State of the Persistent Sampling algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentStateInfo" title="blackjax.smc.persistent_sampling.PersistentStateInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PersistentStateInfo</span></code></a></p></td>
+<td><p>Information from one step of Persistent Sampling.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.init" title="blackjax.smc.persistent_sampling.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ PersistentSMCState)</p></td>
+<td><p>Initialize the Persistent Sampling state.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.remove_padding" title="blackjax.smc.persistent_sampling.remove_padding"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_padding</span></code></a>(→ PersistentSMCState)</p></td>
+<td><p>Remove padding from PersistentSMCState arrays up to current iteration.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.compute_log_Z" title="blackjax.smc.persistent_sampling.compute_log_Z"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_log_Z</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Compute log normalizing constant from log weights.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.compute_log_persistent_weights" title="blackjax.smc.persistent_sampling.compute_log_persistent_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_log_persistent_weights</span></code></a>(...)</p></td>
+<td><p>Compute importance weights for all persistent particles for</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.resample_from_persistent" title="blackjax.smc.persistent_sampling.resample_from_persistent"><code class="xref py py-obj docutils literal notranslate"><span class="pre">resample_from_persistent</span></code></a>(...)</p></td>
+<td><p>Resample N particles from the <span class="math notranslate nohighlight">\(i \times N\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.compute_persistent_ess" title="blackjax.smc.persistent_sampling.compute_persistent_ess"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_persistent_ess</span></code></a>(→ float | blackjax.types.Array)</p></td>
+<td><p>Calculate the effective sample size (ESS) of the persistent</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.step" title="blackjax.smc.persistent_sampling.step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">step</span></code></a>(→ tuple[PersistentSMCState, PersistentStateInfo])</p></td>
+<td><p>One step of the Persistent Sampling algorithm, as</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.build_kernel" title="blackjax.smc.persistent_sampling.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
+<td><p>Build a Persistent Sampling kernel, with signature</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.as_top_level_api" title="blackjax.smc.persistent_sampling.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
+<td><p>Implements the user interface for the Persistent Sampling</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PersistentSMCState</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="Link to this definition">#</a></dt>
+<dd><p>State of the Persistent Sampling algorithm.</p>
+<p>Contains all particles from all iterations, their weights,
+log-likelihoods, log normalizing constants, tempering parameters and an
+index for the current iteration.
+Particles of the current iteration can be accessed via the <cite>particles</cite> property
+for convenience.</p>
+<p>NOTE: All arrays should be padded with zeros up the length of the
+tempering schedule + 1. This is to allow JIT compilation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>persistent_particles</strong> (<em>ArrayLikeTree</em>) – Particles from all iterations (padded with zeros to expected length of
+tempering schedule + 1).</p></li>
+<li><p><strong>persistent_log_likelihoods</strong> (<em>Array</em>) – Log-likelihoods for all persistent particles, updated for current iteration.
+Shape is (n_schedule + 1, n_particles).</p></li>
+<li><p><strong>persistent_log_Z</strong> (<em>Array</em>) – History of (log of) normalizing constants <span class="math notranslate nohighlight">\([log(Z_0), \ldots, log(Z_t)]\)</span>,
+zero-padded for all iterations.</p></li>
+<li><p><strong>tempering_schedule</strong> (<em>Array</em>) – History of tempering parameters <span class="math notranslate nohighlight">\([\lambda_0, \ldots, \lambda_t]\)</span>,
+zero-padded.</p></li>
+<li><p><strong>iteration</strong> (<em>Array</em>) – Current iteration index.</p></li>
+<li><p><strong>Properties</strong> (<em>Derived</em>)</p></li>
+<li><p><strong>------------------</strong></p></li>
+<li><p><strong>particles</strong> (<em>ArrayLikeTree</em>) – Particles in current iteration (i.e. at index <cite>iteration</cite>).</p></li>
+<li><p><strong>tempering_param</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>Array</em>) – Tempering parameter in current iteration.</p></li>
+<li><p><strong>log_Z</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>Array</em>) – Log normalizing constant in current iteration.</p></li>
+<li><p><strong>persistent_weights</strong> (<em>Array</em>) – Normalized weights for all persistent particles, updated for current iteration.
+Shape is (n_schedule + 1, n_particles), where n_schedule is the number of
+tempering steps. Normalized such that they sum to iteration * n_particles.
+Calculated using persistent_log_likelihoods, persistent_log_Z,
+tempering_schedule, and iteration.
+NOTE: The weights are calculated on-the-fly, rather than than stored during
+the sampling process, since the weights in the current iteration depend on
+the particles sampled at that iteration, while in the algorithm the weights are
+calculated before sampling the new particles.</p></li>
+<li><p><strong>num_particles</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a>) – Number of particles.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.persistent_particles">
+<span class="sig-name descname"><span class="pre">persistent_particles</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayLikeTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.persistent_particles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_particles" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_likelihoods">
+<span class="sig-name descname"><span class="pre">persistent_log_likelihoods</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.persistent_log_likelihoods"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_likelihoods" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_Z">
+<span class="sig-name descname"><span class="pre">persistent_log_Z</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.persistent_log_Z"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_Z" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.tempering_schedule">
+<span class="sig-name descname"><span class="pre">tempering_schedule</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.tempering_schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.tempering_schedule" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.iteration">
+<span class="sig-name descname"><span class="pre">iteration</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.iteration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.iteration" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.particles">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">particles</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayLikeTree</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.particles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.particles" title="Link to this definition">#</a></dt>
+<dd><p>Particles in current iteration.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.tempering_param">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">tempering_param</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.tempering_param"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.tempering_param" title="Link to this definition">#</a></dt>
+<dd><p>Tempering parameter in current iteration.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.log_Z">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">log_Z</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.log_Z"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.log_Z" title="Link to this definition">#</a></dt>
+<dd><p>Log normalizing constant in current iteration.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.persistent_weights">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">persistent_weights</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.persistent_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_weights" title="Link to this definition">#</a></dt>
+<dd><p>Weights for all persistent particles in current iteration, normalized
+to sum to iteration * n_particles.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentSMCState.num_particles">
+<em class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">num_particles</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentSMCState.num_particles"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentSMCState.num_particles" title="Link to this definition">#</a></dt>
+<dd><p>Number of particles.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentStateInfo">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">PersistentStateInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentStateInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentStateInfo" title="Link to this definition">#</a></dt>
+<dd><p>Information from one step of Persistent Sampling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ancestors</strong> (<em>Array</em>) – The index of the particles selected by the resampling step.</p></li>
+<li><p><strong>update_info</strong> (<em>NamedTuple</em>) – Additional information returned by the update function.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentStateInfo.ancestors">
+<span class="sig-name descname"><span class="pre">ancestors</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentStateInfo.ancestors"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentStateInfo.ancestors" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.PersistentStateInfo.update_info">
+<span class="sig-name descname"><span class="pre">update_info</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">NamedTuple</span></em><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#PersistentStateInfo.update_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.PersistentStateInfo.update_info" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">particles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_schedule</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState"><span class="pre">PersistentSMCState</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.init" title="Link to this definition">#</a></dt>
+<dd><p>Initialize the Persistent Sampling state.</p>
+<p>The arrays are padded with zeros to alow for JIT compilation.
+The dimension of the arrays is (n_schedule + 1, n_particles),
+where n_schedule is the number of tempering steps. The + 1 is to
+account for the initial prior distribution at iteration 0.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>particles</strong> (<em>PyTree</em>) – Initial N particles (typically sampled from prior).</p></li>
+<li><p><strong>loglikelihood_fn</strong> (<em>Callable</em>) – Log likelihood function.</p></li>
+<li><p><strong>n_schedule</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>Array</em>) – Number of steps in the tempering schedule.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Initial state, with
+- particles set to input particles,
+- weights set to uniform weights,
+- log-likelihoods set to the log-likelihoods of the input particles,
+- normalizing constant set to 1.0 (assume prior is normalized, this is</p>
+<blockquote>
+<div><p>important),</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>tempering parameters set to 0.0 (initial distribution is prior).</p></li>
+<li><p>set iteration to 0.</p></li>
+</ul>
+<p>NOTE: All arrays in the PersistentSMCState are padded with zeros up
+to the length of the tempering schedule.</p>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState">PersistentSMCState</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.remove_padding">
+<span class="sig-name descname"><span class="pre">remove_padding</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState"><span class="pre">PersistentSMCState</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState"><span class="pre">PersistentSMCState</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#remove_padding"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.remove_padding" title="Link to this definition">#</a></dt>
+<dd><p>Remove padding from PersistentSMCState arrays up to current iteration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>state</strong> (<a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState"><em>PersistentSMCState</em></a>) – The PersistentSMCState with padded arrays.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New PersistentSMCState with arrays trimmed to current iteration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState">PersistentSMCState</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.compute_log_Z">
+<span class="sig-name descname"><span class="pre">compute_log_Z</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#compute_log_Z"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.compute_log_Z" title="Link to this definition">#</a></dt>
+<dd><p>Compute log normalizing constant from log weights.</p>
+<p>Implements Equation 16 from the Karamanis2025.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_weights</strong> (<em>Array</em>) – Log of unnormalized weights for all persistent particles at current iteration.</p></li>
+<li><p><strong>iteration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>Array</em>) – Current iteration index.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>log_Z</strong> – Estimate of log of normalizing constant <span class="math notranslate nohighlight">\(\hat{Z}_{t}\)</span> at current
+iteration.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a> | Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.compute_log_persistent_weights">
+<span class="sig-name descname"><span class="pre">compute_log_persistent_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">persistent_log_likelihoods</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persistent_log_Z</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tempering_schedule</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iteration</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">include_current</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_to_one</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#compute_log_persistent_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.compute_log_persistent_weights" title="Link to this definition">#</a></dt>
+<dd><p>Compute importance weights for all persistent particles for
+current iteration.</p>
+<p>Implements Equations 14 and 15 from the Karamanis2025.</p>
+<p>NOTE: The returned weights are normalized such that they sum to
+<span class="math notranslate nohighlight">\((i \times N)\)</span>, where i is the current iteration and N
+is the number of particles. They need to be renormalized to sum to 1.0
+before resampling, this can be done using the ‘normalize_to_one’ argument.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>persistent_log_likelihoods</strong> (<em>Array</em>) – Log-likelihoods for all persistent particles (for all previous
+current iteration).</p></li>
+<li><p><strong>persistent_log_Z</strong> (<em>Array</em>) – Log normalizing constants for all previous iterations.</p></li>
+<li><p><strong>tempering_schedule</strong> (<em>Array</em>) – Tempering parameters up to current iteration.</p></li>
+<li><p><strong>iteration</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>Array</em>) – Current iteration index.</p></li>
+<li><p><strong>include_current</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <cite>True</cite>, include the current iteration in the weight computation (i.e.
+sum to t rather than t-1 in equations 14-16). This is useful when calculating
+the weights after the resampling step, where the current iteration’s particles
+are already included in the persistent ensemble.</p></li>
+<li><p><strong>normalize_to_one</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <cite>True</cite>, normalize the weights to sum to 1.0. By default, the weights
+sum to (iteration * n_particles), as described in the paper.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>normalized_log_weights</strong> (<em>Array</em>) – Log of normalized weights <span class="math notranslate nohighlight">\(W^i_{tt'}\)</span> for all <span class="math notranslate nohighlight">\(i \times N\)</span>
+persistent particles at current iteration.</p></li>
+<li><p><strong>new_log_Z</strong> (<em>float</em>) – Estimate of log of normalizing constant <span class="math notranslate nohighlight">\(\hat{Z}_{t}\)</span> at current
+iteration.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.resample_from_persistent">
+<span class="sig-name descname"><span class="pre">resample_from_persistent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persistent_particles</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">persistent_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.ArrayTree</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#resample_from_persistent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.resample_from_persistent" title="Link to this definition">#</a></dt>
+<dd><p>Resample N particles from the <span class="math notranslate nohighlight">\(i \times N\)</span>
+persistent ensemble, where i is the current iteration.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> (<em>PRNGKey</em>) – JAX random key.</p></li>
+<li><p><strong>persistent_particles</strong> (<em>ArrayLikeTree</em>) – Historical particles of the i previous iterations.</p></li>
+<li><p><strong>persistent_weights</strong> (<em>Array</em>) – Normalized weights for all <span class="math notranslate nohighlight">\(i \times N\)</span> particles.
+NOTE: The weights need to sum to 1, this is different from
+the ‘normalized’ described by equation 14 in Karamanis2025
+amd computed by _compute_log_persistent_weights. These sum
+to <span class="math notranslate nohighlight">\((i \times N)\)</span>, i.e. the current iteration times
+the number of particles (the current number of persistent
+particles in the current iteration).</p></li>
+<li><p><strong>resample_fn</strong> (<em>Callable</em>) – Resampling function (from blackjax.smc.resampling)</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>resampled_particles</strong> (<em>ArrayTree</em>) – N particles resampled from persistent ensemble.</p></li>
+<li><p><strong>resample_idx</strong> (<em>Array</em>) – Indices of the selected particles.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.compute_persistent_ess">
+<span class="sig-name descname"><span class="pre">compute_persistent_ess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_persistent_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalize_weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#compute_persistent_ess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.compute_persistent_ess" title="Link to this definition">#</a></dt>
+<dd><p>Calculate the effective sample size (ESS) of the persistent
+ensemble. Equation 17 from Karamanis2025.</p>
+<p>NOTE: For the second identity in equation 17 to hold, the
+weights must be normalized to sum to 1.0. This function normalizes
+the weights internally if <cite>normalize_weights</cite> is set to <cite>True</cite>.</p>
+<p>NOTE: The ESS can be &gt; 1 for Persistent Sampling, unlike standard
+SMC.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_persistent_weights</strong> (<em>Array</em>) – Normalized log weights for all persistent particles.</p></li>
+<li><p><strong>normalize_weights</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><em>bool</em></a><em>, </em><em>optional</em>) – If <cite>True</cite>, normalize the weights to sum to 1.0 before computing
+the ESS. By default, the weights are assumed to be normalized.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ess</strong> – Effective sample size of the persistent ensemble.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)">float</a> | Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.step">
+<span class="sig-name descname"><span class="pre">step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState"><span class="pre">PersistentSMCState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">lmbda</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resample_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">compute_log_persistent_weights</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState"><span class="pre">PersistentSMCState</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentStateInfo" title="blackjax.smc.persistent_sampling.PersistentStateInfo"><span class="pre">PersistentStateInfo</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.step" title="Link to this definition">#</a></dt>
+<dd><p>One step of the Persistent Sampling algorithm, as
+described in algorithm 2 of Karamanis et al. (2025).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> – Key used for random number generation.</p></li>
+<li><p><strong>state</strong> – Current state of the PS sampler described by a PersistentSMCState.</p></li>
+<li><p><strong>lmbda</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><em>float</em></a><em> | </em><em>Array</em>) – New tempering parameter <span class="math notranslate nohighlight">\(\lambda_t\)</span> for current iteration.</p></li>
+<li><p><strong>loglikelihood_fn</strong> (<em>Callable</em>) – Log likelihood function.</p></li>
+<li><p><strong>update_fn</strong> (<em>Callable</em>) – MCMC kernel that takes in an array of keys and particles and returns
+updated particles along with any extra information.</p></li>
+<li><p><strong>resample_fn</strong> (<em>Callable</em>) – Resampling function (from blackjax.smc.resampling). This function
+is passed to _resample_from_persistent to resample from the
+persistent ensemble.</p></li>
+<li><p><strong>weight_fn</strong> – Function that assigns a weight to the particles, by default
+_compute_log_persistent_weights, which implements equation 14-16 from
+Karamanis2025. Should return normalized log weights and log normalizing
+constant.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul>
+<li><p><strong>new_state</strong> (<em>PersistentSMCState</em>) – The updated PersistentSMCState. Updated fields are:
+- particles: particles from all iterations, with current iteration’s</p>
+<blockquote>
+<div><p>particles added.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>weights: normalized weights for all persistent particles at current
+iteration.</p></li>
+<li><p>log_likelihoods: log-likelihoods for all persistent particles,
+with current iteration’s log-likelihoods added.</p></li>
+<li><p>log_Z: log normalizing constants, with current iteration’s
+normalizing constant added.</p></li>
+<li><p>tempering_schedule: tempering parameters, with current iteration’s
+parameter added.</p></li>
+<li><p>iteration: incremented by 1.</p></li>
+</ul>
+</li>
+<li><p><strong>info</strong> (<em>PersistentStateInfo</em>) – An <cite>PersistentStateInfo</cite> object that contains extra information about the PS
+transition. Contains:
+- ancestors: indices of the particles selected by the resampling step.
+- ess: effective sample size of the persistent ensemble.
+- update_info: any extra information returned by the update function.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprior_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">update_and_take_last</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.build_kernel" title="Link to this definition">#</a></dt>
+<dd><p>Build a Persistent Sampling kernel, with signature
+(rng_key,
+state,
+num_mcmc_steps,
+lmbda,
+mcmc_parameters,) -&gt; (new_state, info).</p>
+<p>The function implements the Persistent Sampling algorithm as described
+in Karamanis et al. (2025), with a fixed tempering schedule. It
+functions similarly to tempered SMC (see blackjax.smc.tempered),
+but keeps track of all particles from all previous iterations. This
+can lead to a more stable posterior and marginal likelihood estimation
+at the cost of higher memory usage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprior_fn</strong> (<em>Callable</em>) – Log prior probability function.
+NOTE: This function must be normalized (<span class="math notranslate nohighlight">\(Z_0 = 1\)</span>), in order
+for the weighting scheme to function correctly.</p></li>
+<li><p><strong>loglikelihood_fn</strong> (<em>Callable</em>) – Log likelihood function.</p></li>
+<li><p><strong>mcmc_step_fn</strong> (<em>Callable</em>) – Function that creates MCMC step from log-probability density function.</p></li>
+<li><p><strong>mcmc_init_fn</strong> (<em>Callable</em>) – A function that creates a new mcmc state from a position and a
+log-probability density function.</p></li>
+<li><p><strong>resampling_fn</strong> (<em>Callable</em>) – Resampling function (from blackjax.smc.resampling).</p></li>
+<li><p><strong>update_strategy</strong> (<em>Callable</em>) – Strategy to update particles using MCMC kernels, by default
+‘update_and_take_last’ from blackjax.smc.base. The function signature must be
+(mcmc_init_fn,
+loggerposterior_fn,
+mcmc_step_fn,
+num_mcmc_steps,
+n_particles,) -&gt; (mcmc_kernel, n_particles), like ‘update_and_take_last’.
+The mcmc_kernel must have signature
+(rng_key, position, mcmc_parameters) -&gt; (new_position, info).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>kernel</strong> – A callable that takes a rng_key, a PersistentSMCState, a tempering parameter
+lmbda, and a dictionary of mcmc_parameters, and that returns a the
+PersistentSMCState after the step along with information about the transition.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.smc.persistent_sampling.as_top_level_api">
+<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logprior_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loglikelihood_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_schedule</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_mcmc_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">update_and_take_last</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/persistent_sampling.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.persistent_sampling.as_top_level_api" title="Link to this definition">#</a></dt>
+<dd><p>Implements the user interface for the Persistent Sampling
+kernel. See build_kernel for details.</p>
+<p>NOTE: For this algorithm, we need to keep track of all particles
+from all previous iterations. To do so in a JIT-compatible way,
+we need to know the number of tempering steps in advance, to
+preallocate arrays of the correct size. Therefore, the user must
+provide the number of steps in the tempering schedule via the
+<cite>n_schedule</cite> argument.
+Since all arrays are preallocated to (n_schedule + 1, n_particles),
+where the + 1 accounts for the initial value at iteration 0. The user
+must ensure that the tempering schedule used in the actual sampling
+matches n_schedule.
+A tempering schedule with many steps may lead to high memory usage.</p>
+<p>NOTE: The algorithm enforces the tempering schedule to start at 0.0,
+if the supplied schedule also starts at 0.0, the first step will be
+done twice.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logprior_fn</strong> (<em>Callable</em>) – The log-prior function of the model we wish to draw samples from.
+NOTE: This function must be normalized (<span class="math notranslate nohighlight">\(Z_0 = 1\)</span>), in order
+for the weighting scheme to function correctly.</p></li>
+<li><p><strong>loglikelihood_fn</strong> (<em>Callable</em>) – The log-likelihood function of the model we wish to draw samples from.</p></li>
+<li><p><strong>n_schedule</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em> | </em><em>Array</em>) – Number of steps in the tempering schedule.</p></li>
+<li><p><strong>mcmc_step_fn</strong> (<em>Callable</em>) – The MCMC step function used to update the particles.</p></li>
+<li><p><strong>mcmc_init_fn</strong> (<em>Callable</em>) – The MCMC initialization function used to initialize the MCMC state
+from a position.</p></li>
+<li><p><strong>mcmc_parameters</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – The parameters for the MCMC kernel.</p></li>
+<li><p><strong>resampling_fn</strong> (<em>Callable</em>) – Resampling function (from blackjax.smc.resampling).</p></li>
+<li><p><strong>num_mcmc_steps</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – Number of MCMC steps to apply to each particle at each iteration,
+by default 10.</p></li>
+<li><p><strong>update_strategy</strong> (<em>Callable</em><em>, </em><em>optional</em>) – The strategy to update particles using MCMC kernels, by default
+‘update_and_take_last’ from blackjax.smc.base. See build_kernel for
+details.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> instance with init and step methods. See
+blackjax.base.SamplingAlgorithm for details.
+The init method has signature
+(position: ArrayLikeTree) -&gt; PersistentSMCState
+The step method has signature
+(rng_key: PRNGKey, state: PersistentSMCState, lmbda: float | Array) -&gt;
+(new_state: PersistentSMCState, info: PersistentStateInfo)</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>SamplingAlgorithm</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../partial_posteriors_path/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">blackjax.smc.partial_posteriors_path</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../pretuning/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">blackjax.smc.pretuning</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_particles"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.persistent_particles</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_likelihoods"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.persistent_log_likelihoods</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_log_Z"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.persistent_log_Z</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.tempering_schedule"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.tempering_schedule</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.iteration"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.iteration</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.particles"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.particles</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.tempering_param"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.tempering_param</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.log_Z"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.log_Z</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.persistent_weights"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.persistent_weights</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentSMCState.num_particles"><code class="docutils literal notranslate"><span class="pre">PersistentSMCState.num_particles</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentStateInfo"><code class="docutils literal notranslate"><span class="pre">PersistentStateInfo</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentStateInfo.ancestors"><code class="docutils literal notranslate"><span class="pre">PersistentStateInfo.ancestors</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.PersistentStateInfo.update_info"><code class="docutils literal notranslate"><span class="pre">PersistentStateInfo.update_info</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.remove_padding"><code class="docutils literal notranslate"><span class="pre">remove_padding()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.compute_log_Z"><code class="docutils literal notranslate"><span class="pre">compute_log_Z()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.compute_log_persistent_weights"><code class="docutils literal notranslate"><span class="pre">compute_log_persistent_weights()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.resample_from_persistent"><code class="docutils literal notranslate"><span class="pre">resample_from_persistent()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.compute_persistent_ess"><code class="docutils literal notranslate"><span class="pre">compute_persistent_ess()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.step"><code class="docutils literal notranslate"><span class="pre">step()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.smc.persistent_sampling.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2025, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../../_static/scripts/bootstrap.js?digest=dfe6caa3a7d634c4db9b"></script>
+<script src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=dfe6caa3a7d634c4db9b"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
