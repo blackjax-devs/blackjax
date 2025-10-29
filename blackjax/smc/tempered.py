@@ -30,14 +30,14 @@ class TemperedSMCState(NamedTuple):
 
     particles: PyTree
         The particles' positions.
-    lmbda: float
+    tempering_param: float
         Current value of the tempering parameter.
 
     """
 
     particles: ArrayTree
     weights: Array
-    lmbda: float
+    tempering_param: float
 
 
 def init(particles: ArrayLikeTree):
@@ -105,7 +105,7 @@ def build_kernel(
         rng_key: PRNGKey,
         state: TemperedSMCState,
         num_mcmc_steps: int,
-        lmbda: float,
+        tempering_param: float,
         mcmc_parameters: dict,
     ) -> tuple[TemperedSMCState, smc.base.SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
@@ -116,7 +116,7 @@ def build_kernel(
             JAX PRNGKey for randomness
         state
             Current state of the tempered SMC algorithm
-        lmbda
+        tempering_param
             Current value of the tempering parameter
         mcmc_parameters
             The parameters of the MCMC step function.  Parameters with leading dimension
@@ -130,14 +130,14 @@ def build_kernel(
             Additional information on the SMC step
 
         """
-        delta = lmbda - state.lmbda
+        delta = tempering_param - state.tempering_param
 
         def log_weights_fn(position: ArrayLikeTree) -> float:
             return delta * loglikelihood_fn(position)
 
         def tempered_logposterior_fn(position: ArrayLikeTree) -> float:
             logprior = logprior_fn(position)
-            tempered_loglikelihood = state.lmbda * loglikelihood_fn(position)
+            tempered_loglikelihood = state.tempering_param * loglikelihood_fn(position)
             return logprior + tempered_loglikelihood
 
         smc_state, info = update_particles(
@@ -150,7 +150,7 @@ def build_kernel(
         )
 
         tempered_state = TemperedSMCState(
-            smc_state.particles, smc_state.weights, state.lmbda + delta
+            smc_state.particles, smc_state.weights, state.tempering_param + delta
         )
 
         return tempered_state, info
@@ -209,12 +209,12 @@ def as_top_level_api(
         del rng_key
         return init(position)
 
-    def step_fn(rng_key: PRNGKey, state, lmbda):
+    def step_fn(rng_key: PRNGKey, state, tempering_param):
         return kernel(
             rng_key,
             state,
             num_mcmc_steps,
-            lmbda,
+            tempering_param,
             mcmc_parameters,
         )
 

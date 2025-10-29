@@ -148,7 +148,7 @@ class TestUpdateParameterDistribution(chex.TestCase):
 def tuned_adaptive_tempered_inference_loop(kernel, rng_key, initial_state):
     def cond(carry):
         _, state, *_ = carry
-        return state.sampler_state.lmbda < 1
+        return state.sampler_state.tempering_param < 1
 
     def body(carry):
         i, state, curr_loglikelihood = carry
@@ -185,10 +185,12 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
                 blackjax.tempered_smc.init, init_particles, initial_parameters
             )
 
-            def body_fn(carry, lmbda):
+            def body_fn(carry, tempering_param):
                 i, state = carry
                 subkey = jax.random.fold_in(self.key, i)
-                new_state, info = smc_kernel(subkey, state, lmbda=lmbda)
+                new_state, info = smc_kernel(
+                    subkey, state, tempering_param=tempering_param
+                )
                 return (i + 1, new_state), (new_state, info)
 
             num_tempering_steps = 10

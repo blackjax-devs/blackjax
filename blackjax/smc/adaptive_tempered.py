@@ -70,8 +70,8 @@ def build_kernel(
     """
 
     def compute_delta(state: tempered.TemperedSMCState) -> float:
-        lmbda = state.lmbda
-        max_delta = 1 - lmbda
+        tempering_param = state.tempering_param
+        max_delta = 1 - tempering_param
         delta = ess.ess_solver(
             jax.vmap(loglikelihood_fn),
             state.particles,
@@ -99,8 +99,10 @@ def build_kernel(
         mcmc_parameters: dict,
     ) -> tuple[tempered.TemperedSMCState, base.SMCInfo]:
         delta = compute_delta(state)
-        lmbda = delta + state.lmbda
-        return tempered_kernel(rng_key, state, num_mcmc_steps, lmbda, mcmc_parameters)
+        tempering_param = delta + state.tempering_param
+        return tempered_kernel(
+            rng_key, state, num_mcmc_steps, tempering_param, mcmc_parameters
+        )
 
     return kernel
 
