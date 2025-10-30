@@ -202,7 +202,7 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
         )(self.rng_keys)
         config = tree.map(lambda x: jnp.median(x, 0), config)
         state_thin, config_thin, n_steps_thin = jit(
-            vmap(partial(self.warmup, num_steps=self.num_steps, thinning=4))
+            vmap(partial(self.warmup, num_steps=self.num_steps, thinning=2))
         )(self.rng_keys)
         config_thin = tree.map(lambda x: jnp.median(x, 0), config_thin)
 
@@ -228,7 +228,7 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
                     self.run_algo,
                     config=config_thin,
                     num_steps=self.num_steps,
-                    thinning=4,
+                    thinning=2,
                 )
             )
         )(self.rng_keys, state_thin)
