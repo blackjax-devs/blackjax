@@ -215,13 +215,20 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
 
         # Test thin algorithm in run_algo
         state, history = jit(
-            vmap(partial(self.run_algo, config=config, num_steps=self.num_steps, thinning=1))
+            vmap(
+                partial(
+                    self.run_algo, config=config, num_steps=self.num_steps, thinning=1
+                )
+            )
         )(self.rng_keys, state)
         samples = jnp.concatenate(history[0].position)
         state_thin, history_thin = jit(
             vmap(
                 partial(
-                    self.run_algo, config=config_thin, num_steps=self.num_steps, thinning=4
+                    self.run_algo,
+                    config=config_thin,
+                    num_steps=self.num_steps,
+                    thinning=4,
                 )
             )
         )(self.rng_keys, state_thin)
