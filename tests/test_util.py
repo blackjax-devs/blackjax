@@ -169,7 +169,7 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
         )  # NOTE: compensate L for thinning
         return state, config, n_steps
 
-    def run(self, rng_key, state, config, num_steps, thinning: int = 1):
+    def run_algo(self, rng_key, state, config, num_steps, thinning: int = 1):
         sampler = blackjax.mclmc(
             self.logdf,
             L=config.L,
@@ -213,15 +213,15 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
             config_thin.inverse_mass_matrix, config.inverse_mass_matrix, rtol=rtol
         )
 
-        # Test thin algorithm in run
+        # Test thin algorithm in run_algo
         state, history = jit(
-            vmap(partial(self.run, config=config, num_steps=self.num_steps, thinning=1))
+            vmap(partial(self.run_algo, config=config, num_steps=self.num_steps, thinning=1))
         )(self.rng_keys, state)
         samples = jnp.concatenate(history[0].position)
         state_thin, history_thin = jit(
             vmap(
                 partial(
-                    self.run, config=config_thin, num_steps=self.num_steps, thinning=4
+                    self.run_algo, config=config_thin, num_steps=self.num_steps, thinning=4
                 )
             )
         )(self.rng_keys, state_thin)
