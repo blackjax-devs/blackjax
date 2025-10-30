@@ -117,14 +117,16 @@ class RunInferenceAlgorithmTest(chex.TestCase):
 
 
 class ThinInferenceAlgorithmTest(chex.TestCase):
-    # logdf = lambda self, x: - (x**2).sum(-1) / 2 # Gaussian
-    logdf = (
-        lambda self, x: -((x[::2] - 1) ** 2 + (x[1::2] - x[::2] ** 2) ** 2).sum(-1) / 2
-    )  # Rosenbrock
-    d = 2
-    init_pos = jnp.ones(d)
-    rng_keys = jr.split(jr.key(42), 2)
-    num_steps = 10_000
+    def setUp(self):
+        super().setUp()
+        # self.logdf = lambda x: - (x**2).sum(-1) / 2 # Gaussian
+        self.logdf = (
+            lambda x: -((x[::2] - 1) ** 2 + (x[1::2] - x[::2] ** 2) ** 2).sum(-1) / 2
+        )  # Rosenbrock
+        dim = 2
+        self.init_pos = jnp.ones(dim)
+        self.rng_keys = jr.split(jr.key(42), 2)
+        self.num_steps = 10_000
 
     def warmup(self, rng_key, num_steps, thinning: int = 1):
         from blackjax.mcmc.integrators import isokinetic_mclachlan
@@ -191,6 +193,9 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
         return state, history
 
     def test_thin(self):
+        """
+        Compare results obtained from thinning kernel or algorithm vs. no thinning.
+        """
         # Test thin kernel in warmup
         state, config, n_steps = jit(
             vmap(partial(self.warmup, num_steps=self.num_steps, thinning=1))
