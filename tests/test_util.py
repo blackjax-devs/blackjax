@@ -119,10 +119,10 @@ class RunInferenceAlgorithmTest(chex.TestCase):
 class ThinInferenceAlgorithmTest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        # self.logdf = lambda x: - (x**2).sum(-1) / 2 # Gaussian
-        self.logdf = (
-            lambda x: -((x[::2] - 1) ** 2 + (x[1::2] - x[::2] ** 2) ** 2).sum(-1) / 2
-        )  # Rosenbrock
+        self.logdf = lambda x: -(x**2).sum(-1) / 2  # Gaussian
+        # self.logdf = (
+        #     lambda x: -((x[::2] - 1) ** 2 + (x[1::2] - x[::2] ** 2) ** 2).sum(-1) / 2
+        # )  # Rosenbrock
         dim = 2
         self.init_pos = jnp.ones(dim)
         self.rng_keys = jr.split(jr.key(42), 2)
@@ -206,11 +206,17 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
         )(self.rng_keys)
         config_thin = tree.map(lambda x: jnp.median(x, 0), config_thin)
 
-        rtol = 5e-1
-        # np.testing.assert_allclose(config_thin.L, config.L, rtol=rtol)
-        np.testing.assert_allclose(config_thin.step_size, config.step_size, rtol=rtol)
+        # Assert that the found parameters are close
+        rtol, atol = 1e-1, 1e-1
+        np.testing.assert_allclose(config_thin.L, config.L, rtol=rtol, atol=atol)
         np.testing.assert_allclose(
-            config_thin.inverse_mass_matrix, config.inverse_mass_matrix, rtol=rtol
+            config_thin.step_size, config.step_size, rtol=rtol, atol=atol
+        )
+        np.testing.assert_allclose(
+            config_thin.inverse_mass_matrix,
+            config.inverse_mass_matrix,
+            rtol=rtol,
+            atol=atol,
         )
 
         # Test thin algorithm in run_algo
@@ -234,6 +240,7 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
         )(self.rng_keys, state_thin)
         samples_thin = jnp.concatenate(history_thin[0].position)
 
+        # Assert that the sample statistics are close
         rtol, atol = 1e-1, 1e-1
         np.testing.assert_allclose(
             samples_thin.mean(0), samples.mean(0), rtol=rtol, atol=atol
