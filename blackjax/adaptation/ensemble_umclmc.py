@@ -314,7 +314,7 @@ class Adaptation:
         adaptation_state_new = AdaptationState(
             L,
             inverse_mass_matrix,
-            adaptation_state.step_size * eps_factor,
+            1.,#adaptation_state.step_size * eps_factor,
             adaptation_state.step_count + 1,
             EEVPD,
             EEVPD_wanted,

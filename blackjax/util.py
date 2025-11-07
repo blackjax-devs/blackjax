@@ -346,16 +346,16 @@ def eca_step(
         state, info = vmap(kernel, (0, 0, None))(keys_sampling, state, adaptation_state)
 
         # combine all the chains to compute expectation values
-        theta = vmap(summary_statistics_fn, (0, 0, None))(state, info, key_adaptation)
-        Etheta = tree_map(
-            lambda theta: lax.psum(jnp.sum(theta, axis=0), axis_name="chains")
+        summary_statistics = vmap(summary_statistics_fn, (0, 0, None))(state, info, key_adaptation)
+        expected_value_summary_statistics = tree_map(
+            lambda summary_statistics: lax.psum(jnp.sum(summary_statistics, axis=0), axis_name="chains")
             / num_chains,
-            theta,
+            summary_statistics,
         )
 
         # use these to adapt the hyperparameters of the dynamics
         adaptation_state, info_to_be_stored = adaptation_update(
-            adaptation_state, Etheta
+            adaptation_state, expected_value_summary_statistics
         )
 
         return (state, adaptation_state), info_to_be_stored
