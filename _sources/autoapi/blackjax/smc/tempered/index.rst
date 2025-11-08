@@ -31,15 +31,16 @@ Module Contents
 
    Current state for the tempered SMC algorithm.
 
-   particles: PyTree
-       The particles' positions.
-   tempering_param: float
-       Current value of the tempering parameter.
-
+   :param particles: The particles' positions.
+   :type particles: ArrayLikeTree
+   :param weights: Normalized weights for the particles.
+   :type weights: Array
+   :param tempering_param: Current value of the tempering parameter.
+   :type tempering_param: float | Array
 
 
    .. py:attribute:: particles
-      :type:  blackjax.types.ArrayTree
+      :type:  blackjax.types.ArrayLikeTree
 
 
    .. py:attribute:: weights
@@ -47,10 +48,19 @@ Module Contents
 
 
    .. py:attribute:: tempering_param
-      :type:  float
+      :type:  float | blackjax.types.Array
 
 
-.. py:function:: init(particles: blackjax.types.ArrayLikeTree)
+.. py:function:: init(particles: blackjax.types.ArrayLikeTree) -> TemperedSMCState
+
+   Initialize the Tempered SMC state.
+
+   :param particles: Initial N particles (typically sampled from prior).
+   :type particles: ArrayLikeTree
+
+   :returns: Initial state with uniform weights and tempering_param set to 0.0.
+   :rtype: TemperedSMCState
+
 
 .. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last, update_particles_fn: Optional[Callable] = None) -> Callable
 
@@ -66,34 +76,58 @@ Module Contents
    unnormalized likelihood term for which :math:`V(x)` is easy to compute
    pointwise.
 
-   :param logprior_fn: A function that computes the log density of the prior distribution
-   :param loglikelihood_fn: A function that returns the probability at a given
-                            position.
-   :param mcmc_step_fn: A function that creates a mcmc kernel from a log-probability density function.
+   :param logprior_fn: Log prior probability function.
+   :type logprior_fn: Callable
+   :param loglikelihood_fn: Log likelihood function.
+   :type loglikelihood_fn: Callable
+   :param mcmc_step_fn: Function that creates MCMC step from log-probability density function.
+   :type mcmc_step_fn: Callable
    :param mcmc_init_fn: A function that creates a new mcmc state from a position and a
                         log-probability density function.
    :type mcmc_init_fn: Callable
-   :param resampling_fn: A random function that resamples generated particles based of weights
-   :param num_mcmc_iterations: Number of iterations in the MCMC chain.
+   :param resampling_fn: Resampling function (from blackjax.smc.resampling).
+   :type resampling_fn: Callable
+   :param update_strategy: Strategy to update particles using MCMC kernels, by default
+                           'update_and_take_last' from blackjax.smc.base.
+   :type update_strategy: Callable
+   :param update_particles_fn: Optional custom function to update particles. If None, uses
+                               smc_from_mcmc.build_kernel.
+   :type update_particles_fn: Callable, optional
 
-   :returns: * *A callable that takes a rng_key and a TemperedSMCState that contains the current state*
-             * *of the chain and that returns a new state of the chain along with*
-             * *information about the transition.*
+   :returns: **kernel** -- A callable that takes a rng_key, a TemperedSMCState, num_mcmc_steps,
+             tempering_param, and mcmc_parameters, and returns a new
+             TemperedSMCState along with information about the transition.
+   :rtype: Callable
 
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: Optional[int] = 10, update_strategy=update_and_take_last, update_particles_fn=None) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: Optional[int] = 10, update_strategy: Callable = update_and_take_last, update_particles_fn: Optional[Callable] = None) -> blackjax.base.SamplingAlgorithm
 
-   Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+   Implements the user interface for the Tempered SMC kernel.
 
    :param logprior_fn: The log-prior function of the model we wish to draw samples from.
+   :type logprior_fn: Callable
    :param loglikelihood_fn: The log-likelihood function of the model we wish to draw samples from.
+   :type loglikelihood_fn: Callable
    :param mcmc_step_fn: The MCMC step function used to update the particles.
+   :type mcmc_step_fn: Callable
    :param mcmc_init_fn: The MCMC init function used to build a MCMC state from a particle position.
-   :param mcmc_parameters: The parameters of the MCMC step function.  Parameters with leading dimension
+   :type mcmc_init_fn: Callable
+   :param mcmc_parameters: The parameters of the MCMC step function. Parameters with leading dimension
                            length of 1 are shared amongst the particles.
+   :type mcmc_parameters: dict
    :param resampling_fn: The function used to resample the particles.
-   :param num_mcmc_steps: The number of times the MCMC kernel is applied to the particles per step.
+   :type resampling_fn: Callable
+   :param num_mcmc_steps: The number of times the MCMC kernel is applied to the particles per step,
+                          by default 10.
+   :type num_mcmc_steps: int, optional
+   :param update_strategy: Strategy to update particles using MCMC kernels, by default
+                           'update_and_take_last' from blackjax.smc.base.
+   :type update_strategy: Callable, optional
+   :param update_particles_fn: Optional custom function to update particles. If None, uses
+                               smc_from_mcmc.build_kernel.
+   :type update_particles_fn: Callable, optional
 
-   :rtype: A ``SamplingAlgorithm``.
+   :returns: A ``SamplingAlgorithm`` instance with init and step methods.
+   :rtype: SamplingAlgorithm
 
 

@@ -20,14 +20,15 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: dichotomy(fun, min_delta, max_delta, eps=0.0001, max_iter=100)
+.. py:function:: dichotomy(fun: Callable, min_delta: float | blackjax.types.Array, max_delta: float | blackjax.types.Array, eps: float = 0.0001, max_iter: int = 100) -> blackjax.types.Array
 
    Solves for delta by dichotomy.
 
    If max_delta is such that fun(max_delta) > 0, then we assume that max_delta
    can be used as an increment in the tempering.
 
-   :param fun: The decreasing function to solve, we must have fun(min_delta) > 0, fun(max_delta) < 0
+   :param fun: The decreasing function to solve, we must have fun(min_delta) > 0,
+               fun(max_delta) < 0
    :type fun: Callable
    :param min_delta: Starting point of the interval search
    :type min_delta: float

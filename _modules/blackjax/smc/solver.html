@@ -392,15 +392,24 @@ document.write(`
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;All things solving for adaptive tempering.&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
+
 
 <div class="viewcode-block" id="dichotomy">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/solver/index.html#blackjax.smc.solver.dichotomy">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">dichotomy</span><span class="p">(</span><span class="n">fun</span><span class="p">,</span> <span class="n">min_delta</span><span class="p">,</span> <span class="n">max_delta</span><span class="p">,</span> <span class="n">eps</span><span class="o">=</span><span class="mf">1e-4</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dichotomy</span><span class="p">(</span>
+    <span class="n">fun</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">min_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">max_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">eps</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-4</span><span class="p">,</span>
+    <span class="n">max_iter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Solves for delta by dichotomy.</span>
 
 <span class="sd">    If max_delta is such that fun(max_delta) &gt; 0, then we assume that max_delta</span>
@@ -409,7 +418,8 @@ document.write(`
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    fun: Callable</span>
-<span class="sd">        The decreasing function to solve, we must have fun(min_delta) &gt; 0, fun(max_delta) &lt; 0</span>
+<span class="sd">        The decreasing function to solve, we must have fun(min_delta) &gt; 0,</span>
+<span class="sd">        fun(max_delta) &lt; 0</span>
 <span class="sd">    min_delta: float</span>
 <span class="sd">        Starting point of the interval search</span>
 <span class="sd">    max_delta: float</span>
@@ -426,7 +436,7 @@ document.write(`
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">carry</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
         <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">f_a</span><span class="p">,</span> <span class="n">f_b</span> <span class="o">=</span> <span class="n">carry</span>
 
         <span class="n">mid</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span> <span class="o">+</span> <span class="n">b</span><span class="p">)</span>
@@ -439,15 +449,16 @@ document.write(`
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">f_a</span><span class="p">,</span> <span class="n">f_b</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">carry</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
         <span class="n">i</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">f_a</span><span class="p">,</span> <span class="n">f_b</span> <span class="o">=</span> <span class="n">carry</span>
         <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">max_iter</span><span class="p">,</span> <span class="n">f_a</span> <span class="o">-</span> <span class="n">f_b</span> <span class="o">&gt;</span> <span class="n">eps</span><span class="p">)</span>
 
     <span class="n">f_min_delta</span><span class="p">,</span> <span class="n">f_max_delta</span> <span class="o">=</span> <span class="n">fun</span><span class="p">(</span><span class="n">min_delta</span><span class="p">),</span> <span class="n">fun</span><span class="p">(</span><span class="n">max_delta</span><span class="p">)</span>
 
-    <span class="n">if_no_opt</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">max_delta</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">if_no_opt</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">max_delta</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">if_opt</span><span class="p">(</span><span class="n">_</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">if_opt</span><span class="p">(</span><span class="n">_</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">:</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">res_a</span><span class="p">,</span> <span class="n">res_b</span><span class="p">,</span> <span class="n">fun_res_a</span><span class="p">,</span> <span class="n">fun_res_b</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
             <span class="n">cond</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">min_delta</span><span class="p">,</span> <span class="n">max_delta</span><span class="p">,</span> <span class="n">f_min_delta</span><span class="p">,</span> <span class="n">f_max_delta</span><span class="p">)</span>
         <span class="p">)</span>

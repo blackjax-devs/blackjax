@@ -391,10 +391,11 @@ document.write(`
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Protocol</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">logsumexp</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
@@ -404,10 +405,20 @@ document.write(`
 <span class="k">class</span><span class="w"> </span><span class="nc">SMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the SMC sampler.</span>
 
-<span class="sd">    Particles must be a ArrayTree, each leave represents a variable from the posterior,</span>
-<span class="sd">    being an array of size `(n_particles, ...)`.</span>
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    particles: ArrayTree | ArrayLikeTree</span>
+<span class="sd">        Particles representing samples from the target distribution. Each leaf</span>
+<span class="sd">        represents a variable from the posterior, being an array of size</span>
+<span class="sd">        `(n_particles, ...)`.</span>
+<span class="sd">    weights: Array</span>
+<span class="sd">        Normalized weights for each particle, shape (n_particles,).</span>
+<span class="sd">    update_parameters: ArrayTree</span>
+<span class="sd">        Parameters passed to the update function.</span>
 
-<span class="sd">    Examples (three particles):</span>
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    Three particles with different posterior structures:</span>
 <span class="sd">        - Single univariate posterior:</span>
 <span class="sd">            [ Array([[1.], [1.2], [3.4]]) ]</span>
 <span class="sd">        - Single bivariate  posterior:</span>
@@ -422,7 +433,7 @@ document.write(`
 
 <div class="viewcode-block" id="SMCState.particles">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.particles">[docs]</a>
-    <span class="n">particles</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+    <span class="n">particles</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="n">ArrayLikeTree</span></div>
 
 <div class="viewcode-block" id="SMCState.weights">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState.weights">[docs]</a>
@@ -440,10 +451,12 @@ document.write(`
 <span class="k">class</span><span class="w"> </span><span class="nc">SMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the tempered SMC step.</span>
 
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
 <span class="sd">    ancestors: Array</span>
 <span class="sd">        The index of the particles proposed by the MCMC pass that were selected</span>
 <span class="sd">        by the resampling step.</span>
-<span class="sd">    log_likelihood_increment: float</span>
+<span class="sd">    log_likelihood_increment: float | Array</span>
 <span class="sd">        The log-likelihood increment due to the current step of the SMC algorithm.</span>
 <span class="sd">    update_info: NamedTuple</span>
 <span class="sd">        Additional information returned by the update function.</span>
@@ -455,7 +468,7 @@ document.write(`
 
 <div class="viewcode-block" id="SMCInfo.log_likelihood_increment">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.log_likelihood_increment">[docs]</a>
-    <span class="n">log_likelihood_increment</span><span class="p">:</span> <span class="nb">float</span></div>
+    <span class="n">log_likelihood_increment</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span></div>
 
 <div class="viewcode-block" id="SMCInfo.update_info">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.update_info">[docs]</a>
@@ -466,7 +479,21 @@ document.write(`
 
 <div class="viewcode-block" id="init">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.init">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">init_update_params</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">init_update_params</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SMCState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the SMC state.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    particles: ArrayLikeTree</span>
+<span class="sd">        Initial particles, typically sampled from the prior.</span>
+<span class="sd">    init_update_params: ArrayTree</span>
+<span class="sd">        Initial parameters for the update function.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    SMCState</span>
+<span class="sd">        Initial state with uniform weights.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Infer the number of particles from the size of the leading dimension of</span>
     <span class="c1"># the first leaf of the inputted PyTree.</span>
     <span class="n">num_particles</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree_util</span><span class="o">.</span><span class="n">tree_flatten</span><span class="p">(</span><span class="n">particles</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -492,7 +519,7 @@ document.write(`
 <span class="sd">    generate new particles from the current ones, weigh these particles using</span>
 <span class="sd">    `weight_fn` and resample them with `resample_fn`.</span>
 
-<span class="sd">    The `update_fn` and `weight_fn` functions must be batched by the called either</span>
+<span class="sd">    The `update_fn` and `weight_fn` functions must be batched by the caller either</span>
 <span class="sd">    using `jax.vmap` or `jax.pmap`.</span>
 
 <span class="sd">    In Feynman-Kac terms, the algorithm goes roughly as follows:</span>
@@ -509,29 +536,28 @@ document.write(`
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    rng_key</span>
+<span class="sd">    rng_key: PRNGKey</span>
 <span class="sd">        Key used to generate pseudo-random numbers.</span>
-<span class="sd">    state</span>
-<span class="sd">        Current state of the SMC sampler: particles and their respective</span>
-<span class="sd">        log-weights</span>
-<span class="sd">    update_fn</span>
+<span class="sd">    state: SMCState</span>
+<span class="sd">        Current state of the SMC sampler: particles and their respective weights.</span>
+<span class="sd">    update_fn: Callable</span>
 <span class="sd">        Function that takes an array of keys and particles and returns</span>
 <span class="sd">        new particles.</span>
-<span class="sd">    weight_fn</span>
+<span class="sd">    weight_fn: Callable</span>
 <span class="sd">        Function that assigns a weight to the particles.</span>
-<span class="sd">    resample_fn</span>
+<span class="sd">    resample_fn: Callable</span>
 <span class="sd">        Function that resamples the particles.</span>
-<span class="sd">    num_resampled</span>
+<span class="sd">    num_resampled: int, optional</span>
 <span class="sd">        The number of particles to resample. This can be used to implement</span>
-<span class="sd">        Waste-Free SMC :cite:p:`dau2020waste`, in which case we resample a number :math:`M&lt;N`</span>
-<span class="sd">        of particles, and the update function is in charge of returning</span>
+<span class="sd">        Waste-Free SMC :cite:p:`dau2020waste`, in which case we resample a number</span>
+<span class="sd">        :math:`M&lt;N` of particles, and the update function is in charge of returning</span>
 <span class="sd">        :math:`N` samples.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    new_particles</span>
-<span class="sd">        An array that contains the new particles generated by this SMC step.</span>
-<span class="sd">    info</span>
+<span class="sd">    new_state: SMCState</span>
+<span class="sd">        The new SMCState containing updated particles and weights.</span>
+<span class="sd">    info: SMCInfo</span>
 <span class="sd">        An `SMCInfo` object that contains extra information about the SMC</span>
 <span class="sd">        transition.</span>
 
@@ -550,7 +576,7 @@ document.write(`
     <span class="n">particles</span><span class="p">,</span> <span class="n">update_info</span> <span class="o">=</span> <span class="n">update_fn</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">particles</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">update_parameters</span><span class="p">)</span>
 
     <span class="n">log_weights</span> <span class="o">=</span> <span class="n">weight_fn</span><span class="p">(</span><span class="n">particles</span><span class="p">)</span>
-    <span class="n">logsum_weights</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span>
+    <span class="n">logsum_weights</span> <span class="o">=</span> <span class="n">logsumexp</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span>
     <span class="n">normalizing_constant</span> <span class="o">=</span> <span class="n">logsum_weights</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">num_particles</span><span class="p">)</span>
     <span class="n">weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_weights</span> <span class="o">-</span> <span class="n">logsum_weights</span><span class="p">)</span>
 
@@ -562,9 +588,22 @@ document.write(`
 
 <div class="viewcode-block" id="extend_params">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.extend_params">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">extend_params</span><span class="p">(</span><span class="n">params</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a dictionary of params, repeats them for every single particle. The expected</span>
-<span class="sd">    usage is in cases where the aim is to repeat the same parameters for all chains within SMC.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">extend_params</span><span class="p">(</span><span class="n">params</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extend parameters to be used for all particles in SMC.</span>
+
+<span class="sd">    Given a dictionary of params, repeats them for every single particle. The</span>
+<span class="sd">    expected usage is in cases where the aim is to repeat the same parameters for</span>
+<span class="sd">    all chains within SMC.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    params: Array</span>
+<span class="sd">        Parameters to extend for all particles.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array</span>
+<span class="sd">        Extended parameters with an additional dimension for particles.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span> <span class="n">params</span><span class="p">)</span></div>
@@ -574,23 +613,58 @@ document.write(`
 <div class="viewcode-block" id="update_and_take_last">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/base/index.html#blackjax.smc.base.update_and_take_last">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">update_and_take_last</span><span class="p">(</span>
-    <span class="n">mcmc_init_fn</span><span class="p">,</span>
-    <span class="n">tempered_logposterior_fn</span><span class="p">,</span>
-    <span class="n">shared_mcmc_step_fn</span><span class="p">,</span>
-    <span class="n">num_mcmc_steps</span><span class="p">,</span>
-    <span class="n">n_particles</span><span class="p">,</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and</span>
-<span class="sd">    returns the last values, waisting the previous num_mcmc_steps-1</span>
-<span class="sd">    samples per chain.</span>
+    <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">tempered_logposterior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">shared_mcmc_step_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">n_particles</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an MCMC update strategy that runs multiple steps and keeps the last.</span>
+
+<span class="sd">    Given N particles, runs num_mcmc_steps of a kernel starting at each particle, and</span>
+<span class="sd">    returns the last values, wasting the previous num_mcmc_steps-1 samples per chain.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    mcmc_init_fn: Callable</span>
+<span class="sd">        Function that initializes an MCMC state from a position.</span>
+<span class="sd">    tempered_logposterior_fn: Callable</span>
+<span class="sd">        Tempered log-posterior probability density function.</span>
+<span class="sd">    shared_mcmc_step_fn: Callable</span>
+<span class="sd">        MCMC step function.</span>
+<span class="sd">    num_mcmc_steps: int</span>
+<span class="sd">        Number of MCMC steps to run for each particle.</span>
+<span class="sd">    n_particles: int | Array</span>
+<span class="sd">        Number of particles.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    mcmc_kernel: Callable</span>
+<span class="sd">        A vectorized MCMC kernel function.</span>
+<span class="sd">    n_particles: int | Array</span>
+<span class="sd">        Number of particles (returned unchanged).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">mcmc_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">step_parameters</span><span class="p">):</span>
+    <span class="c1"># simply typing protocal for type checker</span>
+    <span class="k">class</span><span class="w"> </span><span class="nc">MCMCStateProtocol</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">Any</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">mcmc_kernel</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span>
+        <span class="n">step_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MCMCStateProtocol</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">]:</span>
         <span class="n">state</span> <span class="o">=</span> <span class="n">mcmc_init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">body_fn</span><span class="p">(</span>
+            <span class="n">state</span><span class="p">:</span> <span class="n">MCMCStateProtocol</span><span class="p">,</span>
+            <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MCMCStateProtocol</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">]:</span>
             <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">shared_mcmc_step_fn</span><span class="p">(</span>
-                <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">tempered_logposterior_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">step_parameters</span>
+                <span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">tempered_logposterior_fn</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">step_parameters</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
 

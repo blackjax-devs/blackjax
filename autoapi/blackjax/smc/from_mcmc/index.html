@@ -399,11 +399,11 @@ document.write(`
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn" title="blackjax.smc.from_mcmc.unshared_parameters_and_step_fn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unshared_parameters_and_step_fn</span></code></a>(mcmc_parameters, ...)</p></td>
-<td><p>Splits MCMC parameters into two dictionaries. The shared dictionary</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn" title="blackjax.smc.from_mcmc.unshared_parameters_and_step_fn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unshared_parameters_and_step_fn</span></code></a>(→ tuple[dict, Callable])</p></td>
+<td><p>Split MCMC parameters into shared and unshared parameters.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.from_mcmc.build_kernel" title="blackjax.smc.from_mcmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(mcmc_step_fn, mcmc_init_fn, resampling_fn)</p></td>
-<td><p>SMC step from MCMC kernels.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.from_mcmc.build_kernel" title="blackjax.smc.from_mcmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
+<td><p>Build an SMC step function from MCMC kernels.</p></td>
 </tr>
 </tbody>
 </table>
@@ -413,27 +413,55 @@ document.write(`
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.from_mcmc.unshared_parameters_and_step_fn">
-<span class="sig-name descname"><span class="pre">unshared_parameters_and_step_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_parameters</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/from_mcmc.html#unshared_parameters_and_step_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn" title="Link to this definition">#</a></dt>
-<dd><p>Splits MCMC parameters into two dictionaries. The shared dictionary
-represents the parameters common to all chains, and the unshared are
-different per chain.
-Binds the step fn using the shared parameters.</p>
+<span class="sig-name descname"><span class="pre">unshared_parameters_and_step_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_parameters</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/from_mcmc.html#unshared_parameters_and_step_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn" title="Link to this definition">#</a></dt>
+<dd><p>Split MCMC parameters into shared and unshared parameters.</p>
+<p>The shared dictionary represents the parameters common to all chains, and
+the unshared are different per chain. Binds the step function using the
+shared parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mcmc_parameters</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><em>dict</em></a>) – Dictionary of MCMC parameters. Parameters with shape[0] == 1 are
+considered shared across all chains.</p></li>
+<li><p><strong>mcmc_step_fn</strong> (<em>Callable</em>) – MCMC step function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>unshared_mcmc_parameters</strong> (<em>dict</em>) – Parameters that differ per chain.</p></li>
+<li><p><strong>shared_mcmc_step_fn</strong> (<em>Callable</em>) – MCMC step function with shared parameters bound.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.from_mcmc.build_kernel">
-<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">update_and_take_last</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/from_mcmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.from_mcmc.build_kernel" title="Link to this definition">#</a></dt>
-<dd><p>SMC step from MCMC kernels.
-Builds MCMC kernels from the input parameters, which may change across iterations.
-Moreover, it defines the way such kernels are used to update the particles. This layer
-adapts an API defined in terms of kernels (mcmc_step_fn and mcmc_init_fn) into an API
-that depends on an update function over the set of particles.
-:returns: * <em>A callable that takes a rng_key and a state with .particles and .weights and returns a base.SMCState</em></p>
-<blockquote>
-<div><ul class="simple">
-<li><p><em>and base.SMCInfo pair.</em></p></li>
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mcmc_step_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mcmc_init_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resampling_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_strategy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">update_and_take_last</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/from_mcmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.from_mcmc.build_kernel" title="Link to this definition">#</a></dt>
+<dd><p>Build an SMC step function from MCMC kernels.</p>
+<p>Builds MCMC kernels from the input parameters, which may change across iterations.
+Moreover, it defines the way such kernels are used to update the particles. This
+layer adapts an API defined in terms of kernels (mcmc_step_fn and mcmc_init_fn)
+into an API that depends on an update function over the set of particles.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mcmc_step_fn</strong> (<em>Callable</em>) – MCMC step function.</p></li>
+<li><p><strong>mcmc_init_fn</strong> (<em>Callable</em>) – Function that initializes an MCMC state from a position.</p></li>
+<li><p><strong>resampling_fn</strong> (<em>Callable</em>) – Resampling function (from blackjax.smc.resampling).</p></li>
+<li><p><strong>update_strategy</strong> (<em>Callable</em>) – Strategy to update particles using MCMC kernels, by default
+‘update_and_take_last’ from blackjax.smc.base.</p></li>
 </ul>
-</div></blockquote>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>step</strong> – A callable that takes a rng_key and a state with .particles and .weights
+and returns a base.SMCState and base.SMCInfo pair.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

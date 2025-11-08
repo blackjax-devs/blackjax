@@ -395,37 +395,46 @@ document.write(`
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">jax.scipy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jsp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">logsumexp</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span>
 
 
 <div class="viewcode-block" id="ess">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/ess/index.html#blackjax.smc.ess.ess">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the effective sample size.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    log_weights: Array</span>
+<span class="sd">        Log-weights of the sample, shape (n_particles,).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ess: float | Array</span>
+<span class="sd">        The effective sample size.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">))</span></div>
 
 
 
 <div class="viewcode-block" id="log_ess">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/ess/index.html#blackjax.smc.ess.log_ess">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">log_ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the effective sample size.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">log_ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the logarithm of the effective sample size.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    log_weights: 1D Array</span>
-<span class="sd">        log-weights of the sample</span>
+<span class="sd">    log_weights: Array</span>
+<span class="sd">        Log-weights of the sample, shape (n_particles,).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    log_ess: float</span>
-<span class="sd">        The logarithm of the effective sample size</span>
-
+<span class="sd">    log_ess: float | Array</span>
+<span class="sd">        The logarithm of the effective sample size.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">jsp</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span> <span class="o">-</span> <span class="n">jsp</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span>
-        <span class="mi">2</span> <span class="o">*</span> <span class="n">log_weights</span>
-    <span class="p">)</span></div>
+    <span class="k">return</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">logsumexp</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span> <span class="o">-</span> <span class="n">logsumexp</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">log_weights</span><span class="p">)</span></div>
 
 
 
@@ -434,38 +443,38 @@ document.write(`
 <span class="k">def</span><span class="w"> </span><span class="nf">ess_solver</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-    <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">max_delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">target_ess</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">max_delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">root_solver</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-<span class="p">):</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;ESS solver for computing the next increment of SMC tempering.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn: Callable</span>
 <span class="sd">        The log probability function we wish to sample from.</span>
-<span class="sd">    particles: SMCState</span>
-<span class="sd">        Current state of the tempered SMC algorithm</span>
-<span class="sd">    target_ess: float</span>
-<span class="sd">        The relative ESS targeted for the next increment of SMC tempering</span>
-<span class="sd">    max_delta: float</span>
-<span class="sd">        Max acceptable delta increment</span>
-<span class="sd">    root_solver: Callable, optional</span>
-<span class="sd">        A solver to find the root of a function, takes a function `f`, a starting point `delta0`,</span>
-<span class="sd">        a min value `min_delta`, and a max value `max_delta`.</span>
-<span class="sd">        Default is `BFGS` minimization of `f ** 2` and ignores `min_delta` and `max_delta`.</span>
+<span class="sd">    particles: ArrayLikeTree</span>
+<span class="sd">        Current particles of the tempered SMC algorithm.</span>
+<span class="sd">    target_ess: float | Array</span>
+<span class="sd">        Target effective sample size (ESS) for the next increment of SMC tempering.</span>
+<span class="sd">    max_delta: float | Array</span>
+<span class="sd">        Maximum acceptable delta increment.</span>
+<span class="sd">    root_solver: Callable</span>
+<span class="sd">        A solver to find the root of a function. Signature is</span>
+<span class="sd">        root_solver(fun, min_delta, max_delta). Use e.g. dichotomy from</span>
+<span class="sd">        blackjax.smc.solver.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    delta: float</span>
-<span class="sd">        The increment that solves for the target ESS</span>
+<span class="sd">    delta: float | Array</span>
+<span class="sd">        The increment that solves for the target ESS.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logprob</span> <span class="o">=</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">particles</span><span class="p">)</span>
     <span class="n">n_particles</span> <span class="o">=</span> <span class="n">logprob</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">target_val</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">n_particles</span> <span class="o">*</span> <span class="n">target_ess</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">fun_to_solve</span><span class="p">(</span><span class="n">delta</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fun_to_solve</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
         <span class="n">log_weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="o">-</span><span class="n">delta</span> <span class="o">*</span> <span class="n">logprob</span><span class="p">)</span>
         <span class="n">ess_val</span> <span class="o">=</span> <span class="n">log_ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span>
 

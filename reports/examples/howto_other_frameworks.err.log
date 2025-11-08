@@ -1,20 +1,20 @@
 Traceback (most recent call last):
-  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
     executenb(
-  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/nbclient/client.py", line 1319, in execute
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/nbclient/client.py", line 1319, in execute
     return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
     return loop.run_until_complete(inner)
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
     return future.result()
            ^^^^^^^^^^^^^^^
-  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/nbclient/client.py", line 709, in async_execute
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/nbclient/client.py", line 709, in async_execute
     await self.async_execute_cell(
-  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/nbclient/client.py", line 1062, in async_execute_cell
     await self._check_raise_for_error(cell, cell_index, exec_reply)
-  File "/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+  File "/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
     raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
 nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
 ------------------
@@ -35,17 +35,17 @@ Y_rv = N_rv[I_rv]
 
 [31m---------------------------------------------------------------------------[39m
 [31mNoSectionError[39m                            Traceback (most recent call last)
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/configparser.py:234[39m, in [36mAesaraConfigParser.fetch_val_for_key[39m[34m(self, key, delete_key)[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/configparser.py:234[39m, in [36mAesaraConfigParser.fetch_val_for_key[39m[34m(self, key, delete_key)[39m
 [32m    233[39m [38;5;28;01mtry[39;00m:
 [32m--> [39m[32m234[39m     [38;5;28;01mreturn[39;00m [38;5;28;43mself[39;49m[43m.[49m[43m_aesara_cfg[49m[43m.[49m[43mget[49m[43m([49m[43msection[49m[43m,[49m[43m [49m[43moption[49m[43m)[49m
 [32m    235[39m [38;5;28;01mexcept[39;00m InterpolationError:
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/configparser.py:759[39m, in [36mRawConfigParser.get[39m[34m(self, section, option, raw, vars, fallback)[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/configparser.py:759[39m, in [36mRawConfigParser.get[39m[34m(self, section, option, raw, vars, fallback)[39m
 [32m    758[39m [38;5;28;01mtry[39;00m:
 [32m--> [39m[32m759[39m     d = [38;5;28;43mself[39;49m[43m.[49m[43m_unify_values[49m[43m([49m[43msection[49m[43m,[49m[43m [49m[38;5;28;43mvars[39;49m[43m)[49m
 [32m    760[39m [38;5;28;01mexcept[39;00m NoSectionError:
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/configparser.py:1132[39m, in [36mRawConfigParser._unify_values[39m[34m(self, section, vars)[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/configparser.py:1132[39m, in [36mRawConfigParser._unify_values[39m[34m(self, section, vars)[39m
 [32m   1131[39m     [38;5;28;01mif[39;00m section != [38;5;28mself[39m.default_section:
 [32m-> [39m[32m1132[39m         [38;5;28;01mraise[39;00m NoSectionError(section) [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;28;01mNone[39;00m
 [32m   1133[39m [38;5;66;03m# Update with the entry specific variables[39;00m
@@ -55,12 +55,12 @@ Y_rv = N_rv[I_rv]
 During handling of the above exception, another exception occurred:
 
 [31mKeyError[39m                                  Traceback (most recent call last)
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/configparser.py:350[39m, in [36mConfigParam.__get__[39m[34m(self, cls, type_, delete_key)[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/configparser.py:350[39m, in [36mConfigParam.__get__[39m[34m(self, cls, type_, delete_key)[39m
 [32m    349[39m [38;5;28;01mtry[39;00m:
 [32m--> [39m[32m350[39m     val_str = [38;5;28;43mcls[39;49m[43m.[49m[43mfetch_val_for_key[49m[43m([49m[38;5;28;43mself[39;49m[43m.[49m[43mname[49m[43m,[49m[43m [49m[43mdelete_key[49m[43m=[49m[43mdelete_key[49m[43m)[49m
 [32m    351[39m     [38;5;28mself[39m.is_default = [38;5;28;01mFalse[39;00m
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/configparser.py:238[39m, in [36mAesaraConfigParser.fetch_val_for_key[39m[34m(self, key, delete_key)[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/configparser.py:238[39m, in [36mAesaraConfigParser.fetch_val_for_key[39m[34m(self, key, delete_key)[39m
 [32m    237[39m [38;5;28;01mexcept[39;00m (NoOptionError, NoSectionError):
 [32m--> [39m[32m238[39m     [38;5;28;01mraise[39;00m [38;5;167;01mKeyError[39;00m(key)
 
@@ -69,7 +69,7 @@ During handling of the above exception, another exception occurred:
 During handling of the above exception, another exception occurred:
 
 [31mAttributeError[39m                            Traceback (most recent call last)
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/link/c/cmodule.py:2726[39m, in [36mdefault_blas_ldflags[39m[34m()[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/link/c/cmodule.py:2726[39m, in [36mdefault_blas_ldflags[39m[34m()[39m
 [32m   2725[39m [38;5;28;01mtry[39;00m:
 [32m-> [39m[32m2726[39m     blas_info = [43mnp[49m[43m.[49m[43m__config__[49m[43m.[49m[43mget_info[49m([33m"[39m[33mblas_opt[39m[33m"[39m)
 [32m   2727[39m [38;5;28;01mexcept[39;00m [38;5;167;01mAttributeError[39;00m:
@@ -84,7 +84,7 @@ During handling of the above exception, another exception occurred:
 [32m      2[39m [38;5;28;01mimport[39;00m[38;5;250m [39m[34;01mnumpy[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[34;01mnp[39;00m
 [32m      4[39m srng = at.random.RandomStream([32m0[39m)
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/__init__.py:120[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/__init__.py:120[39m
 [32m    116[39m     [38;5;28;01mreturn[39;00m as_tensor_variable(x, **kwargs)
 [32m    119[39m [38;5;66;03m# isort: off[39;00m
 [32m--> [39m[32m120[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01maesara[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m scalar, tensor
@@ -95,7 +95,7 @@ During handling of the above exception, another exception occurred:
 [32m    130[39m )
 [32m    131[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01maesara[39;00m[34;01m.[39;00m[34;01mcompile[39;00m[34;01m.[39;00m[34;01mfunction[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m function, function_dump
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/tensor/__init__.py:106[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/tensor/__init__.py:106[39m
 [32m    104[39m [38;5;66;03m# adds shared-variable constructors[39;00m
 [32m    105[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01maesara[39;00m[34;01m.[39;00m[34;01mtensor[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m sharedvar  [38;5;66;03m# noqa[39;00m
 [32m--> [39m[32m106[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01maesara[39;00m[34;01m.[39;00m[34;01mtensor[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m (  [38;5;66;03m# noqa[39;00m
@@ -107,14 +107,14 @@ During handling of the above exception, another exception occurred:
 [32m    112[39m [38;5;28;01mimport[39;00m[38;5;250m [39m[34;01maesara[39;00m[34;01m.[39;00m[34;01mtensor[39;00m[34;01m.[39;00m[34;01mrewriting[39;00m
 [32m    115[39m [38;5;66;03m# isort: off[39;00m
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/tensor/blas.py:162[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/tensor/blas.py:162[39m
 [32m    160[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01maesara[39;00m[34;01m.[39;00m[34;01mscalar[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m [38;5;28mbool[39m [38;5;28;01mas[39;00m bool_t
 [32m    161[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01maesara[39;00m[34;01m.[39;00m[34;01mtensor[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m basic [38;5;28;01mas[39;00m at
 [32m--> [39m[32m162[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01maesara[39;00m[34;01m.[39;00m[34;01mtensor[39;00m[34;01m.[39;00m[34;01mblas_headers[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m blas_header_text, blas_header_version
 [32m    163[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01maesara[39;00m[34;01m.[39;00m[34;01mtensor[39;00m[34;01m.[39;00m[34;01melemwise[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m DimShuffle, Elemwise
 [32m    164[39m [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01maesara[39;00m[34;01m.[39;00m[34;01mtensor[39;00m[34;01m.[39;00m[34;01mexceptions[39;00m[38;5;250m [39m[38;5;28;01mimport[39;00m NotScalarConstantError
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/tensor/blas_headers.py:1015[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/tensor/blas_headers.py:1015[39m
 [32m    997[39m             header += textwrap.dedent(
 [32m    998[39m [38;5;250m                [39m[33;03m"""\[39;00m
 [32m    999[39m [33;03m                    static float sdot_(int* Nx, float* x, int* Sx, float* y, int* Sy)[39;00m
@@ -125,14 +125,14 @@ During handling of the above exception, another exception occurred:
 [32m   1016[39m     _logger.warning([33m"[39m[33mUsing NumPy C-API based implementation for BLAS functions.[39m[33m"[39m)
 [32m   1019[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34mmkl_threads_text[39m():
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/configparser.py:354[39m, in [36mConfigParam.__get__[39m[34m(self, cls, type_, delete_key)[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/configparser.py:354[39m, in [36mConfigParam.__get__[39m[34m(self, cls, type_, delete_key)[39m
 [32m    352[39m [38;5;28;01mexcept[39;00m [38;5;167;01mKeyError[39;00m:
 [32m    353[39m     [38;5;28;01mif[39;00m [38;5;28mcallable[39m([38;5;28mself[39m.default):
 [32m--> [39m[32m354[39m         val_str = [38;5;28;43mself[39;49m[43m.[49m[43mdefault[49m[43m([49m[43m)[49m
 [32m    355[39m     [38;5;28;01melse[39;00m:
 [32m    356[39m         val_str = [38;5;28mself[39m.default
 
-[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.11/x64/lib/python3.12/site-packages/aesara/link/c/cmodule.py:2728[39m, in [36mdefault_blas_ldflags[39m[34m()[39m
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.12/x64/lib/python3.12/site-packages/aesara/link/c/cmodule.py:2728[39m, in [36mdefault_blas_ldflags[39m[34m()[39m
 [32m   2726[39m     blas_info = np.__config__.get_info([33m"[39m[33mblas_opt[39m[33m"[39m)
 [32m   2727[39m [38;5;28;01mexcept[39;00m [38;5;167;01mAttributeError[39;00m:
 [32m-> [39m[32m2728[39m     [38;5;28;01mimport[39;00m[38;5;250m [39m[34;01mnumpy[39;00m[34;01m.[39;00m[34;01mdistutils[39;00m[34;01m.[39;00m[34;01msystem_info[39;00m
