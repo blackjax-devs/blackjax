@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable
+from typing import Any, Callable, Optional
 
 import jax
 import jax.numpy as jnp
@@ -21,7 +21,7 @@ import blackjax.smc.ess as ess
 import blackjax.smc.solver as solver
 import blackjax.smc.tempered as tempered
 from blackjax.base import SamplingAlgorithm
-from blackjax.types import ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
 
 __all__ = ["build_kernel", "init", "as_top_level_api"]
 
@@ -34,42 +34,42 @@ def build_kernel(
     resampling_fn: Callable,
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
-    **extra_parameters,
+    **extra_parameters: dict[str, Any],
 ) -> Callable:
-    r"""Build a Tempered SMC step using an adaptive schedule.
+    """Build a Tempered SMC step using an adaptive schedule.
 
     Parameters
     ----------
     logprior_fn: Callable
-        A function that computes the log-prior density.
+        Log prior probability function.
     loglikelihood_fn: Callable
-        A function that returns the log-likelihood density.
-    mcmc_kernel_factory: Callable
-        A callable function that creates a mcmc kernel from a log-probability
-        density function.
-    make_mcmc_state: Callable
+        Log likelihood function.
+    mcmc_step_fn: Callable
+        Function that creates MCMC step from log-probability density function.
+    mcmc_init_fn: Callable
         A function that creates a new mcmc state from a position and a
         log-probability density function.
     resampling_fn: Callable
-        A random function that resamples generated particles based of weights
-    target_ess: float
-        The target ESS for the adaptive MCMC tempering
+        Resampling function (from blackjax.smc.resampling).
+    target_ess: float | Array
+        Target effective sample size (ESS) to determine the next tempering
+        parameter.
     root_solver: Callable, optional
-        A solver utility to find delta matching the target ESS. Signature is
-        `root_solver(fun, delta_0, min_delta, max_delta)`, default is a dichotomy solver
-    use_log_ess: bool, optional
-        Use ESS in log space to solve for delta, default is `True`.
-        This is usually more stable when using gradient based solvers.
+        The solver used to adaptively compute the temperature given a target number
+        of effective samples. By default, blackjax.smc.solver.dichotomy.
+    **extra_parameters : dict[str, Any]
+        Additional parameters to pass to tempered.build_kernel.
 
     Returns
     -------
-    A callable that takes a rng_key and a TemperedSMCState that contains the current state
-    of the chain and that returns a new state of the chain along with
-    information about the transition.
+    kernel: Callable
+        A callable that takes a rng_key, a TemperedSMCState, num_mcmc_steps,
+        and mcmc_parameters, and returns a new TemperedSMCState along with
+        information about the transition.
 
     """
 
-    def compute_delta(state: tempered.TemperedSMCState) -> float:
+    def compute_delta(state: tempered.TemperedSMCState) -> float | Array:
         tempering_param = state.tempering_param
         max_delta = 1 - tempering_param
         delta = ess.ess_solver(
@@ -89,13 +89,13 @@ def build_kernel(
         mcmc_step_fn,
         mcmc_init_fn,
         resampling_fn,
-        **extra_parameters,
+        **extra_parameters,  # type: ignore
     )
 
     def kernel(
         rng_key: PRNGKey,
         state: tempered.TemperedSMCState,
-        num_mcmc_steps: int,
+        num_mcmc_steps: int | Array,
         mcmc_parameters: dict,
     ) -> tuple[tempered.TemperedSMCState, base.SMCInfo]:
         delta = compute_delta(state)
@@ -120,36 +120,41 @@ def as_top_level_api(
     target_ess: float,
     root_solver: Callable = solver.dichotomy,
     num_mcmc_steps: int = 10,
-    **extra_parameters,
+    **extra_parameters: dict[str, Any],
 ) -> SamplingAlgorithm:
-    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+    """Implements the user interface for the Adaptive Tempered SMC kernel.
 
     Parameters
     ----------
-    logprior_fn
+    logprior_fn: Callable
         The log-prior function of the model we wish to draw samples from.
-    loglikelihood_fn
+    loglikelihood_fn: Callable
         The log-likelihood function of the model we wish to draw samples from.
-    mcmc_step_fn
+    mcmc_step_fn: Callable
         The MCMC step function used to update the particles.
-    mcmc_init_fn
+    mcmc_init_fn: Callable
         The MCMC init function used to build a MCMC state from a particle position.
-    mcmc_parameters
-        The parameters of the MCMC step function.  Parameters with leading dimension
+    mcmc_parameters: dict
+        The parameters of the MCMC step function. Parameters with leading dimension
         length of 1 are shared amongst the particles.
-    resampling_fn
+    resampling_fn: Callable
         The function used to resample the particles.
-    target_ess
-        The number of effective sample size to aim for at each step.
-    root_solver
+    target_ess: float | Array
+        Target effective sample size (ESS) to determine the next tempering
+        parameter.
+    root_solver: Callable, optional
         The solver used to adaptively compute the temperature given a target number
-        of effective samples.
-    num_mcmc_steps
-        The number of times the MCMC kernel is applied to the particles per step.
+        of effective samples. By default, blackjax.smc.solver.dichotomy.
+    num_mcmc_steps: int, optional
+        The number of times the MCMC kernel is applied to the particles per step,
+        by default 10.
+    **extra_parameters: dict [str, Any]
+        Additional parameters to pass to the kernel.
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    SamplingAlgorithm
+        A ``SamplingAlgorithm`` instance with init and step methods.
 
     """
     kernel = build_kernel(
@@ -163,11 +168,15 @@ def as_top_level_api(
         **extra_parameters,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key=None):
+    def init_fn(
+        position: ArrayLikeTree, rng_key: Optional[PRNGKey] = None
+    ) -> tempered.TemperedSMCState:
         del rng_key
         return init(position)
 
-    def step_fn(rng_key: PRNGKey, state):
+    def step_fn(
+        rng_key: PRNGKey, state: tempered.TemperedSMCState
+    ) -> tuple[tempered.TemperedSMCState, base.SMCInfo]:
         return kernel(
             rng_key,
             state,
@@ -175,4 +184,4 @@ def as_top_level_api(
             mcmc_parameters,
         )
 
-    return SamplingAlgorithm(init_fn, step_fn)
+    return SamplingAlgorithm(init_fn, step_fn)  # type: ignore[arg-type]
