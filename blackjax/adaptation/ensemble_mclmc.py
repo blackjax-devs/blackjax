@@ -228,7 +228,7 @@ def laps(
         contract=contract,
     )
 
-    final_state, final_adaptation_state, info1, steps_done_phase_1 = run_eca(
+    final_state, final_adaptation_state, info1 = run_eca(
         key_umclmc,
         initial_state,
         kernel,
@@ -299,7 +299,7 @@ def laps(
         observables_for_bias=observables_for_bias,
     )
 
-    final_state, final_adaptation_state, info2, _ = run_eca(
+    final_state, final_adaptation_state, info2 = run_eca(
         key_mclmc,
         initial_state,
         kernel,
