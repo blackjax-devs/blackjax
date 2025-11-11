@@ -62,7 +62,7 @@ def da_adaptation(
 
         return (
             ((new_adaptation_state, new_kernel_state), L),
-            info,
+            None,
         )
 
     def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
@@ -94,7 +94,7 @@ def da_adaptation(
     return AdaptationAlgorithm(run)
 
 
-def alba_adjusted(
+def adjusted_alba(
     unadjusted_algorithm,
     logdensity_fn: Callable,
     target_eevpd,

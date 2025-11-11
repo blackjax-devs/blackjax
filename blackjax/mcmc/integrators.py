@@ -346,7 +346,7 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         """
         del is_last_call
 
-        logdensity_grad = logdensity_grad
+        # logdensity_grad = logdensity_grad
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
         flatten_grads = flatten_grads * sqrt_inverse_mass_matrix
         flatten_momentum, _ = ravel_pytree(momentum)
