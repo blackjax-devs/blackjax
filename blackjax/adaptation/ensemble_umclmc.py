@@ -308,7 +308,7 @@ class Adaptation:
             "r_max": fluctuations[0],
             "r_avg": fluctuations[1],
             "entropy": Etheta["entropy"],
-            "observables": Etheta["observables"],
+            "observables": Etheta["observables"]
         }
 
         adaptation_state_new = AdaptationState(
@@ -326,4 +326,4 @@ class Adaptation:
 
     def while_cond(self, info, counter):
         """determine if we want to switch to adjustment"""
-        return info['r_max'] > self.r_end | (counter < self.save_num)
+        return (info['r_max'] > self.r_end) | (counter < self.save_num)

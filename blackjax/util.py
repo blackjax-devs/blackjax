@@ -324,7 +324,7 @@ def incremental_value_update(
 
 
 def eca_step(
-    kernel, summary_statistics_fn, adaptation_update, num_chains, superchain_size = None, ensemble_info=None
+    kernel, summary_statistics_fn, adaptation_update, num_chains, superchain_size = None, all_chains_info=None
 ):
     """
     Construct a single step of ensemble chain adaptation (eca) to be performed in parallel on multiple devices.
@@ -361,7 +361,7 @@ def eca_step(
         return (state, adaptation_state), info_to_be_stored
 
 
-    return add_ensemble_info(add_splitR(step, num_chains, superchain_size), ensemble_info)
+    return add_all_chains_info(add_splitR(step, num_chains, superchain_size), all_chains_info)
 
 
 def add_splitR(step, num_chains, superchain_size):
@@ -401,13 +401,15 @@ def add_splitR(step, num_chains, superchain_size):
         return _step_with_R
     
     
-def add_ensemble_info(step, ensemble_info):
+def add_all_chains_info(step, all_chains_info):
 
     def _step(state_all, xs):
         (state, adaptation_state), info_to_be_stored = step(state_all, xs)
-        return (state, adaptation_state), (info_to_be_stored, vmap(ensemble_info)(state.position))
+        info_to_be_stored['all_chains_info'] = vmap(all_chains_info)(state.position)
 
-    return _step if ensemble_info is not None else step
+        return (state, adaptation_state), info_to_be_stored
+
+    return _step if all_chains_info is not None else step
 
 
 
@@ -422,7 +424,7 @@ def while_with_info(step, init, xs, length, while_cond):
     info1 = step(init, get_i(xs, 0))[1] # call the step once to determine the shape of info
     info = jax.lax.scan(lambda x, _: (x, info1), init= 0, length= length)[1] # allocate the full info by repeating values
 
-    init_val = (init, info, 0, while_cond(info1))
+    init_val = (init, info, 0, while_cond(info1, 0))
 
     def body_fun(val):
         x, info_old, counter, cond = val
@@ -459,7 +461,7 @@ def run_eca(
     num_chains,
     mesh,
     superchain_size= None,
-    ensemble_info=None,
+    all_chains_info=None,
     early_stop=False,
 ):
     """
@@ -473,7 +475,7 @@ def run_eca(
         num_steps: number of steps to run
         num_chains: number of chains
         mesh: mesh for parallelization
-        ensemble_info: function that takes the state of the system and returns some information about the ensemble
+        all_chains_info: function that takes the state of the system and returns some summary statistics. Will be applied and stored for all the chains at each step so it can be memory intensive.
         early_stop: whether to stop early
     Returns:
         final_state: final state of the system
@@ -487,7 +489,7 @@ def run_eca(
         adaptation.update,
         num_chains,
         superchain_size= superchain_size,
-        ensemble_info = ensemble_info,
+        all_chains_info = all_chains_info,
     )
 
     def all_steps(initial_state, keys_sampling, keys_adaptation):
@@ -519,7 +521,7 @@ def run_eca(
         all_steps,
         mesh=mesh,
         in_specs=(p, p, pscalar),
-        out_specs=(p, pscalar, pscalar, pscalar),
+        out_specs=(p, pscalar, pscalar),
         check_rep=False,
     )
 
@@ -557,8 +559,8 @@ def ensemble_execute_fn(
     Args:
          x: array distributed over all decvices
          args: additional arguments for func, not distributed.
-         summary_statistics_fn: operates on a single member of ensemble and returns some summary statistics.
-         rng_key: a single random key, which will then be split, such that each member of an ensemble will get a different random key.
+         summary_statistics_fn: operates on a chain and returns some summary statistics.
+         rng_key: a single random key, which will then be split, such that chain will get a different random key.
 
     Returns:
          y: array distributed over all decvices. Need not be of the same shape as x.
