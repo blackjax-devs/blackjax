@@ -21,7 +21,12 @@ import jax.numpy as jnp
 from blackjax.types import Array, PRNGKey
 
 
-def _resampling_func(func, name, desc="", additional_params="") -> Callable:
+def _resampling_func(
+    func: Callable,
+    name: str,
+    desc: str = "",
+    additional_params: str = "",
+) -> Callable:
     # Decorator for resampling function
 
     doc = f"""
@@ -124,6 +129,24 @@ def residual(rng_key: PRNGKey, weights: Array, num_samples: int) -> Array:
 def _systematic_or_stratified(
     rng_key: PRNGKey, weights: Array, num_samples: int, is_systematic: bool
 ) -> Array:
+    """Helper function for systematic and stratified resampling.
+
+    Parameters
+    ----------
+    rng_key: PRNGKey
+        PRNGKey to use in resampling.
+    weights: Array
+        Weights to resample.
+    num_samples: int
+        Number of particles to sample.
+    is_systematic: bool
+        If True, use systematic resampling; otherwise use stratified resampling.
+
+    Returns
+    -------
+    idx: Array
+        Array of size `num_samples` to use for resampling.
+    """
     n = weights.shape[0]
     if is_systematic:
         u = jax.random.uniform(rng_key, ())
@@ -135,8 +158,23 @@ def _systematic_or_stratified(
     return jnp.clip(idx, 0, n - 1)
 
 
-def _sorted_uniforms(rng_key: PRNGKey, n) -> Array:
-    # Credit goes to Nicolas Chopin
+def _sorted_uniforms(rng_key: PRNGKey, n: int) -> Array:
+    """Generate sorted uniform random variables.
+
+    Credit goes to Nicolas Chopin.
+
+    Parameters
+    ----------
+    rng_key: PRNGKey
+        PRNGKey to use for random number generation.
+    n: int
+        Number of sorted uniform random variables to generate.
+
+    Returns
+    -------
+    Array
+        Array of size n containing sorted uniform random variables.
+    """
     us = jax.random.uniform(rng_key, (n + 1,))
     z = jnp.cumsum(-jnp.log(us))
     return z[:-1] / z[-1]

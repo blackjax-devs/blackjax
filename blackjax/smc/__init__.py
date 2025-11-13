@@ -2,6 +2,7 @@ from . import (
     adaptive_persistent_sampling,
     adaptive_tempered,
     inner_kernel_tuning,
+    partial_posteriors_path,
     persistent_sampling,
     tempered,
 )
