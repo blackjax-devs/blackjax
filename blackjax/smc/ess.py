@@ -15,69 +15,78 @@
 from typing import Callable
 
 import jax.numpy as jnp
-import jax.scipy as jsp
+from jax.scipy.special import logsumexp
 
 from blackjax.types import Array, ArrayLikeTree
 
 
-def ess(log_weights: Array) -> float:
-    return jnp.exp(log_ess(log_weights))
-
-
-def log_ess(log_weights: Array) -> float:
+def ess(log_weights: Array) -> float | Array:
     """Compute the effective sample size.
 
     Parameters
     ----------
-    log_weights: 1D Array
-        log-weights of the sample
+    log_weights: Array
+        Log-weights of the sample, shape (n_particles,).
 
     Returns
     -------
-    log_ess: float
-        The logarithm of the effective sample size
-
+    ess: float | Array
+        The effective sample size.
     """
-    return 2 * jsp.special.logsumexp(log_weights) - jsp.special.logsumexp(
-        2 * log_weights
-    )
+    return jnp.exp(log_ess(log_weights))
+
+
+def log_ess(log_weights: Array) -> float | Array:
+    """Compute the logarithm of the effective sample size.
+
+    Parameters
+    ----------
+    log_weights: Array
+        Log-weights of the sample, shape (n_particles,).
+
+    Returns
+    -------
+    log_ess: float | Array
+        The logarithm of the effective sample size.
+    """
+    return 2 * logsumexp(log_weights) - logsumexp(2 * log_weights)
 
 
 def ess_solver(
     logdensity_fn: Callable,
     particles: ArrayLikeTree,
-    target_ess: float,
-    max_delta: float,
+    target_ess: float | Array,
+    max_delta: float | Array,
     root_solver: Callable,
-):
+) -> float | Array:
     """ESS solver for computing the next increment of SMC tempering.
 
     Parameters
     ----------
     logdensity_fn: Callable
         The log probability function we wish to sample from.
-    particles: SMCState
-        Current state of the tempered SMC algorithm
-    target_ess: float
-        The relative ESS targeted for the next increment of SMC tempering
-    max_delta: float
-        Max acceptable delta increment
-    root_solver: Callable, optional
-        A solver to find the root of a function, takes a function `f`, a starting point `delta0`,
-        a min value `min_delta`, and a max value `max_delta`.
-        Default is `BFGS` minimization of `f ** 2` and ignores `min_delta` and `max_delta`.
+    particles: ArrayLikeTree
+        Current particles of the tempered SMC algorithm.
+    target_ess: float | Array
+        Target effective sample size (ESS) for the next increment of SMC tempering.
+    max_delta: float | Array
+        Maximum acceptable delta increment.
+    root_solver: Callable
+        A solver to find the root of a function. Signature is
+        root_solver(fun, min_delta, max_delta). Use e.g. dichotomy from
+        blackjax.smc.solver.
 
     Returns
     -------
-    delta: float
-        The increment that solves for the target ESS
+    delta: float | Array
+        The increment that solves for the target ESS.
 
     """
     logprob = logdensity_fn(particles)
     n_particles = logprob.shape[0]
     target_val = jnp.log(n_particles * target_ess)
 
-    def fun_to_solve(delta):
+    def fun_to_solve(delta: float | Array) -> Array:
         log_weights = jnp.nan_to_num(-delta * logprob)
         ess_val = log_ess(log_weights)
 

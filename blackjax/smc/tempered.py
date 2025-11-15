@@ -20,7 +20,7 @@ import blackjax.smc as smc
 import blackjax.smc.from_mcmc as smc_from_mcmc
 from blackjax.base import SamplingAlgorithm
 from blackjax.smc.base import update_and_take_last
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
 
 __all__ = ["TemperedSMCState", "init", "build_kernel", "as_top_level_api"]
 
@@ -28,19 +28,35 @@ __all__ = ["TemperedSMCState", "init", "build_kernel", "as_top_level_api"]
 class TemperedSMCState(NamedTuple):
     """Current state for the tempered SMC algorithm.
 
-    particles: PyTree
+    Parameters
+    ----------
+    particles: ArrayLikeTree
         The particles' positions.
-    tempering_param: float
+    weights: Array
+        Normalized weights for the particles.
+    tempering_param: float | Array
         Current value of the tempering parameter.
 
     """
 
-    particles: ArrayTree
+    particles: ArrayLikeTree
     weights: Array
-    tempering_param: float
+    tempering_param: float | Array
 
 
-def init(particles: ArrayLikeTree):
+def init(particles: ArrayLikeTree) -> TemperedSMCState:
+    """Initialize the Tempered SMC state.
+
+    Parameters
+    ----------
+    particles: ArrayLikeTree
+        Initial N particles (typically sampled from prior).
+
+    Returns
+    -------
+    TemperedSMCState
+        Initial state with uniform weights and tempering_param set to 0.0.
+    """
     # Infer the number of particles from the size of the leading dimension of
     # the first leaf of the inputted PyTree.
     num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
@@ -71,31 +87,38 @@ def build_kernel(
 
     Parameters
     ----------
-    logprior_fn
-        A function that computes the log density of the prior distribution
-    loglikelihood_fn
-        A function that returns the probability at a given
-        position.
-    mcmc_step_fn
-        A function that creates a mcmc kernel from a log-probability density function.
+    logprior_fn: Callable
+        Log prior probability function.
+    loglikelihood_fn: Callable
+        Log likelihood function.
+    mcmc_step_fn: Callable
+        Function that creates MCMC step from log-probability density function.
     mcmc_init_fn: Callable
         A function that creates a new mcmc state from a position and a
         log-probability density function.
-    resampling_fn
-        A random function that resamples generated particles based of weights
-    num_mcmc_iterations
-        Number of iterations in the MCMC chain.
+    resampling_fn: Callable
+        Resampling function (from blackjax.smc.resampling).
+    update_strategy: Callable
+        Strategy to update particles using MCMC kernels, by default
+        'update_and_take_last' from blackjax.smc.base.
+    update_particles_fn: Callable, optional
+        Optional custom function to update particles. If None, uses
+        smc_from_mcmc.build_kernel.
 
     Returns
     -------
-    A callable that takes a rng_key and a TemperedSMCState that contains the current state
-    of the chain and that returns a new state of the chain along with
-    information about the transition.
+    kernel: Callable
+        A callable that takes a rng_key, a TemperedSMCState, num_mcmc_steps,
+        tempering_param, and mcmc_parameters, and returns a new
+        TemperedSMCState along with information about the transition.
 
     """
     update_particles = (
         smc_from_mcmc.build_kernel(
-            mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy
+            mcmc_step_fn,
+            mcmc_init_fn,
+            resampling_fn,
+            update_strategy,
         )
         if update_particles_fn is None
         else update_particles_fn
@@ -104,30 +127,32 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey,
         state: TemperedSMCState,
-        num_mcmc_steps: int,
-        tempering_param: float,
+        num_mcmc_steps: int | Array,
+        tempering_param: float | Array,
         mcmc_parameters: dict,
     ) -> tuple[TemperedSMCState, smc.base.SMCInfo]:
         """Move the particles one step using the Tempered SMC algorithm.
 
         Parameters
         ----------
-        rng_key
-            JAX PRNGKey for randomness
-        state
-            Current state of the tempered SMC algorithm
-        tempering_param
-            Current value of the tempering parameter
-        mcmc_parameters
-            The parameters of the MCMC step function.  Parameters with leading dimension
+        rng_key: PRNGKey
+            Key used for random number generation.
+        state: TemperedSMCState
+            Current state of the tempered SMC algorithm.
+        num_mcmc_steps: int | Array
+            Number of MCMC steps to apply to each particle.
+        tempering_param: float | Array
+            Target value of the tempering parameter for this step.
+        mcmc_parameters: dict
+            The parameters of the MCMC step function. Parameters with leading dimension
             length of 1 are shared amongst the particles.
 
         Returns
         -------
-        state
-            The new state of the tempered SMC algorithm
-        info
-            Additional information on the SMC step
+        state: TemperedSMCState
+            The new state of the tempered SMC algorithm.
+        info: SMCInfo
+            Additional information on the SMC step.
 
         """
         delta = tempering_param - state.tempering_param
@@ -150,7 +175,9 @@ def build_kernel(
         )
 
         tempered_state = TemperedSMCState(
-            smc_state.particles, smc_state.weights, state.tempering_param + delta
+            smc_state.particles,
+            smc_state.weights,
+            state.tempering_param + delta,
         )
 
         return tempered_state, info
@@ -166,32 +193,40 @@ def as_top_level_api(
     mcmc_parameters: dict,
     resampling_fn: Callable,
     num_mcmc_steps: Optional[int] = 10,
-    update_strategy=update_and_take_last,
-    update_particles_fn=None,
+    update_strategy: Callable = update_and_take_last,
+    update_particles_fn: Optional[Callable] = None,
 ) -> SamplingAlgorithm:
-    """Implements the (basic) user interface for the Adaptive Tempered SMC kernel.
+    """Implements the user interface for the Tempered SMC kernel.
 
     Parameters
     ----------
-    logprior_fn
+    logprior_fn: Callable
         The log-prior function of the model we wish to draw samples from.
-    loglikelihood_fn
+    loglikelihood_fn: Callable
         The log-likelihood function of the model we wish to draw samples from.
-    mcmc_step_fn
+    mcmc_step_fn: Callable
         The MCMC step function used to update the particles.
-    mcmc_init_fn
+    mcmc_init_fn: Callable
         The MCMC init function used to build a MCMC state from a particle position.
-    mcmc_parameters
-        The parameters of the MCMC step function.  Parameters with leading dimension
+    mcmc_parameters: dict
+        The parameters of the MCMC step function. Parameters with leading dimension
         length of 1 are shared amongst the particles.
-    resampling_fn
+    resampling_fn: Callable
         The function used to resample the particles.
-    num_mcmc_steps
-        The number of times the MCMC kernel is applied to the particles per step.
+    num_mcmc_steps: int, optional
+        The number of times the MCMC kernel is applied to the particles per step,
+        by default 10.
+    update_strategy: Callable, optional
+        Strategy to update particles using MCMC kernels, by default
+        'update_and_take_last' from blackjax.smc.base.
+    update_particles_fn: Callable, optional
+        Optional custom function to update particles. If None, uses
+        smc_from_mcmc.build_kernel.
 
     Returns
     -------
-    A ``SamplingAlgorithm``.
+    SamplingAlgorithm
+        A ``SamplingAlgorithm`` instance with init and step methods.
 
     """
 
@@ -205,11 +240,15 @@ def as_top_level_api(
         update_particles_fn,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key=None):
+    def init_fn(
+        position: ArrayLikeTree, rng_key: Optional[PRNGKey] = None
+    ) -> TemperedSMCState:
         del rng_key
         return init(position)
 
-    def step_fn(rng_key: PRNGKey, state, tempering_param):
+    def step_fn(
+        rng_key: PRNGKey, state: TemperedSMCState, tempering_param: float | Array
+    ) -> tuple[TemperedSMCState, smc.base.SMCInfo]:
         return kernel(
             rng_key,
             state,

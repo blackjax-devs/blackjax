@@ -12,13 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """All things solving for adaptive tempering."""
+from typing import Any, Callable
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 
+from blackjax.types import Array
 
-def dichotomy(fun, min_delta, max_delta, eps=1e-4, max_iter=100):
+
+def dichotomy(
+    fun: Callable,
+    min_delta: float | Array,
+    max_delta: float | Array,
+    eps: float = 1e-4,
+    max_iter: int = 100,
+) -> Array:
     """Solves for delta by dichotomy.
 
     If max_delta is such that fun(max_delta) > 0, then we assume that max_delta
@@ -27,7 +36,8 @@ def dichotomy(fun, min_delta, max_delta, eps=1e-4, max_iter=100):
     Parameters
     ----------
     fun: Callable
-        The decreasing function to solve, we must have fun(min_delta) > 0, fun(max_delta) < 0
+        The decreasing function to solve, we must have fun(min_delta) > 0,
+        fun(max_delta) < 0
     min_delta: float
         Starting point of the interval search
     max_delta: float
@@ -44,7 +54,7 @@ def dichotomy(fun, min_delta, max_delta, eps=1e-4, max_iter=100):
 
     """
 
-    def body(carry):
+    def body(carry: tuple) -> tuple:
         i, a, b, f_a, f_b = carry
 
         mid = 0.5 * (a + b)
@@ -57,15 +67,16 @@ def dichotomy(fun, min_delta, max_delta, eps=1e-4, max_iter=100):
         )
         return i + 1, a, b, f_a, f_b
 
-    def cond(carry):
+    def cond(carry: tuple) -> Array:
         i, a, b, f_a, f_b = carry
         return jnp.logical_and(i < max_iter, f_a - f_b > eps)
 
     f_min_delta, f_max_delta = fun(min_delta), fun(max_delta)
 
-    if_no_opt = lambda _: max_delta
+    def if_no_opt(_: Any) -> float | Array:
+        return max_delta
 
-    def if_opt(_):
+    def if_opt(_: Any) -> float | Array:
         _, res_a, res_b, fun_res_a, fun_res_b = jax.lax.while_loop(
             cond, body, (0, min_delta, max_delta, f_min_delta, f_max_delta)
         )
