@@ -73,7 +73,7 @@ def mclmc_find_L_and_step_size(
         The fraction of tuning for the second step of the adaptation.
     frac_tune3
         The fraction of tuning for the third step of the adaptation.
-    desired_energy_va
+    desired_energy_var
         The desired energy variance for the MCMC algorithm.
     trust_in_estimate
         The trust in the estimate of optimal stepsize.

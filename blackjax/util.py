@@ -386,7 +386,7 @@ def thin_algorithm(
 
 
 def thin_kernel(
-    kernel: Callable, thinning: int = 1, info_transform=lambda x: x
+    kernel: Callable, thinning: int = 1, info_transform: Callable = lambda x: x
 ) -> Callable:
     """
     Return a thinned version of a kernel that runs the kernel `thinning` times before returning the state.
@@ -431,9 +431,9 @@ def thin_kernel(
 
             # Return every 16th state, especially decreasing computation and memory cost
             # when estimating high dimensional autocorrelation length during tuning.
-            thinning = 16
+            thinning = 16,
 
-            # Adequatly aggregate info.energy_change
+            # Adequately aggregate info.energy_change
             info_transform=lambda info: tree.map(lambda x: (x**2).mean()**.5, info)
             )
 
