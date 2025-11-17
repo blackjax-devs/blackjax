@@ -17,6 +17,10 @@ from blackjax.util import pytree_size
 
 # optimal tuning for HMC, see https://arxiv.org/abs/1001.4460
 OPTIMAL_TARGET_ACCEPTANCE_RATE = 0.651
+# Clip the final log-space update like the original implementation in TFP (~log(2)/2 ≈ 0.35).
+LOG_UPDATE_CLIP = 0.35
+# Small constant to avoid division by zero or log of zero
+EPS_FLOAT = 1e-20
 
 
 class ChEESAdaptationState(NamedTuple):
@@ -59,7 +63,7 @@ def weighted_empirical_mean(x, w):
 
     w_exp = w.reshape((w.shape[0],) + (1,) * (x.ndim - 1))
     num = jnp.sum(w_exp * x_safe, axis=0)
-    den = jnp.sum(w_exp, axis=0) + 1e-20
+    den = jnp.sum(w_exp, axis=0) + EPS_FLOAT
     return jax.lax.stop_gradient(num / den)
 
 
@@ -205,14 +209,13 @@ def base(
         trajectory_gradient = jnp.sum(
             acceptance_probabilities * trajectory_gradients,
             where=~is_divergent,
-        ) / jnp.sum(acceptance_probabilities + 1e-20, where=~is_divergent)
+        ) / jnp.sum(acceptance_probabilities + EPS_FLOAT, where=~is_divergent)
 
         log_trajectory_length = jnp.log(trajectory_length)
         updates, optim_state_ = optim.update(
             trajectory_gradient, optim_state, log_trajectory_length
         )
-        # Clip the final log-space update like the original implementation in TFP (~log(2)/2 ≈ 0.35).
-        LOG_UPDATE_CLIP = 0.35
+
         updates = jax.tree_util.tree_map(
             lambda u: jnp.clip(u, -LOG_UPDATE_CLIP, LOG_UPDATE_CLIP), updates
         )
