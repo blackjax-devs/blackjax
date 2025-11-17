@@ -136,3 +136,11 @@ def test_chees_adaptation(adaptation_filters):
     empirical_std = jnp.std(draws, axis=0)
     np.testing.assert_allclose(empirical_mean, target_mean, atol=0.5)
     np.testing.assert_allclose(empirical_std, target_std, rtol=0.1)
+
+
+def test_halton_sequence_raise_value():
+    """Test that halton sequence raises value error when max_bits is too large."""
+    from blackjax.mcmc.dynamic_hmc import halton_sequence
+
+    with pytest.raises(ValueError, match="max_bits"):
+        halton_sequence(jnp.array([0], dtype=jnp.int32), max_bits=32)
