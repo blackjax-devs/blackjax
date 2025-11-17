@@ -61,21 +61,24 @@ def test_adaptation_schedule(num_steps, expected_schedule):
     ],
 )
 def test_chees_adaptation(adaptation_filters):
+    target_mean = jnp.array([0.0, 0.0])
+    target_std = jnp.array([1.0, 10.0])
     logprob_fn = lambda x: jax.scipy.stats.norm.logpdf(
-        x, loc=0.0, scale=jnp.array([1.0, 10.0])
-    ).sum()
+        x, loc=target_mean, scale=target_std
+    ).sum(axis=-1)
 
     num_burnin_steps = 1000
     num_results = 500
     num_chains = 16
     step_size = 0.1
+    target_acceptance_rate = 0.75
 
     init_key, warmup_key, inference_key = jax.random.split(jax.random.key(346), 3)
 
     warmup = blackjax.chees_adaptation(
         logprob_fn,
         num_chains=num_chains,
-        target_acceptance_rate=0.75,
+        target_acceptance_rate=target_acceptance_rate,
         adaptation_info_fn=adaptation_filters["filter_fn"],
     )
 
@@ -84,13 +87,12 @@ def test_chees_adaptation(adaptation_filters):
         warmup_key,
         initial_positions,
         step_size=step_size,
-        optim=optax.adamw(learning_rate=0.5),
+        optim=optax.adam(learning_rate=0.5, b1=0, b2=0.95),
         num_steps=num_burnin_steps,
     )
     algorithm = blackjax.dynamic_hmc(logprob_fn, **parameters)
-
     chain_keys = jax.random.split(inference_key, num_chains)
-    _, (_, infos) = jax.vmap(
+    final_states, (states, infos) = jax.vmap(
         lambda key, state: run_inference_algorithm(
             rng_key=key,
             initial_state=state,
@@ -99,7 +101,9 @@ def test_chees_adaptation(adaptation_filters):
         )
     )(chain_keys, last_states)
 
-    harmonic_mean = 1.0 / jnp.mean(1.0 / infos.acceptance_rate)
+    harmonic_mean = 1.0 / jnp.mean(1.0 / infos.acceptance_rate, axis=0)
+    assert harmonic_mean.shape == (num_results,)
+    harmonic_mean = jnp.mean(harmonic_mean)
 
     def check_attrs(attribute, keyset):
         for name, param in getattr(warmup_info, attribute)._asdict().items():
@@ -119,6 +123,16 @@ def test_chees_adaptation(adaptation_filters):
     for i, attribute in enumerate(["state", "info", "adaptation_state"]):
         check_attrs(attribute, keysets[i])
 
-    np.testing.assert_allclose(harmonic_mean, 0.75, atol=1e-1)
-    np.testing.assert_allclose(parameters["step_size"], 1.5, rtol=2e-1)
-    np.testing.assert_array_less(infos.num_integration_steps.mean(), 15.0)
+    # The harmonic mean of the acceptance rate should be close to the target acceptance rate
+    np.testing.assert_allclose(harmonic_mean, target_acceptance_rate, atol=1e-1)
+
+    # These are empirical values that should be roughly correct for this target distribution
+    np.testing.assert_allclose(parameters["step_size"], 1.5, atol=0.3)
+    np.testing.assert_allclose(infos.num_integration_steps.mean(), 9, atol=3)
+
+    # Check that sample means and stds are close to target values
+    draws = states.position.reshape(-1, states.position.shape[-1])
+    empirical_mean = jnp.mean(draws, axis=0)
+    empirical_std = jnp.std(draws, axis=0)
+    np.testing.assert_allclose(empirical_mean, target_mean, atol=0.5)
+    np.testing.assert_allclose(empirical_std, target_std, rtol=0.1)
