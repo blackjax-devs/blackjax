@@ -17,6 +17,10 @@ from blackjax.util import pytree_size
 
 # optimal tuning for HMC, see https://arxiv.org/abs/1001.4460
 OPTIMAL_TARGET_ACCEPTANCE_RATE = 0.651
+# Clip the final log-space update like the original implementation in TFP (~log(2)/2 ≈ 0.35).
+LOG_UPDATE_CLIP = 0.35
+# Small constant to avoid division by zero or log of zero
+EPS_FLOAT = 1e-20
 
 
 class ChEESAdaptationState(NamedTuple):
@@ -52,12 +56,24 @@ class ChEESAdaptationState(NamedTuple):
     step: int
 
 
+def weighted_empirical_mean(x, w):
+    # x: (num_chains, dim), w: (num_chains,)
+    x_safe = jnp.where(jnp.isfinite(x), x, 0.0)
+    w = jnp.where(jnp.isfinite(x).all(axis=-1), w, 0.0)
+
+    w_exp = w.reshape((w.shape[0],) + (1,) * (x.ndim - 1))
+    num = jnp.sum(w_exp * x_safe, axis=0)
+    den = jnp.sum(w_exp, axis=0) + EPS_FLOAT
+    return jax.lax.stop_gradient(num / den)
+
+
 def base(
     jitter_generator: Callable,
     next_random_arg_fn: Callable,
     optim: optax.GradientTransformation,
     target_acceptance_rate: float,
     decay_rate: float,
+    max_leapfrog_steps: int,
 ) -> Tuple[Callable, Callable]:
     """Maximizing the Change in the Estimator of the Expected Square criterion
     (trajectory length) and dual averaging procedure (step size) for the jittered
@@ -144,6 +160,8 @@ def base(
         harmonic_mean = 1.0 / jnp.mean(
             1.0 / acceptance_probabilities, where=~is_divergent
         )
+        # Replace inf/nan harmonic mean as zero to avoid issues in dual averaging
+        harmonic_mean = jnp.where(jnp.isfinite(harmonic_mean), harmonic_mean, 0.0)
         da_state_ = da_update(da_state, target_acceptance_rate - harmonic_mean)
         step_size_ = jnp.exp(da_state_.log_x)
         new_step_size, new_da_state, new_log_step_size = jax.lax.cond(
@@ -157,9 +175,14 @@ def base(
             1.0 - update_weight
         ) * log_step_size_ma + update_weight * new_log_step_size
 
+        w = jnp.where(~is_divergent, acceptance_probabilities, 0.0)
         proposals_mean = jax.tree_util.tree_map(
-            lambda p: jnp.nanmean(p, axis=0), proposed_positions
+            lambda p: weighted_empirical_mean(p, w), proposed_positions
         )
+        # The above weighted mean is presumably better than the simple mean:
+        # proposals_mean = jax.tree_util.tree_map(
+        #     lambda p: jnp.nanmean(p, axis=0), proposed_positions
+        # )
         initials_mean = jax.tree_util.tree_map(
             lambda p: jnp.nanmean(p, axis=0), initial_positions
         )
@@ -177,18 +200,24 @@ def base(
 
         trajectory_gradients = (
             jitter_generator(random_generator_arg)
-            * trajectory_length
+            * trajectory_length  # this effectively make this gradient w.r.t. log_trajectory_length
             * jax.vmap(
                 lambda pm, im, mm: (jnp.dot(pm, pm) - jnp.dot(im, im)) * jnp.dot(pm, mm)
             )(proposals_matrix, initials_matrix, momentums_matrix)
         )
+
         trajectory_gradient = jnp.sum(
-            acceptance_probabilities * trajectory_gradients, where=~is_divergent
-        ) / jnp.sum(acceptance_probabilities, where=~is_divergent)
+            acceptance_probabilities * trajectory_gradients,
+            where=~is_divergent,
+        ) / jnp.sum(acceptance_probabilities + EPS_FLOAT, where=~is_divergent)
 
         log_trajectory_length = jnp.log(trajectory_length)
         updates, optim_state_ = optim.update(
             trajectory_gradient, optim_state, log_trajectory_length
+        )
+
+        updates = jax.tree_util.tree_map(
+            lambda u: jnp.clip(u, -LOG_UPDATE_CLIP, LOG_UPDATE_CLIP), updates
         )
         log_trajectory_length_ = optax.apply_updates(log_trajectory_length, updates)
         new_log_trajectory_length, new_optim_state = jax.lax.cond(
@@ -204,6 +233,13 @@ def base(
         ) * log_trajectory_length_ma + update_weight * new_log_trajectory_length
         new_trajectory_length = jnp.exp(new_log_trajectory_length_ma)
 
+        # clip new trajectory length to avoid too large trajectories, also the
+        # minimum trajectory length is one integrator step
+        new_trajectory_length = jnp.clip(
+            new_trajectory_length,
+            max=max_leapfrog_steps * new_step_size,
+            min=new_step_size,
+        )
         return ChEESAdaptationState(
             new_step_size,
             new_log_step_size_ma,
@@ -278,6 +314,7 @@ def chees_adaptation(
     jitter_amount: float = 1.0,
     target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE,
     decay_rate: float = 0.5,
+    max_leapfrog_steps: int = 1000,
     adaptation_info_fn: Callable = return_all_adapt_info,
 ) -> AdaptationAlgorithm:
     """Adapt the step size and trajectory length (number of integration steps / step size)
@@ -376,13 +413,14 @@ def chees_adaptation(
                 jax.random.fold_in(carry_key, i)
             ) * jitter_amount + (1.0 - jitter_amount)
         else:
+            max_bits = np.ceil(np.log2(num_steps + max_sampling_steps))
             jitter_gn = lambda i: dynamic_hmc.halton_sequence(
-                i, np.ceil(np.log2(num_steps + max_sampling_steps))
+                i, max_bits
             ) * jitter_amount + (1.0 - jitter_amount)
 
-        def integration_steps_fn(random_generator_arg, trajectory_length_adjusted):
+        def integration_steps_fn(random_generator_arg, num_leapfrog_steps):
             return jnp.asarray(
-                jnp.ceil(jitter_gn(random_generator_arg) * trajectory_length_adjusted),
+                jnp.ceil(jitter_gn(random_generator_arg) * num_leapfrog_steps),
                 dtype=int,
             )
 
@@ -392,7 +430,12 @@ def chees_adaptation(
         )
 
         init, update = base(
-            jitter_gn, next_random_arg_fn, optim, target_acceptance_rate, decay_rate
+            jitter_gn,
+            next_random_arg_fn,
+            optim,
+            target_acceptance_rate,
+            decay_rate,
+            max_leapfrog_steps,
         )
 
         def one_step(carry, rng_key):
@@ -404,7 +447,7 @@ def chees_adaptation(
                 logdensity_fn=logdensity_fn,
                 step_size=adaptation_state.step_size,
                 inverse_mass_matrix=jnp.ones(num_dim),
-                trajectory_length_adjusted=adaptation_state.trajectory_length
+                num_leapfrog_steps=adaptation_state.trajectory_length
                 / adaptation_state.step_size,
             )
             new_states, info = jax.vmap(_step_fn)(keys, states)
@@ -432,7 +475,7 @@ def chees_adaptation(
             one_step, (init_states, init_adaptation_state), keys_step
         )
 
-        trajectory_length_adjusted = jnp.exp(
+        num_leapfrog_steps = jnp.exp(
             last_adaptation_state.log_trajectory_length_moving_average
             - last_adaptation_state.log_step_size_moving_average
         )
@@ -441,7 +484,7 @@ def chees_adaptation(
             "inverse_mass_matrix": jnp.ones(num_dim),
             "next_random_arg_fn": next_random_arg_fn,
             "integration_steps_fn": lambda arg: integration_steps_fn(
-                arg, trajectory_length_adjusted
+                arg, num_leapfrog_steps
             ),
         }
 
