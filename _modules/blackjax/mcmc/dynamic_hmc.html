@@ -392,6 +392,7 @@ document.write(`
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Public API for the Dynamic HMC Kernel&quot;&quot;&quot;</span>
+
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -443,7 +444,11 @@ document.write(`
 
 <div class="viewcode-block" id="init">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.init">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">random_generator_arg</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">position</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">DynamicHMCState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="n">random_generator_arg</span><span class="p">)</span></div>
 
@@ -557,7 +562,10 @@ document.write(`
 <span class="sd">    A ``SamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span>
-        <span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">next_random_arg_fn</span><span class="p">,</span> <span class="n">integration_steps_fn</span>
+        <span class="n">integrator</span><span class="p">,</span>
+        <span class="n">divergence_threshold</span><span class="p">,</span>
+        <span class="n">next_random_arg_fn</span><span class="p">,</span>
+        <span class="n">integration_steps_fn</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
@@ -582,6 +590,14 @@ document.write(`
 <div class="viewcode-block" id="halton_sequence">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.halton_sequence">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">halton_sequence</span><span class="p">(</span><span class="n">i</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">max_bits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate the (i+1)-th element of the Halton sequence.</span>
+
+<span class="sd">    Warning: max_bits should be less than the bit width of i.dtype to prevent integer overflow (e.g., max_bits &lt;= 63 for int64).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">max_bits</span> <span class="o">&gt;=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">bits</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;max_bits (</span><span class="si">{</span><span class="n">max_bits</span><span class="si">}</span><span class="s2">) must be less than bit width of dtype </span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">iinfo</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">bits</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
     <span class="n">bit_masks</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">max_bits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">i</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">einsum</span><span class="p">(</span><span class="s2">&quot;i,i-&gt;&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mod</span><span class="p">((</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="n">bit_masks</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="mf">0.5</span> <span class="o">/</span> <span class="n">bit_masks</span><span class="p">)</span></div>
 

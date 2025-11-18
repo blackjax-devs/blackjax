@@ -15,6 +15,8 @@ Attributes
 .. autoapisummary::
 
    blackjax.adaptation.chees_adaptation.OPTIMAL_TARGET_ACCEPTANCE_RATE
+   blackjax.adaptation.chees_adaptation.LOG_UPDATE_CLIP
+   blackjax.adaptation.chees_adaptation.EPS_FLOAT
 
 
 Classes
@@ -30,6 +32,7 @@ Functions
 
 .. autoapisummary::
 
+   blackjax.adaptation.chees_adaptation.weighted_empirical_mean
    blackjax.adaptation.chees_adaptation.base
    blackjax.adaptation.chees_adaptation.chees_adaptation
 
@@ -39,6 +42,14 @@ Module Contents
 
 .. py:data:: OPTIMAL_TARGET_ACCEPTANCE_RATE
    :value: 0.651
+
+
+.. py:data:: LOG_UPDATE_CLIP
+   :value: 0.35
+
+
+.. py:data:: EPS_FLOAT
+   :value: 1e-20
 
 
 .. py:class:: ChEESAdaptationState
@@ -99,7 +110,9 @@ Module Contents
       :type:  int
 
 
-.. py:function:: base(jitter_generator: Callable, next_random_arg_fn: Callable, optim: optax.GradientTransformation, target_acceptance_rate: float, decay_rate: float) -> Tuple[Callable, Callable]
+.. py:function:: weighted_empirical_mean(x, w)
+
+.. py:function:: base(jitter_generator: Callable, next_random_arg_fn: Callable, optim: optax.GradientTransformation, target_acceptance_rate: float, decay_rate: float, max_leapfrog_steps: int) -> Tuple[Callable, Callable]
 
    Maximizing the Change in the Estimator of the Expected Square criterion
    (trajectory length) and dual averaging procedure (step size) for the jittered
@@ -125,7 +138,7 @@ Module Contents
              * *update* -- Function that moves the warmup one step.
 
 
-.. py:function:: chees_adaptation(logdensity_fn: Callable, num_chains: int, *, jitter_generator: Optional[Callable] = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5, adaptation_info_fn: Callable = return_all_adapt_info) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: chees_adaptation(logdensity_fn: Callable, num_chains: int, *, jitter_generator: Optional[Callable] = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5, max_leapfrog_steps: int = 1000, adaptation_info_fn: Callable = return_all_adapt_info) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the step size and trajectory length (number of integration steps / step size)
    parameters of the jittered HMC algorthm.

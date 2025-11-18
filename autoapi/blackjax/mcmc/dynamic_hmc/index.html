@@ -431,7 +431,7 @@ document.write(`
 <td><p>Implements the (basic) user interface for the dynamic HMC kernel.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.dynamic_hmc.halton_sequence" title="blackjax.mcmc.dynamic_hmc.halton_sequence"><code class="xref py py-obj docutils literal notranslate"><span class="pre">halton_sequence</span></code></a>(→ float)</p></td>
-<td><p></p></td>
+<td><p>Generate the (i+1)-th element of the Halton sequence.</p></td>
 </tr>
 </tbody>
 </table>
@@ -526,7 +526,9 @@ sequence, given the current <cite>random_generator_arg</cite>.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.dynamic_hmc.halton_sequence">
 <span class="sig-name descname"><span class="pre">halton_sequence</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">i</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_bits</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/dynamic_hmc.html#halton_sequence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.dynamic_hmc.halton_sequence" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dd><p>Generate the (i+1)-th element of the Halton sequence.</p>
+<p>Warning: max_bits should be less than the bit width of i.dtype to prevent integer overflow (e.g., max_bits &lt;= 63 for int64).</p>
+</dd></dl>
 
 </section>
 </section>

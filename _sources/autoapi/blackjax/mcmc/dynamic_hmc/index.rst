@@ -96,3 +96,8 @@ Module Contents
 
 .. py:function:: halton_sequence(i: blackjax.types.Array, max_bits: int = 10) -> float
 
+   Generate the (i+1)-th element of the Halton sequence.
+
+   Warning: max_bits should be less than the bit width of i.dtype to prevent integer overflow (e.g., max_bits <= 63 for int64).
+
+
