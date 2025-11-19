@@ -57,7 +57,7 @@ Module Contents
       :type:  float
 
 
-.. py:function:: mclmc_find_L_and_step_size(mclmc_kernel, num_steps, state, rng_key, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.1, desired_energy_var=0.0005, trust_in_estimate=1.5, num_effective_samples=150, diagonal_preconditioning=True, params=None)
+.. py:function:: mclmc_find_L_and_step_size(mclmc_kernel, num_steps, state, rng_key, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.1, desired_energy_var=0.0005, trust_in_estimate=1.5, num_effective_samples=150, diagonal_preconditioning=True, params=None, Lfactor=0.4)
 
    Finds the optimal value of the parameters for the MCLMC algorithm.
 
@@ -68,11 +68,12 @@ Module Contents
    :param frac_tune1: The fraction of tuning for the first step of the adaptation.
    :param frac_tune2: The fraction of tuning for the second step of the adaptation.
    :param frac_tune3: The fraction of tuning for the third step of the adaptation.
-   :param desired_energy_va: The desired energy variance for the MCMC algorithm.
+   :param desired_energy_var: The desired energy variance for the MCMC algorithm.
    :param trust_in_estimate: The trust in the estimate of optimal stepsize.
    :param num_effective_samples: The number of effective samples for the MCMC algorithm.
    :param diagonal_preconditioning: Whether to do diagonal preconditioning (i.e. a mass matrix)
    :param params: Initial params to start tuning from (optional)
+   :param Lfactor: The factor scaling the estimated autocorrelation length to obtain momentum decoherence length L.
 
    :rtype: A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
 

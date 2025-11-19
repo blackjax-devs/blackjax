@@ -446,6 +446,7 @@ document.write(`
     <span class="n">num_effective_samples</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
     <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">Lfactor</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Finds the optimal value of the parameters for the MCLMC algorithm.</span>
@@ -466,7 +467,7 @@ document.write(`
 <span class="sd">        The fraction of tuning for the second step of the adaptation.</span>
 <span class="sd">    frac_tune3</span>
 <span class="sd">        The fraction of tuning for the third step of the adaptation.</span>
-<span class="sd">    desired_energy_va</span>
+<span class="sd">    desired_energy_var</span>
 <span class="sd">        The desired energy variance for the MCMC algorithm.</span>
 <span class="sd">    trust_in_estimate</span>
 <span class="sd">        The trust in the estimate of optimal stepsize.</span>
@@ -476,6 +477,8 @@ document.write(`
 <span class="sd">        Whether to do diagonal preconditioning (i.e. a mass matrix)</span>
 <span class="sd">    params</span>
 <span class="sd">        Initial params to start tuning from (optional)</span>
+<span class="sd">    Lfactor</span>
+<span class="sd">        The factor scaling the estimated autocorrelation length to obtain momentum decoherence length L.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -530,7 +533,7 @@ document.write(`
 
     <span class="k">if</span> <span class="n">num_steps3</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># at least 2 samples for ESS estimation</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">make_adaptation_L</span><span class="p">(</span>
-            <span class="n">mclmc_kernel</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">frac</span><span class="o">=</span><span class="n">frac_tune3</span><span class="p">,</span> <span class="n">Lfactor</span><span class="o">=</span><span class="mf">0.4</span>
+            <span class="n">mclmc_kernel</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">frac</span><span class="o">=</span><span class="n">frac_tune3</span><span class="p">,</span> <span class="n">Lfactor</span><span class="o">=</span><span class="n">Lfactor</span>
         <span class="p">)(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">part2_key</span><span class="p">)</span>
         <span class="n">total_num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">num_steps3</span>
 
