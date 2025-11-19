@@ -1,7 +1,7 @@
 """Utility functions for BlackJax."""
 
 from functools import partial
-from typing import Callable, Union
+from typing import Callable, NamedTuple, Union
 
 import jax.numpy as jnp
 from jax import jit, lax
@@ -314,3 +314,143 @@ def incremental_value_update(
     )
     total += weight
     return total, average
+
+
+def thin_algorithm(
+    sampling_algorithm: SamplingAlgorithm,
+    thinning: int = 1,
+    info_transform: Callable = lambda x: x,
+) -> SamplingAlgorithm:
+    """
+    Return a new sampling algorithm that performs `thinning` iterations of the given algorithm,
+    meaning only one state is returned every `thinning` steps.
+    This is useful to reduce computation and memory cost of high throughput samplers, especially in high dimension.
+
+    Parameters
+    ----------
+    sampling_algorithm: SamplingAlgorithm
+            The sampling algorithm to thin.
+    thinning: int
+        The number of algorithm step to be performed before returning the state.
+    info_transform: Callable
+        A function defining how to aggregate algorithm informations across the `thinning` steps.
+        By default return all of them.
+
+    Returns
+    -------
+    SamplingAlgorithm
+        A thinned version of the sampling algorithm.
+
+    Example
+    -------
+    .. code::
+
+        logdf = lambda x: -(x**2).sum()
+        init_pos = jnp.ones(2)
+        init_key, run_key = jr.split(jr.key(43), 2)
+
+        state = blackjax.mcmc.mclmc.init(
+                    position=init_pos,
+                    logdensity_fn=logdf,
+                    rng_key=init_key
+                    )
+
+        sampler = blackjax.mclmc(
+                    logdensity_fn=logdf,
+                    L=L,
+                    step_size=step_size,
+                    inverse_mass_matrix=inverse_mass_matrix,
+                    )
+
+        sampler = thin_algorithm(
+                    sampler,
+                    thinning=16,
+                    info_transform=lambda info: tree.map(jnp.mean, info),
+                    )
+
+        state, history = run_inference_algorithm(
+                    rng_key=run_key,
+                    initial_state=state,
+                    inference_algorithm=sampler,
+                    num_steps=100,
+                    )
+    """
+
+    def step_fn(rng_key: PRNGKey, state: NamedTuple) -> tuple[NamedTuple, NamedTuple]:
+        step = lambda state, rng_key: sampling_algorithm.step(rng_key, state)
+        keys = split(rng_key, thinning)
+        state, info = lax.scan(step, state, keys)
+        return state, info_transform(info)
+
+    return SamplingAlgorithm(sampling_algorithm.init, step_fn)
+
+
+def thin_kernel(
+    kernel: Callable, thinning: int = 1, info_transform: Callable = lambda x: x
+) -> Callable:
+    """
+    Return a thinned version of a kernel that runs the kernel `thinning` times before returning the state.
+    This is useful to reduce computation and memory cost of high throughput samplers, especially in high dimension.
+
+    Parameters
+    ----------
+    kernel: Callable
+        The kernel to thin.
+    thinning: int
+        The number of kernel step to be performed before returning the state.
+    info_transform: Callable
+        A function defining how to aggregate algorithm informations across the `thinning` steps.
+        By default return all of them.
+
+    Returns
+    -------
+    Callable
+        A thinned version of the kernel.
+
+
+    Example
+    -------
+    .. code::
+
+        logdf = lambda x: -(x**2).sum()
+        init_pos = jnp.ones(2)
+        init_key, tune_key = jr.split(jr.key(42), 2)
+
+        state = blackjax.mcmc.mclmc.init(
+                    position=init_pos,
+                    logdensity_fn=logdf,
+                    rng_key=init_key
+                    )
+
+        kernel = lambda inverse_mass_matrix: thin_kernel(
+            blackjax.mcmc.mclmc.build_kernel(
+                                logdensity_fn=logdf,
+                                integrator=isokinetic_mclachlan,
+                                inverse_mass_matrix=inverse_mass_matrix,
+                                ),
+
+            # Return every 16th state, especially decreasing computation and memory cost
+            # when estimating high dimensional autocorrelation length during tuning.
+            thinning = 16,
+
+            # Adequately aggregate info.energy_change
+            info_transform=lambda info: tree.map(lambda x: (x**2).mean()**.5, info)
+            )
+
+        state, params, n_steps = blackjax.mclmc_find_L_and_step_size(
+            mclmc_kernel=kernel,
+            num_steps=100,
+            state=state,
+            rng_key=tune_key,
+            )
+    """
+
+    def thinned_kernel(
+        rng_key: PRNGKey, state: NamedTuple, *args, **kwargs
+    ) -> tuple[NamedTuple, NamedTuple]:
+        step = lambda state, rng_key: kernel(rng_key, state, *args, **kwargs)
+        keys = split(rng_key, thinning)
+        state, info = lax.scan(step, state, keys)
+        return state, info_transform(info)
+
+    return thinned_kernel
