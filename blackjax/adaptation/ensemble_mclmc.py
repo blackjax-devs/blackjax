@@ -241,6 +241,7 @@ def laps(
         early_stop=early_stop,
     )
 
+
     # refine the results with the adjusted method
     _acc_prob = acc_prob
     if integrator_coefficients is None:

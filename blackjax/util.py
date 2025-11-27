@@ -447,9 +447,9 @@ def while_with_info(step, init, xs, length, while_cond):
     final, info, counter, _ = jax.lax.while_loop(cond_fun, body_fun, init_val)
 
     # eliminate the repeated values after the while condition has been violated
-    info = jax.tree_util.tree_map(lambda arr: arr[:counter], info)
+    info = jax.tree_util.tree_map(lambda arr: arr[:int(counter)], info)
 
-    return final, info, counter
+    return final, info
 
 
 def run_eca(
@@ -506,7 +506,7 @@ def run_eca(
 
 
         if early_stop:
-            final_state_all, info_history, _ = while_with_info(step, initial_state_all, xs, num_steps, adaptation.while_cond)
+            final_state_all, info_history = while_with_info(step, initial_state_all, xs, num_steps, adaptation.while_cond)
 
         else:
             final_state_all, info_history = lax.scan(step, initial_state_all, xs)
