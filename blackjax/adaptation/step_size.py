@@ -271,6 +271,7 @@ def bisection_monotonic_fn(acc_prob_wanted, reduce_shift=jnp.log(2.0), tolerance
 
         def on_true(bounds):
             lower, upper = bounds
+            # jax.debug.print("true: {x}", x=True)
             lower = jnp.max(jnp.array([lower, x]))
             return jnp.array([lower, upper]), lower + reduce_shift
 

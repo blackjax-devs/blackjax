@@ -199,7 +199,8 @@ def base(
     return init, update, final
 
 def unadjusted_alba(
-    algorithm,
+    mcmc_kernel,
+    init,
     logdensity_fn: Callable,
     target_eevpd,
     v,
@@ -207,14 +208,15 @@ def unadjusted_alba(
     is_mass_matrix_diagonal: bool = True,
     progress_bar: bool = False,
     adaptation_info_fn: Callable = lambda x, y, z : None,
-    integrator=mcmc.integrators.velocity_verlet,
+    # integrator=mcmc.integrators.velocity_verlet,
     num_alba_steps: int = 500,
     alba_factor: float = 0.4,
+    num_tuning_steps: int = 500,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     
 
-    mcmc_kernel = algorithm.build_kernel(integrator)
+    # mcmc_kernel = algorithm.build_kernel(integrator)
 
     adapt_init, adapt_step, adapt_final = base(
         is_mass_matrix_diagonal=is_mass_matrix_diagonal,
@@ -242,6 +244,7 @@ def unadjusted_alba(
             new_state.position,
             info,
         )
+        # raise Exception("stop")
         # jax.debug.print("info: {x}", x=(new_adaptation_state.step_size, info.energy_change))
         # jax.debug.print("step sizes: {x}", x=(adaptation_state.step_size, new_adaptation_state.step_size))
 
@@ -252,7 +255,7 @@ def unadjusted_alba(
 
     def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
         init_key, rng_key, alba_key = jax.random.split(rng_key, 3)
-        init_state = algorithm.init(position=position, logdensity_fn=logdensity_fn, random_generator_arg=init_key)
+        init_state = init(position=position, logdensity_fn=logdensity_fn, random_generator_arg=init_key)
         init_adaptation_state = adapt_init(position)
 
         if progress_bar:
@@ -267,6 +270,7 @@ def unadjusted_alba(
             (jnp.arange(num_steps-num_alba_steps), keys, schedule),
         )
 
+
         last_chain_state, last_warmup_state, *_ = last_state
         step_size, L, inverse_mass_matrix = adapt_final(last_warmup_state)
 
@@ -276,43 +280,53 @@ def unadjusted_alba(
         ### ALBA TUNING
         ###
 
-        jax.debug.print("num_alba_steps: {x}", x=num_alba_steps)
+        # jax.debug.print("num_alba_steps: {x}", x=num_alba_steps)
 
-        max_num_steps = 200
-        thinning_rate = math.ceil(num_alba_steps / max_num_steps)
-        jax.debug.print("thinning_rate: {x}", x=thinning_rate)
-        new_num_alba_steps = math.ceil(num_alba_steps / thinning_rate)
-        jax.debug.print("new_num_alba_steps: {x}", x=new_num_alba_steps)
+        max_num_alba_steps = num_alba_steps
+        # thinning_rate = math.ceil(num_alba_steps / max_num_alba_steps)
+        # jax.debug.print("thinning_rate: {x}", x=thinning_rate)
+        # new_num_alba_steps = math.ceil(num_alba_steps / thinning_rate)
+        # jax.debug.print("new_num_alba_steps: {x}", x=new_num_alba_steps)
 
-        keys = jax.random.split(alba_key, new_num_alba_steps)
-        mcmc_kernel = algorithm.build_kernel(integrator)
+        # keys = jax.random.split(alba_key, new_num_alba_steps)
+        keys = jax.random.split(alba_key, num_alba_steps)
+        # mcmc_kernel = algorithm.build_kernel(integrator)
 
         def step(state, key):
-            next_state=state
-            for i in range(thinning_rate):
-                key = jax.random.fold_in(key, i)
-                next_state, _ = mcmc_kernel(
-                    rng_key=key,
-                    state=state,
-                    logdensity_fn=logdensity_fn,
-                    L=L,
-                    step_size=step_size,
-                    inverse_mass_matrix=inverse_mass_matrix,
-                )
+            # next_state=state
+            # for i in range(thinning_rate):
+            #     key = jax.random.fold_in(key, i)
+            #     next_state, _ = mcmc_kernel(
+            #         rng_key=key,
+            #         state=next_state,
+            #         logdensity_fn=logdensity_fn,
+            #         L=L,
+            #         step_size=step_size,
+            #         inverse_mass_matrix=inverse_mass_matrix,
+            #     )
+
+            next_state, _ = mcmc_kernel(
+                rng_key=key,
+                state=state,
+                logdensity_fn=logdensity_fn,
+                L=L,
+                step_size=step_size,
+                inverse_mass_matrix=inverse_mass_matrix,
+            )
 
             return next_state, next_state.position
         
-        if new_num_alba_steps > 0:
-            jax.debug.print("params before alba tuning {x}", x=(L, step_size))
+        if num_alba_steps > 0:
+            # jax.debug.print("params before alba tuning {x}", x=(L, step_size))
             _, samples = jax.lax.scan(step, last_chain_state, keys)
             flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
             ess = effective_sample_size(flat_samples[None, ...])
-            jax.debug.print("ess after alba {x}", x=(L, step_size, ess))
+            # jax.debug.print("ess after alba {x}", x=(L, step_size, ess))
             # print(num_alba_steps/jnp.mean(ess), "ess (blackjax internal)\n")
             # print( effective_sample_size(flat_samples[None, ...]), "ess (blackjax internal)\n")
 
             # print("L etc", L, step_size, jnp.mean(ess), num_alba_steps, jnp.mean(num_alba_steps / ess))
-            L=alba_factor * step_size * jnp.mean(new_num_alba_steps / ess)
+            L=alba_factor * step_size * jnp.mean(num_alba_steps / ess)
             # print("new L", L)
             # raise Exception("stop")
 

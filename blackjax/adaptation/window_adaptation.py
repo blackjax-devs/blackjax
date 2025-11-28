@@ -257,6 +257,7 @@ def window_adaptation(
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
     preconditioning = True,
+    extra_init_args = {},
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the value of the inverse mass matrix and step size parameters of
@@ -335,7 +336,7 @@ def window_adaptation(
         )
 
     def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
-        init_state = algorithm.init(position, logdensity_fn)
+        init_state = algorithm.init(position, logdensity_fn, **extra_init_args)
         init_adaptation_state = adapt_init(position, initial_step_size)
 
         if progress_bar:
