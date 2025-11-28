@@ -324,7 +324,7 @@ def incremental_value_update(
 
 
 def eca_step(
-    kernel, summary_statistics_fn, adaptation_update, num_chains, superchain_size = None, ensemble_info=None
+    kernel, summary_statistics_fn, adaptation_update, num_chains, superchain_size = None, all_chains_info=None
 ):
     """
     Construct a single step of ensemble chain adaptation (eca) to be performed in parallel on multiple devices.
@@ -346,22 +346,22 @@ def eca_step(
         state, info = vmap(kernel, (0, 0, None))(keys_sampling, state, adaptation_state)
 
         # combine all the chains to compute expectation values
-        theta = vmap(summary_statistics_fn, (0, 0, None))(state, info, key_adaptation)
-        Etheta = tree_map(
-            lambda theta: lax.psum(jnp.sum(theta, axis=0), axis_name="chains")
+        summary_statistics = vmap(summary_statistics_fn, (0, 0, None))(state, info, key_adaptation)
+        expected_value_summary_statistics = tree_map(
+            lambda summary_statistics: lax.psum(jnp.sum(summary_statistics, axis=0), axis_name="chains")
             / num_chains,
-            theta,
+            summary_statistics,
         )
 
         # use these to adapt the hyperparameters of the dynamics
         adaptation_state, info_to_be_stored = adaptation_update(
-            adaptation_state, Etheta
+            adaptation_state, expected_value_summary_statistics
         )
 
         return (state, adaptation_state), info_to_be_stored
 
 
-    return add_ensemble_info(add_splitR(step, num_chains, superchain_size), ensemble_info)
+    return add_all_chains_info(add_splitR(step, num_chains, superchain_size), all_chains_info)
 
 
 def add_splitR(step, num_chains, superchain_size):
@@ -401,14 +401,55 @@ def add_splitR(step, num_chains, superchain_size):
         return _step_with_R
     
     
-def add_ensemble_info(step, ensemble_info):
+def add_all_chains_info(step, all_chains_info):
 
     def _step(state_all, xs):
         (state, adaptation_state), info_to_be_stored = step(state_all, xs)
-        return (state, adaptation_state), (info_to_be_stored, vmap(ensemble_info)(state.position))
+        info_to_be_stored['all_chains_info'] = vmap(all_chains_info)(state.position)
 
-    return _step if ensemble_info is not None else step
+        return (state, adaptation_state), info_to_be_stored
 
+    return _step if all_chains_info is not None else step
+
+
+
+
+def while_with_info(step, init, xs, length, while_cond):
+    """Same syntax and usage as jax.lax.scan, but it is run as a while loop that is terminated if not while_cond(state).
+        len(xs) determines the maximum number of iterations.
+    """
+
+    get_i = lambda tree, i: jax.tree_util.tree_map(lambda arr: arr[i], tree)
+
+    info1 = step(init, get_i(xs, 0))[1] # call the step once to determine the shape of info
+    info = jax.lax.scan(lambda x, _: (x, info1), init= 0, length= length)[1] # allocate the full info by repeating values
+
+    init_val = (init, info, 0, while_cond(info1, 0))
+
+    def body_fun(val):
+        x, info_old, counter, cond = val
+        
+        x_new, info_new = step(x, get_i(xs, counter))
+        
+        # update the full info by adding the new one
+        info_full = jax.tree_util.tree_map(lambda arr, val: arr.at[counter].set(val), info_old, info_new) 
+
+        cond = while_cond(info_new, counter)
+
+        return x_new, info_full, counter + 1, cond
+
+
+    def cond_fun(val):
+        _, _, counter, cond = val
+        return cond & (counter < length)
+    
+    
+    final, info, counter, _ = jax.lax.while_loop(cond_fun, body_fun, init_val)
+
+    # eliminate the repeated values after the while condition has been violated
+    info = jax.tree_util.tree_map(lambda arr: arr[:counter], info)
+
+    return final, info, counter
 
 
 def run_eca(
@@ -420,7 +461,7 @@ def run_eca(
     num_chains,
     mesh,
     superchain_size= None,
-    ensemble_info=None,
+    all_chains_info=None,
     early_stop=False,
 ):
     """
@@ -434,7 +475,7 @@ def run_eca(
         num_steps: number of steps to run
         num_chains: number of chains
         mesh: mesh for parallelization
-        ensemble_info: function that takes the state of the system and returns some information about the ensemble
+        all_chains_info: function that takes the state of the system and returns some summary statistics. Will be applied and stored for all the chains at each step so it can be memory intensive.
         early_stop: whether to stop early
     Returns:
         final_state: final state of the system
@@ -448,7 +489,7 @@ def run_eca(
         adaptation.update,
         num_chains,
         superchain_size= superchain_size,
-        ensemble_info = ensemble_info,
+        all_chains_info = all_chains_info,
     )
 
     def all_steps(initial_state, keys_sampling, keys_adaptation):
@@ -463,89 +504,24 @@ def run_eca(
             keys_adaptation,
         )  # keys for all steps that will be performed. keys_sampling.shape = (num_steps, chains_per_device), keys_adaptation.shape = (num_steps, )
 
-        EEVPD = jnp.zeros((num_steps,))
-        EEVPD_wanted = jnp.zeros((num_steps,))
-        L = jnp.zeros((num_steps,))
-        entropy = jnp.zeros((num_steps,))
-        equi_diag = jnp.zeros((num_steps,))
-        equi_full = jnp.zeros((num_steps,))
-        bias0 = jnp.zeros((num_steps,))
-        bias1 = jnp.zeros((num_steps,))
-        observables = jnp.zeros((num_steps,))
-        r_avg = jnp.zeros((num_steps,))
-        r_max = jnp.zeros((num_steps,))
-        R_avg = jnp.zeros((num_steps,))
-        R_max = jnp.zeros((num_steps,))
-        step_size = jnp.zeros((num_steps,))
-
-        def step_while(a):
-            x, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, R_avg, R_max, step_size = a
-
-            auxilliary_input = (xs[0][i], xs[1][i], xs[2][i])
-
-            output, (info, pos) = step(x, auxilliary_input)
-            new_EEVPD = EEVPD.at[i].set(info.get("EEVPD"))
-            new_EEVPD_wanted = EEVPD_wanted.at[i].set(info.get("EEVPD_wanted"))
-            new_L = L.at[i].set(info.get("L"))
-            new_entropy = entropy.at[i].set(info.get("entropy"))
-            new_equi_diag = equi_diag.at[i].set(info.get("equi_diag"))
-            new_equi_full = equi_full.at[i].set(info.get("equi_full"))
-            new_bias0 = bias0.at[i].set(info.get("bias")[0])
-            new_bias1 = bias1.at[i].set(info.get("bias")[1])
-            new_observables = observables.at[i].set(info.get("observables"))
-            new_r_avg = r_avg.at[i].set(info.get("r_avg"))
-            new_r_max = r_max.at[i].set(info.get("r_max"))
-            new_R_avg = R_avg.at[i].set(info.get("R_avg"))
-            new_R_max = R_max.at[i].set(info.get("R_max"))
-            new_step_size = step_size.at[i].set(info.get("step_size"))
-
-            return (output, i + 1, 
-                    (info.get("r_max") > adaptation.r_end) | (i < adaptation.save_num), # while is run while this is True
-                    new_EEVPD, new_EEVPD_wanted, new_L, new_entropy, new_equi_diag, new_equi_full, new_bias0, new_bias1, new_observables, new_r_avg, new_r_max, new_R_avg, new_R_max, new_step_size)
 
         if early_stop:
-            final_state_all, i, _, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, R_avg, R_max, step_size = lax.while_loop(
-                lambda a: ((a[1] < num_steps) & a[2]),
-                step_while,
-                (initial_state_all, 0, True, EEVPD, EEVPD_wanted, L, entropy, equi_diag, equi_full, bias0, bias1, observables, r_avg, r_max, R_avg, R_max, step_size),
-            )
-            steps_done = i
-            info_history = {
-                "EEVPD": EEVPD,
-                "EEVPD_wanted": EEVPD_wanted,
-                "L": L,
-                "entropy": entropy,
-                "equi_diag": equi_diag,
-                "equi_full": equi_full,
-                "bias0": bias0,
-                "bias1": bias1,
-                "observables": observables,
-                "r_avg": r_avg,
-                "r_max": r_max,
-                "R_avg": R_avg,
-                "R_max": R_max,
-                "step_size": step_size,
-                "steps_done": steps_done,
-            }
+            final_state_all, info_history, _ = while_with_info(step, initial_state_all, xs, num_steps, adaptation.while_cond)
 
         else:
             final_state_all, info_history = lax.scan(step, initial_state_all, xs)
-            steps_done = num_steps
 
         final_state, final_adaptation_state = final_state_all
-        return (
-            final_state,
-            final_adaptation_state,
-            info_history,
-            steps_done,
-        )  # info history is composed of averages over all chains, so it is a couple of scalars
+        
+        return final_state, final_adaptation_state, info_history  # info history is composed of averages over all chains, so it is a couple of scalars
+
 
     p, pscalar = PartitionSpec("chains"), PartitionSpec()
     parallel_execute = shard_map(
         all_steps,
         mesh=mesh,
         in_specs=(p, p, pscalar),
-        out_specs=(p, pscalar, pscalar, pscalar),
+        out_specs=(p, pscalar, pscalar),
         check_rep=False,
     )
 
@@ -560,11 +536,11 @@ def run_eca(
     keys_sampling = distribute_keys(key_sampling, (num_chains, num_steps))
 
     # run sampling in parallel
-    final_state, final_adaptation_state, info_history, steps_done = parallel_execute(
+    final_state, final_adaptation_state, info_history = parallel_execute(
         initial_state, keys_sampling, keys_adaptation
     )
 
-    return final_state, final_adaptation_state, info_history, steps_done
+    return final_state, final_adaptation_state, info_history
 
 
 def ensemble_execute_fn(
@@ -583,8 +559,8 @@ def ensemble_execute_fn(
     Args:
          x: array distributed over all decvices
          args: additional arguments for func, not distributed.
-         summary_statistics_fn: operates on a single member of ensemble and returns some summary statistics.
-         rng_key: a single random key, which will then be split, such that each member of an ensemble will get a different random key.
+         summary_statistics_fn: operates on a chain and returns some summary statistics.
+         rng_key: a single random key, which will then be split, such that chain will get a different random key.
 
     Returns:
          y: array distributed over all decvices. Need not be of the same shape as x.

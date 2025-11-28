@@ -181,7 +181,7 @@ def laps(
     steps_per_sample=15,
     acc_prob=None,
     observables_for_bias=lambda x: x,
-    ensemble_observables=None,
+    all_chains_info=None,
     diagnostics=True,
     contract=lambda x: 0.0,
     superchain_size= 1,
@@ -203,7 +203,7 @@ def laps(
     steps_per_sample: the number of steps per sample
     acc_prob: the acceptance probability
     observables: the observables (for diagnostic use)
-    ensemble_observables:  observable calculated over the ensemble (for diagnostic use)
+    all_chains_info: summary statistics calculated and stored for all chain at each iteration so it can be memory intensive
     diagnostics: whether to return diagnostics
     """
     
@@ -228,7 +228,7 @@ def laps(
         contract=contract,
     )
 
-    final_state, final_adaptation_state, info1, steps_done_phase_1 = run_eca(
+    final_state, final_adaptation_state, info1 = run_eca(
         key_umclmc,
         initial_state,
         kernel,
@@ -237,7 +237,7 @@ def laps(
         num_chains,
         mesh,
         superchain_size,
-        ensemble_observables,
+        all_chains_info,
         early_stop=early_stop,
     )
 
@@ -299,7 +299,7 @@ def laps(
         observables_for_bias=observables_for_bias,
     )
 
-    final_state, final_adaptation_state, info2, _ = run_eca(
+    final_state, final_adaptation_state, info2 = run_eca(
         key_mclmc,
         initial_state,
         kernel,
@@ -308,7 +308,7 @@ def laps(
         num_chains,
         mesh,
         superchain_size,
-        ensemble_observables
+        all_chains_info
     )
 
     if diagnostics:

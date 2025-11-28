@@ -253,7 +253,7 @@ class Adaptation:
             "observables_for_bias": self.observables_for_bias(state.position),
             "observables": self.observables(state.position),
             "entropy": -info["logdensity"],
-            "uturn": jnp.sqrt(jnp.sum(jnp.square(state.logdensity_grad - jnp.dot(state.logdensity_grad, state.momentum) * state.momentum))) / (self.ndims - 1)
+            #"uturn": jnp.sqrt(jnp.sum(jnp.square(state.logdensity_grad - jnp.dot(state.logdensity_grad, state.momentum) * state.momentum))) / (self.ndims - 1)
         }
 
     def update(self, adaptation_state, Etheta):
@@ -308,13 +308,13 @@ class Adaptation:
             "r_max": fluctuations[0],
             "r_avg": fluctuations[1],
             "entropy": Etheta["entropy"],
-            "observables": Etheta["observables"],
+            "observables": Etheta["observables"]
         }
 
         adaptation_state_new = AdaptationState(
             L,
             inverse_mass_matrix,
-            adaptation_state.step_size * eps_factor,
+            adaptation_state.step_size * eps_factor, # set the stepsize directly
             adaptation_state.step_count + 1,
             EEVPD,
             EEVPD_wanted,
@@ -323,6 +323,7 @@ class Adaptation:
 
         return adaptation_state_new, info_to_be_stored
 
-    def while_cond(self, info):
+
+    def while_cond(self, info, counter):
         """determine if we want to switch to adjustment"""
-        return info['r_max'] > self.r_end
+        return (info['r_max'] > self.r_end) | (counter < self.save_num)
