@@ -120,11 +120,11 @@ def adjusted_alba(
         preconditioning=preconditioning,
         **extra_parameters)
     
-    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
+    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000, num_unadjusted_steps: int = 20000):
         
         unadjusted_warmup_key, adjusted_warmup_key = jax.random.split(rng_key)
 
-        num_unadjusted_steps = 20000
+        # num_unadjusted_steps = 20000
 
         (state, params), adaptation_info = unadjusted_warmup.run(unadjusted_warmup_key, position, num_unadjusted_steps)
 
