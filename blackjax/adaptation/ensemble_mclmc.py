@@ -11,12 +11,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# """Public API for the MCLMC Kernel"""
+# """Public API for LAPS"""
 
-# import jax
-# import jax.numpy as jnp
-# from blackjax.util import run_eca
-# import blackjax.adaptation.ensemble_umclmc as umclmc
 
 
 from typing import Any, NamedTuple
@@ -30,10 +26,10 @@ from blackjax.adaptation.ensemble_umclmc import (
     equipartition_diagonal_loss,
 )
 from blackjax.adaptation.step_size import bisection_monotonic_fn
-from blackjax.mcmc.adjusted_mclmc import build_kernel as build_kernel_malt
+from blackjax.mcmc.malt import build_kernel as build_kernel_malt
 from blackjax.mcmc.hmc import HMCState
 from blackjax.mcmc.integrators import (
-    generate_isokinetic_integrator,
+    generate_euclidean_integrator,
     mclachlan_coefficients,
     omelyan_coefficients,
 )
@@ -58,7 +54,7 @@ build_kernel = lambda logdensity_fn, integrator, inverse_mass_matrix: lambda key
     state=state,
     logdensity_fn=logdensity_fn,
     step_size=adap.step_size,
-    integration_steps_fn=lambda k:adap.steps_per_sample,
+    num_integration_steps= adap.steps_per_sample,
     inverse_mass_matrix=inverse_mass_matrix,
 )
 
@@ -257,7 +253,7 @@ def laps(
         if acc_prob is None:
             _acc_prob = 0.9
 
-    integrator = generate_isokinetic_integrator(_integrator_coefficients)
+    integrator = generate_euclidean_integrator(_integrator_coefficients)
     gradient_calls_per_step = (
         len(_integrator_coefficients) // 2
     )  # scheme = BABAB..AB scheme has len(scheme)//2 + 1 Bs. The last doesn't count because that gradient can be reused in the next step.

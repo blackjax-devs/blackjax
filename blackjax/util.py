@@ -446,10 +446,7 @@ def while_with_info(step, init, xs, length, while_cond):
     
     final, info, counter, _ = jax.lax.while_loop(cond_fun, body_fun, init_val)
 
-    # eliminate the repeated values after the while condition has been violated
-    info = jax.tree_util.tree_map(lambda arr: arr[:int(counter)], info)
-
-    return final, info
+    return final, info, counter
 
 
 def run_eca(
@@ -506,14 +503,15 @@ def run_eca(
 
 
         if early_stop:
-            final_state_all, info_history = while_with_info(step, initial_state_all, xs, num_steps, adaptation.while_cond)
+            final_state_all, info_history, counter = while_with_info(step, initial_state_all, xs, num_steps, adaptation.while_cond)
 
         else:
             final_state_all, info_history = lax.scan(step, initial_state_all, xs)
+            counter = num_steps
 
         final_state, final_adaptation_state = final_state_all
         
-        return final_state, final_adaptation_state, info_history  # info history is composed of averages over all chains, so it is a couple of scalars
+        return final_state, final_adaptation_state, info_history, counter  # info history is composed of averages over all chains, so it is a couple of scalars
 
 
     p, pscalar = PartitionSpec("chains"), PartitionSpec()
@@ -521,7 +519,7 @@ def run_eca(
         all_steps,
         mesh=mesh,
         in_specs=(p, p, pscalar),
-        out_specs=(p, pscalar, pscalar),
+        out_specs=(p, pscalar, pscalar, pscalar),
         check_rep=False,
     )
 
@@ -536,9 +534,12 @@ def run_eca(
     keys_sampling = distribute_keys(key_sampling, (num_chains, num_steps))
 
     # run sampling in parallel
-    final_state, final_adaptation_state, info_history = parallel_execute(
+    final_state, final_adaptation_state, info_history, counter = parallel_execute(
         initial_state, keys_sampling, keys_adaptation
     )
+
+    # info_history has a static size, determined by num_steps, but if early_stop = True, the values after the while condition has been violated are nonsense. Remove them:
+    info_history = jax.tree_util.tree_map(lambda arr: arr[:int(counter)], info_history)
 
     return final_state, final_adaptation_state, info_history
 

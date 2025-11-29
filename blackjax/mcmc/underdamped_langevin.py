@@ -95,27 +95,30 @@ def build_kernel(
             state, step_size, L, rng_key
         )
         
+        new_state = IntegratorState(position, momentum, logdensity, logdensitygrad)
 
-        eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
-        ndims = pytree_size(position)
-
-        energy_key, nan_key = jax.random.split(rng_key)
-
-        new_state, info = handle_high_energy(
-            previous_state=state,
-            next_state=IntegratorState(position, momentum, logdensity, logdensitygrad),
-            info=LangevinInfo(
+        info=LangevinInfo(
                 logdensity=logdensity,
                 energy_change=energy_error,
                 kinetic_change=kinetic_change,
                 nonans=True
-            ),
-            key=energy_key,
-            inverse_mass_matrix=inverse_mass_matrix,
-            cutoff=jnp.sqrt(ndims * eev_max_per_dim),
-        )
+            )
+        
+        # new_state, info = handle_high_energy(
+        #     previous_state=state,
+        #     next_state=IntegratorState(position, momentum, logdensity, logdensitygrad),
+        #     info=LangevinInfo(
+        #         logdensity=logdensity,
+        #         energy_change=energy_error,
+        #         kinetic_change=kinetic_change,
+        #         nonans=True
+        #     ),
+        #     key=energy_key,
+        #     inverse_mass_matrix=inverse_mass_matrix,
+        #     cutoff=jnp.sqrt(ndims * eev_max_per_dim),
+        # )
 
-        new_state, info = handle_nans(state, new_state, info, nan_key, inverse_mass_matrix)
+        #new_state, info = handle_nans(state, new_state, info, nan_key, inverse_mass_matrix)
         return new_state, info
 
 

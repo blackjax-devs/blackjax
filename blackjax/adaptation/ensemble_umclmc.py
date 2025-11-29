@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-# """Public API for the MCLMC Kernel"""
+# """Public API for the unadjusted LAPS Kernel"""
 
 from typing import Any, NamedTuple
 
@@ -19,11 +19,11 @@ import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
-from blackjax.mcmc import mclmc
+from blackjax.mcmc import underdamped_langevin
 from blackjax.mcmc.integrators import (
     IntegratorState,
     _normalized_flatten_array,
-    isokinetic_velocity_verlet,
+    velocity_verlet,
 )
 from blackjax.types import Array
 from blackjax.util import ensemble_execute_fn
@@ -49,10 +49,14 @@ def build_kernel(logdensity_fn):
     # )
 
     def sequential_kernel(key, state, adap):
-        new_state, info = mclmc.build_kernel(
-         integrator=isokinetic_velocity_verlet, 
-            )(key, state,logdensity_fn, adap.L, adap.step_size,jnp.ones(adap.inverse_mass_matrix.shape))
+        # new_state, info = mclmc.build_kernel(
+        #  integrator=isokinetic_velocity_verlet, 
+        #     )(key, state,logdensity_fn, adap.L, adap.step_size, jnp.ones(adap.inverse_mass_matrix.shape))
 
+        new_state, info = underdamped_langevin.build_kernel(
+         integrator= velocity_verlet, desired_energy_var_max_ratio= jnp.inf,
+            )(key, state,logdensity_fn, adap.L, adap.step_size, jnp.ones(adap.inverse_mass_matrix.shape))
+        
         # reject the new state if there were nans
         nonans = no_nans(new_state)
         new_state = nan_reject(nonans, state, new_state)
@@ -78,7 +82,7 @@ def initialize(rng_key, logdensity_fn, sample_init, num_chains, mesh, superchain
         logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
         flat_g, unravel_fn = ravel_pytree(logdensity_grad)
         velocity = unravel_fn(
-            _normalized_flatten_array(flat_g)[0]
+            _normalized_flatten_array(flat_g)[0] * jnp.sqrt(len(flat_g))
         )  # = grad logp/ |grad logp|
 
         return IntegratorState(position, velocity, logdensity, logdensity_grad), None
@@ -229,9 +233,9 @@ class Adaptation:
         )
 
         self.initial_state = AdaptationState(
-            L=jnp.inf,  # do not add noise for the first step
+            L= 1.,  # do not add noise for the first step
             inverse_mass_matrix=jnp.ones(ndims),
-            step_size=0.01 * jnp.sqrt(ndims),
+            step_size=0.01,
             step_count=0,
             EEVPD=1e-3,
             EEVPD_wanted=1e-3,
@@ -278,7 +282,7 @@ class Adaptation:
         )
         history = History(history_observables, history_stopping, history_weights)
 
-        L = self.alpha * jnp.sqrt(jnp.sum(Etheta["xsq"] - jnp.square(Etheta["x"])))  # average over the ensemble, sum over parameters (to get sqrt(d))
+        L = self.alpha * jnp.sqrt(jnp.average(Etheta["xsq"] - jnp.square(Etheta["x"])))  # average over the ensemble, sum over parameters (to get sqrt(d))
         #L = self.alpha / Etheta["uturn"]
         inverse_mass_matrix = Etheta["xsq"] - jnp.square(Etheta["x"])
         EEVPD = (Etheta["Esq"] - jnp.square(Etheta["E"])) / self.ndims
