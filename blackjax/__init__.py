@@ -42,6 +42,7 @@ from .smc import partial_posteriors_path as _partial_posteriors_smc
 from .smc import persistent_sampling
 from .smc import pretuning as _pretuning
 from .smc import tempered
+from .vi import fullrank_vi as _fullrank_vi
 from .vi import meanfield_vi as _meanfield_vi
 from .vi import pathfinder as _pathfinder
 from .vi import schrodinger_follmer as _schrodinger_follmer
@@ -150,6 +151,12 @@ csgld = generate_top_level_api_from(_csgld)
 svgd = generate_top_level_api_from(_svgd)
 
 # variational inference
+fullrank_vi = GenerateVariationalAPI(
+    _fullrank_vi.as_top_level_api,
+    _fullrank_vi.init,
+    _fullrank_vi.step,
+    _fullrank_vi.sample,
+)
 meanfield_vi = GenerateVariationalAPI(
     _meanfield_vi.as_top_level_api,
     _meanfield_vi.init,
