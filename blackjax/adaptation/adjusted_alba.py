@@ -25,7 +25,8 @@ def make_random_trajectory_length_fn(random_trajectory_length : bool):
     return integration_steps_fn
 
 def da_adaptation(
-    algorithm,
+    adjusted_mcmc_kernel,
+    adjusted_init,
     logdensity_fn: Callable,
     integration_steps_fn: Callable,
     inverse_mass_matrix,
@@ -37,7 +38,8 @@ def da_adaptation(
 ):
     
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
-    kernel = algorithm.build_kernel(integrator=integrator, L_proposal_factor=L_proposal_factor)
+    # kernel = algorithm.build_kernel(integrator=integrator, L_proposal_factor=L_proposal_factor)
+    # kernel = adjusted_mcmc_kernel.build_kernel(integrator=integrator, L_proposal_factor=L_proposal_factor)
 
     # initial_L = jnp.clip(initial_L, min=initial_step_size+0.01)
 
@@ -45,7 +47,7 @@ def da_adaptation(
     def step(state, key):
 
         (adaptation_state, kernel_state), L = state
-        new_kernel_state, info = kernel(
+        new_kernel_state, info = adjusted_mcmc_kernel(
             rng_key=key,
             state=kernel_state,
             logdensity_fn=logdensity_fn,
@@ -70,7 +72,7 @@ def da_adaptation(
 
         init_key, rng_key = jax.random.split(rng_key)
         
-        init_kernel_state = algorithm.init(position=position, logdensity_fn=logdensity_fn, random_generator_arg=init_key)
+        init_kernel_state = adjusted_init(position=position, logdensity_fn=logdensity_fn, random_generator_arg=init_key)
 
         keys = jax.random.split(rng_key, num_steps)
         init_state = da_init(initial_step_size), init_kernel_state
@@ -95,11 +97,13 @@ def da_adaptation(
 
 
 def adjusted_alba(
-    unadjusted_algorithm,
+    unadjusted_mcmc_kernel,
+    unadjusted_init,
     logdensity_fn: Callable,
     target_eevpd,
     v,
-    adjusted_algorithm,
+    adjusted_mcmc_kernel,
+    adjusted_init,
     integrator,
     target_acceptance_rate: float = 0.80,
     num_alba_steps: int = 500,
@@ -109,12 +113,14 @@ def adjusted_alba(
     **extra_parameters,
     ):
 
+    # jax.debug.print("unadjusted_alba {x}", x=v)
     unadjusted_warmup = unadjusted_alba(
-        algorithm= unadjusted_algorithm,
+        mcmc_kernel= unadjusted_mcmc_kernel,
+        init=unadjusted_init,
         logdensity_fn=logdensity_fn,
         target_eevpd=target_eevpd,
         v=v,
-        integrator=integrator,
+        # integrator=integrator,
         num_alba_steps=num_alba_steps,
         alba_factor=alba_factor,
         preconditioning=preconditioning,
@@ -134,7 +140,8 @@ def adjusted_alba(
         integration_steps_fn = make_random_trajectory_length_fn(random_trajectory_length=True)
 
         adjusted_warmup = da_adaptation(
-            algorithm=adjusted_algorithm,
+            adjusted_mcmc_kernel=adjusted_mcmc_kernel,
+            adjusted_init=adjusted_init,
             logdensity_fn=logdensity_fn,
             integration_steps_fn=integration_steps_fn,
             initial_L=params["L"],
