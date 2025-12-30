@@ -641,12 +641,15 @@ def thin_algorithm(
     -------
     SamplingAlgorithm
         A thinned version of the sampling algorithm.
+
     Example
     -------
     .. code::
+
         logdf = lambda x: -(x**2).sum()
         init_pos = jnp.ones(2)
         init_key, run_key = jr.split(jr.key(43), 2)
+
         state = blackjax.mcmc.mclmc.init(
                     position=init_pos,
                     logdensity_fn=logdf,
@@ -678,3 +681,74 @@ def thin_algorithm(
         return state, info_transform(info)
 
     return SamplingAlgorithm(sampling_algorithm.init, step_fn)
+
+
+def thin_kernel(
+    kernel: Callable, thinning: int = 1, info_transform: Callable = lambda x: x
+) -> Callable:
+    """
+    Return a thinned version of a kernel that runs the kernel `thinning` times before returning the state.
+    This is useful to reduce computation and memory cost of high throughput samplers, especially in high dimension.
+
+    Parameters
+    ----------
+    kernel: Callable
+        The kernel to thin.
+    thinning: int
+        The number of kernel step to be performed before returning the state.
+    info_transform: Callable
+        A function defining how to aggregate algorithm informations across the `thinning` steps.
+        By default return all of them.
+
+    Returns
+    -------
+    Callable
+        A thinned version of the kernel.
+
+
+    Example
+    -------
+    .. code::
+
+        logdf = lambda x: -(x**2).sum()
+        init_pos = jnp.ones(2)
+        init_key, tune_key = jr.split(jr.key(42), 2)
+
+        state = blackjax.mcmc.mclmc.init(
+                    position=init_pos,
+                    logdensity_fn=logdf,
+                    rng_key=init_key
+                    )
+
+        kernel = lambda inverse_mass_matrix: thin_kernel(
+            blackjax.mcmc.mclmc.build_kernel(
+                                logdensity_fn=logdf,
+                                integrator=isokinetic_mclachlan,
+                                inverse_mass_matrix=inverse_mass_matrix,
+                                ),
+
+            # Return every 16th state, especially decreasing computation and memory cost
+            # when estimating high dimensional autocorrelation length during tuning.
+            thinning = 16,
+
+            # Adequately aggregate info.energy_change
+            info_transform=lambda info: tree.map(lambda x: (x**2).mean()**.5, info)
+            )
+
+        state, params, n_steps = blackjax.mclmc_find_L_and_step_size(
+            mclmc_kernel=kernel,
+            num_steps=100,
+            state=state,
+            rng_key=tune_key,
+            )
+    """
+
+    def thinned_kernel(
+        rng_key: PRNGKey, state: NamedTuple, *args, **kwargs
+    ) -> tuple[NamedTuple, NamedTuple]:
+        step = lambda state, rng_key: kernel(rng_key, state, *args, **kwargs)
+        keys = split(rng_key, thinning)
+        state, info = lax.scan(step, state, keys)
+        return state, info_transform(info)
+
+    return thinned_kernel

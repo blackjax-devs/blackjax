@@ -55,7 +55,7 @@ class UpdateFn(Protocol):
     Kernels are pure functions and are idempotent. They necessarily take a
     random state `rng_key` and the current kernel state (which contains the
     current position) as parameters, return a new state and some information
-    about the transtion.
+    about the transition.
 
     Update functions is a simplified yet universal interface with every sampling
     algorithm. In essence, what all these algorithms do is take a rng state, a

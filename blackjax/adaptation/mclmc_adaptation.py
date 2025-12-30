@@ -52,6 +52,7 @@ def mclmc_find_L_and_step_size(
     num_effective_samples=150,
     diagonal_preconditioning=True,
     params=None,
+    Lfactor=0.4,
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -72,7 +73,7 @@ def mclmc_find_L_and_step_size(
         The fraction of tuning for the second step of the adaptation.
     frac_tune3
         The fraction of tuning for the third step of the adaptation.
-    desired_energy_va
+    desired_energy_var
         The desired energy variance for the MCMC algorithm.
     trust_in_estimate
         The trust in the estimate of optimal stepsize.
@@ -82,6 +83,8 @@ def mclmc_find_L_and_step_size(
         Whether to do diagonal preconditioning (i.e. a mass matrix)
     params
         Initial params to start tuning from (optional)
+    Lfactor
+        The factor scaling the estimated autocorrelation length to obtain momentum decoherence length L.
 
     Returns
     -------
@@ -136,7 +139,7 @@ def mclmc_find_L_and_step_size(
 
     if num_steps3 >= 2:  # at least 2 samples for ESS estimation
         state, params = make_adaptation_L(
-            mclmc_kernel(params.inverse_mass_matrix), frac=frac_tune3, Lfactor=0.4
+            mclmc_kernel(params.inverse_mass_matrix), frac=frac_tune3, Lfactor=Lfactor
         )(state, params, num_steps, part2_key)
         total_num_tuning_integrator_steps += num_steps3
 

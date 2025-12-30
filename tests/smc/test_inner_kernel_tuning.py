@@ -81,7 +81,9 @@ class SMCParameterTuningTest(chex.TestCase):
 
     def test_smc_inner_kernel_tempered(self):
         self.smc_inner_kernel_tuning_test_case(
-            blackjax.tempered_smc, smc_parameters={}, step_parameters={"lmbda": 0.75}
+            blackjax.tempered_smc,
+            smc_parameters={},
+            step_parameters={"tempering_param": 0.75},
         )
 
     def smc_inner_kernel_tuning_test_case(
@@ -359,10 +361,10 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
 
         lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
 
-        def body_fn(carry, lmbda):
+        def body_fn(carry, tempering_param):
             i, state = carry
             subkey = jax.random.fold_in(self.key, i)
-            new_state, info = smc_kernel(subkey, state, lmbda=lmbda)
+            new_state, info = smc_kernel(subkey, state, tempering_param=tempering_param)
             return (i + 1, new_state), (new_state, info)
 
         (_, result), _ = jax.lax.scan(body_fn, (0, init_state), lambda_schedule)
@@ -387,7 +389,7 @@ class ParticlesAsRowsTest(unittest.TestCase):
 def adaptive_tempered_loop(kernel, rng_key, initial_state):
     def cond(carry):
         _, state = carry
-        return state.sampler_state.lmbda < 1
+        return state.sampler_state.tempering_param < 1
 
     def body(carry):
         i, state = carry

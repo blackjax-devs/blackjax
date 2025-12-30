@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Dynamic HMC Kernel"""
+
 from typing import Callable, NamedTuple
 
 import jax
@@ -46,7 +47,11 @@ class DynamicHMCState(NamedTuple):
     random_generator_arg: Array
 
 
-def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array):
+def init(
+    position: ArrayLikeTree,
+    logdensity_fn: Callable,
+    random_generator_arg: Array,
+):
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
@@ -154,7 +159,10 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
     kernel = build_kernel(
-        integrator, divergence_threshold, next_random_arg_fn, integration_steps_fn
+        integrator,
+        divergence_threshold,
+        next_random_arg_fn,
+        integration_steps_fn,
     )
 
     def init_fn(position: ArrayLikeTree, rng_key: Array):
@@ -176,6 +184,14 @@ def as_top_level_api(
 
 
 def halton_sequence(i: Array, max_bits: int = 10) -> float:
+    """Generate the (i+1)-th element of the Halton sequence.
+
+    Warning: max_bits should be less than the bit width of i.dtype to prevent integer overflow (e.g., max_bits <= 63 for int64).
+    """
+    if max_bits >= jnp.iinfo(i.dtype).bits:
+        raise ValueError(
+            f"max_bits ({max_bits}) must be less than bit width of dtype {i.dtype} ({jnp.iinfo(i.dtype).bits})"
+        )
     bit_masks = 2 ** jnp.arange(max_bits, dtype=i.dtype)
     return jnp.einsum("i,i->", jnp.mod((i + 1) // bit_masks, 2), 0.5 / bit_masks)
 

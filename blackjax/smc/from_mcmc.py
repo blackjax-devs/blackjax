@@ -5,14 +5,33 @@ import jax
 
 from blackjax import smc
 from blackjax.smc.base import SMCState, update_and_take_last
-from blackjax.types import PRNGKey
+from blackjax.types import Array, PRNGKey
 
 
-def unshared_parameters_and_step_fn(mcmc_parameters, mcmc_step_fn):
-    """Splits MCMC parameters into two dictionaries. The shared dictionary
-    represents the parameters common to all chains, and the unshared are
-    different per chain.
-    Binds the step fn using the shared parameters.
+def unshared_parameters_and_step_fn(
+    mcmc_parameters: dict,
+    mcmc_step_fn: Callable,
+) -> tuple[dict, Callable]:
+    """Split MCMC parameters into shared and unshared parameters.
+
+    The shared dictionary represents the parameters common to all chains, and
+    the unshared are different per chain. Binds the step function using the
+    shared parameters.
+
+    Parameters
+    ----------
+    mcmc_parameters: dict
+        Dictionary of MCMC parameters. Parameters with shape[0] == 1 are
+        considered shared across all chains.
+    mcmc_step_fn: Callable
+        MCMC step function.
+
+    Returns
+    -------
+    unshared_mcmc_parameters: dict
+        Parameters that differ per chain.
+    shared_mcmc_step_fn: Callable
+        MCMC step function with shared parameters bound.
     """
     shared_mcmc_parameters = {}
     unshared_mcmc_parameters = {}
@@ -30,23 +49,37 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
-):
-    """SMC step from MCMC kernels.
+) -> Callable:
+    """Build an SMC step function from MCMC kernels.
+
     Builds MCMC kernels from the input parameters, which may change across iterations.
-    Moreover, it defines the way such kernels are used to update the particles. This layer
-    adapts an API defined in terms of kernels (mcmc_step_fn and mcmc_init_fn) into an API
-    that depends on an update function over the set of particles.
+    Moreover, it defines the way such kernels are used to update the particles. This
+    layer adapts an API defined in terms of kernels (mcmc_step_fn and mcmc_init_fn)
+    into an API that depends on an update function over the set of particles.
+
+    Parameters
+    ----------
+    mcmc_step_fn: Callable
+        MCMC step function.
+    mcmc_init_fn: Callable
+        Function that initializes an MCMC state from a position.
+    resampling_fn: Callable
+        Resampling function (from blackjax.smc.resampling).
+    update_strategy: Callable
+        Strategy to update particles using MCMC kernels, by default
+        'update_and_take_last' from blackjax.smc.base.
+
     Returns
     -------
-    A callable that takes a rng_key and a state with .particles and .weights and returns a base.SMCState
-    and base.SMCInfo pair.
-
+    step: Callable
+        A callable that takes a rng_key and a state with .particles and .weights
+        and returns a base.SMCState and base.SMCInfo pair.
     """
 
     def step(
         rng_key: PRNGKey,
-        state,
-        num_mcmc_steps: int,
+        state: smc.base.SMCState,
+        num_mcmc_steps: int | Array,
         mcmc_parameters: dict,
         logposterior_fn: Callable,
         log_weights_fn: Callable,
