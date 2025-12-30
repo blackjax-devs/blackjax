@@ -20,7 +20,6 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax.mcmc import mclmc
-from blackjax.mcmc import underdamped_langevin
 from blackjax.mcmc.integrators import (
     IntegratorState,
     _normalized_flatten_array,
@@ -43,17 +42,14 @@ def nan_reject(nonans, old, new):
     return jax.lax.cond(nonans, lambda _: new, lambda _: old, operand=None)
 
 
-def build_kernel(logdensity_fn, microcanonical):
+def build_kernel(logdensity_fn, microcanonical=True):
     """MCLMC kernel (with nan rejection)"""
 
-    # kernel = mclmc.build_kernel(
-    #     logdensity_fn=logdensity_fn, integrator=isokinetic_velocity_verlet
-    # )
 
     if microcanonical:
         kernel = mclmc.build_kernel(integrator=isokinetic_velocity_verlet)
     else:
-        kernel = underdamped_langevin.build_kernel(integrator= velocity_verlet, desired_energy_var_max_ratio= jnp.inf)
+        raise ValueError("Only microcanonical mode is supported for LAPS burn-in.")
 
     def sequential_kernel(key, state, adap):
 

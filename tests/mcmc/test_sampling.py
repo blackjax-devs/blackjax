@@ -18,6 +18,7 @@ from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_
 from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
+from blackjax.adaptation.laps import laps as run_laps
 
 
 def orbit_samples(orbits, weights, rng_key):
@@ -288,6 +289,31 @@ class LinearRegressionTest(chex.TestCase):
         )
 
         return out
+
+    
+    def laps(logdensity_fn, ndims, 
+         sample_init, rng_key, 
+         num_steps1, num_steps2, 
+         num_chains, mesh):
+
+        info, grads_per_step, _acc_prob, final_state = run_laps(    
+            logdensity_fn=logdensity_fn, 
+            sample_init= sample_init,
+            ndims= ndims, 
+            num_steps1=num_steps1, 
+            num_steps2=num_steps2, 
+            num_chains=num_chains, 
+            mesh=mesh, 
+            rng_key= rng_key, 
+            early_stop= False,
+            diagonal_preconditioning= True, 
+            steps_per_sample=15,
+            r_end=0.01,
+            diagnostics= False,
+            superchain_size= 1
+            )
+
+        return final_state.position
 
     @parameterized.parameters(
         itertools.product(
@@ -675,6 +701,45 @@ class LinearRegressionTest(chex.TestCase):
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+
+    def test_laps(self):
+        """Test the LAPS kernel."""
+        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(1000, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        # LAPS expects a function that takes an array, not a dictionary
+        logposterior_fn = lambda x: logposterior_fn_(log_scale=x[0], coefs=x[1])
+
+        info, grads_per_step, _acc_prob, final_state = run_laps(
+            logdensity_fn=logposterior_fn,
+            sample_init=lambda key: jax.random.normal(key, shape=(2,)),
+            ndims=2,
+            num_steps1=10000,
+            num_steps2=10000,
+            num_chains=1000,
+            mesh=jax.sharding.Mesh(jax.devices()[:1], 'chains'),
+            rng_key=jax.random.key(0),
+            early_stop=False,
+            diagonal_preconditioning=True,
+            integrator_coefficients=None,
+            steps_per_sample=15,
+            # observables_for_bias=lambda x: x,
+            # contract=lambda x: 0.0,
+            r_end=0.01,
+            diagnostics=True,
+            superchain_size=1,
+        )
+
+        scale_samples = final_state.position[:, 0]
+        coefs_samples = final_state.position[:, 1]
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+        
 
     def test_barker(self):
         """Test the Barker kernel."""

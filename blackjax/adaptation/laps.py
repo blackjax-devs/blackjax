@@ -27,7 +27,6 @@ from blackjax.adaptation.laps_burn_in import (
     equipartition_diagonal_loss,
 )
 from blackjax.adaptation.step_size import bisection_monotonic_fn
-from blackjax.mcmc.malt import build_kernel as build_kernel_lmc
 from blackjax.mcmc.adjusted_mclmc import build_kernel as build_kernel_mclmc
 from blackjax.mcmc.hmc import HMCState
 from blackjax.mcmc.integrators import (
@@ -276,18 +275,7 @@ def laps(
         )
 
     else:
-        integrator = generate_euclidean_integrator(_integrator_coefficients)
-
-        build_kernel = build_kernel_lmc(integrator=integrator, L_proposal_factor=1.25)
-        
-        kernel = lambda key, state, adap: build_kernel(
-            rng_key=key,
-            state=state,
-            logdensity_fn=logdensity_fn,
-            step_size=adap.step_size,
-            num_integration_steps= adap.steps_per_sample,
-            inverse_mass_matrix=inverse_mass_matrix,
-        )
+        raise ValueError("Only microcanonical mode is supported for LAPS.")
     
 
 
