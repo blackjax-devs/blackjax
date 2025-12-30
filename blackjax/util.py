@@ -208,9 +208,7 @@ def run_inference_algorithm(
     scan_fn = gen_scan_fn(num_steps, progress_bar)
 
     xs = jnp.arange(num_steps), keys
-    # tic = time.time()
     final_state, history = scan_fn(one_step, initial_state, xs)
-    # toc = time.time()
 
     return final_state, history
 

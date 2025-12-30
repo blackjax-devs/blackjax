@@ -111,7 +111,7 @@ class LinearRegressionTest(chex.TestCase):
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
         initial_state = blackjax.mcmc.mclmc.init(
-            position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
+            position=initial_position, logdensity_fn=logdensity_fn, random_generator_arg=init_key
         )
 
         kernel = lambda inverse_mass_matrix: blackjax.mcmc.mclmc.build_kernel(
