@@ -3,6 +3,7 @@
 from functools import partial
 from typing import Callable, NamedTuple, Union
 
+import jax
 import jax.numpy as jnp
 from jax import device_put, jit, lax, vmap
 from jax.experimental.shard_map import shard_map
@@ -12,11 +13,10 @@ from jax.sharding import NamedSharding, PartitionSpec
 from jax.tree_util import tree_leaves, tree_map
 
 from blackjax.base import SamplingAlgorithm, VIAlgorithm
+from blackjax.diagnostics import splitR
 from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.diagnostics import splitR
-import time
-import jax
+
 
 @partial(jit, static_argnames=("precision",), inline=True)
 def linear_map(diag_or_dense_a, b, *, precision="highest"):
@@ -200,7 +200,6 @@ def run_inference_algorithm(
 
     keys = split(rng_key, num_steps)
 
-    
     def one_step(state, xs):
         _, rng_key = xs
         state, info = inference_algorithm.step(rng_key, state)
@@ -324,7 +323,12 @@ def incremental_value_update(
 
 
 def eca_step(
-    kernel, summary_statistics_fn, adaptation_update, num_chains, superchain_size = None, all_chains_info=None
+    kernel,
+    summary_statistics_fn,
+    adaptation_update,
+    num_chains,
+    superchain_size=None,
+    all_chains_info=None,
 ):
     """
     Construct a single step of ensemble chain adaptation (eca) to be performed in parallel on multiple devices.
@@ -346,9 +350,13 @@ def eca_step(
         state, info = vmap(kernel, (0, 0, None))(keys_sampling, state, adaptation_state)
 
         # combine all the chains to compute expectation values
-        summary_statistics = vmap(summary_statistics_fn, (0, 0, None))(state, info, key_adaptation)
+        summary_statistics = vmap(summary_statistics_fn, (0, 0, None))(
+            state, info, key_adaptation
+        )
         expected_value_summary_statistics = tree_map(
-            lambda summary_statistics: lax.psum(jnp.sum(summary_statistics, axis=0), axis_name="chains")
+            lambda summary_statistics: lax.psum(
+                jnp.sum(summary_statistics, axis=0), axis_name="chains"
+            )
             / num_chains,
             summary_statistics,
         )
@@ -360,90 +368,88 @@ def eca_step(
 
         return (state, adaptation_state), info_to_be_stored
 
-
-    return add_all_chains_info(add_splitR(step, num_chains, superchain_size), all_chains_info)
+    return add_all_chains_info(
+        add_splitR(step, num_chains, superchain_size), all_chains_info
+    )
 
 
 def add_splitR(step, num_chains, superchain_size):
-
-    
     def _step_with_R(state_all, xs):
+        state_all, info_to_be_stored = step(state_all, xs)
 
-        state_all, info_to_be_stored  = step(state_all, xs)
-        
         state, adaptation_state = state_all
 
         R = splitR(state.position, num_chains, superchain_size)
         split_bavg = jnp.average(jnp.square(R) - 1)
         split_bmax = jnp.max(jnp.square(R) - 1)
 
-        info_to_be_stored['R_avg'] = split_bavg
-        info_to_be_stored['R_max'] = split_bmax
+        info_to_be_stored["R_avg"] = split_bavg
+        info_to_be_stored["R_max"] = split_bmax
 
         return (state, adaptation_state), info_to_be_stored
 
     def _step_with_R_1(state_all, xs):
+        state_all, info_to_be_stored = step(state_all, xs)
 
-        state_all, info_to_be_stored  = step(state_all, xs)
-        
-        info_to_be_stored['R_avg'] = 0.
-        info_to_be_stored['R_max'] = 0.
+        info_to_be_stored["R_avg"] = 0.0
+        info_to_be_stored["R_max"] = 0.0
 
         return state_all, info_to_be_stored
-    
-    if superchain_size == None:
+
+    if superchain_size is None:
         return step
-    
+
     if superchain_size == 1:
         return _step_with_R_1
-    
+
     else:
         return _step_with_R
-    
-    
-def add_all_chains_info(step, all_chains_info):
 
+
+def add_all_chains_info(step, all_chains_info):
     def _step(state_all, xs):
         (state, adaptation_state), info_to_be_stored = step(state_all, xs)
-        info_to_be_stored['all_chains_info'] = vmap(all_chains_info)(state.position)
+        info_to_be_stored["all_chains_info"] = vmap(all_chains_info)(state.position)
 
         return (state, adaptation_state), info_to_be_stored
 
     return _step if all_chains_info is not None else step
 
 
-
-
 def while_with_info(step, init, xs, length, while_cond):
     """Same syntax and usage as jax.lax.scan, but it is run as a while loop that is terminated if not while_cond(state).
-        len(xs) determines the maximum number of iterations.
+    len(xs) determines the maximum number of iterations.
     """
 
     get_i = lambda tree, i: jax.tree_util.tree_map(lambda arr: arr[i], tree)
 
-    info1 = step(init, get_i(xs, 0))[1] # call the step once to determine the shape of info
-    info = jax.lax.scan(lambda x, _: (x, info1), init= 0, length= length)[1] # allocate the full info by repeating values
+    info1 = step(init, get_i(xs, 0))[
+        1
+    ]  # call the step once to determine the shape of info
+    info = jax.lax.scan(lambda x, _: (x, info1), init=0, length=length)[
+        1
+    ]  # allocate the full info by repeating values
 
     init_val = (init, info, 0, while_cond(info1, 0))
 
     def body_fun(val):
         x, info_old, counter, cond = val
-        
+
         x_new, info_new = step(x, get_i(xs, counter))
-        
+
         # update the full info by adding the new one
-        info_full = jax.tree_util.tree_map(lambda arr, val: arr.at[counter].set(val), info_old, info_new) 
+        info_full = jax.tree_util.tree_map(
+            lambda arr, val: arr.at[counter].set(val), info_old, info_new
+        )
 
         cond = while_cond(info_new, counter)
 
         return x_new, info_full, counter + 1, cond
 
-
     def cond_fun(val):
         _, _, counter, cond = val
         return cond & (counter < length)
-    
-    
+
     final, info, counter, _ = jax.lax.while_loop(cond_fun, body_fun, init_val)
 
     return final, info, counter
@@ -457,7 +463,7 @@ def run_eca(
     num_steps,
     num_chains,
     mesh,
-    superchain_size= None,
+    superchain_size=None,
     all_chains_info=None,
     early_stop=False,
 ):
@@ -485,8 +491,8 @@ def run_eca(
         adaptation.summary_statistics_fn,
         adaptation.update,
         num_chains,
-        superchain_size= superchain_size,
-        all_chains_info = all_chains_info,
+        superchain_size=superchain_size,
+        all_chains_info=all_chains_info,
     )
 
     def all_steps(initial_state, keys_sampling, keys_adaptation):
@@ -501,18 +507,23 @@ def run_eca(
             keys_adaptation,
         )  # keys for all steps that will be performed. keys_sampling.shape = (num_steps, chains_per_device), keys_adaptation.shape = (num_steps, )
 
-
         if early_stop:
-            final_state_all, info_history, counter = while_with_info(step, initial_state_all, xs, num_steps, adaptation.while_cond)
+            final_state_all, info_history, counter = while_with_info(
+                step, initial_state_all, xs, num_steps, adaptation.while_cond
+            )
 
         else:
             final_state_all, info_history = lax.scan(step, initial_state_all, xs)
             counter = num_steps
 
         final_state, final_adaptation_state = final_state_all
-        
-        return final_state, final_adaptation_state, info_history, counter  # info history is composed of averages over all chains, so it is a couple of scalars
 
+        return (
+            final_state,
+            final_adaptation_state,
+            info_history,
+            counter,
+        )  # info history is composed of averages over all chains, so it is a couple of scalars
 
     p, pscalar = PartitionSpec("chains"), PartitionSpec()
     parallel_execute = shard_map(
@@ -539,7 +550,7 @@ def run_eca(
     )
 
     # info_history has a static size, determined by num_steps, but if early_stop = True, the values after the while condition has been violated are nonsense. Remove them:
-    info_history = jax.tree_util.tree_map(lambda arr: arr[:int(counter)], info_history)
+    info_history = jax.tree_util.tree_map(lambda arr: arr[: int(counter)], info_history)
 
     return final_state, final_adaptation_state, info_history
 
@@ -552,7 +563,7 @@ def ensemble_execute_fn(
     x=None,
     args=None,
     summary_statistics_fn=lambda y: 0.0,
-    superchain_size = None
+    superchain_size=None,
 ):
     """Given a sequential function
      func(rng_key, x, args) = y,
@@ -594,19 +605,18 @@ def ensemble_execute_fn(
 
     if superchain_size == 1:
         _keys = split(rng_key, num_chains)
-    
+
     else:
-        _keys = jnp.repeat(split(rng_key, num_chains // superchain_size), superchain_size)
+        _keys = jnp.repeat(
+            split(rng_key, num_chains // superchain_size), superchain_size
+        )
 
+    keys = device_put(
+        _keys, NamedSharding(mesh, p)
+    )  # random keys, distributed across devices
 
-    keys = device_put(_keys, NamedSharding(mesh, p))  # random keys, distributed across devices
-    
     # apply F in parallel
     return parallel_execute(X, keys)
-
-
-
-
 
 
 def thin_algorithm(
@@ -668,4 +678,3 @@ def thin_algorithm(
         return state, info_transform(info)
 
     return SamplingAlgorithm(sampling_algorithm.init, step_fn)
-

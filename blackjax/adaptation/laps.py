@@ -1,4 +1,3 @@
-
 # Copyright 2020- The Blackjax Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,7 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # """Public API for Late Adjusted Parallel Sampler (LAPS)"""
-
 
 
 from typing import Any, NamedTuple
@@ -31,7 +29,6 @@ from blackjax.mcmc.adjusted_mclmc import build_kernel as build_kernel_mclmc
 from blackjax.mcmc.hmc import HMCState
 from blackjax.mcmc.integrators import (
     generate_isokinetic_integrator,
-    generate_euclidean_integrator,
     mclachlan_coefficients,
     omelyan_coefficients,
 )
@@ -49,12 +46,12 @@ class Adaptation:
     def __init__(
         self,
         adaptation_state,
-        num_adaptation_samples,  
-        steps_per_sample=15,  
+        num_adaptation_samples,
+        steps_per_sample=15,
         acc_prob_target=0.8,
-        observables=lambda x: 0.0,  
-        observables_for_bias=lambda x: 0.0,  
-        contract=lambda x: 0.0, 
+        observables=lambda x: 0.0,
+        observables_for_bias=lambda x: 0.0,
+        contract=lambda x: 0.0,
     ):
         self.num_adaptation_samples = num_adaptation_samples
         self.observables = observables
@@ -143,7 +140,6 @@ def while_steps_num(cond):
         return jnp.argmin(cond) + 1
 
 
-
 def laps(
     logdensity_fn,
     sample_init,
@@ -153,13 +149,13 @@ def laps(
     num_chains,
     mesh,
     rng_key,
-    microcanonical= True,
+    microcanonical=True,
     alpha=1.9,
     save_frac=0.2,
     C=0.1,
     early_stop=True,
-    r_end= 0.01,
-    bias_type= 3,
+    r_end=0.01,
+    bias_type=3,
     diagonal_preconditioning=True,
     integrator_coefficients=None,
     steps_per_sample=15,
@@ -168,7 +164,7 @@ def laps(
     all_chains_info=None,
     diagnostics=True,
     contract=lambda x: 0.0,
-    superchain_size= 1,
+    superchain_size=1,
 ):
     """
     model: the target density object
@@ -190,12 +186,18 @@ def laps(
     all_chains_info: summary statistics calculated and stored for all chain at each iteration so it can be memory intensive
     diagnostics: whether to return diagnostics
     """
-    
+
     key_init, key1, key2 = jax.random.split(rng_key, 3)
 
     # initialize the chains
     initial_state = laps_burn_in.initialize(
-        key_init, logdensity_fn, microcanonical, sample_init, num_chains, mesh, superchain_size
+        key_init,
+        logdensity_fn,
+        microcanonical,
+        sample_init,
+        num_chains,
+        mesh,
+        superchain_size,
     )
 
     # burn-in with the unadjusted method #
@@ -203,7 +205,7 @@ def laps(
     save_num = (jnp.rint(save_frac * num_steps1)).astype(int)
     adap = laps_burn_in.Adaptation(
         ndims,
-        microcanonical= microcanonical,
+        microcanonical=microcanonical,
         alpha=alpha,
         bias_type=bias_type,
         save_num=save_num,
@@ -226,7 +228,6 @@ def laps(
         early_stop=early_stop,
     )
 
-
     # refine the results with the adjusted method
     _acc_prob = acc_prob
     if integrator_coefficients is None:
@@ -241,7 +242,7 @@ def laps(
         _integrator_coefficients = integrator_coefficients
         if acc_prob is None:
             _acc_prob = 0.9
-    
+
     gradient_calls_per_step = (
         len(_integrator_coefficients) // 2
     )  # The number of B updates in scheme = BABAB..AB is len(scheme)//2 + 1. The number of gradient calls is then len(scheme)//2, because the last B's gradient can be reused in the next step.
@@ -258,13 +259,11 @@ def laps(
     else:
         inverse_mass_matrix = 1.0
 
-
-
     if microcanonical:
         integrator = generate_isokinetic_integrator(_integrator_coefficients)
 
         build_kernel = build_kernel_mclmc(integrator=integrator, L_proposal_factor=1.25)
-    
+
         kernel = lambda key, state, adap: build_kernel(
             rng_key=key,
             state=state,
@@ -276,11 +275,11 @@ def laps(
 
     else:
         raise ValueError("Only microcanonical mode is supported for LAPS.")
-    
-
 
     initial_state = HMCState(
-        final_state.position, final_state.logdensity, final_state.logdensity_grad
+        final_state.position,
+        final_state.logdensity,
+        final_state.logdensity_grad
         # jax.random.key(0)
     )
     num_samples = num_steps2 // (gradient_calls_per_step * steps_per_sample)
@@ -310,7 +309,7 @@ def laps(
         num_chains,
         mesh,
         superchain_size,
-        all_chains_info
+        all_chains_info,
     )
 
     if diagnostics:

@@ -15,10 +15,10 @@ import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
+from blackjax.adaptation.laps import laps as run_laps
 from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
-from blackjax.adaptation.laps import laps as run_laps
 
 
 def orbit_samples(orbits, weights, rng_key):
@@ -290,28 +290,32 @@ class LinearRegressionTest(chex.TestCase):
 
         return out
 
-    
-    def laps(logdensity_fn, ndims, 
-         sample_init, rng_key, 
-         num_steps1, num_steps2, 
-         num_chains, mesh):
-
-        info, grads_per_step, _acc_prob, final_state = run_laps(    
-            logdensity_fn=logdensity_fn, 
-            sample_init= sample_init,
-            ndims= ndims, 
-            num_steps1=num_steps1, 
-            num_steps2=num_steps2, 
-            num_chains=num_chains, 
-            mesh=mesh, 
-            rng_key= rng_key, 
-            early_stop= False,
-            diagonal_preconditioning= True, 
+    def laps(
+        logdensity_fn,
+        ndims,
+        sample_init,
+        rng_key,
+        num_steps1,
+        num_steps2,
+        num_chains,
+        mesh,
+    ):
+        info, grads_per_step, _acc_prob, final_state = run_laps(
+            logdensity_fn=logdensity_fn,
+            sample_init=sample_init,
+            ndims=ndims,
+            num_steps1=num_steps1,
+            num_steps2=num_steps2,
+            num_chains=num_chains,
+            mesh=mesh,
+            rng_key=rng_key,
+            early_stop=False,
+            diagonal_preconditioning=True,
             steps_per_sample=15,
             r_end=0.01,
-            diagnostics= False,
-            superchain_size= 1
-            )
+            diagnostics=False,
+            superchain_size=1,
+        )
 
         return final_state.position
 
@@ -721,7 +725,7 @@ class LinearRegressionTest(chex.TestCase):
             num_steps1=10000,
             num_steps2=10000,
             num_chains=1000,
-            mesh=jax.sharding.Mesh(jax.devices()[:1], 'chains'),
+            mesh=jax.sharding.Mesh(jax.devices()[:1], "chains"),
             rng_key=jax.random.key(0),
             early_stop=False,
             diagonal_preconditioning=True,
@@ -739,7 +743,6 @@ class LinearRegressionTest(chex.TestCase):
 
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
-        
 
     def test_barker(self):
         """Test the Barker kernel."""

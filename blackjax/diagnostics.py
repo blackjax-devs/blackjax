@@ -209,17 +209,22 @@ def effective_sample_size(
     return ess.squeeze()
 
 
-def splitR(position, num_chains, superchain_size, func_for_splitR = jnp.square):
-    
+def splitR(position, num_chains, superchain_size, func_for_splitR=jnp.square):
     # combine the chains in super-chains to compute expectation values
-    func_mk = jax.vmap(func_for_splitR)(position) # shape = (# chains, # func)
-    func_mk = func_mk.reshape(num_chains // superchain_size, superchain_size, func_mk.shape[-1]) #shape = (# superchains, # chains in superchain, # func)
-    func_k = jnp.average(func_mk, axis = 1) #shape = (# superchains, # func)
-    func_sq_k = jnp.average(jnp.square(func_mk), axis = 1) #shape = (# superchains, # func)
-    W_k = (func_sq_k - jnp.square(func_k)) * superchain_size / (superchain_size - 1) # variance withing k-th superchain
-    W = jnp.average(W_k, axis = 0) # average within superchain variance
-    B = jnp.var(func_k, axis = 0, ddof= 1) # between superchain variance
+    func_mk = jax.vmap(func_for_splitR)(position)  # shape = (# chains, # func)
+    func_mk = func_mk.reshape(
+        num_chains // superchain_size, superchain_size, func_mk.shape[-1]
+    )  # shape = (# superchains, # chains in superchain, # func)
+    func_k = jnp.average(func_mk, axis=1)  # shape = (# superchains, # func)
+    func_sq_k = jnp.average(
+        jnp.square(func_mk), axis=1
+    )  # shape = (# superchains, # func)
+    W_k = (
+        (func_sq_k - jnp.square(func_k)) * superchain_size / (superchain_size - 1)
+    )  # variance withing k-th superchain
+    W = jnp.average(W_k, axis=0)  # average within superchain variance
+    B = jnp.var(func_k, axis=0, ddof=1)  # between superchain variance
 
-    R = jnp.sqrt(1. + (B/W)) # splitR, shape = (# func)
+    R = jnp.sqrt(1.0 + (B / W))  # splitR, shape = (# func)
 
     return R

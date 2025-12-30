@@ -23,8 +23,7 @@ from blackjax.mcmc import mclmc
 from blackjax.mcmc.integrators import (
     IntegratorState,
     _normalized_flatten_array,
-    velocity_verlet,
-    isokinetic_velocity_verlet
+    isokinetic_velocity_verlet,
 )
 from blackjax.types import Array
 from blackjax.util import ensemble_execute_fn
@@ -45,16 +44,21 @@ def nan_reject(nonans, old, new):
 def build_kernel(logdensity_fn, microcanonical=True):
     """MCLMC kernel (with nan rejection)"""
 
-
     if microcanonical:
         kernel = mclmc.build_kernel(integrator=isokinetic_velocity_verlet)
     else:
         raise ValueError("Only microcanonical mode is supported for LAPS burn-in.")
 
     def sequential_kernel(key, state, adap):
+        new_state, info = kernel(
+            key,
+            state,
+            logdensity_fn,
+            adap.L,
+            adap.step_size,
+            jnp.ones(adap.inverse_mass_matrix.shape),
+        )
 
-        new_state, info = kernel(key, state,logdensity_fn, adap.L, adap.step_size, jnp.ones(adap.inverse_mass_matrix.shape))
-        
         # reject the new state if there were nans
         nonans = no_nans(new_state)
         new_state = nan_reject(nonans, state, new_state)
@@ -68,15 +72,24 @@ def build_kernel(logdensity_fn, microcanonical=True):
     return sequential_kernel
 
 
-def initialize(rng_key, logdensity_fn, microcanonical, sample_init, num_chains, mesh, superchain_size):
+def initialize(
+    rng_key,
+    logdensity_fn,
+    microcanonical,
+    sample_init,
+    num_chains,
+    mesh,
+    superchain_size,
+):
     """initialize the chains based on the equipartition of the initial condition.
     We initialize the velocity along grad log p if E_ii > 1 and along -grad log p if E_ii < 1.
     """
     if microcanonical:
-        norm = lambda vec: 1. # norm of the velocity 
+        norm = lambda vec: 1.0  # norm of the velocity
     else:
-        norm = lambda vec: jnp.sqrt(len(vec)) #typical norm of the velocity in equilibrium 
-
+        norm = lambda vec: jnp.sqrt(
+            len(vec)
+        )  # typical norm of the velocity in equilibrium
 
     def sequential_init(key, x, args):
         """initialize the position using sample_init and the velocity along the gradient"""
@@ -84,7 +97,9 @@ def initialize(rng_key, logdensity_fn, microcanonical, sample_init, num_chains, 
 
         logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
         flat_g, unravel_fn = ravel_pytree(logdensity_grad)
-        velocity = unravel_fn(_normalized_flatten_array(flat_g)[0] * norm(flat_g))  # = grad logp/ |grad logp|
+        velocity = unravel_fn(
+            _normalized_flatten_array(flat_g)[0] * norm(flat_g)
+        )  # = grad logp/ |grad logp|
 
         return IntegratorState(position, velocity, logdensity, logdensity_grad), None
 
@@ -108,7 +123,12 @@ def initialize(rng_key, logdensity_fn, microcanonical, sample_init, num_chains, 
 
         velocity = unflatten(velocity_flat)
 
-        return IntegratorState(state.position, velocity, state.logdensity, state.logdensity_grad), None
+        return (
+            IntegratorState(
+                state.position, velocity, state.logdensity, state.logdensity_grad
+            ),
+            None,
+        )
 
     key1, key2 = jax.random.split(rng_key)
     initial_state, equipartition = ensemble_execute_fn(
@@ -117,13 +137,21 @@ def initialize(rng_key, logdensity_fn, microcanonical, sample_init, num_chains, 
         num_chains,
         mesh,
         summary_statistics_fn=summary_statistics_fn,
-        superchain_size= superchain_size
+        superchain_size=superchain_size,
     )
 
     flat_equi, _ = ravel_pytree(equipartition)
 
     signs = -2.0 * (flat_equi < 1.0) + 1.0
-    initial_state, _ = ensemble_execute_fn(ensemble_init, key2, num_chains, mesh, x=initial_state, args=signs, superchain_size= superchain_size)
+    initial_state, _ = ensemble_execute_fn(
+        ensemble_init,
+        key2,
+        num_chains,
+        mesh,
+        x=initial_state,
+        args=signs,
+        superchain_size=superchain_size,
+    )
 
     return initial_state
 
@@ -229,10 +257,10 @@ class Adaptation:
             weights=jnp.zeros(r_save_num),
         )
 
-        self.norm_factor = jnp.sqrt(ndims) if microcanonical else 1.
+        self.norm_factor = jnp.sqrt(ndims) if microcanonical else 1.0
 
         self.initial_state = AdaptationState(
-            L= jnp.inf if microcanonical else 1.,  # do not add noise for the first step
+            L=jnp.inf if microcanonical else 1.0,  # do not add noise for the first step
             inverse_mass_matrix=jnp.ones(ndims),
             step_size=0.01 * self.norm_factor,
             step_count=0,
@@ -256,7 +284,7 @@ class Adaptation:
             "observables_for_bias": self.observables_for_bias(state.position),
             "observables": self.observables(state.position),
             "entropy": -info["logdensity"],
-            #"uturn": jnp.sqrt(jnp.sum(jnp.square(state.logdensity_grad - jnp.dot(state.logdensity_grad, state.momentum) * state.momentum))) / (self.ndims - 1)
+            # "uturn": jnp.sqrt(jnp.sum(jnp.square(state.logdensity_grad - jnp.dot(state.logdensity_grad, state.momentum) * state.momentum))) / (self.ndims - 1)
         }
 
     def update(self, adaptation_state, Etheta):
@@ -281,8 +309,12 @@ class Adaptation:
         )
         history = History(history_observables, history_stopping, history_weights)
 
-        L = self.alpha * jnp.sqrt(jnp.average(Etheta["xsq"] - jnp.square(Etheta["x"])))  * self.norm_factor
-        #L = self.alpha / Etheta["uturn"]
+        L = (
+            self.alpha
+            * jnp.sqrt(jnp.average(Etheta["xsq"] - jnp.square(Etheta["x"])))
+            * self.norm_factor
+        )
+        # L = self.alpha / Etheta["uturn"]
         inverse_mass_matrix = Etheta["xsq"] - jnp.square(Etheta["x"])
         EEVPD = (Etheta["Esq"] - jnp.square(Etheta["E"])) / self.ndims
         true_bias = self.contract(Etheta["observables_for_bias"])
@@ -290,15 +322,19 @@ class Adaptation:
 
         # hyperparameter adaptation
         # estimate bias
-        bias = jnp.array([fluctuations[0], fluctuations[1], equi_full, equi_diag])[self.bias_type]  # r_max, r_avg, equi_full, equi_diag
-        EEVPD_wanted = self.C * jnp.power(bias, 3./8.)
+        bias = jnp.array([fluctuations[0], fluctuations[1], equi_full, equi_diag])[
+            self.bias_type
+        ]  # r_max, r_avg, equi_full, equi_diag
+        EEVPD_wanted = self.C * jnp.power(bias, 3.0 / 8.0)
         # bias_asym_wanted = self.C * bias
-        # EEVPD_wanted = 4 * jnp.power(bias_asym_wanted, 3./2.) / jnp.square(1 + jnp.sqrt(bias_asym_wanted)) # phi function from Robnik et. al., Blackbox Unadjusted Hamiltonian Monte Carlo 
+        # EEVPD_wanted = 4 * jnp.power(bias_asym_wanted, 3./2.) / jnp.square(1 + jnp.sqrt(bias_asym_wanted)) # phi function from Robnik et. al., Blackbox Unadjusted Hamiltonian Monte Carlo
 
         eps_factor = jnp.power(EEVPD_wanted / EEVPD, 1.0 / 6.0)
         eps_factor = jnp.clip(eps_factor, 0.3, 3.0)
 
-        eps_factor = nan_reject(1 - nans, 0.5, eps_factor)  # reduce the stepsize if there were nans
+        eps_factor = nan_reject(
+            1 - nans, 0.5, eps_factor
+        )  # reduce the stepsize if there were nans
 
         info_to_be_stored = {
             "L": adaptation_state.L,
@@ -311,13 +347,13 @@ class Adaptation:
             "r_max": fluctuations[0],
             "r_avg": fluctuations[1],
             "entropy": Etheta["entropy"],
-            "observables": Etheta["observables"]
+            "observables": Etheta["observables"],
         }
 
         adaptation_state_new = AdaptationState(
             L,
             inverse_mass_matrix,
-            adaptation_state.step_size * eps_factor, # set the stepsize directly
+            adaptation_state.step_size * eps_factor,  # set the stepsize directly
             adaptation_state.step_count + 1,
             EEVPD,
             EEVPD_wanted,
@@ -326,7 +362,6 @@ class Adaptation:
 
         return adaptation_state_new, info_to_be_stored
 
-
     def while_cond(self, info, counter):
         """determine if we want to switch to adjustment"""
-        return (info['r_max'] > self.r_end) | (counter < self.save_num)
+        return (info["r_max"] > self.r_end) | (counter < self.save_num)

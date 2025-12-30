@@ -19,12 +19,11 @@ import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm
-from blackjax.mcmc.hmc import HMCState
-from blackjax.mcmc.hmc import HMCInfo
+from blackjax.mcmc.dynamic_hmc import halton_sequence
+from blackjax.mcmc.hmc import HMCInfo, HMCState
 from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_unit_vector
-from blackjax.mcmc.dynamic_hmc import halton_sequence
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
 
@@ -70,7 +69,6 @@ def build_kernel(
         inverse_mass_matrix=1.0,
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
-
 
         # num_integration_steps = integration_steps_fn(state.random_generator_arg)
         num_integration_steps = integration_steps_fn(None)
@@ -152,7 +150,7 @@ def as_top_level_api(
     )
 
     def init_fn(position: ArrayLikeTree, rng_key: Array):
-        return init(position, logdensity_fn, rng_key)
+        return init(position, logdensity_fn)
 
     def update_fn(rng_key: PRNGKey, state):
         return kernel(
@@ -261,13 +259,17 @@ def trajectory_length(t, mu):
     s = rescale(mu)
     return jnp.rint(0.5 + halton_sequence(t) * s)
 
-def make_random_trajectory_length_fn(random_trajectory_length : bool):
+
+def make_random_trajectory_length_fn(random_trajectory_length: bool):
     if random_trajectory_length:
-        integration_steps_fn = lambda avg_num_integration_steps: lambda k: (jnp.clip(jnp.ceil(
-            jax.random.uniform(k) * rescale(avg_num_integration_steps)
-        ), min=1)).astype('int32')
+        integration_steps_fn = lambda avg_num_integration_steps: lambda k: (
+            jnp.clip(
+                jnp.ceil(jax.random.uniform(k) * rescale(avg_num_integration_steps)),
+                min=1,
+            )
+        ).astype("int32")
     else:
-        integration_steps_fn = lambda avg_num_integration_steps: lambda _: jnp.clip(jnp.ceil(
-            avg_num_integration_steps
-        ), min=1).astype('int32')
+        integration_steps_fn = lambda avg_num_integration_steps: lambda _: jnp.clip(
+            jnp.ceil(avg_num_integration_steps), min=1
+        ).astype("int32")
     return integration_steps_fn
