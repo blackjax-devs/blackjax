@@ -198,49 +198,53 @@ def as_top_level_api(
     return SamplingAlgorithm(init_fn, update_fn)
 
 
-def handle_nans(previous_state, next_state, info, key):
-    new_momentum = generate_unit_vector(key, previous_state.position)
+def handle_nans(
+    previous_state, next_state, info, key
+):
 
-    nonans = jnp.logical_and(
-        jnp.all(jnp.isfinite(next_state.position)),
-        jnp.all(jnp.isfinite(next_state.momentum)),
-    )
+    new_momentum = generate_unit_vector(key, previous_state.position)
+    # Make nonans pytree compatible
+    def isfinite_pytree(x):
+        # Recursively check if all leaves in a pytree are finite
+        # Will return True if all are finite, False otherwise
+        leaves, _ = jax.tree_util.tree_flatten(x)
+        return jnp.all(jnp.stack([jnp.all(jnp.isfinite(leaf)) for leaf in leaves]))
+
+    nonans = jnp.logical_and(isfinite_pytree(next_state.position), isfinite_pytree(next_state.momentum))
+
+    # nonans = jnp.logical_and(jnp.all(jnp.isfinite(next_state.position)), jnp.all(jnp.isfinite(next_state.momentum)))
 
     state, info = jax.lax.cond(
         nonans,
         lambda: (next_state, info),
-        lambda: (
-            previous_state._replace(
-                momentum=new_momentum,
-            ),
-            MCLMCInfo(
-                logdensity=previous_state.logdensity,
-                energy_change=0.0,
-                kinetic_change=0.0,
-                nonans=nonans,
-            ),
-        ),
+        lambda: (previous_state._replace(
+            momentum=new_momentum,
+        ), MCLMCInfo(
+            logdensity=previous_state.logdensity,
+            energy_change=0.0,
+            kinetic_change=0.0,
+            nonans=nonans
+        )),
     )
 
     return state, info
+    
+def handle_high_energy(
+    previous_state, next_state, info, key, cutoff
+):
 
-
-def handle_high_energy(previous_state, next_state, info, key, cutoff):
     new_momentum = generate_unit_vector(key, previous_state.position)
 
     state, info = jax.lax.cond(
         jnp.abs(info.energy_change) > cutoff,
-        lambda: (
-            previous_state._replace(
-                momentum=new_momentum,
-            ),
-            MCLMCInfo(
-                logdensity=previous_state.logdensity,
-                energy_change=0.0,
-                kinetic_change=0.0,
-                nonans=info.nonans,
-            ),
-        ),
+        lambda: (previous_state._replace(
+            momentum=new_momentum,
+        ), MCLMCInfo(
+            logdensity=previous_state.logdensity,
+            energy_change=0.0,
+            kinetic_change=0.0,
+            nonans=info.nonans
+        )),
         lambda: (next_state, info),
     )
 

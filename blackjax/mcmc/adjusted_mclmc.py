@@ -36,7 +36,6 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable):
 def build_kernel(
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
-    next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     L_proposal_factor: float = jnp.inf,
 ):
     """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
@@ -70,8 +69,8 @@ def build_kernel(
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
 
-        # num_integration_steps = integration_steps_fn(state.random_generator_arg)
-        num_integration_steps = integration_steps_fn(None)
+        # The randomness shouldn't be used here, so jax.random.key(0) suffices
+        num_integration_steps = integration_steps_fn(jax.random.key(0))
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
@@ -113,7 +112,6 @@ def as_top_level_api(
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.isokinetic_mclachlan,
-    next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the dynamic MHMCHMC kernel.
@@ -144,7 +142,6 @@ def as_top_level_api(
 
     kernel = build_kernel(
         integrator=integrator,
-        next_random_arg_fn=next_random_arg_fn,
         divergence_threshold=divergence_threshold,
         L_proposal_factor=L_proposal_factor,
     )
