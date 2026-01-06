@@ -257,3 +257,18 @@ def rescale(mu):
 def trajectory_length(t, mu):
     s = rescale(mu)
     return jnp.rint(0.5 + halton_sequence(t) * s)
+
+
+def make_random_trajectory_length_fn(random_trajectory_length: bool):
+    if random_trajectory_length:
+        integration_steps_fn = lambda avg_num_integration_steps: lambda k: (
+            jnp.clip(
+                jnp.ceil(jax.random.uniform(k) * rescale(avg_num_integration_steps)),
+                min=1,
+            )
+        ).astype("int32")
+    else:
+        integration_steps_fn = lambda avg_num_integration_steps: lambda _: jnp.clip(
+            jnp.ceil(avg_num_integration_steps), min=1
+        ).astype("int32")
+    return integration_steps_fn

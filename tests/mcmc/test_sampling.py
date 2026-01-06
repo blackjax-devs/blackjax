@@ -111,15 +111,13 @@ class LinearRegressionTest(chex.TestCase):
         init_key, tune_key, run_key = jax.random.split(key, 3)
 
         initial_state = blackjax.mcmc.mclmc.init(
-            position=initial_position,
-            logdensity_fn=logdensity_fn,
-            random_generator_arg=init_key,
+            position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
         )
 
-        kernel = lambda inverse_mass_matrix: (
-            lambda rng_key, state, L, step_size: blackjax.mcmc.mclmc.build_kernel(
-                integrator=blackjax.mcmc.mclmc.isokinetic_mclachlan,
-            )(rng_key, state, logdensity_fn, L, step_size, inverse_mass_matrix)
+        kernel = lambda inverse_mass_matrix: blackjax.mcmc.mclmc.build_kernel(
+            logdensity_fn=logdensity_fn,
+            integrator=blackjax.mcmc.mclmc.isokinetic_mclachlan,
+            inverse_mass_matrix=inverse_mass_matrix,
         )
 
         (
@@ -171,10 +169,10 @@ class LinearRegressionTest(chex.TestCase):
 
         kernel = lambda rng_key, state, avg_num_integration_steps, step_size, inverse_mass_matrix: blackjax.mcmc.adjusted_mclmc_dynamic.build_kernel(
             integrator=integrator,
-            inverse_mass_matrix=inverse_mass_matrix,
             integration_steps_fn=lambda k: jnp.ceil(
                 jax.random.uniform(k) * rescale(avg_num_integration_steps)
             ),
+            inverse_mass_matrix=inverse_mass_matrix,
         )(
             rng_key=rng_key,
             state=state,
@@ -243,13 +241,13 @@ class LinearRegressionTest(chex.TestCase):
 
         kernel = lambda rng_key, state, avg_num_integration_steps, step_size, inverse_mass_matrix: blackjax.mcmc.adjusted_mclmc.build_kernel(
             integrator=integrator,
+            inverse_mass_matrix=inverse_mass_matrix,
+            logdensity_fn=logdensity_fn,
         )(
             rng_key=rng_key,
             state=state,
             step_size=step_size,
-            integration_steps_fn=lambda k: avg_num_integration_steps,
-            inverse_mass_matrix=inverse_mass_matrix,
-            logdensity_fn=logdensity_fn,
+            num_integration_steps=avg_num_integration_steps,
         )
 
         target_acc_rate = 0.9
@@ -276,6 +274,7 @@ class LinearRegressionTest(chex.TestCase):
         alg = blackjax.adjusted_mclmc(
             logdensity_fn=logdensity_fn,
             step_size=step_size,
+            num_integration_steps=L / step_size,
             integrator=integrator,
             inverse_mass_matrix=blackjax_mclmc_sampler_params.inverse_mass_matrix,
         )

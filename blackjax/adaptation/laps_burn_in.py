@@ -41,11 +41,15 @@ def nan_reject(nonans, old, new):
     return jax.lax.cond(nonans, lambda _: new, lambda _: old, operand=None)
 
 
-def build_kernel(logdensity_fn, microcanonical=True):
+def build_kernel(logdensity_fn, ndims, microcanonical=True):
     """MCLMC kernel (with nan rejection)"""
 
     if microcanonical:
-        kernel = mclmc.build_kernel(integrator=isokinetic_velocity_verlet)
+        kernel = mclmc.build_kernel(
+            integrator=isokinetic_velocity_verlet,
+            logdensity_fn=logdensity_fn,
+            inverse_mass_matrix=jnp.ones(ndims),
+        )
     else:
         raise ValueError("Only microcanonical mode is supported for LAPS burn-in.")
 
@@ -53,10 +57,8 @@ def build_kernel(logdensity_fn, microcanonical=True):
         new_state, info = kernel(
             key,
             state,
-            logdensity_fn,
             adap.L,
             adap.step_size,
-            jnp.ones(adap.inverse_mass_matrix.shape),
         )
 
         # reject the new state if there were nans

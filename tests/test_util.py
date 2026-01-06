@@ -134,20 +134,22 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
         init_key, tune_key = jr.split(rng_key, 2)
 
         state = blackjax.mcmc.mclmc.init(
-            position=self.init_pos, logdensity_fn=self.logdf, rng_key=init_key
+            position=self.init_pos,
+            logdensity_fn=self.logdf,
+            rng_key=init_key,
         )
 
         if thinning == 1:
             kernel = lambda inverse_mass_matrix: blackjax.mcmc.mclmc.build_kernel(
-                logdensity_fn=self.logdf,
                 integrator=isokinetic_mclachlan,
+                logdensity_fn=self.logdf,
                 inverse_mass_matrix=inverse_mass_matrix,
             )
         else:
             kernel = lambda inverse_mass_matrix: thin_kernel(
                 blackjax.mcmc.mclmc.build_kernel(
-                    logdensity_fn=self.logdf,
                     integrator=isokinetic_mclachlan,
+                    logdensity_fn=self.logdf,
                     inverse_mass_matrix=inverse_mass_matrix,
                 ),
                 thinning=thinning,

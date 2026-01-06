@@ -201,7 +201,7 @@ def laps(
     )
 
     # burn-in with the unadjusted method #
-    kernel = laps_burn_in.build_kernel(logdensity_fn, microcanonical)
+    kernel = laps_burn_in.build_kernel(logdensity_fn, ndims, microcanonical)
     save_num = (jnp.rint(save_frac * num_steps1)).astype(int)
     adap = laps_burn_in.Adaptation(
         ndims,
@@ -262,15 +262,18 @@ def laps(
     if microcanonical:
         integrator = generate_isokinetic_integrator(_integrator_coefficients)
 
-        build_kernel = build_kernel_mclmc(integrator=integrator, L_proposal_factor=1.25)
+        build_kernel = build_kernel_mclmc(
+            integrator=integrator,
+            logdensity_fn=logdensity_fn,
+            inverse_mass_matrix=inverse_mass_matrix,
+        )
 
         kernel = lambda key, state, adap: build_kernel(
             rng_key=key,
             state=state,
-            logdensity_fn=logdensity_fn,
             step_size=adap.step_size,
-            integration_steps_fn=lambda k: adap.steps_per_sample,
-            inverse_mass_matrix=inverse_mass_matrix,
+            num_integration_steps=adap.steps_per_sample,
+            L_proposal_factor=1.25,
         )
 
     else:
