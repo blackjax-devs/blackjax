@@ -424,8 +424,14 @@ def handle_high_energy(
 
     metric = metrics.default_metric(inverse_mass_matrix)
 
+    new_momentum = jax.lax.cond(
+        euclidean,
+        lambda: metric.sample_momentum(key, previous_state.position),
+        lambda: generate_unit_vector(key, previous_state.position),
+    )
 
-    new_momentum = euclidean*metric.sample_momentum(key, previous_state.position) + (1-euclidean)*generate_unit_vector(key, previous_state.position)
+
+    # new_momentum = euclidean*metric.sample_momentum(key, previous_state.position) + (1-euclidean)*generate_unit_vector(key, previous_state.position)
     # new_momentum = generate_unit_vector(key, previous_state.position)
 
     state = jax.lax.cond(

@@ -218,8 +218,16 @@ def handle_nans(
 ):
 
     new_momentum = generate_unit_vector(key, previous_state.position)
+    # Make nonans pytree compatible
+    def isfinite_pytree(x):
+        # Recursively check if all leaves in a pytree are finite
+        # Will return True if all are finite, False otherwise
+        leaves, _ = jax.tree_util.tree_flatten(x)
+        return jnp.all(jnp.stack([jnp.all(jnp.isfinite(leaf)) for leaf in leaves]))
 
-    nonans = jnp.logical_and(jnp.all(jnp.isfinite(next_state.position)), jnp.all(jnp.isfinite(next_state.momentum)))
+    nonans = jnp.logical_and(isfinite_pytree(next_state.position), isfinite_pytree(next_state.momentum))
+
+    # nonans = jnp.logical_and(jnp.all(jnp.isfinite(next_state.position)), jnp.all(jnp.isfinite(next_state.momentum)))
 
     state, info = jax.lax.cond(
         nonans,
