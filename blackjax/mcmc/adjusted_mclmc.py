@@ -204,7 +204,6 @@ def adjusted_mclmc_proposal(
         next_state, next_kinetic_energy = integrator(
             state, step_size, L_proposal_factor, rng_key
         )
-
         return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
 
     def build_trajectory(state, num_integration_steps, rng_key):
