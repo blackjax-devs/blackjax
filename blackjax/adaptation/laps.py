@@ -280,10 +280,7 @@ def laps(
         raise ValueError("Only microcanonical mode is supported for LAPS.")
 
     initial_state = HMCState(
-        final_state.position,
-        final_state.logdensity,
-        final_state.logdensity_grad
-        # jax.random.key(0)
+        final_state.position, final_state.logdensity, final_state.logdensity_grad
     )
     num_samples = num_steps2 // (gradient_calls_per_step * steps_per_sample)
     num_adaptation_samples = (
