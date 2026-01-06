@@ -350,7 +350,7 @@ def handle_nans(
 # def handle_high_energy(
 #     previous_state, next_state, energy_change, key, inverse_mass_matrix, cutoff, euclidean=False
 # ):
-    
+
 
 #     metric = metrics.default_metric(inverse_mass_matrix)
 
