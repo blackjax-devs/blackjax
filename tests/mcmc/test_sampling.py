@@ -731,7 +731,7 @@ class LinearRegressionTest(chex.TestCase):
             ndims=2,
             num_steps1=10000,
             num_steps2=10000,
-            num_chains=1000,
+            num_chains=10000,
             mesh=jax.sharding.Mesh(jax.devices()[:1], "chains"),
             rng_key=jax.random.key(0),
             early_stop=False,

@@ -224,8 +224,8 @@ def handle_nans(previous_state, next_state, info, key):
             ),
             MCLMCInfo(
                 logdensity=previous_state.logdensity,
-                energy_change=0.0,
-                kinetic_change=0.0,
+                energy_change=jnp.zeros_like(info.energy_change),
+                kinetic_change=jnp.zeros_like(info.kinetic_change),
                 nonans=nonans,
             ),
         ),
@@ -245,8 +245,8 @@ def handle_high_energy(previous_state, next_state, info, key, cutoff):
             ),
             MCLMCInfo(
                 logdensity=previous_state.logdensity,
-                energy_change=0.0,
-                kinetic_change=0.0,
+                energy_change=jnp.zeros_like(info.energy_change),
+                kinetic_change=jnp.zeros_like(info.kinetic_change),
                 nonans=info.nonans,
             ),
         ),

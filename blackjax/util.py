@@ -5,8 +5,7 @@ from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
-from jax import device_put, jit, lax, vmap
-from jax.experimental.shard_map import shard_map
+from jax import device_put, jit, lax, shard_map, vmap
 from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
 from jax.sharding import NamedSharding, PartitionSpec
@@ -529,7 +528,6 @@ def run_eca(
         mesh=mesh,
         in_specs=(p, p, pscalar),
         out_specs=(p, pscalar, pscalar, pscalar),
-        check_rep=False,
     )
 
     # produce all random keys that will be needed
@@ -597,9 +595,7 @@ def ensemble_execute_fn(
         y, summary_statistics = _F((x, args), (None, keys, None))[0]
         return y, summary_statistics
 
-    parallel_execute = shard_map(
-        F, mesh=mesh, in_specs=(p, p), out_specs=(p, pscalar), check_rep=False
-    )
+    parallel_execute = shard_map(F, mesh=mesh, in_specs=(p, p), out_specs=(p, pscalar))
 
     if superchain_size == 1:
         _keys = split(rng_key, num_chains)
