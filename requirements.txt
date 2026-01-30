@@ -1,8 +1,8 @@
 -e ./
 chex>=0.1.83
+ipython
 pre-commit
 pytest
 pytest-benchmark
 pytest-cov
 pytest-xdist
-ipython
