@@ -5,3 +5,4 @@ pytest
 pytest-benchmark
 pytest-cov
 pytest-xdist
+ipython
