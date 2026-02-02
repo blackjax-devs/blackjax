@@ -11,7 +11,7 @@ import numpy as np
 import optax
 from absl.testing import absltest, parameterized
 
-import blackjax
+# import blackjax
 import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
@@ -707,13 +707,14 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
     def test_laps(self):
-        """Test the LAPS kernel."""
+
+       
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
         y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
 
         logposterior_fn_ = functools.partial(
-            self.regression_logprob, x=x_data, preds=y_data
+           self.regression_logprob, x=x_data, preds=y_data
         )
         # LAPS expects a function that takes an array, not a dictionary
         logposterior_fn = lambda x: logposterior_fn_(log_scale=x[0], coefs=x[1])
@@ -722,17 +723,15 @@ class LinearRegressionTest(chex.TestCase):
             logdensity_fn=logposterior_fn,
             sample_init=lambda key: jax.random.normal(key, shape=(2,)),
             ndims=2,
-            num_steps1=15000,
-            num_steps2=15000,
-            num_chains=15000,
+            num_steps1=1000,
+            num_steps2=1000,
+            num_chains=100,
             mesh=jax.sharding.Mesh(jax.devices()[:1], "chains"),
-            rng_key=jax.random.key(0),
+            rng_key=inference_key,
             early_stop=False,
             diagonal_preconditioning=True,
             integrator_coefficients=None,
             steps_per_sample=15,
-            # observables_for_bias=lambda x: x,
-            # contract=lambda x: 0.0,
             r_end=0.01,
             diagnostics=True,
             superchain_size=1,
@@ -741,8 +740,11 @@ class LinearRegressionTest(chex.TestCase):
         scale_samples = np.exp(final_state.position[:, 0])
         coefs_samples = final_state.position[:, 1]
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=5e-1)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=5e-1)
+        print(np.mean(scale_samples))
+        print(np.mean(coefs_samples))
+
+        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
+        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
     def test_barker(self):
         """Test the Barker kernel."""
