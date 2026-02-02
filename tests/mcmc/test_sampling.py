@@ -707,14 +707,12 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
     def test_laps(self):
-
-       
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
         y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
 
         logposterior_fn_ = functools.partial(
-           self.regression_logprob, x=x_data, preds=y_data
+            self.regression_logprob, x=x_data, preds=y_data
         )
         # LAPS expects a function that takes an array, not a dictionary
         logposterior_fn = lambda x: logposterior_fn_(log_scale=x[0], coefs=x[1])
