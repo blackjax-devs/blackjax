@@ -32,6 +32,7 @@ classifiers = [
 ]
 dependencies = [
     "fastprogress>=1.0.0",
+    "ipython",
     "jax>=0.4.16",
     "jaxlib>=0.4.16",
     "jaxopt<=0.8.3",
