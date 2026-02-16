@@ -108,8 +108,8 @@ def build_kernel(
                 normalize_to_one=True,  # needed to compute ESS correctly
             )
 
-            ess_val = persistent_sampling.compute_persistent_ess(log_weights)
-            return jnp.log(ess_val) - target_val
+            ess_val = jnp.log(persistent_sampling.compute_persistent_ess(log_weights))
+            return ess_val - target_val
 
         # in case no solution is found, delta is set to 0 using nan_to_num,
         # this allows for new particles to be added to the persistent ensemble
