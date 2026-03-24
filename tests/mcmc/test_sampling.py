@@ -1168,11 +1168,15 @@ class ConstrainedNormal(chex.TestCase):
     def setUp(self):
         super().setUp()
         self.key = jax.random.key(12)
-        self.A = np.array([[1., 1.], [-1., 0.], [0., -1.]])
-        self.b = np.array([1., 0., 0.])
+        self.A = np.array([[1.0, 1.0], [-1.0, 0.0], [0.0, -1.0]])
+        self.b = np.array([1.0, 0.0, 0.0])
 
     def constrained_normal_logprob(self, x):
-        return jax.lax.cond((self.A @ x < self.b).all(), lambda : stats.norm.logpdf(x, loc=0.0, scale=1.0).sum(), lambda : -jnp.inf)
+        return jax.lax.cond(
+            (self.A @ x < self.b).all(),
+            lambda: stats.norm.logpdf(x, loc=0.0, scale=1.0).sum(),
+            lambda: -jnp.inf,
+        )
 
     def constrained_normal_test_case(
         self,
@@ -1218,7 +1222,9 @@ class ConstrainedNormal(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_nuts(self):
         inference_algorithm = blackjax.nuts(
-            self.constrained_normal_logprob, step_size=1.0, inverse_mass_matrix=jnp.array([1.0, 1.0])
+            self.constrained_normal_logprob,
+            step_size=1.0,
+            inverse_mass_matrix=jnp.array([1.0, 1.0]),
         )
 
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
@@ -1230,7 +1236,8 @@ class ConstrainedNormal(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_rmh(self):
         inference_algorithm = blackjax.rmh(
-            self.constrained_normal_logprob, proposal_generator=rmh_proposal_distribution
+            self.constrained_normal_logprob,
+            proposal_generator=rmh_proposal_distribution,
         )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
 
@@ -1255,16 +1262,19 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_mala(self):
-        inference_algorithm = blackjax.mala(self.constrained_normal_logprob, step_size=0.2)
+        inference_algorithm = blackjax.mala(
+            self.constrained_normal_logprob, step_size=0.2
+        )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 45000, 5_000
         )
 
-
     @chex.all_variants(with_pmap=False)
     def test_dikin(self):
-        inference_algorithm = blackjax.dikin(self.constrained_normal_logprob, self.A, self.b, step_size=0.2)
+        inference_algorithm = blackjax.dikin(
+            self.constrained_normal_logprob, self.A, self.b, step_size=0.2
+        )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 45000, 5_000
@@ -1272,7 +1282,9 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_vaidya(self):
-        inference_algorithm = blackjax.vaidya(self.constrained_normal_logprob, self.A, self.b, step_size=0.2)
+        inference_algorithm = blackjax.vaidya(
+            self.constrained_normal_logprob, self.A, self.b, step_size=0.2
+        )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 45000, 5_000
@@ -1280,7 +1292,9 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_mapla(self):
-        inference_algorithm = blackjax.mapla(self.constrained_normal_logprob, self.A, self.b, step_size=0.2)
+        inference_algorithm = blackjax.mapla(
+            self.constrained_normal_logprob, self.A, self.b, step_size=0.2
+        )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 45000, 5_000
@@ -1288,8 +1302,10 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_smmala(self):
-        mass_matrix_fn = lambda x : jax.numpy.array([[1., 0.], [0., 1.]])
-        inference_algorithm = blackjax.smmala(self.constrained_normal_logprob, mass_matrix_fn, step_size=0.2)
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        inference_algorithm = blackjax.smmala(
+            self.constrained_normal_logprob, mass_matrix_fn, step_size=0.2
+        )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 45000, 5_000
@@ -1297,8 +1313,10 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_posdep_rwmh(self):
-        mass_matrix_fn = lambda x : jax.numpy.array([[1., 0.], [0., 1.]])
-        inference_algorithm = blackjax.posdep_rwmh(self.constrained_normal_logprob, mass_matrix_fn, step_size=0.2)
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        inference_algorithm = blackjax.posdep_rwmh(
+            self.constrained_normal_logprob, mass_matrix_fn, step_size=0.2
+        )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 45000, 5_000
@@ -1307,8 +1325,15 @@ class ConstrainedNormal(chex.TestCase):
     @chex.all_variants(with_pmap=False)
     def test_ehr(self):
         grad = jax.grad(self.constrained_normal_logprob)
-        mass_matrix_fn = lambda x : jax.numpy.array([[1., 0.], [0., 1.]])
-        inference_algorithm = blackjax.ehr(self.constrained_normal_logprob, self.A, self.b, grad, mass_matrix_fn, step_size=0.2)
+        mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        inference_algorithm = blackjax.ehr(
+            self.constrained_normal_logprob,
+            self.A,
+            self.b,
+            grad,
+            mass_matrix_fn,
+            step_size=0.2,
+        )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 4500, 1_000
