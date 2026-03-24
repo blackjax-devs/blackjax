@@ -185,7 +185,7 @@ class GaussianEuclideanMetricsTest(chex.TestCase):
 class GaussianRiemannianMetricsTest(chex.TestCase):
     def setUp(self):
         super().setUp()
-        self.key = random.PRNGKey(0)
+        self.key = random.key(0)
         self.dtype = "float32"
 
     @parameterized.named_parameters(
