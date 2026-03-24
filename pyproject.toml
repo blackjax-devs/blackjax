@@ -38,6 +38,7 @@ dependencies = [
     "jaxopt<=0.8.3",
     "optax>=0.1.7",
     "typing-extensions>=4.4.0",
+    "tfp-nightly[jax]",
 ]
 dynamic = ["version"]
 
