@@ -227,7 +227,7 @@ def store_only_expectation_values(
 
     .. code::
 
-         init_key, state_key, run_key = jax.random.split(jax.random.PRNGKey(0),3)
+         init_key, state_key, run_key = jax.random.split(jax.random.key(0),3)
          model = StandardNormal(2)
          initial_position = model.sample_init(init_key)
          initial_state = blackjax.mcmc.mclmc.init(

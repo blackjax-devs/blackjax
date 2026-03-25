@@ -165,7 +165,7 @@ def tuned_adaptive_tempered_inference_loop(kernel, rng_key, initial_state):
 class PretuningSMCTest(SMCLinearRegressionTestCase):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.key(42)
+        self.key = jax.random.key(53)
 
     @chex.variants(with_jit=True)
     def test_tempered(self):

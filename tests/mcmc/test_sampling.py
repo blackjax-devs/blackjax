@@ -521,7 +521,7 @@ class LinearRegressionTest(chex.TestCase):
         )
         model = IllConditionedGaussian(dim, condition_number)
         num_steps = 20000
-        key = jax.random.PRNGKey(2)
+        key = jax.random.key(2)
 
         integrator = isokinetic_mclachlan
 
