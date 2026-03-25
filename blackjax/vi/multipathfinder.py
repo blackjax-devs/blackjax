@@ -21,7 +21,12 @@ from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import psis_weights as _psis_weights
 from blackjax.vi.pathfinder import PathfinderInfo, PathfinderState, approximate, sample
 
-__all__ = ["MultipathfinderState", "multi_approximate", "psis_weights", "as_top_level_api"]
+__all__ = [
+    "MultipathfinderState",
+    "multi_approximate",
+    "psis_weights",
+    "as_top_level_api",
+]
 
 
 class MultipathfinderState(NamedTuple):
@@ -211,9 +216,7 @@ def as_top_level_api(logdensity_fn: Callable) -> VIAlgorithm:
 
         # Flatten the (n_paths, num_samples_per_path, ...) pool to
         # (n_paths * num_samples_per_path, ...) for resampling.
-        flat_pool = jax.tree.map(
-            lambda x: x.reshape(-1, *x.shape[2:]), state.samples
-        )
+        flat_pool = jax.tree.map(lambda x: x.reshape(-1, *x.shape[2:]), state.samples)
 
         indices = jax.random.choice(
             rng_key,
