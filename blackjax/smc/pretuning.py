@@ -229,10 +229,15 @@ def build_kernel(
         mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
     mcmc_init_fn
         A callable that initializes the inner kernel
-    pretune_fn:
+    pretune_fn
         A callable that can update the probability distribution of parameters.
-    extra_parameters:
-        parameters to be used for the creation of the smc_algorithm.
+    extra_parameters
+        Parameters to be used for the creation of the smc_algorithm.
+
+    Returns
+    -------
+    A ``kernel(rng_key, state, **extra_step_parameters) ->
+    (StateWithParameterOverride, SMCInfo)`` function.
     """
     delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
 
@@ -289,6 +294,22 @@ def build_kernel(
 
 
 def init(alg_init_fn, position, initial_parameter_value):
+    """Initialize a pretuning SMC state.
+
+    Parameters
+    ----------
+    alg_init_fn
+        The ``init`` function of the underlying SMC algorithm.
+    position
+        Initial particle positions (PyTree).
+    initial_parameter_value
+        Initial dict of MCMC parameters assigned to each chain.
+
+    Returns
+    -------
+    A StateWithParameterOverride wrapping the SMC state and the initial
+    parameter distribution.
+    """
     return StateWithParameterOverride(alg_init_fn(position), initial_parameter_value)
 
 
@@ -311,21 +332,31 @@ def as_top_level_api(
     Parameters
     ----------
     smc_algorithm
-        Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
-        a sampling algorithm that returns an SMCState and SMCInfo pair).
+        Either ``blackjax.adaptive_tempered_smc`` or ``blackjax.tempered_smc``
+        (or any implementation returning an SMCState/SMCInfo pair).
     logprior_fn
-        A function that computes the log density of the prior distribution
+        A function that computes the log density of the prior distribution.
     loglikelihood_fn
-        A function that returns the probability at a given position.
-    mcmc_step_fn:
-        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
-        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
+        A function that returns the log-likelihood at a given position.
+    mcmc_step_fn
+        The transition kernel; takes parameters from ``mcmc_parameter_update_fn``.
+        Signature: ``mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **params)``.
     mcmc_init_fn
-        A callable that initializes the inner kernel
-    pretune_fn:
-        A callable that can update the probability distribution of parameters.
-    extra_parameters:
-        parameters to be used for the creation of the smc_algorithm.
+        A callable that initializes the inner MCMC kernel.
+    resampling_fn
+        Resampling function (from ``blackjax.smc.resampling``).
+    num_mcmc_steps
+        Number of MCMC steps per SMC iteration.
+    initial_parameter_value
+        Initial dict of MCMC parameters assigned to each chain.
+    pretune_fn
+        A callable that updates the probability distribution of parameters.
+    extra_parameters
+        Additional keyword arguments forwarded to the smc_algorithm.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm`` with ``init`` and ``step`` methods.
     """
 
     kernel = build_kernel(

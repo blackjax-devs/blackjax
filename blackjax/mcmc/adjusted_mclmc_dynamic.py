@@ -28,7 +28,25 @@ from blackjax.util import generate_unit_vector
 __all__ = ["init", "build_kernel", "as_top_level_api"]
 
 
-def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array):
+def init(
+    position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array
+) -> DynamicHMCState:
+    """Create an initial state for the dynamic MHMCHMC kernel.
+
+    Parameters
+    ----------
+    position
+        Initial position of the chain.
+    logdensity_fn
+        Log-density function of the target distribution.
+    random_generator_arg
+        Argument passed to ``integration_steps_fn`` and ``next_random_arg_fn``
+        to generate the number of integration steps.
+
+    Returns
+    -------
+    The initial DynamicHMCState.
+    """
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
@@ -254,12 +272,39 @@ def rescale(mu):
     return k + x
 
 
-def trajectory_length(t, mu):
+def trajectory_length(t: int, mu: float):
+    """Quasi-random trajectory length using the Halton sequence.
+
+    Parameters
+    ----------
+    t
+        Step index used to index into the Halton sequence.
+    mu
+        Target average number of integration steps.
+
+    Returns
+    -------
+    Number of integration steps as a rounded integer.
+    """
     s = rescale(mu)
     return jnp.rint(0.5 + halton_sequence(t) * s)
 
 
 def make_random_trajectory_length_fn(random_trajectory_length: bool):
+    """Build a function that maps average integration steps to a step-count callable.
+
+    Parameters
+    ----------
+    random_trajectory_length
+        If ``True``, returns a randomized trajectory length function; otherwise
+        returns a deterministic one that always yields ``ceil(avg)``.
+
+    Returns
+    -------
+    A function ``integration_steps_fn(avg_num_integration_steps)`` that itself
+    returns a callable ``key -> int`` giving the number of steps for a single
+    transition.
+    """
     if random_trajectory_length:
         integration_steps_fn = lambda avg_num_integration_steps: lambda k: (
             jnp.clip(

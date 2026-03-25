@@ -92,12 +92,15 @@ def normal(sigma: Array) -> Callable:
     Propose a new position such that its distance to the current position is
     normally distributed. Suitable for continuous variables.
 
-    Parameter
-    ---------
-    sigma:
-        vector or matrix that contains the standard deviation of the centered
+    Parameters
+    ----------
+    sigma
+        Vector or matrix that contains the standard deviation of the centered
         normal distribution from which we draw the move proposals.
 
+    Returns
+    -------
+    A callable that takes a PRNGKey and a position and returns a proposed move.
     """
     if jnp.ndim(sigma) > 2:
         raise ValueError("sigma must be a vector or a matrix.")
@@ -113,7 +116,7 @@ class RWState(NamedTuple):
 
     position
         Current position of the chain.
-    log_density
+    logdensity
         Current value of the log-density
 
     """
@@ -149,12 +152,15 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable) -> RWState:
 
     Parameters
     ----------
-    position: PyTree
-        The initial position of the chain
-    logdensity_fn: Callable
+    position
+        The initial position of the chain.
+    logdensity_fn
         Log-probability density function of the distribution we wish to sample
         from.
 
+    Returns
+    -------
+    The initial state of the RW chain.
     """
     return RWState(position, logdensity_fn(position))
 

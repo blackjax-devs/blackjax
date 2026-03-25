@@ -35,17 +35,34 @@ def init(
     Parameters
     ----------
     initial_particles
-        Initial set of particles to start the optimization
-    kernel_paremeters
-        Arguments to the kernel function
+        Initial set of particles to start the optimization.
+    kernel_parameters
+        Arguments to the kernel function.
     optimizer
-        Optax compatible optimizer, which conforms to the `optax.GradientTransformation` protocol
+        Optax compatible optimizer, which conforms to the ``optax.GradientTransformation`` protocol.
+
+    Returns
+    -------
+    Initial SVGDState with the given particles, kernel parameters, and optimizer state.
     """
     opt_state = optimizer.init(initial_particles)
     return SVGDState(initial_particles, kernel_parameters, opt_state)
 
 
 def build_kernel(optimizer: optax.GradientTransformation):
+    """Build a SVGD kernel.
+
+    Parameters
+    ----------
+    optimizer
+        Optax optimizer used to apply the functional gradient update.
+
+    Returns
+    -------
+    A ``kernel(state, grad_logdensity_fn, kernel, **grad_params) -> SVGDState``
+    function that performs one SVGD step.
+    """
+
     def kernel(
         state: SVGDState,
         grad_logdensity_fn: Callable,
@@ -97,11 +114,40 @@ def build_kernel(optimizer: optax.GradientTransformation):
 
 
 def rbf_kernel(x, y, length_scale=1):
+    """Radial basis function (RBF / squared-exponential) kernel.
+
+    Parameters
+    ----------
+    x
+        First particle (PyTree).
+    y
+        Second particle (PyTree).
+    length_scale
+        Bandwidth of the kernel. Larger values produce smoother kernels.
+
+    Returns
+    -------
+    Scalar kernel evaluation ``exp(-||x - y||^2 / length_scale)``.
+    """
     arg = ravel_pytree(jax.tree.map(lambda x, y: (x - y) ** 2, x, y))[0]
     return jnp.exp(-(1 / length_scale) * arg.sum())
 
 
 def median_heuristic(kernel_parameters, particles):
+    """Set RBF ``length_scale`` using the median pairwise distance heuristic.
+
+    Parameters
+    ----------
+    kernel_parameters
+        Dict of kernel parameters. The ``"length_scale"`` key is updated in-place.
+    particles
+        Current particle set (PyTree with leading particle dimension).
+
+    Returns
+    -------
+    Updated ``kernel_parameters`` dict with ``length_scale`` set to
+    ``median(pairwise_distances)^2 / log(n_particles)``.
+    """
     particle_array = jax.vmap(lambda p: ravel_pytree(p)[0])(particles)
 
     def distance(x, y):
@@ -120,9 +166,19 @@ def median_heuristic(kernel_parameters, particles):
 def update_median_heuristic(state: SVGDState) -> SVGDState:
     """Median heuristic for setting the bandwidth of RBF kernels.
 
-    A reasonable middle-ground for choosing the `length_scale` of the RBF kernel
-    is to pick the empirical median of the squared distance between particles.
-    This strategy is called the median heuristic.
+    A reasonable middle-ground for choosing the ``length_scale`` of the RBF
+    kernel is to pick the empirical median of the squared distance between
+    particles. This strategy is called the median heuristic.
+
+    Parameters
+    ----------
+    state
+        Current SVGDState whose particles are used to compute the heuristic.
+
+    Returns
+    -------
+    Updated SVGDState with ``kernel_parameters["length_scale"]`` set via
+    the median heuristic.
     """
 
     position, kernel_parameters, opt_state = state

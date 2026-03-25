@@ -82,7 +82,7 @@ MetricTypes = Union[Metric, Array, Callable[[ArrayLikeTree], Array]]
 
 
 def default_metric(metric: MetricTypes) -> Metric:
-    """Convert an input metric into a ``Metric`` object following sensible default rules
+    """Convert an input metric into a ``Metric`` object following sensible default rules.
 
     The metric can be specified in three different ways:
 
@@ -91,6 +91,11 @@ def default_metric(metric: MetricTypes) -> Metric:
       metric
     - A function that takes a coordinate position and returns the mass matrix at that
       location
+
+    Returns
+    -------
+    A ``Metric`` object with ``sample_momentum``, ``kinetic_energy``,
+    ``check_turning``, and ``scale`` fields.
     """
     if isinstance(metric, Metric):
         return metric
@@ -236,6 +241,20 @@ def gaussian_euclidean(
 def gaussian_riemannian(
     mass_matrix_fn: Callable,
 ) -> Metric:
+    """Hamiltonian dynamic on Riemannian manifold with normally-distributed momentum.
+
+    Parameters
+    ----------
+    mass_matrix_fn
+        A callable that takes a position and returns the mass matrix at that
+        location (positive definite, one or two-dimensional array).
+
+    Returns
+    -------
+    A ``Metric`` object with ``sample_momentum``, ``kinetic_energy``,
+    ``check_turning``, and ``scale`` fields.
+    """
+
     def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayLikeTree:
         mass_matrix = mass_matrix_fn(position)
         mass_matrix_sqrt, *_ = _format_covariance(mass_matrix, is_inv=False)

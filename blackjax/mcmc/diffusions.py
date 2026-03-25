@@ -30,7 +30,18 @@ class DiffusionState(NamedTuple):
 
 
 def overdamped_langevin(logdensity_grad_fn):
-    """Euler solver for overdamped Langevin diffusion."""
+    """Euler solver for overdamped Langevin diffusion.
+
+    Parameters
+    ----------
+    logdensity_grad_fn
+        A function that returns a ``(logdensity, logdensity_grad)`` tuple given
+        a position and optional batch arguments.
+
+    Returns
+    -------
+    A ``one_step`` function that advances the diffusion by one Euler step.
+    """
 
     def one_step(rng_key, state: DiffusionState, step_size: float, batch: tuple = ()):
         position, _, logdensity_grad = state
