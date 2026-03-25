@@ -79,10 +79,10 @@ def build_kernel(optimizer: optax.GradientTransformation):
         def phi_star_summand(particle, particle_):
             gradient = grad_logdensity_fn(particle, **grad_params)
             k, grad_k = jax.value_and_grad(kernel, argnums=0)(particle, particle_)
-            return jax.tree_util.tree_map(lambda g, gk: -(k * g) - gk, gradient, grad_k)
+            return jax.tree.map(lambda g, gk: -(k * g) - gk, gradient, grad_k)
 
         functional_gradient = jax.vmap(
-            lambda p_: jax.tree_util.tree_map(
+            lambda p_: jax.tree.map(
                 lambda phi_star: phi_star.mean(axis=0),
                 jax.vmap(lambda p: phi_star_summand(p, p_))(particles),
             )
@@ -97,7 +97,7 @@ def build_kernel(optimizer: optax.GradientTransformation):
 
 
 def rbf_kernel(x, y, length_scale=1):
-    arg = ravel_pytree(jax.tree_util.tree_map(lambda x, y: (x - y) ** 2, x, y))[0]
+    arg = ravel_pytree(jax.tree.map(lambda x, y: (x - y) ** 2, x, y))[0]
     return jnp.exp(-(1 / length_scale) * arg.sum())
 
 

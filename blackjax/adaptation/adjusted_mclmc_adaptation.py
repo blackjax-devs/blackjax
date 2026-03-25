@@ -395,7 +395,7 @@ def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_ch
     reduced_step_size = 0.8
     p, unravel_fn = ravel_pytree(next_state.position)
     nonans = jnp.all(jnp.isfinite(p))
-    state, step_size, kinetic_change = jax.tree_util.tree_map(
+    state, step_size, kinetic_change = jax.tree.map(
         lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
         (next_state, step_size_max, kinetic_change),
         (previous_state, step_size * reduced_step_size, 0.0),

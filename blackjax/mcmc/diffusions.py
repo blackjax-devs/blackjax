@@ -35,7 +35,7 @@ def overdamped_langevin(logdensity_grad_fn):
     def one_step(rng_key, state: DiffusionState, step_size: float, batch: tuple = ()):
         position, _, logdensity_grad = state
         noise = generate_gaussian_noise(rng_key, position)
-        position = jax.tree_util.tree_map(
+        position = jax.tree.map(
             lambda p, g, n: p + step_size * g + jnp.sqrt(2 * step_size) * n,
             position,
             logdensity_grad,

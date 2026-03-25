@@ -119,7 +119,7 @@ def initialize(
 
         momentum, unflatten = jax.flatten_util.ravel_pytree(state.momentum)
 
-        velocity_flat = jax.tree_util.tree_map(
+        velocity_flat = jax.tree.map(
             lambda sign, u: sign * u, signs, momentum
         )
 
@@ -196,7 +196,7 @@ class AdaptationState(NamedTuple):
 def equipartition_diagonal(state):
     """Ei = E_ensemble (- grad log p_i x_i ). Ei is 1 if we have converged.
     equipartition_loss = average over parameters (Ei)"""
-    return jax.tree_util.tree_map(
+    return jax.tree.map(
         lambda x, g: -x * g, state.position, state.logdensity_grad
     )
 

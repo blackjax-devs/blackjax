@@ -59,7 +59,7 @@ def init(particles: ArrayLikeTree) -> TemperedSMCState:
     """
     # Infer the number of particles from the size of the leading dimension of
     # the first leaf of the inputted PyTree.
-    num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
+    num_particles = jax.tree.flatten(particles)[0][0].shape[0]
     weights = jnp.ones(num_particles) / num_particles
     return TemperedSMCState(particles, weights, 0.0)
 
