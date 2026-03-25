@@ -1,0 +1,27 @@
+name: JAX Nightly
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  test-jax-nightly:
+    name: Run tests against JAX HEAD
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12'
+    - name: Install JAX nightly and dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install --pre jax jaxlib -f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html
+        pip install .
+        less requirements.txt | grep 'pytest\|chex' | xargs -i -t pip install {}
+    - name: Run tests
+      run: |
+        pytest -n auto -vv --benchmark-disable tests
+      continue-on-error: true
