@@ -61,9 +61,7 @@ class Trajectory(NamedTuple):
 
 def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Trajectory:
     """Append a state to the (right of the) trajectory to form a new trajectory."""
-    momentum_sum = jax.tree_util.tree_map(
-        jnp.add, trajectory.momentum_sum, state.momentum
-    )
+    momentum_sum = jax.tree.map(jnp.add, trajectory.momentum_sum, state.momentum)
     return Trajectory(
         trajectory.leftmost_state, state, momentum_sum, trajectory.num_states + 1
     )
@@ -88,7 +86,7 @@ def reorder_trajectories(
 
 
 def merge_trajectories(left_trajectory: Trajectory, right_trajectory: Trajectory):
-    momentum_sum = jax.tree_util.tree_map(
+    momentum_sum = jax.tree.map(
         jnp.add, left_trajectory.momentum_sum, right_trajectory.momentum_sum
     )
     return Trajectory(
@@ -116,7 +114,7 @@ def static_integration(
     def integrate(
         initial_state: IntegratorState, step_size, num_integration_steps
     ) -> IntegratorState:
-        directed_step_size = jax.tree_util.tree_map(
+        directed_step_size = jax.tree.map(
             lambda step_size: direction * step_size, step_size
         )
 
@@ -418,7 +416,7 @@ def dynamic_recursive_integration(
                         trajectory.momentum_sum,
                     )
                     if use_robust_uturn_check & (tree_depth - 1 > 0):
-                        momentum_sum_left = jax.tree_util.tree_map(
+                        momentum_sum_left = jax.tree.map(
                             jnp.add,
                             left_trajectory.momentum_sum,
                             right_trajectory.leftmost_state.momentum,
@@ -428,7 +426,7 @@ def dynamic_recursive_integration(
                             right_trajectory.leftmost_state.momentum,
                             momentum_sum_left,
                         )
-                        momentum_sum_right = jax.tree_util.tree_map(
+                        momentum_sum_right = jax.tree.map(
                             jnp.add,
                             left_trajectory.rightmost_state.momentum,
                             right_trajectory.momentum_sum,

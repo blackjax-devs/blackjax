@@ -137,7 +137,7 @@ class Update_waste_free_multivariate_particles(chex.TestCase):
         )
 
         updated_particles, infos = self.variant(update)(
-            jax.random.split(jax.random.PRNGKey(10), 50), resampled_particles, {}
+            jax.random.split(jax.random.key(10), 50), resampled_particles, {}
         )
 
         assert updated_particles.shape == (n_particles, 3)

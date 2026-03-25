@@ -164,7 +164,7 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
         auxiliary_info=None,
     ):
         del auxiliary_info
-        new_position = jax.tree_util.tree_map(
+        new_position = jax.tree.map(
             lambda x, grad: x + step_size * coef * grad,
             position,
             kinetic_grad,
@@ -187,7 +187,7 @@ def euclidean_momentum_update_fn(kinetic_energy_fn: KineticEnergy):
         is_last_call=False,
     ):
         del auxiliary_info
-        new_momentum = jax.tree_util.tree_map(
+        new_momentum = jax.tree.map(
             lambda x, grad: x + step_size * coef * grad,
             momentum,
             logdensity_grad,
@@ -484,7 +484,7 @@ def solve_fixed_point_iteration(
     """Solve for x = func(x) using a fixed point iteration"""
 
     def compute_norm(x: ArrayTree, xp: ArrayTree) -> float:
-        return norm_fn(ravel_pytree(jax.tree_util.tree_map(jnp.subtract, x, xp))[0])
+        return norm_fn(ravel_pytree(jax.tree.map(jnp.subtract, x, xp))[0])
 
     def cond_fn(args: Tuple[int, ArrayTree, ArrayTree, float]) -> bool:
         n, _, _, norm = args
@@ -543,16 +543,12 @@ def implicit_midpoint(
             initial: Tuple[ArrayTree, ArrayTree] = (position, momentum),
         ) -> Tuple[ArrayTree, ArrayTree]:
             dTdq, dHdp = kinetic_energy_grad_fn(q, p)
-            dHdq = jax.tree_util.tree_map(jnp.subtract, dTdq, dUdq)
+            dHdq = jax.tree.map(jnp.subtract, dTdq, dUdq)
 
             # Take a step from the _initial coordinates_ using the gradients of the
             # Hamiltonian evaluated at the current guess for the midpoint
-            q = jax.tree_util.tree_map(
-                lambda q_, d_: q_ + 0.5 * step_size * d_, initial[0], dHdp
-            )
-            p = jax.tree_util.tree_map(
-                lambda p_, d_: p_ - 0.5 * step_size * d_, initial[1], dHdq
-            )
+            q = jax.tree.map(lambda q_, d_: q_ + 0.5 * step_size * d_, initial[0], dHdp)
+            p = jax.tree.map(lambda p_, d_: p_ - 0.5 * step_size * d_, initial[1], dHdq)
             return q, p
 
         # Solve for the midpoint numerically

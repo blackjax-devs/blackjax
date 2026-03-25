@@ -145,7 +145,7 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         position = integrator(
             rng_key,
             position,
-            jax.tree_util.tree_map(lambda g: gradient_multiplier * g, logprob_grad),
+            jax.tree.map(lambda g: gradient_multiplier * g, logprob_grad),
             step_size_diff,
             temperature,
         )
@@ -164,7 +164,7 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
 
         energy_pdf_update = -energy_pdf.copy()
         energy_pdf_update = energy_pdf_update.at[idx].set(energy_pdf_update[idx] + 1)
-        energy_pdf = jax.tree_util.tree_map(
+        energy_pdf = jax.tree.map(
             lambda e: e + step_size_stoch * energy_pdf[idx] * energy_pdf_update,
             energy_pdf,
         )

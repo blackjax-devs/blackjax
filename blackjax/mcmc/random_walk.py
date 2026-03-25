@@ -174,7 +174,7 @@ def build_additive_step():
     ) -> tuple[RWState, RWInfo]:
         def proposal_generator(key_proposal, position):
             move_proposal = random_step(key_proposal, position)
-            new_position = jax.tree_util.tree_map(jnp.add, position, move_proposal)
+            new_position = jax.tree.map(jnp.add, position, move_proposal)
             return new_position
 
         inner_kernel = build_rmh()

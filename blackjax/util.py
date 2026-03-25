@@ -227,7 +227,7 @@ def store_only_expectation_values(
 
     .. code::
 
-         init_key, state_key, run_key = jax.random.split(jax.random.PRNGKey(0),3)
+         init_key, state_key, run_key = jax.random.split(jax.random.key(0),3)
          model = StandardNormal(2)
          initial_position = model.sample_init(init_key)
          initial_state = blackjax.mcmc.mclmc.init(
@@ -418,7 +418,7 @@ def while_with_info(step, init, xs, length, while_cond):
     len(xs) determines the maximum number of iterations.
     """
 
-    get_i = lambda tree, i: jax.tree_util.tree_map(lambda arr: arr[i], tree)
+    get_i = lambda tree, i: jax.tree.map(lambda arr: arr[i], tree)
 
     info1 = step(init, get_i(xs, 0))[
         1
@@ -435,7 +435,7 @@ def while_with_info(step, init, xs, length, while_cond):
         x_new, info_new = step(x, get_i(xs, counter))
 
         # update the full info by adding the new one
-        info_full = jax.tree_util.tree_map(
+        info_full = jax.tree.map(
             lambda arr, val: arr.at[counter].set(val), info_old, info_new
         )
 
@@ -546,7 +546,7 @@ def run_eca(
     )
 
     # info_history has a static size, determined by num_steps, but if early_stop = True, the values after the while condition has been violated are nonsense. Remove them:
-    info_history = jax.tree_util.tree_map(lambda arr: arr[: int(counter)], info_history)
+    info_history = jax.tree.map(lambda arr: arr[: int(counter)], info_history)
 
     return final_state, final_adaptation_state, info_history
 

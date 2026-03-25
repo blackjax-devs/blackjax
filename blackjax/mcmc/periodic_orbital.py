@@ -100,7 +100,7 @@ def init(
     gradient.
     """
 
-    positions = jax.tree_util.tree_map(
+    positions = jax.tree.map(
         lambda position: jnp.array([position for _ in range(period)]), position
     )
 
@@ -191,14 +191,12 @@ def build_kernel(
         ) = state
 
         choice_indx = jax.random.choice(key_choice, len(weights), p=weights)
-        position = jax.tree_util.tree_map(
-            lambda positions: positions[choice_indx], positions
-        )
+        position = jax.tree.map(lambda positions: positions[choice_indx], positions)
         direction = directions[choice_indx]
         period = jnp.max(directions) + 1
         direction = jnp.mod(direction + jnp.array(period / 2, int), period)
         logdensity = logdensities[choice_indx]
-        logdensity_grad = jax.tree_util.tree_map(
+        logdensity_grad = jax.tree.map(
             lambda p_energy_grad: p_energy_grad[choice_indx], logdensities_grad
         )
 

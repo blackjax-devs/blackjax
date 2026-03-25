@@ -90,7 +90,7 @@ def init(particles: ArrayLikeTree, init_update_params: ArrayTree) -> SMCState:
     """
     # Infer the number of particles from the size of the leading dimension of
     # the first leaf of the inputted PyTree.
-    num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
+    num_particles = jax.tree.flatten(particles)[0][0].shape[0]
     weights = jnp.ones(num_particles) / num_particles
     return SMCState(particles, weights, init_update_params)
 

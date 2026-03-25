@@ -92,8 +92,8 @@ def build_kernel():
         log_x = state.logdensity_grad
         log_y = proposal.logdensity_grad
 
-        y_minus_x = jax.tree_util.tree_map(lambda a, b: a - b, y, x)
-        x_minus_y = jax.tree_util.tree_map(lambda a: -a, y_minus_x)
+        y_minus_x = jax.tree.map(lambda a, b: a - b, y, x)
+        x_minus_y = jax.tree.map(lambda a: -a, y_minus_x)
         z_tilde_x_to_y = metric.scale(x, y_minus_x, inv=True, trans=True)
         z_tilde_y_to_x = metric.scale(y, x_minus_y, inv=True, trans=True)
 
@@ -260,13 +260,13 @@ def _barker_sample(key, mean, a, scale, metric):
 
     # Sample b=1 with probability p and 0 with probability 1 - p where
     # p = 1 / (1 + exp(-a * (z - mean)))
-    log_p = jax.tree_util.tree_map(lambda x, y: -_log1pexp(-x * y), c, z)
-    p = jax.tree_util.tree_map(lambda x: jnp.exp(x), log_p)
+    log_p = jax.tree.map(lambda x, y: -_log1pexp(-x * y), c, z)
+    p = jax.tree.map(lambda x: jnp.exp(x), log_p)
     b = _generate_bernoulli(key2, mean, p=p)
 
-    bz = jax.tree_util.tree_map(lambda x, y: x * y - (1 - x) * y, b, z)
+    bz = jax.tree.map(lambda x, y: x * y - (1 - x) * y, b, z)
 
-    return jax.tree_util.tree_map(
+    return jax.tree.map(
         lambda a, b: a + b, mean, metric.scale(mean, bz, inv=False, trans=False)
     )
 

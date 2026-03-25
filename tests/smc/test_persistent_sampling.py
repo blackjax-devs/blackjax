@@ -95,7 +95,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
         rng_key, init_key = jax.random.split(self.key, 2)
         particles = particle_generator(init_key)
 
-        def loglikelihood_fn(x: ArrayLikeTree) -> jnp.ndarray:
+        def loglikelihood_fn(x: ArrayLikeTree) -> jax.Array:
             leaves = jax.tree.leaves(x)
             return jnp.array(sum(jnp.sum(leaf) for leaf in leaves))
 
@@ -137,7 +137,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
         key, init_key = jax.random.split(self.key, 2)
         particles = jax.random.normal(init_key, shape=(num_particles, num_dim))
 
-        def loglikelihood_fn(x: jnp.ndarray) -> jnp.ndarray:
+        def loglikelihood_fn(x: jax.Array) -> jax.Array:
             return stats.norm.logpdf(x).sum()
 
         state = init(particles, loglikelihood_fn, n_schedule)
@@ -208,7 +208,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
 
         # Check shapes
         assert log_weights.shape == (num_iterations + 2, num_particles)
-        assert isinstance(log_Z, jnp.ndarray) or isinstance(log_Z, float)
+        assert isinstance(log_Z, jax.Array) or isinstance(log_Z, float)
 
         # Check that weights are finite where they should be
         assert jnp.all(jnp.isfinite(log_weights[: iteration + 1]))
@@ -333,7 +333,7 @@ class PersistentSamplingUnitTest(chex.TestCase):
         single_iter_particles = particle_generator(init_key)
 
         # Create persistent particles by stacking multiple iterations
-        def expand_to_iterations(leaf: jnp.ndarray) -> jnp.ndarray:
+        def expand_to_iterations(leaf: jax.Array) -> jax.Array:
             # Expand first particle dimension to (num_iterations, num_particles, ...)
             return jnp.tile(
                 leaf[None, ...], (num_iterations, 1) + (1,) * (leaf.ndim - 1)
@@ -387,14 +387,14 @@ class PersistentSamplingStateUpdateTest(chex.TestCase):
         rng_key, init_key = jax.random.split(self.key, 2)
         particles = jax.random.normal(init_key, shape=(num_particles, num_dim))
 
-        def logprior_fn(x: jnp.ndarray) -> jnp.ndarray:
+        def logprior_fn(x: jax.Array) -> jax.Array:
             return jnp.array(
                 stats.multivariate_normal.logpdf(
                     x, jnp.zeros((num_dim,)), jnp.eye(num_dim)
                 )
             )
 
-        def loglikelihood_fn(x: jnp.ndarray) -> jnp.ndarray:
+        def loglikelihood_fn(x: jax.Array) -> jax.Array:
             return jnp.array(
                 stats.multivariate_normal.logpdf(
                     x, jnp.zeros((num_dim,)), 0.5 * jnp.eye(num_dim)
@@ -609,7 +609,7 @@ def inference_loop_adaptive(
 ) -> PersistentSMCState:
     """Run adaptive SMC until condition is met."""
 
-    def cond(carry: tuple[PersistentSMCState, PRNGKey]) -> jnp.ndarray:
+    def cond(carry: tuple[PersistentSMCState, PRNGKey]) -> jax.Array:
         """Returns True while lambda < 1.0 or ESS < target_ess and
         iteration < max_iterations."""
         state, _ = carry
@@ -650,7 +650,7 @@ def inference_loop_fixed(
     rng_key: PRNGKey,
     kernel: Callable,
     initial_state: PersistentSMCState,
-    tempering_schedule: jnp.ndarray,
+    tempering_schedule: jax.Array,
 ) -> PersistentSMCState:
     """Inference loop for fixed schedule persistent sampling."""
 
@@ -760,7 +760,7 @@ class PersistentSamplingPosteriorTest(SMCLinearRegressionTestCase):
         hmc_parameters_list = [
             base_params,
             jax.tree.map(lambda x: jnp.repeat(x, num_particles, axis=0), base_params),
-            jax.tree_util.tree_map_with_path(
+            jax.tree.map_with_path(
                 lambda path, x: (
                     jnp.repeat(x, num_particles, axis=0)
                     if path[0].key == "step_size"
@@ -818,9 +818,9 @@ class PersistentSamplingPosteriorTest(SMCLinearRegressionTestCase):
 
 
 def multivariate_normal_log_pdf(
-    x: jnp.ndarray,
-    chol_cov: jnp.ndarray,
-) -> jnp.ndarray:
+    x: jax.Array,
+    chol_cov: jax.Array,
+) -> jax.Array:
     """Compute log density of multivariate normal with zero mean and covariance
     defined by its Cholesky factor."""
     dim = chol_cov.shape[0]
@@ -842,7 +842,7 @@ class NormalizingConstantTest(chex.TestCase):
 
     def _setup_test_problem(
         self, num_dim: int
-    ) -> tuple[PRNGKey, jnp.ndarray, Callable, Callable,]:
+    ) -> tuple[PRNGKey, jax.Array, Callable, Callable,]:
         """Setup common test problem: random covariance and log functions."""
         rng_key, cov_key = jax.random.split(self.key, 2)
         chol_cov = jax.random.uniform(cov_key, shape=(num_dim, num_dim))
@@ -850,7 +850,7 @@ class NormalizingConstantTest(chex.TestCase):
         chol_cov = chol_cov.at[iu].set(0.0)
         cov = chol_cov @ chol_cov.T
 
-        def logprior_fn(x: jnp.ndarray) -> jnp.ndarray:
+        def logprior_fn(x: jax.Array) -> jax.Array:
             return jnp.array(
                 stats.multivariate_normal.logpdf(
                     x, jnp.zeros((num_dim,)), jnp.eye(num_dim)
@@ -875,7 +875,7 @@ class NormalizingConstantTest(chex.TestCase):
             ),
         }
 
-    def _compute_expected_log_likelihood(self, cov: jnp.ndarray, num_dim: int) -> float:
+    def _compute_expected_log_likelihood(self, cov: jax.Array, num_dim: int) -> float:
         """Compute expected log marginal likelihood for prior :math:`N(0, I)` and
         likelihood :math:`N(0, cov)`."""
         return -0.5 * np.linalg.slogdet(np.eye(num_dim) + cov)[

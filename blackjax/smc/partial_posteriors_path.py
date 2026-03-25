@@ -31,7 +31,7 @@ def init(particles: ArrayLikeTree, num_datapoints: int) -> PartialPosteriorsSMCS
     used in a partial posterior. Since the initial data_mask is all 0s, it
     means that no likelihood term will be added (only prior).
     """
-    num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
+    num_particles = jax.tree.flatten(particles)[0][0].shape[0]
     weights = jnp.ones(num_particles) / num_particles
     return PartialPosteriorsSMCState(particles, weights, jnp.zeros(num_datapoints))
 

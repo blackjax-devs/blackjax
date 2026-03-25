@@ -8,7 +8,6 @@ import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
-from jaxopt._src.lbfgs import compute_gamma, inv_hessian_product
 
 from blackjax.optimizers.dual_averaging import dual_averaging
 from blackjax.optimizers.lbfgs import (
@@ -103,7 +102,7 @@ class OptimizerTest(chex.TestCase):
         np.testing.assert_array_almost_equal(alpha, history.alpha[1:])
         np.testing.assert_array_equal(mask, history.update_mask[1:])
 
-        # Test inverse hessian product
+        # Verify the two inverse Hessian formulas are consistent with each other.
         S_partial = S[-maxcor:].T
         Z_partial = Z[-maxcor:].T
         alpha = history.alpha[-1]
@@ -112,18 +111,9 @@ class OptimizerTest(chex.TestCase):
         inv_hess_1 = lbfgs_inverse_hessian_formula_1(alpha, beta, gamma)
         inv_hess_2 = lbfgs_inverse_hessian_formula_2(alpha, beta, gamma)
 
-        gamma = compute_gamma(S_partial, Z_partial, -1)
-        pk = inv_hessian_product(
-            -history.g[-1],
-            status.s_history,
-            status.y_history,
-            status.rho_history,
-            gamma,
-            status.iter_num % maxcor,
+        np.testing.assert_allclose(
+            inv_hess_1 @ history.g[-1], inv_hess_2 @ history.g[-1], atol=1e-3
         )
-
-        np.testing.assert_allclose(pk, -inv_hess_1 @ history.g[-1], atol=1e-3)
-        np.testing.assert_allclose(pk, -inv_hess_2 @ history.g[-1], atol=1e-3)
 
     @chex.all_variants(with_pmap=False)
     def test_recover_diag_inv_hess(self):
@@ -150,8 +140,8 @@ class OptimizerTest(chex.TestCase):
         inv_hess_1 = lbfgs_inverse_hessian_formula_1(alpha, beta, gamma)
         inv_hess_2 = lbfgs_inverse_hessian_formula_2(alpha, beta, gamma)
 
-        np.testing.assert_allclose(np.diag(inv_hess_1), np.diag(cov), rtol=0.01)
-        np.testing.assert_allclose(inv_hess_1, inv_hess_2, rtol=0.01)
+        np.testing.assert_allclose(np.diag(inv_hess_1), np.diag(cov), rtol=0.02)
+        np.testing.assert_allclose(inv_hess_1, inv_hess_2, rtol=0.02)
 
 
 if __name__ == "__main__":

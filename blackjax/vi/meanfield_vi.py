@@ -161,6 +161,6 @@ def generate_meanfield_logdensity(mu, rho):
     def meanfield_logdensity(position):
         logq_pytree = jax.tree.map(jsp.stats.norm.logpdf, position, mu, sigma_param)
         logq = jax.tree.map(jnp.sum, logq_pytree)
-        return jax.tree_util.tree_reduce(jnp.add, logq)
+        return jax.tree.reduce(jnp.add, logq)
 
     return meanfield_logdensity

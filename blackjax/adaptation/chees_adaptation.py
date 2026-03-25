@@ -176,20 +176,20 @@ def base(
         ) * log_step_size_ma + update_weight * new_log_step_size
 
         w = jnp.where(~is_divergent, acceptance_probabilities, 0.0)
-        proposals_mean = jax.tree_util.tree_map(
+        proposals_mean = jax.tree.map(
             lambda p: weighted_empirical_mean(p, w), proposed_positions
         )
         # The above weighted mean is presumably better than the simple mean:
-        # proposals_mean = jax.tree_util.tree_map(
+        # proposals_mean = jax.tree.map(
         #     lambda p: jnp.nanmean(p, axis=0), proposed_positions
         # )
-        initials_mean = jax.tree_util.tree_map(
+        initials_mean = jax.tree.map(
             lambda p: jnp.nanmean(p, axis=0), initial_positions
         )
-        proposals_centered = jax.tree_util.tree_map(
+        proposals_centered = jax.tree.map(
             lambda p, pm: p - pm, proposed_positions, proposals_mean
         )
-        initials_centered = jax.tree_util.tree_map(
+        initials_centered = jax.tree.map(
             lambda p, pm: p - pm, initial_positions, initials_mean
         )
 
@@ -216,7 +216,7 @@ def base(
             trajectory_gradient, optim_state, log_trajectory_length
         )
 
-        updates = jax.tree_util.tree_map(
+        updates = jax.tree.map(
             lambda u: jnp.clip(u, -LOG_UPDATE_CLIP, LOG_UPDATE_CLIP), updates
         )
         log_trajectory_length_ = optax.apply_updates(log_trajectory_length, updates)
@@ -398,8 +398,8 @@ def chees_adaptation(
         max_sampling_steps: int = 1000,
     ):
         assert all(
-            jax.tree_util.tree_flatten(
-                jax.tree_util.tree_map(lambda p: p.shape[0] == num_chains, positions)
+            jax.tree.flatten(
+                jax.tree.map(lambda p: p.shape[0] == num_chains, positions)
             )[0]
         ), "initial `positions` leading dimension must be equal to the `num_chains`"
         num_dim = pytree_size(positions) // num_chains
