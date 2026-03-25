@@ -21,7 +21,9 @@ def _expected_mean_and_cov(prior_mean, prior_cov, obs, obs_cov):
 
 
 class MarginalLatentGaussianTest(chex.TestCase):
-    @parameterized.parameters(itertools.product([1234, 5678], [True, False], [True, False]))
+    @parameterized.parameters(
+        itertools.product([1234, 5678], [True, False], [True, False])
+    )
     def test_gaussian_statistics(self, seed, use_mean, tree_input):
         key = jax.random.key(seed)
         key1, key2, key3, key4, key5 = jax.random.split(key, 5)
@@ -41,7 +43,9 @@ class MarginalLatentGaussianTest(chex.TestCase):
                 jnp.concatenate([x["a"], x["b"]]), obs, R
             )
             if prior_mean is not None:
-                log_pdf = generate_mean_shifted_logprob(log_pdf, to_pytree(prior_mean), C)
+                log_pdf = generate_mean_shifted_logprob(
+                    log_pdf, to_pytree(prior_mean), C
+                )
         else:
             init_position = np.zeros(D)
             log_pdf = lambda x: stats.multivariate_normal.logpdf(x, obs, R)
@@ -50,7 +54,10 @@ class MarginalLatentGaussianTest(chex.TestCase):
 
         sampler = blackjax.mgrad_gaussian(log_pdf, covariance=C, step_size=50.0)
         _, history = run_inference_algorithm(
-            key5, sampler, num_steps=500_000, initial_position=init_position,
+            key5,
+            sampler,
+            num_steps=500_000,
+            initial_position=init_position,
             transform=lambda state, info: state.position,
         )
 
@@ -62,8 +69,12 @@ class MarginalLatentGaussianTest(chex.TestCase):
         expected_mean, expected_cov = _expected_mean_and_cov(
             prior_mean if use_mean else np.zeros(D), C, obs, R
         )
-        chex.assert_trees_all_close(np.mean(positions, 0), expected_mean, atol=1e-1, rtol=1e-2)
-        chex.assert_trees_all_close(np.cov(positions, rowvar=False), expected_cov, atol=1e-1, rtol=1e-1)
+        chex.assert_trees_all_close(
+            np.mean(positions, 0), expected_mean, atol=1e-1, rtol=1e-2
+        )
+        chex.assert_trees_all_close(
+            np.cov(positions, rowvar=False), expected_cov, atol=1e-1, rtol=1e-1
+        )
 
 
 if __name__ == "__main__":
