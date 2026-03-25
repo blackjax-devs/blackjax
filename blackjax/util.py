@@ -729,7 +729,7 @@ def _gpinv(p: Array, k: Array, sigma: Array) -> Array:
     )
 
 
-def psis_weights(log_ratios: Array) -> tuple[Array, Array]:
+def psis_weights(log_ratios: Array, r_eff: float = 1.0) -> tuple[Array, Array]:
     """Pareto Smoothed Importance Sampling (PSIS) log weights.
 
     Implements the PSIS smoothing step from :cite:p:`vehtari2017practical`:
@@ -737,14 +737,19 @@ def psis_weights(log_ratios: Array) -> tuple[Array, Array]:
     Generalised Pareto quantiles fitted by the empirical Bayes estimator of
     Zhang & Stephens (2009), then all weights are normalised.
 
-    This is a pure-JAX, JIT-compatible implementation that closely matches the
-    ArviZ reference implementation.
+    This is a pure-JAX, JIT-compatible implementation faithful to Algorithm 1
+    of Vehtari, Gelman & Gabry (2017).
 
     Parameters
     ----------
     log_ratios
         Log importance ratios ``log p(θ) − log q(θ)``, shape ``(n,)``.
         Need not be normalised.
+    r_eff
+        Relative effective sample size of the proposal, ``S_eff / n``.
+        Use the default of ``1.0`` for i.i.d. draws (e.g. Pathfinder);
+        set to the actual ESS ratio for correlated MCMC chains.  Values
+        below 1 increase the tail size ``M`` to compensate for correlation.
 
     Returns
     -------
@@ -754,22 +759,24 @@ def psis_weights(log_ratios: Array) -> tuple[Array, Array]:
     pareto_k
         Pareto shape parameter estimate (scalar ``Array``).  Values below 0.5
         indicate reliable estimates; 0.5–0.7 are moderate; above 0.7 may give
-        unreliable estimates.
+        unreliable estimates.  ``jnp.inf`` means the tail was too small to fit
+        (fewer than 5 samples).
 
     Notes
     -----
-    The tail size is ``M = min(floor(3*sqrt(n)), n//5)``, matching the
-    recommendation in :cite:p:`vehtari2017practical`.  The GPD is fitted in
-    importance-ratio space (after exponentiating) using the empirical Bayes
-    estimator of Zhang & Stephens (2009), the same approach used by ArviZ.
+    Tail size: ``M = min(floor(3*sqrt(n/r_eff)), n//5)``, matching the paper.
+    The GPD is only applied when ``k >= 1/3``; lighter tails are left
+    unsmoothed (only normalised).  Fitting uses empirical Bayes in
+    importance-ratio space, the same approach as ArviZ.
     """
     n = log_ratios.shape[0]
-    M = min(max(int(3.0 * n**0.5), 5), n // 5)
+    M = min(max(int(3.0 * (n / r_eff) ** 0.5), 5), n // 5)
 
     if M < 5:
-        # Too few samples to fit a tail; return normalised weights and k=0.
+        # Too few tail samples for a reliable GPD fit; return normalised
+        # weights and k=inf to signal this to the caller.
         log_w = log_ratios - jax.nn.logsumexp(log_ratios)
-        return log_w, jnp.zeros(())
+        return log_w, jnp.asarray(jnp.inf)
 
     # Stabilise numerically.
     lw = log_ratios - log_ratios.max()
@@ -794,10 +801,16 @@ def psis_weights(log_ratios: Array) -> tuple[Array, Array]:
     # Cap smoothed values at the observed tail maximum.
     smoothed = jnp.minimum(smoothed, tail_ratio[-1])
 
-    # Substitute smoothed tail back (in log space) and restore original order.
-    lw_smooth = lw_sorted.at[n - M :].set(jnp.log(smoothed))
-    lw_orig = jnp.zeros_like(lw_smooth).at[sorted_idx].set(lw_smooth)
+    # Only replace the tail when k >= 1/3 (paper Algorithm 1, step 7).
+    # For lighter tails the raw order statistics are already reliable.
+    lw_smooth = jnp.where(
+        k >= 1.0 / 3.0,
+        lw_sorted.at[n - M :].set(jnp.log(smoothed)),
+        lw_sorted,
+    )
 
+    # Restore original ordering and normalise.
+    lw_orig = jnp.zeros_like(lw_smooth).at[sorted_idx].set(lw_smooth)
     log_w = lw_orig - jax.nn.logsumexp(lw_orig)
     return log_w, k
 

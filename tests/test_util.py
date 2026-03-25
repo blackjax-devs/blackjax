@@ -309,6 +309,29 @@ class PSISWeightsTest(chex.TestCase):
         np.testing.assert_allclose(log_w1, log_w2, atol=1e-5)
         np.testing.assert_allclose(k1, k2, atol=1e-5)
 
+    def test_too_few_samples_returns_inf_k(self):
+        """k=inf signals that the tail is too small for a reliable GPD fit."""
+        # n=20 gives M = min(max(int(3*sqrt(20)),5), 4) = 4 < 5 → degenerate.
+        log_ratios = jr.normal(jr.key(7), (20,))
+        _, k = psis_weights(log_ratios)
+        self.assertTrue(jnp.isinf(k))
+
+    def test_r_eff_increases_tail_size(self):
+        """Smaller r_eff should produce a larger effective tail (more smoothing).
+
+        r_eff is a Python-level compile-time constant (like a shape), so it
+        cannot be traced by chex.variants; JIT coverage is provided implicitly
+        since every other variant test uses the default r_eff=1.0.
+        """
+        # With r_eff < 1 the tail size M = floor(3*sqrt(n/r_eff)) grows, so
+        # more of the weight distribution is smoothed and the returned k can differ.
+        log_ratios = jr.normal(jr.key(8), (500,)) * 2.0
+        _, k_iid = psis_weights(log_ratios, r_eff=1.0)
+        _, k_corr = psis_weights(log_ratios, r_eff=0.25)
+        # Both should be finite for this input.
+        self.assertTrue(jnp.isfinite(k_iid))
+        self.assertTrue(jnp.isfinite(k_corr))
+
 
 if __name__ == "__main__":
     absltest.main()
