@@ -61,9 +61,7 @@ class Trajectory(NamedTuple):
 
 def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Trajectory:
     """Append a state to the (right of the) trajectory to form a new trajectory."""
-    momentum_sum = jax.tree.map(
-        jnp.add, trajectory.momentum_sum, state.momentum
-    )
+    momentum_sum = jax.tree.map(jnp.add, trajectory.momentum_sum, state.momentum)
     return Trajectory(
         trajectory.leftmost_state, state, momentum_sum, trajectory.num_states + 1
     )

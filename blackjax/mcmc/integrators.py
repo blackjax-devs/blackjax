@@ -547,12 +547,8 @@ def implicit_midpoint(
 
             # Take a step from the _initial coordinates_ using the gradients of the
             # Hamiltonian evaluated at the current guess for the midpoint
-            q = jax.tree.map(
-                lambda q_, d_: q_ + 0.5 * step_size * d_, initial[0], dHdp
-            )
-            p = jax.tree.map(
-                lambda p_, d_: p_ - 0.5 * step_size * d_, initial[1], dHdq
-            )
+            q = jax.tree.map(lambda q_, d_: q_ + 0.5 * step_size * d_, initial[0], dHdp)
+            p = jax.tree.map(lambda p_, d_: p_ - 0.5 * step_size * d_, initial[1], dHdq)
             return q, p
 
         # Solve for the midpoint numerically

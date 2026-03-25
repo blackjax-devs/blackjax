@@ -191,9 +191,7 @@ def build_kernel(
         ) = state
 
         choice_indx = jax.random.choice(key_choice, len(weights), p=weights)
-        position = jax.tree.map(
-            lambda positions: positions[choice_indx], positions
-        )
+        position = jax.tree.map(lambda positions: positions[choice_indx], positions)
         direction = directions[choice_indx]
         period = jnp.max(directions) + 1
         direction = jnp.mod(direction + jnp.array(period / 2, int), period)
