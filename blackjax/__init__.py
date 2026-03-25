@@ -46,7 +46,6 @@ from .vi import meanfield_vi as _meanfield_vi
 from .vi import pathfinder as _pathfinder
 from .vi import schrodinger_follmer as _schrodinger_follmer
 from .vi import svgd as _svgd
-from .vi.pathfinder import PathFinderAlgorithm
 
 """
 The above three classes exist as a backwards compatible way of exposing both the high level, differentiable
@@ -85,7 +84,7 @@ class GeneratePathfinderAPI:
     approximate: Callable
     sample: Callable
 
-    def __call__(self, *args, **kwargs) -> PathFinderAlgorithm:
+    def __call__(self, *args, **kwargs) -> VIAlgorithm:
         return self.differentiable(*args, **kwargs)
 
 
