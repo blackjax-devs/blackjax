@@ -310,6 +310,5 @@ class PSISWeightsTest(chex.TestCase):
         np.testing.assert_allclose(k1, k2, atol=1e-5)
 
 
-
 if __name__ == "__main__":
     absltest.main()
