@@ -86,6 +86,20 @@ class SMCParameterTuningTest(chex.TestCase):
             step_parameters={"tempering_param": 0.75},
         )
 
+    def test_smc_inner_kernel_persistent(self):
+        self.smc_inner_kernel_tuning_test_case(
+            blackjax.persistent_sampling_smc,
+            smc_parameters={"n_schedule": 10},
+            step_parameters={"lmbda": 0.75},
+        )
+
+    def test_smc_inner_kernel_adaptive_persistent(self):
+        self.smc_inner_kernel_tuning_test_case(
+            blackjax.adaptive_persistent_sampling_smc,
+            smc_parameters={"target_ess": 0.5, "max_iterations": 100},
+            step_parameters={},
+        )
+
     def smc_inner_kernel_tuning_test_case(
         self, smc_algorithm, smc_parameters, step_parameters
     ):

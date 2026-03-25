@@ -173,7 +173,17 @@ def as_top_level_api(
 
     def init_fn(position, rng_key=None):
         del rng_key
-        return init(smc_algorithm.init, position, initial_parameter_value)
+        smc_init = smc_algorithm(
+            logprior_fn=logprior_fn,
+            loglikelihood_fn=loglikelihood_fn,
+            mcmc_step_fn=mcmc_step_fn,
+            mcmc_init_fn=mcmc_init_fn,
+            mcmc_parameters=initial_parameter_value,
+            resampling_fn=resampling_fn,
+            num_mcmc_steps=num_mcmc_steps,
+            **extra_parameters,
+        ).init
+        return init(smc_init, position, initial_parameter_value)
 
     def step_fn(
         rng_key: PRNGKey, state, **extra_step_parameters
