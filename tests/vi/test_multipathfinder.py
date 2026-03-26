@@ -42,7 +42,7 @@ class MultipathfinderTest(BlackJAXTest):
     def test_step_is_noop(self):
         """The step function should return the same state unchanged."""
         ndim = 2
-        n_paths = 1
+        n_paths = 2
 
         def logdensity_fn(x):
             return -0.5 * jnp.sum(x**2)
@@ -51,7 +51,7 @@ class MultipathfinderTest(BlackJAXTest):
         initial_positions = jax.random.normal(key_init, (n_paths, ndim))
 
         algo = blackjax.multipathfinder(logdensity_fn)
-        state, _ = algo.init(key_run, initial_positions, num_samples=10)
+        state, _ = algo.init(key_run, initial_positions, num_samples=20)
         new_state, info = algo.step(key_step, state)
 
         # State should be identical after step.
