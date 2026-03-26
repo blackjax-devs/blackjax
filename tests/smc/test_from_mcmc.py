@@ -22,7 +22,7 @@ import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax.smc.base import SMCState, init
 from blackjax.smc.from_mcmc import build_kernel, unshared_parameters_and_step_fn
-from tests.util import BlackJAXTest
+from tests.util import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
 # unshared_parameters_and_step_fn
@@ -107,9 +107,6 @@ class BuildKernelTest(BlackJAXTest):
         """A single build_kernel step returns SMCState and SMCInfo."""
         num_particles = 50
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
         hmc_init = blackjax.hmc.init
         hmc_step = blackjax.hmc.build_kernel()
 
@@ -130,8 +127,8 @@ class BuildKernelTest(BlackJAXTest):
             state,
             num_mcmc_steps=3,
             mcmc_parameters=hmc_parameters,
-            logposterior_fn=logdensity_fn,
-            log_weights_fn=logdensity_fn,
+            logposterior_fn=std_normal_logdensity,
+            log_weights_fn=std_normal_logdensity,
         )
         self.assertIsInstance(new_state, SMCState)
         self.assertEqual(new_state.particles.shape, (num_particles, 2))
@@ -140,9 +137,6 @@ class BuildKernelTest(BlackJAXTest):
     def test_particles_change_after_step(self):
         """Particles should generally change after an SMC step."""
         num_particles = 30
-
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
 
         hmc_init = blackjax.hmc.init
         hmc_step = blackjax.hmc.build_kernel()
@@ -164,8 +158,8 @@ class BuildKernelTest(BlackJAXTest):
             state,
             num_mcmc_steps=3,
             mcmc_parameters=hmc_parameters,
-            logposterior_fn=logdensity_fn,
-            log_weights_fn=logdensity_fn,
+            logposterior_fn=std_normal_logdensity,
+            log_weights_fn=std_normal_logdensity,
         )
         # At least some particles should have moved
         assert not jnp.allclose(new_state.particles, init_particles)
@@ -173,9 +167,6 @@ class BuildKernelTest(BlackJAXTest):
     def test_jit_compatible(self):
         """build_kernel step is JIT-compilable."""
         num_particles = 20
-
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
 
         hmc_init = blackjax.hmc.init
         hmc_step = blackjax.hmc.build_kernel()
@@ -200,8 +191,8 @@ class BuildKernelTest(BlackJAXTest):
             state,
             3,  # num_mcmc_steps (static)
             hmc_parameters,
-            logdensity_fn,  # static
-            logdensity_fn,  # static
+            std_normal_logdensity,  # static
+            std_normal_logdensity,  # static
         )
         self.assertEqual(new_state.particles.shape, (num_particles, 2))
 

@@ -7,7 +7,7 @@ import numpy as np
 from absl.testing import absltest
 
 import blackjax
-from tests.util import BlackJAXTest
+from tests.util import BlackJAXTest, std_normal_logdensity
 
 
 class MultipathfinderTest(BlackJAXTest):
@@ -44,13 +44,10 @@ class MultipathfinderTest(BlackJAXTest):
         ndim = 2
         n_paths = 2
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
         key_init, key_run, key_step = jax.random.split(self.next_key(), 3)
         initial_positions = jax.random.normal(key_init, (n_paths, ndim))
 
-        algo = blackjax.multipathfinder(logdensity_fn)
+        algo = blackjax.multipathfinder(std_normal_logdensity)
         state, _ = algo.init(key_run, initial_positions, num_samples=20)
         new_state, info = algo.step(key_step, state)
 

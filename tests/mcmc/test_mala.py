@@ -21,16 +21,7 @@ from absl.testing import absltest
 
 import blackjax.mcmc.diffusions as diffusions
 import blackjax.mcmc.mala as mala
-from tests.util import BlackJAXTest
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _gaussian_logdensity(x):
-    return -0.5 * jnp.sum(x**2)
-
+from tests.util import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
 # mcmc/diffusions.overdamped_langevin
@@ -45,7 +36,7 @@ class OverdampedLangevinMCMCTest(BlackJAXTest):
         self.step_size = 1e-3
 
     def _make_state(self, position):
-        grad_fn = jax.value_and_grad(_gaussian_logdensity)
+        grad_fn = jax.value_and_grad(std_normal_logdensity)
         logdensity, logdensity_grad = grad_fn(position)
         return diffusions.DiffusionState(position, logdensity, logdensity_grad)
 
@@ -53,7 +44,7 @@ class OverdampedLangevinMCMCTest(BlackJAXTest):
         """One step returns a DiffusionState with correct fields."""
         position = jnp.zeros(3)
         state = self._make_state(position)
-        step = diffusions.overdamped_langevin(jax.value_and_grad(_gaussian_logdensity))
+        step = diffusions.overdamped_langevin(jax.value_and_grad(std_normal_logdensity))
         new_state = step(self.next_key(), state, self.step_size)
         self.assertIsInstance(new_state, diffusions.DiffusionState)
         self.assertEqual(new_state.position.shape, (3,))
@@ -63,7 +54,7 @@ class OverdampedLangevinMCMCTest(BlackJAXTest):
         """Position should change after one step."""
         position = jnp.zeros(3)
         state = self._make_state(position)
-        step = diffusions.overdamped_langevin(jax.value_and_grad(_gaussian_logdensity))
+        step = diffusions.overdamped_langevin(jax.value_and_grad(std_normal_logdensity))
         new_state = step(self.next_key(), state, self.step_size)
         assert not jnp.allclose(new_state.position, position)
 
@@ -71,9 +62,9 @@ class OverdampedLangevinMCMCTest(BlackJAXTest):
         """DiffusionState gradient is consistent with the new position."""
         position = jnp.zeros(3)
         state = self._make_state(position)
-        step = diffusions.overdamped_langevin(jax.value_and_grad(_gaussian_logdensity))
+        step = diffusions.overdamped_langevin(jax.value_and_grad(std_normal_logdensity))
         new_state = step(self.next_key(), state, self.step_size)
-        expected_grad = jax.grad(_gaussian_logdensity)(new_state.position)
+        expected_grad = jax.grad(std_normal_logdensity)(new_state.position)
         np.testing.assert_allclose(new_state.logdensity_grad, expected_grad, atol=1e-5)
 
     def test_pytree_position(self):
@@ -95,7 +86,7 @@ class OverdampedLangevinMCMCTest(BlackJAXTest):
         position = jnp.zeros(2)
         state = self._make_state(position)
         step = jax.jit(
-            diffusions.overdamped_langevin(jax.value_and_grad(_gaussian_logdensity))
+            diffusions.overdamped_langevin(jax.value_and_grad(std_normal_logdensity))
         )
         new_state = step(self.next_key(), state, self.step_size)
         self.assertEqual(new_state.position.shape, (2,))
@@ -112,9 +103,9 @@ class MALAInitTest(BlackJAXTest):
     def test_init_computes_logdensity_and_grad(self):
         """init stores logdensity and logdensity_grad at the initial position."""
         position = jnp.array([1.0, 2.0])
-        state = mala.init(position, _gaussian_logdensity)
-        expected_logdensity = _gaussian_logdensity(position)
-        expected_grad = jax.grad(_gaussian_logdensity)(position)
+        state = mala.init(position, std_normal_logdensity)
+        expected_logdensity = std_normal_logdensity(position)
+        expected_grad = jax.grad(std_normal_logdensity)(position)
         np.testing.assert_allclose(float(state.logdensity), float(expected_logdensity))
         np.testing.assert_allclose(state.logdensity_grad, expected_grad)
 
@@ -145,10 +136,10 @@ class MALAKernelTest(BlackJAXTest):
     def test_returns_state_and_info(self):
         """Kernel returns (MALAState, MALAInfo)."""
         position = jnp.zeros(4)
-        state = mala.init(position, _gaussian_logdensity)
+        state = mala.init(position, std_normal_logdensity)
         kernel = mala.build_kernel()
         new_state, info = kernel(
-            self.next_key(), state, _gaussian_logdensity, self.step_size
+            self.next_key(), state, std_normal_logdensity, self.step_size
         )
         self.assertIsInstance(new_state, mala.MALAState)
         self.assertIsInstance(info, mala.MALAInfo)
@@ -156,30 +147,30 @@ class MALAKernelTest(BlackJAXTest):
     def test_output_position_shape(self):
         """Output position has same shape as input."""
         position = jnp.zeros(5)
-        state = mala.init(position, _gaussian_logdensity)
+        state = mala.init(position, std_normal_logdensity)
         kernel = mala.build_kernel()
         new_state, _ = kernel(
-            self.next_key(), state, _gaussian_logdensity, self.step_size
+            self.next_key(), state, std_normal_logdensity, self.step_size
         )
         self.assertEqual(new_state.position.shape, (5,))
 
     def test_acceptance_rate_in_range(self):
         """Acceptance rate is in [0, 1]."""
         position = jnp.zeros(3)
-        state = mala.init(position, _gaussian_logdensity)
+        state = mala.init(position, std_normal_logdensity)
         kernel = mala.build_kernel()
-        _, info = kernel(self.next_key(), state, _gaussian_logdensity, self.step_size)
+        _, info = kernel(self.next_key(), state, std_normal_logdensity, self.step_size)
         assert 0.0 <= float(info.acceptance_rate) <= 1.0
 
     def test_logdensity_updated(self):
         """Stored logdensity is consistent with accepted position."""
         position = jnp.zeros(2)
-        state = mala.init(position, _gaussian_logdensity)
+        state = mala.init(position, std_normal_logdensity)
         kernel = mala.build_kernel()
         new_state, _ = kernel(
-            self.next_key(), state, _gaussian_logdensity, self.step_size
+            self.next_key(), state, std_normal_logdensity, self.step_size
         )
-        expected = _gaussian_logdensity(new_state.position)
+        expected = std_normal_logdensity(new_state.position)
         np.testing.assert_allclose(
             float(new_state.logdensity), float(expected), atol=1e-5
         )
@@ -187,11 +178,11 @@ class MALAKernelTest(BlackJAXTest):
     def test_large_step_size_low_acceptance(self):
         """With a very large step size, most proposals should be rejected."""
         position = jnp.zeros(2)
-        state = mala.init(position, _gaussian_logdensity)
+        state = mala.init(position, std_normal_logdensity)
         kernel = mala.build_kernel()
 
         def one_step(state, key):
-            new_state, info = kernel(key, state, _gaussian_logdensity, step_size=10.0)
+            new_state, info = kernel(key, state, std_normal_logdensity, step_size=10.0)
             return new_state, info.is_accepted
 
         keys = jax.random.split(self.next_key(), 200)
@@ -203,11 +194,11 @@ class MALAKernelTest(BlackJAXTest):
     def test_small_step_size_high_acceptance(self):
         """With a tiny step size, almost all proposals should be accepted."""
         position = jnp.zeros(2)
-        state = mala.init(position, _gaussian_logdensity)
+        state = mala.init(position, std_normal_logdensity)
         kernel = mala.build_kernel()
 
         def one_step(state, key):
-            new_state, info = kernel(key, state, _gaussian_logdensity, step_size=1e-5)
+            new_state, info = kernel(key, state, std_normal_logdensity, step_size=1e-5)
             return new_state, info.is_accepted
 
         keys = jax.random.split(self.next_key(), 200)
@@ -231,10 +222,10 @@ class MALAKernelTest(BlackJAXTest):
     def test_jit_compatible(self):
         """Kernel is JIT-compilable."""
         position = jnp.zeros(3)
-        state = mala.init(position, _gaussian_logdensity)
+        state = mala.init(position, std_normal_logdensity)
         kernel = jax.jit(mala.build_kernel(), static_argnums=(2,))
         new_state, info = kernel(
-            self.next_key(), state, _gaussian_logdensity, self.step_size
+            self.next_key(), state, std_normal_logdensity, self.step_size
         )
         self.assertEqual(new_state.position.shape, (3,))
 
@@ -250,7 +241,7 @@ class MALATopLevelAPITest(BlackJAXTest):
     def test_init_and_step(self):
         """Top-level API init + step runs and returns MALAState."""
         position = jnp.zeros(4)
-        algo = mala.as_top_level_api(_gaussian_logdensity, step_size=1e-2)
+        algo = mala.as_top_level_api(std_normal_logdensity, step_size=1e-2)
         state = algo.init(position)
         new_state, info = algo.step(self.next_key(), state)
         self.assertIsInstance(new_state, mala.MALAState)
@@ -259,7 +250,7 @@ class MALATopLevelAPITest(BlackJAXTest):
     def test_top_level_jit(self):
         """Top-level step is JIT-compilable."""
         position = jnp.zeros(3)
-        algo = mala.as_top_level_api(_gaussian_logdensity, step_size=1e-2)
+        algo = mala.as_top_level_api(std_normal_logdensity, step_size=1e-2)
         state = algo.init(position)
         new_state, info = jax.jit(algo.step)(self.next_key(), state)
         self.assertEqual(new_state.position.shape, (3,))

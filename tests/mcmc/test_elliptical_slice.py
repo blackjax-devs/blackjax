@@ -26,17 +26,7 @@ from blackjax.mcmc.elliptical_slice import (
     ellipsis,
     init,
 )
-from tests.util import BlackJAXTest
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _loglikelihood_fn(x):
-    """Unnormalized log-likelihood for a standard normal likelihood."""
-    return -0.5 * jnp.sum(x**2)
-
+from tests.util import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
 # ellipsis geometry
@@ -97,8 +87,8 @@ class EllipSliceInitTest(BlackJAXTest):
     def test_init_stores_logdensity(self):
         """init stores the logdensity evaluated at the initial position."""
         position = jnp.array([1.0, 2.0])
-        state = init(position, _loglikelihood_fn)
-        expected = _loglikelihood_fn(position)
+        state = init(position, std_normal_logdensity)
+        expected = std_normal_logdensity(position)
         np.testing.assert_allclose(float(state.logdensity), float(expected))
 
     def test_init_pytree_position(self):
@@ -127,9 +117,9 @@ class EllipSliceKernelTest(BlackJAXTest):
         position = jnp.zeros(ndim)
         cov = jnp.ones(ndim)  # diagonal
         mean = jnp.zeros(ndim)
-        state = init(position, _loglikelihood_fn)
+        state = init(position, std_normal_logdensity)
         kernel = build_kernel(cov, mean)
-        new_state, info = kernel(self.next_key(), state, _loglikelihood_fn)
+        new_state, info = kernel(self.next_key(), state, std_normal_logdensity)
         self.assertIsInstance(new_state, EllipSliceState)
         self.assertIsInstance(info, EllipSliceInfo)
         self.assertEqual(new_state.position.shape, (ndim,))
@@ -140,9 +130,9 @@ class EllipSliceKernelTest(BlackJAXTest):
         position = jnp.zeros(ndim)
         cov = jnp.eye(ndim)
         mean = jnp.zeros(ndim)
-        state = init(position, _loglikelihood_fn)
+        state = init(position, std_normal_logdensity)
         kernel = build_kernel(cov, mean)
-        new_state, _ = kernel(self.next_key(), state, _loglikelihood_fn)
+        new_state, _ = kernel(self.next_key(), state, std_normal_logdensity)
         self.assertEqual(new_state.position.shape, (ndim,))
 
     def test_logdensity_consistent(self):
@@ -151,10 +141,10 @@ class EllipSliceKernelTest(BlackJAXTest):
         position = jnp.zeros(ndim)
         cov = jnp.ones(ndim)
         mean = jnp.zeros(ndim)
-        state = init(position, _loglikelihood_fn)
+        state = init(position, std_normal_logdensity)
         kernel = build_kernel(cov, mean)
-        new_state, _ = kernel(self.next_key(), state, _loglikelihood_fn)
-        expected = _loglikelihood_fn(new_state.position)
+        new_state, _ = kernel(self.next_key(), state, std_normal_logdensity)
+        expected = std_normal_logdensity(new_state.position)
         np.testing.assert_allclose(
             float(new_state.logdensity), float(expected), atol=1e-5
         )
@@ -164,9 +154,9 @@ class EllipSliceKernelTest(BlackJAXTest):
         ndim = 2
         cov = jnp.ones(ndim)
         mean = jnp.zeros(ndim)
-        state = init(jnp.zeros(ndim), _loglikelihood_fn)
+        state = init(jnp.zeros(ndim), std_normal_logdensity)
         kernel = build_kernel(cov, mean)
-        _, info = kernel(self.next_key(), state, _loglikelihood_fn)
+        _, info = kernel(self.next_key(), state, std_normal_logdensity)
         assert int(info.subiter) >= 1
 
     def test_accepts_for_flat_likelihood(self):
@@ -206,9 +196,9 @@ class EllipSliceKernelTest(BlackJAXTest):
         position = jnp.zeros(ndim)
         cov = jnp.ones(ndim)
         mean = jnp.zeros(ndim)
-        state = init(position, _loglikelihood_fn)
+        state = init(position, std_normal_logdensity)
         kernel = jax.jit(build_kernel(cov, mean), static_argnums=(2,))
-        new_state, _ = kernel(self.next_key(), state, _loglikelihood_fn)
+        new_state, _ = kernel(self.next_key(), state, std_normal_logdensity)
         self.assertEqual(new_state.position.shape, (ndim,))
 
     def test_wrong_cov_dim_raises(self):
@@ -234,7 +224,7 @@ class EllipSliceTopLevelAPITest(BlackJAXTest):
         ndim = 3
         cov = jnp.eye(ndim)
         mean = jnp.zeros(ndim)
-        algo = blackjax.elliptical_slice(_loglikelihood_fn, mean=mean, cov=cov)
+        algo = blackjax.elliptical_slice(std_normal_logdensity, mean=mean, cov=cov)
         state = algo.init(jnp.zeros(ndim))
         new_state, info = algo.step(self.next_key(), state)
         self.assertIsInstance(new_state, EllipSliceState)
@@ -247,7 +237,7 @@ class EllipSliceTopLevelAPITest(BlackJAXTest):
         ndim = 2
         cov = jnp.eye(ndim)
         mean = jnp.zeros(ndim)
-        algo = blackjax.elliptical_slice(_loglikelihood_fn, mean=mean, cov=cov)
+        algo = blackjax.elliptical_slice(std_normal_logdensity, mean=mean, cov=cov)
         state = algo.init(jnp.zeros(ndim))
         new_state, _ = jax.jit(algo.step)(self.next_key(), state)
         self.assertEqual(new_state.position.shape, (ndim,))

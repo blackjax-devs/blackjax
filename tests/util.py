@@ -16,6 +16,7 @@ import datetime
 
 import chex
 import jax
+import jax.numpy as jnp
 
 
 class BlackJAXTest(chex.TestCase):
@@ -52,3 +53,12 @@ class BlackJAXTest(chex.TestCase):
         """
         self.key, subkey = jax.random.split(self.key)
         return subkey
+
+
+def std_normal_logdensity(x):
+    """Log density of a standard isotropic Gaussian: -0.5 * sum(x**2).
+
+    Works with both array and PyTree positions (sums over all leaves).
+    """
+    leaves = jax.tree.leaves(x)
+    return -0.5 * sum(jnp.sum(leaf**2) for leaf in leaves)

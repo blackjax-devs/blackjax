@@ -14,7 +14,7 @@ from blackjax.vi.meanfield_vi import (
     sample,
     step,
 )
-from tests.util import BlackJAXTest
+from tests.util import BlackJAXTest, std_normal_logdensity
 
 
 class MFVIUnitTest(BlackJAXTest):
@@ -48,10 +48,9 @@ class MFVIUnitTest(BlackJAXTest):
         position = jnp.zeros(2)
         state = init(position, self.optimizer)
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
-        new_state, info = step(self.next_key(), state, logdensity_fn, self.optimizer)
+        new_state, info = step(
+            self.next_key(), state, std_normal_logdensity, self.optimizer
+        )
         self.assertIsInstance(new_state, MFVIState)
         assert jnp.isfinite(info.elbo)
 
@@ -60,10 +59,9 @@ class MFVIUnitTest(BlackJAXTest):
         position = {"x": jnp.zeros(3), "y": jnp.zeros(2)}
         state = init(position, self.optimizer)
 
-        def logdensity_fn(x):
-            return -0.5 * (jnp.sum(x["x"] ** 2) + jnp.sum(x["y"] ** 2))
-
-        new_state, _ = step(self.next_key(), state, logdensity_fn, self.optimizer)
+        new_state, _ = step(
+            self.next_key(), state, std_normal_logdensity, self.optimizer
+        )
         chex.assert_trees_all_equal_shapes(state.mu, new_state.mu)
         chex.assert_trees_all_equal_shapes(state.rho, new_state.rho)
 
@@ -116,11 +114,8 @@ class MFVIUnitTest(BlackJAXTest):
         position = jnp.zeros(2)
         state = init(position, self.optimizer)
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
         new_state, info = jax.jit(step, static_argnums=(2, 3))(
-            self.next_key(), state, logdensity_fn, self.optimizer
+            self.next_key(), state, std_normal_logdensity, self.optimizer
         )
         assert jnp.isfinite(info.elbo)
 

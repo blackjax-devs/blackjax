@@ -15,21 +15,11 @@
 
 import jax
 import jax.numpy as jnp
-import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest
 
 from blackjax.vi.pathfinder import PathfinderState, approximate, sample
-from tests.util import BlackJAXTest
-
-
-def _gaussian_logdensity(x, mean=None, cov=None):
-    """Simple multivariate Gaussian log-density for testing."""
-    if mean is None:
-        mean = jnp.zeros_like(x)
-    if cov is None:
-        cov = jnp.eye(x.shape[0])
-    return stats.multivariate_normal.logpdf(x, mean, cov)
+from tests.util import BlackJAXTest, std_normal_logdensity
 
 
 class PathfinderApproximateTest(BlackJAXTest):
@@ -40,10 +30,9 @@ class PathfinderApproximateTest(BlackJAXTest):
         ndim = 2
         initial_position = jnp.zeros(ndim)
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
-        state, info = approximate(self.next_key(), logdensity_fn, initial_position)
+        state, info = approximate(
+            self.next_key(), std_normal_logdensity, initial_position
+        )
         self.assertIsInstance(state, PathfinderState)
         # Info should contain the full path
         self.assertIsInstance(info.path, PathfinderState)
@@ -52,10 +41,7 @@ class PathfinderApproximateTest(BlackJAXTest):
         """Best ELBO from approximate is finite."""
         initial_position = jnp.zeros(3)
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
-        state, _ = approximate(self.next_key(), logdensity_fn, initial_position)
+        state, _ = approximate(self.next_key(), std_normal_logdensity, initial_position)
         assert jnp.isfinite(state.elbo), f"ELBO is not finite: {state.elbo}"
 
     def test_state_position_shape(self):
@@ -63,10 +49,7 @@ class PathfinderApproximateTest(BlackJAXTest):
         ndim = 4
         initial_position = jnp.zeros(ndim)
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
-        state, _ = approximate(self.next_key(), logdensity_fn, initial_position)
+        state, _ = approximate(self.next_key(), std_normal_logdensity, initial_position)
         self.assertEqual(state.position.shape, (ndim,))
 
     def test_state_position_near_mode(self):
@@ -88,22 +71,15 @@ class PathfinderApproximateTest(BlackJAXTest):
         initial_position = jnp.zeros(ndim)
         maxiter = 10
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
         _, info = approximate(
-            self.next_key(), logdensity_fn, initial_position, maxiter=maxiter
+            self.next_key(), std_normal_logdensity, initial_position, maxiter=maxiter
         )
         self.assertEqual(info.path.elbo.shape, (maxiter + 1,))
 
     def test_pytree_position(self):
         """approximate works with PyTree initial positions."""
-
-        def logdensity_fn(pos):
-            return -0.5 * (jnp.sum(pos["w"] ** 2) + jnp.sum(pos["b"] ** 2))
-
         initial_position = {"w": jnp.zeros(2), "b": jnp.zeros(1)}
-        state, _ = approximate(self.next_key(), logdensity_fn, initial_position)
+        state, _ = approximate(self.next_key(), std_normal_logdensity, initial_position)
         self.assertIsInstance(state, PathfinderState)
         assert jnp.isfinite(state.elbo)
 
@@ -114,12 +90,10 @@ class PathfinderSampleTest(BlackJAXTest):
     def _get_state(self, ndim=2):
         """Helper: run approximate and return the state."""
         initial_position = jnp.zeros(ndim)
-
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
         state, _ = approximate(
-            jax.random.fold_in(self.next_key(), 0), logdensity_fn, initial_position
+            jax.random.fold_in(self.next_key(), 0),
+            std_normal_logdensity,
+            initial_position,
         )
         return state
 
@@ -176,10 +150,7 @@ class PathfinderTopLevelAPITest(BlackJAXTest):
 
         ndim = 2
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
-        algo = blackjax.pathfinder(logdensity_fn)
+        algo = blackjax.pathfinder(std_normal_logdensity)
         key_init, key_sample = jax.random.split(self.next_key())
         initial_position = jnp.zeros(ndim)
 
@@ -192,10 +163,7 @@ class PathfinderTopLevelAPITest(BlackJAXTest):
         """Pathfinder step is a no-op (returns the same state)."""
         import blackjax
 
-        def logdensity_fn(x):
-            return -0.5 * jnp.sum(x**2)
-
-        algo = blackjax.pathfinder(logdensity_fn)
+        algo = blackjax.pathfinder(std_normal_logdensity)
         key_init, key_step = jax.random.split(self.next_key())
         state, _ = algo.init(key_init, jnp.zeros(2), num_samples=20)
         new_state, info = algo.step(key_step, state)
