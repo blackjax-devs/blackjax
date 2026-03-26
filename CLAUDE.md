@@ -44,25 +44,36 @@ Remaining known issues (tracked for future PRs, not blocking Step 2):
 - Large functions in `mcmc/trajectory.py` (150+ lines each: `dynamic_progressive_integration`, `dynamic_recursive_integration`, `dynamic_multiplicative_expansion`) and `smc/persistent_sampling.py`
 - Type annotation coverage is 0% in ~13 files (`adjusted_mclmc.py`, `diffusions.py`, `elliptical_slice.py`, `meanfield_vi.py`, etc.)
 
-**2. Test suite depth audit**
+**2. Test suite depth audit** ✅ DONE (in progress → PR pending)
 
-Tests are inconsistently deep across subsystems:
-- Some test only end-to-end behavior (too shallow — misses unit-level bugs)
-- Some test internal implementation details exhaustively (too deep — brittle)
-- Target: unit tests for key building blocks + end-to-end smoke tests for each kernel
+Added 131 new unit tests across subsystems that previously had only end-to-end coverage:
 
-Specific gaps to close:
-- MCLMC tests vs HMC tests: compare depth and coverage
-- SMC tests: check if internal resampling/weighting steps are tested
-- VI tests: pathfinder vs meanfield coverage comparison
+- ✅ SGMCMC: `tests/sgmcmc/test_diffusions.py`, `test_kernels.py`, `test_gradients.py` (53 tests)
+- ✅ VI: unit test classes in `test_meanfield_vi.py`, `test_svgd.py`; new `test_pathfinder.py` (37 tests)
+- ✅ MCMC: new `test_mala.py` (covers `mcmc/diffusions.py` too), `test_elliptical_slice.py` (33 tests)
+- ✅ SMC: new `test_from_mcmc.py` for `from_mcmc.unshared_parameters_and_step_fn` and `build_kernel` (8 tests)
 
-**3. PRNG key strategy in tests**
+Remaining gaps (lower priority, tracked for future PRs):
+- MCLMC-specific unit tests (adapted_mclmc, adjusted_mclmc_dynamic)
+- HMC/NUTS unit tests beyond integrators (hmc.py, nuts.py `init`/`build_kernel`)
 
-Current tests hardcode specific PRNG seeds, making them brittle (pass/fail depends on lucky/unlucky keys). Strategy:
+**3. PRNG key strategy in tests** ✅ DONE (in progress → PR pending)
 
-- Use date-based seeds: `seed = int(datetime.date.today().strftime("%Y%m%d"))` — deterministic per day, rotates automatically
-- Alternatively, parameterize tests over multiple seeds and assert statistical properties rather than exact values
-- Prefer asserting distribution properties (mean, variance within tolerance) over exact sample equality
+Centralised in `tests/util.py` as `BlackJAXTest(chex.TestCase)`:
+- `setUp()` sets `self.key = jax.random.key(int(datetime.date.today().strftime("%Y%m%d")))` — deterministic per day, rotates automatically
+- `next_key()` advances `self.key` via `jax.random.split`, ensuring every key use is independent
+- All new and migrated test files inherit `BlackJAXTest` instead of `chex.TestCase`
+- Empty `setUp(self): super().setUp()` methods removed throughout
+- Tests with exact-value assertions tied to seed (e.g. `test_random_walk_without_chex.py`) were intentionally left — those assert mathematical identities, not random outcomes
+
+**3b. Test speed optimisation** ✅ DONE (in progress → PR pending)
+
+Reduced test wall time ~3x by cutting particle counts and loop iterations in integration tests without changing their intent (all tolerances preserved):
+- `test_smc.py::test_smc`: 5000→1000 particles, 20→10 MCMC steps (~10x)
+- `test_tempered_smc.py`, `test_waste_free_smc.py`, `test_inner_kernel_tuning.py`, `test_partial_posteriors_smc.py`, `test_pretuning.py`: `num_integration_steps` 50→10, `num_mcmc_steps` 10→3 where applicable
+- `test_meanfield_vi.py::MFVITest`: 50k→15k steps, 500→100 samples/step (~17x)
+- `test_svgd.py::SvgdTest`: 10k→500 observations, 500→200 iterations (~10x)
+- `test_schrodinger_follmer.py`: replaced random covariance with fixed non-identity matrix
 
 **4. Clean up issues and pull requests**
 
