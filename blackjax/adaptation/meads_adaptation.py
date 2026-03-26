@@ -27,71 +27,79 @@ __all__ = ["MEADSAdaptationState", "base", "maximum_eigenvalue", "meads_adaptati
 class MEADSAdaptationState(NamedTuple):
     """State of the MEADS adaptation scheme.
 
+    current_iteration
+        Current iteration of the adaptation.
     step_size
-        Value of the step_size parameter of the generalized HMC algorithm.
+        Step size for each fold, shape (num_folds,).
     position_sigma
-        PyTree containing the per dimension sample standard deviation of the
-        position variable. Used to scale the momentum variable on the generalized
-        HMC algorithm.
+        PyTree with per-fold per-dimension sample standard deviation of the
+        position variable, leading axis has size num_folds.
     alpha
-        Value of the alpha parameter of the generalized HMC algorithm.
+        Alpha parameter (momentum persistence) for each fold, shape (num_folds,).
     delta
-        Value of the delta parameter of the generalized HMC algorithm.
+        Delta parameter (slice translation) for each fold, shape (num_folds,).
 
     """
 
     current_iteration: int
-    step_size: float
+    step_size: Array
     position_sigma: ArrayTree
-    alpha: float
-    delta: float
+    alpha: Array
+    delta: Array
 
 
-def base():
+def base(
+    num_folds: int = 4,
+    step_size_multiplier: float = 0.5,
+    damping_slowdown: float = 1.0,
+):
     """Maximum-Eigenvalue Adaptation of damping and step size for the generalized
     Hamiltonian Monte Carlo kernel :cite:p:`hoffman2022tuning`.
 
+    Full implementation of Algorithm 3 with K-fold cross-chain adaptation and
+    chain shuffling. Chains are divided into ``num_folds`` folds; at each step
+    statistics from fold ``t mod K`` are used to update the parameters for fold
+    ``(t+1) mod K``. Every K steps all chains are reshuffled across folds.
 
-    This algorithm performs a cross-chain adaptation scheme for the generalized
-    HMC algorithm that automatically selects values for the generalized HMC's
-    tunable parameters based on statistics collected from a population of many
-    chains. It uses heuristics determined by the maximum eigenvalue of the
-    covariance and gradient matrices given by the grouped samples of all chains
-    with shape.
-
-    This is an implementation of Algorithm 3 of :cite:p:`hoffman2022tuning` using cross-chain
-    adaptation instead of parallel ensemble chain adaptation.
+    Parameters
+    ----------
+    num_folds
+        Number of folds K to split chains into. Must divide num_chains evenly.
+    step_size_multiplier
+        Multiplicative factor applied to the raw step size heuristic (default 0.5
+        as in the paper).
+    damping_slowdown
+        Multiplicative factor that slows the damping adaptation relative to the
+        iteration count (default 1.0 as in the paper).
 
     Returns
     -------
     init
-        Function that initializes the warmup.
+        Function that initializes the warmup state.
     update
-        Function that moves the warmup one step.
+        Function that moves the warmup one step forward.
 
     """
 
     def compute_parameters(
-        positions: ArrayLikeTree, logdensity_grad: ArrayLikeTree, current_iteration: int
+        positions: ArrayLikeTree,
+        logdensity_grad: ArrayLikeTree,
+        current_iteration: int,
     ):
-        """Compute values for the parameters based on statistics collected from
-        multiple chains.
+        """Compute GHMC parameters from a single fold's chains.
 
         Parameters
         ----------
-        positions:
-            A PyTree that contains the current position of every chains.
-        logdensity_grad:
-            A PyTree that contains the gradients of the logdensity
-            function evaluated at the current position of every chains.
-        current_iteration:
-            The current iteration index in the adaptation process.
+        positions
+            PyTree with leading axis of size n_per_fold.
+        logdensity_grad
+            PyTree with leading axis of size n_per_fold.
+        current_iteration
+            Global adaptation iteration index.
 
         Returns
         -------
-        New values of the step size, and the alpha and delta parameters
-        of the generalized HMC algorithm.
-
+        step_size, position_sigma, alpha, delta
         """
         mean_position = jax.tree.map(lambda p: p.mean(axis=0), positions)
         sd_position = jax.tree.map(lambda p: p.std(axis=0), positions)
@@ -101,17 +109,16 @@ def base():
             mean_position,
             sd_position,
         )
-
         batch_grad_scaled = jax.tree.map(
             lambda grad, sd: grad * sd, logdensity_grad, sd_position
         )
 
-        epsilon = jnp.minimum(
+        epsilon = step_size_multiplier * jnp.minimum(
             0.5 / jnp.sqrt(maximum_eigenvalue(batch_grad_scaled)), 1.0
         )
         gamma = jnp.maximum(
             1.0 / jnp.sqrt(maximum_eigenvalue(normalized_positions)),
-            1.0 / ((current_iteration + 1) * epsilon),
+            1.0 / (damping_slowdown * (current_iteration + 1) * epsilon),
         )
         alpha = 1.0 - jnp.exp(-2.0 * epsilon * gamma)
         delta = alpha / 2
@@ -120,43 +127,62 @@ def base():
     def init(
         positions: ArrayLikeTree, logdensity_grad: ArrayLikeTree
     ) -> MEADSAdaptationState:
-        parameters = compute_parameters(positions, logdensity_grad, 0)
-        return MEADSAdaptationState(0, *parameters)
+        """Initialize with parameters computed from all chains, replicated per fold."""
+        step_size, sd_position, alpha, delta = compute_parameters(
+            positions, logdensity_grad, 0
+        )
+        # Replicate scalar params across folds
+        step_sizes = jnp.full((num_folds,), step_size)
+        alphas = jnp.full((num_folds,), alpha)
+        deltas = jnp.full((num_folds,), delta)
+        # Replicate pytree params: (num_folds, *dims) per leaf
+        sigmas = jax.tree.map(
+            lambda s: jnp.repeat(s[None], num_folds, axis=0), sd_position
+        )
+        return MEADSAdaptationState(0, step_sizes, sigmas, alphas, deltas)
 
     def update(
         adaptation_state: MEADSAdaptationState,
         positions: ArrayLikeTree,
         logdensity_grad: ArrayLikeTree,
+        source_fold: int,
     ) -> MEADSAdaptationState:
-        """Update the adaptation state and parameter values.
-
-        We find new optimal values for the parameters of the generalized HMC
-        kernel using heuristics based on the maximum eigenvalue of the
-        covariance and gradient matrices given by an ensemble of chains.
+        """Update the target fold's parameters using the source fold's statistics.
 
         Parameters
         ----------
         adaptation_state
-            The current state of the adaptation algorithm
+            Current adaptation state.
         positions
-            The current position of every chain.
+            Positions of chains in the source fold only.
         logdensity_grad
-            The gradients of the logdensity function evaluated at the
-            current position of every chain.
+            Gradients of chains in the source fold only.
+        source_fold
+            Index of the fold whose statistics are used. The target fold that
+            receives the updated parameters is ``(source_fold + 1) % num_folds``.
 
         Returns
         -------
-        New adaptation state that contains the step size, alpha and delta
-        parameters of the generalized HMC kernel.
-
+        Updated adaptation state.
         """
-        current_iteration = adaptation_state.current_iteration
-        step_size, position_sigma, alpha, delta = compute_parameters(
-            positions, logdensity_grad, current_iteration
+        target = (source_fold + 1) % num_folds
+        t = adaptation_state.current_iteration
+
+        new_step_size, new_sigma, new_alpha, new_delta = compute_parameters(
+            positions, logdensity_grad, t
         )
 
+        new_step_sizes = adaptation_state.step_size.at[target].set(new_step_size)
+        new_sigmas = jax.tree.map(
+            lambda s, v: s.at[target].set(v),
+            adaptation_state.position_sigma,
+            new_sigma,
+        )
+        new_alphas = adaptation_state.alpha.at[target].set(new_alpha)
+        new_deltas = adaptation_state.delta.at[target].set(new_delta)
+
         return MEADSAdaptationState(
-            current_iteration + 1, step_size, position_sigma, alpha, delta
+            t + 1, new_step_sizes, new_sigmas, new_alphas, new_deltas
         )
 
     return init, update
@@ -165,72 +191,116 @@ def base():
 def meads_adaptation(
     logdensity_fn: Callable,
     num_chains: int,
+    num_folds: int = 4,
+    step_size_multiplier: float = 0.5,
+    damping_slowdown: float = 1.0,
     adaptation_info_fn: Callable = return_all_adapt_info,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of the Generalized HMC algorithm.
 
-    The Generalized HMC algorithm depends on three parameters, each controlling
-    one element of its behaviour: step size controls the integrator's dynamics,
-    alpha controls the persistency of the momentum variable, and delta controls
-    the deterministic transformation of the slice variable used to perform the
-    non-reversible Metropolis-Hastings accept/reject step.
+    Full implementation of Algorithm 3 from :cite:p:`hoffman2022tuning` with
+    K-fold cross-chain adaptation and periodic chain shuffling.
 
-    The step size parameter is chosen to ensure the stability of the velocity
-    verlet integrator, the alpha parameter to make the influence of the current
-    state on future states of the momentum variable to decay exponentially, and
-    the delta parameter to maximize the acceptance of proposal but with good
-    mixing properties for the slice variable. These characteristics are targeted
-    by controlling heuristics based on the maximum eigenvalues of the correlation
-    and gradient matrices of the cross-chain samples, under simpifyng assumptions.
-
-    Good tuning is fundamental for the non-reversible Generalized HMC sampling
-    algorithm to explore the target space efficienty and output uncorrelated, or
-    as uncorrelated as possible, samples from the target space. Furthermore, the
-    single integrator step of the algorithm lends itself for fast sampling
-    on parallel computer architectures.
+    Chains are divided into ``num_folds`` folds. At adaptation step ``t``,
+    cross-chain statistics are computed within fold ``t mod K`` and used to
+    update the GHMC parameters for fold ``(t+1) mod K``. Every K steps all
+    chains are reshuffled randomly across folds to prevent fold-assignment bias.
+    Each fold independently tracks its own step size, momentum scale, alpha and
+    delta parameters.
 
     Parameters
     ----------
     logdensity_fn
         The log density probability density function from which we wish to sample.
     num_chains
-        Number of chains used for cross-chain warm-up training.
+        Total number of chains. Must be divisible by ``num_folds``.
+    num_folds
+        Number of folds K to split chains into. Default is 4 as in the paper.
+    step_size_multiplier
+        Multiplicative factor for the step size heuristic. Default is 0.5 as in
+        the paper.
+    damping_slowdown
+        Slows the damping decay relative to the iteration count. Default is 1.0
+        as in the paper.
     adaptation_info_fn
         Function to select the adaptation info returned. See return_all_adapt_info
-        and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
+        and get_filter_adapt_info_fn in blackjax.adaptation.base. By default all
         information is saved - this can result in excessive memory usage if the
         information is unused.
 
     Returns
     -------
     A function that returns the last cross-chain state, a sampling kernel with the
-    tuned parameter values, and all the warm-up states for diagnostics.
+    tuned parameter values (averaged across folds), and all the warm-up states for
+    diagnostics.
 
     """
+    if num_chains % num_folds != 0:
+        raise ValueError(
+            f"num_chains ({num_chains}) must be divisible by num_folds ({num_folds})."
+        )
+    n_per_fold = num_chains // num_folds
 
     ghmc_kernel = mcmc.ghmc.build_kernel()
-
-    adapt_init, adapt_update = base()
-
+    adapt_init, adapt_update = base(num_folds, step_size_multiplier, damping_slowdown)
     batch_init = jax.vmap(lambda p, r: mcmc.ghmc.init(p, r, logdensity_fn))
 
     def one_step(carry, rng_key):
         states, adaptation_state = carry
+        t = adaptation_state.current_iteration
 
-        keys = jax.random.split(rng_key, num_chains)
-        new_states, info = jax.vmap(
-            ghmc_kernel, in_axes=(0, 0, None, None, None, None, None)
-        )(
-            keys,
+        # Identify source fold; target fold receives updated parameters
+        source = t % num_folds
+
+        # Extract source fold chains
+        source_positions = jax.tree.map(
+            lambda x: jax.lax.dynamic_slice_in_dim(
+                x, source * n_per_fold, n_per_fold, axis=0
+            ),
+            states.position,
+        )
+        source_grads = jax.tree.map(
+            lambda x: jax.lax.dynamic_slice_in_dim(
+                x, source * n_per_fold, n_per_fold, axis=0
+            ),
+            states.logdensity_grad,
+        )
+
+        # Update target fold parameters from source fold statistics
+        new_adaptation_state = adapt_update(
+            adaptation_state, source_positions, source_grads, source
+        )
+
+        # Broadcast per-fold parameters to per-chain arrays
+        chain_step_sizes = jnp.repeat(new_adaptation_state.step_size, n_per_fold)
+        chain_sigmas = jax.tree.map(
+            lambda s: jnp.repeat(s, n_per_fold, axis=0),
+            new_adaptation_state.position_sigma,
+        )
+        chain_alphas = jnp.repeat(new_adaptation_state.alpha, n_per_fold)
+        chain_deltas = jnp.repeat(new_adaptation_state.delta, n_per_fold)
+
+        # Step all chains with their fold's parameters
+        keys = jax.random.split(rng_key, num_chains + 1)
+        chain_keys, shuffle_key = keys[:num_chains], keys[num_chains]
+
+        new_states, info = jax.vmap(ghmc_kernel, in_axes=(0, 0, None, 0, 0, 0, 0))(
+            chain_keys,
             states,
             logdensity_fn,
-            adaptation_state.step_size,
-            adaptation_state.position_sigma,
-            adaptation_state.alpha,
-            adaptation_state.delta,
+            chain_step_sizes,
+            chain_sigmas,
+            chain_alphas,
+            chain_deltas,
         )
-        new_adaptation_state = adapt_update(
-            adaptation_state, new_states.position, new_states.logdensity_grad
+
+        # Every num_folds steps: reshuffle chains across folds
+        perm = jax.random.permutation(shuffle_key, num_chains)
+        new_states = jax.lax.cond(
+            (t + 1) % num_folds == 0,
+            lambda s: jax.tree.map(lambda x: x[perm], s),
+            lambda s: s,
+            new_states,
         )
 
         return (new_states, new_adaptation_state), adaptation_info_fn(
@@ -249,11 +319,14 @@ def meads_adaptation(
             one_step, (init_states, init_adaptation_state), keys
         )
 
+        # Return mean parameters across folds for use with a single ghmc kernel
         parameters = {
-            "step_size": last_adaptation_state.step_size,
-            "momentum_inverse_scale": last_adaptation_state.position_sigma,
-            "alpha": last_adaptation_state.alpha,
-            "delta": last_adaptation_state.delta,
+            "step_size": last_adaptation_state.step_size.mean(),
+            "momentum_inverse_scale": jax.tree.map(
+                lambda s: s.mean(axis=0), last_adaptation_state.position_sigma
+            ),
+            "alpha": last_adaptation_state.alpha.mean(),
+            "delta": last_adaptation_state.delta.mean(),
         }
 
         return AdaptationResults(last_states, parameters), info
