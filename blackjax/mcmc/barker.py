@@ -214,13 +214,18 @@ def as_top_level_api(
     """
 
     kernel = build_kernel()
+    metric = (
+        metrics.default_metric(inverse_mass_matrix)
+        if inverse_mass_matrix is not None
+        else None
+    )
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
         del rng_key
         return init(position, logdensity_fn)
 
     def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix)
+        return kernel(rng_key, state, logdensity_fn, step_size, metric)
 
     return SamplingAlgorithm(init_fn, step_fn)
 
