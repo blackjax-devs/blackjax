@@ -189,12 +189,14 @@ len(jax.devices())
 
 ### Back to our example
 
-JAX's sharding API (introduced as the replacement for the deprecated `jax.pmap`) lets us distribute computation across devices by annotating arrays with a `NamedSharding`. When `jax.jit` sees sharded inputs it uses XLA's GSPMD compiler to send each shard to a separate device automatically.
+JAX's sharding API (introduced as the replacement for the deprecated `jax.pmap`) lets us distribute computation across devices using `jax.shard_map`. This runs the function independently on each device, one chain per device.
 
 The recipe is:
 1. Create a `Mesh` that names the device axis `'chain'`.
 2. Shard the per-chain inputs (RNG keys and initial states) with `jax.device_put`.
-3. Wrap `inference_loop` with `jax.vmap` (one call per chain) and compile with `jax.jit`. The sharded inputs tell XLA to run each mapped call on its own device.
+3. Use `jax.shard_map` to dispatch one chain per device, then compile with `jax.jit`.
+
+Inside `shard_map`, each device receives a `(1, ...)` slice of the input, so we squeeze the leading axis on the way in and restore it on the way out.
 
 ```{code-cell} ipython3
 from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
@@ -214,10 +216,20 @@ You can inspect the sharding with `jax.debug.visualize_array_sharding(initial_st
 ```
 
 ```{code-cell} ipython3
+def run_one_chain(key, state):
+    result = inference_loop(key[0], nuts.step, jax.tree.map(lambda x: x[0], state), 2_000)
+    return jax.tree.map(lambda x: x[None], result)
+```
+
+```{code-cell} ipython3
 %%time
-sharded_states = jax.jit(
-    jax.vmap(lambda key, state: inference_loop(key, nuts.step, state, 2_000))
-)(sample_keys, initial_states_sharded)
+sharded_states = jax.jit(jax.shard_map(
+    run_one_chain,
+    mesh=mesh,
+    in_specs=(P('chain'), P('chain')),
+    out_specs=P('chain'),
+    check_vma=False,
+))(sample_keys, initial_states_sharded)
 _ = sharded_states.position["loc"].block_until_ready()
 ```
 
