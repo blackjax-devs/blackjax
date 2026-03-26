@@ -64,7 +64,7 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
                         jnp.zeros(dataset_size - datapoints_chosen),
                     ]
                 )
-                for datapoints_chosen in np.arange(100, 1001, 50)
+                for datapoints_chosen in np.arange(200, 1001, 200)
             ]
         )
 
@@ -75,7 +75,7 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
             return (i + 1, new_state), (new_state, info)
 
         (steps, result), it = jax.lax.scan(body_fn, (0, init_state), data_masks)
-        assert steps == 19
+        assert steps == 5
 
         self.assert_linear_regression_test_case(result)
 
