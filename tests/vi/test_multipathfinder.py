@@ -1,5 +1,5 @@
 """Tests for the multi-path Pathfinder algorithm."""
-import chex
+
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
@@ -7,13 +7,10 @@ import numpy as np
 from absl.testing import absltest
 
 import blackjax
+from tests.util import BlackJAXTest
 
 
-class MultipathfinderTest(chex.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(42)
-
+class MultipathfinderTest(BlackJAXTest):
     def test_recover_posterior(self):
         """Multi-path Pathfinder should estimate a Gaussian posterior."""
         ndim = 2
@@ -24,7 +21,7 @@ class MultipathfinderTest(chex.TestCase):
             return stats.multivariate_normal.logpdf(x, true_mean, true_cov)
 
         n_paths = 4
-        key_init, key_run, key_sample = jax.random.split(self.key, 3)
+        key_init, key_run, key_sample = jax.random.split(self.next_key(), 3)
         initial_positions = jax.random.normal(key_init, (n_paths, ndim))
 
         algo = blackjax.multipathfinder(logdensity_fn)
@@ -50,7 +47,7 @@ class MultipathfinderTest(chex.TestCase):
         def logdensity_fn(x):
             return -0.5 * jnp.sum(x**2)
 
-        key_init, key_run, key_step = jax.random.split(self.key, 3)
+        key_init, key_run, key_step = jax.random.split(self.next_key(), 3)
         initial_positions = jax.random.normal(key_init, (n_paths, ndim))
 
         algo = blackjax.multipathfinder(logdensity_fn)

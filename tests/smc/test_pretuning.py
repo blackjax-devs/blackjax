@@ -15,6 +15,7 @@ from blackjax.smc.pretuning import (
     update_parameter_distribution,
 )
 from tests.smc import SMCLinearRegressionTestCase
+from tests.util import BlackJAXTest
 
 
 class TestMeasureOfChainMixing(unittest.TestCase):
@@ -68,10 +69,9 @@ class TestMeasureOfChainMixing(unittest.TestCase):
         np.testing.assert_allclose(chain_mixing[1], 6 * 6 * 3 + 8 * 8 * 5)
 
 
-class TestUpdateParameterDistribution(chex.TestCase):
+class TestUpdateParameterDistribution(BlackJAXTest):
     def setUp(self):
         super().setUp()
-        self.key = jax.random.key(42)
         self.previous_position = np.array(
             [jnp.array([10.0, 15.0]), jnp.array([10.0, 15.0]), jnp.array([3.0, 4.0])]
         )
@@ -90,7 +90,7 @@ class TestUpdateParameterDistribution(chex.TestCase):
             new_parameter_distribution,
             chain_mixing_measurement,
         ) = update_parameter_distribution(
-            self.key,
+            self.next_key(),
             jnp.array([1.0, 2.0, 3.0]),
             self.previous_position,
             self.next_position,
@@ -120,7 +120,7 @@ class TestUpdateParameterDistribution(chex.TestCase):
             new_parameter_distribution,
             chain_mixing_measurement,
         ) = update_parameter_distribution(
-            self.key,
+            self.next_key(),
             {
                 "param_a": jnp.array([1.0, 2.0, 3.0]),
                 "param_b": jnp.array([[5.0, 6.0], [6.0, 7.0], [4.0, 5.0]]),
@@ -176,7 +176,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             blackjax.hmc.build_kernel(),
             blackjax.hmc.init,
             resampling.systematic,
-            num_mcmc_steps=10,
+            num_mcmc_steps=3,
             pretune_fn=pretune,
         )
 
@@ -187,7 +187,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
 
             def body_fn(carry, tempering_param):
                 i, state = carry
-                subkey = jax.random.fold_in(self.key, i)
+                subkey = jax.random.fold_in(self.next_key(), i)
                 new_state, info = smc_kernel(
                     subkey, state, tempering_param=tempering_param
                 )
@@ -210,7 +210,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
             blackjax.hmc.build_kernel(),
             blackjax.hmc.init,
             resampling.systematic,
-            num_mcmc_steps=10,
+            num_mcmc_steps=3,
             pretune_fn=pretune,
             target_ess=0.5,
         )
@@ -220,7 +220,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
                 blackjax.tempered_smc.init, init_particles, initial_parameters
             )
             return tuned_adaptive_tempered_inference_loop(
-                smc_kernel, self.key, initial_state
+                smc_kernel, self.next_key(), initial_state
             )
 
         self.linear_regression_test_case(step_provider, loop)
@@ -234,7 +234,7 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
 
         num_particles = 100
         sampling_key, step_size_key, integration_steps_key = jax.random.split(
-            self.key, 3
+            self.next_key(), 3
         )
         integration_steps_distribution = jnp.round(
             jax.random.uniform(

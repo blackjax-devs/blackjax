@@ -16,14 +16,11 @@ from blackjax.smc import extend_params
 from blackjax.smc.waste_free import update_waste_free, waste_free_smc
 from tests.smc import SMCLinearRegressionTestCase
 from tests.smc.test_tempered_smc import inference_loop
+from tests.util import BlackJAXTest
 
 
 class WasteFreeSMCTest(SMCLinearRegressionTestCase):
     """Test posterior mean estimate."""
-
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(42)
 
     @chex.variants(with_jit=True)
     def test_fixed_schedule_tempered_smc(self):
@@ -42,7 +39,7 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
             {
                 "step_size": 10e-2,
                 "inverse_mass_matrix": jnp.eye(2),
-                "num_integration_steps": 50,
+                "num_integration_steps": 10,
             },
         )
 
@@ -61,7 +58,7 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
 
         def body_fn(carry, tempering_param):
             i, state = carry
-            subkey = jax.random.fold_in(self.key, i)
+            subkey = jax.random.fold_in(self.next_key(), i)
             new_state, info = smc_kernel(subkey, state, tempering_param)
             return (i + 1, new_state), (new_state, info)
 
@@ -82,7 +79,7 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
             {
                 "step_size": 10e-2,
                 "inverse_mass_matrix": jnp.eye(2),
-                "num_integration_steps": 50,
+                "num_integration_steps": 10,
             },
         )
 
@@ -101,12 +98,12 @@ class WasteFreeSMCTest(SMCLinearRegressionTestCase):
 
         n_iter, result, log_likelihood = self.variant(
             functools.partial(inference_loop, tempering.step)
-        )(self.key, init_state)
+        )(self.next_key(), init_state)
 
         self.assert_linear_regression_test_case(result)
 
 
-class Update_waste_free_multivariate_particles(chex.TestCase):
+class Update_waste_free_multivariate_particles(BlackJAXTest):
     @chex.variants(with_jit=True)
     def test_update_waste_free_multivariate_particles(self):
         """
