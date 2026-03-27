@@ -88,9 +88,7 @@ class TestMEADSBase(BlackJAXTest):
         state1 = init1(positions, grads)
         state2 = init2(positions, grads)
 
-        np.testing.assert_allclose(
-            state2.step_size, state1.step_size * 2.0, rtol=1e-5
-        )
+        np.testing.assert_allclose(state2.step_size, state1.step_size * 2.0, rtol=1e-5)
 
 
 class TestMEADSAdaptation(BlackJAXTest):
