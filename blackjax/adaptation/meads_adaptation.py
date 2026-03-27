@@ -70,7 +70,8 @@ def base(
         as in the paper).
     damping_slowdown
         Multiplicative factor that slows the damping adaptation relative to the
-        iteration count (default 1.0 as in the paper).
+        iteration count (default 1.0 as in the paper). Higher values force
+        stronger damping in early iterations.
 
     Returns
     -------
@@ -100,6 +101,15 @@ def base(
         Returns
         -------
         step_size, position_sigma, alpha, delta
+
+        Notes
+        -----
+        This function uses the same chains' positions for both step-size and
+        damping estimation. The full MEADS algorithm (Algorithm 3) uses
+        cross-fold statistics: step size comes from the source fold, while
+        damping uses the target fold's own positions. ``meads_adaptation``
+        implements this correctly; this lower-level helper is an approximation
+        suitable for direct use of ``base()``.
         """
         mean_position = jax.tree.map(lambda p: p.mean(axis=0), positions)
         sd_position = jax.tree.map(lambda p: p.std(axis=0), positions)
@@ -113,9 +123,16 @@ def base(
             lambda grad, sd: grad * sd, logdensity_grad, sd_position
         )
 
-        epsilon = step_size_multiplier * jnp.minimum(
-            0.5 / jnp.sqrt(maximum_eigenvalue(batch_grad_scaled)), 1.0
+        # Algorithm 3, line 8: ε = min(1, step_size_multiplier / sqrt(λ_max(ḡ)))
+        epsilon = jnp.minimum(
+            step_size_multiplier / jnp.sqrt(maximum_eigenvalue(batch_grad_scaled)),
+            1.0,
         )
+        # Algorithm 3, line 9 (paper parameterization):
+        #   γ = max(1/sqrt(λ_max(θ̄)), ε/t)
+        # Written as max(1/sqrt(λ), 1/(t·ε)) so that α = 1 - exp(-2·ε·γ) gives
+        # α_floor = 1 - exp(-2/t), matching TFP's floor damping_slowdown/t with
+        # the TFP parameterisation where α = 1 - exp(-2·γ_tfp).
         gamma = jnp.maximum(
             1.0 / jnp.sqrt(maximum_eigenvalue(normalized_positions)),
             1.0 / (damping_slowdown * (current_iteration + 1) * epsilon),
@@ -202,11 +219,11 @@ def meads_adaptation(
     K-fold cross-chain adaptation and periodic chain shuffling.
 
     Chains are divided into ``num_folds`` folds. At adaptation step ``t``,
-    cross-chain statistics are computed within fold ``t mod K`` and used to
-    update the GHMC parameters for fold ``(t+1) mod K``. Every K steps all
-    chains are reshuffled randomly across folds to prevent fold-assignment bias.
-    Each fold independently tracks its own step size, momentum scale, alpha and
-    delta parameters.
+    fold ``t mod K`` is frozen (its chains do not advance, Algorithm 3 line 4).
+    For each active fold k, the step size is computed from fold ``(k-1) mod K``'s
+    preconditioned gradients, and the damping is computed from fold k's own
+    positions using that step size. Every K steps all chains are reshuffled
+    randomly across folds to prevent fold-assignment bias.
 
     Parameters
     ----------
@@ -221,7 +238,7 @@ def meads_adaptation(
         the paper.
     damping_slowdown
         Slows the damping decay relative to the iteration count. Default is 1.0
-        as in the paper.
+        as in the paper. Higher values force stronger damping in early iterations.
     adaptation_info_fn
         Function to select the adaptation info returned. See return_all_adapt_info
         and get_filter_adapt_info_fn in blackjax.adaptation.base. By default all
@@ -242,56 +259,117 @@ def meads_adaptation(
     n_per_fold = num_chains // num_folds
 
     ghmc_kernel = mcmc.ghmc.build_kernel()
-    adapt_init, adapt_update = base(num_folds, step_size_multiplier, damping_slowdown)
+    adapt_init, _ = base(num_folds, step_size_multiplier, damping_slowdown)
     batch_init = jax.vmap(lambda p, r: mcmc.ghmc.init(p, r, logdensity_fn))
 
     def one_step(carry, rng_key):
         states, adaptation_state = carry
         t = adaptation_state.current_iteration
 
-        # Identify source fold; target fold receives updated parameters
-        source = t % num_folds
+        # Fold to freeze this step (Algorithm 3, line 4: "excluding k = t mod K")
+        fold_to_skip = t % num_folds
 
-        # Extract source fold chains
-        source_positions = jax.tree.map(
-            lambda x: jax.lax.dynamic_slice_in_dim(
-                x, source * n_per_fold, n_per_fold, axis=0
-            ),
-            states.position,
-        )
-        source_grads = jax.tree.map(
-            lambda x: jax.lax.dynamic_slice_in_dim(
-                x, source * n_per_fold, n_per_fold, axis=0
-            ),
-            states.logdensity_grad,
-        )
-
-        # Update target fold parameters from source fold statistics
-        new_adaptation_state = adapt_update(
-            adaptation_state, source_positions, source_grads, source
-        )
-
-        # Broadcast per-fold parameters to per-chain arrays
-        chain_step_sizes = jnp.repeat(new_adaptation_state.step_size, n_per_fold)
-        chain_sigmas = jax.tree.map(
-            lambda s: jnp.repeat(s, n_per_fold, axis=0),
-            new_adaptation_state.position_sigma,
-        )
-        chain_alphas = jnp.repeat(new_adaptation_state.alpha, n_per_fold)
-        chain_deltas = jnp.repeat(new_adaptation_state.delta, n_per_fold)
-
-        # Step all chains with their fold's parameters
         keys = jax.random.split(rng_key, num_chains + 1)
         chain_keys, shuffle_key = keys[:num_chains], keys[num_chains]
 
+        # Reshape chain arrays to [num_folds, n_per_fold, *dims] for per-fold ops
+        def to_folds(x):
+            return x.reshape((num_folds, n_per_fold) + x.shape[1:])
+
+        folded_pos = jax.tree.map(to_folds, states.position)
+        folded_grads = jax.tree.map(to_folds, states.logdensity_grad)
+
+        # Per-fold scale (std across chains within each fold)
+        # Result: PyTree with leaves [num_folds, *dims]
+        folded_scales = jax.tree.map(lambda p: p.std(axis=1), folded_pos)
+
+        # Preconditioned grads: grads_k * scale_k  (Algorithm 3, line 7)
+        precond_grads = jax.tree.map(
+            lambda g, s: g * jnp.expand_dims(s, axis=1),
+            folded_grads,
+            folded_scales,
+        )
+
+        # Per-fold step size from each fold's own preconditioned grads.
+        # Then roll by 1 so fold k gets the step size from fold k-1.
+        # (Algorithm 3, line 8 + cross-fold roll)
+        def fold_step_size(grads_k):
+            return jnp.minimum(
+                step_size_multiplier / jnp.sqrt(maximum_eigenvalue(grads_k)),
+                1.0,
+            )
+
+        step_size_own = jax.vmap(fold_step_size)(precond_grads)  # [num_folds]
+        # fold k uses step_size from fold k-1
+        step_size_rolled = jnp.roll(step_size_own, 1)  # [num_folds]
+        # fold k uses the momentum scale (std) from fold k-1
+        scales_rolled = jax.tree.map(  # [num_folds, *dims]
+            lambda s: jnp.roll(s, 1, axis=0), folded_scales
+        )
+
+        # Per-fold damping from each fold's OWN (centered, scaled) positions
+        # and the rolled step size from the left-neighbor fold.
+        # Algorithm 3, lines 9-10 (paper parameterization):
+        #   γ_k = max(1/sqrt(λ_max(θ̄_k)), 1/(damping_slowdown·t·ε_k))
+        #   α_k = 1 - exp(-2·ε_k·γ_k)
+        def fold_damping(pos_k, eps_k):
+            # Center within the fold before eigenvalue estimation
+            pos_k_centered = jax.tree.map(lambda p: p - p.mean(axis=0), pos_k)
+            gamma = jnp.maximum(
+                1.0 / jnp.sqrt(maximum_eigenvalue(pos_k_centered)),
+                1.0 / (damping_slowdown * (t + 1) * eps_k),
+            )
+            alpha = 1.0 - jnp.exp(-2.0 * eps_k * gamma)
+            delta = alpha / 2
+            return alpha, delta
+
+        # Divide each fold's positions by its own scale (centering done inside)
+        precond_pos = jax.tree.map(
+            lambda p, s: p / jnp.expand_dims(s, axis=1),
+            folded_pos,
+            folded_scales,
+        )
+        alphas, deltas = jax.vmap(fold_damping)(precond_pos, step_size_rolled)
+
+        # Broadcast per-fold parameters to per-chain arrays
+        chain_step_sizes = jnp.repeat(step_size_rolled, n_per_fold)
+        chain_scales = jax.tree.map(
+            lambda s: jnp.repeat(s, n_per_fold, axis=0), scales_rolled
+        )
+        chain_alphas = jnp.repeat(alphas, n_per_fold)
+        chain_deltas = jnp.repeat(deltas, n_per_fold)
+
+        # Step all chains with their fold's parameters
         new_states, info = jax.vmap(ghmc_kernel, in_axes=(0, 0, None, 0, 0, 0, 0))(
             chain_keys,
             states,
             logdensity_fn,
             chain_step_sizes,
-            chain_sigmas,
+            chain_scales,
             chain_alphas,
             chain_deltas,
+        )
+
+        # Restore fold_to_skip's chains: they do not advance this step
+        # (Algorithm 3, line 4: "excluding k = t mod K")
+        fold_is_skipped = jnp.arange(num_folds) == fold_to_skip  # [num_folds]
+        chain_is_skipped = jnp.repeat(fold_is_skipped, n_per_fold)  # [num_chains]
+
+        def restore_skipped(new_val, old_val):
+            # Broadcast chain_is_skipped over any trailing dims
+            mask = chain_is_skipped.reshape(
+                chain_is_skipped.shape + (1,) * (new_val.ndim - 1)
+            )
+            return jnp.where(mask, old_val, new_val)
+
+        new_states = jax.tree.map(restore_skipped, new_states, states)
+
+        new_adaptation_state = MEADSAdaptationState(
+            current_iteration=t + 1,
+            step_size=step_size_rolled,
+            position_sigma=scales_rolled,
+            alpha=alphas,
+            delta=deltas,
         )
 
         # Every num_folds steps: reshuffle chains across folds
