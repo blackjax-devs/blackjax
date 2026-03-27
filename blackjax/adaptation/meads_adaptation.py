@@ -134,9 +134,8 @@ def base(
         #   γ = max(1/sqrt(λ_max(θ̄)), damping_slowdown / (t·ε))
         # With α = 1 - exp(-2·ε·γ) the floor gives
         #   α_floor = 1 - exp(-2·damping_slowdown/t)
-        # matching TFP's floor exactly (TFP uses γ_tfp = damping_slowdown/t
-        # with α = 1 - exp(-2·γ_tfp)).  Higher damping_slowdown → higher
-        # α_floor → stronger damping in early iterations.
+        # Higher damping_slowdown → higher α_floor → stronger damping in early
+        # iterations.
         gamma = jnp.maximum(
             1.0 / jnp.sqrt(maximum_eigenvalue(normalized_positions)),
             damping_slowdown / ((current_iteration + 1) * epsilon),
