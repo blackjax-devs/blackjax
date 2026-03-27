@@ -69,9 +69,9 @@ def base(
         Multiplicative factor applied to the raw step size heuristic (default 0.5
         as in the paper).
     damping_slowdown
-        Multiplicative factor that slows the damping adaptation relative to the
-        iteration count (default 1.0 as in the paper). Higher values force
-        stronger damping in early iterations.
+        Controls the damping floor in early iterations. The floor on γ is
+        ``damping_slowdown / (t·ε)``, so higher values force stronger damping
+        (higher α) in early iterations. Default is 1.0 as in the paper.
 
     Returns
     -------
@@ -81,6 +81,8 @@ def base(
         Function that moves the warmup one step forward.
 
     """
+    if num_folds < 1:
+        raise ValueError(f"num_folds must be >= 1, got {num_folds}.")
 
     def compute_parameters(
         positions: ArrayLikeTree,
@@ -129,13 +131,15 @@ def base(
             1.0,
         )
         # Algorithm 3, line 9 (paper parameterization):
-        #   γ = max(1/sqrt(λ_max(θ̄)), ε/t)
-        # Written as max(1/sqrt(λ), 1/(t·ε)) so that α = 1 - exp(-2·ε·γ) gives
-        # α_floor = 1 - exp(-2/t), matching TFP's floor damping_slowdown/t with
-        # the TFP parameterisation where α = 1 - exp(-2·γ_tfp).
+        #   γ = max(1/sqrt(λ_max(θ̄)), damping_slowdown / (t·ε))
+        # With α = 1 - exp(-2·ε·γ) the floor gives
+        #   α_floor = 1 - exp(-2·damping_slowdown/t)
+        # matching TFP's floor exactly (TFP uses γ_tfp = damping_slowdown/t
+        # with α = 1 - exp(-2·γ_tfp)).  Higher damping_slowdown → higher
+        # α_floor → stronger damping in early iterations.
         gamma = jnp.maximum(
             1.0 / jnp.sqrt(maximum_eigenvalue(normalized_positions)),
-            1.0 / (damping_slowdown * (current_iteration + 1) * epsilon),
+            damping_slowdown / ((current_iteration + 1) * epsilon),
         )
         alpha = 1.0 - jnp.exp(-2.0 * epsilon * gamma)
         delta = alpha / 2
@@ -252,6 +256,8 @@ def meads_adaptation(
     diagnostics.
 
     """
+    if num_folds < 1:
+        raise ValueError(f"num_folds must be >= 1, got {num_folds}.")
     if num_chains % num_folds != 0:
         raise ValueError(
             f"num_chains ({num_chains}) must be divisible by num_folds ({num_folds})."
@@ -310,14 +316,14 @@ def meads_adaptation(
         # Per-fold damping from each fold's OWN (centered, scaled) positions
         # and the rolled step size from the left-neighbor fold.
         # Algorithm 3, lines 9-10 (paper parameterization):
-        #   γ_k = max(1/sqrt(λ_max(θ̄_k)), 1/(damping_slowdown·t·ε_k))
+        #   γ_k = max(1/sqrt(λ_max(θ̄_k)), damping_slowdown/(t·ε_k))
         #   α_k = 1 - exp(-2·ε_k·γ_k)
         def fold_damping(pos_k, eps_k):
             # Center within the fold before eigenvalue estimation
             pos_k_centered = jax.tree.map(lambda p: p - p.mean(axis=0), pos_k)
             gamma = jnp.maximum(
                 1.0 / jnp.sqrt(maximum_eigenvalue(pos_k_centered)),
-                1.0 / (damping_slowdown * (t + 1) * eps_k),
+                damping_slowdown / ((t + 1) * eps_k),
             )
             alpha = 1.0 - jnp.exp(-2.0 * eps_k * gamma)
             delta = alpha / 2
@@ -351,18 +357,20 @@ def meads_adaptation(
         )
 
         # Restore fold_to_skip's chains: they do not advance this step
-        # (Algorithm 3, line 4: "excluding k = t mod K")
-        fold_is_skipped = jnp.arange(num_folds) == fold_to_skip  # [num_folds]
-        chain_is_skipped = jnp.repeat(fold_is_skipped, n_per_fold)  # [num_chains]
+        # (Algorithm 3, line 4: "excluding k = t mod K").
+        # When num_folds==1 there is no meaningful cross-fold split, so all
+        # chains advance (no fold is frozen).
+        if num_folds > 1:
+            fold_is_skipped = jnp.arange(num_folds) == fold_to_skip  # [num_folds]
+            chain_is_skipped = jnp.repeat(fold_is_skipped, n_per_fold)  # [num_chains]
 
-        def restore_skipped(new_val, old_val):
-            # Broadcast chain_is_skipped over any trailing dims
-            mask = chain_is_skipped.reshape(
-                chain_is_skipped.shape + (1,) * (new_val.ndim - 1)
-            )
-            return jnp.where(mask, old_val, new_val)
+            def restore_skipped(new_val, old_val):
+                mask = chain_is_skipped.reshape(
+                    chain_is_skipped.shape + (1,) * (new_val.ndim - 1)
+                )
+                return jnp.where(mask, old_val, new_val)
 
-        new_states = jax.tree.map(restore_skipped, new_states, states)
+            new_states = jax.tree.map(restore_skipped, new_states, states)
 
         new_adaptation_state = MEADSAdaptationState(
             current_iteration=t + 1,
@@ -372,14 +380,16 @@ def meads_adaptation(
             delta=deltas,
         )
 
-        # Every num_folds steps: reshuffle chains across folds
-        perm = jax.random.permutation(shuffle_key, num_chains)
-        new_states = jax.lax.cond(
-            (t + 1) % num_folds == 0,
-            lambda s: jax.tree.map(lambda x: x[perm], s),
-            lambda s: s,
-            new_states,
-        )
+        # Every num_folds steps: reshuffle chains across folds.
+        # Skipped for num_folds==1 (single fold; shuffle would be a no-op).
+        if num_folds > 1:
+            perm = jax.random.permutation(shuffle_key, num_chains)
+            new_states = jax.lax.cond(
+                (t + 1) % num_folds == 0,
+                lambda s: jax.tree.map(lambda x: x[perm], s),
+                lambda s: s,
+                new_states,
+            )
 
         return (new_states, new_adaptation_state), adaptation_info_fn(
             new_states, info, new_adaptation_state

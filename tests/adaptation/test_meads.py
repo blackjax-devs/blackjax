@@ -90,6 +90,31 @@ class TestMEADSBase(BlackJAXTest):
 
         np.testing.assert_allclose(state2.step_size, state1.step_size * 2.0, rtol=1e-5)
 
+    def test_damping_slowdown_effect(self):
+        """Higher damping_slowdown should produce stronger damping (higher alpha)."""
+        num_chains, dim = 8, 3
+        positions = jax.random.normal(self.next_key(), (num_chains, dim))
+        grads = jax.random.normal(self.next_key(), (num_chains, dim))
+
+        init1, _ = base(num_folds=4, damping_slowdown=1.0)
+        init2, _ = base(num_folds=4, damping_slowdown=10.0)
+
+        state1 = init1(positions, grads)
+        state2 = init2(positions, grads)
+
+        # Higher damping_slowdown raises the floor on gamma, so alpha is larger.
+        # The floor term is damping_slowdown/(t*eps); with the eigenvalue-based
+        # term fixed, a 10x larger floor must produce alpha >= the 1x case.
+        self.assertTrue(
+            jnp.all(state2.alpha >= state1.alpha),
+            "Higher damping_slowdown should produce alpha >= lower damping_slowdown",
+        )
+
+    def test_invalid_num_folds_base(self):
+        """base() should raise for num_folds < 1."""
+        with pytest.raises(ValueError, match="num_folds"):
+            base(num_folds=0)
+
 
 class TestMEADSAdaptation(BlackJAXTest):
     """Tests for the full meads_adaptation run loop."""
@@ -103,6 +128,13 @@ class TestMEADSAdaptation(BlackJAXTest):
         """Should raise if num_chains not divisible by num_folds."""
         with pytest.raises(ValueError, match="divisible"):
             blackjax.meads_adaptation(make_logdensity(), num_chains=10, num_folds=4)
+
+    def test_invalid_num_folds(self):
+        """Should raise if num_folds < 1."""
+        with pytest.raises(ValueError, match="num_folds"):
+            blackjax.meads_adaptation(make_logdensity(), num_chains=8, num_folds=0)
+        with pytest.raises(ValueError, match="num_folds"):
+            blackjax.meads_adaptation(make_logdensity(), num_chains=8, num_folds=-1)
 
     def test_output_shapes(self):
         """Returned states and parameters should have correct shapes."""
@@ -151,19 +183,38 @@ class TestMEADSAdaptation(BlackJAXTest):
         # Folds should have different step sizes
         self.assertFalse(jnp.allclose(state.step_size[0], state.step_size[1]))
 
-    def test_num_folds_1_matches_no_folding(self):
-        """num_folds=1 should behave like the original unfold implementation."""
+    def test_num_folds_1_chains_advance(self):
+        """With num_folds=1 all chains must advance every step (no fold frozen)."""
         num_chains, dim = 8, 2
         logdensity, positions = self._make_problem(num_chains, dim)
 
-        key = self.next_key()
-        warmup1 = blackjax.meads_adaptation(
+        warmup = blackjax.meads_adaptation(
             logdensity, num_chains=num_chains, num_folds=1
         )
-        (_, params1), _ = warmup1.run(key, positions, num_steps=5)
+        (last_states, params), warmup_info = warmup.run(
+            self.next_key(), positions, num_steps=5
+        )
 
-        # With num_folds=1 there is only one fold, so mean == the single fold value
-        self.assertEqual(params1["step_size"].shape, ())
+        # With num_folds=1 the single fold is never frozen, so every chain
+        # should have moved from its starting position by at least one step.
+        init_pos = np.array(positions)
+        final_pos = np.array(last_states.position)
+        self.assertFalse(
+            np.allclose(init_pos, final_pos),
+            "All chains stayed at init with num_folds=1 — fold was incorrectly frozen",
+        )
+
+        # The per-step trajectory: at no step should all chains be unchanged
+        # from the previous step (which would indicate a full freeze).
+        pos_trace = np.array(warmup_info.state.position)  # [5, num_chains, dim]
+        for t in range(1, 5):
+            self.assertFalse(
+                np.allclose(pos_trace[t], pos_trace[t - 1]),
+                f"All chains frozen at step {t} with num_folds=1",
+            )
+
+        # Output shapes should still be correct with a single fold
+        self.assertEqual(params["step_size"].shape, ())
 
     @chex.assert_max_traces(n=2)
     def test_no_recompilation(self):
