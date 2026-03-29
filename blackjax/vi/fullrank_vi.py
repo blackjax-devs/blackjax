@@ -20,7 +20,7 @@ import jax.scipy as jsp
 from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "FRVIState",
@@ -48,7 +48,7 @@ class FRVIState(NamedTuple):
     """
 
     mu: ArrayTree
-    chol_params: ArrayTree
+    chol_params: Array
     opt_state: OptState
 
 
@@ -69,7 +69,11 @@ def init(
     *optimizer_args,
     **optimizer_kwargs,
 ) -> FRVIState:
-    """Initialize the full-rank VI state with zero mean and identity covariance."""
+    """Initialize the full-rank VI state with zero mean and identity covariance.
+
+    The Cholesky diagonal is initialized to ``exp(0) = 1``, giving an identity
+    covariance as the starting approximation.
+    """
     mu = jax.tree.map(jnp.zeros_like, position)
     dim = jax.flatten_util.ravel_pytree(mu)[0].shape[0]
     chol_params = jnp.zeros(dim * (dim + 1) // 2)
@@ -91,8 +95,8 @@ def step(
     ----------
     rng_key
         Key for JAX's pseudo-random number generator.
-    init_state
-        Initial state of the full-rank approximation.
+    state
+        Current state of the full-rank approximation.
     logdensity_fn
         Function that represents the target log-density to approximate.
     optimizer
@@ -102,9 +106,16 @@ def step(
         at each step to compute the Kullback-Leibler divergence between
         the approximation and the target log-density.
     stl_estimator
-        Whether to use stick-the-landing (STL) gradient estimator :cite:p:`roeder2017sticking` for gradient estimation.
-        The STL estimator has lower gradient variance by removing the score function term
-        from the gradient. It is suggested by :cite:p:`agrawal2020advances` to always keep it in order for better results.
+        Whether to use the stick-the-landing (STL) gradient estimator
+        :cite:p:`roeder2017sticking`. Reduces gradient variance by removing
+        the score function term. Recommended in :cite:p:`agrawal2020advances`.
+
+    Returns
+    -------
+    new_state
+        Updated ``FRVIState``.
+    info
+        ``FRVIInfo`` containing the current ELBO value.
 
     """
 
@@ -114,7 +125,7 @@ def step(
         mu, chol_params = parameters
         z = _sample(rng_key, mu, chol_params, num_samples)
         if stl_estimator:
-            parameters = jax.tree.map(jax.lax.stop_gradient, (mu, chol_params))
+            mu, chol_params = jax.lax.stop_gradient((mu, chol_params))
         logq = jax.vmap(generate_fullrank_logdensity(mu, chol_params))(z)
         logp = jax.vmap(logdensity_fn)(z)
         return (logq - logp).mean()
@@ -127,7 +138,23 @@ def step(
 
 
 def sample(rng_key: PRNGKey, state: FRVIState, num_samples: int = 1):
-    """Sample from the full-rank approximation."""
+    """Sample from the full-rank approximation.
+
+    Parameters
+    ----------
+    rng_key
+        Key for JAX's pseudo-random number generator.
+    state
+        Current ``FRVIState``.
+    num_samples
+        Number of samples to draw.
+
+    Returns
+    -------
+    Samples from the full-rank Gaussian approximation, as a PyTree with a
+    leading axis of size ``num_samples``.
+
+    """
     return _sample(rng_key, state.mu, state.chol_params, num_samples)
 
 
@@ -198,7 +225,9 @@ def _unflatten_cholesky(chol_params, dim):
 
     tril = jnp.zeros((dim, dim))
     tril = tril.at[jnp.tril_indices(dim, k=-1)].set(chol_params[dim:])
-    diag = jnp.exp(chol_params[:dim])  # TODO: replace with softplus?
+    # exp ensures positivity of diagonal during unconstrained optimization;
+    # its gradient is well-behaved near zero unlike softplus.
+    diag = jnp.exp(chol_params[:dim])
     chol_factor = tril + jnp.diag(diag)
     return chol_factor
 
@@ -247,6 +276,10 @@ def generate_fullrank_logdensity(mu, chol_params):
 
     """
 
+    # We compute the log-density directly from the Cholesky factor rather than
+    # using jax.scipy.stats.multivariate_normal.logpdf, which would require
+    # forming Sigma = L L^T and re-decomposing it internally — wasting the
+    # Cholesky factorization we already have.
     mu_flatten, _ = jax.flatten_util.ravel_pytree(mu)
     dim = mu_flatten.size
     chol_factor = _unflatten_cholesky(chol_params, dim)
