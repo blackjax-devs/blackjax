@@ -10,6 +10,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
+   /autoapi/blackjax/vi/fullrank_vi/index
    /autoapi/blackjax/vi/meanfield_vi/index
    /autoapi/blackjax/vi/multipathfinder/index
    /autoapi/blackjax/vi/pathfinder/index

@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g41086fa1b" />
+  <meta name="docsearch:version" content="0.1.dev1+gf8c87534e" />
   </head>
   
   
@@ -242,6 +242,7 @@
 </ul>
 </details></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
@@ -504,6 +505,8 @@
         <li><a href="autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.as_top_level_api">(in module blackjax.smc.pretuning)</a>
 </li>
         <li><a href="autoapi/blackjax/smc/tempered/index.html#blackjax.smc.tempered.as_top_level_api">(in module blackjax.smc.tempered)</a>
+</li>
+        <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.as_top_level_api">(in module blackjax.vi.fullrank_vi)</a>
 </li>
         <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.as_top_level_api">(in module blackjax.vi.meanfield_vi)</a>
 </li>
@@ -967,6 +970,13 @@
 </li>
       </ul></li>
       <li>
+    blackjax.vi.fullrank_vi
+
+      <ul>
+        <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#module-blackjax.vi.fullrank_vi">module</a>
+</li>
+      </ul></li>
+      <li>
     blackjax.vi.meanfield_vi
 
       <ul>
@@ -1081,14 +1091,16 @@
 </li>
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState">ChEESAdaptationState (class in blackjax.adaptation.chees_adaptation)</a>
 </li>
+      <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIState.chol_params">chol_params (FRVIState attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio">compute_asymmetric_acceptance_ratio() (in module blackjax.mcmc.proposal)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.compute_log_persistent_weights">compute_log_persistent_weights() (in module blackjax.smc.persistent_sampling)</a>
 </li>
-      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.compute_log_Z">compute_log_Z() (in module blackjax.smc.persistent_sampling)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.compute_log_Z">compute_log_Z() (in module blackjax.smc.persistent_sampling)</a>
+</li>
       <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.compute_persistent_ess">compute_persistent_ess() (in module blackjax.smc.persistent_sampling)</a>
 </li>
       <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#blackjax.sgmcmc.csgld.ContourSGLDState">ContourSGLDState (class in blackjax.sgmcmc.csgld)</a>
@@ -1151,9 +1163,11 @@
 </li>
       <li><a href="autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.effective_sample_size">effective_sample_size() (in module blackjax.diagnostics)</a>
 </li>
-      <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIInfo.elbo">elbo (MFVIInfo attribute)</a>
+      <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIInfo.elbo">elbo (FRVIInfo attribute)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIInfo.elbo">(MFVIInfo attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.PathfinderState.elbo">(PathfinderState attribute)</a>
 </li>
       </ul></li>
@@ -1206,6 +1220,12 @@
       <li><a href="autoapi/blackjax/adaptation/step_size/index.html#blackjax.adaptation.step_size.find_reasonable_step_size">find_reasonable_step_size() (in module blackjax.adaptation.step_size)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIInfo">FRVIInfo (class in blackjax.vi.fullrank_vi)</a>
+</li>
+      <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIState">FRVIState (class in blackjax.vi.fullrank_vi)</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="G">G</h2>
@@ -1217,10 +1237,12 @@
 </li>
       <li><a href="autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.gaussian_riemannian">gaussian_riemannian() (in module blackjax.mcmc.metrics)</a>
 </li>
-      <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.generate_meanfield_logdensity">generate_meanfield_logdensity() (in module blackjax.vi.meanfield_vi)</a>
+      <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.generate_fullrank_logdensity">generate_fullrank_logdensity() (in module blackjax.vi.fullrank_vi)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.generate_meanfield_logdensity">generate_meanfield_logdensity() (in module blackjax.vi.meanfield_vi)</a>
+</li>
       <li><a href="autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.get_filter_adapt_info_fn">get_filter_adapt_info_fn() (in module blackjax.adaptation.base)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState">GHMCState (class in blackjax.mcmc.ghmc)</a>
@@ -1649,6 +1671,8 @@
 </li>
         <li><a href="autoapi/blackjax/vi/index.html#module-blackjax.vi">blackjax.vi</a>
 </li>
+        <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#module-blackjax.vi.fullrank_vi">blackjax.vi.fullrank_vi</a>
+</li>
         <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#module-blackjax.vi.meanfield_vi">blackjax.vi.meanfield_vi</a>
 </li>
         <li><a href="autoapi/blackjax/vi/multipathfinder/index.html#module-blackjax.vi.multipathfinder">blackjax.vi.multipathfinder</a>
@@ -1685,6 +1709,8 @@
       <li><a href="autoapi/blackjax/adaptation/step_size/index.html#blackjax.adaptation.step_size.DualAveragingAdaptationState.mu">mu (DualAveragingAdaptationState attribute)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIState.mu">(FRVIState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState.mu">(MFVIState attribute)</a>
 </li>
       </ul></li>
@@ -1752,10 +1778,14 @@
 </li>
       <li><a href="autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.omelyan">omelyan (in module blackjax.mcmc.integrators)</a>
 </li>
+      <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIState.opt_state">opt_state (FRVIState attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState.opt_state">(MFVIState attribute)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.MFVIState.opt_state">opt_state (MFVIState attribute)</a>
-</li>
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.ChEESAdaptationState.optim_state">optim_state (ChEESAdaptationState attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.OPTIMAL_TARGET_ACCEPTANCE_RATE">OPTIMAL_TARGET_ACCEPTANCE_RATE (in module blackjax.adaptation.chees_adaptation)</a>
@@ -1926,9 +1956,11 @@
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.safe_energy_diff">safe_energy_diff() (in module blackjax.mcmc.proposal)</a>
 </li>
-      <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.sample">sample() (in module blackjax.vi.meanfield_vi)</a>
+      <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.sample">sample() (in module blackjax.vi.fullrank_vi)</a>
 
       <ul>
+        <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.sample">(in module blackjax.vi.meanfield_vi)</a>
+</li>
         <li><a href="autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.sample">(in module blackjax.vi.pathfinder)</a>
 </li>
         <li><a href="autoapi/blackjax/vi/schrodinger_follmer/index.html#blackjax.vi.schrodinger_follmer.sample">(in module blackjax.vi.schrodinger_follmer)</a>
@@ -1996,6 +2028,8 @@
 
       <ul>
         <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.step">(in module blackjax.smc.persistent_sampling)</a>
+</li>
+        <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.step">(in module blackjax.vi.fullrank_vi)</a>
 </li>
         <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.step">(in module blackjax.vi.meanfield_vi)</a>
 </li>

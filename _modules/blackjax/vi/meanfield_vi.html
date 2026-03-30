@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g41086fa1b" />
+  <meta name="docsearch:version" content="0.1.dev1+gf8c87534e" />
   </head>
   
   
@@ -242,6 +242,7 @@
 </ul>
 </details></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
@@ -389,6 +390,7 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">VIAlgorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.vi._gaussian_vi</span><span class="w"> </span><span class="kn">import</span> <span class="n">_elbo_step</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;MFVIState&quot;</span><span class="p">,</span>
@@ -493,19 +495,23 @@
 
     <span class="n">parameters</span> <span class="o">=</span> <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">kl_divergence_fn</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
-        <span class="n">mu</span><span class="p">,</span> <span class="n">rho</span> <span class="o">=</span> <span class="n">parameters</span>
-        <span class="n">z</span> <span class="o">=</span> <span class="n">_sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">rho</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">stl_estimator</span><span class="p">:</span>
-            <span class="n">mu</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
-            <span class="n">rho</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">stop_gradient</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
-        <span class="n">logq</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">generate_meanfield_logdensity</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">rho</span><span class="p">))(</span><span class="n">z</span><span class="p">)</span>
-        <span class="n">logp</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)(</span><span class="n">z</span><span class="p">)</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">logq</span> <span class="o">-</span> <span class="n">logp</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sample_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">num_samples</span><span class="p">)</span>
 
-    <span class="n">elbo</span><span class="p">,</span> <span class="n">elbo_grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span><span class="n">kl_divergence_fn</span><span class="p">)(</span><span class="n">parameters</span><span class="p">)</span>
-    <span class="n">updates</span><span class="p">,</span> <span class="n">new_opt_state</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">elbo_grad</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">opt_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">)</span>
-    <span class="n">new_parameters</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">u</span><span class="p">:</span> <span class="n">p</span> <span class="o">+</span> <span class="n">u</span><span class="p">,</span> <span class="n">parameters</span><span class="p">,</span> <span class="n">updates</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">logq_fn</span><span class="p">(</span><span class="n">parameters</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">generate_meanfield_logdensity</span><span class="p">(</span><span class="n">parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="n">new_parameters</span><span class="p">,</span> <span class="n">new_opt_state</span><span class="p">,</span> <span class="n">elbo</span> <span class="o">=</span> <span class="n">_elbo_step</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">,</span>
+        <span class="n">parameters</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">opt_state</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">,</span>
+        <span class="n">sample_fn</span><span class="p">,</span>
+        <span class="n">logq_fn</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="p">,</span>
+        <span class="n">stl_estimator</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="n">new_state</span> <span class="o">=</span> <span class="n">MFVIState</span><span class="p">(</span><span class="n">new_parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">new_opt_state</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">MFVIInfo</span><span class="p">(</span><span class="n">elbo</span><span class="p">)</span></div>
 
