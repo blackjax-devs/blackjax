@@ -21,6 +21,7 @@ from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.vi._gaussian_vi import _elbo_step
 
 __all__ = [
     "FRVIState",
@@ -121,18 +122,23 @@ def step(
 
     parameters = (state.mu, state.chol_params)
 
-    def kl_divergence_fn(parameters):
-        mu, chol_params = parameters
-        z = _sample(rng_key, mu, chol_params, num_samples)
-        if stl_estimator:
-            mu, chol_params = jax.lax.stop_gradient((mu, chol_params))
-        logq = jax.vmap(generate_fullrank_logdensity(mu, chol_params))(z)
-        logp = jax.vmap(logdensity_fn)(z)
-        return (logq - logp).mean()
+    def sample_fn(rng_key, parameters, num_samples):
+        return _sample(rng_key, parameters[0], parameters[1], num_samples)
 
-    elbo, elbo_grad = jax.value_and_grad(kl_divergence_fn)(parameters)
-    updates, new_opt_state = optimizer.update(elbo_grad, state.opt_state, parameters)
-    new_parameters = jax.tree.map(lambda p, u: p + u, parameters, updates)
+    def logq_fn(parameters):
+        return generate_fullrank_logdensity(parameters[0], parameters[1])
+
+    new_parameters, new_opt_state, elbo = _elbo_step(
+        rng_key,
+        parameters,
+        state.opt_state,
+        logdensity_fn,
+        optimizer,
+        sample_fn,
+        logq_fn,
+        num_samples,
+        stl_estimator,
+    )
     new_state = FRVIState(new_parameters[0], new_parameters[1], new_opt_state)
     return new_state, FRVIInfo(elbo)
 

@@ -20,6 +20,7 @@ from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.vi._gaussian_vi import _elbo_step
 
 __all__ = [
     "MFVIState",
@@ -104,19 +105,23 @@ def step(
 
     parameters = (state.mu, state.rho)
 
-    def kl_divergence_fn(parameters):
-        mu, rho = parameters
-        z = _sample(rng_key, mu, rho, num_samples)
-        if stl_estimator:
-            mu = jax.lax.stop_gradient(mu)
-            rho = jax.lax.stop_gradient(rho)
-        logq = jax.vmap(generate_meanfield_logdensity(mu, rho))(z)
-        logp = jax.vmap(logdensity_fn)(z)
-        return (logq - logp).mean()
+    def sample_fn(rng_key, parameters, num_samples):
+        return _sample(rng_key, parameters[0], parameters[1], num_samples)
 
-    elbo, elbo_grad = jax.value_and_grad(kl_divergence_fn)(parameters)
-    updates, new_opt_state = optimizer.update(elbo_grad, state.opt_state, parameters)
-    new_parameters = jax.tree.map(lambda p, u: p + u, parameters, updates)
+    def logq_fn(parameters):
+        return generate_meanfield_logdensity(parameters[0], parameters[1])
+
+    new_parameters, new_opt_state, elbo = _elbo_step(
+        rng_key,
+        parameters,
+        state.opt_state,
+        logdensity_fn,
+        optimizer,
+        sample_fn,
+        logq_fn,
+        num_samples,
+        stl_estimator,
+    )
     new_state = MFVIState(new_parameters[0], new_parameters[1], new_opt_state)
     return new_state, MFVIInfo(elbo)
 
