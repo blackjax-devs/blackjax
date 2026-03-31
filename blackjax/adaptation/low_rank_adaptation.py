@@ -252,6 +252,7 @@ def _compute_low_rank_metric(
         pad = max_rank - actual_rank
         U_out = jnp.concatenate([U_out, jnp.zeros((d, pad))], axis=1)
         lam_out = jnp.concatenate([lam_out, jnp.ones(pad)])
+
     return sigma, mu_star, U_out, lam_out
 
 
