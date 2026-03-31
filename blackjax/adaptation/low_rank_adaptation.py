@@ -238,12 +238,20 @@ def _compute_low_rank_metric(
     # nutpie keeps λ < 1/cutoff or λ > cutoff; others carry no preconditioning
     # benefit.  In JAX (fixed shapes) we retain the slots but set λ=1 to
     # effectively zero out those directions in the metric.
+    # When q < max_rank (i.e. d < 2k), only q eigenvectors exist; pad the
+    # remainder with zero columns (λ=1 → no effect on the metric).
+    actual_rank = min(max_rank, q)  # static: both are Python ints at trace time
     distances = jnp.abs(vals - 1.0)
-    order = jnp.argsort(-distances)[:max_rank]  # (max_rank,) indices
-    U_out = U_full[:, order]  # (d, max_rank)
+    order = jnp.argsort(-distances)[:actual_rank]  # (actual_rank,) indices
+    U_out = U_full[:, order]  # (d, actual_rank)
     lam_raw = vals[order]
     is_informative = (lam_raw < 1.0 / cutoff) | (lam_raw > cutoff)
     lam_out = jnp.where(is_informative, lam_raw, 1.0)
+
+    if actual_rank < max_rank:
+        pad = max_rank - actual_rank
+        U_out = jnp.concatenate([U_out, jnp.zeros((d, pad))], axis=1)
+        lam_out = jnp.concatenate([lam_out, jnp.ones(pad)])
 
     return sigma, mu_star, U_out, lam_out
 
@@ -533,8 +541,13 @@ def low_rank_window_adaptation(
 
     def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
         init_state = algorithm.init(position, logdensity_fn)
-        # Buffer large enough for the largest possible slow window.
-        buffer_size = max(num_steps, 1)
+        # Size the buffer to the expected largest slow window rather than the
+        # full warmup length.  The modular indexing in slow_update means that
+        # if a window exceeds buffer_size only the most recent buffer_size
+        # draws are kept — matching nutpie's fixed-buffer behaviour and
+        # avoiding O(num_steps × d) allocations for large d.
+        typical_window = max(num_steps // 5, 128)
+        buffer_size = min(typical_window * 2, max(num_steps, 1))
         init_adaptation_state = adapt_init(
             position,
             init_state.logdensity_grad,
