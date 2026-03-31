@@ -37,7 +37,12 @@ from jax.flatten_util import ravel_pytree
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, Numeric, PRNGKey
 from blackjax.util import generate_gaussian_noise, linear_map
 
-__all__ = ["default_metric", "gaussian_euclidean", "gaussian_riemannian"]
+__all__ = [
+    "default_metric",
+    "gaussian_euclidean",
+    "gaussian_euclidean_low_rank",
+    "gaussian_riemannian",
+]
 
 
 class KineticEnergy(Protocol):
@@ -232,6 +237,133 @@ def gaussian_euclidean(
             left_hand_side_matrix = left_hand_side_matrix.T
 
         scaled = linear_map(left_hand_side_matrix, ravelled_element)
+
+        return unravel_fn(scaled)
+
+    return Metric(momentum_generator, kinetic_energy, is_turning, scale)
+
+
+def gaussian_euclidean_low_rank(
+    sigma: Array,
+    U: Array,
+    lam: Array,
+) -> Metric:
+    r"""Euclidean metric with low-rank-modified mass matrix :cite:p:`sountsov2025preconditioning`.
+
+    The inverse mass matrix has the form
+
+    .. math::
+
+        M^{-1} = \operatorname{diag}(\sigma)
+                 \bigl(I + U(\Lambda - I)U^\top\bigr)
+                 \operatorname{diag}(\sigma)
+
+    where :math:`\sigma \in \mathbb{R}^d_{>0}` is a diagonal scaling,
+    :math:`U \in \mathbb{R}^{d \times k}` has orthonormal columns, and
+    :math:`\Lambda = \operatorname{diag}(\lambda)` with :math:`\lambda > 0`.
+    When :math:`\lambda = \mathbf{1}` the metric reduces to a diagonal metric
+    with scale :math:`\sigma`.  All HMC operations are :math:`O(dk)`, making
+    this efficient when :math:`k \ll d`.
+
+    Parameters
+    ----------
+    sigma
+        Shape ``(d,)``.  Positive diagonal scaling; plays the role of marginal
+        standard deviations.
+    U
+        Shape ``(d, k)``.  Matrix with orthonormal columns spanning the
+        low-rank correction subspace.
+    lam
+        Shape ``(k,)``.  Positive eigenvalues for the low-rank correction.
+
+    Returns
+    -------
+    A ``Metric`` object whose operations all run in :math:`O(dk)`.
+    """
+    inv_sigma = 1.0 / sigma  # (d,)
+    sqrt_lam = jnp.sqrt(lam)  # (k,)
+    inv_sqrt_lam = 1.0 / sqrt_lam  # (k,)
+
+    def momentum_generator(rng_key: PRNGKey, position: ArrayLikeTree) -> ArrayTree:
+        # Sample eps ~ N(0, I) with the same pytree shape as position.
+        noise = generate_gaussian_noise(rng_key, position)
+        eps, unravel_fn = ravel_pytree(noise)
+        # p = M^{1/2} eps  where  M^{1/2} = D^{-1} B,
+        # B = I + U (Λ^{-1/2} - I) U^T,  D^{-1} = diag(1/σ).
+        # D^{-1} is applied AFTER B so that E[pp^T] = D^{-1} B B D^{-1} = M.
+        v = eps + U @ ((inv_sqrt_lam - 1.0) * (U.T @ eps))  # B eps
+        p = inv_sigma * v  # D^{-1} B eps
+        return unravel_fn(p)
+
+    def kinetic_energy(
+        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+    ) -> Numeric:
+        del position
+        p, _ = ravel_pytree(momentum)
+        # K(p) = ½ p^T M^{-1} p = ½ q^T (I + U(Λ-I)U^T) q,  q = σ⊙p
+        q = sigma * p  # (d,)
+        alpha = U.T @ q  # (k,)
+        return 0.5 * (jnp.dot(q, q) + jnp.dot(alpha, (lam - 1.0) * alpha))
+
+    def is_turning(
+        momentum_left: ArrayLikeTree,
+        momentum_right: ArrayLikeTree,
+        momentum_sum: ArrayLikeTree,
+        position_left: Optional[ArrayLikeTree] = None,
+        position_right: Optional[ArrayLikeTree] = None,
+    ) -> bool:
+        del position_left, position_right
+        m_left, _ = ravel_pytree(momentum_left)
+        m_right, _ = ravel_pytree(momentum_right)
+        m_sum, _ = ravel_pytree(momentum_sum)
+
+        def _inv_mass_times(p):
+            # M^{-1} p = D(I + U(Λ-I)U^T)D p
+            q = sigma * p
+            return sigma * (q + U @ ((lam - 1.0) * (U.T @ q)))
+
+        vel_left = _inv_mass_times(m_left)
+        vel_right = _inv_mass_times(m_right)
+        rho = m_sum - (m_right + m_left) / 2
+        return (jnp.dot(vel_left, rho) <= 0) | (jnp.dot(vel_right, rho) <= 0)
+
+    def scale(
+        position: ArrayLikeTree,
+        element: ArrayLikeTree,
+        *,
+        inv: bool,
+        trans: bool,
+    ) -> ArrayLikeTree:
+        """Scale an element by the (inverse) (transposed) square-root mass matrix.
+
+        M = D^{-1} C D^{-1} where C = I+U(Λ^{-1}-I)U^T and D = diag(σ).
+        The (non-symmetric) left square root is M^{1/2} = D^{-1} B where
+        B = I+U(Λ^{-1/2}-I)U^T, so M = M^{1/2} (M^{1/2})^T.
+
+        * ``inv=False, trans=False``:  M^{1/2}    = D^{-1} B
+        * ``inv=False, trans=True`` :  (M^{1/2})^T = B D^{-1}
+        * ``inv=True,  trans=False``:  M^{-1/2}   = D A^{*}  where A^{*} = I+U(√Λ-I)U^T
+        * ``inv=True,  trans=True`` :  (M^{-1/2})^T = A^{*} D
+        """
+        del position
+        e, unravel_fn = ravel_pytree(element)
+
+        if not inv and not trans:
+            # M^{1/2} e = D^{-1} (B e) = (1/σ) * (B e)
+            v = e + U @ ((inv_sqrt_lam - 1.0) * (U.T @ e))
+            scaled = inv_sigma * v
+        elif not inv and trans:
+            # (M^{1/2})^T e = B (D^{-1} e) = B (e/σ)
+            q = inv_sigma * e
+            scaled = q + U @ ((inv_sqrt_lam - 1.0) * (U.T @ q))
+        elif inv and not trans:
+            # M^{-1/2} e = D (A^{*} e) = σ * (A^{*} e)  where A^{*} = I+U(√Λ-I)U^T
+            v = e + U @ ((sqrt_lam - 1.0) * (U.T @ e))
+            scaled = sigma * v
+        else:
+            # (M^{-1/2})^T e = A^{*} (D e) = A^{*} (σ⊙e)
+            q = sigma * e
+            scaled = q + U @ ((sqrt_lam - 1.0) * (U.T @ q))
 
         return unravel_fn(scaled)
 
