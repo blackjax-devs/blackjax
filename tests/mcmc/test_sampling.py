@@ -621,7 +621,7 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
     def test_meads(self):
-        """Test the MEADS adaptation w/ GHMC kernel."""
+        """Test the MEADS adaptation w/ GHMC kernel, including fold structure."""
         rng_key, init_key0, init_key1 = jax.random.split(self.key, 3)
         x_data = jax.random.normal(init_key0, shape=(1000, 1))
         y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
@@ -634,19 +634,62 @@ class LinearRegressionTest(chex.TestCase):
         init_key, warmup_key, inference_key = jax.random.split(rng_key, 3)
 
         num_chains = 128
+        num_folds = 4
+        n_per_fold = num_chains // num_folds
         warmup = blackjax.meads_adaptation(
             logposterior_fn,
             num_chains=num_chains,
+            num_folds=num_folds,
         )
         scale_key, coefs_key = jax.random.split(init_key, 2)
         log_scales = 1.0 + jax.random.normal(scale_key, (num_chains,))
         coefs = 4.0 + jax.random.normal(coefs_key, (num_chains,))
         initial_positions = {"log_scale": log_scales, "coefs": coefs}
-        (last_states, parameters), _ = warmup.run(
+        (last_states, parameters), warmup_info = warmup.run(
             warmup_key,
             initial_positions,
             num_steps=1000,
         )
+
+        # --- Verify fold freezing (Algorithm 3, line 4) ---
+        # At step t the fold (t % num_folds) is frozen: its chains keep their
+        # positions from the previous step.  No shuffling occurs until step
+        # num_folds, so fold assignments are stable for steps 0..num_folds-2.
+        #
+        # warmup_info.state.position["coefs"] has shape [num_steps, num_chains].
+        # Index [t] is the state *after* step t.
+
+        coefs_trace = np.array(warmup_info.state.position["coefs"])
+
+        # Step 0: fold 0 frozen → unchanged from initial
+        np.testing.assert_array_equal(
+            coefs_trace[0, :n_per_fold],
+            np.array(initial_positions["coefs"][:n_per_fold]),
+            err_msg="Fold 0 should be frozen at step 0",
+        )
+
+        # Step 1: fold 1 frozen → unchanged from end of step 0
+        np.testing.assert_array_equal(
+            coefs_trace[1, n_per_fold : 2 * n_per_fold],
+            coefs_trace[0, n_per_fold : 2 * n_per_fold],
+            err_msg="Fold 1 should be frozen at step 1",
+        )
+
+        # Step 2: fold 2 frozen → unchanged from end of step 1
+        np.testing.assert_array_equal(
+            coefs_trace[2, 2 * n_per_fold : 3 * n_per_fold],
+            coefs_trace[1, 2 * n_per_fold : 3 * n_per_fold],
+            err_msg="Fold 2 should be frozen at step 2",
+        )
+
+        # --- Verify per-fold adaptation state shape ---
+        # adaptation_state.step_size has shape [num_steps, num_folds]
+        fold_step_sizes = np.array(warmup_info.adaptation_state.step_size)
+        np.testing.assert_equal(fold_step_sizes.shape, (1000, num_folds))
+        # All step sizes should be finite and positive throughout warmup
+        assert np.all(np.isfinite(fold_step_sizes)) and np.all(fold_step_sizes > 0)
+
+        # --- Verify posterior convergence ---
         inference_algorithm = blackjax.ghmc(logposterior_fn, **parameters)
 
         chain_keys = jax.random.split(inference_key, num_chains)
@@ -763,7 +806,7 @@ class LinearRegressionTest(chex.TestCase):
         )
         logposterior_fn = lambda x: logposterior_fn_(**x)
 
-        barker = blackjax.barker_proposal(logposterior_fn, 1e-1)
+        barker = blackjax.barker(logposterior_fn, 1e-1)
         state = barker.init({"coefs": 1.0, "log_scale": 1.0})
 
         _, states = run_inference_algorithm(
@@ -1153,9 +1196,7 @@ class UnivariateNormalTest(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_barker(self):
-        inference_algorithm = blackjax.barker_proposal(
-            self.normal_logprob, step_size=1.5
-        )
+        inference_algorithm = blackjax.barker(self.normal_logprob, step_size=1.5)
         initial_state = inference_algorithm.init(jnp.array(1.0))
         self.univariate_normal_test_case(
             inference_algorithm, self.key, initial_state, 20000, 2_000
@@ -1368,7 +1409,7 @@ mcse_test_cases = [
         "is_mass_matrix_diagonal": False,
     },
     {
-        "algorithm": blackjax.barker_proposal,
+        "algorithm": blackjax.barker,
         "parameters": {"step_size": 0.45},
         "is_mass_matrix_diagonal": None,
     },

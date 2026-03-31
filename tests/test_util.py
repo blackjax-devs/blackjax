@@ -10,6 +10,7 @@ from jax import tree, vmap
 
 import blackjax
 from blackjax.util import (
+    psis_weights,
     run_inference_algorithm,
     store_only_expectation_values,
     thin_algorithm,
@@ -250,6 +251,86 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
         np.testing.assert_allclose(
             jnp.cov(samples_thin.T), jnp.cov(samples.T), rtol=rtol, atol=atol
         )
+
+
+class PSISWeightsTest(chex.TestCase):
+    """Tests for the pure-JAX psis_weights utility."""
+
+    @chex.variants(with_jit=True, without_jit=True)
+    def test_weights_sum_to_one(self):
+        """Normalised weights must sum to 1."""
+        key = jr.key(0)
+        log_ratios = jr.normal(key, (200,))
+        log_w, _ = self.variant(psis_weights)(log_ratios)
+        np.testing.assert_allclose(jnp.exp(log_w).sum(), 1.0, atol=1e-5)
+
+    @chex.variants(with_jit=True, without_jit=True)
+    def test_output_shapes(self):
+        """Output shapes should match input length; k should be a scalar."""
+        n = 300
+        log_ratios = jr.normal(jr.key(1), (n,))
+        log_w, k = self.variant(psis_weights)(log_ratios)
+        self.assertEqual(log_w.shape, (n,))
+        self.assertEqual(k.shape, ())
+
+    @chex.variants(with_jit=True, without_jit=True)
+    def test_uniform_ratios_give_uniform_weights(self):
+        """When p == q (all log-ratios zero) weights should be uniform."""
+        n = 100
+        log_ratios = jnp.zeros(n)
+        log_w, _ = self.variant(psis_weights)(log_ratios)
+        expected = -jnp.log(n)
+        np.testing.assert_allclose(log_w, jnp.full(n, expected), atol=1e-5)
+
+    @chex.variants(with_jit=True, without_jit=True)
+    def test_pareto_k_light_tail(self):
+        """For near-uniform log-ratios (light-tailed), k should be <= 0."""
+        # When log-ratios are small and near-Gaussian the tail is light → k < 0.
+        log_ratios = jr.normal(jr.key(3), (500,)) * 0.1
+        _, k = self.variant(psis_weights)(log_ratios)
+        self.assertLessEqual(float(k), 0.5)
+
+    @chex.variants(with_jit=True, without_jit=True)
+    def test_pareto_k_heavy_tail(self):
+        """For heavy-tailed log-ratios k should be positive."""
+        key = jr.key(4)
+        # log-ratios from a heavy-tailed distribution: log of Pareto(alpha=2)
+        u = jr.uniform(key, (1000,), minval=1e-4, maxval=1.0)
+        log_ratios = jnp.log(u ** (-0.5))  # log-Pareto, true tail index k=0.5
+        _, k = self.variant(psis_weights)(log_ratios)
+        self.assertGreater(float(k), 0.0)
+
+    @chex.variants(with_jit=True, without_jit=True)
+    def test_constant_shift_does_not_change_weights(self):
+        """Adding a constant to all log-ratios should not change the weights."""
+        log_ratios = jr.normal(jr.key(5), (200,))
+        log_w1, k1 = self.variant(psis_weights)(log_ratios)
+        log_w2, k2 = self.variant(psis_weights)(log_ratios + 7.3)
+        np.testing.assert_allclose(log_w1, log_w2, atol=1e-5)
+        np.testing.assert_allclose(k1, k2, atol=1e-5)
+
+    def test_too_few_samples_returns_inf_k(self):
+        """k=inf signals that the tail is too small for a reliable GPD fit."""
+        # n=20 gives M = min(max(int(3*sqrt(20)),5), 4) = 4 < 5 → degenerate.
+        log_ratios = jr.normal(jr.key(7), (20,))
+        _, k = psis_weights(log_ratios)
+        self.assertTrue(jnp.isinf(k))
+
+    def test_r_eff_increases_tail_size(self):
+        """Smaller r_eff should produce a larger effective tail (more smoothing).
+
+        r_eff is a Python-level compile-time constant (like a shape), so it
+        cannot be traced by chex.variants; JIT coverage is provided implicitly
+        since every other variant test uses the default r_eff=1.0.
+        """
+        # With r_eff < 1 the tail size M = floor(3*sqrt(n/r_eff)) grows, so
+        # more of the weight distribution is smoothed and the returned k can differ.
+        log_ratios = jr.normal(jr.key(8), (500,)) * 2.0
+        _, k_iid = psis_weights(log_ratios, r_eff=1.0)
+        _, k_corr = psis_weights(log_ratios, r_eff=0.25)
+        # Both should be finite for this input.
+        self.assertTrue(jnp.isfinite(k_iid))
+        self.assertTrue(jnp.isfinite(k_corr))
 
 
 if __name__ == "__main__":

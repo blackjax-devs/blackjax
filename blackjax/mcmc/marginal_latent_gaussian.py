@@ -17,10 +17,11 @@ from typing import Callable, NamedTuple, Optional
 import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as linalg
+from jax.flatten_util import ravel_pytree
 
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc.proposal import static_binomial_sampling
-from blackjax.types import Array, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
 
 __all__ = [
     "MarginalState",
@@ -31,26 +32,26 @@ __all__ = [
 ]
 
 
-# [TODO](https://github.com/blackjax-devs/blackjax/issues/237)
 class MarginalState(NamedTuple):
     """State of the RMH chain.
 
-    x
-        Current position of the chain.
-    log_p_x
+    position
+        Current position of the chain. Can be any PyTree.
+    logdensity
         Current value of the log-likelihood of the model
-    grad_x
-        Current value of the gradient of the log-likelihood of the model
+    logdensity_grad
+        Current value of the gradient of the log-likelihood of the model.
+        Has the same PyTree structure as ``position``.
     U_x
-        Auxiliary attributes
+        Position projected into the SVD basis (flat array).
     U_grad_x
-        Gradient of the auxiliary attributes
+        Gradient projected into the SVD basis (flat array).
 
     """
 
-    position: Array
+    position: ArrayLikeTree
     logdensity: float
-    logdensity_grad: Array
+    logdensity_grad: ArrayLikeTree
 
     U_x: Array
     U_grad_x: Array
@@ -120,7 +121,7 @@ def generate_mean_shifted_logprob(logdensity_fn, mean, covariance):
     logdensity_fn
         The original log-density function
     mean
-        The mean of the prior Gaussian density
+        The mean of the prior Gaussian density. Can be any PyTree.
     covariance
         The covariance of the prior Gaussian density.
 
@@ -129,10 +130,12 @@ def generate_mean_shifted_logprob(logdensity_fn, mean, covariance):
     A log-density function that is shifted by a constant
 
     """
-    shift = linalg.solve(covariance, mean, assume_a="pos")
+    mean_flat, _ = ravel_pytree(mean)
+    shift = linalg.solve(covariance, mean_flat, assume_a="pos")
 
     def shifted_logdensity_fn(x):
-        return logdensity_fn(x) + jnp.dot(x, shift)
+        x_flat, _ = ravel_pytree(x)
+        return logdensity_fn(x) + jnp.dot(x_flat, shift)
 
     return shifted_logdensity_fn
 
@@ -143,15 +146,21 @@ def init(position, logdensity_fn, U_t):
     Parameters
     ----------
     position
-        The initial position of the chain.
+        The initial position of the chain. Can be any PyTree.
     logdensity_fn
         The logarithm of the likelihood function for the latent Gaussian model.
     U_t
         The unitary array of the covariance matrix.
     """
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
+    position_flat, _ = ravel_pytree(position)
+    logdensity_grad_flat, _ = ravel_pytree(logdensity_grad)
     return MarginalState(
-        position, logdensity, logdensity_grad, U_t @ position, U_t @ logdensity_grad
+        position,
+        logdensity,
+        logdensity_grad,
+        U_t @ position_flat,
+        U_t @ logdensity_grad_flat,
     )
 
 
@@ -175,6 +184,7 @@ def build_kernel(cov_svd: CovarianceSVD):
         y_key, u_key = jax.random.split(key, 2)
 
         position, logdensity, logdensity_grad, U_x, U_grad_x = state
+        position_flat, unravel_fn = ravel_pytree(position)
 
         # Update Gamma(delta)
         # TODO: Ideally, we could have a dichotomy, where we only update Gamma(delta) if delta changes,
@@ -185,13 +195,15 @@ def build_kernel(cov_svd: CovarianceSVD):
 
         # Propose a new y
         temp = Gamma_1 * (U_x / (0.5 * delta) + U_grad_x)
-        temp = temp + jnp.sqrt(Gamma_2) * jax.random.normal(y_key, position.shape)
-        y = U @ temp
+        temp = temp + jnp.sqrt(Gamma_2) * jax.random.normal(y_key, position_flat.shape)
+        y = unravel_fn(U @ temp)
 
         # Bookkeeping
         log_p_y, grad_y = jax.value_and_grad(logdensity_fn)(y)
-        U_y = U_t @ y
-        U_grad_y = U_t @ grad_y
+        y_flat, _ = ravel_pytree(y)
+        grad_y_flat, _ = ravel_pytree(grad_y)
+        U_y = U_t @ y_flat
+        U_grad_y = U_t @ grad_y_flat
 
         # Acceptance step
         temp_x = Gamma_1 * (U_x / (0.5 * delta) + 0.5 * U_grad_x)
@@ -215,7 +227,7 @@ def build_kernel(cov_svd: CovarianceSVD):
 def as_top_level_api(
     logdensity_fn: Callable,
     covariance: Optional[Array] = None,
-    mean: Optional[Array] = None,
+    mean: Optional[ArrayLikeTree] = None,
     cov_svd: Optional[CovarianceSVD] = None,
     step_size: float = 1.0,
 ) -> SamplingAlgorithm:

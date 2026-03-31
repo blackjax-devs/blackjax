@@ -70,7 +70,22 @@ def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Traj
 def reorder_trajectories(
     direction: int, trajectory: Trajectory, new_trajectory: Trajectory
 ) -> tuple[Trajectory, Trajectory]:
-    """Order the two trajectories depending on the direction."""
+    """Order two trajectories depending on the integration direction.
+
+    Parameters
+    ----------
+    direction
+        Integration direction: ``1`` for forward, ``-1`` for backward.
+    trajectory
+        The existing trajectory (from the previous expansion step).
+    new_trajectory
+        The newly sampled sub-trajectory.
+
+    Returns
+    -------
+    A ``(left_trajectory, right_trajectory)`` tuple ordered so that
+    ``left_trajectory`` precedes ``right_trajectory`` in time.
+    """
     return jax.lax.cond(
         direction > 0,
         lambda _: (
@@ -86,6 +101,20 @@ def reorder_trajectories(
 
 
 def merge_trajectories(left_trajectory: Trajectory, right_trajectory: Trajectory):
+    """Merge two trajectories into one by concatenating left and right.
+
+    Parameters
+    ----------
+    left_trajectory
+        The left (earlier) sub-trajectory.
+    right_trajectory
+        The right (later) sub-trajectory.
+
+    Returns
+    -------
+    A new Trajectory spanning from the leftmost state of ``left_trajectory``
+    to the rightmost state of ``right_trajectory``.
+    """
     momentum_sum = jax.tree.map(
         jnp.add, left_trajectory.momentum_sum, right_trajectory.momentum_sum
     )
@@ -109,7 +138,20 @@ def static_integration(
     integrator: Callable,
     direction: int = 1,
 ) -> Callable:
-    """Generate a trajectory by integrating several times in one direction."""
+    """Generate a trajectory by integrating several times in one direction.
+
+    Parameters
+    ----------
+    integrator
+        One-step symplectic integrator.
+    direction
+        Integration direction: ``1`` for forward, ``-1`` for backward.
+
+    Returns
+    -------
+    An ``integrate(initial_state, step_size, num_integration_steps)`` function
+    that returns the final IntegratorState after all steps.
+    """
 
     def integrate(
         initial_state: IntegratorState, step_size, num_integration_steps
@@ -157,6 +199,11 @@ def dynamic_progressive_integration(
         Value of the difference of energy between two consecutive states above
         which we say a transition is divergent.
 
+    Returns
+    -------
+    An ``integrate(rng_key, initial_state, direction, termination_state,
+    max_num_steps, step_size, initial_energy)`` function that returns
+    ``(proposal, new_trajectory, termination_state, is_diverging, has_terminated)``.
     """
     _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling
@@ -299,7 +346,7 @@ def dynamic_recursive_integration(
     until the termination criterion is met.
 
     This is the implementation of Algorithm 6 from :cite:p:`hoffman2014no` with
-    multinomial sampling. The implemenation here is mostly for validating the
+    multinomial sampling. The implementation here is mostly for validating the
     progressive implementation to make sure the two are equivalent. The recursive
     implementation should not be used for actually sampling as it cannot be jitted and
     thus likely slow.
@@ -319,6 +366,11 @@ def dynamic_recursive_integration(
         Bool to indicate whether to perform additional U turn check between two
         trajectory.
 
+    Returns
+    -------
+    A ``buildtree_integrate(rng_key, initial_state, direction, tree_depth,
+    step_size, initial_energy)`` function that returns
+    ``(rng_key, proposal, trajectory, is_diverging, is_turning)``.
     """
     _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling
@@ -491,14 +543,16 @@ def dynamic_multiplicative_expansion(
         and the integrated trajectory.
     uturn_check_fn
         Function used to check the U-Turn criterion.
-    step_size
-        The step size used by the symplectic integrator.
     max_num_expansions
         The maximum number of trajectory expansions until the proposal is returned.
     rate
         The rate of the geometrical expansion. Typically 2 in NUTS, this is why
         the literature often refers to "tree doubling".
 
+    Returns
+    -------
+    An ``expand(rng_key, initial_expansion_state, initial_energy, step_size)``
+    function that returns ``(expansion_state, (is_diverging, is_turning))``.
     """
     proposal_sampler = progressive_biased_sampling
 
@@ -618,6 +672,20 @@ def dynamic_multiplicative_expansion(
 
 
 def hmc_energy(kinetic_energy):
+    """Build the total HMC energy function from a kinetic energy function.
+
+    Parameters
+    ----------
+    kinetic_energy
+        A function that computes the kinetic energy given the momentum (and
+        optionally the position).
+
+    Returns
+    -------
+    An ``energy(state)`` function that returns the total energy
+    ``-logdensity + kinetic_energy(momentum)``.
+    """
+
     def energy(state):
         return -state.logdensity + kinetic_energy(
             state.momentum, position=state.position

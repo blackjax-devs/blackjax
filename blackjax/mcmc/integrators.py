@@ -149,11 +149,39 @@ def generalized_two_stage_integrator(
 
 
 def new_integrator_state(logdensity_fn, position, momentum):
+    """Create an IntegratorState from a position and momentum.
+
+    Parameters
+    ----------
+    logdensity_fn
+        Log-density function of the target distribution.
+    position
+        Current position in the parameter space.
+    momentum
+        Current momentum.
+
+    Returns
+    -------
+    An IntegratorState with position, momentum, logdensity, and logdensity_grad.
+    """
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
 
 def euclidean_position_update_fn(logdensity_fn: Callable):
+    """Build the position update operator for Euclidean HMC.
+
+    Parameters
+    ----------
+    logdensity_fn
+        Log-density function used to compute gradients after each position update.
+
+    Returns
+    -------
+    An ``update`` function with signature
+    ``(position, kinetic_grad, step_size, coef, auxiliary_info) ->
+    (new_position, logdensity, logdensity_grad, None)``.
+    """
     logdensity_and_grad_fn = jax.value_and_grad(logdensity_fn)
 
     def update(
@@ -176,6 +204,19 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
 
 
 def euclidean_momentum_update_fn(kinetic_energy_fn: KineticEnergy):
+    """Build the momentum update operator for Euclidean HMC.
+
+    Parameters
+    ----------
+    kinetic_energy_fn
+        Kinetic energy function whose gradient gives the velocity.
+
+    Returns
+    -------
+    An ``update`` function with signature
+    ``(momentum, logdensity_grad, step_size, coef, auxiliary_info, is_last_call) ->
+    (new_momentum, kinetic_grad, None)``.
+    """
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def update(
@@ -209,6 +250,15 @@ def format_euclidean_state_output(
     position_update_info,
     momentum_update_info,
 ):
+    """Format the output of a Euclidean integrator step into an IntegratorState.
+
+    Discards auxiliary integration info not needed for Euclidean dynamics.
+
+    Returns
+    -------
+    An IntegratorState with the updated position, momentum, logdensity, and
+    logdensity_grad.
+    """
     del kinetic_grad, position_update_info, momentum_update_info
     return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
@@ -216,8 +266,18 @@ def format_euclidean_state_output(
 def generate_euclidean_integrator(coefficients):
     """Generate symplectic integrator for solving a Hamiltonian system.
 
-    The resulting integrator is volume-preserve and preserves the symplectic structure
-    of phase space.
+    The resulting integrator is volume-preserving and preserves the symplectic
+    structure of phase space.
+
+    Parameters
+    ----------
+    coefficients
+        Palindromic list of alternating momentum/position update coefficients.
+
+    Returns
+    -------
+    A factory function ``euclidean_integrator(logdensity_fn, kinetic_energy_fn)``
+    that returns a one-step integrator ``(state, step_size) -> new_state``.
     """
 
     def euclidean_integrator(
@@ -312,6 +372,21 @@ def _normalized_flatten_array(x, tol=1e-13):
 
 
 def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
+    """Build the ESH dynamics momentum update operator.
+
+    Parameters
+    ----------
+    inverse_mass_matrix
+        Inverse mass matrix. Scalar or array.
+
+    Returns
+    -------
+    An ``update`` function implementing one ESH momentum update step.
+    The function signature is
+    ``(momentum, logdensity_grad, step_size, coef,
+    previous_kinetic_energy_change, is_last_call) ->
+    (new_momentum, kinetic_grad, kinetic_energy_change)``.
+    """
     sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
 
     def update(
@@ -367,6 +442,13 @@ def format_isokinetic_state_output(
     position_update_info,
     momentum_update_info,
 ):
+    """Format the output of an isokinetic integrator step.
+
+    Returns
+    -------
+    A tuple of ``(IntegratorState, momentum_update_info)`` where
+    ``momentum_update_info`` carries the accumulated kinetic energy change.
+    """
     del kinetic_grad, position_update_info
     return (
         IntegratorState(position, momentum, logdensity, logdensity_grad),
@@ -375,6 +457,20 @@ def format_isokinetic_state_output(
 
 
 def generate_isokinetic_integrator(coefficients):
+    """Generate an isokinetic (ESH-dynamics) integrator.
+
+    Parameters
+    ----------
+    coefficients
+        Palindromic list of alternating momentum/position update coefficients.
+
+    Returns
+    -------
+    A factory function ``isokinetic_integrator(logdensity_fn, inverse_mass_matrix)``
+    that returns a one-step integrator
+    ``(state, step_size) -> (new_state, kinetic_energy_change)``.
+    """
+
     def isokinetic_integrator(
         logdensity_fn: Callable, inverse_mass_matrix: ArrayTree = 1.0
     ) -> GeneralIntegrator:

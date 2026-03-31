@@ -1,0 +1,123 @@
+name: New algorithm / sampler proposal
+description: Propose a new sampling algorithm for inclusion in BlackJAX.
+title: "[Sampler] "
+labels: ["sampler proposal"]
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, search open **and closed** issues to avoid duplicates.
+        A proposal is more likely to be accepted if it includes a working JAX sketch or a reference implementation.
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Algorithm category
+      options:
+        - MCMC (gradient-based)
+        - MCMC (gradient-free)
+        - SMC
+        - VI
+        - SGMCMC
+        - Adaptation / tuning
+        - Diagnostic
+    validations:
+      required: true
+
+  - type: textarea
+    id: paper
+    attributes:
+      label: Paper reference
+      description: "Title, authors, year, venue, and a link (arXiv or DOI)."
+      placeholder: |
+        **Title:** Foo Sampler for Bayesian Inference
+        **Authors:** Smith et al.
+        **Year:** 2023
+        **Link:** https://arxiv.org/abs/...
+    validations:
+      required: true
+
+  - type: textarea
+    id: implementations
+    attributes:
+      label: Existing implementations
+      description: |
+        Links to any reference implementations (Python, Julia, JAX, etc.).
+        This is the single biggest factor in scoping effort — a clean NumPy/PyTorch reference
+        makes JAX translation straightforward; no reference means we design from scratch.
+      placeholder: |
+        - Official repo: https://github.com/...
+        - JAX port (partial): https://github.com/...
+        - None found
+    validations:
+      required: true
+
+  - type: textarea
+    id: benefit
+    attributes:
+      label: Benefit and motivation
+      description: |
+        Summarise what problem this algorithm solves and why it belongs in BlackJAX.
+        Concretely: on what class of targets does it outperform existing algorithms?
+      placeholder: |
+        Foo Sampler addresses ... unlike NUTS/HMC by ...
+        It is particularly useful when ...
+        Benchmark from the paper shows X% improvement on ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: comparison
+    attributes:
+      label: Comparison to existing BlackJAX algorithms
+      description: |
+        Is this strictly better, complementary, or for a different use case?
+        Which existing algorithm is the closest? Does it supersede anything?
+      placeholder: |
+        Closest existing algorithm: HMC / NUTS / MALA / ...
+        Advantage over it: ...
+        Limitation vs it: ...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: effort
+    attributes:
+      label: Estimated JAX implementation effort
+      description: |
+        Judge based on how much JAX-specific work is needed beyond the math:
+        - **S** — fits the existing 3-layer kernel pattern (`init`/`build_kernel`/`as_top_level_api`), only standard `jnp`/`jax.grad` ops needed
+        - **M** — requires `lax.scan` or `lax.while_loop`, non-trivial state, or a new `Info` struct
+        - **L** — requires custom gradients (`jax.custom_vjp`), new integrator/trajectory logic, or deep changes to existing modules
+        - **XL** — requires new infrastructure (e.g. new base class, new adaptation loop), significant design work before any code
+      options:
+        - "S — standard ops, fits existing pattern"
+        - "M — needs lax.scan / lax.while_loop or non-trivial state"
+        - "L — needs custom gradients or new integrator logic"
+        - "XL — requires new infrastructure or significant design work"
+    validations:
+      required: true
+
+  - type: textarea
+    id: jax_notes
+    attributes:
+      label: JAX-specific implementation notes
+      description: |
+        Any known JAX complications: dynamic shapes, Python-side control flow that must
+        become `lax.cond`/`lax.scan`, integer indexing, etc. Leave blank if unknown.
+      placeholder: |
+        - The algorithm has a variable-length trajectory → needs lax.while_loop
+        - Requires integer-valued state → no issues expected
+        - Uses rejection sampling → needs lax.while_loop or fixed max-iterations
+
+  - type: dropdown
+    id: pr
+    attributes:
+      label: Are you willing to open a PR?
+      options:
+        - "Yes — I can implement this"
+        - "Yes — but I need guidance on BlackJAX design patterns"
+        - "No — filing for community interest"
+    validations:
+      required: true

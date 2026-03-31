@@ -20,6 +20,7 @@ from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.vi._gaussian_vi import _elbo_step
 
 __all__ = [
     "MFVIState",
@@ -47,7 +48,20 @@ def init(
     *optimizer_args,
     **optimizer_kwargs,
 ) -> MFVIState:
-    """Initialize the mean-field VI state."""
+    """Initialize the mean-field VI state.
+
+    Parameters
+    ----------
+    position
+        Reference PyTree used to infer shapes; mean is initialized to zero,
+        log-scale ``rho`` to ``-2``.
+    optimizer
+        Optax optimizer whose state is initialized here.
+
+    Returns
+    -------
+    Initial MFVIState with zero mean, rho=-2, and optimizer state.
+    """
     mu = jax.tree.map(jnp.zeros_like, position)
     rho = jax.tree.map(lambda x: -2.0 * jnp.ones_like(x), position)
     opt_state = optimizer.init((mu, rho))
@@ -68,44 +82,66 @@ def step(
     ----------
     rng_key
         Key for JAX's pseudo-random number generator.
-    init_state
-        Initial state of the mean-field approximation.
+    state
+        Current state of the mean-field approximation.
     logdensity_fn
         Function that represents the target log-density to approximate.
     optimizer
-        Optax `GradientTransformation` to be used for optimization.
+        Optax ``GradientTransformation`` to be used for optimization.
     num_samples
         The number of samples that are taken from the approximation
         at each step to compute the Kullback-Leibler divergence between
         the approximation and the target log-density.
     stl_estimator
-        Whether to use stick-the-landing (STL) gradient estimator :cite:p:`roeder2017sticking` for gradient estimation.
-        The STL estimator has lower gradient variance by removing the score function term
-        from the gradient. It is suggested by :cite:p:`agrawal2020advances` to always keep it in order for better results.
+        Whether to use the stick-the-landing (STL) gradient estimator
+        :cite:p:`roeder2017sticking`. The STL estimator has lower gradient
+        variance by removing the score function term from the gradient.
+        :cite:p:`agrawal2020advances` recommend keeping it enabled.
 
+    Returns
+    -------
+    Updated MFVIState and MFVIInfo containing the ELBO value.
     """
 
     parameters = (state.mu, state.rho)
 
-    def kl_divergence_fn(parameters):
-        mu, rho = parameters
-        z = _sample(rng_key, mu, rho, num_samples)
-        if stl_estimator:
-            mu = jax.lax.stop_gradient(mu)
-            rho = jax.lax.stop_gradient(rho)
-        logq = jax.vmap(generate_meanfield_logdensity(mu, rho))(z)
-        logp = jax.vmap(logdensity_fn)(z)
-        return (logq - logp).mean()
+    def sample_fn(rng_key, parameters, num_samples):
+        return _sample(rng_key, parameters[0], parameters[1], num_samples)
 
-    elbo, elbo_grad = jax.value_and_grad(kl_divergence_fn)(parameters)
-    updates, new_opt_state = optimizer.update(elbo_grad, state.opt_state, parameters)
-    new_parameters = jax.tree.map(lambda p, u: p + u, parameters, updates)
+    def logq_fn(parameters):
+        return generate_meanfield_logdensity(parameters[0], parameters[1])
+
+    new_parameters, new_opt_state, elbo = _elbo_step(
+        rng_key,
+        parameters,
+        state.opt_state,
+        logdensity_fn,
+        optimizer,
+        sample_fn,
+        logq_fn,
+        num_samples,
+        stl_estimator,
+    )
     new_state = MFVIState(new_parameters[0], new_parameters[1], new_opt_state)
     return new_state, MFVIInfo(elbo)
 
 
 def sample(rng_key: PRNGKey, state: MFVIState, num_samples: int = 1):
-    """Sample from the mean-field approximation."""
+    """Sample from the mean-field approximation.
+
+    Parameters
+    ----------
+    rng_key
+        Key for JAX's pseudo-random number generator.
+    state
+        Current MFVIState containing the variational parameters.
+    num_samples
+        Number of samples to draw.
+
+    Returns
+    -------
+    A PyTree of samples with leading dimension ``num_samples``.
+    """
     return _sample(rng_key, state.mu, state.rho, num_samples)
 
 

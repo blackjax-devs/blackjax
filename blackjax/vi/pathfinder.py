@@ -18,6 +18,7 @@ import jax.numpy as jnp
 import jax.random
 from jax.flatten_util import ravel_pytree
 
+from blackjax.base import VIAlgorithm
 from blackjax.optimizers.lbfgs import (
     _minimize_lbfgs,
     bfgs_sample,
@@ -61,11 +62,6 @@ class PathfinderInfo(NamedTuple):
     """Extra information returned by the Pathfinder algorithm."""
 
     path: PathfinderState
-
-
-class PathFinderAlgorithm(NamedTuple):
-    approximate: Callable
-    sample: Callable
 
 
 def approximate(
@@ -242,7 +238,7 @@ def sample(
         return jax.vmap(unravel_fn)(phi), logq
 
 
-def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
+def as_top_level_api(logdensity_fn: Callable) -> VIAlgorithm:
     """Implements the (basic) user interface for the pathfinder kernel.
 
     Pathfinder locates normal approximations to the target density along a
@@ -251,8 +247,8 @@ def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
     Pathfinder returns draws from the approximation with the lowest estimated
     Kullback-Leibler (KL) divergence to the true posterior.
 
-    Note: all the heavy processing in performed in the init function, step
-    function is just a drawing a sample from a normal distribution
+    As Pathfinder is a one-shot algorithm, the returned ``VIAlgorithm.step``
+    is a no-op; all computation happens inside ``VIAlgorithm.init``.
 
     Parameters
     ----------
@@ -262,11 +258,11 @@ def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
 
     Returns
     -------
-    A ``VISamplingAlgorithm``.
+    A ``VIAlgorithm``.
 
     """
 
-    def approximate_fn(
+    def init_fn(
         rng_key: PRNGKey,
         position: ArrayLikeTree,
         num_samples: int = 200,
@@ -276,7 +272,11 @@ def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
             rng_key, logdensity_fn, position, num_samples, **lbfgs_parameters
         )
 
+    def step_fn(rng_key: PRNGKey, state: PathfinderState):
+        """Pathfinder is one-shot; this is a no-op for API compatibility."""
+        return state, PathfinderInfo(path=state)
+
     def sample_fn(rng_key: PRNGKey, state: PathfinderState, num_samples: int):
         return sample(rng_key, state, num_samples)
 
-    return PathFinderAlgorithm(approximate_fn, sample_fn)
+    return VIAlgorithm(init_fn, step_fn, sample_fn)

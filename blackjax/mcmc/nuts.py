@@ -211,6 +211,7 @@ def as_top_level_api(
 
     """
     kernel = build_kernel(integrator, divergence_threshold)
+    metric = metrics.default_metric(inverse_mass_matrix)
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
         del rng_key
@@ -222,7 +223,7 @@ def as_top_level_api(
             state,
             logdensity_fn,
             step_size,
-            inverse_mass_matrix,
+            metric,
             max_num_doublings,
         )
 

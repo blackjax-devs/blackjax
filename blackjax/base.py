@@ -114,20 +114,22 @@ class SamplingAlgorithm(NamedTuple):
 
 
 class VIAlgorithm(NamedTuple):
-    """A pair of functions that represents a Variational Inference algorithm.
+    """A trio of functions that represents a Variational Inference algorithm.
 
-    Blackjax variational inference algorithms are implemented as a pair of pure
-    functions: an approximator, which takes a target probability density (and
-    potentially a guide), and a sampling function that uses the approximation to
-    draw samples.
+    Blackjax variational inference algorithms are implemented as three pure
+    functions: an initializer, an update step, and a sampler.
 
-    approximate
-        A pure function, which when called with an initial position (and
-        potentially a guide function) returns a state that allows to build
-        an approximation to the target probability density function.
+    init
+        A pure function which initializes the VI state from an initial position.
+        For iterative algorithms (e.g. mean-field VI) this sets up the optimizer
+        state. For one-shot algorithms (e.g. Pathfinder) this builds the full
+        approximation.
+    step
+        A pure function that advances the VI approximation by one step, taking
+        a rng key and the current state and returning an updated state and
+        diagnostic info. For one-shot algorithms this is a no-op.
     sample
-        A pure function which returns samples from the approximation computed
-        by `approximate`.
+        A pure function that draws samples from the current approximation.
 
     """
 

@@ -38,7 +38,7 @@ jobs:
         venv-wheel/bin/python -m pip install ../dist/blackjax-*.whl
         venv-wheel/bin/python -c "import blackjax"
     - name: Publish to PyPi
-      uses: pypa/gh-action-pypi-publish@v1.4.2
+      uses: pypa/gh-action-pypi-publish@v1.13.0
       with:
         user: __token__
         password: ${{ secrets.PYPI_TOKEN }}

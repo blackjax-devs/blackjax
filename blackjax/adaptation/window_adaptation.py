@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
+import inspect
 from typing import Callable, NamedTuple
 
 import jax
@@ -296,7 +297,10 @@ def window_adaptation(
 
     """
 
-    mcmc_kernel = algorithm.build_kernel(integrator)
+    if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
+        mcmc_kernel = algorithm.build_kernel(integrator)
+    else:
+        mcmc_kernel = algorithm.build_kernel()
 
     adapt_init, adapt_step, adapt_final = base(
         is_mass_matrix_diagonal,

@@ -14,7 +14,7 @@ from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .mcmc import adjusted_mclmc as _adjusted_mclmc
 from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
-from .mcmc import barker
+from .mcmc import barker as _barker
 from .mcmc import dikin as _dikin
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import ehr as _ehr
@@ -49,11 +49,12 @@ from .smc import partial_posteriors_path as _partial_posteriors_smc
 from .smc import persistent_sampling
 from .smc import pretuning as _pretuning
 from .smc import tempered
+from .vi import fullrank_vi as _fullrank_vi
 from .vi import meanfield_vi as _meanfield_vi
+from .vi import multipathfinder as _multipathfinder
 from .vi import pathfinder as _pathfinder
 from .vi import schrodinger_follmer as _schrodinger_follmer
 from .vi import svgd as _svgd
-from .vi.pathfinder import PathFinderAlgorithm
 
 """
 The above three classes exist as a backwards compatible way of exposing both the high level, differentiable
@@ -92,7 +93,7 @@ class GeneratePathfinderAPI:
     approximate: Callable
     sample: Callable
 
-    def __call__(self, *args, **kwargs) -> PathFinderAlgorithm:
+    def __call__(self, *args, **kwargs) -> VIAlgorithm:
         return self.differentiable(*args, **kwargs)
 
 
@@ -131,7 +132,8 @@ adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
 adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
 ghmc = generate_top_level_api_from(_ghmc)
-barker_proposal = generate_top_level_api_from(barker)
+barker = generate_top_level_api_from(_barker)
+barker_proposal = barker  # backwards-compatible alias
 
 posdep_rwmh = generate_top_level_api_from(_posdep_rwmh)
 
@@ -164,6 +166,12 @@ csgld = generate_top_level_api_from(_csgld)
 svgd = generate_top_level_api_from(_svgd)
 
 # variational inference
+fullrank_vi = GenerateVariationalAPI(
+    _fullrank_vi.as_top_level_api,
+    _fullrank_vi.init,
+    _fullrank_vi.step,
+    _fullrank_vi.sample,
+)
 meanfield_vi = GenerateVariationalAPI(
     _meanfield_vi.as_top_level_api,
     _meanfield_vi.init,
@@ -181,6 +189,8 @@ pathfinder = GeneratePathfinderAPI(
     _pathfinder.as_top_level_api, _pathfinder.approximate, _pathfinder.sample
 )
 
+multipathfinder = _multipathfinder.as_top_level_api
+
 
 __all__ = [
     "__version__",
@@ -194,4 +204,5 @@ __all__ = [
     "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
     "ess",  # diagnostics
     "rhat",
+    "multipathfinder",
 ]

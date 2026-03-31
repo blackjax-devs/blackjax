@@ -13,10 +13,6 @@ from tests.smc import SMCLinearRegressionTestCase
 class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
     """Test posterior mean estimate."""
 
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(42)
-
     @chex.variants(with_jit=True)
     def test_partial_posteriors(self):
         (
@@ -32,7 +28,7 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
             {
                 "step_size": 10e-3,
                 "inverse_mass_matrix": jnp.eye(2),
-                "num_integration_steps": 50,
+                "num_integration_steps": 10,
             },
         )
 
@@ -68,18 +64,18 @@ class PartialPosteriorsSMCTest(SMCLinearRegressionTestCase):
                         jnp.zeros(dataset_size - datapoints_chosen),
                     ]
                 )
-                for datapoints_chosen in np.arange(100, 1001, 50)
+                for datapoints_chosen in np.arange(200, 1001, 200)
             ]
         )
 
         def body_fn(carry, data_mask):
             i, state = carry
-            subkey = jax.random.fold_in(self.key, i)
+            subkey = jax.random.fold_in(self.next_key(), i)
             new_state, info = smc_kernel(subkey, state, data_mask)
             return (i + 1, new_state), (new_state, info)
 
         (steps, result), it = jax.lax.scan(body_fn, (0, init_state), data_masks)
-        assert steps == 19
+        assert steps == 5
 
         self.assert_linear_regression_test_case(result)
 

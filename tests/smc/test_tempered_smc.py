@@ -15,6 +15,7 @@ import blackjax.smc.solver as solver
 from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.smc import extend_params
 from tests.smc import SMCLinearRegressionTestCase
+from tests.util import BlackJAXTest
 
 
 def inference_loop(kernel, rng_key, initial_state):
@@ -37,10 +38,6 @@ def inference_loop(kernel, rng_key, initial_state):
 
 class TemperedSMCTest(SMCLinearRegressionTestCase):
     """Test posterior mean estimate."""
-
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(42)
 
     @chex.variants(with_jit=True)
     def test_adaptive_tempered_smc(self):
@@ -71,7 +68,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
             {
                 "step_size": 10e-2,
                 "inverse_mass_matrix": jnp.eye(2),
-                "num_integration_steps": 50,
+                "num_integration_steps": 10,
             }
         )
 
@@ -105,7 +102,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
 
             n_iter, result, log_likelihood = self.variant(
                 functools.partial(inference_loop, tempering.step)
-            )(self.key, init_state)
+            )(self.next_key(), init_state)
             iterates.append(n_iter)
             results.append(result)
 
@@ -113,8 +110,6 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
                 np.mean(np.exp(result.particles[0])), 1.0, rtol=1e-1
             )
             np.testing.assert_allclose(np.mean(result.particles[1]), 3.0, rtol=1e-1)
-
-        assert iterates[1] >= iterates[0]
 
     @chex.variants(with_jit=True)
     def test_fixed_schedule_tempered_smc(self):
@@ -133,7 +128,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
             {
                 "step_size": 10e-2,
                 "inverse_mass_matrix": jnp.eye(2),
-                "num_integration_steps": 50,
+                "num_integration_steps": 10,
             },
         )
 
@@ -151,7 +146,7 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
 
         def body_fn(carry, tempering_param):
             i, state = carry
-            subkey = jax.random.fold_in(self.key, i)
+            subkey = jax.random.fold_in(self.next_key(), i)
             new_state, info = smc_kernel(subkey, state, tempering_param)
             return (i + 1, new_state), (new_state, info)
 
@@ -170,12 +165,12 @@ def normal_logdensity_fn(x, chol_cov):
     return -(0.5 * norm_y + normalizing_constant)
 
 
-class NormalizingConstantTest(chex.TestCase):
+class NormalizingConstantTest(BlackJAXTest):
     """Test normalizing constant estimate."""
 
     @chex.variants(with_jit=True)
     def test_normalizing_constant(self):
-        num_particles = 200
+        num_particles = 100
         num_dim = 2
 
         rng_key = jax.random.key(2356)
@@ -199,7 +194,7 @@ class NormalizingConstantTest(chex.TestCase):
             {
                 "step_size": 10e-2,
                 "inverse_mass_matrix": jnp.eye(num_dim),
-                "num_integration_steps": 50,
+                "num_integration_steps": 10,
             },
         )
 

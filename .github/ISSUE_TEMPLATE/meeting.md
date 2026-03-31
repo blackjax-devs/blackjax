@@ -1,15 +1,18 @@
 ---
-name: Blackjax Meeting
-about: Blackjax public meeting
-title: '👋 Blackjax Meeting - {{ MONTH }}'
+name: BlackJAX Meeting
+about: Track agenda for the next public BlackJAX meeting.
+title: "👋 BlackJAX Meeting — {{ MONTH }} {{ YEAR }}"
 labels: meeting
-assignees: ''
 ---
 
-Hello! This is an issue to track the next Blackjax meeting. Here's some relevant information:
+Hello! This issue tracks the next BlackJAX public meeting.
 
-- **Date**: Paris time at **5:00PM on the FIRST Friday of the month**
-- [**Google Calendar Link**](https://calendar.google.com/calendar/u/0?cid=MDVlMzVkODQyYzJmZDc1YjkxZjFmNTExYWJlNmVjYzhiYjM2NDk3OWYxMTFjOWVkNzhkYzliN2Y3MDk3YTc0M0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t).
-- [**Video Link**](https://meet.google.com/ack-uozu-xww)
+- **When:** 5:00 PM Paris time, first Friday of the month
+- **Calendar:** [Google Calendar](https://calendar.google.com/calendar/u/0?cid=MDVlMzVkODQyYzJmZDc1YjkxZjFmNTExYWJlNmVjYzhiYjM2NDk3OWYxMTFjOWVkNzhkYzliN2Y3MDk3YTc0M0Bncm91cC5jYWxlbmRhci5nb29nbGUuY29t)
+- **Video call:** [Google Meet](https://meet.google.com/ack-uozu-xww)
 
-These meetings are public and can be attended by anyone. If you'd like to discuss something at the meeting, we kindly ask you to comment on this issue beforehand.
+These meetings are open to everyone. If you'd like to add something to the agenda, please comment below before the meeting.
+
+## Agenda
+
+<!-- Add agenda items as comments or edit this section -->
