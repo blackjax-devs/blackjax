@@ -7,6 +7,7 @@ import optax
 from absl.testing import absltest
 
 import blackjax
+from blackjax.vi._gaussian_vi import _objective_value_from_log_ratio
 from blackjax.vi.meanfield_vi import (
     KL,
     MFVIState,
@@ -168,6 +169,21 @@ class MFVIUnitTest(BlackJAXTest):
                 objective=RenyiAlpha(alpha=0.5),
                 stl_estimator=True,
             )
+
+    def test_objective_value_renyi_alpha_one_matches_kl(self):
+        """RenyiAlpha(alpha=1.0) should recover the KL objective."""
+        log_ratio = jnp.array([1.0, 2.0, 3.0])
+
+        value = _objective_value_from_log_ratio(log_ratio, RenyiAlpha(alpha=1.0))
+
+        self.assertAlmostEqual(float(value), 2.0)
+
+    def test_objective_value_invalid_objective_raises(self):
+        """Unsupported objective types should raise TypeError."""
+        log_ratio = jnp.array([1.0, 2.0, 3.0])
+
+        with self.assertRaises(TypeError):
+            _objective_value_from_log_ratio(log_ratio, object())
 
 
 class MFVITest(BlackJAXTest):
