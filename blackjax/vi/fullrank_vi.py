@@ -21,9 +21,11 @@ from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.vi._gaussian_vi import _elbo_step
+from blackjax.vi._gaussian_vi import KL, Objective, RenyiAlpha, _elbo_step
 
 __all__ = [
+    "KL",
+    "RenyiAlpha",
     "FRVIState",
     "FRVIInfo",
     "sample",
@@ -88,6 +90,7 @@ def step(
     logdensity_fn: Callable,
     optimizer: GradientTransformation,
     num_samples: int = 5,
+    objective: Objective = KL(),
     stl_estimator: bool = True,
 ) -> tuple[FRVIState, FRVIInfo]:
     """Approximate the target density using the full-rank Gaussian approximation.
@@ -106,6 +109,9 @@ def step(
         The number of samples that are taken from the approximation
         at each step to compute the Kullback-Leibler divergence between
         the approximation and the target log-density.
+    objective:
+        The variational objective to minimize. `KL()` by default or
+        `RenyiAlpha(alpha)`. For alpha = 1, Renyi reduces to KL.
     stl_estimator
         Whether to use the stick-the-landing (STL) gradient estimator
         :cite:p:`roeder2017sticking`. Reduces gradient variance by removing
@@ -137,7 +143,8 @@ def step(
         sample_fn,
         logq_fn,
         num_samples,
-        stl_estimator,
+        objective=objective,
+        stl_estimator=stl_estimator,
     )
     new_state = FRVIState(new_parameters[0], new_parameters[1], new_opt_state)
     return new_state, FRVIInfo(elbo)
@@ -168,6 +175,8 @@ def as_top_level_api(
     logdensity_fn: Callable,
     optimizer: GradientTransformation,
     num_samples: int = 100,
+    objective: Objective = KL(),
+    stl_estimator: bool = True,
 ):
     """High-level implementation of Full-Rank Variational Inference.
 
@@ -180,6 +189,12 @@ def as_top_level_api(
         Optax optimizer to use to optimize the ELBO.
     num_samples
         Number of samples to take at each step to optimize the ELBO.
+    objective
+        The variational objective to minimize. `KL()` by default or
+        `RenyiAlpha(alpha)`. For alpha = 1, Renyi reduces to KL.
+    stl_estimator
+        Whether to use STL gradient estimator.
+        Only supported when `objective` is `KL()` or `RenyiAlpha(alpha=1.0)`.
 
     Returns
     -------
@@ -191,7 +206,15 @@ def as_top_level_api(
         return init(position, optimizer)
 
     def step_fn(rng_key: PRNGKey, state: FRVIState) -> tuple[FRVIState, FRVIInfo]:
-        return step(rng_key, state, logdensity_fn, optimizer, num_samples)
+        return step(
+            rng_key,
+            state,
+            logdensity_fn,
+            optimizer,
+            num_samples,
+            objective=objective,
+            stl_estimator=stl_estimator,
+        )
 
     def sample_fn(rng_key: PRNGKey, state: FRVIState, num_samples: int):
         return sample(rng_key, state, num_samples)

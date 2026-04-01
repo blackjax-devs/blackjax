@@ -20,9 +20,11 @@ from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.vi._gaussian_vi import _elbo_step
+from blackjax.vi._gaussian_vi import KL, Objective, RenyiAlpha, _elbo_step
 
 __all__ = [
+    "KL",
+    "RenyiAlpha",
     "MFVIState",
     "MFVIInfo",
     "sample",
@@ -74,6 +76,7 @@ def step(
     logdensity_fn: Callable,
     optimizer: GradientTransformation,
     num_samples: int = 5,
+    objective: Objective = KL(),
     stl_estimator: bool = True,
 ) -> tuple[MFVIState, MFVIInfo]:
     """Approximate the target density using the mean-field approximation.
@@ -92,6 +95,9 @@ def step(
         The number of samples that are taken from the approximation
         at each step to compute the Kullback-Leibler divergence between
         the approximation and the target log-density.
+    objective
+        The variational objective to minimize. `KL()` by default or
+        `RenyiAlpha(alpha)`. For alpha = 1, Renyi reduces to KL.
     stl_estimator
         Whether to use the stick-the-landing (STL) gradient estimator
         :cite:p:`roeder2017sticking`. The STL estimator has lower gradient
@@ -120,7 +126,8 @@ def step(
         sample_fn,
         logq_fn,
         num_samples,
-        stl_estimator,
+        objective=objective,
+        stl_estimator=stl_estimator,
     )
     new_state = MFVIState(new_parameters[0], new_parameters[1], new_opt_state)
     return new_state, MFVIInfo(elbo)
@@ -140,7 +147,7 @@ def sample(rng_key: PRNGKey, state: MFVIState, num_samples: int = 1):
 
     Returns
     -------
-    A PyTree of samples with leading dimension ``num_samples``.
+    A PyTree of samples with leading dimension ``num_samples``
     """
     return _sample(rng_key, state.mu, state.rho, num_samples)
 
@@ -149,18 +156,26 @@ def as_top_level_api(
     logdensity_fn: Callable,
     optimizer: GradientTransformation,
     num_samples: int = 100,
+    objective: Objective = KL(),
+    stl_estimator: bool = True,
 ):
-    """High-level implementation of Mean-Field Variational Inference.
+    """High-level implementation of Mean-Field Variational Inference
 
-    Parameters
+     Parameters
     ----------
     logdensity_fn
         A function that represents the log-density function associated with
         the distribution we want to sample from.
     optimizer
-        Optax optimizer to use to optimize the ELBO.
+        Optax optimizer to use to optimize the variational objective.
     num_samples
         Number of samples to take at each step to optimize the ELBO.
+    objective
+        The variational objective to minimize. `KL()` by default or
+        `RenyiAlpha(alpha)`. For a = 1, Renyi reduces to KL.
+    stl_estimator
+        Whether to use the STL gradient estimator.
+        Only supported when `objective` is `KL()` or `RenyiAlpha(alpha=1.0)`.
 
     Returns
     -------
@@ -172,7 +187,15 @@ def as_top_level_api(
         return init(position, optimizer)
 
     def step_fn(rng_key: PRNGKey, state: MFVIState) -> tuple[MFVIState, MFVIInfo]:
-        return step(rng_key, state, logdensity_fn, optimizer, num_samples)
+        return step(
+            rng_key,
+            state,
+            logdensity_fn,
+            optimizer,
+            num_samples,
+            objective=objective,
+            stl_estimator=stl_estimator,
+        )
 
     def sample_fn(rng_key: PRNGKey, state: MFVIState, num_samples: int):
         return sample(rng_key, state, num_samples)

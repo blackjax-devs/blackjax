@@ -8,7 +8,9 @@ from absl.testing import absltest
 
 import blackjax
 from blackjax.vi.meanfield_vi import (
+    KL,
     MFVIState,
+    RenyiAlpha,
     generate_meanfield_logdensity,
     init,
     sample,
@@ -119,6 +121,54 @@ class MFVIUnitTest(BlackJAXTest):
         )
         assert jnp.isfinite(info.elbo)
 
+    def test_step_with_kl_objective(self):
+        """MFVI step works explicitly with KL()."""
+        position = jnp.zeros(2)
+        state = init(position, self.optimizer)
+
+        new_state, info = step(
+            self.next_key(),
+            state,
+            std_normal_logdensity,
+            self.optimizer,
+            objective=KL(),
+        )
+
+        self.assertIsInstance(new_state, MFVIState)
+        assert jnp.isfinite(info.elbo)
+
+    def test_step_with_renyi_objective(self):
+        """MFVI step works with RenyiAlpha(alpha=n) when STL is False."""
+        position = jnp.zeros(2)
+        state = init(position, self.optimizer)
+
+        new_state, info = step(
+            self.next_key(),
+            state,
+            std_normal_logdensity,
+            self.optimizer,
+            objective=RenyiAlpha(alpha=0.5),
+            stl_estimator=False,
+        )
+
+        self.assertIsInstance(new_state, MFVIState)
+        assert jnp.isfinite(info.elbo)
+
+    def test_renyi_with_stl_raises(self):
+        """MFVI should raise error STL for RenyiAlpha(alpha != 1)."""
+        position = jnp.zeros(2)
+        state = init(position, self.optimizer)
+
+        with self.assertRaises(ValueError):
+            step(
+                self.next_key(),
+                state,
+                std_normal_logdensity,
+                self.optimizer,
+                objective=RenyiAlpha(alpha=0.5),
+                stl_estimator=True,
+            )
+
 
 class MFVITest(BlackJAXTest):
     def test_recover_posterior(self):
@@ -155,6 +205,23 @@ class MFVITest(BlackJAXTest):
         self.assertAlmostEqual(scale_1, ground_truth[0][1], delta=0.01)
         self.assertAlmostEqual(loc_2, ground_truth[1][0], delta=0.01)
         self.assertAlmostEqual(scale_2, ground_truth[1][1], delta=0.01)
+
+    def test_top_level_api_with_renyi(self):
+        def logdensity_fn(x):
+            return -0.5 * jnp.sum(x**2)
+
+        optimizer = optax.adam(1e-2)
+        algo = blackjax.meanfield_vi(
+            logdensity_fn,
+            optimizer,
+            20,
+            objective=RenyiAlpha(alpha=0.5),
+            stl_estimator=False,
+        )
+
+        state = algo.init(jnp.zeros(2))
+        state, info = algo.step(self.next_key(), state)
+        assert jnp.isfinite(info.elbo)
 
 
 if __name__ == "__main__":
