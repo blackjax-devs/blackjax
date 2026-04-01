@@ -39,7 +39,6 @@ dependencies = [
     "optax>=0.2.3",
     "scipy>=1.13",
     "typing-extensions>=4.4.0",
-    "tfp-nightly[jax]",
 ]
 dynamic = ["version"]
 
