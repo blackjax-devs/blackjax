@@ -24,9 +24,9 @@ from blackjax.smc.tuning.from_particles import (
     particles_means,
     particles_stds,
 )
+from tests.fixtures import BlackJAXTest
 from tests.mcmc.test_sampling import irmh_proposal_distribution
 from tests.smc import SMCLinearRegressionTestCase
-from tests.util import BlackJAXTest
 
 
 class MultivariableParticlesDistribution:

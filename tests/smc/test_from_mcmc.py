@@ -22,7 +22,7 @@ import blackjax
 import blackjax.smc.resampling as resampling
 from blackjax.smc.base import SMCState, init
 from blackjax.smc.from_mcmc import build_kernel, unshared_parameters_and_step_fn
-from tests.util import BlackJAXTest, std_normal_logdensity
+from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
 # unshared_parameters_and_step_fn

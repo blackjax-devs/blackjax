@@ -7,7 +7,7 @@ import jax.scipy.stats as stats
 from absl.testing import absltest
 
 from blackjax.vi.schrodinger_follmer import as_top_level_api as schrodinger_follmer
-from tests.util import BlackJAXTest
+from tests.fixtures import BlackJAXTest
 
 
 class SchrodingerFollmerTest(BlackJAXTest):

@@ -14,8 +14,8 @@ from blackjax.smc.pretuning import (
     init,
     update_parameter_distribution,
 )
+from tests.fixtures import BlackJAXTest
 from tests.smc import SMCLinearRegressionTestCase
-from tests.util import BlackJAXTest
 
 
 class TestMeasureOfChainMixing(unittest.TestCase):

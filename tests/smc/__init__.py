@@ -2,7 +2,7 @@ import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 
-from tests.util import BlackJAXTest
+from tests.fixtures import BlackJAXTest
 
 
 class SMCLinearRegressionTestCase(BlackJAXTest):

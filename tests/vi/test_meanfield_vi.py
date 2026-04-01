@@ -14,7 +14,7 @@ from blackjax.vi.meanfield_vi import (
     sample,
     step,
 )
-from tests.util import BlackJAXTest, std_normal_logdensity
+from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 
 class MFVIUnitTest(BlackJAXTest):

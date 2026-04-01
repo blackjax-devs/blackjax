@@ -26,7 +26,7 @@ from blackjax.vi.fullrank_vi import (
     sample,
     step,
 )
-from tests.util import BlackJAXTest, std_normal_logdensity
+from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 
 class FRVIUnitTest(BlackJAXTest):

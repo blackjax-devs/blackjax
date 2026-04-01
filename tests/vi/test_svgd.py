@@ -16,7 +16,7 @@ from blackjax.vi.svgd import (
     rbf_kernel,
     update_median_heuristic,
 )
-from tests.util import BlackJAXTest
+from tests.fixtures import BlackJAXTest
 
 
 class SVGDUnitTest(BlackJAXTest):

@@ -14,8 +14,8 @@ import blackjax.smc.resampling as resampling
 import blackjax.smc.solver as solver
 from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.smc import extend_params
+from tests.fixtures import BlackJAXTest
 from tests.smc import SMCLinearRegressionTestCase
-from tests.util import BlackJAXTest
 
 
 def inference_loop(kernel, rng_key, initial_state):
