@@ -45,6 +45,7 @@ import inspect
 from typing import Callable, NamedTuple
 
 import jax
+import jax.flatten_util as fu
 import jax.numpy as jnp
 
 import blackjax.mcmc as mcmc
@@ -348,8 +349,6 @@ def base(
         state: LowRankAdaptationState,
     ) -> LowRankAdaptationState:
         """Slow window: adapt step size and accumulate draws/grads in buffer."""
-        import jax.flatten_util as fu
-
         pos_flat, _ = fu.ravel_pytree(position)
         grad_flat, _ = fu.ravel_pytree(grad)
         B = state.draws_buffer.shape[0]
@@ -495,8 +494,12 @@ def low_rank_window_adaptation(
     An ``AdaptationAlgorithm`` whose ``run`` method returns
     ``(AdaptationResults, info)``.  ``AdaptationResults.parameters`` contains
     ``step_size``, ``inverse_mass_matrix`` (a :func:`gaussian_euclidean_low_rank`
-    ``Metric`` object), ``mu_star`` (the optimal translation ``x̄ + σ²⊙ᾱ``),
-    and any ``extra_parameters``.
+    ``Metric`` object), and any ``extra_parameters``.
+    ``AdaptationResults.state`` is re-initialised at the optimal translation
+    μ* = x̄ + σ²⊙ᾱ, so it can be passed directly as the starting state for
+    production sampling.  The last chain state from warmup is available as
+    ``warmup_info[-1].state``, and μ* as
+    ``warmup_info[-1].adaptation_state.mu_star``.
     """
     if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
         mcmc_kernel = algorithm.build_kernel(integrator)
@@ -565,15 +568,19 @@ def low_rank_window_adaptation(
             (init_state, init_adaptation_state),
             (jnp.arange(num_steps), keys, schedule),
         )
-        last_chain_state, last_warmup_state, *_ = last_state
+        _, last_warmup_state, *_ = last_state
         step_size, sigma, mu_star, U, lam = adapt_final(last_warmup_state)
         metric = gaussian_euclidean_low_rank(sigma, U, lam)
         parameters = {
             "step_size": step_size,
             "inverse_mass_matrix": metric,
-            "mu_star": mu_star,
             **extra_parameters,
         }
-        return AdaptationResults(last_chain_state, parameters), info
+        # Re-initialise chain state at the optimal translation μ* = x̄ + σ²⊙ᾱ.
+        # mu_star is flat (d,); unravel to the original position pytree structure
+        # before passing to algorithm.init.
+        _, unravel = fu.ravel_pytree(position)
+        mu_star_state = algorithm.init(unravel(mu_star), logdensity_fn)
+        return AdaptationResults(mu_star_state, parameters), info
 
     return AdaptationAlgorithm(run)

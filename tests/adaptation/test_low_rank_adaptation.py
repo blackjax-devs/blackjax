@@ -169,19 +169,19 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
         (state, params), _ = warmup.run(self.next_key(), jnp.ones(5), num_steps=200)
         self.assertIn("step_size", params)
         self.assertIn("inverse_mass_matrix", params)
-        self.assertIn("mu_star", params)
-        self.assertEqual(params["mu_star"].shape, (5,))
+        self.assertNotIn("mu_star", params)
+        self.assertEqual(state.position.shape, (5,))
 
     def test_mu_star_recovers_posterior_mean(self):
-        """μ* should be close to the true posterior mean after warmup."""
+        """State position (= μ*) should be close to the true posterior mean after warmup."""
         d = 6
         true_mean = jnp.array([2.0, -1.0, 0.5, -0.5, 1.5, -2.0])
         logdensity_fn = lambda x: -0.5 * jnp.sum((x - true_mean) ** 2)
         warmup = blackjax.low_rank_window_adaptation(
             blackjax.nuts, logdensity_fn, max_rank=3
         )
-        (_, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=500)
-        np.testing.assert_allclose(params["mu_star"], true_mean, atol=0.2)
+        (state, _), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=500)
+        np.testing.assert_allclose(state.position, true_mean, atol=0.2)
 
     def test_step_size_positive(self):
         """Adapted step size is strictly positive."""
@@ -212,8 +212,10 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
             warmup = blackjax.low_rank_window_adaptation(
                 blackjax.nuts, logdensity_fn, max_rank=max_rank
             )
-            (_, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=200)
-            self.assertEqual(params["mu_star"].shape, (d,))
+            (state, params), _ = warmup.run(
+                self.next_key(), jnp.zeros(d), num_steps=200
+            )
+            self.assertEqual(state.position.shape, (d,))
 
 
 if __name__ == "__main__":
