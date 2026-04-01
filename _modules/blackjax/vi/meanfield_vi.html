@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g08f5a428b" />
+  <meta name="docsearch:version" content="0.1.dev1+gffca7c89e" />
   </head>
   
   
@@ -391,9 +391,11 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">VIAlgorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.vi._gaussian_vi</span><span class="w"> </span><span class="kn">import</span> <span class="n">_elbo_step</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.vi._gaussian_vi</span><span class="w"> </span><span class="kn">import</span> <span class="n">KL</span><span class="p">,</span> <span class="n">Objective</span><span class="p">,</span> <span class="n">RenyiAlpha</span><span class="p">,</span> <span class="n">_elbo_step</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;KL&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RenyiAlpha&quot;</span><span class="p">,</span>
     <span class="s2">&quot;MFVIState&quot;</span><span class="p">,</span>
     <span class="s2">&quot;MFVIInfo&quot;</span><span class="p">,</span>
     <span class="s2">&quot;sample&quot;</span><span class="p">,</span>
@@ -465,6 +467,7 @@
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">GradientTransformation</span><span class="p">,</span>
     <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span> <span class="o">=</span> <span class="n">KL</span><span class="p">(),</span>
     <span class="n">stl_estimator</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MFVIState</span><span class="p">,</span> <span class="n">MFVIInfo</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Approximate the target density using the mean-field approximation.</span>
@@ -483,6 +486,9 @@
 <span class="sd">        The number of samples that are taken from the approximation</span>
 <span class="sd">        at each step to compute the Kullback-Leibler divergence between</span>
 <span class="sd">        the approximation and the target log-density.</span>
+<span class="sd">    objective</span>
+<span class="sd">        The variational objective to minimize. `KL()` by default or</span>
+<span class="sd">        `RenyiAlpha(alpha)`. For alpha = 1, Renyi reduces to KL.</span>
 <span class="sd">    stl_estimator</span>
 <span class="sd">        Whether to use the stick-the-landing (STL) gradient estimator</span>
 <span class="sd">        :cite:p:`roeder2017sticking`. The STL estimator has lower gradient</span>
@@ -511,7 +517,8 @@
         <span class="n">sample_fn</span><span class="p">,</span>
         <span class="n">logq_fn</span><span class="p">,</span>
         <span class="n">num_samples</span><span class="p">,</span>
-        <span class="n">stl_estimator</span><span class="p">,</span>
+        <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+        <span class="n">stl_estimator</span><span class="o">=</span><span class="n">stl_estimator</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">new_state</span> <span class="o">=</span> <span class="n">MFVIState</span><span class="p">(</span><span class="n">new_parameters</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">new_parameters</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">new_opt_state</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">MFVIInfo</span><span class="p">(</span><span class="n">elbo</span><span class="p">)</span></div>
@@ -534,7 +541,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A PyTree of samples with leading dimension ``num_samples``.</span>
+<span class="sd">    A PyTree of samples with leading dimension ``num_samples``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">_sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">rho</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span></div>
 
@@ -546,18 +553,26 @@
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">optimizer</span><span class="p">:</span> <span class="n">GradientTransformation</span><span class="p">,</span>
     <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">objective</span><span class="p">:</span> <span class="n">Objective</span> <span class="o">=</span> <span class="n">KL</span><span class="p">(),</span>
+    <span class="n">stl_estimator</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;High-level implementation of Mean-Field Variational Inference.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;High-level implementation of Mean-Field Variational Inference</span>
 
-<span class="sd">    Parameters</span>
+<span class="sd">     Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn</span>
 <span class="sd">        A function that represents the log-density function associated with</span>
 <span class="sd">        the distribution we want to sample from.</span>
 <span class="sd">    optimizer</span>
-<span class="sd">        Optax optimizer to use to optimize the ELBO.</span>
+<span class="sd">        Optax optimizer to use to optimize the variational objective.</span>
 <span class="sd">    num_samples</span>
 <span class="sd">        Number of samples to take at each step to optimize the ELBO.</span>
+<span class="sd">    objective</span>
+<span class="sd">        The variational objective to minimize. `KL()` by default or</span>
+<span class="sd">        `RenyiAlpha(alpha)`. For a = 1, Renyi reduces to KL.</span>
+<span class="sd">    stl_estimator</span>
+<span class="sd">        Whether to use the STL gradient estimator.</span>
+<span class="sd">        Only supported when `objective` is `KL()` or `RenyiAlpha(alpha=1.0)`.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -569,7 +584,15 @@
         <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">MFVIState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MFVIState</span><span class="p">,</span> <span class="n">MFVIInfo</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">step</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">optimizer</span><span class="p">,</span>
+            <span class="n">num_samples</span><span class="p">,</span>
+            <span class="n">objective</span><span class="o">=</span><span class="n">objective</span><span class="p">,</span>
+            <span class="n">stl_estimator</span><span class="o">=</span><span class="n">stl_estimator</span><span class="p">,</span>
+        <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">sample_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">MFVIState</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">sample</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">num_samples</span><span class="p">)</span>

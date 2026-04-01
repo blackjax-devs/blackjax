@@ -72,7 +72,7 @@ Module Contents
       :type:  float
 
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: FRVIState, logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 5, stl_estimator: bool = True) -> tuple[FRVIState, FRVIInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: FRVIState, logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 5, objective: blackjax.vi._gaussian_vi.Objective = KL(), stl_estimator: bool = True) -> tuple[FRVIState, FRVIInfo]
 
    Approximate the target density using the full-rank Gaussian approximation.
 
@@ -83,6 +83,8 @@ Module Contents
    :param num_samples: The number of samples that are taken from the approximation
                        at each step to compute the Kullback-Leibler divergence between
                        the approximation and the target log-density.
+   :param objective: The variational objective to minimize. `KL()` by default or
+                     `RenyiAlpha(alpha)`. For alpha = 1, Renyi reduces to KL.
    :param stl_estimator: Whether to use the stick-the-landing (STL) gradient estimator
                          :cite:p:`roeder2017sticking`. Reduces gradient variance by removing
                          the score function term. Recommended in :cite:p:`agrawal2020advances`.
@@ -103,7 +105,7 @@ Module Contents
              * leading axis of size ``num_samples``.
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 100)
+.. py:function:: as_top_level_api(logdensity_fn: Callable, optimizer: optax.GradientTransformation, num_samples: int = 100, objective: blackjax.vi._gaussian_vi.Objective = KL(), stl_estimator: bool = True)
 
    High-level implementation of Full-Rank Variational Inference.
 
@@ -111,6 +113,10 @@ Module Contents
                          the distribution we want to sample from.
    :param optimizer: Optax optimizer to use to optimize the ELBO.
    :param num_samples: Number of samples to take at each step to optimize the ELBO.
+   :param objective: The variational objective to minimize. `KL()` by default or
+                     `RenyiAlpha(alpha)`. For alpha = 1, Renyi reduces to KL.
+   :param stl_estimator: Whether to use STL gradient estimator.
+                         Only supported when `objective` is `KL()` or `RenyiAlpha(alpha=1.0)`.
 
    :rtype: A ``VIAlgorithm``.
 
