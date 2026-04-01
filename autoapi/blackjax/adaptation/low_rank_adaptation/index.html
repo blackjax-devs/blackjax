@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.laps_burn_in" href="../laps_burn_in/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8bb77c121" />
+  <meta name="docsearch:version" content="0.1.dev1+g0caa5e726" />
   </head>
   
   
@@ -590,8 +590,12 @@ Default <code class="docutils literal notranslate"><span class="pre">2.0</span><
 <li><p>An <code class="docutils literal notranslate"><span class="pre">AdaptationAlgorithm</span></code> whose <code class="docutils literal notranslate"><span class="pre">run</span></code> method returns</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">(AdaptationResults,</span> <span class="pre">info)</span></code>.  <code class="docutils literal notranslate"><span class="pre">AdaptationResults.parameters</span></code> contains</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">step_size</span></code>, <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> (a <code class="xref py py-func docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Metric</span></code> object), <code class="docutils literal notranslate"><span class="pre">mu_star</span></code> (the optimal translation <code class="docutils literal notranslate"><span class="pre">x̄</span> <span class="pre">+</span> <span class="pre">σ²⊙ᾱ</span></code>),</p></li>
-<li><p>and any <code class="docutils literal notranslate"><span class="pre">extra_parameters</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Metric</span></code> object), and any <code class="docutils literal notranslate"><span class="pre">extra_parameters</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">AdaptationResults.state</span></code> is re-initialised at the optimal translation</p></li>
+<li><p><em>μ</em> = x̄ + σ²⊙ᾱ, so it can be passed directly as the starting state for*</p></li>
+<li><p><em>production sampling.  The last chain state from warmup is available as</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">warmup_info[-1].state</span></code>, and μ* as</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">warmup_info[-1].adaptation_state.mu_star</span></code>.</p></li>
 </ul>
 </p>
 </dd>

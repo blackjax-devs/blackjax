@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8bb77c121" />
+  <meta name="docsearch:version" content="0.1.dev1+g0caa5e726" />
   </head>
   
   
@@ -416,6 +416,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fu</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mcmc</span>
@@ -751,8 +752,6 @@
         <span class="n">state</span><span class="p">:</span> <span class="n">LowRankAdaptationState</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankAdaptationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Slow window: adapt step size and accumulate draws/grads in buffer.&quot;&quot;&quot;</span>
-        <span class="kn">import</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fu</span>
-
         <span class="n">pos_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
         <span class="n">grad_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">grad</span><span class="p">)</span>
         <span class="n">B</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
@@ -901,8 +900,12 @@
 <span class="sd">    An ``AdaptationAlgorithm`` whose ``run`` method returns</span>
 <span class="sd">    ``(AdaptationResults, info)``.  ``AdaptationResults.parameters`` contains</span>
 <span class="sd">    ``step_size``, ``inverse_mass_matrix`` (a :func:`gaussian_euclidean_low_rank`</span>
-<span class="sd">    ``Metric`` object), ``mu_star`` (the optimal translation ``x̄ + σ²⊙ᾱ``),</span>
-<span class="sd">    and any ``extra_parameters``.</span>
+<span class="sd">    ``Metric`` object), and any ``extra_parameters``.</span>
+<span class="sd">    ``AdaptationResults.state`` is re-initialised at the optimal translation</span>
+<span class="sd">    μ* = x̄ + σ²⊙ᾱ, so it can be passed directly as the starting state for</span>
+<span class="sd">    production sampling.  The last chain state from warmup is available as</span>
+<span class="sd">    ``warmup_info[-1].state``, and μ* as</span>
+<span class="sd">    ``warmup_info[-1].adaptation_state.mu_star``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">mcmc_kernel</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">)</span>
@@ -971,16 +974,20 @@
             <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">),</span>
             <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">),</span>
         <span class="p">)</span>
-        <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
         <span class="n">step_size</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_star</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span> <span class="o">=</span> <span class="n">adapt_final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
         <span class="n">metric</span> <span class="o">=</span> <span class="n">gaussian_euclidean_low_rank</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">step_size</span><span class="p">,</span>
             <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">,</span>
-            <span class="s2">&quot;mu_star&quot;</span><span class="p">:</span> <span class="n">mu_star</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">}</span>
-        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_chain_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
+        <span class="c1"># Re-initialise chain state at the optimal translation μ* = x̄ + σ²⊙ᾱ.</span>
+        <span class="c1"># mu_star is flat (d,); unravel to the original position pytree structure</span>
+        <span class="c1"># before passing to algorithm.init.</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">unravel</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">mu_star_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">unravel</span><span class="p">(</span><span class="n">mu_star</span><span class="p">),</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">mu_star_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
 
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span></div>
 

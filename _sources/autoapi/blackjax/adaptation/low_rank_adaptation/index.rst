@@ -174,7 +174,11 @@ Module Contents
    :returns: * An ``AdaptationAlgorithm`` whose ``run`` method returns
              * ``(AdaptationResults, info)``.  ``AdaptationResults.parameters`` contains
              * ``step_size``, ``inverse_mass_matrix`` (a :func:`gaussian_euclidean_low_rank`
-             * ``Metric`` object), ``mu_star`` (the optimal translation ``x̄ + σ²⊙ᾱ``),
-             * and any ``extra_parameters``.
+             * ``Metric`` object), and any ``extra_parameters``.
+             * ``AdaptationResults.state`` is re-initialised at the optimal translation
+             * *μ* = x̄ + σ²⊙ᾱ, so it can be passed directly as the starting state for*
+             * *production sampling.  The last chain state from warmup is available as*
+             * ``warmup_info[-1].state``, and μ* as
+             * ``warmup_info[-1].adaptation_state.mu_star``.
 
 
