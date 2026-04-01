@@ -24,7 +24,7 @@ Info = NamedTuple
 class InitFn(Protocol):
     """A `Callable` used to initialize the kernel state.
 
-    Sampling algorithms often need to carry over some informations between
+    Sampling algorithms often need to carry over some information between
     steps, often to avoid computing the same quantity twice. Therefore the
     kernels do not operate on the chain positions themselves, but on states that
     contain this position and other information.

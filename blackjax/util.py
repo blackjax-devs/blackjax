@@ -629,7 +629,7 @@ def thin_algorithm(
     thinning: int
         The number of algorithm step to be performed before returning the state.
     info_transform: Callable
-        A function defining how to aggregate algorithm informations across the `thinning` steps.
+        A function defining how to aggregate algorithm information across the `thinning` steps.
         By default return all of them.
     Returns
     -------
@@ -829,7 +829,7 @@ def thin_kernel(
     thinning: int
         The number of kernel step to be performed before returning the state.
     info_transform: Callable
-        A function defining how to aggregate algorithm informations across the `thinning` steps.
+        A function defining how to aggregate algorithm information across the `thinning` steps.
         By default return all of them.
 
     Returns
