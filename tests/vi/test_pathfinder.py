@@ -19,7 +19,7 @@ import numpy as np
 from absl.testing import absltest
 
 from blackjax.vi.pathfinder import PathfinderState, approximate, sample
-from tests.util import BlackJAXTest, std_normal_logdensity
+from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 
 class PathfinderApproximateTest(BlackJAXTest):

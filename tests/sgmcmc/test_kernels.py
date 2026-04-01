@@ -23,7 +23,7 @@ import blackjax.sgmcmc.csgld as csgld
 import blackjax.sgmcmc.sghmc as sghmc
 import blackjax.sgmcmc.sgld as sgld
 import blackjax.sgmcmc.sgnht as sgnht
-from tests.util import BlackJAXTest
+from tests.fixtures import BlackJAXTest
 
 # ---------------------------------------------------------------------------
 # Shared helpers

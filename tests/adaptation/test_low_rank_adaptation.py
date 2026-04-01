@@ -19,7 +19,7 @@ from absl.testing import absltest
 
 import blackjax
 from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric, _spd_mean
-from tests.util import BlackJAXTest
+from tests.fixtures import BlackJAXTest
 
 
 class SPDMeanTest(BlackJAXTest):

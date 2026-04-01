@@ -13,7 +13,7 @@ import blackjax.smc.resampling as resampling
 from blackjax.smc.base import extend_params, init, step
 from blackjax.smc.tempered import update_and_take_last
 from blackjax.smc.waste_free import update_waste_free
-from tests.util import BlackJAXTest
+from tests.fixtures import BlackJAXTest
 
 
 def logdensity_fn(position):

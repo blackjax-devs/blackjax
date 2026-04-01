@@ -7,7 +7,7 @@ import pytest
 
 import blackjax
 from blackjax.adaptation.meads_adaptation import MEADSAdaptationState, base
-from tests.util import BlackJAXTest
+from tests.fixtures import BlackJAXTest
 
 
 def make_logdensity(dim=2):

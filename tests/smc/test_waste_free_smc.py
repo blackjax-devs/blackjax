@@ -14,9 +14,9 @@ import blackjax.smc.resampling as resampling
 from blackjax import adaptive_tempered_smc, tempered_smc
 from blackjax.smc import extend_params
 from blackjax.smc.waste_free import update_waste_free, waste_free_smc
+from tests.fixtures import BlackJAXTest
 from tests.smc import SMCLinearRegressionTestCase
 from tests.smc.test_tempered_smc import inference_loop
-from tests.util import BlackJAXTest
 
 
 class WasteFreeSMCTest(SMCLinearRegressionTestCase):
