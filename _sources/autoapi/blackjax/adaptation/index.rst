@@ -15,6 +15,7 @@ Submodules
    /autoapi/blackjax/adaptation/chees_adaptation/index
    /autoapi/blackjax/adaptation/laps/index
    /autoapi/blackjax/adaptation/laps_burn_in/index
+   /autoapi/blackjax/adaptation/low_rank_adaptation/index
    /autoapi/blackjax/adaptation/mass_matrix/index
    /autoapi/blackjax/adaptation/mclmc_adaptation/index
    /autoapi/blackjax/adaptation/meads_adaptation/index

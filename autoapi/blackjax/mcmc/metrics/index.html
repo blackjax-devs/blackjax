@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.mclmc" href="../mclmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gf8c87534e" />
+  <meta name="docsearch:version" content="0.1.dev1+g8bb77c121" />
   </head>
   
   
@@ -181,6 +181,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
@@ -371,6 +372,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.default_metric"><code class="docutils literal notranslate"><span class="pre">default_metric()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_riemannian"><code class="docutils literal notranslate"><span class="pre">gaussian_riemannian()</span></code></a></li>
 </ul>
 </li>
@@ -407,7 +409,10 @@ dynamic is independent of the position and only depends on the momentum
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="blackjax.mcmc.metrics.gaussian_euclidean"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_euclidean</span></code></a>(→ Metric)</p></td>
 <td><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_riemannian" title="blackjax.mcmc.metrics.gaussian_riemannian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_riemannian</span></code></a>(→ Metric)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank</span></code></a>(→ Metric)</p></td>
+<td><p>Euclidean metric with low-rank-modified mass matrix <span id="id3">[]</span>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_riemannian" title="blackjax.mcmc.metrics.gaussian_riemannian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_riemannian</span></code></a>(→ Metric)</p></td>
 <td><p>Hamiltonian dynamic on Riemannian manifold with normally-distributed momentum.</p></td>
 </tr>
 </tbody>
@@ -443,7 +448,7 @@ location</p></li>
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_euclidean">
 <span class="sig-name descname"><span class="pre">gaussian_euclidean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="Link to this definition">#</a></dt>
 <dd><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
-<span id="id3">[<a class="reference internal" href="../../../../bib.html#id34" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
+<span id="id4">[<a class="reference internal" href="../../../../bib.html#id34" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
 <p>The gaussian euclidean metric is a euclidean metric further characterized
 by setting the conditional probability density <span class="math notranslate nohighlight">\(\pi(momentum|position)\)</span>
 to follow a standard gaussian distribution. A Newtonian hamiltonian
@@ -468,6 +473,37 @@ the order given by <cite>sort(keys)</cite>.</p>
 itself given the values of the momentum along the trajectory.</p></li>
 </ul>
 </p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_euclidean_low_rank">
+<span class="sig-name descname"><span class="pre">gaussian_euclidean_low_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">U</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean_low_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="Link to this definition">#</a></dt>
+<dd><p>Euclidean metric with low-rank-modified mass matrix <span id="id5">[]</span>.</p>
+<p>The inverse mass matrix has the form</p>
+<div class="math notranslate nohighlight">
+\[M^{-1} = \operatorname{diag}(\sigma)
+         \bigl(I + U(\Lambda - I)U^\top\bigr)
+         \operatorname{diag}(\sigma)\]</div>
+<p>where <span class="math notranslate nohighlight">\(\sigma \in \mathbb{R}^d_{&gt;0}\)</span> is a diagonal scaling,
+<span class="math notranslate nohighlight">\(U \in \mathbb{R}^{d \times k}\)</span> has orthonormal columns, and
+<span class="math notranslate nohighlight">\(\Lambda = \operatorname{diag}(\lambda)\)</span> with <span class="math notranslate nohighlight">\(\lambda &gt; 0\)</span>.
+When <span class="math notranslate nohighlight">\(\lambda = \mathbf{1}\)</span> the metric reduces to a diagonal metric
+with scale <span class="math notranslate nohighlight">\(\sigma\)</span>.  All HMC operations are <span class="math notranslate nohighlight">\(O(dk)\)</span>, making
+this efficient when <span class="math notranslate nohighlight">\(k \ll d\)</span>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>sigma</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.  Positive diagonal scaling; plays the role of marginal
+standard deviations.</p></li>
+<li><p><strong>U</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">k)</span></code>.  Matrix with orthonormal columns spanning the
+low-rank correction subspace.</p></li>
+<li><p><strong>lam</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(k,)</span></code>.  Positive eigenvalues for the low-rank correction.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">Metric</span></code> object whose operations all run in <span class="math notranslate nohighlight">\(O(dk)\)</span>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -545,6 +581,7 @@ location (positive definite, one or two-dimensional array).</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.default_metric"><code class="docutils literal notranslate"><span class="pre">default_metric()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_riemannian"><code class="docutils literal notranslate"><span class="pre">gaussian_riemannian()</span></code></a></li>
 </ul>
 </li>

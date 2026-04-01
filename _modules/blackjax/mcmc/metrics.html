@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gf8c87534e" />
+  <meta name="docsearch:version" content="0.1.dev1+g8bb77c121" />
   </head>
   
   
@@ -179,6 +179,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
@@ -407,7 +408,12 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">Numeric</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_gaussian_noise</span><span class="p">,</span> <span class="n">linear_map</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;default_metric&quot;</span><span class="p">,</span> <span class="s2">&quot;gaussian_euclidean&quot;</span><span class="p">,</span> <span class="s2">&quot;gaussian_riemannian&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;default_metric&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gaussian_euclidean&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gaussian_euclidean_low_rank&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gaussian_riemannian&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">KineticEnergy</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
@@ -607,6 +613,136 @@
             <span class="n">left_hand_side_matrix</span> <span class="o">=</span> <span class="n">left_hand_side_matrix</span><span class="o">.</span><span class="n">T</span>
 
         <span class="n">scaled</span> <span class="o">=</span> <span class="n">linear_map</span><span class="p">(</span><span class="n">left_hand_side_matrix</span><span class="p">,</span> <span class="n">ravelled_element</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">scaled</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">Metric</span><span class="p">(</span><span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">is_turning</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="gaussian_euclidean_low_rank">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.gaussian_euclidean_low_rank">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">gaussian_euclidean_low_rank</span><span class="p">(</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">U</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">lam</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Euclidean metric with low-rank-modified mass matrix :cite:p:`sountsov2025preconditioning`.</span>
+
+<span class="sd">    The inverse mass matrix has the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        M^{-1} = \operatorname{diag}(\sigma)</span>
+<span class="sd">                 \bigl(I + U(\Lambda - I)U^\top\bigr)</span>
+<span class="sd">                 \operatorname{diag}(\sigma)</span>
+
+<span class="sd">    where :math:`\sigma \in \mathbb{R}^d_{&gt;0}` is a diagonal scaling,</span>
+<span class="sd">    :math:`U \in \mathbb{R}^{d \times k}` has orthonormal columns, and</span>
+<span class="sd">    :math:`\Lambda = \operatorname{diag}(\lambda)` with :math:`\lambda &gt; 0`.</span>
+<span class="sd">    When :math:`\lambda = \mathbf{1}` the metric reduces to a diagonal metric</span>
+<span class="sd">    with scale :math:`\sigma`.  All HMC operations are :math:`O(dk)`, making</span>
+<span class="sd">    this efficient when :math:`k \ll d`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sigma</span>
+<span class="sd">        Shape ``(d,)``.  Positive diagonal scaling; plays the role of marginal</span>
+<span class="sd">        standard deviations.</span>
+<span class="sd">    U</span>
+<span class="sd">        Shape ``(d, k)``.  Matrix with orthonormal columns spanning the</span>
+<span class="sd">        low-rank correction subspace.</span>
+<span class="sd">    lam</span>
+<span class="sd">        Shape ``(k,)``.  Positive eigenvalues for the low-rank correction.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``Metric`` object whose operations all run in :math:`O(dk)`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inv_sigma</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span>  <span class="c1"># (d,)</span>
+    <span class="n">sqrt_lam</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">lam</span><span class="p">)</span>  <span class="c1"># (k,)</span>
+    <span class="n">inv_sqrt_lam</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sqrt_lam</span>  <span class="c1"># (k,)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">momentum_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
+        <span class="c1"># Sample eps ~ N(0, I) with the same pytree shape as position.</span>
+        <span class="n">noise</span> <span class="o">=</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+        <span class="n">eps</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+        <span class="c1"># p = M^{1/2} eps  where  M^{1/2} = D^{-1} B,</span>
+        <span class="c1"># B = I + U (Λ^{-1/2} - I) U^T,  D^{-1} = diag(1/σ).</span>
+        <span class="c1"># D^{-1} is applied AFTER B so that E[pp^T] = D^{-1} B B D^{-1} = M.</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="n">eps</span> <span class="o">+</span> <span class="n">U</span> <span class="o">@</span> <span class="p">((</span><span class="n">inv_sqrt_lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">eps</span><span class="p">))</span>  <span class="c1"># B eps</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">inv_sigma</span> <span class="o">*</span> <span class="n">v</span>  <span class="c1"># D^{-1} B eps</span>
+        <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">kinetic_energy</span><span class="p">(</span>
+        <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Numeric</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">position</span>
+        <span class="n">p</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
+        <span class="c1"># K(p) = ½ p^T M^{-1} p = ½ q^T (I + U(Λ-I)U^T) q,  q = σ⊙p</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">p</span>  <span class="c1"># (d,)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">q</span>  <span class="c1"># (k,)</span>
+        <span class="k">return</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="p">(</span><span class="n">lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">alpha</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_turning</span><span class="p">(</span>
+        <span class="n">momentum_left</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">momentum_right</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">momentum_sum</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">position_left</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">position_right</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayLikeTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">position_left</span><span class="p">,</span> <span class="n">position_right</span>
+        <span class="n">m_left</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_left</span><span class="p">)</span>
+        <span class="n">m_right</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_right</span><span class="p">)</span>
+        <span class="n">m_sum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_sum</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_inv_mass_times</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+            <span class="c1"># M^{-1} p = D(I + U(Λ-I)U^T)D p</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">p</span>
+            <span class="k">return</span> <span class="n">sigma</span> <span class="o">*</span> <span class="p">(</span><span class="n">q</span> <span class="o">+</span> <span class="n">U</span> <span class="o">@</span> <span class="p">((</span><span class="n">lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">q</span><span class="p">)))</span>
+
+        <span class="n">vel_left</span> <span class="o">=</span> <span class="n">_inv_mass_times</span><span class="p">(</span><span class="n">m_left</span><span class="p">)</span>
+        <span class="n">vel_right</span> <span class="o">=</span> <span class="n">_inv_mass_times</span><span class="p">(</span><span class="n">m_right</span><span class="p">)</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">m_sum</span> <span class="o">-</span> <span class="p">(</span><span class="n">m_right</span> <span class="o">+</span> <span class="n">m_left</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vel_left</span><span class="p">,</span> <span class="n">rho</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">vel_right</span><span class="p">,</span> <span class="n">rho</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">scale</span><span class="p">(</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">element</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">inv</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">trans</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayLikeTree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Scale an element by the (inverse) (transposed) square-root mass matrix.</span>
+
+<span class="sd">        M = D^{-1} C D^{-1} where C = I+U(Λ^{-1}-I)U^T and D = diag(σ).</span>
+<span class="sd">        The (non-symmetric) left square root is M^{1/2} = D^{-1} B where</span>
+<span class="sd">        B = I+U(Λ^{-1/2}-I)U^T, so M = M^{1/2} (M^{1/2})^T.</span>
+
+<span class="sd">        * ``inv=False, trans=False``:  M^{1/2}    = D^{-1} B</span>
+<span class="sd">        * ``inv=False, trans=True`` :  (M^{1/2})^T = B D^{-1}</span>
+<span class="sd">        * ``inv=True,  trans=False``:  M^{-1/2}   = D A^{*}  where A^{*} = I+U(√Λ-I)U^T</span>
+<span class="sd">        * ``inv=True,  trans=True`` :  (M^{-1/2})^T = A^{*} D</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">del</span> <span class="n">position</span>
+        <span class="n">e</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">element</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">inv</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">trans</span><span class="p">:</span>
+            <span class="c1"># M^{1/2} e = D^{-1} (B e) = (1/σ) * (B e)</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">e</span> <span class="o">+</span> <span class="n">U</span> <span class="o">@</span> <span class="p">((</span><span class="n">inv_sqrt_lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">e</span><span class="p">))</span>
+            <span class="n">scaled</span> <span class="o">=</span> <span class="n">inv_sigma</span> <span class="o">*</span> <span class="n">v</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">inv</span> <span class="ow">and</span> <span class="n">trans</span><span class="p">:</span>
+            <span class="c1"># (M^{1/2})^T e = B (D^{-1} e) = B (e/σ)</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">inv_sigma</span> <span class="o">*</span> <span class="n">e</span>
+            <span class="n">scaled</span> <span class="o">=</span> <span class="n">q</span> <span class="o">+</span> <span class="n">U</span> <span class="o">@</span> <span class="p">((</span><span class="n">inv_sqrt_lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">q</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">inv</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">trans</span><span class="p">:</span>
+            <span class="c1"># M^{-1/2} e = D (A^{*} e) = σ * (A^{*} e)  where A^{*} = I+U(√Λ-I)U^T</span>
+            <span class="n">v</span> <span class="o">=</span> <span class="n">e</span> <span class="o">+</span> <span class="n">U</span> <span class="o">@</span> <span class="p">((</span><span class="n">sqrt_lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">e</span><span class="p">))</span>
+            <span class="n">scaled</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">v</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># (M^{-1/2})^T e = A^{*} (D e) = A^{*} (σ⊙e)</span>
+            <span class="n">q</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">e</span>
+            <span class="n">scaled</span> <span class="o">=</span> <span class="n">q</span> <span class="o">+</span> <span class="n">U</span> <span class="o">@</span> <span class="p">((</span><span class="n">sqrt_lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">q</span><span class="p">))</span>
 
         <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">scaled</span><span class="p">)</span>
 

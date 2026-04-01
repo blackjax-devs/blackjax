@@ -55,7 +55,7 @@
     <link rel="prev" title="Welcome to Blackjax!" href="../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gf8c87534e" />
+  <meta name="docsearch:version" content="0.1.dev1+g8bb77c121" />
   </head>
   
   
@@ -180,6 +180,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
@@ -470,7 +471,7 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-37202.84, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1265.3405, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(69570.8, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-35977.094, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1243.6661, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(67119.31, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -518,8 +519,8 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.45 s, sys: 136 ms, total: 3.59 s
-Wall time: 2.25 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.12 s, sys: 150 ms, total: 3.27 s
+Wall time: 2.07 s
 </pre></div>
 </div>
 </div>
@@ -544,7 +545,7 @@ Wall time: 2.25 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/bef84060bd17ee143c647f53bb3f5e95257ea89d8f2c0070592d57ea4281f5d4.png" src="../_images/bef84060bd17ee143c647f53bb3f5e95257ea89d8f2c0070592d57ea4281f5d4.png" />
+<img alt="../_images/6d1663a9da400f84bd327a47fa0f5e12773d76abee246514cc6bbaeadaa7e1a7.png" src="../_images/6d1663a9da400f84bd327a47fa0f5e12773d76abee246514cc6bbaeadaa7e1a7.png" />
 </div>
 </div>
 </section>
@@ -571,7 +572,7 @@ Wall time: 2.25 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-37202.84, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1265.3405, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(69570.8, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-35977.094, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1243.6661, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(67119.31, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -588,8 +589,8 @@ Wall time: 2.25 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.2 s, sys: 422 ms, total: 16.6 s
-Wall time: 13.4 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 16.9 s, sys: 426 ms, total: 17.3 s
+Wall time: 13.9 s
 </pre></div>
 </div>
 </div>
@@ -614,7 +615,7 @@ Wall time: 13.4 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/231ccaf9b65a43c2564236a841ac39feac229a166642b555d6a71c18455ef73e.png" src="../_images/231ccaf9b65a43c2564236a841ac39feac229a166642b555d6a71c18455ef73e.png" />
+<img alt="../_images/46fdcce5fa8c526ef27cdf87fb3d7a300149df2371cd588629e9034902fa59db.png" src="../_images/46fdcce5fa8c526ef27cdf87fb3d7a300149df2371cd588629e9034902fa59db.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -632,8 +633,8 @@ Wall time: 13.4 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.94 s, sys: 92.8 ms, total: 3.03 s
-Wall time: 1.38 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.93 s, sys: 72.7 ms, total: 3.01 s
+Wall time: 1.36 s
 </pre></div>
 </div>
 </div>
@@ -652,8 +653,8 @@ Wall time: 1.38 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.14 s, sys: 34.3 ms, total: 2.17 s
-Wall time: 888 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.15 s, sys: 32.7 ms, total: 2.18 s
+Wall time: 904 ms
 </pre></div>
 </div>
 </div>
@@ -678,7 +679,7 @@ Wall time: 888 ms
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/6ee82b4da5269c255edfd874c1ba46f025c042a2d142aac552409d052a5ce82d.png" src="../_images/6ee82b4da5269c255edfd874c1ba46f025c042a2d142aac552409d052a5ce82d.png" />
+<img alt="../_images/6edc56e7dae9877014e8e6448d3b50257f9e31619d2f21f4c733255dc3938ca3.png" src="../_images/6edc56e7dae9877014e8e6448d3b50257f9e31619d2f21f4c733255dc3938ca3.png" />
 </div>
 </div>
 </section>
