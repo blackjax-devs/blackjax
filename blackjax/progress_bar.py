@@ -16,7 +16,6 @@ Adapted from Jeremie Coullon's blog post :cite:p:`progress_bar`.
 """
 from threading import Lock
 
-from fastprogress.fastprogress import progress_bar
 from jax import lax
 from jax.experimental import io_callback
 from jax.numpy import array
@@ -42,6 +41,13 @@ def progress_bar_scan(num_samples, print_rate=None):
         return idx
 
     def _update_bar(arg, chain_id):
+        try:
+            from fastprogress.fastprogress import progress_bar
+        except ImportError as e:
+            raise ImportError(
+                "fastprogress is required to use progress bars. "
+                "Install it with: pip install fastprogress"
+            ) from e
         chain_id = int(chain_id)
         if arg == 0:
             chain_id = _calc_chain_idx(arg)

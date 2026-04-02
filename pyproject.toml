@@ -31,8 +31,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Mathematics",
 ]
 dependencies = [
-    "fastprogress>=1.0.0",
-    "ipython",
     "jax>=0.9.0",
     "jaxlib>=0.9.0",
     "numpy>=1.25",
@@ -41,6 +39,9 @@ dependencies = [
     "typing-extensions>=4.4.0",
 ]
 dynamic = ["version"]
+
+[project.optional-dependencies]
+progress = ["fastprogress>=1.0.0,<1.1"]
 
 [project.urls]
 homepage = "https://github.com/blackjax-devs/blackjax"
