@@ -7,11 +7,15 @@ import optax
 from absl.testing import absltest
 
 import blackjax
-from blackjax.vi._gaussian_vi import _objective_value_from_log_ratio
+from blackjax.vi._gaussian_vi import (
+    _objective_value_from_log_ratio,
+    _tail_adaptive_weights_from_log_ratio,
+)
 from blackjax.vi.meanfield_vi import (
     KL,
     MFVIState,
     RenyiAlpha,
+    TailAdaptive,
     generate_meanfield_logdensity,
     init,
     sample,
@@ -184,6 +188,72 @@ class MFVIUnitTest(BlackJAXTest):
 
         with self.assertRaises(TypeError):
             _objective_value_from_log_ratio(log_ratio, object())
+
+    def test_tail_adaptive_weights_are_normalized_and_rank_ordered(self):
+        """TailAdaptive weights should sum to one and favor low log-ratio samples."""
+        log_ratio = jnp.array([2.0, 0.0, -1.0])
+        weights = _tail_adaptive_weights_from_log_ratio(log_ratio, beta=-1.0)
+
+        np.testing.assert_allclose(jnp.sum(weights), 1.0, rtol=1e-6, atol=1e-6)
+        # lower log_ratio leads to larger importance weight w = exp(-log_ratio)
+        self.assertGreater(float(weights[2]), float(weights[1]))
+        self.assertGreater(float(weights[1]), float(weights[0]))
+
+    def test_tail_adaptive_weights_non_1d_raises(self):
+        """TailAdaptive weighting expects 1D batch of log-ratios."""
+        with self.assertRaises(ValueError):
+            _tail_adaptive_weights_from_log_ratio(
+                jnp.ones((2, 2)),
+                beta=-1.0,
+            )
+
+    def test_objective_value_tail_adaptive_matches_manual_weighted_sum(self):
+        """TailAdaptive objective = stop grad weights * log-ratio."""
+        log_ratio = jnp.array([2.0, 0.0, -1.0])
+        weights = _tail_adaptive_weights_from_log_ratio(log_ratio, beta=-1.0)
+
+        value = _objective_value_from_log_ratio(
+            log_ratio,
+            TailAdaptive(beta=-1.0),
+        )
+
+        np.testing.assert_allclose(
+            value,
+            jnp.sum(weights * log_ratio),
+            rtol=1e-6,
+            atol=1e-6,
+        )
+
+    def test_step_with_tail_adaptive_objective(self):
+        """MFVI step works with TailAdaptive(beta=-1.0)."""
+        position = jnp.zeros(2)
+        state = init(position, self.optimizer)
+
+        new_state, info = step(
+            self.next_key(),
+            state,
+            std_normal_logdensity,
+            self.optimizer,
+            objective=TailAdaptive(beta=-1.0),
+        )
+
+        self.assertIsInstance(new_state, MFVIState)
+        assert jnp.isfinite(info.elbo)
+
+    def test_tail_adaptive_without_stl_raises(self):
+        """MFVI should reject TailAdaptive when stl_estimator is False."""
+        position = jnp.zeros(2)
+        state = init(position, self.optimizer)
+
+        with self.assertRaises(ValueError):
+            step(
+                self.next_key(),
+                state,
+                std_normal_logdensity,
+                self.optimizer,
+                objective=TailAdaptive(beta=-1.0),
+                stl_estimator=False,
+            )
 
 
 class MFVITest(BlackJAXTest):
