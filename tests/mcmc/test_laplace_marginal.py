@@ -231,5 +231,107 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
         self.assertIn("b", theta_star)
 
 
+class TestLaplaceAdjointAnalytical(BlackJAXTest):
+    """Validates JAX AD gradient against the adjoint formula from Algorithm 2 of
+    Margossian et al. (2020), using a Poisson-LogNormal model where the derivation
+    can be carried out in closed form.
+
+    Model:  K(phi) = exp(phi) * I
+        phi                              hyperparameter (scalar)
+        theta | phi ~ N(0, exp(phi)*I)   latent, n-vector
+        y_i | theta ~ Poisson(exp(theta_i))
+
+    Because K is a scaled identity and the Poisson observations are conditionally
+    independent, every matrix in the adjoint is diagonal.
+
+    Analytical gradient (derived from the total derivative of log p̂):
+
+        d/dphi log p̂ = partial_phi - 1/2 * d(log det H)/dphi
+
+    where:
+        k            = exp(phi)                             K = k * I
+        a            = K^{-1} theta* = theta* / k
+        W            = diag(exp(theta*))                    Poisson W_ii = exp(theta_i*)
+        H            = K^{-1} + W = diag(1/k + W_i)         neg-Hessian of log joint
+        d3_i         = -exp(theta_i*)                       Poisson third derivative
+        partial_phi  = -n/2 + ||theta*||^2 / (2k)           direct phi-deriv of log prior
+        dtheta*/dphi = H^{-1} a   (IFT: positive sign)      implicit function theorem
+        dH/dphi      = -1/k + W * dtheta*/dphi              chain rule through H
+        d_logdet     = tr(H^{-1} dH/dphi)                   = sum(H_inv * dH_diag)
+
+    The s2 term from Algorithm 2 enters through d_logdet:
+        s2 = -1/2 * diag(H^{-1}) * d3 = 1/2 * H_inv * W
+        -1/2 * sum(W * H_inv^2 * a) = sum(s2 * H_inv * a)
+
+    This confirms that JAX's custom_root + slogdet approach correctly captures the
+    third-order information that Algorithm 2's manual adjoint was designed for.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.n = 6
+        rng = self.next_key()
+        self.y = jax.random.randint(rng, (self.n,), 1, 8).astype(jnp.float32)
+        self.theta_init = jnp.zeros(self.n)
+
+        def log_joint(theta, phi):
+            # K(phi) = exp(phi) * I  =>  theta ~ N(0, exp(phi)*I)
+            log_prior = stats.norm.logpdf(theta, 0.0, jnp.exp(0.5 * phi)).sum()
+            log_lik = jax.scipy.stats.poisson.logpmf(self.y, jnp.exp(theta)).sum()
+            return log_prior + log_lik
+
+        self.log_joint = log_joint
+        self.laplace = laplace_marginal_factory(log_joint, self.theta_init, maxiter=500)
+
+    def _analytical_gradient(self, phi, theta_star):
+        """Closed-form adjoint gradient for the Poisson-LogNormal LGM.
+
+        Implements the total derivative d/dphi log p̂ accounting for the implicit
+        dependence theta*(phi) via the IFT.
+        """
+        k = jnp.exp(phi)                          # K = k * I
+        n = theta_star.shape[0]
+
+        a = theta_star / k                        # K^{-1} theta*
+        W = jnp.exp(theta_star)                   # Poisson: W_ii = exp(theta_i*)
+        H_inv = 1.0 / (1.0 / k + W)              # (K^{-1} + W)^{-1} diagonal
+
+        # IFT: differentiating the optimality condition wrt phi gives
+        #   -(1/k + W_i) * dtheta_i*/dphi + theta_i*/k = 0
+        # => dtheta_i*/dphi = a_i / H_ii = H_inv_i * a_i  (positive)
+        dtheta_dphi = H_inv * a
+
+        # Total derivative of H = K^{-1} + W wrt phi:
+        #   dK^{-1}/dphi = -1/k * I
+        #   dW/dphi = diag(W) * dtheta*/dphi  [chain rule; d3_i = -W_i enters here]
+        dH_diag = -1.0 / k + W * dtheta_dphi     # = -1/k + W * H_inv * a
+
+        # Direct phi-derivative of log p(theta*|phi) at fixed theta*:
+        #   log p = -n/2 * log(2pi*k) - ||theta*||^2/(2k)
+        partial_phi = -n / 2.0 + jnp.sum(theta_star ** 2) / (2.0 * k)
+
+        # d/dphi log det H = tr(H^{-1} dH/dphi)
+        d_logdet = jnp.sum(H_inv * dH_diag)
+
+        return partial_phi - 0.5 * d_logdet
+
+    def test_jax_grad_matches_analytical_adjoint(self):
+        """JAX AD gradient (custom_root + slogdet VJP) matches closed-form adjoint.
+
+        Tests multiple phi values to confirm the match is not coincidental.
+        """
+        for phi_val in [-1.0, 0.0, 0.5, 1.0]:
+            phi = jnp.array(phi_val)
+            (_, theta_star), jax_grad = jax.value_and_grad(
+                self.laplace, has_aux=True
+            )(phi)
+            analytical = self._analytical_gradient(phi, theta_star)
+            # Tolerance is set by float32 L-BFGS convergence, not by the formula.
+            np.testing.assert_allclose(
+                float(jax_grad), float(analytical), rtol=1e-2, atol=1e-2,
+                err_msg=f"phi={phi_val}"
+            )
+
+
 if __name__ == "__main__":
     absltest.main()
