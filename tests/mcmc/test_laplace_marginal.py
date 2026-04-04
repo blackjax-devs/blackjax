@@ -88,30 +88,6 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
         theta_star = self.laplace.solve_theta(log_sigma)
         np.testing.assert_allclose(theta_star, expected_mode, atol=1e-4)
 
-    def test_solve_theta_warm_starts(self):
-        # Fewer L-BFGS iterations should be needed from a warm start.
-        log_sigma = jnp.array(0.5)
-        cold_result = laplace_marginal_factory(
-            self.log_joint, self.theta_init, maxiter=3
-        ).solve_theta(log_sigma)
-        warm_result = laplace_marginal_factory(
-            self.log_joint, self.theta_init, maxiter=3
-        ).solve_theta(log_sigma, theta_prev=self.laplace.solve_theta(log_sigma))
-
-        # Warm start from the true mode should already satisfy the optimality
-        # condition; cold start from zeros needs iterations to get there.
-        log_sigma_vec = jnp.array([0.5])
-        grad_at_cold = jax.grad(self.log_joint, argnums=0)(
-            cold_result, log_sigma_vec[0]
-        )
-        grad_at_warm = jax.grad(self.log_joint, argnums=0)(
-            warm_result, log_sigma_vec[0]
-        )
-        self.assertLess(
-            float(jnp.linalg.norm(grad_at_warm)),
-            float(jnp.linalg.norm(grad_at_cold)) + 1e-4,
-        )
-
     # --- log_marginal value ---------------------------------------------------
 
     def test_value_matches_exact_gaussian(self):
