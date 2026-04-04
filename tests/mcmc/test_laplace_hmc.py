@@ -20,6 +20,7 @@ from absl.testing import absltest
 
 import chex
 import blackjax
+from blackjax.util import run_inference_algorithm
 from tests.fixtures import BlackJAXTest
 from blackjax.mcmc.laplace_hmc import (
     LaplaceHMCState,
@@ -206,6 +207,127 @@ class TestLaplaceHMCSampling(BlackJAXTest):
         # observations at sigma=1 gives a well-defined posterior.
         posterior_mean = np.mean(samples)
         self.assertLess(abs(posterior_mean), 1.5)  # loose but meaningful
+
+
+class TestLaplaceHMCFunnel(BlackJAXTest):
+    """Neal's funnel: laplace_hmc vs NCP-NUTS baseline.
+
+    Model (centered parameterisation, used by laplace_hmc):
+        phi      ~ N(0, 3²)
+        theta_i  ~ N(0, exp(phi)²)   i = 1 … n
+        y_i      ~ N(theta_i, 1)
+
+    The non-centered parameterisation (NCP) removes the funnel geometry and
+    lets standard NUTS explore freely.  It serves as a reference posterior for
+    phi because its geometry is benign.
+
+    NCP (used by NUTS baseline):
+        phi      ~ N(0, 3²)
+        z_i      ~ N(0, 1)           (non-centred latent)
+        theta_i   = z_i * exp(phi)
+        y_i      ~ N(theta_i, 1)
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.n = 5
+        rng = self.next_key()
+        phi_true = 0.5
+        theta_true = jax.random.normal(rng, (self.n,)) * jnp.exp(phi_true)
+        key_obs = self.next_key()
+        self.y = theta_true + jax.random.normal(key_obs, (self.n,))
+
+    def _run_laplace_hmc(self, n_warmup=500, n_samples=5000):
+        y = self.y
+        n = self.n
+
+        def log_joint(theta, phi):
+            return (
+                stats.norm.logpdf(phi, 0.0, 3.0)
+                + stats.norm.logpdf(theta, 0.0, jnp.exp(phi)).sum()
+                + stats.norm.logpdf(y, theta, 1.0).sum()
+            )
+
+        sampler = as_top_level_api(
+            log_joint,
+            jnp.zeros(n),
+            step_size=0.3,
+            inverse_mass_matrix=jnp.ones(1),
+            num_integration_steps=5,
+            maxiter=200,
+        )
+        initial_state = sampler.init(jnp.array(0.0))
+
+        # Warmup (discarded)
+        warmup_state, _ = run_inference_algorithm(
+            self.next_key(), sampler, n_warmup, initial_state=initial_state
+        )
+        # Sampling — extract scalar phi at each step
+        _, phi_samples = run_inference_algorithm(
+            self.next_key(), sampler, n_samples, initial_state=warmup_state,
+            transform=lambda state, info: state.position,
+        )
+        return phi_samples  # shape (n_samples,)
+
+    def _run_ncp_nuts(self, n_warmup=500, n_samples=5000):
+        """Window-adapted NUTS on the NCP — the reference posterior for phi."""
+        y = self.y
+        n = self.n
+
+        def log_joint_ncp(flat):
+            z = flat[:n]
+            phi = flat[n]
+            theta = z * jnp.exp(phi)
+            return (
+                stats.norm.logpdf(phi, 0.0, 3.0)
+                + stats.norm.logpdf(z, 0.0, 1.0).sum()
+                + stats.norm.logpdf(y, theta, 1.0).sum()
+            )
+
+        # Window adaptation tunes step size and mass matrix automatically.
+        warmup = blackjax.window_adaptation(blackjax.nuts, log_joint_ncp)
+        (warmup_state, params), _ = warmup.run(
+            self.next_key(), jnp.zeros(n + 1), num_steps=n_warmup
+        )
+        nuts_algo = blackjax.nuts(log_joint_ncp, **params)
+
+        # Sampling — extract phi (last element of position) at each step
+        _, phi_samples = run_inference_algorithm(
+            self.next_key(), nuts_algo, n_samples, initial_state=warmup_state,
+            transform=lambda state, info: state.position[n],
+        )
+        return phi_samples  # shape (n_samples,)
+
+    def test_posterior_mean_matches_ncp_nuts(self):
+        """laplace_hmc posterior mean for phi must agree with NCP-NUTS reference."""
+        phi_laplace = self._run_laplace_hmc()
+        phi_ncp = self._run_ncp_nuts()
+
+        mean_laplace = float(jnp.mean(phi_laplace))
+        mean_ncp = float(jnp.mean(phi_ncp))
+        np.testing.assert_allclose(
+            mean_laplace, mean_ncp, atol=0.1,
+            err_msg=(
+                f"laplace_hmc mean {mean_laplace:.3f} deviates from "
+                f"NCP-NUTS reference {mean_ncp:.3f}"
+            ),
+        )
+
+    def test_posterior_std_matches_ncp_nuts(self):
+        """laplace_hmc posterior std for phi must agree with NCP-NUTS reference."""
+        phi_laplace = self._run_laplace_hmc()
+        phi_ncp = self._run_ncp_nuts()
+
+        std_laplace = float(jnp.std(phi_laplace))
+        std_ncp = float(jnp.std(phi_ncp))
+        # Allow up to 30% relative deviation — Laplace is an approximation.
+        np.testing.assert_allclose(
+            std_laplace, std_ncp, rtol=0.3,
+            err_msg=(
+                f"laplace_hmc std {std_laplace:.3f} deviates from "
+                f"NCP-NUTS reference {std_ncp:.3f}"
+            ),
+        )
 
 
 if __name__ == "__main__":
