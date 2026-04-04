@@ -12,16 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Laplace-approximated marginal log-density."""
+import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest
 
-import chex
-from tests.fixtures import BlackJAXTest
 from blackjax.mcmc.laplace_marginal import LaplaceMarginal, laplace_marginal_factory
-
+from tests.fixtures import BlackJAXTest
 
 # ---------------------------------------------------------------------------
 # Shared model: Gaussian-Gaussian (Laplace is exact)
@@ -34,6 +33,7 @@ from blackjax.mcmc.laplace_marginal import LaplaceMarginal, laplace_marginal_fac
 #   log p(y | phi) = sum_i N(y_i; 0, exp(2*phi) + 1)
 #   grad_phi log p(y | phi) = exp(2*phi) * (||y||² / (exp(2*phi)+1)² - n/(exp(2*phi)+1))
 # ---------------------------------------------------------------------------
+
 
 def make_gaussian_model(y):
     """Return log_joint for the Gaussian-Gaussian model."""
@@ -101,8 +101,12 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
         # Warm start from the true mode should already satisfy the optimality
         # condition; cold start from zeros needs iterations to get there.
         log_sigma_vec = jnp.array([0.5])
-        grad_at_cold = jax.grad(self.log_joint, argnums=0)(cold_result, log_sigma_vec[0])
-        grad_at_warm = jax.grad(self.log_joint, argnums=0)(warm_result, log_sigma_vec[0])
+        grad_at_cold = jax.grad(self.log_joint, argnums=0)(
+            cold_result, log_sigma_vec[0]
+        )
+        grad_at_warm = jax.grad(self.log_joint, argnums=0)(
+            warm_result, log_sigma_vec[0]
+        )
         self.assertLess(
             float(jnp.linalg.norm(grad_at_warm)),
             float(jnp.linalg.norm(grad_at_cold)) + 1e-4,
@@ -114,17 +118,13 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
         # Laplace is exact for Gaussian-Gaussian models.
         for log_sigma_val in [-1.0, 0.0, 0.5, 1.0]:
             phi = jnp.array(log_sigma_val)
-            (approx, _), _ = jax.value_and_grad(
-                self.laplace, has_aux=True
-            )(phi)
+            (approx, _), _ = jax.value_and_grad(self.laplace, has_aux=True)(phi)
             exact = self.exact_log_marginal(phi)
             np.testing.assert_allclose(approx, exact, rtol=1e-4, atol=1e-4)
 
     def test_returns_theta_star_as_aux(self):
         phi = jnp.array(0.0)
-        (lp, theta_star), _ = jax.value_and_grad(
-            self.laplace, has_aux=True
-        )(phi)
+        (lp, theta_star), _ = jax.value_and_grad(self.laplace, has_aux=True)(phi)
         self.assertEqual(theta_star.shape, (self.n,))
         # theta_star should match solve_theta output
         expected_mode = self.laplace.solve_theta(phi)
@@ -136,9 +136,7 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
         # Exact gradient of the Gaussian-Gaussian log-marginal.
         for log_sigma_val in [-0.5, 0.0, 0.5]:
             phi = jnp.array(log_sigma_val)
-            (_, _), approx_grad = jax.value_and_grad(
-                self.laplace, has_aux=True
-            )(phi)
+            (_, _), approx_grad = jax.value_and_grad(self.laplace, has_aux=True)(phi)
             exact_grad = jax.grad(self.exact_log_marginal)(phi)
             np.testing.assert_allclose(approx_grad, exact_grad, rtol=1e-3, atol=1e-3)
 
@@ -155,17 +153,23 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
             log_joint_2d, self.theta_init, maxiter=200
         )
         phi0 = jnp.array([0.0, 0.5])
-        (_, _), approx_grad = jax.value_and_grad(
-            laplace_2d, has_aux=True
-        )(phi0)
+        (_, _), approx_grad = jax.value_and_grad(laplace_2d, has_aux=True)(phi0)
 
         eps = 1e-2  # cbrt(machine_eps) is optimal for float32 central FD
-        fd_grad = jnp.array([
-            (laplace_2d(phi0.at[0].set(phi0[0] + eps))[0] -
-             laplace_2d(phi0.at[0].set(phi0[0] - eps))[0]) / (2 * eps),
-            (laplace_2d(phi0.at[1].set(phi0[1] + eps))[0] -
-             laplace_2d(phi0.at[1].set(phi0[1] - eps))[0]) / (2 * eps),
-        ])
+        fd_grad = jnp.array(
+            [
+                (
+                    laplace_2d(phi0.at[0].set(phi0[0] + eps))[0]
+                    - laplace_2d(phi0.at[0].set(phi0[0] - eps))[0]
+                )
+                / (2 * eps),
+                (
+                    laplace_2d(phi0.at[1].set(phi0[1] + eps))[0]
+                    - laplace_2d(phi0.at[1].set(phi0[1] - eps))[0]
+                )
+                / (2 * eps),
+            ]
+        )
         np.testing.assert_allclose(approx_grad, fd_grad, rtol=0.02, atol=0.02)
 
     def test_known_model_mode_and_gradient(self):
@@ -181,13 +185,9 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
             log_lik = -0.5 * jnp.sum((1.0 - theta) ** 2)
             return log_prior_phi + log_prior_theta + log_lik
 
-        laplace = laplace_marginal_factory(
-            log_joint, jnp.array([0.0]), maxiter=200
-        )
+        laplace = laplace_marginal_factory(log_joint, jnp.array([0.0]), maxiter=200)
         phi = jnp.array([2.0])
-        (lp, theta_star), grad = jax.value_and_grad(
-            laplace, has_aux=True
-        )(phi)
+        (lp, theta_star), grad = jax.value_and_grad(laplace, has_aux=True)(phi)
 
         np.testing.assert_allclose(theta_star, jnp.array([1.5]), atol=1e-3)
         expected_grad = -0.5 * (phi - 1.0) - phi / 100.0
@@ -222,9 +222,7 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
             log_joint_tree, theta_init_tree, maxiter=200
         )
         phi = jnp.array(0.0)
-        (lp, theta_star), grad = jax.value_and_grad(
-            laplace_tree, has_aux=True
-        )(phi)
+        (lp, theta_star), grad = jax.value_and_grad(laplace_tree, has_aux=True)(phi)
         self.assertTrue(jnp.isfinite(lp))
         self.assertTrue(jnp.isfinite(grad))
         self.assertIn("a", theta_star)
@@ -289,12 +287,12 @@ class TestLaplaceAdjointAnalytical(BlackJAXTest):
         Implements the total derivative d/dphi log p̂ accounting for the implicit
         dependence theta*(phi) via the IFT.
         """
-        k = jnp.exp(phi)                          # K = k * I
+        k = jnp.exp(phi)  # K = k * I
         n = theta_star.shape[0]
 
-        a = theta_star / k                        # K^{-1} theta*
-        W = jnp.exp(theta_star)                   # Poisson: W_ii = exp(theta_i*)
-        H_inv = 1.0 / (1.0 / k + W)              # (K^{-1} + W)^{-1} diagonal
+        a = theta_star / k  # K^{-1} theta*
+        W = jnp.exp(theta_star)  # Poisson: W_ii = exp(theta_i*)
+        H_inv = 1.0 / (1.0 / k + W)  # (K^{-1} + W)^{-1} diagonal
 
         # IFT: differentiating the optimality condition wrt phi gives
         #   -(1/k + W_i) * dtheta_i*/dphi + theta_i*/k = 0
@@ -304,11 +302,11 @@ class TestLaplaceAdjointAnalytical(BlackJAXTest):
         # Total derivative of H = K^{-1} + W wrt phi:
         #   dK^{-1}/dphi = -1/k * I
         #   dW/dphi = diag(W) * dtheta*/dphi  [chain rule; d3_i = -W_i enters here]
-        dH_diag = -1.0 / k + W * dtheta_dphi     # = -1/k + W * H_inv * a
+        dH_diag = -1.0 / k + W * dtheta_dphi  # = -1/k + W * H_inv * a
 
         # Direct phi-derivative of log p(theta*|phi) at fixed theta*:
         #   log p = -n/2 * log(2pi*k) - ||theta*||^2/(2k)
-        partial_phi = -n / 2.0 + jnp.sum(theta_star ** 2) / (2.0 * k)
+        partial_phi = -n / 2.0 + jnp.sum(theta_star**2) / (2.0 * k)
 
         # d/dphi log det H = tr(H^{-1} dH/dphi)
         d_logdet = jnp.sum(H_inv * dH_diag)
@@ -322,14 +320,17 @@ class TestLaplaceAdjointAnalytical(BlackJAXTest):
         """
         for phi_val in [-1.0, 0.0, 0.5, 1.0]:
             phi = jnp.array(phi_val)
-            (_, theta_star), jax_grad = jax.value_and_grad(
-                self.laplace, has_aux=True
-            )(phi)
+            (_, theta_star), jax_grad = jax.value_and_grad(self.laplace, has_aux=True)(
+                phi
+            )
             analytical = self._analytical_gradient(phi, theta_star)
             # Tolerance is set by float32 L-BFGS convergence, not by the formula.
             np.testing.assert_allclose(
-                float(jax_grad), float(analytical), rtol=1e-2, atol=1e-2,
-                err_msg=f"phi={phi_val}"
+                float(jax_grad),
+                float(analytical),
+                rtol=1e-2,
+                atol=1e-2,
+                err_msg=f"phi={phi_val}",
             )
 
 

@@ -185,6 +185,7 @@ __all__ = [
     "__version__",
     "dual_averaging",  # optimizers
     "lbfgs",
+    "laplace_hmc",
     "window_adaptation",  # mcmc adaptation
     "low_rank_window_adaptation",
     "meads_adaptation",

@@ -233,7 +233,7 @@ def as_top_level_api(
         del rng_key
         return init(position, laplace)
 
-    def step_fn(rng_key: PRNGKey, state: LaplaceHMCState):
+    def step_fn(rng_key: PRNGKey, state):
         return kernel(
             rng_key,
             state,

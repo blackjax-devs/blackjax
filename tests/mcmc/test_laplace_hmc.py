@@ -12,24 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests for the Laplace-HMC sampler (laplace_hmc)."""
+import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 from absl.testing import absltest
 
-import chex
 import blackjax
+from blackjax.mcmc.laplace_hmc import LaplaceHMCState, as_top_level_api, init
+from blackjax.mcmc.laplace_marginal import laplace_marginal_factory
 from blackjax.util import run_inference_algorithm
 from tests.fixtures import BlackJAXTest
-from blackjax.mcmc.laplace_hmc import (
-    LaplaceHMCState,
-    init,
-    build_kernel,
-    as_top_level_api,
-)
-from blackjax.mcmc.laplace_marginal import laplace_marginal_factory
-
 
 # ---------------------------------------------------------------------------
 # Shared model: Gaussian-Gaussian (Laplace is exact)
@@ -38,6 +32,7 @@ from blackjax.mcmc.laplace_marginal import laplace_marginal_factory
 #   theta | phi ~ N(0, exp(phi)² * I_n)    [latent, n-vector]
 #   y     | theta ~ N(theta, I_n)          [observations, n-vector]
 # ---------------------------------------------------------------------------
+
 
 def make_gaussian_model(y):
     def log_joint(theta, log_sigma):
@@ -264,7 +259,10 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         )
         # Sampling — extract scalar phi at each step
         _, phi_samples = run_inference_algorithm(
-            self.next_key(), sampler, n_samples, initial_state=warmup_state,
+            self.next_key(),
+            sampler,
+            n_samples,
+            initial_state=warmup_state,
             transform=lambda state, info: state.position,
         )
         return phi_samples  # shape (n_samples,)
@@ -293,7 +291,10 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
 
         # Sampling — extract phi (last element of position) at each step
         _, phi_samples = run_inference_algorithm(
-            self.next_key(), nuts_algo, n_samples, initial_state=warmup_state,
+            self.next_key(),
+            nuts_algo,
+            n_samples,
+            initial_state=warmup_state,
             transform=lambda state, info: state.position[n],
         )
         return phi_samples  # shape (n_samples,)
@@ -306,10 +307,12 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         mean_laplace = float(jnp.mean(phi_laplace))
         mean_ncp = float(jnp.mean(phi_ncp))
         np.testing.assert_allclose(
-            mean_laplace, mean_ncp, atol=0.1,
+            mean_laplace,
+            mean_ncp,
+            atol=0.1,
             err_msg=(
-                f"laplace_hmc mean {mean_laplace:.3f} deviates from "
-                f"NCP-NUTS reference {mean_ncp:.3f}"
+                "laplace_hmc mean {:.3f} deviates from "
+                "NCP-NUTS reference {:.3f}".format(mean_laplace, mean_ncp)
             ),
         )
 
@@ -322,10 +325,12 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         std_ncp = float(jnp.std(phi_ncp))
         # Allow up to 30% relative deviation — Laplace is an approximation.
         np.testing.assert_allclose(
-            std_laplace, std_ncp, rtol=0.3,
+            std_laplace,
+            std_ncp,
+            rtol=0.3,
             err_msg=(
-                f"laplace_hmc std {std_laplace:.3f} deviates from "
-                f"NCP-NUTS reference {std_ncp:.3f}"
+                "laplace_hmc std {:.3f} deviates from "
+                "NCP-NUTS reference {:.3f}".format(std_laplace, std_ncp)
             ),
         )
 
