@@ -317,39 +317,26 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         )
         return phi_samples  # shape (n_samples,)
 
-    def test_posterior_mean_matches_ncp_nuts(self):
-        """laplace_hmc posterior mean for phi must agree with NCP-NUTS reference."""
+    def test_posterior_matches_ncp_nuts(self):
+        """laplace_hmc mean and std for phi must agree with NCP-NUTS reference.
+
+        Both statistics are checked from a single pair of runs to avoid
+        paying the sampling cost twice.
+        """
         phi_laplace = self._run_laplace_hmc()
         phi_ncp = self._run_ncp_nuts()
 
-        mean_laplace = float(jnp.mean(phi_laplace))
-        mean_ncp = float(jnp.mean(phi_ncp))
+        mean_laplace, mean_ncp = float(jnp.mean(phi_laplace)), float(jnp.mean(phi_ncp))
+        std_laplace, std_ncp = float(jnp.std(phi_laplace)), float(jnp.std(phi_ncp))
+
         np.testing.assert_allclose(
-            mean_laplace,
-            mean_ncp,
-            atol=0.1,
-            err_msg=(
-                "laplace_hmc mean {:.3f} deviates from "
-                "NCP-NUTS reference {:.3f}".format(mean_laplace, mean_ncp)
-            ),
+            mean_laplace, mean_ncp, atol=0.1,
+            err_msg="laplace_hmc mean {:.3f} vs NCP-NUTS {:.3f}".format(mean_laplace, mean_ncp),
         )
-
-    def test_posterior_std_matches_ncp_nuts(self):
-        """laplace_hmc posterior std for phi must agree with NCP-NUTS reference."""
-        phi_laplace = self._run_laplace_hmc()
-        phi_ncp = self._run_ncp_nuts()
-
-        std_laplace = float(jnp.std(phi_laplace))
-        std_ncp = float(jnp.std(phi_ncp))
         # Allow up to 30% relative deviation — Laplace is an approximation.
         np.testing.assert_allclose(
-            std_laplace,
-            std_ncp,
-            rtol=0.3,
-            err_msg=(
-                "laplace_hmc std {:.3f} deviates from "
-                "NCP-NUTS reference {:.3f}".format(std_laplace, std_ncp)
-            ),
+            std_laplace, std_ncp, rtol=0.3,
+            err_msg="laplace_hmc std {:.3f} vs NCP-NUTS {:.3f}".format(std_laplace, std_ncp),
         )
 
 
