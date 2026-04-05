@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g023ff19bf" />
+  <meta name="docsearch:version" content="0.1.dev1+g728c3461a" />
   </head>
   
   
@@ -199,6 +199,8 @@
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
@@ -473,6 +475,8 @@
 </li>
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.as_top_level_api">(in module blackjax.mcmc.hmc)</a>
 </li>
+        <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#blackjax.mcmc.laplace_hmc.as_top_level_api">(in module blackjax.mcmc.laplace_hmc)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.as_top_level_api">(in module blackjax.mcmc.mala)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.as_top_level_api">(in module blackjax.mcmc.marginal_latent_gaussian)</a>
@@ -726,6 +730,20 @@
 </li>
       </ul></li>
       <li>
+    blackjax.mcmc.laplace_hmc
+
+      <ul>
+        <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#module-blackjax.mcmc.laplace_hmc">module</a>
+</li>
+      </ul></li>
+      <li>
+    blackjax.mcmc.laplace_marginal
+
+      <ul>
+        <li><a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#module-blackjax.mcmc.laplace_marginal">module</a>
+</li>
+      </ul></li>
+      <li>
     blackjax.mcmc.mala
 
       <ul>
@@ -823,6 +841,8 @@
         <li><a href="autoapi/blackjax/sgmcmc/diffusions/index.html#module-blackjax.sgmcmc.diffusions">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.gradients
 
@@ -830,8 +850,6 @@
         <li><a href="autoapi/blackjax/sgmcmc/gradients/index.html#module-blackjax.sgmcmc.gradients">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.sghmc
 
@@ -1046,6 +1064,8 @@
 </li>
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.build_kernel">(in module blackjax.mcmc.hmc)</a>
 </li>
+        <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#blackjax.mcmc.laplace_hmc.build_kernel">(in module blackjax.mcmc.laplace_hmc)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.build_kernel">(in module blackjax.mcmc.mala)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.build_kernel">(in module blackjax.mcmc.marginal_latent_gaussian)</a>
@@ -1255,11 +1275,13 @@
 </li>
       <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.generate_fullrank_logdensity">generate_fullrank_logdensity() (in module blackjax.vi.fullrank_vi)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/vi/meanfield_vi/index.html#blackjax.vi.meanfield_vi.generate_meanfield_logdensity">generate_meanfield_logdensity() (in module blackjax.vi.meanfield_vi)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.get_filter_adapt_info_fn">get_filter_adapt_info_fn() (in module blackjax.adaptation.base)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal.get_theta_star">get_theta_star (LaplaceMarginal attribute)</a>, <a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#id1">[1]</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState">GHMCState (class in blackjax.mcmc.ghmc)</a>
 </li>
@@ -1335,6 +1357,8 @@
         <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.init">(in module blackjax.mcmc.ghmc)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.init">(in module blackjax.mcmc.hmc)</a>
+</li>
+        <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#blackjax.mcmc.laplace_hmc.init">(in module blackjax.mcmc.laplace_hmc)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.init">(in module blackjax.mcmc.mala)</a>
 </li>
@@ -1451,6 +1475,14 @@
       </ul></li>
       <li><a href="autoapi/blackjax/adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.LowRankAdaptationState.lam">lam (LowRankAdaptationState attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/index.html#blackjax.laplace_hmc">laplace_hmc (in module blackjax)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.laplace_marginal_factory">laplace_marginal_factory() (in module blackjax.mcmc.laplace_marginal)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#blackjax.mcmc.laplace_hmc.LaplaceHMCState">LaplaceHMCState (class in blackjax.mcmc.laplace_hmc)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal">LaplaceMarginal (class in blackjax.mcmc.laplace_marginal)</a>
+</li>
       <li><a href="autoapi/blackjax/adaptation/laps/index.html#blackjax.adaptation.laps.laps">laps() (in module blackjax.adaptation.laps)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.Trajectory.leftmost_state">leftmost_state (Trajectory attribute)</a>
@@ -1458,6 +1490,8 @@
       <li><a href="autoapi/blackjax/smc/ess/index.html#blackjax.smc.ess.log_ess">log_ess() (in module blackjax.smc.ess)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCInfo.log_likelihood_increment">log_likelihood_increment (SMCInfo attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal.log_marginal">log_marginal (LaplaceMarginal attribute)</a>, <a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#id2">[1]</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/step_size/index.html#blackjax.adaptation.step_size.DualAveragingAdaptationState.log_step_size">log_step_size (DualAveragingAdaptationState attribute)</a>
 </li>
@@ -1486,6 +1520,8 @@
 </li>
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.logdensity">(HMCState attribute)</a>
 </li>
+        <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#blackjax.mcmc.laplace_hmc.LaplaceHMCState.logdensity">(LaplaceHMCState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAState.logdensity">(MALAState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.MarginalState.logdensity">(MarginalState attribute)</a>
@@ -1507,6 +1543,8 @@
         <li><a href="autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.GHMCState.logdensity_grad">(GHMCState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.logdensity_grad">(HMCState attribute)</a>
+</li>
+        <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#blackjax.mcmc.laplace_hmc.LaplaceHMCState.logdensity_grad">(LaplaceHMCState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAState.logdensity_grad">(MALAState attribute)</a>
 </li>
@@ -1624,6 +1662,10 @@
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#module-blackjax.mcmc.hmc">blackjax.mcmc.hmc</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/integrators/index.html#module-blackjax.mcmc.integrators">blackjax.mcmc.integrators</a>
+</li>
+        <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#module-blackjax.mcmc.laplace_hmc">blackjax.mcmc.laplace_hmc</a>
+</li>
+        <li><a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#module-blackjax.mcmc.laplace_marginal">blackjax.mcmc.laplace_marginal</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/mala/index.html#module-blackjax.mcmc.mala">blackjax.mcmc.mala</a>
 </li>
@@ -1891,6 +1933,8 @@
 </li>
         <li><a href="autoapi/blackjax/mcmc/hmc/index.html#blackjax.mcmc.hmc.HMCState.position">(HMCState attribute)</a>
 </li>
+        <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#blackjax.mcmc.laplace_hmc.LaplaceHMCState.position">(LaplaceHMCState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/mala/index.html#blackjax.mcmc.mala.MALAState.position">(MALAState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.MarginalState.position">(MarginalState attribute)</a>
@@ -1996,6 +2040,8 @@
       </ul></li>
       <li><a href="autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.WelfordAlgorithmState.sample_size">sample_size (WelfordAlgorithmState attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal.sample_theta">sample_theta (LaplaceMarginal attribute)</a>, <a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#id3">[1]</a>
+</li>
       <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.StateWithParameterOverride.sampler_state">sampler_state (StateWithParameterOverride attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/vi/multipathfinder/index.html#blackjax.vi.multipathfinder.MultipathfinderState.samples">samples (MultipathfinderState attribute)</a>
@@ -2022,6 +2068,8 @@
 </li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.SMCState">SMCState (class in blackjax.smc.base)</a>
 </li>
+      <li><a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta">solve_theta (LaplaceMarginal attribute)</a>, <a href="autoapi/blackjax/mcmc/laplace_marginal/index.html#id0">[1]</a>
+</li>
       <li><a href="autoapi/blackjax/adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.LowRankAdaptationState.ss_state">ss_state (LowRankAdaptationState attribute)</a>
 
       <ul>
@@ -2038,10 +2086,10 @@
         <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.Proposal.state">(Proposal attribute)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.StateWithParameterOverride">StateWithParameterOverride (class in blackjax.smc.inner_kernel_tuning)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/smc/inner_kernel_tuning/index.html#blackjax.smc.inner_kernel_tuning.StateWithParameterOverride">StateWithParameterOverride (class in blackjax.smc.inner_kernel_tuning)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.static_binomial_sampling">static_binomial_sampling() (in module blackjax.mcmc.proposal)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.static_integration">static_integration() (in module blackjax.mcmc.trajectory)</a>
@@ -2125,6 +2173,8 @@
 </li>
       </ul></li>
       <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.EllipSliceInfo.theta">theta (EllipSliceInfo attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/laplace_hmc/index.html#blackjax.mcmc.laplace_hmc.LaplaceHMCState.theta_star">theta_star (LaplaceHMCState attribute)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>

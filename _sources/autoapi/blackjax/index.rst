@@ -23,11 +23,14 @@ Attributes
 
 .. autoapisummary::
 
+   blackjax.laplace_hmc
    blackjax.multipathfinder
 
 
 Package Contents
 ----------------
+
+.. py:data:: laplace_hmc
 
 .. py:data:: multipathfinder
 
