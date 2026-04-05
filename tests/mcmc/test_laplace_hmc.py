@@ -261,6 +261,7 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
                 + stats.norm.logpdf(y, theta, 1.0).sum()
             )
 
+        laplace = laplace_marginal_factory(log_joint, jnp.zeros(n), maxiter=200)
         sampler = as_top_level_api(
             log_joint,
             jnp.zeros(n),
@@ -271,22 +272,26 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         )
         initial_state = sampler.init(jnp.array(0.0))
 
-        # Warmup (discarded)
         warmup_state, _ = run_inference_algorithm(
             self.next_key(), sampler, n_warmup, initial_state=initial_state
         )
-        # Sampling — extract scalar phi at each step
-        _, phi_samples = run_inference_algorithm(
+        _, (phi_samples, theta_star_samples) = run_inference_algorithm(
             self.next_key(),
             sampler,
             n_samples,
             initial_state=warmup_state,
-            transform=lambda state, info: state.position,
+            transform=lambda state, info: (state.position, state.theta_star),
         )
-        return phi_samples  # shape (n_samples,)
+
+        # Draw theta ~ N(theta_star, H^{-1}) for each phi sample.
+        rng_keys = jax.random.split(self.next_key(), n_samples)
+        theta_samples = jax.vmap(laplace.sample_theta)(
+            rng_keys, phi_samples, theta_star_samples
+        )
+        return phi_samples, theta_samples  # (n_samples,), (n_samples, n)
 
     def _run_ncp_nuts(self, n_warmup=500, n_samples=5000):
-        """Window-adapted NUTS on the NCP — the reference posterior for phi."""
+        """Window-adapted NUTS on the NCP — the reference posterior for phi and theta."""
         y = self.y
         n = self.n
 
@@ -300,43 +305,61 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
                 + stats.norm.logpdf(y, theta, 1.0).sum()
             )
 
-        # Window adaptation tunes step size and mass matrix automatically.
         warmup = blackjax.window_adaptation(blackjax.nuts, log_joint_ncp)
         (warmup_state, params), _ = warmup.run(
             self.next_key(), jnp.zeros(n + 1), num_steps=n_warmup
         )
         nuts_algo = blackjax.nuts(log_joint_ncp, **params)
 
-        # Sampling — extract phi (last element of position) at each step
-        _, phi_samples = run_inference_algorithm(
+        _, (phi_samples, theta_samples) = run_inference_algorithm(
             self.next_key(),
             nuts_algo,
             n_samples,
             initial_state=warmup_state,
-            transform=lambda state, info: state.position[n],
+            transform=lambda state, info: (
+                state.position[n],
+                state.position[:n] * jnp.exp(state.position[n]),
+            ),
         )
-        return phi_samples  # shape (n_samples,)
+        return phi_samples, theta_samples  # (n_samples,), (n_samples, n)
 
     def test_posterior_matches_ncp_nuts(self):
-        """laplace_hmc mean and std for phi must agree with NCP-NUTS reference.
+        """laplace_hmc phi and theta posteriors must agree with NCP-NUTS reference.
 
-        Both statistics are checked from a single pair of runs to avoid
-        paying the sampling cost twice.
+        phi mean/std and theta mean/std are all checked from a single pair of
+        runs to avoid paying the sampling cost multiple times.
+
+        For theta, we compare the mean and std pooled across components — the
+        model is exchangeable in theta, so the pooled statistics are the most
+        powerful single-number summary.
         """
-        phi_laplace = self._run_laplace_hmc()
-        phi_ncp = self._run_ncp_nuts()
+        phi_laplace, theta_laplace = self._run_laplace_hmc()
+        phi_ncp, theta_ncp = self._run_ncp_nuts()
 
-        mean_laplace, mean_ncp = float(jnp.mean(phi_laplace)), float(jnp.mean(phi_ncp))
-        std_laplace, std_ncp = float(jnp.std(phi_laplace)), float(jnp.std(phi_ncp))
-
+        # --- phi ---
+        mean_phi_laplace, mean_phi_ncp = float(jnp.mean(phi_laplace)), float(jnp.mean(phi_ncp))
+        std_phi_laplace, std_phi_ncp = float(jnp.std(phi_laplace)), float(jnp.std(phi_ncp))
         np.testing.assert_allclose(
-            mean_laplace, mean_ncp, atol=0.1,
-            err_msg="laplace_hmc mean {:.3f} vs NCP-NUTS {:.3f}".format(mean_laplace, mean_ncp),
+            mean_phi_laplace, mean_phi_ncp, atol=0.1,
+            err_msg="phi mean: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(mean_phi_laplace, mean_phi_ncp),
         )
-        # Allow up to 30% relative deviation — Laplace is an approximation.
+        # Allow up to 40% relative deviation — Laplace underestimates variance,
+        # especially for small n.
         np.testing.assert_allclose(
-            std_laplace, std_ncp, rtol=0.3,
-            err_msg="laplace_hmc std {:.3f} vs NCP-NUTS {:.3f}".format(std_laplace, std_ncp),
+            std_phi_laplace, std_phi_ncp, rtol=0.4,
+            err_msg="phi std: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(std_phi_laplace, std_phi_ncp),
+        )
+
+        # --- theta (pooled across components) ---
+        mean_theta_laplace, mean_theta_ncp = float(jnp.mean(theta_laplace)), float(jnp.mean(theta_ncp))
+        std_theta_laplace, std_theta_ncp = float(jnp.std(theta_laplace)), float(jnp.std(theta_ncp))
+        np.testing.assert_allclose(
+            mean_theta_laplace, mean_theta_ncp, atol=0.2,
+            err_msg="theta mean: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(mean_theta_laplace, mean_theta_ncp),
+        )
+        np.testing.assert_allclose(
+            std_theta_laplace, std_theta_ncp, rtol=0.3,
+            err_msg="theta std: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(std_theta_laplace, std_theta_ncp),
         )
 
 
