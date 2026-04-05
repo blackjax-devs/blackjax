@@ -212,7 +212,10 @@ class TestLaplaceHMCSampling(BlackJAXTest):
             self.next_key(), sampler, 500, initial_state=initial_state
         )
         _, samples = run_inference_algorithm(
-            self.next_key(), sampler, 1000, initial_state=warmup_state,
+            self.next_key(),
+            sampler,
+            1000,
+            initial_state=warmup_state,
             transform=lambda state, info: state.position,
         )
 
@@ -337,29 +340,53 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         phi_ncp, theta_ncp = self._run_ncp_nuts()
 
         # --- phi ---
-        mean_phi_laplace, mean_phi_ncp = float(jnp.mean(phi_laplace)), float(jnp.mean(phi_ncp))
-        std_phi_laplace, std_phi_ncp = float(jnp.std(phi_laplace)), float(jnp.std(phi_ncp))
+        mean_phi_laplace, mean_phi_ncp = float(jnp.mean(phi_laplace)), float(
+            jnp.mean(phi_ncp)
+        )
+        std_phi_laplace, std_phi_ncp = float(jnp.std(phi_laplace)), float(
+            jnp.std(phi_ncp)
+        )
         np.testing.assert_allclose(
-            mean_phi_laplace, mean_phi_ncp, atol=0.1,
-            err_msg="phi mean: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(mean_phi_laplace, mean_phi_ncp),
+            mean_phi_laplace,
+            mean_phi_ncp,
+            atol=0.1,
+            err_msg="phi mean: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(
+                mean_phi_laplace, mean_phi_ncp
+            ),
         )
         # Allow up to 40% relative deviation — Laplace underestimates variance,
         # especially for small n.
         np.testing.assert_allclose(
-            std_phi_laplace, std_phi_ncp, rtol=0.4,
-            err_msg="phi std: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(std_phi_laplace, std_phi_ncp),
+            std_phi_laplace,
+            std_phi_ncp,
+            rtol=0.4,
+            err_msg="phi std: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(
+                std_phi_laplace, std_phi_ncp
+            ),
         )
 
         # --- theta (pooled across components) ---
-        mean_theta_laplace, mean_theta_ncp = float(jnp.mean(theta_laplace)), float(jnp.mean(theta_ncp))
-        std_theta_laplace, std_theta_ncp = float(jnp.std(theta_laplace)), float(jnp.std(theta_ncp))
-        np.testing.assert_allclose(
-            mean_theta_laplace, mean_theta_ncp, atol=0.2,
-            err_msg="theta mean: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(mean_theta_laplace, mean_theta_ncp),
+        mean_theta_laplace, mean_theta_ncp = float(jnp.mean(theta_laplace)), float(
+            jnp.mean(theta_ncp)
+        )
+        std_theta_laplace, std_theta_ncp = float(jnp.std(theta_laplace)), float(
+            jnp.std(theta_ncp)
         )
         np.testing.assert_allclose(
-            std_theta_laplace, std_theta_ncp, rtol=0.3,
-            err_msg="theta std: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(std_theta_laplace, std_theta_ncp),
+            mean_theta_laplace,
+            mean_theta_ncp,
+            atol=0.2,
+            err_msg="theta mean: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(
+                mean_theta_laplace, mean_theta_ncp
+            ),
+        )
+        np.testing.assert_allclose(
+            std_theta_laplace,
+            std_theta_ncp,
+            rtol=0.3,
+            err_msg="theta std: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(
+                std_theta_laplace, std_theta_ncp
+            ),
         )
 
 

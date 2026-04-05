@@ -228,7 +228,9 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
 
         theta_star = self.laplace.solve_theta(phi)
         keys = jax.random.split(self.next_key(), 5000)
-        samples = jax.vmap(lambda k: self.laplace.sample_theta(k, phi, theta_star))(keys)
+        samples = jax.vmap(lambda k: self.laplace.sample_theta(k, phi, theta_star))(
+            keys
+        )
 
         np.testing.assert_allclose(jnp.mean(samples, axis=0), exact_mean, atol=0.05)
         np.testing.assert_allclose(jnp.var(samples, axis=0), exact_var, rtol=0.05)
@@ -364,19 +366,16 @@ class TestLaplacePoissonQuadrature(BlackJAXTest):
             return log_prior + log_lik
 
         self.log_joint = log_joint
-        self.laplace = laplace_marginal_factory(
-            log_joint, jnp.array(0.0), maxiter=500
-        )
+        self.laplace = laplace_marginal_factory(log_joint, jnp.array(0.0), maxiter=500)
 
     def _exact_log_marginal(self, phi_val):
         """1D quadrature over theta to get the exact log p(y | phi)."""
-        y_np = np.array(self.y)
 
         def integrand(theta):
-            log_prior = float(stats.norm.logpdf(jnp.array(theta), 0.0, np.exp(0.5 * phi_val)))
-            log_lik = float(
-                jax.scipy.stats.poisson.logpmf(self.y, np.exp(theta)).sum()
+            log_prior = float(
+                stats.norm.logpdf(jnp.array(theta), 0.0, np.exp(0.5 * phi_val))
             )
+            log_lik = float(jax.scipy.stats.poisson.logpmf(self.y, np.exp(theta)).sum())
             return np.exp(log_prior + log_lik)
 
         result, _ = scipy.integrate.quad(integrand, -15.0, 15.0, limit=200)
@@ -397,7 +396,9 @@ class TestLaplacePoissonQuadrature(BlackJAXTest):
                 float(approx),
                 exact,
                 atol=0.1,
-                err_msg=f"phi={phi_val}: Laplace={float(approx):.4f}, quadrature={exact:.4f}",
+                err_msg="phi={}: Laplace={:.4f}, quadrature={:.4f}".format(
+                    phi_val, float(approx), exact
+                ),
             )
 
 
