@@ -21,11 +21,13 @@ from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.vi._gaussian_vi import KL, Objective, RenyiAlpha, _elbo_step
+
+from ._gaussian_vi import KL, Objective, RenyiAlpha, TailAdaptive, _elbo_step
 
 __all__ = [
     "KL",
     "RenyiAlpha",
+    "TailAdaptive",
     "FRVIState",
     "FRVIInfo",
     "sample",
@@ -60,7 +62,6 @@ class FRVIInfo(NamedTuple):
 
     elbo:
         ELBO of approximation wrt target distribution.
-
     """
 
     elbo: float
@@ -107,11 +108,8 @@ def step(
         Optax `GradientTransformation` to be used for optimization.
     num_samples
         The number of samples that are taken from the approximation
-        at each step to compute the Kullback-Leibler divergence between
-        the approximation and the target log-density.
-    objective:
-        The variational objective to minimize. `KL()` by default or
-        `RenyiAlpha(alpha)`. For alpha = 1, Renyi reduces to KL.
+        at each step to compute the divergence between the approximation
+        and the target log-density.
     stl_estimator
         Whether to use the stick-the-landing (STL) gradient estimator
         :cite:p:`roeder2017sticking`. Reduces gradient variance by removing
@@ -122,7 +120,7 @@ def step(
     new_state
         Updated ``FRVIState``.
     info
-        ``FRVIInfo`` containing the current ELBO value.
+        ``FRVIInfo`` containing the current objective estimate.
 
     """
 
@@ -189,12 +187,6 @@ def as_top_level_api(
         Optax optimizer to use to optimize the ELBO.
     num_samples
         Number of samples to take at each step to optimize the ELBO.
-    objective
-        The variational objective to minimize. `KL()` by default or
-        `RenyiAlpha(alpha)`. For alpha = 1, Renyi reduces to KL.
-    stl_estimator
-        Whether to use STL gradient estimator.
-        Only supported when `objective` is `KL()` or `RenyiAlpha(alpha=1.0)`.
 
     Returns
     -------
@@ -317,9 +309,13 @@ def generate_fullrank_logdensity(mu, chol_params):
 
     def fullrank_logdensity(position):
         position_flatten, _ = jax.flatten_util.ravel_pytree(position)
-        centered_position = position_flatten - mu_flatten
-        y = jsp.linalg.solve_triangular(chol_factor, centered_position, lower=True)
-        mahalanobis_dist = jnp.sum(y**2)
-        return const - 0.5 * (log_det + mahalanobis_dist)
+        delta = position_flatten - mu_flatten
+        solved = jsp.linalg.solve_triangular(
+            chol_factor,
+            delta,
+            lower=True,
+        )
+        maha = jnp.sum(solved**2)
+        return const - 0.5 * (log_det + maha)
 
     return fullrank_logdensity

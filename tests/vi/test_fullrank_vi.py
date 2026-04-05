@@ -23,6 +23,7 @@ from blackjax.vi.fullrank_vi import (
     KL,
     FRVIState,
     RenyiAlpha,
+    TailAdaptive,
     generate_fullrank_logdensity,
     init,
     sample,
@@ -185,6 +186,37 @@ class FRVIUnitTest(BlackJAXTest):
                 self.optimizer,
                 objective=RenyiAlpha(alpha=0.5),
                 stl_estimator=True,
+            )
+
+    def test_step_with_tail_adaptive_objective(self):
+        """FRVI step works with TailAdaptive(beta=-1.0)."""
+        position = jnp.zeros(2)
+        state = init(position, self.optimizer)
+
+        new_state, info = step(
+            self.next_key(),
+            state,
+            std_normal_logdensity,
+            self.optimizer,
+            objective=TailAdaptive(beta=-1.0),
+        )
+
+        self.assertIsInstance(new_state, FRVIState)
+        assert jnp.isfinite(info.elbo)
+
+    def test_tail_adaptive_without_stl_raises(self):
+        """FRVI should reject TailAdaptive when stl_estimator is False."""
+        position = jnp.zeros(2)
+        state = init(position, self.optimizer)
+
+        with self.assertRaises(ValueError):
+            step(
+                self.next_key(),
+                state,
+                std_normal_logdensity,
+                self.optimizer,
+                objective=TailAdaptive(beta=-1.0),
+                stl_estimator=False,
             )
 
 

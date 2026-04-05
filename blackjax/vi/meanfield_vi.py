@@ -20,11 +20,13 @@ from optax import GradientTransformation, OptState
 
 from blackjax.base import VIAlgorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.vi._gaussian_vi import KL, Objective, RenyiAlpha, _elbo_step
+
+from ._gaussian_vi import KL, Objective, RenyiAlpha, TailAdaptive, _elbo_step
 
 __all__ = [
     "KL",
     "RenyiAlpha",
+    "TailAdaptive",
     "MFVIState",
     "MFVIInfo",
     "sample",
@@ -79,35 +81,7 @@ def step(
     objective: Objective = KL(),
     stl_estimator: bool = True,
 ) -> tuple[MFVIState, MFVIInfo]:
-    """Approximate the target density using the mean-field approximation.
-
-    Parameters
-    ----------
-    rng_key
-        Key for JAX's pseudo-random number generator.
-    state
-        Current state of the mean-field approximation.
-    logdensity_fn
-        Function that represents the target log-density to approximate.
-    optimizer
-        Optax ``GradientTransformation`` to be used for optimization.
-    num_samples
-        The number of samples that are taken from the approximation
-        at each step to compute the Kullback-Leibler divergence between
-        the approximation and the target log-density.
-    objective
-        The variational objective to minimize. `KL()` by default or
-        `RenyiAlpha(alpha)`. For alpha = 1, Renyi reduces to KL.
-    stl_estimator
-        Whether to use the stick-the-landing (STL) gradient estimator
-        :cite:p:`roeder2017sticking`. The STL estimator has lower gradient
-        variance by removing the score function term from the gradient.
-        :cite:p:`agrawal2020advances` recommend keeping it enabled.
-
-    Returns
-    -------
-    Updated MFVIState and MFVIInfo containing the ELBO value.
-    """
+    """Approximate the target density using the mean-field approximation."""
 
     parameters = (state.mu, state.rho)
 
@@ -134,21 +108,7 @@ def step(
 
 
 def sample(rng_key: PRNGKey, state: MFVIState, num_samples: int = 1):
-    """Sample from the mean-field approximation.
-
-    Parameters
-    ----------
-    rng_key
-        Key for JAX's pseudo-random number generator.
-    state
-        Current MFVIState containing the variational parameters.
-    num_samples
-        Number of samples to draw.
-
-    Returns
-    -------
-    A PyTree of samples with leading dimension ``num_samples``
-    """
+    """Sample from the mean-field approximation."""
     return _sample(rng_key, state.mu, state.rho, num_samples)
 
 
@@ -159,29 +119,7 @@ def as_top_level_api(
     objective: Objective = KL(),
     stl_estimator: bool = True,
 ):
-    """High-level implementation of Mean-Field Variational Inference
-
-     Parameters
-    ----------
-    logdensity_fn
-        A function that represents the log-density function associated with
-        the distribution we want to sample from.
-    optimizer
-        Optax optimizer to use to optimize the variational objective.
-    num_samples
-        Number of samples to take at each step to optimize the ELBO.
-    objective
-        The variational objective to minimize. `KL()` by default or
-        `RenyiAlpha(alpha)`. For a = 1, Renyi reduces to KL.
-    stl_estimator
-        Whether to use the STL gradient estimator.
-        Only supported when `objective` is `KL()` or `RenyiAlpha(alpha=1.0)`.
-
-    Returns
-    -------
-    A ``VIAlgorithm``.
-
-    """
+    """High-level implementation of Mean-Field Variational Inference."""
 
     def init_fn(position: ArrayLikeTree):
         return init(position, optimizer)
