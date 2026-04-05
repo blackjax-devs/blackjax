@@ -20,6 +20,7 @@ from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
+from .mcmc import laplace_hmc as _laplace_hmc
 from .mcmc import mala as _mala
 from .mcmc import marginal_latent_gaussian
 from .mcmc import mclmc as _mclmc
@@ -108,6 +109,7 @@ dynamic_hmc = generate_top_level_api_from(_dynamic_hmc)
 rmhmc = generate_top_level_api_from(_rmhmc)
 mala = generate_top_level_api_from(_mala)
 mgrad_gaussian = generate_top_level_api_from(marginal_latent_gaussian)
+laplace_hmc = generate_top_level_api_from(_laplace_hmc)
 orbital_hmc = generate_top_level_api_from(periodic_orbital)
 
 additive_step_random_walk = GenerateSamplingAPI(
@@ -183,6 +185,7 @@ __all__ = [
     "__version__",
     "dual_averaging",  # optimizers
     "lbfgs",
+    "laplace_hmc",
     "window_adaptation",  # mcmc adaptation
     "low_rank_window_adaptation",
     "meads_adaptation",
