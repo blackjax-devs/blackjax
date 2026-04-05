@@ -44,7 +44,7 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax.optimizers.lbfgs import minimize_lbfgs
-from blackjax.types import ArrayLikeTree, ArrayTree
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["LaplaceMarginal", "laplace_marginal_factory"]
 
@@ -74,11 +74,24 @@ class LaplaceMarginal:
             (lp, theta_star), grad = jax.value_and_grad(
                 laplace.log_marginal, has_aux=True
             )(phi)
+    sample_theta
+        ``(rng_key, phi, theta_star) -> theta_sample`` — draws one sample
+        from the Laplace-approximate conditional posterior::
+
+            p(theta | phi, y) ≈ N(theta_star, H(phi)^{-1})
+
+        where ``H = -d²/dtheta² log_joint`` at the mode ``theta_star``.
+        Use this to recover samples of the marginalized latent variables
+        after running MCMC on ``phi``::
+
+            theta_sample = laplace.sample_theta(rng_key, state.position,
+                                                state.theta_star)
     """
 
     solve_theta: Callable
     get_theta_star: Callable
     log_marginal: Callable
+    sample_theta: Callable
 
     def __call__(
         self, phi: ArrayLikeTree, theta_prev: Optional[ArrayTree] = None
@@ -233,8 +246,52 @@ def laplace_marginal_factory(
         lp = log_p_star - 0.5 * log_abs_det + 0.5 * d * jnp.log(2.0 * jnp.pi)
         return lp, theta_star
 
+    # ------------------------------------------------------------------
+    # sample_theta: draw from the Laplace-approximate conditional posterior
+    # ------------------------------------------------------------------
+    def sample_theta(
+        rng_key: PRNGKey,
+        phi: ArrayLikeTree,
+        theta_star: ArrayTree,
+    ) -> ArrayTree:
+        """Sample theta ~ N(theta_star, H(phi)^{-1}).
+
+        Parameters
+        ----------
+        rng_key
+            JAX PRNG key.
+        phi
+            Hyperparameter value (a single MCMC sample).
+        theta_star
+            MAP of theta at ``phi``, e.g. ``state.theta_star`` from a
+            :class:`~blackjax.mcmc.laplace_hmc.LaplaceHMCState`.
+
+        Returns
+        -------
+        A sample from the Laplace-approximate posterior
+        ``p(theta | phi, y) ≈ N(theta_star, H^{-1})``.
+        """
+        theta_flat_star, _ = ravel_pytree(theta_star)
+
+        def log_joint_flat(t_flat):
+            return log_joint_fn(unravel_theta(t_flat), phi)
+
+        # H = -Hessian_theta log_joint at theta_star (positive-definite)
+        neg_hess = jax.hessian(lambda t: -log_joint_flat(t))(theta_flat_star)
+
+        # Cholesky: H = L L^T.  Sample x = theta_star + L^{-T} z, z ~ N(0, I).
+        # This is equivalent to x ~ N(theta_star, H^{-1}).
+        L = jnp.linalg.cholesky(neg_hess)
+        z = jax.random.normal(rng_key, (d,))
+        # Solve L^T x_flat = z  =>  x_flat = (L^T)^{-1} z
+        x_flat = jax.lax.linalg.triangular_solve(
+            L, z, left_side=True, lower=True, transpose_a=True
+        )
+        return unravel_theta(theta_flat_star + x_flat)
+
     return LaplaceMarginal(
         solve_theta=solve_theta,
         get_theta_star=get_theta_star,
         log_marginal=log_marginal,
+        sample_theta=sample_theta,
     )

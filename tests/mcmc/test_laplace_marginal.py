@@ -17,6 +17,7 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
+import scipy.integrate
 from absl.testing import absltest
 
 from blackjax.mcmc.laplace_marginal import LaplaceMarginal, laplace_marginal_factory
@@ -204,6 +205,34 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
         self.assertIn("a", theta_star)
         self.assertIn("b", theta_star)
 
+    # --- sample_theta: draw from Laplace approximate posterior ---------------
+
+    def test_sample_theta_shape(self):
+        phi = jnp.array(0.0)
+        theta_star = self.laplace.solve_theta(phi)
+        sample = self.laplace.sample_theta(self.next_key(), phi, theta_star)
+        self.assertEqual(sample.shape, (self.n,))
+
+    def test_sample_theta_mean_and_variance_match_exact_posterior(self):
+        """Empirical mean ≈ theta_star and variance ≈ sigma^2/(sigma^2+1).
+
+        For the Gaussian-Gaussian model the Laplace posterior is exact:
+            theta | phi, y ~ N(mu_post, Sigma_post)
+            mu_post    = sigma^2 / (sigma^2 + 1) * y
+            Sigma_post = sigma^2 / (sigma^2 + 1) * I
+        """
+        phi = jnp.array(0.0)  # log_sigma = 0  =>  sigma = 1
+        sigma = jnp.exp(phi)
+        exact_mean = (sigma**2 / (sigma**2 + 1.0)) * self.y
+        exact_var = sigma**2 / (sigma**2 + 1.0)
+
+        theta_star = self.laplace.solve_theta(phi)
+        keys = jax.random.split(self.next_key(), 5000)
+        samples = jax.vmap(lambda k: self.laplace.sample_theta(k, phi, theta_star))(keys)
+
+        np.testing.assert_allclose(jnp.mean(samples, axis=0), exact_mean, atol=0.05)
+        np.testing.assert_allclose(jnp.var(samples, axis=0), exact_var, rtol=0.05)
+
 
 class TestLaplaceAdjointAnalytical(BlackJAXTest):
     """Validates JAX AD gradient against the adjoint formula from Algorithm 2 of
@@ -307,6 +336,68 @@ class TestLaplaceAdjointAnalytical(BlackJAXTest):
                 rtol=1e-2,
                 atol=1e-2,
                 err_msg=f"phi={phi_val}",
+            )
+
+
+class TestLaplacePoissonQuadrature(BlackJAXTest):
+    """Gold-standard value test: log-marginal matches 1D numerical quadrature.
+
+    Mirrors Stan's ``aki_ex_test.cpp``, which validates the Laplace marginal
+    against ``integrate_1d`` for a scalar-theta Poisson-LogNormal model.
+    Scalar theta makes the exact marginal tractable by quadrature, giving an
+    model-agnostic ground truth that requires no closed-form derivation.
+
+    Model:
+        phi                ~ (hyperparameter under test)
+        theta | phi        ~ N(0, exp(phi/2))   [scalar latent, variance = exp(phi)]
+        y_i   | theta      ~ Poisson(exp(theta))
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.y = jnp.array([3.0, 1.0, 4.0, 1.0, 5.0])
+
+        def log_joint(theta, phi):
+            # theta scalar; variance of prior = exp(phi), std = exp(phi/2)
+            log_prior = stats.norm.logpdf(theta, 0.0, jnp.exp(0.5 * phi))
+            log_lik = jax.scipy.stats.poisson.logpmf(self.y, jnp.exp(theta)).sum()
+            return log_prior + log_lik
+
+        self.log_joint = log_joint
+        self.laplace = laplace_marginal_factory(
+            log_joint, jnp.array(0.0), maxiter=500
+        )
+
+    def _exact_log_marginal(self, phi_val):
+        """1D quadrature over theta to get the exact log p(y | phi)."""
+        y_np = np.array(self.y)
+
+        def integrand(theta):
+            log_prior = float(stats.norm.logpdf(jnp.array(theta), 0.0, np.exp(0.5 * phi_val)))
+            log_lik = float(
+                jax.scipy.stats.poisson.logpmf(self.y, np.exp(theta)).sum()
+            )
+            return np.exp(log_prior + log_lik)
+
+        result, _ = scipy.integrate.quad(integrand, -15.0, 15.0, limit=200)
+        return np.log(result)
+
+    def test_log_marginal_value_matches_quadrature(self):
+        """Laplace log-marginal matches 1D quadrature within atol=0.1 nats.
+
+        atol=0.1 matches the ~5% relative tolerance used in Stan's aki_ex_test.
+        The Laplace approximation is accurate here because the posterior
+        p(theta | phi, y) is unimodal and well-concentrated for these y values.
+        """
+        for phi_val in [-1.0, 0.0, 0.5, 1.0]:
+            phi = jnp.array(phi_val)
+            approx, _ = self.laplace(phi)
+            exact = self._exact_log_marginal(phi_val)
+            np.testing.assert_allclose(
+                float(approx),
+                exact,
+                atol=0.1,
+                err_msg=f"phi={phi_val}: Laplace={float(approx):.4f}, quadrature={exact:.4f}",
             )
 
 

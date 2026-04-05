@@ -140,6 +140,26 @@ class TestLaplaceHMCKernel(BlackJAXTest):
         for _ in range(3):
             self.state, _ = step(self.next_key(), self.state)
 
+    def test_sample_theta_from_mcmc_states(self):
+        """After running laplace_hmc, sample theta ~ N(theta_star, H^{-1}) for each phi."""
+        laplace = laplace_marginal_factory(self.log_joint, self.theta_init, maxiter=200)
+
+        n_samples = 30
+        keys = jax.random.split(self.next_key(), n_samples)
+        rng_keys = jax.random.split(self.next_key(), n_samples)
+
+        def one_step(state, key):
+            new_state, _ = self.sampler.step(key, state)
+            return new_state, new_state
+
+        _, states = jax.lax.scan(one_step, self.state, keys)
+
+        theta_samples = jax.vmap(laplace.sample_theta)(
+            rng_keys, states.position, states.theta_star
+        )
+        self.assertEqual(theta_samples.shape, (n_samples, self.n))
+        self.assertTrue(jnp.all(jnp.isfinite(theta_samples)))
+
     def test_blackjax_top_level_api(self):
         """blackjax.laplace_hmc exposes .init and .step."""
         sampler = blackjax.laplace_hmc(
@@ -163,9 +183,11 @@ class TestLaplaceHMCSampling(BlackJAXTest):
         # phi ~ N(0, 2²), theta | phi ~ N(0, exp(phi)² I), y | theta ~ N(theta, I)
         # True log_sigma = 0.0 (sigma = 1.0).  Posterior of phi is proper and
         # concentrated near 0 for large n.
-        rng = self.next_key()
+        # Fixed y with sum(y²)/n ≈ 2, matching the marginal variance sigma²+1=2
+        # at the true log_sigma=0.  This pins the posterior near 0 regardless of
+        # the PRNG sequence used for sampling.
         n = 10
-        y = jax.random.normal(rng, (n,))  # generated at true sigma=1, log_sigma=0
+        y = jnp.array([1.2, 1.5, -1.3, -1.4, 1.6, -1.5, 0.9, -1.8, 1.4, -1.2])
 
         def log_joint(theta, log_sigma):
             log_prior_phi = stats.norm.logpdf(log_sigma, 0.0, 2.0)
@@ -184,23 +206,19 @@ class TestLaplaceHMCSampling(BlackJAXTest):
         )
 
         phi_init = jnp.array(0.0)
-        state = sampler.init(phi_init)
-        step = jax.jit(sampler.step)
+        initial_state = sampler.init(phi_init)
 
-        # Burn-in
-        keys = jax.random.split(self.next_key(), 600)
-        for k in keys[:200]:
-            state, _ = step(k, state)
-
-        # Collect samples
-        samples = []
-        for k in keys[200:]:
-            state, _ = step(k, state)
-            samples.append(float(state.position))
+        warmup_state, _ = run_inference_algorithm(
+            self.next_key(), sampler, 500, initial_state=initial_state
+        )
+        _, samples = run_inference_algorithm(
+            self.next_key(), sampler, 1000, initial_state=warmup_state,
+            transform=lambda state, info: state.position,
+        )
 
         # Posterior should be near 0 (true log_sigma).  N(0, 2) prior + n=10
         # observations at sigma=1 gives a well-defined posterior.
-        posterior_mean = np.mean(samples)
+        posterior_mean = float(jnp.mean(samples))
         self.assertLess(abs(posterior_mean), 1.5)  # loose but meaningful
 
 
