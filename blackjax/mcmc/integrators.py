@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Any, Callable, NamedTuple
+from typing import Any, Callable, NamedTuple, TypeAlias
 
 import jax
 import jax.numpy as jnp
@@ -560,6 +560,9 @@ FixedPointSolver = Callable[
     tuple[ArrayTree, ArrayTree, Any],
 ]
 
+#: Iteration state for the fixed-point solver: (iteration count, current x, auxiliary data, norm).
+FixedPointIterState: TypeAlias = tuple[int, ArrayTree, ArrayTree, float]
+
 
 class FixedPointIterationInfo(NamedTuple):
     success: bool
@@ -581,7 +584,7 @@ def solve_fixed_point_iteration(
     def compute_norm(x: ArrayTree, xp: ArrayTree) -> float:
         return norm_fn(ravel_pytree(jax.tree.map(jnp.subtract, x, xp))[0])
 
-    def cond_fn(args: tuple[int, ArrayTree, ArrayTree, float]) -> bool:
+    def cond_fn(args: FixedPointIterState) -> bool:
         n, _, _, norm = args
         return (
             (n < max_iters)
@@ -590,9 +593,7 @@ def solve_fixed_point_iteration(
             & (norm > convergence_tol)
         )
 
-    def body_fn(
-        args: tuple[int, ArrayTree, ArrayTree, float]
-    ) -> tuple[int, ArrayTree, ArrayTree, float]:
+    def body_fn(args: FixedPointIterState) -> FixedPointIterState:
         n, x, _, _ = args
         xn, aux = func(x)
         norm = compute_norm(xn, x)
