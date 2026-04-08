@@ -365,7 +365,7 @@ omelyan_coefficients = [b1, a1, b2, a2, b3, a3, b3, a2, b2, a1, b1]
 omelyan = generate_euclidean_integrator(omelyan_coefficients)
 
 
-# Intergrators with non Euclidean updates
+# Integrators with non Euclidean updates
 def _normalized_flatten_array(x, tol=1e-13):
     norm = jnp.linalg.norm(x)
     return jnp.where(norm > tol, x / norm, x), norm
@@ -405,7 +405,6 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         """
         del is_last_call
 
-        logdensity_grad = logdensity_grad
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
         flatten_grads = flatten_grads * sqrt_inverse_mass_matrix
         flatten_momentum, _ = ravel_pytree(momentum)

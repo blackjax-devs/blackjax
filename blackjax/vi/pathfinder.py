@@ -35,7 +35,7 @@ class PathfinderState(NamedTuple):
     Pathfinder locates normal approximations to the target density along a
     quasi-Newton optimization path, with local covariance estimated using
     the inverse Hessian estimates produced by the L-BFGS optimizer.
-    PathfinderState stores for an interation fo the L-BFGS optimizer the
+    PathfinderState stores for an iteration of the L-BFGS optimizer the
     resulting ELBO and all factors needed to sample from the approximated
     target density.
 
@@ -44,7 +44,7 @@ class PathfinderState(NamedTuple):
     grad_position:
         gradient of target distribution wrt position
     alpha, beta, gamma:
-        factored rappresentation of the inverse hessian
+        factored representation of the inverse hessian
     elbo:
         ELBO of approximation wrt target distribution
 
@@ -88,7 +88,7 @@ def approximate(
     Parameters
     ----------
     rng_key
-        PRPNG key
+        PRNG key
     logdensity_fn
         (un-normalized) log densify function of target distribution to take
         approximate samples from
@@ -97,17 +97,17 @@ def approximate(
     num_samples
         number of samples to draw to estimate ELBO
     maxiter
-        Maximum number of iterations of the LGBFS algorithm.
+        Maximum number of iterations of the L-BFGS algorithm.
     maxcor
-        Maximum number of metric corrections of the LGBFS algorithm ("history
+        Maximum number of metric corrections of the L-BFGS algorithm ("history
         size")
     ftol
-        The LGBFS algorithm terminates the minimization when `(f_k - f_{k+1}) <
+        The L-BFGS algorithm terminates the minimization when `(f_k - f_{k+1}) <
         ftol`
     gtol
-        The LGBFS algorithm terminates the minimization when `|g_k|_norm < gtol`
+        The L-BFGS algorithm terminates the minimization when `|g_k|_norm < gtol`
     maxls
-        The maximum number of line search steps (per iteration) for the LGBFS
+        The maximum number of line search steps (per iteration) for the L-BFGS
         algorithm
     **lbfgs_kwargs
         other keyword arguments passed to `jaxopt.LBFGS`.

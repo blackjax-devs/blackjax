@@ -398,8 +398,8 @@ def gaussian_riemannian(
     ) -> Numeric:
         if position is None:
             raise ValueError(
-                "A Reinmannian kinetic energy function must be called with the "
-                "position specified; make sure to use a Reinmannian-capable "
+                "A Riemannian kinetic energy function must be called with the "
+                "position specified; make sure to use a Riemannian-capable "
                 "integrator like `implicit_midpoint`."
             )
 

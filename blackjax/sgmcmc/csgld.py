@@ -86,7 +86,7 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         zeta: float = 1,
         temperature: float = 1.0,
     ) -> ContourSGLDState:
-        r"""Multil-modal sampling via Contour SGLD :cite:p:`deng2020contour,deng2022interacting`.
+        r"""Multi-modal sampling via Contour SGLD :cite:p:`deng2020contour,deng2022interacting`.
 
         We are interested in the simulations of :math:`\exp(-U(x) / T)`,
         where :math:`U` is an energy function and :math:`T` is the temperature.

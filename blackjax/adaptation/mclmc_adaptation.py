@@ -52,7 +52,7 @@ def mclmc_find_L_and_step_size(
     num_effective_samples=150,
     diagonal_preconditioning=True,
     params=None,
-    Lfactor=0.4,
+    l_factor=0.4,
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -83,7 +83,7 @@ def mclmc_find_L_and_step_size(
         Whether to do diagonal preconditioning (i.e. a mass matrix)
     params
         Initial params to start tuning from (optional)
-    Lfactor
+    l_factor
         The factor scaling the estimated autocorrelation length to obtain momentum decoherence length L.
 
     Returns
@@ -139,7 +139,7 @@ def mclmc_find_L_and_step_size(
 
     if num_steps3 >= 2:  # at least 2 samples for ESS estimation
         state, params = make_adaptation_L(
-            mclmc_kernel(params.inverse_mass_matrix), frac=frac_tune3, Lfactor=Lfactor
+            mclmc_kernel(params.inverse_mass_matrix), frac=frac_tune3, l_factor=l_factor
         )(state, params, num_steps, part2_key)
         total_num_tuning_integrator_steps += num_steps3
 
@@ -287,7 +287,7 @@ def make_L_step_size_adaptation(
     return L_step_size_adaptation
 
 
-def make_adaptation_L(kernel, frac, Lfactor):
+def make_adaptation_L(kernel, frac, l_factor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
@@ -314,7 +314,7 @@ def make_adaptation_L(kernel, frac, Lfactor):
         ess = effective_sample_size(flat_samples[None, ...])
 
         return state, params._replace(
-            L=Lfactor * params.step_size * jnp.mean(num_steps_3 / ess)
+            L=l_factor * params.step_size * jnp.mean(num_steps_3 / ess)
         )
 
     return adaptation_L

@@ -113,7 +113,7 @@ def adjusted_mclmc_find_L_and_step_size(
             ) = adjusted_mclmc_make_adaptation_L(
                 mclmc_kernel,
                 frac=frac_tune3,
-                Lfactor=0.5,
+                l_factor=0.5,
                 max=max,
                 eigenvector=eigenvector,
             )(
@@ -336,7 +336,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
 
 def adjusted_mclmc_make_adaptation_L(
-    kernel, frac, Lfactor, max="avg", eigenvector=None
+    kernel, frac, l_factor, max="avg", eigenvector=None
 ):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
@@ -379,7 +379,7 @@ def adjusted_mclmc_make_adaptation_L(
             state,
             params._replace(
                 L=jnp.clip(
-                    Lfactor * params.L / jnp.mean(ess), max=params.L * Lratio_upperbound
+                    l_factor * params.L / jnp.mean(ess), max=params.L * Lratio_upperbound
                 )
             ),
             info.num_integration_steps.sum(),

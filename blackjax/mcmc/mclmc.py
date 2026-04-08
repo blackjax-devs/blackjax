@@ -52,13 +52,13 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
         raise ValueError(
             "The target distribution must have more than 1 dimension for MCLMC."
         )
-    l, g = jax.value_and_grad(logdensity_fn)(position)
+    logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
 
     return IntegratorState(
         position=position,
         momentum=generate_unit_vector(rng_key, position),
-        logdensity=l,
-        logdensity_grad=g,
+        logdensity=logdensity,
+        logdensity_grad=logdensity_grad,
     )
 
 
@@ -69,16 +69,21 @@ def build_kernel(
     desired_energy_var_max_ratio=jnp.inf,
     desired_energy_var=5e-4,
 ):
-    """Build a HMC kernel.
+    """Build an MCLMC kernel.
 
     Parameters
     ----------
+    logdensity_fn
+        The log-density function we wish to draw samples from.
+    inverse_mass_matrix
+        A matrix used for preconditioning.
     integrator
-        The symplectic integrator to use to integrate the Hamiltonian dynamics.
-    L
-        the momentum decoherence rate.
-    step_size
-        step size of the integrator.
+        The isokinetic integrator to use.
+    desired_energy_var_max_ratio
+        Maximum ratio of energy variance to desired energy variance before
+        rejecting a transition.
+    desired_energy_var
+        The target energy variance per dimension.
 
     Returns
     -------
@@ -97,7 +102,7 @@ def build_kernel(
     ) -> tuple[IntegratorState, MCLMCInfo]:
         kernel_key, energy_cutoff_key, nan_key = jax.random.split(rng_key, 3)
 
-        (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
+        (position, momentum, logdensity, logdensity_grad), kinetic_change = step(
             state, step_size, L, kernel_key
         )
 
@@ -107,7 +112,7 @@ def build_kernel(
 
         new_state, info = handle_high_energy(
             state,
-            IntegratorState(position, momentum, logdensity, logdensitygrad),
+            IntegratorState(position, momentum, logdensity, logdensity_grad),
             MCLMCInfo(
                 logdensity=logdensity,
                 energy_change=energy_change,
@@ -189,10 +194,10 @@ def as_top_level_api(
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
         return init(position, logdensity_fn, rng_key)
 
-    def update_fn(rng_key, state):
+    def step_fn(rng_key, state):
         return kernel(rng_key, state, L, step_size)
 
-    return SamplingAlgorithm(init_fn, update_fn)
+    return SamplingAlgorithm(init_fn, step_fn)
 
 
 def handle_nans(previous_state, next_state, info, key):
@@ -213,8 +218,11 @@ def handle_nans(previous_state, next_state, info, key):
         nonans,
         lambda: (next_state, info),
         lambda: (
-            previous_state._replace(
-                momentum=new_momentum,
+            IntegratorState(
+                previous_state.position,
+                new_momentum,
+                previous_state.logdensity,
+                previous_state.logdensity_grad,
             ),
             MCLMCInfo(
                 logdensity=previous_state.logdensity,
@@ -234,8 +242,11 @@ def handle_high_energy(previous_state, next_state, info, key, cutoff):
     state, info = jax.lax.cond(
         jnp.abs(info.energy_change) > cutoff,
         lambda: (
-            previous_state._replace(
-                momentum=new_momentum,
+            IntegratorState(
+                previous_state.position,
+                new_momentum,
+                previous_state.logdensity,
+                previous_state.logdensity_grad,
             ),
             MCLMCInfo(
                 logdensity=previous_state.logdensity,
