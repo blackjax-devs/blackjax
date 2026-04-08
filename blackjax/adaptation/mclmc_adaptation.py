@@ -44,6 +44,7 @@ def mclmc_find_L_and_step_size(
     num_steps,
     state,
     rng_key,
+    logdensity_fn=None,
     frac_tune1=0.1,
     frac_tune2=0.1,
     frac_tune3=0.1,
@@ -60,13 +61,17 @@ def mclmc_find_L_and_step_size(
     Parameters
     ----------
     mclmc_kernel
-        The kernel function used for the MCMC algorithm.
+        The kernel function built by ``mclmc.build_kernel``.  Its call signature
+        must be ``kernel(rng_key, state, logdensity_fn, inverse_mass_matrix, L,
+        step_size)``, matching the standard BlackJAX kernel pattern.
     num_steps
         The number of MCMC steps that will subsequently be run, after tuning.
     state
         The initial state of the MCMC algorithm.
     rng_key
         The random number generator key.
+    logdensity_fn
+        The log-density function of the target distribution.
     frac_tune1
         The fraction of tuning for the first step of the adaptation.
     frac_tune2
@@ -93,23 +98,26 @@ def mclmc_find_L_and_step_size(
     Example
     -------
     .. code::
-        kernel = lambda inverse_mass_matrix : blackjax.mcmc.mclmc.build_kernel(
-        logdensity_fn=logdensity_fn,
-        integrator=integrator,
-        inverse_mass_matrix=inverse_mass_matrix,
-        )
+        kernel = blackjax.mcmc.mclmc.build_kernel(integrator=integrator)
 
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
         ) = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
+            logdensity_fn=logdensity_fn,
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
             diagonal_preconditioning=preconditioning,
         )
     """
+    if logdensity_fn is None:
+        raise ValueError(
+            "logdensity_fn is required. Pass the log-density function of the "
+            "target distribution."
+        )
+
     dim = pytree_size(state.position)
     if params is None:
         params = MCLMCAdaptationState(
@@ -127,6 +135,7 @@ def mclmc_find_L_and_step_size(
 
     state, params = make_L_step_size_adaptation(
         kernel=mclmc_kernel,
+        logdensity_fn=logdensity_fn,
         dim=dim,
         frac_tune1=frac_tune1,
         frac_tune2=frac_tune2,
@@ -139,7 +148,7 @@ def mclmc_find_L_and_step_size(
 
     if num_steps3 >= 2:  # at least 2 samples for ESS estimation
         state, params = make_adaptation_L(
-            mclmc_kernel(params.inverse_mass_matrix), frac=frac_tune3, l_factor=l_factor
+            mclmc_kernel, logdensity_fn, frac=frac_tune3, l_factor=l_factor
         )(state, params, num_steps, part2_key)
         total_num_tuning_integrator_steps += num_steps3
 
@@ -148,6 +157,7 @@ def mclmc_find_L_and_step_size(
 
 def make_L_step_size_adaptation(
     kernel,
+    logdensity_fn,
     dim,
     frac_tune1,
     frac_tune2,
@@ -169,9 +179,11 @@ def make_L_step_size_adaptation(
         rng_key, nan_key = jax.random.split(rng_key)
 
         # dynamics
-        next_state, info = kernel(params.inverse_mass_matrix)(
+        next_state, info = kernel(
             rng_key=rng_key,
             state=previous_state,
+            logdensity_fn=logdensity_fn,
+            inverse_mass_matrix=params.inverse_mass_matrix,
             L=params.L,
             step_size=params.step_size,
         )
@@ -294,7 +306,7 @@ def make_L_step_size_adaptation(
     return L_step_size_adaptation
 
 
-def make_adaptation_L(kernel, frac, l_factor):
+def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
@@ -305,6 +317,8 @@ def make_adaptation_L(kernel, frac, l_factor):
             next_state, _ = kernel(
                 rng_key=key,
                 state=state,
+                logdensity_fn=logdensity_fn,
+                inverse_mass_matrix=params.inverse_mass_matrix,
                 L=params.L,
                 step_size=params.step_size,
             )

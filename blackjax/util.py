@@ -424,11 +424,9 @@ def thin_kernel(
                     rng_key=init_key
                     )
 
-        kernel = lambda inverse_mass_matrix: thin_kernel(
+        kernel = thin_kernel(
             blackjax.mcmc.mclmc.build_kernel(
-                                logdensity_fn=logdf,
                                 integrator=isokinetic_mclachlan,
-                                inverse_mass_matrix=inverse_mass_matrix,
                                 ),
 
             # Return every 16th state, especially decreasing computation and memory cost
@@ -441,6 +439,7 @@ def thin_kernel(
 
         state, params, n_steps = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
+            logdensity_fn=logdf,
             num_steps=100,
             state=state,
             rng_key=tune_key,

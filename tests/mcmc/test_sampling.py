@@ -114,10 +114,8 @@ class LinearRegressionTest(chex.TestCase):
             position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
         )
 
-        kernel = lambda inverse_mass_matrix: blackjax.mcmc.mclmc.build_kernel(
-            logdensity_fn=logdensity_fn,
+        kernel = blackjax.mcmc.mclmc.build_kernel(
             integrator=blackjax.mcmc.mclmc.isokinetic_mclachlan,
-            inverse_mass_matrix=inverse_mass_matrix,
         )
 
         (
@@ -126,6 +124,7 @@ class LinearRegressionTest(chex.TestCase):
             _,
         ) = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
+            logdensity_fn=logdensity_fn,
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
@@ -536,14 +535,11 @@ class LinearRegressionTest(chex.TestCase):
                 rng_key=init_key,
             )
 
-            kernel = lambda inverse_mass_matrix: blackjax.mcmc.mclmc.build_kernel(
-                logdensity_fn=model.logdensity_fn,
-                inverse_mass_matrix=inverse_mass_matrix,
-                integrator=integrator,
-            )
+            kernel = blackjax.mcmc.mclmc.build_kernel(integrator=integrator)
 
             (_, blackjax_mclmc_sampler_params, _) = blackjax.mclmc_find_L_and_step_size(
                 mclmc_kernel=kernel,
+                logdensity_fn=model.logdensity_fn,
                 num_steps=num_steps,
                 state=initial_state,
                 rng_key=tune_key,

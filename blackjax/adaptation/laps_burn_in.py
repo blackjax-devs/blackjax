@@ -45,18 +45,18 @@ def build_kernel(logdensity_fn, ndims, microcanonical=True):
     """MCLMC kernel (with nan rejection)"""
 
     if microcanonical:
-        kernel = mclmc.build_kernel(
-            integrator=isokinetic_velocity_verlet,
-            logdensity_fn=logdensity_fn,
-            inverse_mass_matrix=jnp.ones(ndims),
-        )
+        kernel = mclmc.build_kernel(integrator=isokinetic_velocity_verlet)
     else:
         raise ValueError("Only microcanonical mode is supported for LAPS burn-in.")
+
+    inverse_mass_matrix = jnp.ones(ndims)
 
     def sequential_kernel(key, state, adap):
         new_state, info = kernel(
             key,
             state,
+            logdensity_fn,
+            inverse_mass_matrix,
             adap.L,
             adap.step_size,
         )

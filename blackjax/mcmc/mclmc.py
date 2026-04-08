@@ -63,9 +63,7 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
 
 
 def build_kernel(
-    logdensity_fn: Callable,
-    inverse_mass_matrix: ArrayLike,
-    integrator: Callable,
+    integrator: Callable = isokinetic_mclachlan,
     desired_energy_var_max_ratio: float = jnp.inf,
     desired_energy_var: float = 5e-4,
 ):
@@ -73,10 +71,6 @@ def build_kernel(
 
     Parameters
     ----------
-    logdensity_fn
-        The log-density function we wish to draw samples from.
-    inverse_mass_matrix
-        A matrix used for preconditioning.
     integrator
         The isokinetic integrator to use.
     desired_energy_var_max_ratio
@@ -93,13 +87,20 @@ def build_kernel(
 
     """
 
-    step = with_isokinetic_maruyama(
-        integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
-    )
-
     def kernel(
-        rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
+        rng_key: PRNGKey,
+        state: IntegratorState,
+        logdensity_fn: Callable,
+        inverse_mass_matrix: ArrayLike,
+        L: float,
+        step_size: float,
     ) -> tuple[IntegratorState, MCLMCInfo]:
+        step = with_isokinetic_maruyama(
+            integrator(
+                logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix
+            )
+        )
+
         kernel_key, energy_cutoff_key, nan_key = jax.random.split(rng_key, 3)
 
         (position, momentum, logdensity, logdensity_grad), kinetic_change = step(
@@ -187,15 +188,13 @@ def as_top_level_api(
     kernel = build_kernel(
         integrator=integrator,
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
-        inverse_mass_matrix=inverse_mass_matrix,
-        logdensity_fn=logdensity_fn,
     )
 
     def init_fn(position: ArrayLike, rng_key: PRNGKey):
         return init(position, logdensity_fn, rng_key)
 
     def step_fn(rng_key, state):
-        return kernel(rng_key, state, L, step_size)
+        return kernel(rng_key, state, logdensity_fn, inverse_mass_matrix, L, step_size)
 
     return SamplingAlgorithm(init_fn, step_fn)
 
