@@ -95,10 +95,6 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
     ) -> tuple[IntegratorState, MCLMCInfo]:
-        (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
-            state, step_size, L, rng_key
-        )
-
         kernel_key, energy_cutoff_key, nan_key = jax.random.split(rng_key, 3)
 
         (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
@@ -212,8 +208,6 @@ def handle_nans(previous_state, next_state, info, key):
     nonans = jnp.logical_and(
         isfinite_pytree(next_state.position), isfinite_pytree(next_state.momentum)
     )
-
-    # nonans = jnp.logical_and(jnp.all(jnp.isfinite(next_state.position)), jnp.all(jnp.isfinite(next_state.momentum)))
 
     state, info = jax.lax.cond(
         nonans,
