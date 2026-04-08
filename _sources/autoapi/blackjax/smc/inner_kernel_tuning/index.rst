@@ -45,6 +45,16 @@ Module Contents
 
 .. py:function:: init(alg_init_fn, position, initial_parameter_value)
 
+   Initialize the inner-kernel-tuning SMC state.
+
+   :param alg_init_fn: The ``init`` function of the underlying SMC algorithm.
+   :param position: Initial particle positions.
+   :param initial_parameter_value: Initial MCMC parameter dictionary (one value per parameter name).
+
+   :returns: * A ``StateWithParameterOverride`` combining the SMC state with the
+             * *parameter dictionary.*
+
+
 .. py:function:: build_kernel(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.types.PRNGKey, blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], dict[str, blackjax.types.ArrayTree]], num_mcmc_steps: int = 10, smc_returns_state_with_parameter_override=False, **extra_parameters) -> Callable
 
    In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner

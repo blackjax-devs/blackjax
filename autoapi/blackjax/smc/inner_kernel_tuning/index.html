@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.smc.from_mcmc" href="../from_mcmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gd430cec22" />
+  <meta name="docsearch:version" content="0.1.dev1+g59fff9a28" />
   </head>
   
   
@@ -411,7 +411,7 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.smc.inner_kernel_tuning.init" title="blackjax.smc.inner_kernel_tuning.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(alg_init_fn, position, initial_parameter_value)</p></td>
-<td><p></p></td>
+<td><p>Initialize the inner-kernel-tuning SMC state.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.smc.inner_kernel_tuning.build_kernel" title="blackjax.smc.inner_kernel_tuning.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
 <td><p>In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner</p></td>
@@ -447,7 +447,24 @@ represent a parameter per chain for the next mutation step.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.inner_kernel_tuning.init">
 <span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alg_init_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_parameter_value</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/smc/inner_kernel_tuning.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.inner_kernel_tuning.init" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dd><p>Initialize the inner-kernel-tuning SMC state.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alg_init_fn</strong> – The <code class="docutils literal notranslate"><span class="pre">init</span></code> function of the underlying SMC algorithm.</p></li>
+<li><p><strong>position</strong> – Initial particle positions.</p></li>
+<li><p><strong>initial_parameter_value</strong> – Initial MCMC parameter dictionary (one value per parameter name).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>A <code class="docutils literal notranslate"><span class="pre">StateWithParameterOverride</span></code> combining the SMC state with the</p></li>
+<li><p><em>parameter dictionary.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.smc.inner_kernel_tuning.build_kernel">

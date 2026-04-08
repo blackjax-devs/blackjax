@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gd430cec22" />
+  <meta name="docsearch:version" content="0.1.dev1+g59fff9a28" />
   </head>
   
   
@@ -895,6 +895,23 @@
 <div class="viewcode-block" id="build_rmh_transition_energy">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/random_walk/index.html#blackjax.mcmc.random_walk.build_rmh_transition_energy">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_rmh_transition_energy</span><span class="p">(</span><span class="n">proposal_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the transition energy function for the Random Walk Metropolis-Hastings kernel.</span>
+
+<span class="sd">    For a symmetric proposal (``proposal_logdensity_fn is None``) the transition</span>
+<span class="sd">    energy reduces to ``-logdensity(new_state)``.  For an asymmetric proposal</span>
+<span class="sd">    it includes the log-density ratio of the proposal distribution, giving</span>
+<span class="sd">    ``-logdensity(new_state) - log q(new_state -&gt; prev_state)``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    proposal_logdensity_fn</span>
+<span class="sd">        Log-density of the proposal distribution evaluated at ``(from_state,</span>
+<span class="sd">        to_state)``, or ``None`` for a symmetric proposal.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A callable ``(prev_state, new_state) -&gt; transition_energy``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">proposal_logdensity_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">transition_energy</span><span class="p">(</span><span class="n">prev_state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">):</span>
@@ -917,6 +934,28 @@
     <span class="n">compute_acceptance_ratio</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">sample_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">proposal</span><span class="o">.</span><span class="n">static_binomial_sampling</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Random Walk Metropolis-Hastings proposal generator.</span>
+
+<span class="sd">    Draws a new position from ``transition_distribution``, evaluates the</span>
+<span class="sd">    log-density, computes the acceptance ratio, and accepts or rejects</span>
+<span class="sd">    via ``sample_proposal``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        Log-density of the target distribution.</span>
+<span class="sd">    transition_distribution</span>
+<span class="sd">        Callable ``(rng_key, position) -&gt; new_position``.</span>
+<span class="sd">    compute_acceptance_ratio</span>
+<span class="sd">        Callable ``(prev_state, proposed_state) -&gt; log_acceptance_ratio``.</span>
+<span class="sd">    sample_proposal</span>
+<span class="sd">        Accept/reject sampler; defaults to static binomial sampling.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A callable ``(rng_key, state) -&gt; (new_state, do_accept, p_accept)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">previous_state</span><span class="p">:</span> <span class="n">RWState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">RWState</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
         <span class="n">key_proposal</span><span class="p">,</span> <span class="n">key_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">position</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">previous_state</span>

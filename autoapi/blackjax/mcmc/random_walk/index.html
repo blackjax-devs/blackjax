@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.proposal" href="../proposal/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gd430cec22" />
+  <meta name="docsearch:version" content="0.1.dev1+g59fff9a28" />
   </head>
   
   
@@ -495,10 +495,10 @@ See ‘Metropolis Algorithm’ in [1].</p>
 <td><p>Implements the user interface for the RMH.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.random_walk.build_rmh_transition_energy" title="blackjax.mcmc.random_walk.build_rmh_transition_energy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_rmh_transition_energy</span></code></a>(→ Callable)</p></td>
-<td><p></p></td>
+<td><p>Build the transition energy function for the Random Walk Metropolis-Hastings kernel.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.random_walk.rmh_proposal" title="blackjax.mcmc.random_walk.rmh_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rmh_proposal</span></code></a>(→ Callable)</p></td>
-<td><p></p></td>
+<td><p>Build a Random Walk Metropolis-Hastings proposal generator.</p></td>
 </tr>
 </tbody>
 </table>
@@ -747,12 +747,43 @@ the Metropolis-Hastings correction for detailed balance.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.random_walk.build_rmh_transition_energy">
 <span class="sig-name descname"><span class="pre">build_rmh_transition_energy</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">proposal_logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/random_walk.html#build_rmh_transition_energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.random_walk.build_rmh_transition_energy" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dd><p>Build the transition energy function for the Random Walk Metropolis-Hastings kernel.</p>
+<p>For a symmetric proposal (<code class="docutils literal notranslate"><span class="pre">proposal_logdensity_fn</span> <span class="pre">is</span> <span class="pre">None</span></code>) the transition
+energy reduces to <code class="docutils literal notranslate"><span class="pre">-logdensity(new_state)</span></code>.  For an asymmetric proposal
+it includes the log-density ratio of the proposal distribution, giving
+<code class="docutils literal notranslate"><span class="pre">-logdensity(new_state)</span> <span class="pre">-</span> <span class="pre">log</span> <span class="pre">q(new_state</span> <span class="pre">-&gt;</span> <span class="pre">prev_state)</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>proposal_logdensity_fn</strong> – Log-density of the proposal distribution evaluated at <code class="docutils literal notranslate"><span class="pre">(from_state,</span>
+<span class="pre">to_state)</span></code>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for a symmetric proposal.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A callable <code class="docutils literal notranslate"><span class="pre">(prev_state,</span> <span class="pre">new_state)</span> <span class="pre">-&gt;</span> <span class="pre">transition_energy</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.random_walk.rmh_proposal">
 <span class="sig-name descname"><span class="pre">rmh_proposal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">transition_distribution</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_acceptance_ratio</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">proposal.static_binomial_sampling</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/random_walk.html#rmh_proposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.random_walk.rmh_proposal" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
+<dd><p>Build a Random Walk Metropolis-Hastings proposal generator.</p>
+<p>Draws a new position from <code class="docutils literal notranslate"><span class="pre">transition_distribution</span></code>, evaluates the
+log-density, computes the acceptance ratio, and accepts or rejects
+via <code class="docutils literal notranslate"><span class="pre">sample_proposal</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – Log-density of the target distribution.</p></li>
+<li><p><strong>transition_distribution</strong> – Callable <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">position)</span> <span class="pre">-&gt;</span> <span class="pre">new_position</span></code>.</p></li>
+<li><p><strong>compute_acceptance_ratio</strong> – Callable <code class="docutils literal notranslate"><span class="pre">(prev_state,</span> <span class="pre">proposed_state)</span> <span class="pre">-&gt;</span> <span class="pre">log_acceptance_ratio</span></code>.</p></li>
+<li><p><strong>sample_proposal</strong> – Accept/reject sampler; defaults to static binomial sampling.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A callable <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">state)</span> <span class="pre">-&gt;</span> <span class="pre">(new_state,</span> <span class="pre">do_accept,</span> <span class="pre">p_accept)</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
 
 </section>
 </section>
