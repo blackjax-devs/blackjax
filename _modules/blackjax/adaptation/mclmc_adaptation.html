@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gee635366e" />
+  <meta name="docsearch:version" content="0.1.dev1+g04d279017" />
   </head>
   
   
@@ -625,16 +625,18 @@
 
         <span class="k">return</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">adaptive_state</span><span class="p">,</span> <span class="n">streaming_avg</span><span class="p">),</span> <span class="kc">None</span>
 
-    <span class="n">run_steps</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">xs</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-        <span class="n">step</span><span class="p">,</span>
-        <span class="n">init</span><span class="o">=</span><span class="p">(</span>
-            <span class="n">state</span><span class="p">,</span>
-            <span class="n">params</span><span class="p">,</span>
-            <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
-            <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">)])),</span>
-        <span class="p">),</span>
-        <span class="n">xs</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span>
-    <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run_steps</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run adaptation steps via scan, returning final carry state.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="n">step</span><span class="p">,</span>
+            <span class="n">init</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">state</span><span class="p">,</span>
+                <span class="n">params</span><span class="p">,</span>
+                <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">),</span>
+                <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dim</span><span class="p">)])),</span>
+            <span class="p">),</span>
+            <span class="n">xs</span><span class="o">=</span><span class="n">xs</span><span class="p">,</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">L_step_size_adaptation</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
         <span class="n">num_steps1</span><span class="p">,</span> <span class="n">num_steps2</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">*</span> <span class="n">frac_tune1</span><span class="p">),</span> <span class="nb">round</span><span class="p">(</span>
