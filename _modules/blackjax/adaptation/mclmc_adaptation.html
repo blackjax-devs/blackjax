@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0b118268a" />
+  <meta name="docsearch:version" content="0.1.dev1+gee2b7f254" />
   </head>
   
   
@@ -432,6 +432,7 @@
     <span class="n">num_steps</span><span class="p">,</span>
     <span class="n">state</span><span class="p">,</span>
     <span class="n">rng_key</span><span class="p">,</span>
+    <span class="n">logdensity_fn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">frac_tune1</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
     <span class="n">frac_tune2</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
     <span class="n">frac_tune3</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
@@ -448,13 +449,17 @@
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    mclmc_kernel</span>
-<span class="sd">        The kernel function used for the MCMC algorithm.</span>
+<span class="sd">        The kernel function built by ``mclmc.build_kernel``.  Its call signature</span>
+<span class="sd">        must be ``kernel(rng_key, state, logdensity_fn, inverse_mass_matrix, L,</span>
+<span class="sd">        step_size)``, matching the standard BlackJAX kernel pattern.</span>
 <span class="sd">    num_steps</span>
 <span class="sd">        The number of MCMC steps that will subsequently be run, after tuning.</span>
 <span class="sd">    state</span>
 <span class="sd">        The initial state of the MCMC algorithm.</span>
 <span class="sd">    rng_key</span>
 <span class="sd">        The random number generator key.</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        The log-density function of the target distribution.</span>
 <span class="sd">    frac_tune1</span>
 <span class="sd">        The fraction of tuning for the first step of the adaptation.</span>
 <span class="sd">    frac_tune2</span>
@@ -481,23 +486,26 @@
 <span class="sd">    Example</span>
 <span class="sd">    -------</span>
 <span class="sd">    .. code::</span>
-<span class="sd">        kernel = lambda inverse_mass_matrix : blackjax.mcmc.mclmc.build_kernel(</span>
-<span class="sd">        logdensity_fn=logdensity_fn,</span>
-<span class="sd">        integrator=integrator,</span>
-<span class="sd">        inverse_mass_matrix=inverse_mass_matrix,</span>
-<span class="sd">        )</span>
+<span class="sd">        kernel = blackjax.mcmc.mclmc.build_kernel(integrator=integrator)</span>
 
 <span class="sd">        (</span>
 <span class="sd">            blackjax_state_after_tuning,</span>
 <span class="sd">            blackjax_mclmc_sampler_params,</span>
 <span class="sd">        ) = blackjax.mclmc_find_L_and_step_size(</span>
 <span class="sd">            mclmc_kernel=kernel,</span>
+<span class="sd">            logdensity_fn=logdensity_fn,</span>
 <span class="sd">            num_steps=num_steps,</span>
 <span class="sd">            state=initial_state,</span>
 <span class="sd">            rng_key=tune_key,</span>
 <span class="sd">            diagonal_preconditioning=preconditioning,</span>
 <span class="sd">        )</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">logdensity_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;logdensity_fn is required. Pass the log-density function of the &quot;</span>
+            <span class="s2">&quot;target distribution.&quot;</span>
+        <span class="p">)</span>
+
     <span class="n">dim</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
@@ -515,6 +523,7 @@
 
     <span class="n">state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">make_L_step_size_adaptation</span><span class="p">(</span>
         <span class="n">kernel</span><span class="o">=</span><span class="n">mclmc_kernel</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
         <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span>
         <span class="n">frac_tune1</span><span class="o">=</span><span class="n">frac_tune1</span><span class="p">,</span>
         <span class="n">frac_tune2</span><span class="o">=</span><span class="n">frac_tune2</span><span class="p">,</span>
@@ -527,7 +536,7 @@
 
     <span class="k">if</span> <span class="n">num_steps3</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># at least 2 samples for ESS estimation</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">make_adaptation_L</span><span class="p">(</span>
-            <span class="n">mclmc_kernel</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">frac</span><span class="o">=</span><span class="n">frac_tune3</span><span class="p">,</span> <span class="n">l_factor</span><span class="o">=</span><span class="n">l_factor</span>
+            <span class="n">mclmc_kernel</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">frac</span><span class="o">=</span><span class="n">frac_tune3</span><span class="p">,</span> <span class="n">l_factor</span><span class="o">=</span><span class="n">l_factor</span>
         <span class="p">)(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">part2_key</span><span class="p">)</span>
         <span class="n">total_num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">num_steps3</span>
 
@@ -539,6 +548,7 @@
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.make_L_step_size_adaptation">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">make_L_step_size_adaptation</span><span class="p">(</span>
     <span class="n">kernel</span><span class="p">,</span>
+    <span class="n">logdensity_fn</span><span class="p">,</span>
     <span class="n">dim</span><span class="p">,</span>
     <span class="n">frac_tune1</span><span class="p">,</span>
     <span class="n">frac_tune2</span><span class="p">,</span>
@@ -560,9 +570,11 @@
         <span class="n">rng_key</span><span class="p">,</span> <span class="n">nan_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 
         <span class="c1"># dynamics</span>
-        <span class="n">next_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">)(</span>
+        <span class="n">next_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span>
             <span class="n">state</span><span class="o">=</span><span class="n">previous_state</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="n">L</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">L</span><span class="p">,</span>
             <span class="n">step_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
         <span class="p">)</span>
@@ -688,7 +700,7 @@
 
 <div class="viewcode-block" id="make_adaptation_L">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.make_adaptation_L">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">make_adaptation_L</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">l_factor</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_adaptation_L</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">l_factor</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">adaptation_L</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
@@ -699,6 +711,8 @@
             <span class="n">next_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span>
                 <span class="n">rng_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
                 <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
+                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
                 <span class="n">L</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">L</span><span class="p">,</span>
                 <span class="n">step_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
             <span class="p">)</span>

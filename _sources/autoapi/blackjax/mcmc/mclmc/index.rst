@@ -62,12 +62,10 @@ Module Contents
 
 .. py:function:: init(position: blackjax.types.ArrayLike, logdensity_fn, rng_key)
 
-.. py:function:: build_kernel(logdensity_fn: Callable, inverse_mass_matrix: blackjax.types.ArrayLike, integrator: Callable, desired_energy_var_max_ratio: float = jnp.inf, desired_energy_var: float = 0.0005)
+.. py:function:: build_kernel(integrator: Callable = isokinetic_mclachlan, desired_energy_var_max_ratio: float = jnp.inf, desired_energy_var: float = 0.0005)
 
    Build an MCLMC kernel.
 
-   :param logdensity_fn: The log-density function we wish to draw samples from.
-   :param inverse_mass_matrix: A matrix used for preconditioning.
    :param integrator: The isokinetic integrator to use.
    :param desired_energy_var_max_ratio: Maximum ratio of energy variance to desired energy variance before
                                         rejecting a transition.
