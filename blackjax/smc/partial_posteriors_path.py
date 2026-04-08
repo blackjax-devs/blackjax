@@ -1,4 +1,4 @@
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -40,7 +40,7 @@ def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
-    num_mcmc_steps: Optional[int],
+    num_mcmc_steps: int | None,
     mcmc_parameters: ArrayTree,
     partial_logposterior_factory: Callable[[Array], Callable],
     update_strategy=update_and_take_last,
@@ -74,7 +74,7 @@ def build_kernel(
 
     def step(
         key, state: PartialPosteriorsSMCState, data_mask: Array
-    ) -> Tuple[PartialPosteriorsSMCState, smc.base.SMCInfo]:
+    ) -> tuple[PartialPosteriorsSMCState, smc.base.SMCInfo]:
         logposterior_fn = partial_logposterior_factory(data_mask)
 
         previous_logposterior_fn = partial_logposterior_factory(state.data_mask)

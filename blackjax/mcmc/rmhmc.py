@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Union
+from typing import Callable
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
@@ -30,7 +30,7 @@ build_kernel = hmc.build_kernel
 def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
-    mass_matrix: Union[metrics.Metric, Callable],
+    mass_matrix: metrics.Metric | Callable,
     num_integration_steps: int,
     *,
     divergence_threshold: int = 1000,

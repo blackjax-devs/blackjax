@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -22,7 +22,7 @@ class SMCInfoWithParameterDistribution(NamedTuple):
     """
 
     smc_info: SMCInfo
-    parameter_override: Dict[str, ArrayTree]
+    parameter_override: dict[str, ArrayTree]
 
 
 def esjd(m):
@@ -114,8 +114,8 @@ def build_pretune(
     sigma_parameters: ArrayLikeTree,
     n_particles: int,
     performance_of_chain_measure_factory: Callable = default_measure_factory,
-    natural_parameters: Optional[List[str]] = None,
-    positive_parameters: Optional[List[str]] = None,
+    natural_parameters: list[str] | None = None,
+    positive_parameters: list[str] | None = None,
 ):
     """Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure.
     The goal is to maintain a probability distribution of parameters, in order
@@ -272,7 +272,7 @@ def build_kernel(
 
     def kernel(
         rng_key: PRNGKey, state: StateWithParameterOverride, **extra_step_parameters
-    ) -> Tuple[StateWithParameterOverride, SMCInfo]:
+    ) -> tuple[StateWithParameterOverride, SMCInfo]:
         extra_parameters["update_particles_fn"] = pretuned_step
         step_fn = smc_algorithm(
             logprior_fn=logprior_fn,
@@ -377,7 +377,7 @@ def as_top_level_api(
 
     def step_fn(
         rng_key: PRNGKey, state, **extra_step_parameters
-    ) -> Tuple[StateWithParameterOverride, SMCInfo]:
+    ) -> tuple[StateWithParameterOverride, SMCInfo]:
         return kernel(rng_key, state, **extra_step_parameters)
 
     return SamplingAlgorithm(init_fn, step_fn)

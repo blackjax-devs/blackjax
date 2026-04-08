@@ -15,7 +15,7 @@
    * mean field variational inference (MFVI)
    * full rank variational inference (FRVI)"""
 from dataclasses import dataclass
-from typing import Callable, Union
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -44,7 +44,7 @@ class RenyiAlpha:
     alpha: float
 
 
-Objective = Union[KL, RenyiAlpha]
+Objective = KL | RenyiAlpha
 
 
 def _objective_value_from_log_ratio(

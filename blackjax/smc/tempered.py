@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -71,7 +71,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
-    update_particles_fn: Optional[Callable] = None,
+    update_particles_fn: Callable | None = None,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -192,9 +192,9 @@ def as_top_level_api(
     mcmc_init_fn: Callable,
     mcmc_parameters: dict,
     resampling_fn: Callable,
-    num_mcmc_steps: Optional[int] = 10,
+    num_mcmc_steps: int | None = 10,
     update_strategy: Callable = update_and_take_last,
-    update_particles_fn: Optional[Callable] = None,
+    update_particles_fn: Callable | None = None,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the Tempered SMC kernel.
 
@@ -241,7 +241,7 @@ def as_top_level_api(
     )
 
     def init_fn(
-        position: ArrayLikeTree, rng_key: Optional[PRNGKey] = None
+        position: ArrayLikeTree, rng_key: PRNGKey | None = None
     ) -> TemperedSMCState:
         del rng_key
         return init(position)

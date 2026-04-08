@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 
@@ -256,7 +256,7 @@ def as_top_level_api(
 def hmc_proposal(
     integrator: Callable,
     kinetic_energy: metrics.KineticEnergy,
-    step_size: Union[float, ArrayLikeTree],
+    step_size: float | ArrayLikeTree,
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
     *,

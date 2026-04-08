@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, NamedTuple, Optional, Protocol
+from typing import Any, Callable, NamedTuple, Protocol
 
 import jax
 import jax.numpy as jnp
@@ -101,7 +101,7 @@ def step(
     update_fn: Callable,
     weight_fn: Callable,
     resample_fn: Callable,
-    num_resampled: Optional[int] = None,
+    num_resampled: int | None = None,
 ) -> tuple[SMCState, SMCInfo]:
     """General SMC sampling step.
 

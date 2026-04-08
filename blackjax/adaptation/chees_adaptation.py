@@ -1,7 +1,7 @@
 """Public API for ChEES-HMC"""
 
 from functools import partial
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -74,7 +74,7 @@ def base(
     target_acceptance_rate: float,
     decay_rate: float,
     max_leapfrog_steps: int,
-) -> Tuple[Callable, Callable]:
+) -> tuple[Callable, Callable]:
     """Maximizing the Change in the Estimator of the Expected Square criterion
     (trajectory length) and dual averaging procedure (step size) for the jittered
     Hamiltonian Monte Carlo kernel :cite:p:`hoffman2021adaptive`.
@@ -310,7 +310,7 @@ def chees_adaptation(
     logdensity_fn: Callable,
     num_chains: int,
     *,
-    jitter_generator: Optional[Callable] = None,
+    jitter_generator: Callable | None = None,
     jitter_amount: float = 1.0,
     target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE,
     decay_rate: float = 0.5,

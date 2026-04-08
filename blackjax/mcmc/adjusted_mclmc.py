@@ -16,7 +16,7 @@
 NOTE: For best performance, we recommend using adjusted_mclmc_dynamic instead of this module, which is primarily intended for use in parallelized versions of the algorithm.
 
 """
-from typing import Callable, Union
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -178,7 +178,7 @@ def as_top_level_api(
 
 def adjusted_mclmc_proposal(
     integrator: Callable,
-    step_size: Union[float, ArrayLikeTree],
+    step_size: float | ArrayLikeTree,
     L_proposal_factor: float,
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -201,7 +201,7 @@ def approximate(
 def sample(
     rng_key: PRNGKey,
     state: PathfinderState,
-    num_samples: Union[int, tuple[()], tuple[int]] = (),
+    num_samples: int | tuple[()] | tuple[int] = (),
 ) -> ArrayTree:
     """Draw from the Pathfinder approximation of the target distribution.
 

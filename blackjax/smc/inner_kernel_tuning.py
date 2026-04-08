@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, Dict, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 
@@ -29,7 +29,7 @@ class StateWithParameterOverride(NamedTuple):
     """
 
     sampler_state: ArrayTree
-    parameter_override: Dict[str, ArrayTree]
+    parameter_override: dict[str, ArrayTree]
 
 
 def init(alg_init_fn, position, initial_parameter_value):
@@ -44,7 +44,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     mcmc_parameter_update_fn: Callable[
-        [PRNGKey, SMCState, SMCInfo], Dict[str, ArrayTree]
+        [PRNGKey, SMCState, SMCInfo], dict[str, ArrayTree]
     ],
     num_mcmc_steps: int = 10,
     smc_returns_state_with_parameter_override=False,
@@ -100,7 +100,7 @@ def build_kernel(
 
     def kernel(
         rng_key: PRNGKey, state: StateWithParameterOverride, **extra_step_parameters
-    ) -> Tuple[StateWithParameterOverride, SMCInfo]:
+    ) -> tuple[StateWithParameterOverride, SMCInfo]:
         step_fn = smc_algorithm(
             logprior_fn=logprior_fn,
             loglikelihood_fn=loglikelihood_fn,
@@ -131,7 +131,7 @@ def as_top_level_api(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     mcmc_parameter_update_fn: Callable[
-        [PRNGKey, SMCState, SMCInfo], Dict[str, ArrayTree]
+        [PRNGKey, SMCState, SMCInfo], dict[str, ArrayTree]
     ],
     initial_parameter_value,
     num_mcmc_steps: int = 10,
@@ -200,7 +200,7 @@ def as_top_level_api(
 
     def step_fn(
         rng_key: PRNGKey, state, **extra_step_parameters
-    ) -> Tuple[StateWithParameterOverride, SMCInfo]:
+    ) -> tuple[StateWithParameterOverride, SMCInfo]:
         return kernel(rng_key, state, **extra_step_parameters)
 
     return SamplingAlgorithm(init_fn, step_fn)

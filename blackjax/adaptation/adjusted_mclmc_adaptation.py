@@ -379,7 +379,8 @@ def adjusted_mclmc_make_adaptation_L(
             state,
             params._replace(
                 L=jnp.clip(
-                    l_factor * params.L / jnp.mean(ess), max=params.L * Lratio_upperbound
+                    l_factor * params.L / jnp.mean(ess),
+                    max=params.L * Lratio_upperbound,
                 )
             ),
             info.num_integration_steps.sum(),

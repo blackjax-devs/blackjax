@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin"."""
-from typing import Callable, Union
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -184,7 +184,7 @@ def as_top_level_api(
 
 def adjusted_mclmc_proposal(
     integrator: Callable,
-    step_size: Union[float, ArrayLikeTree],
+    step_size: float | ArrayLikeTree,
     L_proposal_factor: float,
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,

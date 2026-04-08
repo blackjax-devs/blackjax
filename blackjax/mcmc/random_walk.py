@@ -60,7 +60,7 @@ Examples
         new_state, info = step(rng_key, state)
 
 """
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple
 
 import jax
 from jax import numpy as jnp
@@ -273,7 +273,7 @@ def build_irmh() -> Callable:
         state: RWState,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
-        proposal_logdensity_fn: Optional[Callable] = None,
+        proposal_logdensity_fn: Callable | None = None,
     ) -> tuple[RWState, RWInfo]:
         """
         Parameters
@@ -302,7 +302,7 @@ def build_irmh() -> Callable:
 def irmh_as_top_level_api(
     logdensity_fn: Callable,
     proposal_distribution: Callable,
-    proposal_logdensity_fn: Optional[Callable] = None,
+    proposal_logdensity_fn: Callable | None = None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the independent RMH.
 
@@ -374,7 +374,7 @@ def build_rmh():
         state: RWState,
         logdensity_fn: Callable,
         transition_generator: Callable,
-        proposal_logdensity_fn: Optional[Callable] = None,
+        proposal_logdensity_fn: Callable | None = None,
     ) -> tuple[RWState, RWInfo]:
         """Move the chain by one step using the Rosenbluth Metropolis Hastings
         algorithm.
@@ -419,7 +419,7 @@ def build_rmh():
 def rmh_as_top_level_api(
     logdensity_fn: Callable,
     proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
-    proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,
+    proposal_logdensity_fn: Callable[[ArrayLikeTree], ArrayTree] | None = None,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the RMH.
 
@@ -474,7 +474,7 @@ def rmh_as_top_level_api(
     return SamplingAlgorithm(init_fn, step_fn)
 
 
-def build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable:
+def build_rmh_transition_energy(proposal_logdensity_fn: Callable | None) -> Callable:
     if proposal_logdensity_fn is None:
 
         def transition_energy(prev_state, new_state):

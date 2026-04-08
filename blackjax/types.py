@@ -10,7 +10,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Iterable, Mapping, Union
+from typing import Any, Iterable, Mapping, TypeAlias
 
 import jax
 from jax.typing import ArrayLike
@@ -36,14 +36,14 @@ function), we annotate them as `float` to empathizes they should be scalar
 """
 #: JAX PyTrees
 Array = jax.Array
-ArrayTree = Union[jax.Array, Iterable["ArrayTree"], Mapping[Any, "ArrayTree"]]
-ArrayLikeTree = Union[
-    ArrayLike, Iterable["ArrayLikeTree"], Mapping[Any, "ArrayLikeTree"]
-]
+ArrayTree: TypeAlias = jax.Array | Iterable["ArrayTree"] | Mapping[Any, "ArrayTree"]
+ArrayLikeTree: TypeAlias = (
+    ArrayLike | Iterable["ArrayLikeTree"] | Mapping[Any, "ArrayLikeTree"]
+)
 
 #: JAX PRNGKey
 PRNGKey = jax.Array
 
 #: JAX Scalar types
-Scalar = Union[float, int]
-Numeric = Union[jax.Array, Scalar]
+Scalar: TypeAlias = float | int
+Numeric: TypeAlias = jax.Array | Scalar

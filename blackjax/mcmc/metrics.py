@@ -28,7 +28,7 @@ For a Newtonian hamiltonian dynamic the kinetic energy is given by:
 We can also generate a relativistic dynamic :cite:p:`lu2017relativistic`.
 
 """
-from typing import Callable, NamedTuple, Optional, Protocol, Union
+from typing import Callable, NamedTuple, Protocol, TypeAlias
 
 import jax.numpy as jnp
 import jax.scipy as jscipy
@@ -47,7 +47,7 @@ __all__ = [
 
 class KineticEnergy(Protocol):
     def __call__(
-        self, momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+        self, momentum: ArrayLikeTree, position: ArrayLikeTree | None = None
     ) -> Numeric:
         ...
 
@@ -58,8 +58,8 @@ class CheckTurning(Protocol):
         momentum_left: ArrayLikeTree,
         momentum_right: ArrayLikeTree,
         momentum_sum: ArrayLikeTree,
-        position_left: Optional[ArrayLikeTree] = None,
-        position_right: Optional[ArrayLikeTree] = None,
+        position_left: ArrayLikeTree | None = None,
+        position_right: ArrayLikeTree | None = None,
     ) -> bool:
         ...
 
@@ -83,7 +83,7 @@ class Metric(NamedTuple):
     scale: Scale
 
 
-MetricTypes = Union[Metric, Array, Callable[[ArrayLikeTree], Array]]
+MetricTypes: TypeAlias = Metric | Array | Callable[[ArrayLikeTree], Array]
 
 
 def default_metric(metric: MetricTypes) -> Metric:
@@ -158,7 +158,7 @@ def gaussian_euclidean(
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
     def kinetic_energy(
-        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+        momentum: ArrayLikeTree, position: ArrayLikeTree | None = None
     ) -> Numeric:
         del position
         momentum, _ = ravel_pytree(momentum)
@@ -170,8 +170,8 @@ def gaussian_euclidean(
         momentum_left: ArrayLikeTree,
         momentum_right: ArrayLikeTree,
         momentum_sum: ArrayLikeTree,
-        position_left: Optional[ArrayLikeTree] = None,
-        position_right: Optional[ArrayLikeTree] = None,
+        position_left: ArrayLikeTree | None = None,
+        position_right: ArrayLikeTree | None = None,
     ) -> bool:
         """Generalized U-turn criterion :cite:p:`betancourt2013generalizing,nuts_uturn`.
 
@@ -296,7 +296,7 @@ def gaussian_euclidean_low_rank(
         return unravel_fn(p)
 
     def kinetic_energy(
-        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+        momentum: ArrayLikeTree, position: ArrayLikeTree | None = None
     ) -> Numeric:
         del position
         p, _ = ravel_pytree(momentum)
@@ -309,8 +309,8 @@ def gaussian_euclidean_low_rank(
         momentum_left: ArrayLikeTree,
         momentum_right: ArrayLikeTree,
         momentum_sum: ArrayLikeTree,
-        position_left: Optional[ArrayLikeTree] = None,
-        position_right: Optional[ArrayLikeTree] = None,
+        position_left: ArrayLikeTree | None = None,
+        position_right: ArrayLikeTree | None = None,
     ) -> bool:
         del position_left, position_right
         m_left, _ = ravel_pytree(momentum_left)
@@ -394,7 +394,7 @@ def gaussian_riemannian(
         return generate_gaussian_noise(rng_key, position, sigma=mass_matrix_sqrt)
 
     def kinetic_energy(
-        momentum: ArrayLikeTree, position: Optional[ArrayLikeTree] = None
+        momentum: ArrayLikeTree, position: ArrayLikeTree | None = None
     ) -> Numeric:
         if position is None:
             raise ValueError(
@@ -415,8 +415,8 @@ def gaussian_riemannian(
         momentum_left: ArrayLikeTree,
         momentum_right: ArrayLikeTree,
         momentum_sum: ArrayLikeTree,
-        position_left: Optional[ArrayLikeTree] = None,
-        position_right: Optional[ArrayLikeTree] = None,
+        position_left: ArrayLikeTree | None = None,
+        position_right: ArrayLikeTree | None = None,
     ) -> bool:
         del momentum_left, momentum_right, momentum_sum, position_left, position_right
         raise NotImplementedError(

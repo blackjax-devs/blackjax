@@ -1,7 +1,7 @@
 """Utility functions for BlackJax."""
 
 from functools import partial
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -63,8 +63,8 @@ def linear_map(diag_or_dense_a, b, *, precision="highest"):
 def generate_gaussian_noise(
     rng_key: PRNGKey,
     position: ArrayLikeTree,
-    mu: Union[float, Array] = 0.0,
-    sigma: Union[float, Array] = 1.0,
+    mu: float | Array = 0.0,
+    sigma: float | Array = 1.0,
 ) -> ArrayTree:
     """Generate N(mu, sigma) noise with output structure that match a given PyTree.
 
@@ -146,7 +146,7 @@ def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
 
 def run_inference_algorithm(
     rng_key: PRNGKey,
-    inference_algorithm: Union[SamplingAlgorithm, VIAlgorithm],
+    inference_algorithm: SamplingAlgorithm | VIAlgorithm,
     num_steps: int,
     initial_state: ArrayLikeTree = None,
     initial_position: ArrayLikeTree = None,

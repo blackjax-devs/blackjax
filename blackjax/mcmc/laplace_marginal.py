@@ -37,7 +37,7 @@ Margossian, "General adjoint-differentiated Laplace approximation", 2023.
 arXiv:2306.14976.
 """
 import dataclasses
-from typing import Callable, Optional
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -94,7 +94,7 @@ class LaplaceMarginal:
     sample_theta: Callable
 
     def __call__(
-        self, phi: ArrayLikeTree, theta_prev: Optional[ArrayTree] = None
+        self, phi: ArrayLikeTree, theta_prev: ArrayTree | None = None
     ) -> tuple[float, ArrayTree]:
         """Evaluate log p̂(phi | y).  Alias for ``log_marginal``.
 
@@ -180,7 +180,7 @@ def laplace_marginal_factory(
     # solve_theta: pure L-BFGS mode-finding, no custom VJP
     # ------------------------------------------------------------------
     def solve_theta(
-        phi: ArrayLikeTree, theta_prev: Optional[ArrayTree] = None
+        phi: ArrayLikeTree, theta_prev: ArrayTree | None = None
     ) -> ArrayTree:
         """Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given."""
         initial = theta_prev if theta_prev is not None else theta_init
@@ -195,7 +195,7 @@ def laplace_marginal_factory(
     # get_theta_star: same solve, wrapped in custom_root for IFT gradient
     # ------------------------------------------------------------------
     def get_theta_star(
-        phi: ArrayLikeTree, theta_prev: Optional[ArrayTree] = None
+        phi: ArrayLikeTree, theta_prev: ArrayTree | None = None
     ) -> ArrayTree:
         """Find theta*(phi) with correct implicit-function-theorem gradient."""
 
@@ -228,7 +228,7 @@ def laplace_marginal_factory(
     # log_marginal: assemble the Laplace log-marginal value
     # ------------------------------------------------------------------
     def log_marginal(
-        phi: ArrayLikeTree, theta_prev: Optional[ArrayTree] = None
+        phi: ArrayLikeTree, theta_prev: ArrayTree | None = None
     ) -> tuple[float, ArrayTree]:
         """Evaluate log p̂(phi | y).  Returns (lp, theta_star) for has_aux=True."""
         theta_star = get_theta_star(phi, theta_prev)

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for marginal latent Gaussian sampling."""
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -226,9 +226,9 @@ def build_kernel(cov_svd: CovarianceSVD):
 
 def as_top_level_api(
     logdensity_fn: Callable,
-    covariance: Optional[Array] = None,
-    mean: Optional[ArrayLikeTree] = None,
-    cov_svd: Optional[CovarianceSVD] = None,
+    covariance: Array | None = None,
+    mean: ArrayLikeTree | None = None,
+    cov_svd: CovarianceSVD | None = None,
     step_size: float = 1.0,
 ) -> SamplingAlgorithm:
     """Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.

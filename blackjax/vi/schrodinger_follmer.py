@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -65,7 +65,7 @@ def step(
     logdensity_fn: Callable,
     step_size: float,
     n_samples: int,
-) -> Tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]:
+) -> tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]:
     """
     Runs one step of the Schrödinger-Föllmer algorithm. As per the paper, we only allow for Euler-Maruyama integration.
     It is likely possible to generalize this to other integration schemes but is not considered in the original work
