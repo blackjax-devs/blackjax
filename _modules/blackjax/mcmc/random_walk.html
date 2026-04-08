@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gee2b7f254" />
+  <meta name="docsearch:version" content="0.1.dev1+g22c286f4a" />
   </head>
   
   
@@ -574,6 +574,7 @@
 <span class="sd">    of the chain and that returns a new state of the chain along with</span>
 <span class="sd">    information about the transition.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inner_kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">RWState</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">random_step</span><span class="p">:</span> <span class="n">Callable</span>
@@ -583,7 +584,6 @@
             <span class="n">new_position</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">add</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">move_proposal</span><span class="p">)</span>
             <span class="k">return</span> <span class="n">new_position</span>
 
-        <span class="n">inner_kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">inner_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">proposal_generator</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
@@ -676,6 +676,7 @@
 <span class="sd">    information about the transition.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inner_kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
@@ -700,7 +701,6 @@
             <span class="k">del</span> <span class="n">position</span>
             <span class="k">return</span> <span class="n">proposal_distribution</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
 
-        <span class="n">inner_kernel</span> <span class="o">=</span> <span class="n">build_rmh</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">inner_kernel</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">proposal_generator</span><span class="p">,</span> <span class="n">proposal_logdensity_fn</span>
         <span class="p">)</span>
