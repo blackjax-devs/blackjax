@@ -19,6 +19,7 @@ import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
+from blackjax.eca import ensemble_execute_fn
 from blackjax.mcmc import mclmc
 from blackjax.mcmc.integrators import (
     IntegratorState,
@@ -26,7 +27,6 @@ from blackjax.mcmc.integrators import (
     isokinetic_velocity_verlet,
 )
 from blackjax.types import Array
-from blackjax.util import ensemble_execute_fn
 
 
 def no_nans(a):

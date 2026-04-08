@@ -9,8 +9,8 @@ from jax import random as jr
 from jax import tree, vmap
 
 import blackjax
+from blackjax.diagnostics import psis_weights
 from blackjax.util import (
-    psis_weights,
     run_inference_algorithm,
     store_only_expectation_values,
     thin_algorithm,

@@ -19,7 +19,11 @@ from scipy.fftpack import next_fast_len  # type: ignore
 
 from blackjax.types import Array, ArrayLike
 
-__all__ = ["potential_scale_reduction", "effective_sample_size"]
+__all__ = [
+    "potential_scale_reduction",
+    "effective_sample_size",
+    "psis_weights",
+]
 
 
 def potential_scale_reduction(
@@ -228,3 +232,141 @@ def splitR(position, num_chains, superchain_size, func_for_splitR=jnp.square):
     R = jnp.sqrt(1.0 + (B / W))  # splitR, shape = (# func)
 
     return R
+
+
+def _gpdfit(exceedances: Array) -> tuple[Array, Array]:
+    """Empirical Bayes GPD fit via Zhang & Stephens (2009).
+
+    Fits a Generalised Pareto Distribution to ``exceedances`` (a 1-D array of
+    non-negative values in *ascending* order) using the Bayesian model-averaging
+    estimator.  All operations on fixed-shape arrays so the function is
+    JIT-compatible (``exceedances.shape[0]`` must be static).
+    """
+    n = exceedances.shape[0]  # static at trace time
+    prior_bs, prior_k = 3, 10
+    m_est = 30 + int(n**0.5)  # static
+
+    # Guard against the degenerate case where all exceedances are zero
+    # (e.g. all importance weights equal).  In that case k=0, sigma=0
+    # and the caller will leave the tail unchanged.
+    tiny = jnp.finfo(exceedances.dtype).tiny
+    is_degenerate = exceedances[-1] < tiny
+    safe_exc = jnp.where(is_degenerate, jnp.ones_like(exceedances), exceedances)
+
+    # Grid of candidate rate parameters b.
+    b = 1.0 - jnp.sqrt(m_est / (jnp.arange(1, m_est + 1) - 0.5))
+    b = b / (prior_bs * safe_exc[int(n / 4 + 0.5) - 1])
+    b = b + 1.0 / safe_exc[-1]
+
+    # k estimate for each b (mean log1p).
+    k_ary = jnp.mean(jnp.log1p(-b[:, None] * safe_exc[None, :]), axis=1)
+
+    # Profile log-likelihood weights.
+    len_scale = n * (jnp.log(-b / k_ary) - k_ary - 1.0)
+    w = jnp.exp(len_scale - jax.nn.logsumexp(len_scale))
+
+    # Posterior mean of b, then derive k and sigma.
+    b_post = jnp.sum(b * w)
+    k = jnp.mean(jnp.log1p(-b_post * safe_exc))
+    sigma = -k / b_post
+    # Weakly informative prior shrinks k toward 0.5.
+    k = (n * k + prior_k * 0.5) / (n + prior_k)
+
+    k = jnp.where(is_degenerate, jnp.zeros(()), k)
+    sigma = jnp.where(is_degenerate, jnp.zeros(()), sigma)
+    return k, sigma
+
+
+def _gpinv(p: Array, k: Array, sigma: Array) -> Array:
+    """GPD quantile function (inverse CDF)."""
+    return jnp.where(
+        jnp.abs(k) < 1e-10,
+        -sigma * jnp.log1p(-p),
+        sigma * jnp.expm1(-k * jnp.log1p(-p)) / k,
+    )
+
+
+def psis_weights(log_ratios: Array, r_eff: float = 1.0) -> tuple[Array, Array]:
+    """Pareto Smoothed Importance Sampling (PSIS) log weights.
+
+    Implements the PSIS smoothing step from :cite:p:`vehtari2017practical`:
+    the ``M`` largest importance ratios (in ratio space) are replaced by sorted
+    Generalised Pareto quantiles fitted by the empirical Bayes estimator of
+    Zhang & Stephens (2009), then all weights are normalised.
+
+    This is a pure-JAX, JIT-compatible implementation faithful to Algorithm 1
+    of Vehtari, Gelman & Gabry (2017).
+
+    Parameters
+    ----------
+    log_ratios
+        Log importance ratios ``log p(θ) − log q(θ)``, shape ``(n,)``.
+        Need not be normalised.
+    r_eff
+        Relative effective sample size of the proposal, ``S_eff / n``.
+        Use the default of ``1.0`` for i.i.d. draws (e.g. Pathfinder);
+        set to the actual ESS ratio for correlated MCMC chains.  Values
+        below 1 increase the tail size ``M`` to compensate for correlation.
+
+    Returns
+    -------
+    log_weights
+        Normalised log importance weights, shape ``(n,)``.
+        ``jnp.exp(log_weights).sum() == 1`` up to floating-point precision.
+    pareto_k
+        Pareto shape parameter estimate (scalar ``Array``).  Values below 0.5
+        indicate reliable estimates; 0.5–0.7 are moderate; above 0.7 may give
+        unreliable estimates.  ``jnp.inf`` means the tail was too small to fit
+        (fewer than 5 samples).
+
+    Notes
+    -----
+    Tail size: ``M = min(floor(3*sqrt(n/r_eff)), n//5)``, matching the paper.
+    The GPD is only applied when ``k >= 1/3``; lighter tails are left
+    unsmoothed (only normalised).  Fitting uses empirical Bayes in
+    importance-ratio space, the same approach as ArviZ.
+    """
+    n = log_ratios.shape[0]
+    M = min(max(int(3.0 * (n / r_eff) ** 0.5), 5), n // 5)
+
+    if M < 5:
+        # Too few tail samples for a reliable GPD fit; return normalised
+        # weights and k=inf to signal this to the caller.
+        log_w = log_ratios - jax.nn.logsumexp(log_ratios)
+        return log_w, jnp.asarray(jnp.inf)
+
+    # Stabilise numerically.
+    lw = log_ratios - log_ratios.max()
+
+    # Sort ascending so that the M largest are at positions [n-M:].
+    sorted_idx = jnp.argsort(lw)
+    lw_sorted = lw[sorted_idx]
+
+    # Threshold: largest value below the tail (in log and ratio space).
+    threshold_log = lw_sorted[n - M - 1]
+    threshold_ratio = jnp.exp(threshold_log)
+
+    # Work in ratio (non-log) space for GPD fitting, as in the original paper.
+    tail_ratio = jnp.exp(lw_sorted[n - M :])  # ascending, shape (M,)
+    exceedances = tail_ratio - threshold_ratio  # >= 0, ascending
+
+    k, sigma = _gpdfit(exceedances)
+
+    # Uniform quantile positions within the tail: (0.5/M, 1.5/M, ..., (M-0.5)/M).
+    p = (jnp.arange(M) + 0.5) / M  # ascending
+    smoothed = threshold_ratio + _gpinv(p, k, sigma)
+    # Cap smoothed values at the observed tail maximum.
+    smoothed = jnp.minimum(smoothed, tail_ratio[-1])
+
+    # Only replace the tail when k >= 1/3 (paper Algorithm 1, step 7).
+    # For lighter tails the raw order statistics are already reliable.
+    lw_smooth = jnp.where(
+        k >= 1.0 / 3.0,
+        lw_sorted.at[n - M :].set(jnp.log(smoothed)),
+        lw_sorted,
+    )
+
+    # Restore original ordering and normalise.
+    lw_orig = jnp.zeros_like(lw_smooth).at[sorted_idx].set(lw_smooth)
+    log_w = lw_orig - jax.nn.logsumexp(lw_orig)
+    return log_w, k

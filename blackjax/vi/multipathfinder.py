@@ -17,8 +17,8 @@ import jax
 import jax.numpy as jnp
 
 from blackjax.base import VIAlgorithm
+from blackjax.diagnostics import psis_weights as _psis_weights
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.util import psis_weights as _psis_weights
 from blackjax.vi.pathfinder import PathfinderInfo, PathfinderState, approximate, sample
 
 __all__ = [
