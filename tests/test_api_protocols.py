@@ -56,41 +56,61 @@ def _make_algorithm(name):
     factories = {
         # --- MCMC ---
         "hmc": lambda: blackjax.hmc(
-            _logdensity_fn, step_size=0.1,
-            inverse_mass_matrix=inv_mass, num_integration_steps=10,
+            _logdensity_fn,
+            step_size=0.1,
+            inverse_mass_matrix=inv_mass,
+            num_integration_steps=10,
         ),
         "nuts": lambda: blackjax.nuts(
-            _logdensity_fn, step_size=0.1, inverse_mass_matrix=inv_mass,
+            _logdensity_fn,
+            step_size=0.1,
+            inverse_mass_matrix=inv_mass,
         ),
         "mala": lambda: blackjax.mala(_logdensity_fn, step_size=0.1),
         "mclmc": lambda: blackjax.mclmc(
-            _logdensity_fn, L=1.0, step_size=0.1,
+            _logdensity_fn,
+            L=1.0,
+            step_size=0.1,
         ),
         "adjusted_mclmc": lambda: blackjax.adjusted_mclmc(
-            _logdensity_fn, step_size=0.1,
-            inverse_mass_matrix=inv_mass, num_integration_steps=10,
+            _logdensity_fn,
+            step_size=0.1,
+            inverse_mass_matrix=inv_mass,
+            num_integration_steps=10,
         ),
         "adjusted_mclmc_dynamic": lambda: blackjax.adjusted_mclmc_dynamic(
-            _logdensity_fn, step_size=0.1, inverse_mass_matrix=inv_mass,
+            _logdensity_fn,
+            step_size=0.1,
+            inverse_mass_matrix=inv_mass,
         ),
         "barker": lambda: blackjax.barker(_logdensity_fn, step_size=0.1),
         "dynamic_hmc": lambda: blackjax.dynamic_hmc(
-            _logdensity_fn, step_size=0.1, inverse_mass_matrix=inv_mass,
+            _logdensity_fn,
+            step_size=0.1,
+            inverse_mass_matrix=inv_mass,
         ),
         "rmhmc": lambda: blackjax.rmhmc(
-            _logdensity_fn, step_size=0.1,
-            mass_matrix=cov, num_integration_steps=10,
+            _logdensity_fn,
+            step_size=0.1,
+            mass_matrix=cov,
+            num_integration_steps=10,
         ),
         "ghmc": lambda: blackjax.ghmc(
-            _logdensity_fn, step_size=0.1,
-            momentum_inverse_scale=inv_mass, alpha=0.5, delta=0.5,
+            _logdensity_fn,
+            step_size=0.1,
+            momentum_inverse_scale=inv_mass,
+            alpha=0.5,
+            delta=0.5,
         ),
         "elliptical_slice": lambda: blackjax.elliptical_slice(
-            _loglikelihood_fn, mean=jnp.zeros(_DIM), cov=cov,
+            _loglikelihood_fn,
+            mean=jnp.zeros(_DIM),
+            cov=cov,
         ),
         "additive_step_random_walk": lambda: (
             blackjax.additive_step_random_walk.normal_random_walk(
-                _logdensity_fn, sigma=0.1 * cov,
+                _logdensity_fn,
+                sigma=0.1 * cov,
             )
         ),
         "rmh": lambda: blackjax.rmh(
@@ -113,9 +133,20 @@ _NEEDS_RNG_KEY = {"mclmc", "ghmc", "adjusted_mclmc_dynamic", "dynamic_hmc"}
 
 # All MCMC algorithms we test
 _MCMC_ALGORITHMS = [
-    "hmc", "nuts", "mala", "mclmc", "adjusted_mclmc",
-    "adjusted_mclmc_dynamic", "barker", "dynamic_hmc", "rmhmc", "ghmc",
-    "elliptical_slice", "additive_step_random_walk", "rmh", "irmh",
+    "hmc",
+    "nuts",
+    "mala",
+    "mclmc",
+    "adjusted_mclmc",
+    "adjusted_mclmc_dynamic",
+    "barker",
+    "dynamic_hmc",
+    "rmhmc",
+    "ghmc",
+    "elliptical_slice",
+    "additive_step_random_walk",
+    "rmh",
+    "irmh",
 ]
 
 
@@ -129,9 +160,9 @@ class TestSamplingAlgorithmProtocol:
         alg = _make_algorithm(name)
         if alg is None:
             pytest.skip(f"{name} not covered by generic factory")
-        assert isinstance(alg, SamplingAlgorithm), (
-            f"{name} factory did not return a SamplingAlgorithm"
-        )
+        assert isinstance(
+            alg, SamplingAlgorithm
+        ), f"{name} factory did not return a SamplingAlgorithm"
 
     def test_init_step_roundtrip(self, name):
         """init -> step should execute without error and return (state, info)."""
@@ -158,9 +189,9 @@ class TestSamplingAlgorithmProtocol:
         sig = inspect.signature(alg.init)
         params = list(sig.parameters.keys())
         assert len(params) >= 1, f"{name}.init has no parameters"
-        assert params[0] == "position", (
-            f"{name}.init first param is '{params[0]}', expected 'position'"
-        )
+        assert (
+            params[0] == "position"
+        ), f"{name}.init first param is '{params[0]}', expected 'position'"
 
     def test_step_fn_first_two_params(self, name):
         """The step function should accept (rng_key, state) as first two params."""
@@ -171,9 +202,9 @@ class TestSamplingAlgorithmProtocol:
         sig = inspect.signature(alg.step)
         params = list(sig.parameters.keys())
         assert len(params) >= 2, f"{name}.step has fewer than 2 parameters"
-        assert params[0] == "rng_key", (
-            f"{name}.step first param is '{params[0]}', expected 'rng_key'"
-        )
-        assert params[1] == "state", (
-            f"{name}.step second param is '{params[1]}', expected 'state'"
-        )
+        assert (
+            params[0] == "rng_key"
+        ), f"{name}.step first param is '{params[0]}', expected 'rng_key'"
+        assert (
+            params[1] == "state"
+        ), f"{name}.step second param is '{params[1]}', expected 'state'"
