@@ -62,7 +62,7 @@ Module Contents
 
 .. py:function:: init(position: blackjax.types.ArrayLike, logdensity_fn, rng_key)
 
-.. py:function:: build_kernel(logdensity_fn, inverse_mass_matrix, integrator, desired_energy_var_max_ratio=jnp.inf, desired_energy_var=0.0005)
+.. py:function:: build_kernel(logdensity_fn: Callable, inverse_mass_matrix: blackjax.types.ArrayLike, integrator: Callable, desired_energy_var_max_ratio: float = jnp.inf, desired_energy_var: float = 0.0005)
 
    Build an MCLMC kernel.
 

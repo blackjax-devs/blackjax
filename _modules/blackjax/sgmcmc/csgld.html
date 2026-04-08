@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g59fff9a28" />
+  <meta name="docsearch:version" content="0.1.dev1+gee635366e" />
   </head>
   
   
@@ -543,12 +543,14 @@
         <span class="c1"># Update the stochastic approximation to the energy histogram</span>
         <span class="n">neg_logprob</span> <span class="o">=</span> <span class="o">-</span><span class="n">logdensity_estimator</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">minibatch</span><span class="p">)</span>
         <span class="n">idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
-            <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">neg_logprob</span> <span class="o">-</span> <span class="n">min_energy</span><span class="p">)</span> <span class="o">/</span> <span class="n">energy_gap</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int32&quot;</span><span class="p">),</span>
+            <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">neg_logprob</span> <span class="o">-</span> <span class="n">min_energy</span><span class="p">)</span> <span class="o">/</span> <span class="n">energy_gap</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span>
+            <span class="p">),</span>
             <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
             <span class="nb">max</span><span class="o">=</span><span class="n">num_partitions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="n">energy_pdf_update</span> <span class="o">=</span> <span class="o">-</span><span class="n">energy_pdf</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">energy_pdf_update</span> <span class="o">=</span> <span class="o">-</span><span class="n">energy_pdf</span>
         <span class="n">energy_pdf_update</span> <span class="o">=</span> <span class="n">energy_pdf_update</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">energy_pdf_update</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
         <span class="n">energy_pdf</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
             <span class="k">lambda</span> <span class="n">e</span><span class="p">:</span> <span class="n">e</span> <span class="o">+</span> <span class="n">step_size_stoch</span> <span class="o">*</span> <span class="n">energy_pdf</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">*</span> <span class="n">energy_pdf_update</span><span class="p">,</span>

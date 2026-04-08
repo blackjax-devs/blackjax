@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g59fff9a28" />
+  <meta name="docsearch:version" content="0.1.dev1+gee635366e" />
   </head>
   
   
@@ -456,11 +456,11 @@
 <div class="viewcode-block" id="build_kernel">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.build_kernel">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
-    <span class="n">logdensity_fn</span><span class="p">,</span>
-    <span class="n">inverse_mass_matrix</span><span class="p">,</span>
-    <span class="n">integrator</span><span class="p">,</span>
-    <span class="n">desired_energy_var_max_ratio</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
-    <span class="n">desired_energy_var</span><span class="o">=</span><span class="mf">5e-4</span><span class="p">,</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">desired_energy_var_max_ratio</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+    <span class="n">desired_energy_var</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-4</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an MCLMC kernel.</span>
 
