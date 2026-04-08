@@ -174,6 +174,7 @@ def build_additive_step():
     of the chain and that returns a new state of the chain along with
     information about the transition.
     """
+    inner_kernel = build_rmh()
 
     def kernel(
         rng_key: PRNGKey, state: RWState, logdensity_fn: Callable, random_step: Callable
@@ -183,7 +184,6 @@ def build_additive_step():
             new_position = jax.tree.map(jnp.add, position, move_proposal)
             return new_position
 
-        inner_kernel = build_rmh()
         return inner_kernel(rng_key, state, logdensity_fn, proposal_generator)
 
     return kernel
@@ -267,6 +267,7 @@ def build_irmh() -> Callable:
     information about the transition.
 
     """
+    inner_kernel = build_rmh()
 
     def kernel(
         rng_key: PRNGKey,
@@ -291,7 +292,6 @@ def build_irmh() -> Callable:
             del position
             return proposal_distribution(rng_key)
 
-        inner_kernel = build_rmh()
         return inner_kernel(
             rng_key, state, logdensity_fn, proposal_generator, proposal_logdensity_fn
         )
