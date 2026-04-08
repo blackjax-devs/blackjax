@@ -235,16 +235,18 @@ def make_L_step_size_adaptation(
 
         return (state, params, adaptive_state, streaming_avg), None
 
-    run_steps = lambda xs, state, params: jax.lax.scan(
-        step,
-        init=(
-            state,
-            params,
-            (0.0, 0.0, jnp.inf),
-            (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
-        ),
-        xs=xs,
-    )[0]
+    def run_steps(xs, state, params):
+        """Run adaptation steps via scan, returning final carry state."""
+        return jax.lax.scan(
+            step,
+            init=(
+                state,
+                params,
+                (0.0, 0.0, jnp.inf),
+                (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
+            ),
+            xs=xs,
+        )[0]
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
