@@ -28,7 +28,7 @@ Module Contents
 
 .. py:data:: build_kernel
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, mass_matrix: Union[blackjax.mcmc.metrics.Metric, Callable], num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.implicit_midpoint) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, mass_matrix: blackjax.mcmc.metrics.Metric | Callable, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.implicit_midpoint) -> blackjax.base.SamplingAlgorithm
 
    A Riemannian Manifold Hamiltonian Monte Carlo kernel
 

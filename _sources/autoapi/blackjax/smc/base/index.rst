@@ -109,7 +109,7 @@ Module Contents
    :rtype: SMCState
 
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: Callable, weight_fn: Callable, resample_fn: Callable, num_resampled: Optional[int] = None) -> tuple[SMCState, SMCInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SMCState, update_fn: Callable, weight_fn: Callable, resample_fn: Callable, num_resampled: int | None = None) -> tuple[SMCState, SMCInfo]
 
    General SMC sampling step.
 

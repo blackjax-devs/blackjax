@@ -92,7 +92,7 @@ Module Contents
              * *returns a new state of the chain along with information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, momentum_inverse_scale: blackjax.types.ArrayLikeTree, alpha: float, delta: float, *, divergence_threshold: int = 1000, noise_gn: Callable = lambda _: 0.0) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, momentum_inverse_scale: blackjax.types.ArrayLikeTree, alpha: float, delta: float, *, divergence_threshold: int = 1000, noise_fn: Callable = lambda _: 0.0) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the Generalized HMC kernel.
 
@@ -140,7 +140,7 @@ Module Contents
    :param divergence_threshold: The absolute value of the difference in energy between two states above
                                 which we say that the transition is divergent. The default value is
                                 commonly found in other libraries, and yet is arbitrary.
-   :param noise_gn: A function that takes as input the slice variable and outputs a random
+   :param noise_fn: A function that takes as input the slice variable and outputs a random
                     variable used as a noise correction of the persistent slice update.
                     The parameter defaults to a random variable with a single atom at 0.
 

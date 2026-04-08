@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.marginal_latent_gaussian" href="../marginal_latent_gaussian/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g728c3461a" />
+  <meta name="docsearch:version" content="0.1.dev1+gd430cec22" />
   </head>
   
   
@@ -417,7 +417,7 @@
 <td><p></p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.mclmc.build_kernel" title="blackjax.mcmc.mclmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(logdensity_fn, inverse_mass_matrix, ...)</p></td>
-<td><p>Build a HMC kernel.</p></td>
+<td><p>Build an MCLMC kernel.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.mclmc.as_top_level_api" title="blackjax.mcmc.mclmc.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
 <td><p>The general mclmc kernel builder (<a class="reference internal" href="#blackjax.mcmc.mclmc.build_kernel" title="blackjax.mcmc.mclmc.build_kernel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.mclmc.build_kernel()</span></code></a>, alias <cite>blackjax.mclmc.build_kernel</cite>) can be</p></td>
@@ -470,13 +470,16 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.mclmc.build_kernel">
 <span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">desired_energy_var_max_ratio</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">jnp.inf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">desired_energy_var</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0005</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/mclmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.mclmc.build_kernel" title="Link to this definition">#</a></dt>
-<dd><p>Build a HMC kernel.</p>
+<dd><p>Build an MCLMC kernel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>integrator</strong> – The symplectic integrator to use to integrate the Hamiltonian dynamics.</p></li>
-<li><p><strong>L</strong> – the momentum decoherence rate.</p></li>
-<li><p><strong>step_size</strong> – step size of the integrator.</p></li>
+<li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
+<li><p><strong>inverse_mass_matrix</strong> – A matrix used for preconditioning.</p></li>
+<li><p><strong>integrator</strong> – The isokinetic integrator to use.</p></li>
+<li><p><strong>desired_energy_var_max_ratio</strong> – Maximum ratio of energy variance to desired energy variance before
+rejecting a transition.</p></li>
+<li><p><strong>desired_energy_var</strong> – The target energy variance per dimension.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

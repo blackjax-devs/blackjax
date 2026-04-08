@@ -64,11 +64,14 @@ Module Contents
 
 .. py:function:: build_kernel(logdensity_fn, inverse_mass_matrix, integrator, desired_energy_var_max_ratio=jnp.inf, desired_energy_var=0.0005)
 
-   Build a HMC kernel.
+   Build an MCLMC kernel.
 
-   :param integrator: The symplectic integrator to use to integrate the Hamiltonian dynamics.
-   :param L: the momentum decoherence rate.
-   :param step_size: step size of the integrator.
+   :param logdensity_fn: The log-density function we wish to draw samples from.
+   :param inverse_mass_matrix: A matrix used for preconditioning.
+   :param integrator: The isokinetic integrator to use.
+   :param desired_energy_var_max_ratio: Maximum ratio of energy variance to desired energy variance before
+                                        rejecting a transition.
+   :param desired_energy_var: The target energy variance per dimension.
 
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*

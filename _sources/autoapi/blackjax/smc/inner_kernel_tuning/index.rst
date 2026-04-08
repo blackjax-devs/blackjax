@@ -40,12 +40,12 @@ Module Contents
 
 
    .. py:attribute:: parameter_override
-      :type:  Dict[str, blackjax.types.ArrayTree]
+      :type:  dict[str, blackjax.types.ArrayTree]
 
 
 .. py:function:: init(alg_init_fn, position, initial_parameter_value)
 
-.. py:function:: build_kernel(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.types.PRNGKey, blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], Dict[str, blackjax.types.ArrayTree]], num_mcmc_steps: int = 10, smc_returns_state_with_parameter_override=False, **extra_parameters) -> Callable
+.. py:function:: build_kernel(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.types.PRNGKey, blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], dict[str, blackjax.types.ArrayTree]], num_mcmc_steps: int = 10, smc_returns_state_with_parameter_override=False, **extra_parameters) -> Callable
 
    In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
    MCMC that is used to perturbate/update each of the particles. This adaptation tunes some parameter of that MCMC,
@@ -65,7 +65,7 @@ Module Contents
                                                      this is used in order to compose different adaptation mechanisms, such as pretuning with tuning.
 
 
-.. py:function:: as_top_level_api(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.types.PRNGKey, blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], Dict[str, blackjax.types.ArrayTree]], initial_parameter_value, num_mcmc_steps: int = 10, smc_returns_state_with_parameter_override=False, **extra_parameters) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.types.PRNGKey, blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], dict[str, blackjax.types.ArrayTree]], initial_parameter_value, num_mcmc_steps: int = 10, smc_returns_state_with_parameter_override=False, **extra_parameters) -> blackjax.base.SamplingAlgorithm
 
    In the context of an SMC sampler (whose step_fn returning state
    has a .particles attribute), there's an inner MCMC that is used

@@ -43,7 +43,7 @@ Module Contents
 
 
    .. py:attribute:: parameter_override
-      :type:  Dict[str, blackjax.types.ArrayTree]
+      :type:  dict[str, blackjax.types.ArrayTree]
 
 
 .. py:function:: esjd(m)
@@ -77,7 +77,7 @@ Module Contents
 
 .. py:function:: default_measure_factory(state)
 
-.. py:function:: build_pretune(mcmc_init_fn: Callable, mcmc_step_fn: Callable, alpha: float, sigma_parameters: blackjax.types.ArrayLikeTree, n_particles: int, performance_of_chain_measure_factory: Callable = default_measure_factory, natural_parameters: Optional[List[str]] = None, positive_parameters: Optional[List[str]] = None)
+.. py:function:: build_pretune(mcmc_init_fn: Callable, mcmc_step_fn: Callable, alpha: float, sigma_parameters: blackjax.types.ArrayLikeTree, n_particles: int, performance_of_chain_measure_factory: Callable = default_measure_factory, natural_parameters: list[str] | None = None, positive_parameters: list[str] | None = None)
 
    Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure.
    The goal is to maintain a probability distribution of parameters, in order

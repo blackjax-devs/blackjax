@@ -59,7 +59,7 @@ Module Contents
    means that no likelihood term will be added (only prior).
 
 
-.. py:function:: build_kernel(mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, num_mcmc_steps: Optional[int], mcmc_parameters: blackjax.types.ArrayTree, partial_logposterior_factory: Callable[[blackjax.types.Array], Callable], update_strategy=update_and_take_last) -> Callable
+.. py:function:: build_kernel(mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, num_mcmc_steps: int | None, mcmc_parameters: blackjax.types.ArrayTree, partial_logposterior_factory: Callable[[blackjax.types.Array], Callable], update_strategy=update_and_take_last) -> Callable
 
    Build the Partial Posteriors (data tempering) SMC kernel.
    The distribution's trajectory includes increasingly adding more

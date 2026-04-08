@@ -62,7 +62,7 @@ Module Contents
    :rtype: TemperedSMCState
 
 
-.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last, update_particles_fn: Optional[Callable] = None) -> Callable
+.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last, update_particles_fn: Callable | None = None) -> Callable
 
    Build the base Tempered SMC kernel.
 
@@ -100,7 +100,7 @@ Module Contents
    :rtype: Callable
 
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: Optional[int] = 10, update_strategy: Callable = update_and_take_last, update_particles_fn: Optional[Callable] = None) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: int | None = 10, update_strategy: Callable = update_and_take_last, update_particles_fn: Callable | None = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the Tempered SMC kernel.
 

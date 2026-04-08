@@ -51,7 +51,7 @@ Module Contents
 
 .. py:function:: init(example_position: blackjax.types.ArrayLikeTree) -> SchrodingerFollmerState
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SchrodingerFollmerState, logdensity_fn: Callable, step_size: float, n_samples: int) -> Tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: SchrodingerFollmerState, logdensity_fn: Callable, step_size: float, n_samples: int) -> tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]
 
    Runs one step of the Schrödinger-Föllmer algorithm. As per the paper, we only allow for Euler-Maruyama integration.
    It is likely possible to generalize this to other integration schemes but is not considered in the original work

@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation" href="../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g728c3461a" />
+  <meta name="docsearch:version" content="0.1.dev1+gd430cec22" />
   </head>
   
   
@@ -417,7 +417,7 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_L_step_size_adaptation" title="blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_L_step_size_adaptation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adjusted_mclmc_make_L_step_size_adaptation</span></code></a>(kernel, ...)</p></td>
 <td><p>Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_adaptation_L" title="blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_adaptation_L"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adjusted_mclmc_make_adaptation_L</span></code></a>(kernel, frac, Lfactor)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_adaptation_L" title="blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_adaptation_L"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adjusted_mclmc_make_adaptation_L</span></code></a>(kernel, frac, l_factor)</p></td>
 <td><p>determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.adjusted_mclmc_adaptation.handle_nans" title="blackjax.adaptation.adjusted_mclmc_adaptation.handle_nans"><code class="xref py py-obj docutils literal notranslate"><span class="pre">handle_nans</span></code></a>(previous_state, next_state, step_size, ...)</p></td>
@@ -475,7 +475,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_adaptation_L">
-<span class="sig-name descname"><span class="pre">adjusted_mclmc_make_adaptation_L</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">Lfactor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'avg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigenvector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/adjusted_mclmc_adaptation.html#adjusted_mclmc_make_adaptation_L"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_adaptation_L" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">adjusted_mclmc_make_adaptation_L</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">frac</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">l_factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'avg'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigenvector</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/adjusted_mclmc_adaptation.html#adjusted_mclmc_make_adaptation_L"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_make_adaptation_L" title="Link to this definition">#</a></dt>
 <dd><p>determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)</p>
 </dd></dl>
 

@@ -61,7 +61,7 @@ Module Contents
    Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC
 
 
-.. py:function:: adjusted_mclmc_make_adaptation_L(kernel, frac, Lfactor, max='avg', eigenvector=None)
+.. py:function:: adjusted_mclmc_make_adaptation_L(kernel, frac, l_factor, max='avg', eigenvector=None)
 
    determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)
 

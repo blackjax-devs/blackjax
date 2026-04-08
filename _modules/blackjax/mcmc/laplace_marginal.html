@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g728c3461a" />
+  <meta name="docsearch:version" content="0.1.dev1+gd430cec22" />
   </head>
   
   
@@ -410,7 +410,7 @@
 <span class="sd">arXiv:2306.14976.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -481,7 +481,7 @@
 
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate log p̂(phi | y).  Alias for ``log_marginal``.</span>
 
@@ -570,7 +570,7 @@
     <span class="c1"># solve_theta: pure L-BFGS mode-finding, no custom VJP</span>
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">solve_theta</span><span class="p">(</span>
-        <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given.&quot;&quot;&quot;</span>
         <span class="n">initial</span> <span class="o">=</span> <span class="n">theta_prev</span> <span class="k">if</span> <span class="n">theta_prev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">theta_init</span>
@@ -585,7 +585,7 @@
     <span class="c1"># get_theta_star: same solve, wrapped in custom_root for IFT gradient</span>
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">get_theta_star</span><span class="p">(</span>
-        <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Find theta*(phi) with correct implicit-function-theorem gradient.&quot;&quot;&quot;</span>
 
@@ -618,7 +618,7 @@
     <span class="c1"># log_marginal: assemble the Laplace log-marginal value</span>
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">log_marginal</span><span class="p">(</span>
-        <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Evaluate log p̂(phi | y).  Returns (lp, theta_star) for has_aux=True.&quot;&quot;&quot;</span>
         <span class="n">theta_star</span> <span class="o">=</span> <span class="n">get_theta_star</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">)</span>

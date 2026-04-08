@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g728c3461a" />
+  <meta name="docsearch:version" content="0.1.dev1+gd430cec22" />
   </head>
   
   
@@ -371,7 +371,7 @@
                 <article class="bd-article">
                   
   <h1>Source code for blackjax.smc.pretuning</h1><div class="highlight"><pre>
-<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -402,7 +402,7 @@
 
 <div class="viewcode-block" id="SMCInfoWithParameterDistribution.parameter_override">
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.SMCInfoWithParameterDistribution.parameter_override">[docs]</a>
-    <span class="n">parameter_override</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span></div>
+    <span class="n">parameter_override</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span></div>
 </div>
 
 
@@ -507,8 +507,8 @@
     <span class="n">sigma_parameters</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">n_particles</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="n">performance_of_chain_measure_factory</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">default_measure_factory</span><span class="p">,</span>
-    <span class="n">natural_parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">positive_parameters</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">natural_parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">positive_parameters</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure.</span>
 <span class="sd">    The goal is to maintain a probability distribution of parameters, in order</span>
@@ -668,7 +668,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">StateWithParameterOverride</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_step_parameters</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">StateWithParameterOverride</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">StateWithParameterOverride</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">]:</span>
         <span class="n">extra_parameters</span><span class="p">[</span><span class="s2">&quot;update_particles_fn&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">pretuned_step</span>
         <span class="n">step_fn</span> <span class="o">=</span> <span class="n">smc_algorithm</span><span class="p">(</span>
             <span class="n">logprior_fn</span><span class="o">=</span><span class="n">logprior_fn</span><span class="p">,</span>
@@ -779,7 +779,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step_fn</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_step_parameters</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">StateWithParameterOverride</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">StateWithParameterOverride</span><span class="p">,</span> <span class="n">SMCInfo</span><span class="p">]:</span>
         <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_step_parameters</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>

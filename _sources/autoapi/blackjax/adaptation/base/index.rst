@@ -59,7 +59,7 @@ Module Contents
    parameters of the adaptation algorithms.
 
 
-.. py:function:: get_filter_adapt_info_fn(state_keys: Set[str] = set(), info_keys: Set[str] = set(), adapt_state_keys: Set[str] = set())
+.. py:function:: get_filter_adapt_info_fn(state_keys: set[str] = set(), info_keys: set[str] = set(), adapt_state_keys: set[str] = set())
 
    Generate a function to filter what is saved in AdaptationInfo.  Used
    for adptation_info_fn parameters of the adaptation algorithms.

@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g728c3461a" />
+  <meta name="docsearch:version" content="0.1.dev1+gd430cec22" />
   </head>
   
   
@@ -439,7 +439,7 @@
     <span class="n">num_effective_samples</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
     <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-    <span class="n">Lfactor</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
+    <span class="n">l_factor</span><span class="o">=</span><span class="mf">0.4</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Finds the optimal value of the parameters for the MCLMC algorithm.</span>
@@ -470,7 +470,7 @@
 <span class="sd">        Whether to do diagonal preconditioning (i.e. a mass matrix)</span>
 <span class="sd">    params</span>
 <span class="sd">        Initial params to start tuning from (optional)</span>
-<span class="sd">    Lfactor</span>
+<span class="sd">    l_factor</span>
 <span class="sd">        The factor scaling the estimated autocorrelation length to obtain momentum decoherence length L.</span>
 
 <span class="sd">    Returns</span>
@@ -526,7 +526,7 @@
 
     <span class="k">if</span> <span class="n">num_steps3</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># at least 2 samples for ESS estimation</span>
         <span class="n">state</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">make_adaptation_L</span><span class="p">(</span>
-            <span class="n">mclmc_kernel</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">frac</span><span class="o">=</span><span class="n">frac_tune3</span><span class="p">,</span> <span class="n">Lfactor</span><span class="o">=</span><span class="n">Lfactor</span>
+            <span class="n">mclmc_kernel</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">),</span> <span class="n">frac</span><span class="o">=</span><span class="n">frac_tune3</span><span class="p">,</span> <span class="n">l_factor</span><span class="o">=</span><span class="n">l_factor</span>
         <span class="p">)(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">part2_key</span><span class="p">)</span>
         <span class="n">total_num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">num_steps3</span>
 
@@ -680,7 +680,7 @@
 
 <div class="viewcode-block" id="make_adaptation_L">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.make_adaptation_L">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">make_adaptation_L</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">Lfactor</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_adaptation_L</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">frac</span><span class="p">,</span> <span class="n">l_factor</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)&quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">adaptation_L</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
@@ -707,7 +707,7 @@
         <span class="n">ess</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">flat_samples</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="o">...</span><span class="p">])</span>
 
         <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
-            <span class="n">L</span><span class="o">=</span><span class="n">Lfactor</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">num_steps_3</span> <span class="o">/</span> <span class="n">ess</span><span class="p">)</span>
+            <span class="n">L</span><span class="o">=</span><span class="n">l_factor</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">num_steps_3</span> <span class="o">/</span> <span class="n">ess</span><span class="p">)</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">adaptation_L</span></div>
@@ -742,36 +742,6 @@
 
     <span class="k">return</span> <span class="n">nonans</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">kinetic_change</span></div>
 
-
-
-<span class="c1"># def handle_high_energy(</span>
-<span class="c1">#     previous_state, next_state, energy_change, key, inverse_mass_matrix, cutoff, euclidean=False</span>
-<span class="c1"># ):</span>
-
-
-<span class="c1">#     metric = metrics.default_metric(inverse_mass_matrix)</span>
-
-<span class="c1">#     new_momentum = jax.lax.cond(</span>
-<span class="c1">#         euclidean,</span>
-<span class="c1">#         lambda: metric.sample_momentum(key, previous_state.position),</span>
-<span class="c1">#         lambda: generate_unit_vector(key, previous_state.position),</span>
-<span class="c1">#     )</span>
-
-
-<span class="c1">#     # new_momentum = euclidean*metric.sample_momentum(key, previous_state.position) + (1-euclidean)*generate_unit_vector(key, previous_state.position)</span>
-<span class="c1">#     # new_momentum = generate_unit_vector(key, previous_state.position)</span>
-
-<span class="c1">#     state = jax.lax.cond(</span>
-<span class="c1">#         jnp.abs(energy_change) &gt; cutoff,</span>
-<span class="c1">#         lambda: previous_state._replace(</span>
-<span class="c1">#             # momentum=generate_unit_vector(key, next_state.position)</span>
-<span class="c1">#             momentum=new_momentum</span>
-<span class="c1">#         ),</span>
-<span class="c1">#         lambda: next_state,</span>
-<span class="c1">#     )</span>
-<span class="c1">#     energy_change = jnp.clip(energy_change, -cutoff, cutoff)</span>
-
-<span class="c1">#     return energy_change, state</span>
 </pre></div>
 
                 </article>

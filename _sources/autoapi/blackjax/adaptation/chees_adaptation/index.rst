@@ -112,7 +112,7 @@ Module Contents
 
 .. py:function:: weighted_empirical_mean(x, w)
 
-.. py:function:: base(jitter_generator: Callable, next_random_arg_fn: Callable, optim: optax.GradientTransformation, target_acceptance_rate: float, decay_rate: float, max_leapfrog_steps: int) -> Tuple[Callable, Callable]
+.. py:function:: base(jitter_generator: Callable, next_random_arg_fn: Callable, optim: optax.GradientTransformation, target_acceptance_rate: float, decay_rate: float, max_leapfrog_steps: int) -> tuple[Callable, Callable]
 
    Maximizing the Change in the Estimator of the Expected Square criterion
    (trajectory length) and dual averaging procedure (step size) for the jittered
@@ -138,7 +138,7 @@ Module Contents
              * *update* -- Function that moves the warmup one step.
 
 
-.. py:function:: chees_adaptation(logdensity_fn: Callable, num_chains: int, *, jitter_generator: Optional[Callable] = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5, max_leapfrog_steps: int = 1000, adaptation_info_fn: Callable = return_all_adapt_info) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: chees_adaptation(logdensity_fn: Callable, num_chains: int, *, jitter_generator: Callable | None = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5, max_leapfrog_steps: int = 1000, adaptation_info_fn: Callable = return_all_adapt_info) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the step size and trajectory length (number of integration steps / step size)
    parameters of the jittered HMC algorthm.

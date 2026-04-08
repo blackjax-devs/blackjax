@@ -123,7 +123,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, covariance: Optional[blackjax.types.Array] = None, mean: Optional[blackjax.types.ArrayLikeTree] = None, cov_svd: Optional[CovarianceSVD] = None, step_size: float = 1.0) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, covariance: blackjax.types.Array | None = None, mean: blackjax.types.ArrayLikeTree | None = None, cov_svd: CovarianceSVD | None = None, step_size: float = 1.0) -> blackjax.base.SamplingAlgorithm
 
    Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
 

@@ -206,7 +206,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: irmh_as_top_level_api(logdensity_fn: Callable, proposal_distribution: Callable, proposal_logdensity_fn: Optional[Callable] = None) -> blackjax.base.SamplingAlgorithm
+.. py:function:: irmh_as_top_level_api(logdensity_fn: Callable, proposal_distribution: Callable, proposal_logdensity_fn: Callable | None = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the independent RMH.
 
@@ -246,7 +246,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: rmh_as_top_level_api(logdensity_fn: Callable, proposal_generator: Callable[[blackjax.types.PRNGKey, blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree], proposal_logdensity_fn: Optional[Callable[[blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree]] = None) -> blackjax.base.SamplingAlgorithm
+.. py:function:: rmh_as_top_level_api(logdensity_fn: Callable, proposal_generator: Callable[[blackjax.types.PRNGKey, blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree], proposal_logdensity_fn: Callable[[blackjax.types.ArrayLikeTree], blackjax.types.ArrayTree] | None = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the RMH.
 
@@ -277,7 +277,7 @@ Module Contents
    :rtype: A ``SamplingAlgorithm``.
 
 
-.. py:function:: build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable
+.. py:function:: build_rmh_transition_energy(proposal_logdensity_fn: Callable | None) -> Callable
 
 .. py:function:: rmh_proposal(logdensity_fn: Callable, transition_distribution: Callable, compute_acceptance_ratio: Callable, sample_proposal: Callable = proposal.static_binomial_sampling) -> Callable
 
