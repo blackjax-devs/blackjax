@@ -153,12 +153,14 @@ def build_kernel(num_partitions=512, energy_gap=10, min_energy=0) -> Callable:
         # Update the stochastic approximation to the energy histogram
         neg_logprob = -logdensity_estimator(position, minibatch)
         idx = jnp.clip(
-            jax.lax.floor((neg_logprob - min_energy) / energy_gap + 1).astype("int32"),
+            jax.lax.floor((neg_logprob - min_energy) / energy_gap + 1).astype(
+                jnp.int32
+            ),
             min=1,
             max=num_partitions - 1,
         )
 
-        energy_pdf_update = -energy_pdf.copy()
+        energy_pdf_update = -energy_pdf
         energy_pdf_update = energy_pdf_update.at[idx].set(energy_pdf_update[idx] + 1)
         energy_pdf = jax.tree.map(
             lambda e: e + step_size_stoch * energy_pdf[idx] * energy_pdf_update,

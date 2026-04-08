@@ -63,11 +63,11 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
 
 
 def build_kernel(
-    logdensity_fn,
-    inverse_mass_matrix,
-    integrator,
-    desired_energy_var_max_ratio=jnp.inf,
-    desired_energy_var=5e-4,
+    logdensity_fn: Callable,
+    inverse_mass_matrix: ArrayLike,
+    integrator: Callable,
+    desired_energy_var_max_ratio: float = jnp.inf,
+    desired_energy_var: float = 5e-4,
 ):
     """Build an MCLMC kernel.
 
