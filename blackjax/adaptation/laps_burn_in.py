@@ -38,7 +38,7 @@ def nan_reject(nonans, old, new):
     """Equivalent to
     return new if nonans else old"""
 
-    return jax.lax.cond(nonans, lambda _: new, lambda _: old, operand=None)
+    return jax.lax.cond(nonans, lambda: new, lambda: old)
 
 
 def build_kernel(logdensity_fn, ndims, microcanonical=True):
