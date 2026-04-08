@@ -16,6 +16,7 @@ Functions
 
    blackjax.diagnostics.potential_scale_reduction
    blackjax.diagnostics.effective_sample_size
+   blackjax.diagnostics.psis_weights
 
 
 Module Contents
@@ -70,5 +71,39 @@ Module Contents
 
    The current implementation is similar to Stan, which uses Geyer's initial monotone sequence
    criterion :cite:p:`geyer1992practical,geyer2011introduction`.
+
+
+.. py:function:: psis_weights(log_ratios: blackjax.types.Array, r_eff: float = 1.0) -> tuple[blackjax.types.Array, blackjax.types.Array]
+
+   Pareto Smoothed Importance Sampling (PSIS) log weights.
+
+   Implements the PSIS smoothing step from :cite:p:`vehtari2017practical`:
+   the ``M`` largest importance ratios (in ratio space) are replaced by sorted
+   Generalised Pareto quantiles fitted by the empirical Bayes estimator of
+   Zhang & Stephens (2009), then all weights are normalised.
+
+   This is a pure-JAX, JIT-compatible implementation faithful to Algorithm 1
+   of Vehtari, Gelman & Gabry (2017).
+
+   :param log_ratios: Log importance ratios ``log p(θ) − log q(θ)``, shape ``(n,)``.
+                      Need not be normalised.
+   :param r_eff: Relative effective sample size of the proposal, ``S_eff / n``.
+                 Use the default of ``1.0`` for i.i.d. draws (e.g. Pathfinder);
+                 set to the actual ESS ratio for correlated MCMC chains.  Values
+                 below 1 increase the tail size ``M`` to compensate for correlation.
+
+   :returns: * *log_weights* -- Normalised log importance weights, shape ``(n,)``.
+               ``jnp.exp(log_weights).sum() == 1`` up to floating-point precision.
+             * *pareto_k* -- Pareto shape parameter estimate (scalar ``Array``).  Values below 0.5
+               indicate reliable estimates; 0.5–0.7 are moderate; above 0.7 may give
+               unreliable estimates.  ``jnp.inf`` means the tail was too small to fit
+               (fewer than 5 samples).
+
+   .. rubric:: Notes
+
+   Tail size: ``M = min(floor(3*sqrt(n/r_eff)), n//5)``, matching the paper.
+   The GPD is only applied when ``k >= 1/3``; lighter tails are left
+   unsmoothed (only normalised).  Fitting uses empirical Bayes in
+   importance-ratio space, the same approach as ArviZ.
 
 

@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g04d279017" />
+  <meta name="docsearch:version" content="0.1.dev1+g0b118268a" />
   </head>
   
   
@@ -189,6 +189,7 @@
 </ul>
 </details></li>
 <li class="toctree-l2"><a class="reference internal" href="../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
@@ -392,7 +393,11 @@
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLike</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;potential_scale_reduction&quot;</span><span class="p">,</span> <span class="s2">&quot;effective_sample_size&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;potential_scale_reduction&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;effective_sample_size&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;psis_weights&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="potential_scale_reduction">
@@ -607,6 +612,147 @@
     <span class="n">R</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="n">B</span> <span class="o">/</span> <span class="n">W</span><span class="p">))</span>  <span class="c1"># splitR, shape = (# func)</span>
 
     <span class="k">return</span> <span class="n">R</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gpdfit</span><span class="p">(</span><span class="n">exceedances</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Empirical Bayes GPD fit via Zhang &amp; Stephens (2009).</span>
+
+<span class="sd">    Fits a Generalised Pareto Distribution to ``exceedances`` (a 1-D array of</span>
+<span class="sd">    non-negative values in *ascending* order) using the Bayesian model-averaging</span>
+<span class="sd">    estimator.  All operations on fixed-shape arrays so the function is</span>
+<span class="sd">    JIT-compatible (``exceedances.shape[0]`` must be static).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">exceedances</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># static at trace time</span>
+    <span class="n">prior_bs</span><span class="p">,</span> <span class="n">prior_k</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">10</span>
+    <span class="n">m_est</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">+</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span>  <span class="c1"># static</span>
+
+    <span class="c1"># Guard against the degenerate case where all exceedances are zero</span>
+    <span class="c1"># (e.g. all importance weights equal).  In that case k=0, sigma=0</span>
+    <span class="c1"># and the caller will leave the tail unchanged.</span>
+    <span class="n">tiny</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">exceedances</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span>
+    <span class="n">is_degenerate</span> <span class="o">=</span> <span class="n">exceedances</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">tiny</span>
+    <span class="n">safe_exc</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_degenerate</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">exceedances</span><span class="p">),</span> <span class="n">exceedances</span><span class="p">)</span>
+
+    <span class="c1"># Grid of candidate rate parameters b.</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">m_est</span> <span class="o">/</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">m_est</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">))</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">/</span> <span class="p">(</span><span class="n">prior_bs</span> <span class="o">*</span> <span class="n">safe_exc</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">])</span>
+    <span class="n">b</span> <span class="o">=</span> <span class="n">b</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">safe_exc</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="c1"># k estimate for each b (mean log1p).</span>
+    <span class="n">k_ary</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">b</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">safe_exc</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Profile log-likelihood weights.</span>
+    <span class="n">len_scale</span> <span class="o">=</span> <span class="n">n</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="o">-</span><span class="n">b</span> <span class="o">/</span> <span class="n">k_ary</span><span class="p">)</span> <span class="o">-</span> <span class="n">k_ary</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">len_scale</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">len_scale</span><span class="p">))</span>
+
+    <span class="c1"># Posterior mean of b, then derive k and sigma.</span>
+    <span class="n">b_post</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">b</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">b_post</span> <span class="o">*</span> <span class="n">safe_exc</span><span class="p">))</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="o">-</span><span class="n">k</span> <span class="o">/</span> <span class="n">b_post</span>
+    <span class="c1"># Weakly informative prior shrinks k toward 0.5.</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">k</span> <span class="o">+</span> <span class="n">prior_k</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="n">prior_k</span><span class="p">)</span>
+
+    <span class="n">k</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_degenerate</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span> <span class="n">k</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_degenerate</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span> <span class="n">sigma</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">k</span><span class="p">,</span> <span class="n">sigma</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_gpinv</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;GPD quantile function (inverse CDF).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-10</span><span class="p">,</span>
+        <span class="o">-</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">p</span><span class="p">),</span>
+        <span class="n">sigma</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">expm1</span><span class="p">(</span><span class="o">-</span><span class="n">k</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="o">-</span><span class="n">p</span><span class="p">))</span> <span class="o">/</span> <span class="n">k</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="psis_weights">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.psis_weights">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">psis_weights</span><span class="p">(</span><span class="n">log_ratios</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">r_eff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pareto Smoothed Importance Sampling (PSIS) log weights.</span>
+
+<span class="sd">    Implements the PSIS smoothing step from :cite:p:`vehtari2017practical`:</span>
+<span class="sd">    the ``M`` largest importance ratios (in ratio space) are replaced by sorted</span>
+<span class="sd">    Generalised Pareto quantiles fitted by the empirical Bayes estimator of</span>
+<span class="sd">    Zhang &amp; Stephens (2009), then all weights are normalised.</span>
+
+<span class="sd">    This is a pure-JAX, JIT-compatible implementation faithful to Algorithm 1</span>
+<span class="sd">    of Vehtari, Gelman &amp; Gabry (2017).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    log_ratios</span>
+<span class="sd">        Log importance ratios ``log p(θ) − log q(θ)``, shape ``(n,)``.</span>
+<span class="sd">        Need not be normalised.</span>
+<span class="sd">    r_eff</span>
+<span class="sd">        Relative effective sample size of the proposal, ``S_eff / n``.</span>
+<span class="sd">        Use the default of ``1.0`` for i.i.d. draws (e.g. Pathfinder);</span>
+<span class="sd">        set to the actual ESS ratio for correlated MCMC chains.  Values</span>
+<span class="sd">        below 1 increase the tail size ``M`` to compensate for correlation.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    log_weights</span>
+<span class="sd">        Normalised log importance weights, shape ``(n,)``.</span>
+<span class="sd">        ``jnp.exp(log_weights).sum() == 1`` up to floating-point precision.</span>
+<span class="sd">    pareto_k</span>
+<span class="sd">        Pareto shape parameter estimate (scalar ``Array``).  Values below 0.5</span>
+<span class="sd">        indicate reliable estimates; 0.5–0.7 are moderate; above 0.7 may give</span>
+<span class="sd">        unreliable estimates.  ``jnp.inf`` means the tail was too small to fit</span>
+<span class="sd">        (fewer than 5 samples).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Tail size: ``M = min(floor(3*sqrt(n/r_eff)), n//5)``, matching the paper.</span>
+<span class="sd">    The GPD is only applied when ``k &gt;= 1/3``; lighter tails are left</span>
+<span class="sd">    unsmoothed (only normalised).  Fitting uses empirical Bayes in</span>
+<span class="sd">    importance-ratio space, the same approach as ArviZ.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">log_ratios</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="mf">3.0</span> <span class="o">*</span> <span class="p">(</span><span class="n">n</span> <span class="o">/</span> <span class="n">r_eff</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">),</span> <span class="mi">5</span><span class="p">),</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">5</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">M</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="c1"># Too few tail samples for a reliable GPD fit; return normalised</span>
+        <span class="c1"># weights and k=inf to signal this to the caller.</span>
+        <span class="n">log_w</span> <span class="o">=</span> <span class="n">log_ratios</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">log_ratios</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">log_w</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
+
+    <span class="c1"># Stabilise numerically.</span>
+    <span class="n">lw</span> <span class="o">=</span> <span class="n">log_ratios</span> <span class="o">-</span> <span class="n">log_ratios</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+
+    <span class="c1"># Sort ascending so that the M largest are at positions [n-M:].</span>
+    <span class="n">sorted_idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">lw</span><span class="p">)</span>
+    <span class="n">lw_sorted</span> <span class="o">=</span> <span class="n">lw</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">]</span>
+
+    <span class="c1"># Threshold: largest value below the tail (in log and ratio space).</span>
+    <span class="n">threshold_log</span> <span class="o">=</span> <span class="n">lw_sorted</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="n">M</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="n">threshold_ratio</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">threshold_log</span><span class="p">)</span>
+
+    <span class="c1"># Work in ratio (non-log) space for GPD fitting, as in the original paper.</span>
+    <span class="n">tail_ratio</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">lw_sorted</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="n">M</span> <span class="p">:])</span>  <span class="c1"># ascending, shape (M,)</span>
+    <span class="n">exceedances</span> <span class="o">=</span> <span class="n">tail_ratio</span> <span class="o">-</span> <span class="n">threshold_ratio</span>  <span class="c1"># &gt;= 0, ascending</span>
+
+    <span class="n">k</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">_gpdfit</span><span class="p">(</span><span class="n">exceedances</span><span class="p">)</span>
+
+    <span class="c1"># Uniform quantile positions within the tail: (0.5/M, 1.5/M, ..., (M-0.5)/M).</span>
+    <span class="n">p</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">M</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="n">M</span>  <span class="c1"># ascending</span>
+    <span class="n">smoothed</span> <span class="o">=</span> <span class="n">threshold_ratio</span> <span class="o">+</span> <span class="n">_gpinv</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>
+    <span class="c1"># Cap smoothed values at the observed tail maximum.</span>
+    <span class="n">smoothed</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">smoothed</span><span class="p">,</span> <span class="n">tail_ratio</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="c1"># Only replace the tail when k &gt;= 1/3 (paper Algorithm 1, step 7).</span>
+    <span class="c1"># For lighter tails the raw order statistics are already reliable.</span>
+    <span class="n">lw_smooth</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">k</span> <span class="o">&gt;=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">,</span>
+        <span class="n">lw_sorted</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="n">M</span> <span class="p">:]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">smoothed</span><span class="p">)),</span>
+        <span class="n">lw_sorted</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Restore original ordering and normalise.</span>
+    <span class="n">lw_orig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">lw_smooth</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">lw_smooth</span><span class="p">)</span>
+    <span class="n">log_w</span> <span class="o">=</span> <span class="n">lw_orig</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">lw_orig</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">log_w</span><span class="p">,</span> <span class="n">k</span></div>
+
 </pre></div>
 
                 </article>

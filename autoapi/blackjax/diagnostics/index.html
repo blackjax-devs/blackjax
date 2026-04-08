@@ -52,11 +52,11 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/diagnostics/index';</script>
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="blackjax.mcmc" href="../mcmc/index.html" />
+    <link rel="next" title="blackjax.eca" href="../eca/index.html" />
     <link rel="prev" title="blackjax.adaptation.window_adaptation" href="../adaptation/window_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g04d279017" />
+  <meta name="docsearch:version" content="0.1.dev1+g0b118268a" />
   </head>
   
   
@@ -191,6 +191,7 @@
 </ul>
 </details></li>
 <li class="toctree-l2 current active"><a class="current reference internal" href="#">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../eca/index.html">blackjax.eca</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
@@ -374,6 +375,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.potential_scale_reduction"><code class="docutils literal notranslate"><span class="pre">potential_scale_reduction()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.effective_sample_size"><code class="docutils literal notranslate"><span class="pre">effective_sample_size()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.psis_weights"><code class="docutils literal notranslate"><span class="pre">psis_weights()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -399,6 +401,9 @@
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.diagnostics.effective_sample_size" title="blackjax.diagnostics.effective_sample_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">effective_sample_size</span></code></a>(→ blackjax.types.Array)</p></td>
 <td><p>Compute estimate of the effective sample size (ess).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.diagnostics.psis_weights" title="blackjax.diagnostics.psis_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">psis_weights</span></code></a>(→ tuple[blackjax.types.Array, ...)</p></td>
+<td><p>Pareto Smoothed Importance Sampling (PSIS) log weights.</p></td>
 </tr>
 </tbody>
 </table>
@@ -464,6 +469,46 @@ contains a chain dimension and a sample dimension.</p></li>
 criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#id10" title="Charles J Geyer. Practical markov chain monte carlo. Statistical science, pages 473–483, 1992.">Gey92</a>, <a class="reference internal" href="../../../bib.html#id11" title="Charles J Geyer. Introduction to markov chain monte carlo. Handbook of Markov Chain Monte Carlo, 20116022:45, 2011.">Gey11</a>]</span>.</p>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.diagnostics.psis_weights">
+<span class="sig-name descname"><span class="pre">psis_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_ratios</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_eff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#psis_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.psis_weights" title="Link to this definition">#</a></dt>
+<dd><p>Pareto Smoothed Importance Sampling (PSIS) log weights.</p>
+<p>Implements the PSIS smoothing step from <span id="id4">[]</span>:
+the <code class="docutils literal notranslate"><span class="pre">M</span></code> largest importance ratios (in ratio space) are replaced by sorted
+Generalised Pareto quantiles fitted by the empirical Bayes estimator of
+Zhang &amp; Stephens (2009), then all weights are normalised.</p>
+<p>This is a pure-JAX, JIT-compatible implementation faithful to Algorithm 1
+of Vehtari, Gelman &amp; Gabry (2017).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>log_ratios</strong> – Log importance ratios <code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">p(θ)</span> <span class="pre">−</span> <span class="pre">log</span> <span class="pre">q(θ)</span></code>, shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.
+Need not be normalised.</p></li>
+<li><p><strong>r_eff</strong> – Relative effective sample size of the proposal, <code class="docutils literal notranslate"><span class="pre">S_eff</span> <span class="pre">/</span> <span class="pre">n</span></code>.
+Use the default of <code class="docutils literal notranslate"><span class="pre">1.0</span></code> for i.i.d. draws (e.g. Pathfinder);
+set to the actual ESS ratio for correlated MCMC chains.  Values
+below 1 increase the tail size <code class="docutils literal notranslate"><span class="pre">M</span></code> to compensate for correlation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>log_weights</em> – Normalised log importance weights, shape <code class="docutils literal notranslate"><span class="pre">(n,)</span></code>.
+<code class="docutils literal notranslate"><span class="pre">jnp.exp(log_weights).sum()</span> <span class="pre">==</span> <span class="pre">1</span></code> up to floating-point precision.</p></li>
+<li><p><em>pareto_k</em> – Pareto shape parameter estimate (scalar <code class="docutils literal notranslate"><span class="pre">Array</span></code>).  Values below 0.5
+indicate reliable estimates; 0.5–0.7 are moderate; above 0.7 may give
+unreliable estimates.  <code class="docutils literal notranslate"><span class="pre">jnp.inf</span></code> means the tail was too small to fit
+(fewer than 5 samples).</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Tail size: <code class="docutils literal notranslate"><span class="pre">M</span> <span class="pre">=</span> <span class="pre">min(floor(3*sqrt(n/r_eff)),</span> <span class="pre">n//5)</span></code>, matching the paper.
+The GPD is only applied when <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">&gt;=</span> <span class="pre">1/3</span></code>; lighter tails are left
+unsmoothed (only normalised).  Fitting uses empirical Bayes in
+importance-ratio space, the same approach as ArviZ.</p>
+</dd></dl>
+
 </section>
 </section>
 
@@ -488,11 +533,11 @@ criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#
       </div>
     </a>
     <a class="right-next"
-       href="../mcmc/index.html"
+       href="../eca/index.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">blackjax.mcmc</p>
+        <p class="prev-next-title">blackjax.eca</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -518,6 +563,7 @@ criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.potential_scale_reduction"><code class="docutils literal notranslate"><span class="pre">potential_scale_reduction()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.effective_sample_size"><code class="docutils literal notranslate"><span class="pre">effective_sample_size()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.psis_weights"><code class="docutils literal notranslate"><span class="pre">psis_weights()</span></code></a></li>
 </ul>
 </li>
 </ul>
