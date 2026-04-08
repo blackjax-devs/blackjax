@@ -186,13 +186,18 @@ def make_L_step_size_adaptation(
             nan_key,
         )
 
-        # Warning: var = 0 if there were nans, but we will give it a very small weight
+        # Warning: var = 0 if there were nans, but we will give it a very small weight.
+        #
+        # The step-size adaptation exploits the scaling relation Var[E] = O(eps^6)
+        # for the leapfrog integrator (see Bou-Rabee & Sanz-Serna, 2018).
+        # xi measures the energy-variance ratio relative to the target; the
+        # exponent 6.0 throughout this block originates from that relation.
         xi = (
             jnp.square(energy_change) / (dim * desired_energy_var)
-        ) + 1e-8  # 1e-8 is added to avoid divergences in log xi
+        ) + 1e-8  # small offset to prevent log(0) divergence
         weight = jnp.exp(
             -0.5 * jnp.square(jnp.log(xi) / (6.0 * trust_in_estimate))
-        )  # the weight reduces the impact of stepsizes which are much larger on much smaller than the desired one.
+        )  # Gaussian weight that down-weights step sizes far from the optimum
 
         x_average = decay_rate * x_average + weight * (
             xi / jnp.power(params.step_size, 6.0)
@@ -200,7 +205,7 @@ def make_L_step_size_adaptation(
         time = decay_rate * time + weight
         step_size = jnp.power(
             x_average / time, -1.0 / 6.0
-        )  # We use the Var[E] = O(eps^6) relation here.
+        )  # invert the Var[E] = O(eps^6) relation to obtain the optimal step size
         step_size = (step_size < step_size_max) * step_size + (
             step_size > step_size_max
         ) * step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
@@ -326,7 +331,7 @@ def handle_nans(
     """if there are nans, let's reduce the stepsize, and not update the state. The
     function returns the old state in this case."""
 
-    reduced_step_size = 0.8
+    reduced_step_size = 0.8  # multiplicative shrinkage factor applied on NaN recovery
     p, unravel_fn = ravel_pytree(next_state.position)
     q, unravel_fn = ravel_pytree(next_state.momentum)
     nonans = jnp.logical_and(jnp.all(jnp.isfinite(p)), jnp.all(jnp.isfinite(q)))

@@ -33,6 +33,22 @@ class StateWithParameterOverride(NamedTuple):
 
 
 def init(alg_init_fn, position, initial_parameter_value):
+    """Initialize the inner-kernel-tuning SMC state.
+
+    Parameters
+    ----------
+    alg_init_fn
+        The ``init`` function of the underlying SMC algorithm.
+    position
+        Initial particle positions.
+    initial_parameter_value
+        Initial MCMC parameter dictionary (one value per parameter name).
+
+    Returns
+    -------
+    A ``StateWithParameterOverride`` combining the SMC state with the
+    parameter dictionary.
+    """
     return StateWithParameterOverride(alg_init_fn(position), initial_parameter_value)
 
 
