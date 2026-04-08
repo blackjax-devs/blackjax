@@ -27,19 +27,7 @@ import pytest
 
 import blackjax
 from blackjax.base import SamplingAlgorithm
-
-
-# ---------------------------------------------------------------------------
-# Target distributions
-# ---------------------------------------------------------------------------
-def _logdensity_fn(x):
-    return -0.5 * jnp.sum(x**2)
-
-
-def _loglikelihood_fn(x):
-    """Likelihood for elliptical slice (prior is encoded in cov matrix)."""
-    return -0.5 * jnp.sum(x**2)
-
+from tests.fixtures import std_normal_logdensity
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -56,69 +44,69 @@ def _make_algorithm(name):
     factories = {
         # --- MCMC ---
         "hmc": lambda: blackjax.hmc(
-            _logdensity_fn,
+            std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=inv_mass,
             num_integration_steps=10,
         ),
         "nuts": lambda: blackjax.nuts(
-            _logdensity_fn,
+            std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=inv_mass,
         ),
-        "mala": lambda: blackjax.mala(_logdensity_fn, step_size=0.1),
+        "mala": lambda: blackjax.mala(std_normal_logdensity, step_size=0.1),
         "mclmc": lambda: blackjax.mclmc(
-            _logdensity_fn,
+            std_normal_logdensity,
             L=1.0,
             step_size=0.1,
         ),
         "adjusted_mclmc": lambda: blackjax.adjusted_mclmc(
-            _logdensity_fn,
+            std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=inv_mass,
             num_integration_steps=10,
         ),
         "adjusted_mclmc_dynamic": lambda: blackjax.adjusted_mclmc_dynamic(
-            _logdensity_fn,
+            std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=inv_mass,
         ),
-        "barker": lambda: blackjax.barker(_logdensity_fn, step_size=0.1),
+        "barker": lambda: blackjax.barker(std_normal_logdensity, step_size=0.1),
         "dynamic_hmc": lambda: blackjax.dynamic_hmc(
-            _logdensity_fn,
+            std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=inv_mass,
         ),
         "rmhmc": lambda: blackjax.rmhmc(
-            _logdensity_fn,
+            std_normal_logdensity,
             step_size=0.1,
             mass_matrix=cov,
             num_integration_steps=10,
         ),
         "ghmc": lambda: blackjax.ghmc(
-            _logdensity_fn,
+            std_normal_logdensity,
             step_size=0.1,
             momentum_inverse_scale=inv_mass,
             alpha=0.5,
             delta=0.5,
         ),
         "elliptical_slice": lambda: blackjax.elliptical_slice(
-            _loglikelihood_fn,
+            std_normal_logdensity,
             mean=jnp.zeros(_DIM),
             cov=cov,
         ),
         "additive_step_random_walk": lambda: (
             blackjax.additive_step_random_walk.normal_random_walk(
-                _logdensity_fn,
+                std_normal_logdensity,
                 sigma=0.1 * cov,
             )
         ),
         "rmh": lambda: blackjax.rmh(
-            _logdensity_fn,
+            std_normal_logdensity,
             proposal_generator=lambda key, x: x + 0.1 * jax.random.normal(key, x.shape),
         ),
         "irmh": lambda: blackjax.irmh(
-            _logdensity_fn,
+            std_normal_logdensity,
             proposal_distribution=lambda key: jax.random.normal(key, (_DIM,)),
         ),
     }
