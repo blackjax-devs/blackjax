@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.window_adaptation" href="../adaptation/window_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g193b20f93" />
+  <meta name="docsearch:version" content="0.1.dev1+gc7e83a70e" />
   </head>
   
   
@@ -435,7 +435,7 @@ contains a chain dimension and a sample dimension.</p></li>
 <p>where <span class="math notranslate nohighlight">\(W\)</span> is the within-chain variance and <span class="math notranslate nohighlight">\(\hat{V}\)</span> is the posterior variance
 estimate for the pooled traces. This is the potential scale reduction factor, which
 converges to unity when each of the traces is a sample from the target posterior. Values
-greater than one indicate that one or more chains have not yet converged <span id="id1">[<a class="reference internal" href="../../../bib.html#id3" title="Potential scale reduction, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction.">stac</a>, <a class="reference internal" href="../../../bib.html#id2" title="Andrew Gelman and Donald B Rubin. Inference from iterative simulation using multiple sequences. Statistical science, pages 457–472, 1992.">GR92</a>]</span>.</p>
+greater than one indicate that one or more chains have not yet converged <span id="id1">[<a class="reference internal" href="../../../bib.html#id4" title="Potential scale reduction, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction.">stac</a>, <a class="reference internal" href="../../../bib.html#id3" title="Andrew Gelman and Donald B Rubin. Inference from iterative simulation using multiple sequences. Statistical science, pages 457–472, 1992.">GR92</a>]</span>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -464,9 +464,9 @@ contains a chain dimension and a sample dimension.</p></li>
 <p>where <span class="math notranslate nohighlight">\(M\)</span> is the number of chains, <span class="math notranslate nohighlight">\(N\)</span> the number of draws,
 <span class="math notranslate nohighlight">\(\hat{\rho}_t\)</span> is the estimated _autocorrelation at lag <span class="math notranslate nohighlight">\(t\)</span>, and
 <span class="math notranslate nohighlight">\(K\)</span> is the last integer for which <span class="math notranslate nohighlight">\(\hat{P}_{K} = \hat{\rho}_{2K} +
-\hat{\rho}_{2K+1}\)</span> is still positive <span id="id2">[<a class="reference internal" href="../../../bib.html#id4" title="Effective sample size, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html.">staa</a>, <a class="reference internal" href="../../../bib.html#id9" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 1995.">GCSR95</a>]</span>.</p>
+\hat{\rho}_{2K+1}\)</span> is still positive <span id="id2">[<a class="reference internal" href="../../../bib.html#id5" title="Effective sample size, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html.">staa</a>, <a class="reference internal" href="../../../bib.html#id10" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 1995.">GCSR95</a>]</span>.</p>
 <p>The current implementation is similar to Stan, which uses Geyer’s initial monotone sequence
-criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#id10" title="Charles J Geyer. Practical markov chain monte carlo. Statistical science, pages 473–483, 1992.">Gey92</a>, <a class="reference internal" href="../../../bib.html#id11" title="Charles J Geyer. Introduction to markov chain monte carlo. Handbook of Markov Chain Monte Carlo, 20116022:45, 2011.">Gey11</a>]</span>.</p>
+criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#id11" title="Charles J Geyer. Practical markov chain monte carlo. Statistical science, pages 473–483, 1992.">Gey92</a>, <a class="reference internal" href="../../../bib.html#id12" title="Charles J Geyer. Introduction to markov chain monte carlo. Handbook of Markov Chain Monte Carlo, 20116022:45, 2011.">Gey11</a>]</span>.</p>
 </dd></dl>
 
 <dl class="py function">

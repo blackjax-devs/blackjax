@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g193b20f93" />
+  <meta name="docsearch:version" content="0.1.dev1+gc7e83a70e" />
   </head>
   
   
@@ -387,7 +387,7 @@
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Adaptation of the low-rank-modified mass matrix for HMC-family samplers.</span>
 
-<span class="sd">Implements Algorithm 1 of :cite:p:`sountsov2025preconditioning`, following the</span>
+<span class="sd">Implements Algorithm 1 of :cite:p:`seyboldt2026preconditioning`, following the</span>
 <span class="sd">nutpie reference implementation.  The mass matrix has the form</span>
 
 <span class="sd">.. math::</span>
@@ -551,7 +551,7 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the low-rank metric from a buffer of draws and gradients.</span>
 
-<span class="sd">    Implements Algorithm 1 of :cite:p:`sountsov2025preconditioning`, following</span>
+<span class="sd">    Implements Algorithm 1 of :cite:p:`seyboldt2026preconditioning`, following</span>
 <span class="sd">    the nutpie reference implementation.</span>
 
 <span class="sd">    Parameters</span>
@@ -678,7 +678,7 @@
 
 <span class="sd">    Mirrors Stan&#39;s three-phase schedule but replaces Welford covariance</span>
 <span class="sd">    estimation with the Fisher-divergence-minimising low-rank metric of</span>
-<span class="sd">    :cite:p:`sountsov2025preconditioning`, following nutpie&#39;s implementation.</span>
+<span class="sd">    :cite:p:`seyboldt2026preconditioning`, following nutpie&#39;s implementation.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -862,7 +862,7 @@
 
 <span class="sd">    Uses the three-phase Stan-style warmup schedule while replacing Welford</span>
 <span class="sd">    covariance estimation with the Fisher-divergence-minimising low-rank</span>
-<span class="sd">    metric of :cite:p:`sountsov2025preconditioning`.</span>
+<span class="sd">    metric of :cite:p:`seyboldt2026preconditioning`.</span>
 
 <span class="sd">    The returned ``AdaptationAlgorithm`` has a single ``run`` method::</span>
 

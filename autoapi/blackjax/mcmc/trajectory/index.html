@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.termination" href="../termination/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g193b20f93" />
+  <meta name="docsearch:version" content="0.1.dev1+gc7e83a70e" />
   </head>
   
   
@@ -419,7 +419,7 @@
 <span id="blackjax-mcmc-trajectory"></span><h1>blackjax.mcmc.trajectory<a class="headerlink" href="#module-blackjax.mcmc.trajectory" title="Link to this heading">#</a></h1>
 <p>Procedures to build trajectories for algorithms in the HMC family.</p>
 <p>To propose a new state, algorithms in the HMC family generally proceed by
-<span id="id1">[<a class="reference internal" href="../../../../bib.html#id25" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>:</p>
+<span id="id1">[<a class="reference internal" href="../../../../bib.html#id26" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>:</p>
 <ol class="arabic simple">
 <li><p>Sampling a trajectory starting from the initial point;</p></li>
 <li><p>Sampling a new state from this sampled trajectory.</p></li>
@@ -641,7 +641,7 @@ which we say a transition is divergent.</p></li>
 <span class="sig-name descname"><span class="pre">dynamic_recursive_integration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uturn_check_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_robust_uturn_check</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#dynamic_recursive_integration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.dynamic_recursive_integration" title="Link to this definition">#</a></dt>
 <dd><p>Integrate a trajectory and update the proposal recursively in Python
 until the termination criterion is met.</p>
-<p>This is the implementation of Algorithm 6 from <span id="id4">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with
+<p>This is the implementation of Algorithm 6 from <span id="id4">[<a class="reference internal" href="../../../../bib.html#id17" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with
 multinomial sampling. The implementation here is mostly for validating the
 progressive implementation to make sure the two are equivalent. The recursive
 implementation should not be used for actually sampling as it cannot be jitted and

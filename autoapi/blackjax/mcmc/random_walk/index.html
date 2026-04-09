@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.proposal" href="../proposal/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g193b20f93" />
+  <meta name="docsearch:version" content="0.1.dev1+gc7e83a70e" />
   </head>
   
   
@@ -440,7 +440,7 @@ See ‘Metropolis Algorithm’ in [1].</p>
 </div></blockquote>
 </li>
 </ol>
-<p>Reference: <span id="id1">[<a class="reference internal" href="../../../../bib.html#id42" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 2014.">GCSR14</a>]</span> Section 11.2</p>
+<p>Reference: <span id="id1">[<a class="reference internal" href="../../../../bib.html#id43" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 2014.">GCSR14</a>]</span> Section 11.2</p>
 <p class="rubric">Examples</p>
 <p>The simplest case is:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">random_walk</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">additive_step_random_walk</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mcmc</span><span class="o">.</span><span class="n">random_walk</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">sigma</span><span class="p">))</span>
@@ -648,7 +648,7 @@ to maintain detailed balance. This means that P(step|position) = P(-step | posit
 <dt class="sig sig-object py" id="blackjax.mcmc.random_walk.build_irmh">
 <span class="sig-name descname"><span class="pre">build_irmh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/random_walk.html#build_irmh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.random_walk.build_irmh" title="Link to this definition">#</a></dt>
 <dd><p>Build an Independent Random Walk Rosenbluth-Metropolis-Hastings kernel. This implies
-that the proposal distribution does not depend on the particle being mutated <span id="id2">[<a class="reference internal" href="../../../../bib.html#id41" title="Guanyang Wang. Exact convergence analysis of the independent metropolis-hastings algorithms. Bernoulli, 28(3):2012–2033, 2022.">Wan22</a>]</span>.</p>
+that the proposal distribution does not depend on the particle being mutated <span id="id2">[<a class="reference internal" href="../../../../bib.html#id42" title="Guanyang Wang. Exact convergence analysis of the independent metropolis-hastings algorithms. Bernoulli, 28(3):2012–2033, 2022.">Wan22</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
 <dd class="field-odd"><p><ul class="simple">

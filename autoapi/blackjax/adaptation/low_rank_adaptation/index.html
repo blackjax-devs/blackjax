@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.laps_burn_in" href="../laps_burn_in/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g193b20f93" />
+  <meta name="docsearch:version" content="0.1.dev1+gc7e83a70e" />
   </head>
   
   
@@ -404,7 +404,7 @@
   <section id="module-blackjax.adaptation.low_rank_adaptation">
 <span id="blackjax-adaptation-low-rank-adaptation"></span><h1>blackjax.adaptation.low_rank_adaptation<a class="headerlink" href="#module-blackjax.adaptation.low_rank_adaptation" title="Link to this heading">#</a></h1>
 <p>Adaptation of the low-rank-modified mass matrix for HMC-family samplers.</p>
-<p>Implements Algorithm 1 of <span id="id1">[]</span>, following the
+<p>Implements Algorithm 1 of <span id="id1">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following the
 nutpie reference implementation.  The mass matrix has the form</p>
 <div class="math notranslate nohighlight">
 \[M^{-1} = \operatorname{diag}(\sigma)
@@ -534,7 +534,7 @@ window boundary).</p>
 <dd><p>Warmup scheme using the low-rank mass matrix adaptation.</p>
 <p>Mirrors Stan’s three-phase schedule but replaces Welford covariance
 estimation with the Fisher-divergence-minimising low-rank metric of
-<span id="id2">[]</span>, following nutpie’s implementation.</p>
+<span id="id2">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following nutpie’s implementation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -562,7 +562,7 @@ estimation with the Fisher-divergence-minimising low-rank metric of
 <dd><p>Adapt step size and a low-rank mass matrix for HMC-family samplers.</p>
 <p>Uses the three-phase Stan-style warmup schedule while replacing Welford
 covariance estimation with the Fisher-divergence-minimising low-rank
-metric of <span id="id3">[]</span>.</p>
+metric of <span id="id3">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
 <p>The returned <code class="docutils literal notranslate"><span class="pre">AdaptationAlgorithm</span></code> has a single <code class="docutils literal notranslate"><span class="pre">run</span></code> method:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 <span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>

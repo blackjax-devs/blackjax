@@ -7,7 +7,7 @@ blackjax.adaptation.low_rank_adaptation
 
    Adaptation of the low-rank-modified mass matrix for HMC-family samplers.
 
-   Implements Algorithm 1 of :cite:p:`sountsov2025preconditioning`, following the
+   Implements Algorithm 1 of :cite:p:`seyboldt2026preconditioning`, following the
    nutpie reference implementation.  The mass matrix has the form
 
    .. math::
@@ -128,7 +128,7 @@ Module Contents
 
    Mirrors Stan's three-phase schedule but replaces Welford covariance
    estimation with the Fisher-divergence-minimising low-rank metric of
-   :cite:p:`sountsov2025preconditioning`, following nutpie's implementation.
+   :cite:p:`seyboldt2026preconditioning`, following nutpie's implementation.
 
    :param max_rank: Maximum number of eigenvectors retained in the low-rank correction.
    :param target_acceptance_rate: Target acceptance rate for dual-averaging step-size adaptation.
@@ -148,7 +148,7 @@ Module Contents
 
    Uses the three-phase Stan-style warmup schedule while replacing Welford
    covariance estimation with the Fisher-divergence-minimising low-rank
-   metric of :cite:p:`sountsov2025preconditioning`.
+   metric of :cite:p:`seyboldt2026preconditioning`.
 
    The returned ``AdaptationAlgorithm`` has a single ``run`` method::
 

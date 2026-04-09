@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.mclmc" href="../mclmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g193b20f93" />
+  <meta name="docsearch:version" content="0.1.dev1+gc7e83a70e" />
   </head>
   
   
@@ -397,11 +397,11 @@
 position space in the Euclidean metric. It is defined by a definite positive
 matrix <span class="math notranslate nohighlight">\(M\)</span> with fixed value so that the kinetic energy of the hamiltonian
 dynamic is independent of the position and only depends on the momentum
-<span class="math notranslate nohighlight">\(p\)</span> <span id="id1">[<a class="reference internal" href="../../../../bib.html#id23" title="Michael Betancourt, Simon Byrne, Sam Livingstone, and Mark Girolami. The geometric foundations of hamiltonian monte carlo. arXiv preprint arXiv:arXiv:1410.5110, 2017.">BBLG17</a>]</span>.</p>
+<span class="math notranslate nohighlight">\(p\)</span> <span id="id1">[<a class="reference internal" href="../../../../bib.html#id24" title="Michael Betancourt, Simon Byrne, Sam Livingstone, and Mark Girolami. The geometric foundations of hamiltonian monte carlo. arXiv preprint arXiv:arXiv:1410.5110, 2017.">BBLG17</a>]</span>.</p>
 <p>For a Newtonian hamiltonian dynamic the kinetic energy is given by:</p>
 <div class="math notranslate nohighlight">
 \[K(p) = \frac{1}{2} p^T M^{-1} p\]</div>
-<p>We can also generate a relativistic dynamic <span id="id2">[<a class="reference internal" href="../../../../bib.html#id24" title="Xiaoyu Lu, Valerio Perrone, Leonard Hasenclever, Yee Whye Teh, and Sebastian Vollmer. Relativistic monte carlo. In Artificial Intelligence and Statistics, 1236–1245. PMLR, 2017.">LPH+17</a>]</span>.</p>
+<p>We can also generate a relativistic dynamic <span id="id2">[<a class="reference internal" href="../../../../bib.html#id25" title="Xiaoyu Lu, Valerio Perrone, Leonard Hasenclever, Yee Whye Teh, and Sebastian Vollmer. Relativistic monte carlo. In Artificial Intelligence and Statistics, 1236–1245. PMLR, 2017.">LPH+17</a>]</span>.</p>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
@@ -413,7 +413,7 @@ dynamic is independent of the position and only depends on the momentum
 <td><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank</span></code></a>(→ Metric)</p></td>
-<td><p>Euclidean metric with low-rank-modified mass matrix <span id="id3">[]</span>.</p></td>
+<td><p>Euclidean metric with low-rank-modified mass matrix <span id="id3">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_riemannian" title="blackjax.mcmc.metrics.gaussian_riemannian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_riemannian</span></code></a>(→ Metric)</p></td>
 <td><p>Hamiltonian dynamic on Riemannian manifold with normally-distributed momentum.</p></td>
@@ -451,7 +451,7 @@ location</p></li>
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_euclidean">
 <span class="sig-name descname"><span class="pre">gaussian_euclidean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="Link to this definition">#</a></dt>
 <dd><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
-<span id="id4">[<a class="reference internal" href="../../../../bib.html#id34" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
+<span id="id4">[<a class="reference internal" href="../../../../bib.html#id35" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
 <p>The gaussian euclidean metric is a euclidean metric further characterized
 by setting the conditional probability density <span class="math notranslate nohighlight">\(\pi(momentum|position)\)</span>
 to follow a standard gaussian distribution. A Newtonian hamiltonian
@@ -483,7 +483,7 @@ itself given the values of the momentum along the trajectory.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_euclidean_low_rank">
 <span class="sig-name descname"><span class="pre">gaussian_euclidean_low_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">U</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean_low_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="Link to this definition">#</a></dt>
-<dd><p>Euclidean metric with low-rank-modified mass matrix <span id="id5">[]</span>.</p>
+<dd><p>Euclidean metric with low-rank-modified mass matrix <span id="id5">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
 <p>The inverse mass matrix has the form</p>
 <div class="math notranslate nohighlight">
 \[M^{-1} = \operatorname{diag}(\sigma)

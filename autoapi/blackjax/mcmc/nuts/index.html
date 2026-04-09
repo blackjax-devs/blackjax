@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.metrics" href="../metrics/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g193b20f93" />
+  <meta name="docsearch:version" content="0.1.dev1+gc7e83a70e" />
   </head>
   
   
@@ -528,13 +528,13 @@ states in the full trajectory.</p>
 <dt class="sig sig-object py" id="blackjax.mcmc.nuts.build_kernel">
 <span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/nuts.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.nuts.build_kernel" title="Link to this definition">#</a></dt>
 <dd><p>Build an iterative NUTS kernel.</p>
-<p>This algorithm is an iteration on the original NUTS algorithm <span id="id1">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>
+<p>This algorithm is an iteration on the original NUTS algorithm <span id="id1">[<a class="reference internal" href="../../../../bib.html#id17" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>
 with two major differences:</p>
 <ul class="simple">
 <li><p>We do not use slice samplig but multinomial sampling for the proposal
-<span id="id2">[<a class="reference internal" href="../../../../bib.html#id25" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>;</p></li>
-<li><p>The trajectory expansion is not recursive but iterative <span id="id3">[<a class="reference internal" href="../../../../bib.html#id26" title="Du Phan, Neeraj Pradhan, and Martin Jankowiak. Composable effects for flexible and accelerated probabilistic programming in numpyro. arXiv preprint arXiv:1912.11554, 2019.">PPJ19</a>]</span>,
-<span id="id4">[<a class="reference internal" href="../../../../bib.html#id27" title="Junpeng Lao, Christopher Suter, Ian Langmore, Cyril Chimisov, Ashish Saxena, Pavel Sountsov, Dave Moore, Rif A Saurous, Matthew D Hoffman, and Joshua V Dillon. Tfp. mcmc: modern markov chain monte carlo tools built for modern hardware. arXiv preprint arXiv:2002.01184, 2020.">LSL+20</a>]</span>.</p></li>
+<span id="id2">[<a class="reference internal" href="../../../../bib.html#id26" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>;</p></li>
+<li><p>The trajectory expansion is not recursive but iterative <span id="id3">[<a class="reference internal" href="../../../../bib.html#id27" title="Du Phan, Neeraj Pradhan, and Martin Jankowiak. Composable effects for flexible and accelerated probabilistic programming in numpyro. arXiv preprint arXiv:1912.11554, 2019.">PPJ19</a>]</span>,
+<span id="id4">[<a class="reference internal" href="../../../../bib.html#id28" title="Junpeng Lao, Christopher Suter, Ian Langmore, Cyril Chimisov, Ashish Saxena, Pavel Sountsov, Dave Moore, Rif A Saurous, Matthew D Hoffman, and Joshua V Dillon. Tfp. mcmc: modern markov chain monte carlo tools built for modern hardware. arXiv preprint arXiv:2002.01184, 2020.">LSL+20</a>]</span>.</p></li>
 </ul>
 <p>The implementation can seem unusual for those familiar with similar
 algorithms. Indeed, we do not conceptualize the trajectory construction as

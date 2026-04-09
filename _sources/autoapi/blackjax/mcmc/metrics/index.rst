@@ -81,7 +81,7 @@ Module Contents
 
 .. py:function:: gaussian_euclidean_low_rank(sigma: blackjax.types.Array, U: blackjax.types.Array, lam: blackjax.types.Array) -> Metric
 
-   Euclidean metric with low-rank-modified mass matrix :cite:p:`sountsov2025preconditioning`.
+   Euclidean metric with low-rank-modified mass matrix :cite:p:`seyboldt2026preconditioning`.
 
    The inverse mass matrix has the form
 
