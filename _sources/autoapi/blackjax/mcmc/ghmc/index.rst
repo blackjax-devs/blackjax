@@ -67,7 +67,7 @@ Module Contents
       :type:  float
 
 
-.. py:function:: init(position: blackjax.types.ArrayLikeTree, rng_key: blackjax.types.PRNGKey, logdensity_fn: Callable) -> GHMCState
+.. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, rng_key: blackjax.types.PRNGKey) -> GHMCState
 
 .. py:function:: build_kernel(noise_fn: Callable = lambda _: 0.0, divergence_threshold: float = 1000)
 

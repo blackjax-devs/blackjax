@@ -34,15 +34,13 @@ Module Contents
    :rtype: The initial HMCState.
 
 
-.. py:function:: build_kernel(logdensity_fn: Callable, integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000, inverse_mass_matrix=1.0)
+.. py:function:: build_kernel(integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000)
 
    Build an MHMCHMC kernel.
 
-   :param logdensity_fn: The log-density function of the target distribution.
    :param integrator: The symplectic integrator to use to integrate the Hamiltonian dynamics.
    :param divergence_threshold: Value of the difference in energy above which we consider that the
                                 transition is divergent.
-   :param inverse_mass_matrix: Inverse mass matrix for the isokinetic integrator. Scalar or array.
 
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
