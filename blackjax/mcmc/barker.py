@@ -16,7 +16,6 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
-from jax.flatten_util import ravel_pytree
 from jax.scipy import stats
 
 import blackjax.mcmc.metrics as metrics
@@ -100,20 +99,25 @@ def build_kernel():
         c_x_to_y = metric.scale(x, log_x, inv=False, trans=True)
         c_y_to_x = metric.scale(y, log_y, inv=False, trans=True)
 
-        z_tilde_x_to_y_flat, _ = ravel_pytree(z_tilde_x_to_y)
-        z_tilde_y_to_x_flat, _ = ravel_pytree(z_tilde_y_to_x)
-
-        c_x_to_y_flat, _ = ravel_pytree(c_x_to_y)
-        c_y_to_x_flat, _ = ravel_pytree(c_y_to_x)
-
-        num = metric.kinetic_energy(x_minus_y, y) - _log1pexp(
-            -z_tilde_y_to_x_flat * c_y_to_x_flat
+        log1pexp_yx = jax.tree.map(
+            lambda z, c: _log1pexp(-z * c), z_tilde_y_to_x, c_y_to_x
         )
-        denom = metric.kinetic_energy(y_minus_x, x) - _log1pexp(
-            -z_tilde_x_to_y_flat * c_x_to_y_flat
+        log1pexp_xy = jax.tree.map(
+            lambda z, c: _log1pexp(-z * c), z_tilde_x_to_y, c_x_to_y
         )
 
-        ratio_proposal = jnp.sum(num - denom)
+        sum_log1pexp_yx = sum(jnp.sum(leaf) for leaf in jax.tree.leaves(log1pexp_yx))
+        sum_log1pexp_xy = sum(jnp.sum(leaf) for leaf in jax.tree.leaves(log1pexp_xy))
+
+        # The original code broadcasts kinetic_energy (scalar) - log1pexp (vector)
+        # then sums, which multiplies KE by N. Preserve this exactly.
+        n = sum(leaf.size for leaf in jax.tree.leaves(x))
+        ratio_proposal = (
+            n * metric.kinetic_energy(x_minus_y, y)
+            - sum_log1pexp_yx
+            - n * metric.kinetic_energy(y_minus_x, x)
+            + sum_log1pexp_xy
+        )
 
         return proposal.logdensity - state.logdensity + ratio_proposal
 
@@ -126,8 +130,7 @@ def build_kernel():
     ) -> tuple[BarkerState, BarkerInfo]:
         """Generate a new sample with the Barker kernel."""
         if inverse_mass_matrix is None:
-            p, _ = ravel_pytree(state.position)
-            (m,) = p.shape
+            m = sum(leaf.size for leaf in jax.tree.leaves(state.position))
             inverse_mass_matrix = jnp.ones((m,))
         metric = metrics.default_metric(inverse_mass_matrix)
         grad_fn = jax.value_and_grad(logdensity_fn)
@@ -227,10 +230,15 @@ def as_top_level_api(
 def _generate_bernoulli(
     rng_key: PRNGKey, position: ArrayLikeTree, p: ArrayLikeTree
 ) -> ArrayTree:
-    pos, unravel_fn = ravel_pytree(position)
-    p_flat, _ = ravel_pytree(p)
-    sample = jax.random.bernoulli(rng_key, p=p_flat, shape=pos.shape)
-    return unravel_fn(sample)
+    leaves = jax.tree.leaves(position)
+    keys = jax.random.split(rng_key, len(leaves))
+    keys_tree = jax.tree.unflatten(jax.tree.structure(position), keys)
+    return jax.tree.map(
+        lambda k, pos, prob: jax.random.bernoulli(k, p=prob, shape=pos.shape),
+        keys_tree,
+        position,
+        p,
+    )
 
 
 def _barker_sample(key, mean, a, scale, metric):

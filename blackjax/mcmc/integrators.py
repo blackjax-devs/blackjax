@@ -520,9 +520,8 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     # return new_momentum
     return jax.lax.cond(
         jnp.isinf(L),
-        lambda _: momentum,
-        lambda _: new_momentum,
-        operand=None,
+        lambda: momentum,
+        lambda: new_momentum,
     )
 
 

@@ -16,6 +16,7 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
@@ -190,6 +191,9 @@ def elliptical_proposal(
         rng_key: PRNGKey, state: EllipSliceState
     ) -> tuple[EllipSliceState, EllipSliceInfo]:
         position, logdensity = state
+        # Convert flat mean to pytree matching position structure
+        flat_position, unravel_fn = ravel_pytree(position)
+        mean_tree = unravel_fn(jnp.broadcast_to(jnp.asarray(mean), flat_position.shape))
         key_slice, key_momentum, key_uniform, key_theta = jax.random.split(rng_key, 4)
         # step 1: sample momentum
         momentum = momentum_generator(key_momentum, position)
@@ -200,7 +204,7 @@ def elliptical_proposal(
         theta_min = theta - 2 * jnp.pi
         theta_max = theta
         # step 4: proposal
-        p, m = ellipsis(position, momentum, theta, mean)
+        p, m = ellipsis(position, momentum, theta, mean_tree)
         # step 5: acceptance
         logdensity = logdensity_fn(p)
 
@@ -220,7 +224,7 @@ def elliptical_proposal(
             _, subiter, theta, theta_min, theta_max, *_ = vals
             thetak = jax.random.fold_in(key_slice, subiter)
             theta = jax.random.uniform(thetak, minval=theta_min, maxval=theta_max)
-            p, m = ellipsis(position, momentum, theta, mean)
+            p, m = ellipsis(position, momentum, theta, mean_tree)
             logdensity = logdensity_fn(p)
             theta_min = jnp.where(theta < 0, theta, theta_min)
             theta_max = jnp.where(theta > 0, theta, theta_max)
@@ -248,20 +252,31 @@ def ellipsis(position, momentum, theta, mean):
     generate proposed position and momentum to later accept or reject
     depending on the slice variable.
 
+    Parameters
+    ----------
+    position
+        Current position (PyTree).
+    momentum
+        Latent momentum variable (PyTree matching position structure).
+    theta
+        Angle on the ellipse circumference.
+    mean
+        Shared mean (PyTree matching position structure).
+
     """
-    position, unravel_fn = jax.flatten_util.ravel_pytree(position)
-    momentum, _ = jax.flatten_util.ravel_pytree(momentum)
-    position_centered = position - mean
-    momentum_centered = momentum - mean
+    cos_theta = jnp.cos(theta)
+    sin_theta = jnp.sin(theta)
     return (
-        unravel_fn(
-            position_centered * jnp.cos(theta)
-            + momentum_centered * jnp.sin(theta)
-            + mean
+        jax.tree.map(
+            lambda p, m, mu: (p - mu) * cos_theta + (m - mu) * sin_theta + mu,
+            position,
+            momentum,
+            mean,
         ),
-        unravel_fn(
-            momentum_centered * jnp.cos(theta)
-            - position_centered * jnp.sin(theta)
-            + mean
+        jax.tree.map(
+            lambda p, m, mu: (m - mu) * cos_theta - (p - mu) * sin_theta + mu,
+            position,
+            momentum,
+            mean,
         ),
     )
