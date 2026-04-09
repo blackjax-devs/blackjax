@@ -20,6 +20,7 @@ import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
+from blackjax.mcmc.adjusted_mclmc import rescale
 from blackjax.mcmc.hmc import HMCInfo, HMCState
 from blackjax.mcmc.hmc import build_kernel as build_static_hmc_kernel
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
@@ -185,13 +186,6 @@ def halton_sequence(i: Array, max_bits: int = 10) -> float:
         )
     bit_masks = 2 ** jnp.arange(max_bits, dtype=i.dtype)
     return jnp.einsum("i,i->", jnp.mod((i + 1) // bit_masks, 2), 0.5 / bit_masks)
-
-
-def rescale(mu):
-    # Returns s, such that `round(U(0, 1) * s + 0.5)` has expected value mu.
-    k = jnp.floor(2 * mu - 1)
-    x = k * (mu - 0.5 * (k + 1)) / (k + 1 - mu)
-    return k + x
 
 
 def halton_trajectory_length(
