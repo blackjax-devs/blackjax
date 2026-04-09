@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g58d06f2bd" />
+  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
   </head>
   
   
@@ -528,19 +528,18 @@
 
     <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
         <span class="n">do_accept</span><span class="p">,</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">(</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">(</span>
             <span class="n">new_proposal</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
             <span class="n">new_proposal</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span>
             <span class="n">new_weight</span><span class="p">,</span>
             <span class="n">new_sum_log_p_accept</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">(</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">(</span>
             <span class="n">proposal</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
             <span class="n">proposal</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span>
             <span class="n">new_weight</span><span class="p">,</span>
             <span class="n">new_sum_log_p_accept</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -565,19 +564,18 @@
 
     <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
         <span class="n">do_accept</span><span class="p">,</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">(</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">(</span>
             <span class="n">new_proposal</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
             <span class="n">new_proposal</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span>
             <span class="n">new_weight</span><span class="p">,</span>
             <span class="n">new_sum_log_p_accept</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">(</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">Proposal</span><span class="p">(</span>
             <span class="n">proposal</span><span class="o">.</span><span class="n">state</span><span class="p">,</span>
             <span class="n">proposal</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span>
             <span class="n">new_weight</span><span class="p">,</span>
             <span class="n">new_sum_log_p_accept</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -639,9 +637,8 @@
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
             <span class="n">do_accept</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">new_proposal</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">proposal</span><span class="p">,</span>
-            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">new_proposal</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">proposal</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">info</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -672,9 +669,8 @@
     <span class="k">return</span> <span class="p">(</span>
         <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
             <span class="n">do_accept</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">new_proposal</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">proposal</span><span class="p">,</span>
-            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">new_proposal</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">proposal</span><span class="p">,</span>
         <span class="p">),</span>
         <span class="n">info</span><span class="p">,</span>
     <span class="p">)</span></div>

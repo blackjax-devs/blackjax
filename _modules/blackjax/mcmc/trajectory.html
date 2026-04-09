@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g58d06f2bd" />
+  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
   </head>
   
   
@@ -482,15 +482,14 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
         <span class="n">direction</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="p">(</span>
             <span class="n">trajectory</span><span class="p">,</span>
             <span class="n">new_trajectory</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="p">(</span>
             <span class="n">new_trajectory</span><span class="p">,</span>
             <span class="n">trajectory</span><span class="p">,</span>
         <span class="p">),</span>
-        <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -684,15 +683,14 @@
             <span class="c1"># take one step to get the leftmost state of the tree.</span>
             <span class="p">(</span><span class="n">new_trajectory</span><span class="p">,</span> <span class="n">sampled_proposal</span><span class="p">)</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
                 <span class="n">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="p">(</span>
                     <span class="n">Trajectory</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
                     <span class="n">new_proposal</span><span class="p">,</span>
                 <span class="p">),</span>
-                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="p">(</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="p">(</span>
                     <span class="n">append_to_trajectory</span><span class="p">(</span><span class="n">trajectory</span><span class="p">,</span> <span class="n">new_state</span><span class="p">),</span>
                     <span class="n">sample_proposal</span><span class="p">(</span><span class="n">proposal_key</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">),</span>
                 <span class="p">),</span>
-                <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
 
             <span class="n">new_termination_state</span> <span class="o">=</span> <span class="n">update_termination_state</span><span class="p">(</span>
@@ -732,14 +730,13 @@
         <span class="c1"># In the while_loop we always extend on the right most direction.</span>
         <span class="n">new_trajectory</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
             <span class="n">direction</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="p">,</span>
-            <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">Trajectory</span><span class="p">(</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">trajectory</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">Trajectory</span><span class="p">(</span>
                 <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
                 <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span>
                 <span class="n">trajectory</span><span class="o">.</span><span class="n">momentum_sum</span><span class="p">,</span>
                 <span class="n">trajectory</span><span class="o">.</span><span class="n">num_states</span><span class="p">,</span>
             <span class="p">),</span>
-            <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="p">(</span>
@@ -859,9 +856,8 @@
             <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_diverging</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="ow">not</span> <span class="n">is_turning</span><span class="p">):</span>
                 <span class="n">start_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
                     <span class="n">direction</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
-                    <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
-                    <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span>
-                    <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <span class="k">lambda</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
+                    <span class="k">lambda</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span>
                 <span class="p">)</span>
                 <span class="p">(</span>
                     <span class="n">rng_key</span><span class="p">,</span>
@@ -1032,9 +1028,8 @@
             <span class="n">direction</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">(</span><span class="n">direction_key</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
             <span class="n">start_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
                 <span class="n">direction</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span>
-                <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">rightmost_state</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">leftmost_state</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="p">(</span>
                 <span class="n">new_proposal</span><span class="p">,</span>
