@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8ed96d1b9" />
+  <meta name="docsearch:version" content="0.1.dev1+g58d06f2bd" />
   </head>
   
   
@@ -918,9 +918,8 @@
     <span class="c1"># return new_momentum</span>
     <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
         <span class="n">jnp</span><span class="o">.</span><span class="n">isinf</span><span class="p">(</span><span class="n">L</span><span class="p">),</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">momentum</span><span class="p">,</span>
-        <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">new_momentum</span><span class="p">,</span>
-        <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">momentum</span><span class="p">,</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">new_momentum</span><span class="p">,</span>
     <span class="p">)</span>
 
 
