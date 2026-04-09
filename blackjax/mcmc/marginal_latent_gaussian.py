@@ -283,5 +283,5 @@ def as_top_level_api(
 
     kernel = build_kernel(cov_svd)
     return build_sampling_algorithm(
-        kernel, init, (logdensity_fn, U_t), (logdensity_fn, step_size)
+        kernel, init, logdensity_fn, init_args=(U_t,), kernel_args=(step_size,)
     )

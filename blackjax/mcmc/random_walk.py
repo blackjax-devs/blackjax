@@ -245,7 +245,7 @@ def additive_step_random_walk(
     """
     kernel = build_additive_step()
     return build_sampling_algorithm(
-        kernel, init, (logdensity_fn,), (logdensity_fn, random_step)
+        kernel, init, logdensity_fn, kernel_args=(random_step,)
     )
 
 
@@ -338,8 +338,8 @@ def irmh_as_top_level_api(
     return build_sampling_algorithm(
         kernel,
         init,
-        (logdensity_fn,),
-        (logdensity_fn, proposal_distribution, proposal_logdensity_fn),
+        logdensity_fn,
+        kernel_args=(proposal_distribution, proposal_logdensity_fn),
     )
 
 
@@ -445,8 +445,8 @@ def rmh_as_top_level_api(
     return build_sampling_algorithm(
         kernel,
         init,
-        (logdensity_fn,),
-        (logdensity_fn, proposal_generator, proposal_logdensity_fn),
+        logdensity_fn,
+        kernel_args=(proposal_generator, proposal_logdensity_fn),
     )
 
 

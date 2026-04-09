@@ -172,5 +172,5 @@ def as_top_level_api(
 
     kernel = build_kernel()
     return build_sampling_algorithm(
-        kernel, init, (logdensity_fn,), (logdensity_fn, step_size)
+        kernel, init, logdensity_fn, kernel_args=(step_size,)
     )

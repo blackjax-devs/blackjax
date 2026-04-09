@@ -157,9 +157,7 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
     kernel = build_kernel(cov, mean)
-    return build_sampling_algorithm(
-        kernel, init, (loglikelihood_fn,), (loglikelihood_fn,)
-    )
+    return build_sampling_algorithm(kernel, init, loglikelihood_fn)
 
 
 def elliptical_proposal(

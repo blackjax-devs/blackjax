@@ -73,6 +73,6 @@ def as_top_level_api(
     return build_sampling_algorithm(
         kernel,
         init,
-        (logdensity_fn,),
-        (logdensity_fn, step_size, mass_matrix, num_integration_steps),
+        logdensity_fn,
+        kernel_args=(step_size, mass_matrix, num_integration_steps),
     )
