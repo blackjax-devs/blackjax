@@ -19,10 +19,10 @@ import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
+from blackjax.mcmc.adjusted_mclmc import adjusted_mclmc_proposal, rescale
 from blackjax.mcmc.dynamic_hmc import DynamicHMCState, halton_sequence
 from blackjax.mcmc.hmc import HMCInfo
-from blackjax.mcmc.proposal import static_binomial_sampling
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
 from blackjax.util import generate_unit_vector
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
@@ -173,96 +173,6 @@ def as_top_level_api(
         kernel_args=(step_size, L_proposal_factor, inverse_mass_matrix),
         pass_rng_key_to_init=True,
     )
-
-
-def adjusted_mclmc_proposal(
-    integrator: Callable,
-    step_size: float | ArrayLikeTree,
-    L_proposal_factor: float,
-    num_integration_steps: int = 1,
-    divergence_threshold: float = 1000,
-    *,
-    sample_proposal: Callable = static_binomial_sampling,
-) -> Callable:
-    """Vanilla MHMCHMC algorithm.
-
-    The algorithm integrates the trajectory applying a integrator
-    `num_integration_steps` times in one direction to get a proposal and uses a
-    Metropolis-Hastings acceptance step to either reject or accept this
-    proposal. This is what people usually refer to when they talk about "the
-    HMC algorithm".
-
-    Parameters
-    ----------
-    integrator
-        integrator used to build the trajectory step by step.
-    kinetic_energy
-        Function that computes the kinetic energy.
-    step_size
-        Size of the integration step.
-    num_integration_steps
-        Number of times we run the integrator to build the trajectory
-    divergence_threshold
-        Threshold above which we say that there is a divergence.
-
-    Returns
-    -------
-    A kernel that generates a new chain state and information about the transition.
-
-    """
-
-    def step(i, vars):
-        state, kinetic_energy, rng_key = vars
-        rng_key, next_rng_key = jax.random.split(rng_key)
-        next_state, next_kinetic_energy = integrator(
-            state, step_size, L_proposal_factor, rng_key
-        )
-
-        return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
-
-    def build_trajectory(state, num_integration_steps, rng_key):
-        return jax.lax.fori_loop(
-            0 * num_integration_steps, num_integration_steps, step, (state, 0, rng_key)
-        )
-
-    def generate(
-        rng_key, state: integrators.IntegratorState
-    ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
-        """Generate a new chain state."""
-        end_state, kinetic_energy, rng_key = build_trajectory(
-            state, num_integration_steps, rng_key
-        )
-
-        new_energy = -end_state.logdensity
-        delta_energy = -state.logdensity + end_state.logdensity - kinetic_energy
-        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-        is_diverging = -delta_energy > divergence_threshold
-        sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
-        do_accept, p_accept, other_proposal_info = info
-
-        info = HMCInfo(
-            state.momentum,
-            p_accept,
-            do_accept,
-            is_diverging,
-            new_energy,
-            end_state,
-            num_integration_steps,
-        )
-
-        return sampled_state, info, other_proposal_info
-
-    return generate
-
-
-def rescale(mu):
-    """returns s, such that
-     round(U(0, 1) * s + 0.5)
-    has expected value mu.
-    """
-    k = jnp.floor(2 * mu - 1)
-    x = k * (mu - 0.5 * (k + 1)) / (k + 1 - mu)
-    return k + x
 
 
 def trajectory_length(t: int, mu: float):

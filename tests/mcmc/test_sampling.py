@@ -16,7 +16,7 @@ import blackjax.diagnostics as diagnostics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.adaptation.laps import laps as run_laps
-from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
+from blackjax.mcmc.adjusted_mclmc import rescale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
