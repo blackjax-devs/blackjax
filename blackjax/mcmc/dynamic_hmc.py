@@ -19,7 +19,7 @@ import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.hmc import HMCInfo, HMCState
 from blackjax.mcmc.hmc import build_kernel as build_static_hmc_kernel
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
@@ -165,22 +165,13 @@ def as_top_level_api(
         integration_steps_fn,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key: Array):
-        # Note that rng_key here is not necessarily a PRNGKey, could be a Array that
-        # for generates a sequence of pseudo or quasi-random numbers (previously
-        # named as `random_generator_arg`)
-        return init(position, logdensity_fn, rng_key)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            inverse_mass_matrix,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        (logdensity_fn,),
+        (logdensity_fn, step_size, inverse_mass_matrix),
+        pass_rng_key_to_init=True,
+    )
 
 
 def halton_sequence(i: Array, max_bits: int = 10) -> float:

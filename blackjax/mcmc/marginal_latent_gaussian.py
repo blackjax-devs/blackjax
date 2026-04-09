@@ -19,7 +19,7 @@ import jax.numpy as jnp
 import jax.scipy.linalg as linalg
 from jax.flatten_util import ravel_pytree
 
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import Array, ArrayLikeTree, PRNGKey
 
@@ -282,17 +282,6 @@ def as_top_level_api(
         logdensity_fn = generate_mean_shifted_logprob(logdensity_fn, mean, covariance)
 
     kernel = build_kernel(cov_svd)
-
-    def init_fn(position: Array, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn, U_t)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel, init, (logdensity_fn, U_t), (logdensity_fn, step_size)
+    )

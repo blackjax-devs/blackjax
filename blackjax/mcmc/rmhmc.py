@@ -71,5 +71,8 @@ def as_top_level_api(
     """
     kernel = build_kernel(integrator, divergence_threshold)
     return build_sampling_algorithm(
-        logdensity_fn, kernel, init, step_size, mass_matrix, num_integration_steps
+        kernel,
+        init,
+        (logdensity_fn,),
+        (logdensity_fn, step_size, mass_matrix, num_integration_steps),
     )

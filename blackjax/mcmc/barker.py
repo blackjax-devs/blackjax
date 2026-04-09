@@ -219,7 +219,9 @@ def as_top_level_api(
         if inverse_mass_matrix is not None
         else None
     )
-    return build_sampling_algorithm(logdensity_fn, kernel, init, step_size, metric)
+    return build_sampling_algorithm(
+        kernel, init, (logdensity_fn,), (logdensity_fn, step_size, metric)
+    )
 
 
 def _generate_bernoulli(

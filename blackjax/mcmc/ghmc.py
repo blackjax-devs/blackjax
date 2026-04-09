@@ -21,7 +21,7 @@ from jax.flatten_util import ravel_pytree
 import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.proposal import nonreversible_slice_sampling
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
@@ -52,8 +52,8 @@ class GHMCState(NamedTuple):
 
 def init(
     position: ArrayLikeTree,
-    rng_key: PRNGKey,
     logdensity_fn: Callable,
+    rng_key: PRNGKey,
 ) -> GHMCState:
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
 
@@ -272,19 +272,10 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(noise_fn, divergence_threshold)
-
-    def init_fn(position: ArrayLikeTree, rng_key: PRNGKey):
-        return init(position, rng_key, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            momentum_inverse_scale,
-            alpha,
-            delta,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        (logdensity_fn,),
+        (logdensity_fn, step_size, momentum_inverse_scale, alpha, delta),
+        pass_rng_key_to_init=True,
+    )

@@ -22,7 +22,7 @@ import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.hmc import HMCInfo, HMCState
 from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
@@ -50,24 +50,18 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable) -> HMCState:
 
 
 def build_kernel(
-    logdensity_fn: Callable,
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
-    inverse_mass_matrix=1.0,
 ):
     """Build an MHMCHMC kernel.
 
     Parameters
     ----------
-    logdensity_fn
-        The log-density function of the target distribution.
     integrator
         The symplectic integrator to use to integrate the Hamiltonian dynamics.
     divergence_threshold
         Value of the difference in energy above which we consider that the
         transition is divergent.
-    inverse_mass_matrix
-        Inverse mass matrix for the isokinetic integrator. Scalar or array.
 
     Returns
     -------
@@ -79,8 +73,10 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey,
         state: HMCState,
+        logdensity_fn: Callable,
         step_size: float,
         num_integration_steps: int,
+        inverse_mass_matrix=1.0,
         L_proposal_factor: float = jnp.inf,
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
@@ -154,26 +150,21 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(
-        logdensity_fn=logdensity_fn,
         integrator=integrator,
-        inverse_mass_matrix=inverse_mass_matrix,
         divergence_threshold=divergence_threshold,
     )
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def update_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key=rng_key,
-            state=state,
-            step_size=step_size,
-            num_integration_steps=num_integration_steps,
-            L_proposal_factor=L_proposal_factor,
-        )
-
-    return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        (logdensity_fn,),
+        (
+            logdensity_fn,
+            step_size,
+            num_integration_steps,
+            inverse_mass_matrix,
+            L_proposal_factor,
+        ),
+    )
 
 
 def adjusted_mclmc_proposal(

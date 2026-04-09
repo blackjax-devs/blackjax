@@ -265,7 +265,7 @@ def meads_adaptation(
 
     ghmc_kernel = mcmc.ghmc.build_kernel()
     adapt_init, _ = base(num_folds, step_size_multiplier, damping_slowdown)
-    batch_init = jax.vmap(lambda p, r: mcmc.ghmc.init(p, r, logdensity_fn))
+    batch_init = jax.vmap(lambda p, r: mcmc.ghmc.init(p, logdensity_fn, r))
 
     def one_step(carry, rng_key):
         states, adaptation_state = carry

@@ -17,7 +17,7 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.integrators import (
     IntegratorState,
     isokinetic_mclachlan,
@@ -189,14 +189,13 @@ def as_top_level_api(
         integrator=integrator,
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
     )
-
-    def init_fn(position: ArrayLike, rng_key: PRNGKey):
-        return init(position, logdensity_fn, rng_key)
-
-    def step_fn(rng_key, state):
-        return kernel(rng_key, state, logdensity_fn, inverse_mass_matrix, L, step_size)
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        (logdensity_fn,),
+        (logdensity_fn, inverse_mass_matrix, L, step_size),
+        pass_rng_key_to_init=True,
+    )
 
 
 def handle_nans(previous_state, next_state, info, key):

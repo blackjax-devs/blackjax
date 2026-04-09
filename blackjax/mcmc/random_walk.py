@@ -65,7 +65,7 @@ from typing import Callable, NamedTuple
 import jax
 from jax import numpy as jnp
 
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc import proposal
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
@@ -244,15 +244,9 @@ def additive_step_random_walk(
     A ``SamplingAlgorithm``.
     """
     kernel = build_additive_step()
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state, logdensity_fn, random_step)
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel, init, (logdensity_fn,), (logdensity_fn, random_step)
+    )
 
 
 def build_irmh() -> Callable:
@@ -341,21 +335,12 @@ def irmh_as_top_level_api(
 
     """
     kernel = build_irmh()
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            proposal_distribution,
-            proposal_logdensity_fn,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        (logdensity_fn,),
+        (logdensity_fn, proposal_distribution, proposal_logdensity_fn),
+    )
 
 
 def build_rmh():
@@ -457,21 +442,12 @@ def rmh_as_top_level_api(
     A ``SamplingAlgorithm``.
     """
     kernel = build_rmh()
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            proposal_generator,
-            proposal_logdensity_fn,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        (logdensity_fn,),
+        (logdensity_fn, proposal_generator, proposal_logdensity_fn),
+    )
 
 
 def build_rmh_transition_energy(proposal_logdensity_fn: Callable | None) -> Callable:

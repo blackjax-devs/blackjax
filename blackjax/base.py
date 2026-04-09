@@ -152,10 +152,12 @@ class AdaptationAlgorithm(NamedTuple):
 
 
 def build_sampling_algorithm(
-    logdensity_fn: Callable,
     kernel: Callable,
     init_state: Callable,
-    *kernel_parameters,
+    init_args: tuple = (),
+    kernel_args: tuple = (),
+    *,
+    pass_rng_key_to_init: bool = False,
 ) -> SamplingAlgorithm:
     """Build a ``SamplingAlgorithm`` from standard components.
 
@@ -166,19 +168,24 @@ def build_sampling_algorithm(
 
     Parameters
     ----------
-    logdensity_fn
-        The log-density function of the target distribution.  Passed to both
-        ``init_state`` (to compute the initial log-density) and ``kernel`` (as
-        the first argument after ``state``).
     kernel
         A kernel function with signature
-        ``(rng_key, state, logdensity_fn, *kernel_parameters) -> (state, info)``.
+        ``(rng_key, state, *kernel_args) -> (state, info)``.
     init_state
         An initialization function with signature
-        ``(position, logdensity_fn) -> state``.
-    *kernel_parameters
+        ``(position, *init_args) -> state`` (or
+        ``(position, *init_args, rng_key) -> state`` when
+        ``pass_rng_key_to_init`` is True).
+    init_args
+        Extra positional arguments forwarded to ``init_state`` after
+        ``position`` (e.g. ``(logdensity_fn,)``).
+    kernel_args
         Extra positional arguments forwarded to ``kernel`` after
-        ``logdensity_fn`` on every step (e.g. ``step_size``, ``metric``).
+        ``(rng_key, state)`` on every step
+        (e.g. ``(logdensity_fn, step_size, metric)``).
+    pass_rng_key_to_init
+        If True, ``rng_key`` is appended to the ``init_state`` call
+        (for algorithms like mclmc/ghmc that need it for initialization).
 
     Returns
     -------
@@ -186,10 +193,11 @@ def build_sampling_algorithm(
     """
 
     def init_fn(position: Position, rng_key: PRNGKey | None = None):
-        del rng_key
-        return init_state(position, logdensity_fn)
+        if pass_rng_key_to_init:
+            return init_state(position, *init_args, rng_key)
+        return init_state(position, *init_args)
 
     def step_fn(rng_key: PRNGKey, state: State) -> tuple[State, Info]:
-        return kernel(rng_key, state, logdensity_fn, *kernel_parameters)
+        return kernel(rng_key, state, *kernel_args)
 
     return SamplingAlgorithm(init_fn, step_fn)

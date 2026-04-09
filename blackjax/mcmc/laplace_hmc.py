@@ -229,5 +229,8 @@ def as_top_level_api(
     laplace = laplace_marginal_factory(log_joint_fn, theta_init, **optimizer_kwargs)
     kernel = build_kernel(integrator, divergence_threshold)
     return build_sampling_algorithm(
-        laplace, kernel, init, step_size, inverse_mass_matrix, num_integration_steps
+        kernel,
+        init,
+        (laplace,),
+        (laplace, step_size, inverse_mass_matrix, num_integration_steps),
     )
