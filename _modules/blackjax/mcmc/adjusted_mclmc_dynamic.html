@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g6c4d3b42b" />
+  <meta name="docsearch:version" content="0.1.dev1+g193b20f93" />
   </head>
   
   
@@ -393,10 +393,10 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.integrators</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">integrators</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingAlgorithm</span><span class="p">,</span> <span class="n">build_sampling_algorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.adjusted_mclmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">adjusted_mclmc_proposal</span><span class="p">,</span> <span class="n">rescale</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.dynamic_hmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">DynamicHMCState</span><span class="p">,</span> <span class="n">halton_sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.hmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">HMCInfo</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.proposal</span><span class="w"> </span><span class="kn">import</span> <span class="n">static_binomial_sampling</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_unit_vector</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">]</span>
@@ -556,96 +556,6 @@
         <span class="n">pass_rng_key_to_init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span></div>
 
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">adjusted_mclmc_proposal</span><span class="p">(</span>
-    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-    <span class="n">L_proposal_factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
-    <span class="o">*</span><span class="p">,</span>
-    <span class="n">sample_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">static_binomial_sampling</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Vanilla MHMCHMC algorithm.</span>
-
-<span class="sd">    The algorithm integrates the trajectory applying a integrator</span>
-<span class="sd">    `num_integration_steps` times in one direction to get a proposal and uses a</span>
-<span class="sd">    Metropolis-Hastings acceptance step to either reject or accept this</span>
-<span class="sd">    proposal. This is what people usually refer to when they talk about &quot;the</span>
-<span class="sd">    HMC algorithm&quot;.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    integrator</span>
-<span class="sd">        integrator used to build the trajectory step by step.</span>
-<span class="sd">    kinetic_energy</span>
-<span class="sd">        Function that computes the kinetic energy.</span>
-<span class="sd">    step_size</span>
-<span class="sd">        Size of the integration step.</span>
-<span class="sd">    num_integration_steps</span>
-<span class="sd">        Number of times we run the integrator to build the trajectory</span>
-<span class="sd">    divergence_threshold</span>
-<span class="sd">        Threshold above which we say that there is a divergence.</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    A kernel that generates a new chain state and information about the transition.</span>
-
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="nb">vars</span><span class="p">):</span>
-        <span class="n">state</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="nb">vars</span>
-        <span class="n">rng_key</span><span class="p">,</span> <span class="n">next_rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-        <span class="n">next_state</span><span class="p">,</span> <span class="n">next_kinetic_energy</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span>
-            <span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">L_proposal_factor</span><span class="p">,</span> <span class="n">rng_key</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">kinetic_energy</span> <span class="o">+</span> <span class="n">next_kinetic_energy</span><span class="p">,</span> <span class="n">next_rng_key</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">build_trajectory</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">fori_loop</span><span class="p">(</span>
-            <span class="mi">0</span> <span class="o">*</span> <span class="n">num_integration_steps</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">,</span> <span class="n">step</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">)</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span>
-        <span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">,</span> <span class="n">HMCInfo</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new chain state.&quot;&quot;&quot;</span>
-        <span class="n">end_state</span><span class="p">,</span> <span class="n">kinetic_energy</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">build_trajectory</span><span class="p">(</span>
-            <span class="n">state</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">,</span> <span class="n">rng_key</span>
-        <span class="p">)</span>
-
-        <span class="n">new_energy</span> <span class="o">=</span> <span class="o">-</span><span class="n">end_state</span><span class="o">.</span><span class="n">logdensity</span>
-        <span class="n">delta_energy</span> <span class="o">=</span> <span class="o">-</span><span class="n">state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">end_state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">-</span> <span class="n">kinetic_energy</span>
-        <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">delta_energy</span><span class="p">),</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">delta_energy</span><span class="p">)</span>
-        <span class="n">is_diverging</span> <span class="o">=</span> <span class="o">-</span><span class="n">delta_energy</span> <span class="o">&gt;</span> <span class="n">divergence_threshold</span>
-        <span class="n">sampled_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">sample_proposal</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">delta_energy</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">end_state</span><span class="p">)</span>
-        <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">,</span> <span class="n">other_proposal_info</span> <span class="o">=</span> <span class="n">info</span>
-
-        <span class="n">info</span> <span class="o">=</span> <span class="n">HMCInfo</span><span class="p">(</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
-            <span class="n">p_accept</span><span class="p">,</span>
-            <span class="n">do_accept</span><span class="p">,</span>
-            <span class="n">is_diverging</span><span class="p">,</span>
-            <span class="n">new_energy</span><span class="p">,</span>
-            <span class="n">end_state</span><span class="p">,</span>
-            <span class="n">num_integration_steps</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">sampled_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">other_proposal_info</span>
-
-    <span class="k">return</span> <span class="n">generate</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">rescale</span><span class="p">(</span><span class="n">mu</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;returns s, such that</span>
-<span class="sd">     round(U(0, 1) * s + 0.5)</span>
-<span class="sd">    has expected value mu.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">k</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">mu</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">k</span> <span class="o">*</span> <span class="p">(</span><span class="n">mu</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">mu</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">k</span> <span class="o">+</span> <span class="n">x</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">trajectory_length</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
