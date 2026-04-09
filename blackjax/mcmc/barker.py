@@ -20,7 +20,7 @@ from jax.flatten_util import ravel_pytree
 from jax.scipy import stats
 
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.metrics import Metric
 from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import ArrayLikeTree, ArrayTree, Numeric, PRNGKey
@@ -219,15 +219,7 @@ def as_top_level_api(
         if inverse_mass_matrix is not None
         else None
     )
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state, logdensity_fn, step_size, metric)
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(logdensity_fn, kernel, init, step_size, metric)
 
 
 def _generate_bernoulli(

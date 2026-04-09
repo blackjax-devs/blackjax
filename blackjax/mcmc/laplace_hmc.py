@@ -37,7 +37,7 @@ import jax
 import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.laplace_marginal import LaplaceMarginal, laplace_marginal_factory
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -228,19 +228,6 @@ def as_top_level_api(
     """
     laplace = laplace_marginal_factory(log_joint_fn, theta_init, **optimizer_kwargs)
     kernel = build_kernel(integrator, divergence_threshold)
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, laplace)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            laplace,
-            step_size,
-            inverse_mass_matrix,
-            num_integration_steps,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        laplace, kernel, init, step_size, inverse_mass_matrix, num_integration_steps
+    )

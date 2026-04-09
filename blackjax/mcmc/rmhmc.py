@@ -16,9 +16,8 @@ from typing import Callable
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc import hmc
-from blackjax.types import ArrayTree, PRNGKey
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
 
@@ -71,19 +70,6 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
     kernel = build_kernel(integrator, divergence_threshold)
-
-    def init_fn(position: ArrayTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            mass_matrix,
-            num_integration_steps,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        logdensity_fn, kernel, init, step_size, mass_matrix, num_integration_steps
+    )

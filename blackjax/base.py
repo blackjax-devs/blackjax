@@ -149,3 +149,47 @@ class AdaptationAlgorithm(NamedTuple):
     """A function that implements an adaptation algorithm."""
 
     run: RunFn
+
+
+def build_sampling_algorithm(
+    logdensity_fn: Callable,
+    kernel: Callable,
+    init_state: Callable,
+    *kernel_parameters,
+) -> SamplingAlgorithm:
+    """Build a ``SamplingAlgorithm`` from standard components.
+
+    Most BlackJAX MCMC algorithms follow the same boilerplate in their
+    ``as_top_level_api`` functions: create an ``init_fn`` that delegates to the
+    module-level ``init`` and a ``step_fn`` that calls the built kernel with
+    fixed parameters.  This helper eliminates that repetition.
+
+    Parameters
+    ----------
+    logdensity_fn
+        The log-density function of the target distribution.  Passed to both
+        ``init_state`` (to compute the initial log-density) and ``kernel`` (as
+        the first argument after ``state``).
+    kernel
+        A kernel function with signature
+        ``(rng_key, state, logdensity_fn, *kernel_parameters) -> (state, info)``.
+    init_state
+        An initialization function with signature
+        ``(position, logdensity_fn) -> state``.
+    *kernel_parameters
+        Extra positional arguments forwarded to ``kernel`` after
+        ``logdensity_fn`` on every step (e.g. ``step_size``, ``metric``).
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    def init_fn(position: Position, rng_key: PRNGKey | None = None):
+        del rng_key
+        return init_state(position, logdensity_fn)
+
+    def step_fn(rng_key: PRNGKey, state: State) -> tuple[State, Info]:
+        return kernel(rng_key, state, logdensity_fn, *kernel_parameters)
+
+    return SamplingAlgorithm(init_fn, step_fn)
