@@ -326,9 +326,8 @@ def periodic_orbital_proposal(
         def orbit_fn(state, i):
             state = jax.lax.cond(
                 i != 0,
-                lambda _: bijection(state, jnp.sign(i) * step_size),
-                lambda _: init_state,
-                operand=None,
+                lambda: bijection(state, jnp.sign(i) * step_size),
+                lambda: init_state,
             )
             kinetic_energy = kinetic_energy_fn(state.momentum)
             weight = state.logdensity - kinetic_energy

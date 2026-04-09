@@ -299,9 +299,8 @@ class Adaptation:
         history_stopping = update_history_scalar(
             jax.lax.cond(
                 adaptation_state.step_count > len(history_weights),
-                lambda _: fluctuations[0],
-                lambda _: jnp.nan,
-                operand=None,
+                lambda: fluctuations[0],
+                lambda: jnp.nan,
             ),
             adaptation_state.history.stopping,
         )

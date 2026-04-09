@@ -88,15 +88,14 @@ def reorder_trajectories(
     """
     return jax.lax.cond(
         direction > 0,
-        lambda _: (
+        lambda: (
             trajectory,
             new_trajectory,
         ),
-        lambda _: (
+        lambda: (
             new_trajectory,
             trajectory,
         ),
-        operand=None,
     )
 
 
@@ -266,15 +265,14 @@ def dynamic_progressive_integration(
             # take one step to get the leftmost state of the tree.
             (new_trajectory, sampled_proposal) = jax.lax.cond(
                 step == 0,
-                lambda _: (
+                lambda: (
                     Trajectory(new_state, new_state, new_state.momentum, 1),
                     new_proposal,
                 ),
-                lambda _: (
+                lambda: (
                     append_to_trajectory(trajectory, new_state),
                     sample_proposal(proposal_key, proposal, new_proposal),
                 ),
-                operand=None,
             )
 
             new_termination_state = update_termination_state(
@@ -314,14 +312,13 @@ def dynamic_progressive_integration(
         # In the while_loop we always extend on the right most direction.
         new_trajectory = jax.lax.cond(
             direction > 0,
-            lambda _: trajectory,
-            lambda _: Trajectory(
+            lambda: trajectory,
+            lambda: Trajectory(
                 trajectory.rightmost_state,
                 trajectory.leftmost_state,
                 trajectory.momentum_sum,
                 trajectory.num_states,
             ),
-            operand=None,
         )
 
         return (
@@ -438,9 +435,8 @@ def dynamic_recursive_integration(
             if (not is_diverging) & (not is_turning):
                 start_state = jax.lax.cond(
                     direction > 0,
-                    lambda _: trajectory.rightmost_state,
-                    lambda _: trajectory.leftmost_state,
-                    operand=None,
+                    lambda: trajectory.rightmost_state,
+                    lambda: trajectory.leftmost_state,
                 )
                 (
                     rng_key,
@@ -593,9 +589,8 @@ def dynamic_multiplicative_expansion(
             direction = jnp.where(jax.random.bernoulli(direction_key), 1, -1)
             start_state = jax.lax.cond(
                 direction > 0,
-                lambda _: trajectory.rightmost_state,
-                lambda _: trajectory.leftmost_state,
-                operand=None,
+                lambda: trajectory.rightmost_state,
+                lambda: trajectory.leftmost_state,
             )
             (
                 new_proposal,
