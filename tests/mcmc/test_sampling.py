@@ -171,12 +171,12 @@ class LinearRegressionTest(chex.TestCase):
             integration_steps_fn=lambda k: jnp.ceil(
                 jax.random.uniform(k) * rescale(avg_num_integration_steps)
             ),
-            inverse_mass_matrix=inverse_mass_matrix,
         )(
             rng_key=rng_key,
             state=state,
-            step_size=step_size,
             logdensity_fn=logdensity_fn,
+            step_size=step_size,
+            inverse_mass_matrix=inverse_mass_matrix,
         )
 
         target_acc_rate = 0.65
