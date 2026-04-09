@@ -34,15 +34,15 @@ Module Contents
    :rtype: The initial DynamicHMCState.
 
 
-.. py:function:: build_kernel(integration_steps_fn, integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], inverse_mass_matrix=1.0)
+.. py:function:: build_kernel(integration_steps_fn, integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1])
 
    Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
+   :param integration_steps_fn: Function that generates the next pseudo or quasi-random number of integration steps in the
+                                sequence, given the current `random_generator_arg`. Needs to return an `int`.
    :param integrator: The integrator to use to integrate the Hamiltonian dynamics.
    :param divergence_threshold: Value of the difference in energy above which we consider that the transition is divergent.
    :param next_random_arg_fn: Function that generates the next `random_generator_arg` from its previous value.
-   :param integration_steps_fn: Function that generates the next pseudo or quasi-random number of integration steps in the
-                                sequence, given the current `random_generator_arg`. Needs to return an `int`.
 
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
