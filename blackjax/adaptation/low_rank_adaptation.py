@@ -13,7 +13,7 @@
 # limitations under the License.
 """Adaptation of the low-rank-modified mass matrix for HMC-family samplers.
 
-Implements Algorithm 1 of :cite:p:`sountsov2025preconditioning`, following the
+Implements Algorithm 1 of :cite:p:`seyboldt2026preconditioning`, following the
 nutpie reference implementation.  The mass matrix has the form
 
 .. math::
@@ -147,7 +147,7 @@ def _compute_low_rank_metric(
 ) -> tuple[Array, Array, Array, Array]:
     """Compute the low-rank metric from a buffer of draws and gradients.
 
-    Implements Algorithm 1 of :cite:p:`sountsov2025preconditioning`, following
+    Implements Algorithm 1 of :cite:p:`seyboldt2026preconditioning`, following
     the nutpie reference implementation.
 
     Parameters
@@ -272,7 +272,7 @@ def base(
 
     Mirrors Stan's three-phase schedule but replaces Welford covariance
     estimation with the Fisher-divergence-minimising low-rank metric of
-    :cite:p:`sountsov2025preconditioning`, following nutpie's implementation.
+    :cite:p:`seyboldt2026preconditioning`, following nutpie's implementation.
 
     Parameters
     ----------
@@ -453,7 +453,7 @@ def low_rank_window_adaptation(
 
     Uses the three-phase Stan-style warmup schedule while replacing Welford
     covariance estimation with the Fisher-divergence-minimising low-rank
-    metric of :cite:p:`sountsov2025preconditioning`.
+    metric of :cite:p:`seyboldt2026preconditioning`.
 
     The returned ``AdaptationAlgorithm`` has a single ``run`` method::
 

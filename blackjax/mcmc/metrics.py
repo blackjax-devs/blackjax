@@ -248,7 +248,7 @@ def gaussian_euclidean_low_rank(
     U: Array,
     lam: Array,
 ) -> Metric:
-    r"""Euclidean metric with low-rank-modified mass matrix :cite:p:`sountsov2025preconditioning`.
+    r"""Euclidean metric with low-rank-modified mass matrix :cite:p:`seyboldt2026preconditioning`.
 
     The inverse mass matrix has the form
 
