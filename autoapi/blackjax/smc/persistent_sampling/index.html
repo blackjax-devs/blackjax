@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.smc.partial_posteriors_path" href="../partial_posteriors_path/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -151,10 +151,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -607,21 +608,9 @@ account for the initial prior distribution at iteration 0.</p>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p>Initial state, with
-- particles set to input particles,
-- weights set to uniform weights,
-- log-likelihoods set to the log-likelihoods of the input particles,
-- normalizing constant set to 1.0 (assume prior is normalized, this is</p>
-<blockquote>
-<div><p>important),</p>
-</div></blockquote>
-<ul class="simple">
-<li><p>tempering parameters set to 0.0 (initial distribution is prior).</p></li>
-<li><p>set iteration to 0.</p></li>
-</ul>
-<p>NOTE: All arrays in the PersistentSMCState are padded with zeros up
-to the length of the tempering schedule.</p>
-</p>
+<dd class="field-even"><p>Initial state with particles, uniform weights, log-likelihoods, normalizing
+constant 1.0, tempering parameters 0.0, and iteration 0.
+All arrays are padded with zeros up to the length of the tempering schedule.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference internal" href="#blackjax.smc.persistent_sampling.PersistentSMCState" title="blackjax.smc.persistent_sampling.PersistentSMCState">PersistentSMCState</a></p>
@@ -787,29 +776,12 @@ constant.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul>
-<li><p><strong>new_state</strong> (<em>PersistentSMCState</em>) – The updated PersistentSMCState. Updated fields are:
-- particles: particles from all iterations, with current iteration’s</p>
-<blockquote>
-<div><p>particles added.</p>
-</div></blockquote>
-<ul class="simple">
-<li><p>weights: normalized weights for all persistent particles at current
-iteration.</p></li>
-<li><p>log_likelihoods: log-likelihoods for all persistent particles,
-with current iteration’s log-likelihoods added.</p></li>
-<li><p>log_Z: log normalizing constants, with current iteration’s
-normalizing constant added.</p></li>
-<li><p>tempering_schedule: tempering parameters, with current iteration’s
-parameter added.</p></li>
-<li><p>iteration: incremented by 1.</p></li>
-</ul>
-</li>
-<li><p><strong>info</strong> (<em>PersistentStateInfo</em>) – An <cite>PersistentStateInfo</cite> object that contains extra information about the PS
-transition. Contains:
-- ancestors: indices of the particles selected by the resampling step.
-- ess: effective sample size of the persistent ensemble.
-- update_info: any extra information returned by the update function.</p></li>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>new_state</strong> (<em>PersistentSMCState</em>) – The updated PersistentSMCState with particles, weights, log-likelihoods,
+log normalizing constants, and tempering parameters from all iterations.
+Iteration counter is incremented by 1.</p></li>
+<li><p><strong>info</strong> (<em>PersistentStateInfo</em>) – Extra information about the transition: ancestors (resampling indices),
+ess (effective sample size), and update_info from the MCMC update step.</p></li>
 </ul>
 </p>
 </dd>

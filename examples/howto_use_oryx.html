@@ -55,7 +55,7 @@
     <link rel="prev" title="Use with Numpyro models" href="howto_use_numpyro.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="current nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_use_pymc.html">PyMC</a></li>
@@ -412,11 +413,16 @@ Number of data points: 150
 </div>
 <div class="cell tag_remove-output docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">date</span>
 <span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">today</span><span class="p">()</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y%m</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)))</span>
+
+<span class="c1"># Suppress DeprecationWarnings from oryx internals (FlatPrimitive DebugInfo)</span>
+<span class="c1"># raised during import under JAX &gt;= 0.4.25</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">category</span><span class="o">=</span><span class="ne">DeprecationWarning</span><span class="p">,</span> <span class="n">module</span><span class="o">=</span><span class="s2">&quot;oryx&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -460,7 +466,7 @@ Number of data points: 150
 <span class="g g-Whitespace">      </span><span class="mi">4</span> <span class="n">tfd</span> <span class="o">=</span> <span class="n">tfp</span><span class="o">.</span><span class="n">distributions</span>
 
 <span class="n">File</span> <span class="o">/</span><span class="n">opt</span><span class="o">/</span><span class="n">hostedtoolcache</span><span class="o">/</span><span class="n">Python</span><span class="o">/</span><span class="mf">3.12.13</span><span class="o">/</span><span class="n">x64</span><span class="o">/</span><span class="n">lib</span><span class="o">/</span><span class="n">python3</span><span class="mf">.12</span><span class="o">/</span><span class="n">site</span><span class="o">-</span><span class="n">packages</span><span class="o">/</span><span class="n">oryx</span><span class="o">/</span><span class="fm">__init__</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">16</span>
-<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2024 The oryx Authors.</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="c1"># Copyright 2026 The oryx Authors.</span>
 <span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="c1">#</span>
 <span class="g g-Whitespace">      </span><span class="mi">3</span> <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
    <span class="p">(</span><span class="o">...</span><span class="p">)</span>     <span class="mi">12</span> <span class="c1"># See the License for the specific language governing permissions and</span>

@@ -101,8 +101,7 @@ Module Contents
    :param integrator: Symplectic integrator used for the HMC trajectory.
    :param divergence_threshold: Energy difference above which a transition is declared divergent.
 
-   :returns: * A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix,
-             * num_integration_steps) -> (LaplaceHMCState, HMCInfo)``.
+   :rtype: A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -> (LaplaceHMCState, HMCInfo)``.
 
 
 .. py:function:: as_top_level_api(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm

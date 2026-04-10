@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -149,10 +149,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -393,7 +394,7 @@
 <a class="viewcode-back" href="../../../autoapi/blackjax/smc/pretuning/index.html#blackjax.smc.pretuning.SMCInfoWithParameterDistribution">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SMCInfoWithParameterDistribution</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Stores both the sampling status and also a dictionary</span>
-<span class="sd">    with parameter names as keys and (n_particles, *) arrays as values.</span>
+<span class="sd">    with parameter names as keys and ``(n_particles, *)`` arrays as values.</span>
 <span class="sd">    The latter represents a parameter per chain for the next mutation step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -623,7 +624,7 @@
 <span class="sd">        A function that returns the probability at a given position.</span>
 <span class="sd">    mcmc_step_fn:</span>
 <span class="sd">        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.</span>
-<span class="sd">        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())</span>
+<span class="sd">        ``mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())``</span>
 <span class="sd">    mcmc_init_fn</span>
 <span class="sd">        A callable that initializes the inner kernel</span>
 <span class="sd">    pretune_fn</span>
@@ -633,8 +634,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A ``kernel(rng_key, state, **extra_step_parameters) -&gt;</span>
-<span class="sd">    (StateWithParameterOverride, SMCInfo)`` function.</span>
+<span class="sd">    A ``kernel(rng_key, state, **extra_step_parameters) -&gt; (StateWithParameterOverride, SMCInfo)`` function.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">delegate</span> <span class="o">=</span> <span class="n">smc_from_mcmc</span><span class="p">(</span><span class="n">mcmc_step_fn</span><span class="p">,</span> <span class="n">mcmc_init_fn</span><span class="p">,</span> <span class="n">resampling_fn</span><span class="p">,</span> <span class="n">update_strategy</span><span class="p">)</span>
 

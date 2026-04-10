@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -149,10 +149,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -400,7 +401,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Stores both the sampling status and also a dictionary</span>
 <span class="sd">    that contains an dictionary with parameter names as key</span>
-<span class="sd">    and (n_particles, *) arrays as meanings. The latter</span>
+<span class="sd">    and ``(n_particles, *)`` arrays as meanings. The latter</span>
 <span class="sd">    represent a parameter per chain for the next mutation step.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -431,8 +432,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A ``StateWithParameterOverride`` combining the SMC state with the</span>
-<span class="sd">    parameter dictionary.</span>
+<span class="sd">    A ``StateWithParameterOverride`` combining the SMC state with the parameter dictionary.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">StateWithParameterOverride</span><span class="p">(</span><span class="n">alg_init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">),</span> <span class="n">initial_parameter_value</span><span class="p">)</span></div>
 
@@ -470,7 +470,7 @@
 <span class="sd">        A function that returns the probability at a given position.</span>
 <span class="sd">    mcmc_step_fn:</span>
 <span class="sd">        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.</span>
-<span class="sd">        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())</span>
+<span class="sd">        ``mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())``</span>
 <span class="sd">    mcmc_init_fn</span>
 <span class="sd">        A callable that initializes the inner kernel</span>
 <span class="sd">    mcmc_parameter_update_fn</span>

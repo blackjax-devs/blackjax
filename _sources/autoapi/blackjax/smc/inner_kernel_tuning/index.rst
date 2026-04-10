@@ -31,7 +31,7 @@ Module Contents
 
    Stores both the sampling status and also a dictionary
    that contains an dictionary with parameter names as key
-   and (n_particles, *) arrays as meanings. The latter
+   and ``(n_particles, *)`` arrays as meanings. The latter
    represent a parameter per chain for the next mutation step.
 
 
@@ -51,8 +51,7 @@ Module Contents
    :param position: Initial particle positions.
    :param initial_parameter_value: Initial MCMC parameter dictionary (one value per parameter name).
 
-   :returns: * A ``StateWithParameterOverride`` combining the SMC state with the
-             * *parameter dictionary.*
+   :rtype: A ``StateWithParameterOverride`` combining the SMC state with the parameter dictionary.
 
 
 .. py:function:: build_kernel(smc_algorithm, logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, mcmc_parameter_update_fn: Callable[[blackjax.types.PRNGKey, blackjax.smc.base.SMCState, blackjax.smc.base.SMCInfo], dict[str, blackjax.types.ArrayTree]], num_mcmc_steps: int = 10, smc_returns_state_with_parameter_override=False, **extra_parameters) -> Callable
@@ -67,7 +66,7 @@ Module Contents
    :param logprior_fn: A function that computes the log density of the prior distribution
    :param loglikelihood_fn: A function that returns the probability at a given position.
    :param mcmc_step_fn: The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
-                        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
+                        ``mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())``
    :param mcmc_init_fn: A callable that initializes the inner kernel
    :param mcmc_parameter_update_fn: A callable that takes the SMCState and SMCInfo at step i and constructs a parameter to be used by the inner kernel in i+1 iteration.
    :param extra_parameters: parameters to be used for the creation of the smc_algorithm.

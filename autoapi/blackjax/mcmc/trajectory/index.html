@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.termination" href="../termination/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -419,7 +420,7 @@
 <span id="blackjax-mcmc-trajectory"></span><h1>blackjax.mcmc.trajectory<a class="headerlink" href="#module-blackjax.mcmc.trajectory" title="Link to this heading">#</a></h1>
 <p>Procedures to build trajectories for algorithms in the HMC family.</p>
 <p>To propose a new state, algorithms in the HMC family generally proceed by
-<span id="id1">[<a class="reference internal" href="../../../../bib.html#id26" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>:</p>
+<span id="id1">[<a class="reference internal" href="../../../../bib.html#id27" title="Michael Betancourt. A conceptual introduction to hamiltonian monte carlo. arXiv preprint arXiv:1701.02434, 2017.">Bet17</a>]</span>:</p>
 <ol class="arabic simple">
 <li><p>Sampling a trajectory starting from the initial point;</p></li>
 <li><p>Sampling a new state from this sampled trajectory.</p></li>
@@ -625,13 +626,8 @@ until the termination criterion is met.</p>
 which we say a transition is divergent.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p>An <a href="#id2"><span class="problematic" id="id3">``</span></a>integrate(rng_key, initial_state, direction, termination_state,</p></li>
-<li><p>max_num_steps, step_size, initial_energy)`` function that returns</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">(proposal,</span> <span class="pre">new_trajectory,</span> <span class="pre">termination_state,</span> <span class="pre">is_diverging,</span> <span class="pre">has_terminated)</span></code>.</p></li>
-</ul>
-</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>An <code class="docutils literal notranslate"><span class="pre">integrate(rng_key,</span> <span class="pre">state,</span> <span class="pre">direction,</span> <span class="pre">termination_state,</span> <span class="pre">max_num_steps,</span> <span class="pre">step_size,</span> <span class="pre">initial_energy)</span></code> function returning <code class="docutils literal notranslate"><span class="pre">(proposal,</span> <span class="pre">new_trajectory,</span> <span class="pre">termination_state,</span> <span class="pre">is_diverging,</span> <span class="pre">has_terminated)</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -641,7 +637,7 @@ which we say a transition is divergent.</p></li>
 <span class="sig-name descname"><span class="pre">dynamic_recursive_integration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">uturn_check_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">use_robust_uturn_check</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#dynamic_recursive_integration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.dynamic_recursive_integration" title="Link to this definition">#</a></dt>
 <dd><p>Integrate a trajectory and update the proposal recursively in Python
 until the termination criterion is met.</p>
-<p>This is the implementation of Algorithm 6 from <span id="id4">[<a class="reference internal" href="../../../../bib.html#id17" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with
+<p>This is the implementation of Algorithm 6 from <span id="id2">[<a class="reference internal" href="../../../../bib.html#id18" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with
 multinomial sampling. The implementation here is mostly for validating the
 progressive implementation to make sure the two are equivalent. The recursive
 implementation should not be used for actually sampling as it cannot be jitted and
@@ -658,13 +654,8 @@ say a transition is divergent.</p></li>
 trajectory.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p>A <a href="#id5"><span class="problematic" id="id6">``</span></a>buildtree_integrate(rng_key, initial_state, direction, tree_depth,</p></li>
-<li><p>step_size, initial_energy)`` function that returns</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">proposal,</span> <span class="pre">trajectory,</span> <span class="pre">is_diverging,</span> <span class="pre">is_turning)</span></code>.</p></li>
-</ul>
-</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">buildtree_integrate(rng_key,</span> <span class="pre">state,</span> <span class="pre">direction,</span> <span class="pre">tree_depth,</span> <span class="pre">step_size,</span> <span class="pre">initial_energy)</span></code> function returning <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">proposal,</span> <span class="pre">trajectory,</span> <span class="pre">is_diverging,</span> <span class="pre">is_turning)</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>

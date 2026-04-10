@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.diagnostics" href="../diagnostics/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -414,7 +415,7 @@
 <td><p>Run ensemble chain adaptation (eca) in parallel on multiple devices.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.eca.ensemble_execute_fn" title="blackjax.eca.ensemble_execute_fn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ensemble_execute_fn</span></code></a>(func, rng_key, num_chains, mesh[, ...])</p></td>
-<td><p>Given a sequential function</p></td>
+<td><p>Given a sequential function <code class="docutils literal notranslate"><span class="pre">func(rng_key,</span> <span class="pre">x,</span> <span class="pre">args)</span> <span class="pre">=</span> <span class="pre">y</span></code>, evaluate it</p></td>
 </tr>
 </tbody>
 </table>
@@ -448,67 +449,52 @@ len(xs) determines the maximum number of iterations.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.eca.run_eca">
 <span class="sig-name descname"><span class="pre">run_eca</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_steps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chains</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superchain_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_chains_info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_stop</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/blackjax/eca.html#run_eca"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.eca.run_eca" title="Link to this definition">#</a></dt>
-<dd><section id="run-ensemble-chain-adaptation-eca-in-parallel-on-multiple-devices">
-<h3>Run ensemble chain adaptation (eca) in parallel on multiple devices.<a class="headerlink" href="#run-ensemble-chain-adaptation-eca-in-parallel-on-multiple-devices" title="Link to this heading">#</a></h3>
+<dd><p>Run ensemble chain adaptation (eca) in parallel on multiple devices.</p>
 <dl class="field-list simple">
-<dt class="field-odd">param rng_key<span class="colon">:</span></dt>
-<dd class="field-odd"><p>random key</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> – random key</p></li>
+<li><p><strong>initial_state</strong> – initial state of the system</p></li>
+<li><p><strong>kernel</strong> – kernel for the dynamics</p></li>
+<li><p><strong>adaptation</strong> – adaptation object</p></li>
+<li><p><strong>num_steps</strong> – number of steps to run</p></li>
+<li><p><strong>num_chains</strong> – number of chains</p></li>
+<li><p><strong>mesh</strong> – mesh for parallelization</p></li>
+<li><p><strong>all_chains_info</strong> – function that takes the state of the system and returns some summary statistics. Will be applied and stored for all the chains at each step so it can be memory intensive.</p></li>
+<li><p><strong>early_stop</strong> – whether to stop early</p></li>
+</ul>
 </dd>
-<dt class="field-even">param initial_state<span class="colon">:</span></dt>
-<dd class="field-even"><p>initial state of the system</p>
-</dd>
-<dt class="field-odd">param kernel<span class="colon">:</span></dt>
-<dd class="field-odd"><p>kernel for the dynamics</p>
-</dd>
-<dt class="field-even">param adaptation<span class="colon">:</span></dt>
-<dd class="field-even"><p>adaptation object</p>
-</dd>
-<dt class="field-odd">param num_steps<span class="colon">:</span></dt>
-<dd class="field-odd"><p>number of steps to run</p>
-</dd>
-<dt class="field-even">param num_chains<span class="colon">:</span></dt>
-<dd class="field-even"><p>number of chains</p>
-</dd>
-<dt class="field-odd">param mesh<span class="colon">:</span></dt>
-<dd class="field-odd"><p>mesh for parallelization</p>
-</dd>
-<dt class="field-even">param all_chains_info<span class="colon">:</span></dt>
-<dd class="field-even"><p>function that takes the state of the system and returns some summary statistics. Will be applied and stored for all the chains at each step so it can be memory intensive.</p>
-</dd>
-<dt class="field-odd">param early_stop<span class="colon">:</span></dt>
-<dd class="field-odd"><p>whether to stop early</p>
-</dd>
-<dt class="field-even">returns<span class="colon">:</span></dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>final state of the system
 final_adaptation_state: final adaptation state
 info_history: history of the information that was stored at each step (if early_stop is False, then this is None)</p>
 </dd>
-<dt class="field-odd">rtype<span class="colon">:</span></dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>final_state</p>
 </dd>
 </dl>
-</section>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.eca.ensemble_execute_fn">
 <span class="sig-name descname"><span class="pre">ensemble_execute_fn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">func</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chains</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">summary_statistics_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">lambda</span> <span class="pre">y:</span> <span class="pre">...</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">superchain_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../_modules/blackjax/eca.html#ensemble_execute_fn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.eca.ensemble_execute_fn" title="Link to this definition">#</a></dt>
-<dd><dl class="simple">
-<dt>Given a sequential function</dt><dd><p>func(rng_key, x, args) = y,</p>
-</dd>
-</dl>
-<p>evaluate it with an ensemble and also compute some summary statistics E[theta(y)], where expectation is taken over ensemble.
-:param x: array distributed over all decvices
-:param args: additional arguments for func, not distributed.
-:param summary_statistics_fn: operates on a chain and returns some summary statistics.
-:param rng_key: a single random key, which will then be split, such that chain will get a different random key.</p>
+<dd><p>Given a sequential function <code class="docutils literal notranslate"><span class="pre">func(rng_key,</span> <span class="pre">x,</span> <span class="pre">args)</span> <span class="pre">=</span> <span class="pre">y</span></code>, evaluate it
+with an ensemble and compute summary statistics <code class="docutils literal notranslate"><span class="pre">E[theta(y)]</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Returns<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array distributed over all decvices. Need not be of the same shape as x.
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – array distributed over all devices</p></li>
+<li><p><strong>args</strong> – additional arguments for func, not distributed.</p></li>
+<li><p><strong>summary_statistics_fn</strong> – operates on a chain and returns some summary statistics.</p></li>
+<li><p><strong>rng_key</strong> – a single random key, which will then be split so each chain gets a different key.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>array distributed over all devices. Need not be of the same shape as x.
 Etheta: expected values of the summary statistics</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>y</p>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>y</p>
 </dd>
 </dl>
 </dd></dl>

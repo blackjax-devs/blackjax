@@ -87,21 +87,14 @@ Module Contents
 
    High-level implementation of Mean-Field Variational Inference
 
-    Parameters
-   ----------
-   logdensity_fn
-       A function that represents the log-density function associated with
-       the distribution we want to sample from.
-   optimizer
-       Optax optimizer to use to optimize the variational objective.
-   num_samples
-       Number of samples to take at each step to optimize the ELBO.
-   objective
-       The variational objective to minimize. `KL()` by default or
-       `RenyiAlpha(alpha)`. For a = 1, Renyi reduces to KL.
-   stl_estimator
-       Whether to use the STL gradient estimator.
-       Only supported when `objective` is `KL()` or `RenyiAlpha(alpha=1.0)`.
+   :param logdensity_fn: A function that represents the log-density function associated with
+                         the distribution we want to sample from.
+   :param optimizer: Optax optimizer to use to optimize the variational objective.
+   :param num_samples: Number of samples to take at each step to optimize the ELBO.
+   :param objective: The variational objective to minimize. `KL()` by default or
+                     `RenyiAlpha(alpha)`. For a = 1, Renyi reduces to KL.
+   :param stl_estimator: Whether to use the STL gradient estimator.
+                         Only supported when `objective` is `KL()` or `RenyiAlpha(alpha=1.0)`.
 
    :rtype: A ``VIAlgorithm``.
 

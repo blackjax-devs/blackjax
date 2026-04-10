@@ -81,9 +81,8 @@ Module Contents
    :param gtol: Gradient norm convergence tolerance.
    :param ftol: Function value convergence tolerance.
 
-   :returns: * A ``MultipathfinderState`` (all path states + per-path samples and log
-             * densities) and a ``PathfinderInfo`` wrapping all per-path
-             * ``PathfinderState``s.
+   :returns: * A ``MultipathfinderState`` (all path states, per-path samples, and log densities)
+             * and a ``PathfinderInfo`` wrapping all per-path ``PathfinderState`` objects.
 
 
 .. py:function:: psis_weights(state: MultipathfinderState) -> tuple[blackjax.types.Array, blackjax.types.Array]

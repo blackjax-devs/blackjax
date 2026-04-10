@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -149,10 +149,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -437,8 +438,10 @@
     <span class="n">update_strategy</span><span class="o">=</span><span class="n">update_and_take_last</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Partial Posteriors (data tempering) SMC kernel.</span>
+
 <span class="sd">    The distribution&#39;s trajectory includes increasingly adding more</span>
 <span class="sd">    datapoints to the likelihood. See Section 2.2 of https://arxiv.org/pdf/2007.11936</span>
+
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    mcmc_step_fn</span>
@@ -451,15 +454,13 @@
 <span class="sd">        Number of iterations in the MCMC chain.</span>
 <span class="sd">    mcmc_parameters</span>
 <span class="sd">        A dictionary of parameters to be used by the inner MCMC kernels</span>
-<span class="sd">    partial_logposterior_factory:</span>
-<span class="sd">        A callable that given an array of 0 and 1, returns a function logposterior(x).</span>
-<span class="sd">        The array represents which values to include in the logposterior calculation. The logposterior</span>
-<span class="sd">        must be jax compilable.</span>
+<span class="sd">    partial_logposterior_factory</span>
+<span class="sd">        A callable taking a binary array of length n_data and returning a logposterior function.</span>
+<span class="sd">        The binary array indicates which data points to include. Must be JAX-compilable.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A callable that takes a rng_key and PartialPosteriorsSMCState and selectors for</span>
-<span class="sd">    the current and previous posteriors, and takes a data-tempered SMC state.</span>
+<span class="sd">    A callable that takes a rng_key and PartialPosteriorsSMCState and selectors for the current and previous posteriors, and takes a data-tempered SMC state.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">delegate</span> <span class="o">=</span> <span class="n">smc_from_mcmc</span><span class="p">(</span><span class="n">mcmc_step_fn</span><span class="p">,</span> <span class="n">mcmc_init_fn</span><span class="p">,</span> <span class="n">resampling_fn</span><span class="p">,</span> <span class="n">update_strategy</span><span class="p">)</span>
 

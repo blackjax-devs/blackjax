@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.vi" href="../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -502,8 +503,8 @@ the approximation and the target log-density.</p></li>
 <li><p><strong>objective</strong> – The variational objective to minimize. <cite>KL()</cite> by default or
 <cite>RenyiAlpha(alpha)</cite>. For alpha = 1, Renyi reduces to KL.</p></li>
 <li><p><strong>stl_estimator</strong> – Whether to use the stick-the-landing (STL) gradient estimator
-<span id="id1">[<a class="reference internal" href="../../../../bib.html#id40" title="Geoffrey Roeder, Yuhuai Wu, and David K Duvenaud. Sticking the landing: simple, lower-variance gradient estimators for variational inference. Advances in Neural Information Processing Systems, 2017.">RWD17</a>]</span>. Reduces gradient variance by removing
-the score function term. Recommended in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id41" title="Abhinav Agrawal, Daniel R Sheldon, and Justin Domke. Advances in black-box vi: normalizing flows, importance weighting, and optimization. Advances in Neural Information Processing Systems, 33:17358–17369, 2020.">ASD20</a>]</span>.</p></li>
+<span id="id1">[<a class="reference internal" href="../../../../bib.html#id41" title="Geoffrey Roeder, Yuhuai Wu, and David K Duvenaud. Sticking the landing: simple, lower-variance gradient estimators for variational inference. Advances in Neural Information Processing Systems, 2017.">RWD17</a>]</span>. Reduces gradient variance by removing
+the score function term. Recommended in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id42" title="Abhinav Agrawal, Daniel R Sheldon, and Justin Domke. Advances in black-box vi: normalizing flows, importance weighting, and optimization. Advances in Neural Information Processing Systems, 33:17358–17369, 2020.">ASD20</a>]</span>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

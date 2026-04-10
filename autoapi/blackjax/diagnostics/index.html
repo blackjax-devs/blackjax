@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.window_adaptation" href="../adaptation/window_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -151,10 +151,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -435,7 +436,7 @@ contains a chain dimension and a sample dimension.</p></li>
 <p>where <span class="math notranslate nohighlight">\(W\)</span> is the within-chain variance and <span class="math notranslate nohighlight">\(\hat{V}\)</span> is the posterior variance
 estimate for the pooled traces. This is the potential scale reduction factor, which
 converges to unity when each of the traces is a sample from the target posterior. Values
-greater than one indicate that one or more chains have not yet converged <span id="id1">[<a class="reference internal" href="../../../bib.html#id4" title="Potential scale reduction, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction.">stac</a>, <a class="reference internal" href="../../../bib.html#id3" title="Andrew Gelman and Donald B Rubin. Inference from iterative simulation using multiple sequences. Statistical science, pages 457–472, 1992.">GR92</a>]</span>.</p>
+greater than one indicate that one or more chains have not yet converged <span id="id1">[<a class="reference internal" href="../../../bib.html#id5" title="Potential scale reduction, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/notation-for-samples-chains-and-draws.html#potential-scale-reduction.">stac</a>, <a class="reference internal" href="../../../bib.html#id4" title="Andrew Gelman and Donald B Rubin. Inference from iterative simulation using multiple sequences. Statistical science, pages 457–472, 1992.">GR92</a>]</span>.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -464,16 +465,16 @@ contains a chain dimension and a sample dimension.</p></li>
 <p>where <span class="math notranslate nohighlight">\(M\)</span> is the number of chains, <span class="math notranslate nohighlight">\(N\)</span> the number of draws,
 <span class="math notranslate nohighlight">\(\hat{\rho}_t\)</span> is the estimated _autocorrelation at lag <span class="math notranslate nohighlight">\(t\)</span>, and
 <span class="math notranslate nohighlight">\(K\)</span> is the last integer for which <span class="math notranslate nohighlight">\(\hat{P}_{K} = \hat{\rho}_{2K} +
-\hat{\rho}_{2K+1}\)</span> is still positive <span id="id2">[<a class="reference internal" href="../../../bib.html#id5" title="Effective sample size, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html.">staa</a>, <a class="reference internal" href="../../../bib.html#id10" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 1995.">GCSR95</a>]</span>.</p>
+\hat{\rho}_{2K+1}\)</span> is still positive <span id="id2">[<a class="reference internal" href="../../../bib.html#id6" title="Effective sample size, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html.">staa</a>, <a class="reference internal" href="../../../bib.html#id11" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 1995.">GCSR95</a>]</span>.</p>
 <p>The current implementation is similar to Stan, which uses Geyer’s initial monotone sequence
-criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#id11" title="Charles J Geyer. Practical markov chain monte carlo. Statistical science, pages 473–483, 1992.">Gey92</a>, <a class="reference internal" href="../../../bib.html#id12" title="Charles J Geyer. Introduction to markov chain monte carlo. Handbook of Markov Chain Monte Carlo, 20116022:45, 2011.">Gey11</a>]</span>.</p>
+criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#id12" title="Charles J Geyer. Practical markov chain monte carlo. Statistical science, pages 473–483, 1992.">Gey92</a>, <a class="reference internal" href="../../../bib.html#id13" title="Charles J Geyer. Introduction to markov chain monte carlo. Handbook of Markov Chain Monte Carlo, 20116022:45, 2011.">Gey11</a>]</span>.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.diagnostics.psis_weights">
 <span class="sig-name descname"><span class="pre">psis_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">log_ratios</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">r_eff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#psis_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.psis_weights" title="Link to this definition">#</a></dt>
 <dd><p>Pareto Smoothed Importance Sampling (PSIS) log weights.</p>
-<p>Implements the PSIS smoothing step from <span id="id4">[]</span>:
+<p>Implements the PSIS smoothing step from <span id="id4">[<a class="reference internal" href="../../../bib.html#id3" title="Aki Vehtari, Andrew Gelman, and Jonah Gabry. Practical bayesian model evaluation using leave-one-out cross-validation and WAIC. Statistics and Computing, 27(5):1413–1432, 2017.">VGG17</a>]</span>:
 the <code class="docutils literal notranslate"><span class="pre">M</span></code> largest importance ratios (in ratio space) are replaced by sorted
 Generalised Pareto quantiles fitted by the empirical Bayes estimator of
 Zhang &amp; Stephens (2009), then all weights are normalised.</p>

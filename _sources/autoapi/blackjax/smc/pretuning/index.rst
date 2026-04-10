@@ -34,7 +34,7 @@ Module Contents
 
 
    Stores both the sampling status and also a dictionary
-   with parameter names as keys and (n_particles, *) arrays as values.
+   with parameter names as keys and ``(n_particles, *)`` arrays as values.
    The latter represents a parameter per chain for the next mutation step.
 
 
@@ -100,13 +100,12 @@ Module Contents
    :param logprior_fn: A function that computes the log density of the prior distribution
    :param loglikelihood_fn: A function that returns the probability at a given position.
    :param mcmc_step_fn: The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
-                        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
+                        ``mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())``
    :param mcmc_init_fn: A callable that initializes the inner kernel
    :param pretune_fn: A callable that can update the probability distribution of parameters.
    :param extra_parameters: Parameters to be used for the creation of the smc_algorithm.
 
-   :returns: * A ``kernel(rng_key, state, \*\*extra_step_parameters) ->
-             * (StateWithParameterOverride, SMCInfo)`` function.
+   :rtype: A ``kernel(rng_key, state, \*\*extra_step_parameters) -> (StateWithParameterOverride, SMCInfo)`` function.
 
 
 .. py:function:: init(alg_init_fn, position, initial_parameter_value)

@@ -82,7 +82,8 @@ Module Contents
 
    .. rubric:: Example
 
-   .. code::
+   .. code-block:: python
+
        kernel = blackjax.mcmc.mclmc.build_kernel(integrator=integrator)
 
        (

@@ -51,11 +51,11 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/quickstart';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Use with Aesara models" href="howto_use_aesara.html" />
+    <link rel="next" title="BlackJAX Design Principles" href="design_principles.html" />
     <link rel="prev" title="Welcome to Blackjax!" href="../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_use_pymc.html">PyMC</a></li>
@@ -474,7 +475,7 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-35419.605, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1269.9668, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(66004.33, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-32528.588, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1310.6508, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(60222.312, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -522,8 +523,8 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.29 s, sys: 152 ms, total: 3.44 s
-Wall time: 2.13 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.48 s, sys: 162 ms, total: 3.64 s
+Wall time: 2.29 s
 </pre></div>
 </div>
 </div>
@@ -548,7 +549,7 @@ Wall time: 2.13 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/61bde2a31c4426689bee3ccbe1856b4b55e0dcc478d78f242230ca88bca34380.png" src="../_images/61bde2a31c4426689bee3ccbe1856b4b55e0dcc478d78f242230ca88bca34380.png" />
+<img alt="../_images/6b09e0e1bfce1aa3e98be81d2741152e49ce5bf7db3ca3386ef7c18e7cf117b2.png" src="../_images/6b09e0e1bfce1aa3e98be81d2741152e49ce5bf7db3ca3386ef7c18e7cf117b2.png" />
 </div>
 </div>
 </section>
@@ -575,7 +576,7 @@ Wall time: 2.13 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-35419.605, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1269.9668, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(66004.33, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-32528.588, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1310.6508, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(60222.312, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -592,8 +593,8 @@ Wall time: 2.13 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.5 s, sys: 444 ms, total: 17.9 s
-Wall time: 14.5 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.1 s, sys: 455 ms, total: 17.5 s
+Wall time: 14.1 s
 </pre></div>
 </div>
 </div>
@@ -618,7 +619,7 @@ Wall time: 14.5 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/7494d936957340469853b3b9982c1efeec95941d227528de808a54c43e82fd2c.png" src="../_images/7494d936957340469853b3b9982c1efeec95941d227528de808a54c43e82fd2c.png" />
+<img alt="../_images/ae3424f1e23871d109d5b8e74fb19755140eafc975ca18b3fe00adfc3cf5f8f6.png" src="../_images/ae3424f1e23871d109d5b8e74fb19755140eafc975ca18b3fe00adfc3cf5f8f6.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -636,8 +637,8 @@ Wall time: 14.5 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.04 s, sys: 83.9 ms, total: 3.13 s
-Wall time: 1.41 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.89 s, sys: 99.6 ms, total: 2.99 s
+Wall time: 1.36 s
 </pre></div>
 </div>
 </div>
@@ -656,8 +657,8 @@ Wall time: 1.41 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.24 s, sys: 33 ms, total: 2.27 s
-Wall time: 942 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.1 s, sys: 31 ms, total: 2.13 s
+Wall time: 883 ms
 </pre></div>
 </div>
 </div>
@@ -682,7 +683,7 @@ Wall time: 942 ms
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/01654de7f8815d740057000bb207dde9552421b2627fc4cf308935cf4dd47457.png" src="../_images/01654de7f8815d740057000bb207dde9552421b2627fc4cf308935cf4dd47457.png" />
+<img alt="../_images/8461c8e5ecaf0e51196e497bc70f1c453bd7250637706a306e0ee2791671571c.png" src="../_images/8461c8e5ecaf0e51196e497bc70f1c453bd7250637706a306e0ee2791671571c.png" />
 </div>
 </div>
 </section>
@@ -710,11 +711,11 @@ Wall time: 942 ms
       </div>
     </a>
     <a class="right-next"
-       href="howto_use_aesara.html"
+       href="design_principles.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use with Aesara models</p>
+        <p class="prev-next-title">BlackJAX Design Principles</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

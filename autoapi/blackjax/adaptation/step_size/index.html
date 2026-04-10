@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.pathfinder_adaptation" href="../pathfinder_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -151,10 +151,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -485,23 +486,23 @@ metropolis acceptance rate at time <span class="math notranslate nohighlight">\(
 aceptance rate. We define:</p>
 <p>the error at time t. We would like to find a procedure that adapts the
 value of <span class="math notranslate nohighlight">\(\epsilon\)</span> such that <span class="math notranslate nohighlight">\(h(x) =\mathbb{E}\left[H_t|\epsilon\right] = 0\)</span></p>
-<p>Following <span id="id1">[<a class="reference internal" href="../../../../bib.html#id16" title="Yurii Nesterov. Primal-dual subgradient methods for convex problems. Mathematical programming, 120(1):221–259, 2009.">Nes09</a>]</span>, the authors of <span id="id2">[<a class="reference internal" href="../../../../bib.html#id17" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> proposed the following update scheme. If
+<p>Following <span id="id1">[<a class="reference internal" href="../../../../bib.html#id17" title="Yurii Nesterov. Primal-dual subgradient methods for convex problems. Mathematical programming, 120(1):221–259, 2009.">Nes09</a>]</span>, the authors of <span id="id2">[<a class="reference internal" href="../../../../bib.html#id18" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> proposed the following update scheme. If
 we note <span class="math notranslate nohighlight">\(x = \log \epsilon\)</span> we follow:</p>
 <p><span class="math notranslate nohighlight">\(\overline{x}_{t}\)</span> is guaranteed to converge to a value such that
 <span class="math notranslate nohighlight">\(h(\overline{x}_t)\)</span> converges to 0, i.e. the Metropolis acceptance
 rate converges to the desired rate.</p>
-<p>See reference <span id="id3">[<a class="reference internal" href="../../../../bib.html#id17" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> (section 3.2.1) for a detailed discussion.</p>
+<p>See reference <span id="id3">[<a class="reference internal" href="../../../../bib.html#id18" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> (section 3.2.1) for a detailed discussion.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>t0</strong> (<em>float &gt;= 0</em>) – Free parameter that stabilizes the initial iterations of the algorithm.
-Large values may slow down convergence. Introduced in <span id="id4">[<a class="reference internal" href="../../../../bib.html#id17" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with a default
+Large values may slow down convergence. Introduced in <span id="id4">[<a class="reference internal" href="../../../../bib.html#id18" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> with a default
 value of 10.</p></li>
-<li><p><strong>gamma</strong> – Controls the speed of convergence of the scheme. The authors of <span id="id5">[<a class="reference internal" href="../../../../bib.html#id17" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> recommend
+<li><p><strong>gamma</strong> – Controls the speed of convergence of the scheme. The authors of <span id="id5">[<a class="reference internal" href="../../../../bib.html#id18" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span> recommend
 a value of 0.05.</p></li>
 <li><p><strong>kappa</strong> (<em>float in</em><em> [</em><em>0.5</em><em>, </em><em>1</em><em>]</em>) – Controls the weights of past steps in the current update. The scheme will
 quickly forget earlier step for a small value of <cite>kappa</cite>. Introduced
-in <span id="id6">[<a class="reference internal" href="../../../../bib.html#id17" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>, with a recommended value of .75</p></li>
+in <span id="id6">[<a class="reference internal" href="../../../../bib.html#id18" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>, with a recommended value of .75</p></li>
 <li><p><strong>target</strong> – Target acceptance rate.</p></li>
 </ul>
 </dd>
@@ -523,7 +524,7 @@ in <span id="id6">[<a class="reference internal" href="../../../../bib.html#id17
 value for the step size starting from any value, choosing a good first
 value can speed up the convergence. This heuristics doubles and halves the
 step size until the acceptance probability of the HMC proposal crosses the
-target value <span id="id7">[<a class="reference internal" href="../../../../bib.html#id17" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>.</p>
+target value <span id="id7">[<a class="reference internal" href="../../../../bib.html#id18" title="Matthew D Hoffman, Andrew Gelman, and others. The no-u-turn sampler: adaptively setting path lengths in hamiltonian monte carlo. J. Mach. Learn. Res., 15(1):1593–1623, 2014.">HG+14</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

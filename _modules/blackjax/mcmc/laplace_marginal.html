@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -149,10 +149,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -432,36 +433,17 @@
 <span class="sd">    Each attribute is a plain callable, testable and reusable independently.</span>
 <span class="sd">    The dataclass is a named container — there is no mutable state.</span>
 
-<span class="sd">    Attributes</span>
-<span class="sd">    ----------</span>
-<span class="sd">    solve_theta</span>
-<span class="sd">        ``(phi, theta_prev=None) -&gt; theta_star`` — finds the mode of the</span>
-<span class="sd">        conditional posterior ``p(theta | phi, y)`` via L-BFGS.  No custom</span>
-<span class="sd">        VJP; useful for warm-starting and standalone testing.</span>
-<span class="sd">    get_theta_star</span>
-<span class="sd">        ``(phi, theta_prev=None) -&gt; theta_star`` — same as ``solve_theta``</span>
-<span class="sd">        but wrapped in ``jax.lax.custom_root`` so the result is</span>
-<span class="sd">        differentiable w.r.t. ``phi`` via the implicit function theorem.</span>
-<span class="sd">    log_marginal</span>
-<span class="sd">        ``(phi, theta_prev=None) -&gt; (lp, theta_star)`` — evaluates the</span>
-<span class="sd">        Laplace-approximated log-marginal ``log p̂(phi | y)`` and returns</span>
-<span class="sd">        ``theta_star`` as auxiliary output.  Designed for::</span>
+<span class="sd">    The four callables are:</span>
 
-<span class="sd">            (lp, theta_star), grad = jax.value_and_grad(</span>
-<span class="sd">                laplace.log_marginal, has_aux=True</span>
-<span class="sd">            )(phi)</span>
-<span class="sd">    sample_theta</span>
-<span class="sd">        ``(rng_key, phi, theta_star) -&gt; theta_sample`` — draws one sample</span>
-<span class="sd">        from the Laplace-approximate conditional posterior::</span>
-
-<span class="sd">            p(theta | phi, y) ≈ N(theta_star, H(phi)^{-1})</span>
-
-<span class="sd">        where ``H = -d²/dtheta² log_joint`` at the mode ``theta_star``.</span>
-<span class="sd">        Use this to recover samples of the marginalized latent variables</span>
-<span class="sd">        after running MCMC on ``phi``::</span>
-
-<span class="sd">            theta_sample = laplace.sample_theta(rng_key, state.position,</span>
-<span class="sd">                                                state.theta_star)</span>
+<span class="sd">    - ``solve_theta(phi, theta_prev=None) -&gt; theta_star``: finds the mode of</span>
+<span class="sd">      ``p(theta | phi, y)`` via L-BFGS.  No custom VJP; useful for warm-starting.</span>
+<span class="sd">    - ``get_theta_star(phi, theta_prev=None) -&gt; theta_star``: same as</span>
+<span class="sd">      ``solve_theta`` but wrapped in ``jax.lax.custom_root`` for IFT gradients.</span>
+<span class="sd">    - ``log_marginal(phi, theta_prev=None) -&gt; (lp, theta_star)``: evaluates the</span>
+<span class="sd">      Laplace log-marginal and returns ``theta_star`` as auxiliary output.</span>
+<span class="sd">      Use with ``jax.value_and_grad(..., has_aux=True)``.</span>
+<span class="sd">    - ``sample_theta(rng_key, phi, theta_star) -&gt; theta_sample``: draws one</span>
+<span class="sd">      sample from ``p(theta | phi, y) ≈ N(theta_star, H(phi)^{-1})``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="LaplaceMarginal.solve_theta">

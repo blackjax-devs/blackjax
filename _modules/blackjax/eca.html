@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -149,10 +149,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -558,7 +559,7 @@
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Run ensemble chain adaptation (eca) in parallel on multiple devices.</span>
-<span class="sd">    -----------------------------------------------------</span>
+
 <span class="sd">    Args:</span>
 <span class="sd">        rng_key: random key</span>
 <span class="sd">        initial_state: initial state of the system</span>
@@ -656,18 +657,18 @@
     <span class="n">summary_statistics_fn</span><span class="o">=</span><span class="k">lambda</span> <span class="n">y</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">superchain_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a sequential function</span>
-<span class="sd">     func(rng_key, x, args) = y,</span>
-<span class="sd">    evaluate it with an ensemble and also compute some summary statistics E[theta(y)], where expectation is taken over ensemble.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Given a sequential function ``func(rng_key, x, args) = y``, evaluate it</span>
+<span class="sd">    with an ensemble and compute summary statistics ``E[theta(y)]``.</span>
+
 <span class="sd">    Args:</span>
-<span class="sd">         x: array distributed over all decvices</span>
-<span class="sd">         args: additional arguments for func, not distributed.</span>
-<span class="sd">         summary_statistics_fn: operates on a chain and returns some summary statistics.</span>
-<span class="sd">         rng_key: a single random key, which will then be split, such that chain will get a different random key.</span>
+<span class="sd">        x: array distributed over all devices</span>
+<span class="sd">        args: additional arguments for func, not distributed.</span>
+<span class="sd">        summary_statistics_fn: operates on a chain and returns some summary statistics.</span>
+<span class="sd">        rng_key: a single random key, which will then be split so each chain gets a different key.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">         y: array distributed over all decvices. Need not be of the same shape as x.</span>
-<span class="sd">         Etheta: expected values of the summary statistics</span>
+<span class="sd">        y: array distributed over all devices. Need not be of the same shape as x.</span>
+<span class="sd">        Etheta: expected values of the summary statistics</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">p</span><span class="p">,</span> <span class="n">pscalar</span> <span class="o">=</span> <span class="n">PartitionSpec</span><span class="p">(</span><span class="s2">&quot;chains&quot;</span><span class="p">),</span> <span class="n">PartitionSpec</span><span class="p">()</span>
 

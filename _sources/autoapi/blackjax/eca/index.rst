@@ -43,7 +43,7 @@ Module Contents
 .. py:function:: run_eca(rng_key, initial_state, kernel, adaptation, num_steps, num_chains, mesh, superchain_size=None, all_chains_info=None, early_stop=False)
 
    Run ensemble chain adaptation (eca) in parallel on multiple devices.
-   -----------------------------------------------------
+
    :param rng_key: random key
    :param initial_state: initial state of the system
    :param kernel: kernel for the dynamics
@@ -62,15 +62,15 @@ Module Contents
 
 .. py:function:: ensemble_execute_fn(func, rng_key, num_chains, mesh, x=None, args=None, summary_statistics_fn=lambda y: 0.0, superchain_size=None)
 
-   Given a sequential function
-    func(rng_key, x, args) = y,
-   evaluate it with an ensemble and also compute some summary statistics E[theta(y)], where expectation is taken over ensemble.
-   :param x: array distributed over all decvices
+   Given a sequential function ``func(rng_key, x, args) = y``, evaluate it
+   with an ensemble and compute summary statistics ``E[theta(y)]``.
+
+   :param x: array distributed over all devices
    :param args: additional arguments for func, not distributed.
    :param summary_statistics_fn: operates on a chain and returns some summary statistics.
-   :param rng_key: a single random key, which will then be split, such that chain will get a different random key.
+   :param rng_key: a single random key, which will then be split so each chain gets a different key.
 
-   :returns: array distributed over all decvices. Need not be of the same shape as x.
+   :returns: array distributed over all devices. Need not be of the same shape as x.
              Etheta: expected values of the summary statistics
    :rtype: y
 

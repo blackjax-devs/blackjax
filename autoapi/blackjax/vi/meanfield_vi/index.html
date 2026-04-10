@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.vi.fullrank_vi" href="../fullrank_vi/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -485,9 +486,9 @@ the approximation and the target log-density.</p></li>
 <li><p><strong>objective</strong> – The variational objective to minimize. <cite>KL()</cite> by default or
 <cite>RenyiAlpha(alpha)</cite>. For alpha = 1, Renyi reduces to KL.</p></li>
 <li><p><strong>stl_estimator</strong> – Whether to use the stick-the-landing (STL) gradient estimator
-<span id="id1">[<a class="reference internal" href="../../../../bib.html#id40" title="Geoffrey Roeder, Yuhuai Wu, and David K Duvenaud. Sticking the landing: simple, lower-variance gradient estimators for variational inference. Advances in Neural Information Processing Systems, 2017.">RWD17</a>]</span>. The STL estimator has lower gradient
+<span id="id1">[<a class="reference internal" href="../../../../bib.html#id41" title="Geoffrey Roeder, Yuhuai Wu, and David K Duvenaud. Sticking the landing: simple, lower-variance gradient estimators for variational inference. Advances in Neural Information Processing Systems, 2017.">RWD17</a>]</span>. The STL estimator has lower gradient
 variance by removing the score function term from the gradient.
-<span id="id2">[<a class="reference internal" href="../../../../bib.html#id41" title="Abhinav Agrawal, Daniel R Sheldon, and Justin Domke. Advances in black-box vi: normalizing flows, importance weighting, and optimization. Advances in Neural Information Processing Systems, 33:17358–17369, 2020.">ASD20</a>]</span> recommend keeping it enabled.</p></li>
+<span id="id2">[<a class="reference internal" href="../../../../bib.html#id42" title="Abhinav Agrawal, Daniel R Sheldon, and Justin Domke. Advances in black-box vi: normalizing flows, importance weighting, and optimization. Advances in Neural Information Processing Systems, 33:17358–17369, 2020.">ASD20</a>]</span> recommend keeping it enabled.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -518,27 +519,21 @@ variance by removing the score function term from the gradient.
 <dt class="sig sig-object py" id="blackjax.vi.meanfield_vi.as_top_level_api">
 <span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">optax.GradientTransformation</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objective</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.vi._gaussian_vi.Objective</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">KL()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stl_estimator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/vi/meanfield_vi.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.vi.meanfield_vi.as_top_level_api" title="Link to this definition">#</a></dt>
 <dd><p>High-level implementation of Mean-Field Variational Inference</p>
-<blockquote>
-<div><p>Parameters</p>
-</div></blockquote>
-<blockquote>
-<div><p>the distribution we want to sample from.</p>
-</div></blockquote>
-<dl class="simple">
-<dt>optimizer</dt><dd><p>Optax optimizer to use to optimize the variational objective.</p>
-</dd>
-<dt>num_samples</dt><dd><p>Number of samples to take at each step to optimize the ELBO.</p>
-</dd>
-<dt>objective</dt><dd><p>The variational objective to minimize. <cite>KL()</cite> by default or
-<cite>RenyiAlpha(alpha)</cite>. For a = 1, Renyi reduces to KL.</p>
-</dd>
-<dt>stl_estimator</dt><dd><p>Whether to use the STL gradient estimator.
-Only supported when <cite>objective</cite> is <cite>KL()</cite> or <cite>RenyiAlpha(alpha=1.0)</cite>.</p>
-</dd>
-</dl>
 <dl class="field-list simple">
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>A <code class="docutils literal notranslate"><span class="pre">VIAlgorithm</span></code>.</p>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – A function that represents the log-density function associated with
+the distribution we want to sample from.</p></li>
+<li><p><strong>optimizer</strong> – Optax optimizer to use to optimize the variational objective.</p></li>
+<li><p><strong>num_samples</strong> – Number of samples to take at each step to optimize the ELBO.</p></li>
+<li><p><strong>objective</strong> – The variational objective to minimize. <cite>KL()</cite> by default or
+<cite>RenyiAlpha(alpha)</cite>. For a = 1, Renyi reduces to KL.</p></li>
+<li><p><strong>stl_estimator</strong> – Whether to use the STL gradient estimator.
+Only supported when <cite>objective</cite> is <cite>KL()</cite> or <cite>RenyiAlpha(alpha=1.0)</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">VIAlgorithm</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>

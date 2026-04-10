@@ -151,9 +151,7 @@ Module Contents
    :param divergence_threshold: Value of the difference of energy between two consecutive states above
                                 which we say a transition is divergent.
 
-   :returns: * An ``integrate(rng_key, initial_state, direction, termination_state,
-             * max_num_steps, step_size, initial_energy)`` function that returns
-             * ``(proposal, new_trajectory, termination_state, is_diverging, has_terminated)``.
+   :rtype: An ``integrate(rng_key, state, direction, termination_state, max_num_steps, step_size, initial_energy)`` function returning ``(proposal, new_trajectory, termination_state, is_diverging, has_terminated)``.
 
 
 .. py:function:: dynamic_recursive_integration(integrator: Callable, kinetic_energy: Callable, uturn_check_fn: Callable, divergence_threshold: float, use_robust_uturn_check: bool = False)
@@ -175,9 +173,7 @@ Module Contents
    :param use_robust_uturn_check: Bool to indicate whether to perform additional U turn check between two
                                   trajectory.
 
-   :returns: * A ``buildtree_integrate(rng_key, initial_state, direction, tree_depth,
-             * step_size, initial_energy)`` function that returns
-             * ``(rng_key, proposal, trajectory, is_diverging, is_turning)``.
+   :rtype: A ``buildtree_integrate(rng_key, state, direction, tree_depth, step_size, initial_energy)`` function returning ``(rng_key, proposal, trajectory, is_diverging, is_turning)``.
 
 
 .. py:class:: DynamicExpansionState

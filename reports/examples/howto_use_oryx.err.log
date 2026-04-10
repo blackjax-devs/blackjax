@@ -53,7 +53,7 @@ def dense(dim_out, activation=jax.nn.relu):
 [32m      4[39m tfd = tfp.distributions
 
 [36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/oryx/__init__.py:16[39m
-[32m      1[39m [38;5;66;03m# Copyright 2024 The oryx Authors.[39;00m
+[32m      1[39m [38;5;66;03m# Copyright 2026 The oryx Authors.[39;00m
 [32m      2[39m [38;5;66;03m#[39;00m
 [32m      3[39m [38;5;66;03m# Licensed under the Apache License, Version 2.0 (the "License");[39;00m
 [32m   (...)[39m[32m     12[39m [38;5;66;03m# See the License for the specific language governing permissions and[39;00m

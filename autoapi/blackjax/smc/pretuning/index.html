@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.smc.persistent_sampling" href="../persistent_sampling/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -446,7 +447,7 @@
 <dt class="sig sig-object py" id="blackjax.smc.pretuning.SMCInfoWithParameterDistribution">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SMCInfoWithParameterDistribution</span></span><a class="reference internal" href="../../../../_modules/blackjax/smc/pretuning.html#SMCInfoWithParameterDistribution"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.smc.pretuning.SMCInfoWithParameterDistribution" title="Link to this definition">#</a></dt>
 <dd><p>Stores both the sampling status and also a dictionary
-with parameter names as keys and (n_particles, <a href="#id1"><span class="problematic" id="id2">*</span></a>) arrays as values.
+with parameter names as keys and <code class="docutils literal notranslate"><span class="pre">(n_particles,</span> <span class="pre">*)</span></code> arrays as values.
 The latter represents a parameter per chain for the next mutation step.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.smc.pretuning.SMCInfoWithParameterDistribution.smc_info">
@@ -527,18 +528,14 @@ a sampling algorithm that returns an SMCState and SMCInfo pair).</p></li>
 <li><p><strong>logprior_fn</strong> – A function that computes the log density of the prior distribution</p></li>
 <li><p><strong>loglikelihood_fn</strong> – A function that returns the probability at a given position.</p></li>
 <li><p><strong>mcmc_step_fn</strong> – The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
-mcmc_step_fn(rng_key, state, tempered_logposterior_fn, <a href="#id3"><span class="problematic" id="id4">**</span></a>mcmc_parameter_update_fn())</p></li>
+<code class="docutils literal notranslate"><span class="pre">mcmc_step_fn(rng_key,</span> <span class="pre">state,</span> <span class="pre">tempered_logposterior_fn,</span> <span class="pre">**mcmc_parameter_update_fn())</span></code></p></li>
 <li><p><strong>mcmc_init_fn</strong> – A callable that initializes the inner kernel</p></li>
 <li><p><strong>pretune_fn</strong> – A callable that can update the probability distribution of parameters.</p></li>
 <li><p><strong>extra_parameters</strong> – Parameters to be used for the creation of the smc_algorithm.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p>A <a href="#id5"><span class="problematic" id="id6">``</span></a>kernel(rng_key, state, **extra_step_parameters) -&gt;</p></li>
-<li><p>(StateWithParameterOverride, SMCInfo)`` function.</p></li>
-</ul>
-</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">kernel(rng_key,</span> <span class="pre">state,</span> <span class="pre">\*\*extra_step_parameters)</span> <span class="pre">-&gt;</span> <span class="pre">(StateWithParameterOverride,</span> <span class="pre">SMCInfo)</span></code> function.</p>
 </dd>
 </dl>
 </dd></dl>

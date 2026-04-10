@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.nuts" href="../nuts/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -419,7 +420,7 @@
 <td><p>Create a periodic orbital state from a position.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.build_kernel" title="blackjax.mcmc.periodic_orbital.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([bijection])</p></td>
-<td><p>Build a Periodic Orbital kernel <span id="id1">[<a class="reference internal" href="../../../../bib.html#id14" title="Kirill Neklyudov and Max Welling. Orbital mcmc. In International Conference on Artificial Intelligence and Statistics, 5790–5814. PMLR, 2022.">NW22</a>]</span>.</p></td>
+<td><p>Build a Periodic Orbital kernel <span id="id1">[<a class="reference internal" href="../../../../bib.html#id15" title="Kirill Neklyudov and Max Welling. Orbital mcmc. In International Conference on Artificial Intelligence and Statistics, 5790–5814. PMLR, 2022.">NW22</a>]</span>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.periodic_orbital.as_top_level_api" title="blackjax.mcmc.periodic_orbital.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
 <td><p>Implements the (basic) user interface for the Periodic orbital MCMC kernel.</p></td>
@@ -510,7 +511,7 @@ with a position.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.periodic_orbital.build_kernel">
 <span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">bijection</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/periodic_orbital.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.periodic_orbital.build_kernel" title="Link to this definition">#</a></dt>
-<dd><p>Build a Periodic Orbital kernel <span id="id2">[<a class="reference internal" href="../../../../bib.html#id14" title="Kirill Neklyudov and Max Welling. Orbital mcmc. In International Conference on Artificial Intelligence and Statistics, 5790–5814. PMLR, 2022.">NW22</a>]</span>.</p>
+<dd><p>Build a Periodic Orbital kernel <span id="id2">[<a class="reference internal" href="../../../../bib.html#id15" title="Kirill Neklyudov and Max Welling. Orbital mcmc. In International Conference on Artificial Intelligence and Statistics, 5790–5814. PMLR, 2022.">NW22</a>]</span>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><p><strong>bijection</strong> – transformation used to build the orbit (given a step size).</p>

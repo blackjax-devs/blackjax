@@ -139,7 +139,7 @@ Module Contents
                   (eigenvalue set to 1).  Default ``2.0`` matches nutpie's ``c=2``.
 
    :returns: The three adaptation primitives expected by the window-adaptation loop.
-   :rtype: init, update, final
+   :rtype: ``(init, update, final)``
 
 
 .. py:function:: low_rank_window_adaptation(algorithm, logdensity_fn: Callable, max_rank: int = 10, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, gamma: float = 1.0, cutoff: float = 2.0, progress_bar: bool = False, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm

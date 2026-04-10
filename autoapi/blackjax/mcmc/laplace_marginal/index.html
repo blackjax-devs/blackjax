@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.laplace_hmc" href="../laplace_hmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -378,10 +379,6 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.get_theta_star"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.get_theta_star</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.log_marginal"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.log_marginal</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.sample_theta"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.sample_theta</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.get_theta_star</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.log_marginal</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.sample_theta</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.laplace_marginal_factory"><code class="docutils literal notranslate"><span class="pre">laplace_marginal_factory()</span></code></a></li>
@@ -449,70 +446,36 @@ arXiv:2306.14976.</p>
 <dd><p>Bundle of pure functions for the Laplace-approximated marginal density.</p>
 <p>Each attribute is a plain callable, testable and reusable independently.
 The dataclass is a named container — there is no mutable state.</p>
+<p>The four callables are:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">solve_theta(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">theta_star</span></code>: finds the mode of
+<code class="docutils literal notranslate"><span class="pre">p(theta</span> <span class="pre">|</span> <span class="pre">phi,</span> <span class="pre">y)</span></code> via L-BFGS.  No custom VJP; useful for warm-starting.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">get_theta_star(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">theta_star</span></code>: same as
+<code class="docutils literal notranslate"><span class="pre">solve_theta</span></code> but wrapped in <code class="docutils literal notranslate"><span class="pre">jax.lax.custom_root</span></code> for IFT gradients.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">log_marginal(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">(lp,</span> <span class="pre">theta_star)</span></code>: evaluates the
+Laplace log-marginal and returns <code class="docutils literal notranslate"><span class="pre">theta_star</span></code> as auxiliary output.
+Use with <code class="docutils literal notranslate"><span class="pre">jax.value_and_grad(...,</span> <span class="pre">has_aux=True)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">sample_theta(rng_key,</span> <span class="pre">phi,</span> <span class="pre">theta_star)</span> <span class="pre">-&gt;</span> <span class="pre">theta_sample</span></code>: draws one
+sample from <code class="docutils literal notranslate"><span class="pre">p(theta</span> <span class="pre">|</span> <span class="pre">phi,</span> <span class="pre">y)</span> <span class="pre">≈</span> <span class="pre">N(theta_star,</span> <span class="pre">H(phi)^{-1})</span></code>.</p></li>
+</ul>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta">
-<span class="sig-name descname"><span class="pre">solve_theta</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.solve_theta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta" title="Link to this definition">#</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">theta_star</span></code> — finds the mode of the
-conditional posterior <code class="docutils literal notranslate"><span class="pre">p(theta</span> <span class="pre">|</span> <span class="pre">phi,</span> <span class="pre">y)</span></code> via L-BFGS.  No custom
-VJP; useful for warm-starting and standalone testing.</p>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">solve_theta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.solve_theta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceMarginal.get_theta_star">
-<span class="sig-name descname"><span class="pre">get_theta_star</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.get_theta_star"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.get_theta_star" title="Link to this definition">#</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">theta_star</span></code> — same as <code class="docutils literal notranslate"><span class="pre">solve_theta</span></code>
-but wrapped in <code class="docutils literal notranslate"><span class="pre">jax.lax.custom_root</span></code> so the result is
-differentiable w.r.t. <code class="docutils literal notranslate"><span class="pre">phi</span></code> via the implicit function theorem.</p>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">get_theta_star</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.get_theta_star"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.get_theta_star" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceMarginal.log_marginal">
-<span class="sig-name descname"><span class="pre">log_marginal</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.log_marginal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.log_marginal" title="Link to this definition">#</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">(lp,</span> <span class="pre">theta_star)</span></code> — evaluates the
-Laplace-approximated log-marginal <code class="docutils literal notranslate"><span class="pre">log</span> <span class="pre">p̂(phi</span> <span class="pre">|</span> <span class="pre">y)</span></code> and returns
-<code class="docutils literal notranslate"><span class="pre">theta_star</span></code> as auxiliary output.  Designed for:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">lp</span><span class="p">,</span> <span class="n">theta_star</span><span class="p">),</span> <span class="n">grad</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">value_and_grad</span><span class="p">(</span>
-    <span class="n">laplace</span><span class="o">.</span><span class="n">log_marginal</span><span class="p">,</span> <span class="n">has_aux</span><span class="o">=</span><span class="kc">True</span>
-<span class="p">)(</span><span class="n">phi</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
+<span class="sig-name descname"><span class="pre">log_marginal</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.log_marginal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.log_marginal" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
 
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceMarginal.sample_theta">
-<span class="sig-name descname"><span class="pre">sample_theta</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.sample_theta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.sample_theta" title="Link to this definition">#</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">phi,</span> <span class="pre">theta_star)</span> <span class="pre">-&gt;</span> <span class="pre">theta_sample</span></code> — draws one sample
-from the Laplace-approximate conditional posterior:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>p(theta | phi, y) ≈ N(theta_star, H(phi)^{-1})
-</pre></div>
-</div>
-<p>where <code class="docutils literal notranslate"><span class="pre">H</span> <span class="pre">=</span> <span class="pre">-d²/dtheta²</span> <span class="pre">log_joint</span></code> at the mode <code class="docutils literal notranslate"><span class="pre">theta_star</span></code>.
-Use this to recover samples of the marginalized latent variables
-after running MCMC on <code class="docutils literal notranslate"><span class="pre">phi</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">theta_sample</span> <span class="o">=</span> <span class="n">laplace</span><span class="o">.</span><span class="n">sample_theta</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
-                                    <span class="n">state</span><span class="o">.</span><span class="n">theta_star</span><span class="p">)</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id0">
-<span class="sig-name descname"><span class="pre">solve_theta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.solve_theta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id1">
-<span class="sig-name descname"><span class="pre">get_theta_star</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.get_theta_star"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id1" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id2">
-<span class="sig-name descname"><span class="pre">log_marginal</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.log_marginal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id2" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="id3">
-<span class="sig-name descname"><span class="pre">sample_theta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.sample_theta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id3" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">sample_theta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.sample_theta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.sample_theta" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -638,10 +601,6 @@ approximately Gaussian (unimodal, log-concave near the mode).</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.get_theta_star"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.get_theta_star</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.log_marginal"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.log_marginal</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.sample_theta"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.sample_theta</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id1"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.get_theta_star</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id2"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.log_marginal</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id3"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.sample_theta</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.laplace_marginal_factory"><code class="docutils literal notranslate"><span class="pre">laplace_marginal_factory()</span></code></a></li>

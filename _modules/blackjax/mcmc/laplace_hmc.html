@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -149,10 +149,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -503,8 +504,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix,</span>
-<span class="sd">    num_integration_steps) -&gt; (LaplaceHMCState, HMCInfo)``.</span>
+<span class="sd">    A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -&gt; (LaplaceHMCState, HMCInfo)``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">hmc_kernel</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
 

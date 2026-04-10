@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.integrators" href="../integrators/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g35f77082d" />
+  <meta name="docsearch:version" content="0.1.dev1+gd8d19205a" />
   </head>
   
   
@@ -150,10 +150,11 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
-<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_aesara.html">Aesara</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
@@ -512,12 +513,8 @@ returned by <a class="reference internal" href="../laplace_marginal/index.html#b
 <li><p><strong>divergence_threshold</strong> – Energy difference above which a transition is declared divergent.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p>A kernel <a href="#id1"><span class="problematic" id="id2">``</span></a>(rng_key, state, laplace, step_size, inverse_mass_matrix,</p></li>
-<li><p>num_integration_steps) -&gt; (LaplaceHMCState, HMCInfo)``.</p></li>
-</ul>
-</p>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A kernel <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">state,</span> <span class="pre">laplace,</span> <span class="pre">step_size,</span> <span class="pre">inverse_mass_matrix,</span> <span class="pre">num_integration_steps)</span> <span class="pre">-&gt;</span> <span class="pre">(LaplaceHMCState,</span> <span class="pre">HMCInfo)</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
