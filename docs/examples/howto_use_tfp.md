@@ -147,7 +147,9 @@ And now let us plot the correponding chains and distributions:
 import matplotlib.pyplot as plt
 import arviz as az
 
-idata = az.from_dict(posterior={k: v[None, ...] for k, v in states.position._asdict().items()})
+pos = states.position
+pos_dict = pos._asdict() if hasattr(pos, "_asdict") else pos
+idata = az.from_dict(posterior={k: v[None, ...] for k, v in pos_dict.items()})
 az.plot_trace(idata, var_names=["school_effects_standard"], compact=False)
 plt.tight_layout();
 ```
