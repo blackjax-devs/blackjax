@@ -39,11 +39,16 @@ print(f"Number of data points: {features.shape[0]}")
 ```{code-cell} ipython3
 :tags: [remove-output]
 
+import warnings
 import jax
 import jax.numpy as jnp
 
 from datetime import date
 rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
+
+# Suppress DeprecationWarnings from oryx internals (FlatPrimitive DebugInfo)
+# raised during import under JAX >= 0.4.25
+warnings.filterwarnings("ignore", category=DeprecationWarning, module="oryx")
 ```
 
 Oryx's approach, like Aesara's, is to implement probabilistic models as generative models and then apply transformations to get the log-probability density function. We begin with implementing a dense layer with normal prior probability on the weights and use the function `random_variable` to define random variables:
