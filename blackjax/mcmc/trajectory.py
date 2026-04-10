@@ -200,9 +200,7 @@ def dynamic_progressive_integration(
 
     Returns
     -------
-    An ``integrate(rng_key, initial_state, direction, termination_state,
-    max_num_steps, step_size, initial_energy)`` function that returns
-    ``(proposal, new_trajectory, termination_state, is_diverging, has_terminated)``.
+    An ``integrate(rng_key, state, direction, termination_state, max_num_steps, step_size, initial_energy)`` function returning ``(proposal, new_trajectory, termination_state, is_diverging, has_terminated)``.
     """
     _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling
@@ -365,9 +363,7 @@ def dynamic_recursive_integration(
 
     Returns
     -------
-    A ``buildtree_integrate(rng_key, initial_state, direction, tree_depth,
-    step_size, initial_energy)`` function that returns
-    ``(rng_key, proposal, trajectory, is_diverging, is_turning)``.
+    A ``buildtree_integrate(rng_key, state, direction, tree_depth, step_size, initial_energy)`` function returning ``(rng_key, proposal, trajectory, is_diverging, is_turning)``.
     """
     _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling

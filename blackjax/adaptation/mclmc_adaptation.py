@@ -97,7 +97,8 @@ def mclmc_find_L_and_step_size(
 
     Example
     -------
-    .. code::
+    .. code-block:: python
+
         kernel = blackjax.mcmc.mclmc.build_kernel(integrator=integrator)
 
         (

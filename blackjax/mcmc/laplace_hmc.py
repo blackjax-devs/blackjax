@@ -109,8 +109,7 @@ def build_kernel(
 
     Returns
     -------
-    A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix,
-    num_integration_steps) -> (LaplaceHMCState, HMCInfo)``.
+    A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -> (LaplaceHMCState, HMCInfo)``.
     """
     hmc_kernel = hmc.build_kernel(integrator, divergence_threshold)
 

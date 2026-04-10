@@ -95,9 +95,8 @@ def multi_approximate(
 
     Returns
     -------
-    A ``MultipathfinderState`` (all path states + per-path samples and log
-    densities) and a ``PathfinderInfo`` wrapping all per-path
-    ``PathfinderState``s.
+    A ``MultipathfinderState`` (all path states, per-path samples, and log densities)
+    and a ``PathfinderInfo`` wrapping all per-path ``PathfinderState`` objects.
     """
     n_paths = jax.tree.leaves(initial_positions)[0].shape[0]
     approx_key, sample_key = jax.random.split(rng_key)

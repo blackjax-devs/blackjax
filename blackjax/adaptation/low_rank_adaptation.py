@@ -290,7 +290,7 @@ def base(
 
     Returns
     -------
-    init, update, final
+    ``(init, update, final)``
         The three adaptation primitives expected by the window-adaptation loop.
     """
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)

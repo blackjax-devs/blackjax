@@ -24,7 +24,7 @@ class StateWithParameterOverride(NamedTuple):
     """
     Stores both the sampling status and also a dictionary
     that contains an dictionary with parameter names as key
-    and (n_particles, *) arrays as meanings. The latter
+    and ``(n_particles, *)`` arrays as meanings. The latter
     represent a parameter per chain for the next mutation step.
     """
 
@@ -46,8 +46,7 @@ def init(alg_init_fn, position, initial_parameter_value):
 
     Returns
     -------
-    A ``StateWithParameterOverride`` combining the SMC state with the
-    parameter dictionary.
+    A ``StateWithParameterOverride`` combining the SMC state with the parameter dictionary.
     """
     return StateWithParameterOverride(alg_init_fn(position), initial_parameter_value)
 
@@ -82,7 +81,7 @@ def build_kernel(
         A function that returns the probability at a given position.
     mcmc_step_fn:
         The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
-        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
+        ``mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())``
     mcmc_init_fn
         A callable that initializes the inner kernel
     mcmc_parameter_update_fn

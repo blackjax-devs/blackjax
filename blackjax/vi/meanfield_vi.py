@@ -161,7 +161,7 @@ def as_top_level_api(
 ):
     """High-level implementation of Mean-Field Variational Inference
 
-     Parameters
+    Parameters
     ----------
     logdensity_fn
         A function that represents the log-density function associated with

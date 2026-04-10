@@ -17,7 +17,7 @@ from blackjax.util import generate_gaussian_noise
 
 class SMCInfoWithParameterDistribution(NamedTuple):
     """Stores both the sampling status and also a dictionary
-    with parameter names as keys and (n_particles, *) arrays as values.
+    with parameter names as keys and ``(n_particles, *)`` arrays as values.
     The latter represents a parameter per chain for the next mutation step.
     """
 
@@ -226,7 +226,7 @@ def build_kernel(
         A function that returns the probability at a given position.
     mcmc_step_fn:
         The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
-        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
+        ``mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())``
     mcmc_init_fn
         A callable that initializes the inner kernel
     pretune_fn
@@ -236,8 +236,7 @@ def build_kernel(
 
     Returns
     -------
-    A ``kernel(rng_key, state, **extra_step_parameters) ->
-    (StateWithParameterOverride, SMCInfo)`` function.
+    A ``kernel(rng_key, state, **extra_step_parameters) -> (StateWithParameterOverride, SMCInfo)`` function.
     """
     delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
 

@@ -171,17 +171,9 @@ def init(
     Returns
     -------
     PersistentSMCState
-        Initial state, with
-        - particles set to input particles,
-        - weights set to uniform weights,
-        - log-likelihoods set to the log-likelihoods of the input particles,
-        - normalizing constant set to 1.0 (assume prior is normalized, this is
-          important),
-        - tempering parameters set to 0.0 (initial distribution is prior).
-        - set iteration to 0.
-
-        NOTE: All arrays in the PersistentSMCState are padded with zeros up
-        to the length of the tempering schedule.
+        Initial state with particles, uniform weights, log-likelihoods, normalizing
+        constant 1.0, tempering parameters 0.0, and iteration 0.
+        All arrays are padded with zeros up to the length of the tempering schedule.
     """
 
     # Infer the number of particles from the size of the leading dimension of
@@ -488,24 +480,12 @@ def step(
     Returns
     -------
     new_state: PersistentSMCState
-        The updated PersistentSMCState. Updated fields are:
-        - particles: particles from all iterations, with current iteration's
-          particles added.
-        - weights: normalized weights for all persistent particles at current
-          iteration.
-        - log_likelihoods: log-likelihoods for all persistent particles,
-          with current iteration's log-likelihoods added.
-        - log_Z: log normalizing constants, with current iteration's
-          normalizing constant added.
-        - tempering_schedule: tempering parameters, with current iteration's
-          parameter added.
-        - iteration: incremented by 1.
+        The updated PersistentSMCState with particles, weights, log-likelihoods,
+        log normalizing constants, and tempering parameters from all iterations.
+        Iteration counter is incremented by 1.
     info: PersistentStateInfo
-        An `PersistentStateInfo` object that contains extra information about the PS
-        transition. Contains:
-        - ancestors: indices of the particles selected by the resampling step.
-        - ess: effective sample size of the persistent ensemble.
-        - update_info: any extra information returned by the update function.
+        Extra information about the transition: ancestors (resampling indices),
+        ess (effective sample size), and update_info from the MCMC update step.
 
     """
 

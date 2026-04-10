@@ -56,36 +56,17 @@ class LaplaceMarginal:
     Each attribute is a plain callable, testable and reusable independently.
     The dataclass is a named container — there is no mutable state.
 
-    Attributes
-    ----------
-    solve_theta
-        ``(phi, theta_prev=None) -> theta_star`` — finds the mode of the
-        conditional posterior ``p(theta | phi, y)`` via L-BFGS.  No custom
-        VJP; useful for warm-starting and standalone testing.
-    get_theta_star
-        ``(phi, theta_prev=None) -> theta_star`` — same as ``solve_theta``
-        but wrapped in ``jax.lax.custom_root`` so the result is
-        differentiable w.r.t. ``phi`` via the implicit function theorem.
-    log_marginal
-        ``(phi, theta_prev=None) -> (lp, theta_star)`` — evaluates the
-        Laplace-approximated log-marginal ``log p̂(phi | y)`` and returns
-        ``theta_star`` as auxiliary output.  Designed for::
+    The four callables are:
 
-            (lp, theta_star), grad = jax.value_and_grad(
-                laplace.log_marginal, has_aux=True
-            )(phi)
-    sample_theta
-        ``(rng_key, phi, theta_star) -> theta_sample`` — draws one sample
-        from the Laplace-approximate conditional posterior::
-
-            p(theta | phi, y) ≈ N(theta_star, H(phi)^{-1})
-
-        where ``H = -d²/dtheta² log_joint`` at the mode ``theta_star``.
-        Use this to recover samples of the marginalized latent variables
-        after running MCMC on ``phi``::
-
-            theta_sample = laplace.sample_theta(rng_key, state.position,
-                                                state.theta_star)
+    - ``solve_theta(phi, theta_prev=None) -> theta_star``: finds the mode of
+      ``p(theta | phi, y)`` via L-BFGS.  No custom VJP; useful for warm-starting.
+    - ``get_theta_star(phi, theta_prev=None) -> theta_star``: same as
+      ``solve_theta`` but wrapped in ``jax.lax.custom_root`` for IFT gradients.
+    - ``log_marginal(phi, theta_prev=None) -> (lp, theta_star)``: evaluates the
+      Laplace log-marginal and returns ``theta_star`` as auxiliary output.
+      Use with ``jax.value_and_grad(..., has_aux=True)``.
+    - ``sample_theta(rng_key, phi, theta_star) -> theta_sample``: draws one
+      sample from ``p(theta | phi, y) ≈ N(theta_star, H(phi)^{-1})``.
     """
 
     solve_theta: Callable

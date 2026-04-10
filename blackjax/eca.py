@@ -170,7 +170,7 @@ def run_eca(
 ):
     """
     Run ensemble chain adaptation (eca) in parallel on multiple devices.
-    -----------------------------------------------------
+
     Args:
         rng_key: random key
         initial_state: initial state of the system
@@ -265,18 +265,18 @@ def ensemble_execute_fn(
     summary_statistics_fn=lambda y: 0.0,
     superchain_size=None,
 ):
-    """Given a sequential function
-     func(rng_key, x, args) = y,
-    evaluate it with an ensemble and also compute some summary statistics E[theta(y)], where expectation is taken over ensemble.
+    """Given a sequential function ``func(rng_key, x, args) = y``, evaluate it
+    with an ensemble and compute summary statistics ``E[theta(y)]``.
+
     Args:
-         x: array distributed over all decvices
-         args: additional arguments for func, not distributed.
-         summary_statistics_fn: operates on a chain and returns some summary statistics.
-         rng_key: a single random key, which will then be split, such that chain will get a different random key.
+        x: array distributed over all devices
+        args: additional arguments for func, not distributed.
+        summary_statistics_fn: operates on a chain and returns some summary statistics.
+        rng_key: a single random key, which will then be split so each chain gets a different key.
 
     Returns:
-         y: array distributed over all decvices. Need not be of the same shape as x.
-         Etheta: expected values of the summary statistics
+        y: array distributed over all devices. Need not be of the same shape as x.
+        Etheta: expected values of the summary statistics
     """
     p, pscalar = PartitionSpec("chains"), PartitionSpec()
 
