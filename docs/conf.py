@@ -99,6 +99,7 @@ source_suffix = {".rst": "restructuredtext", ".ipynb": "myst-nb", ".md": "myst-n
 
 nb_execution_mode = "auto"
 nb_execution_timeout = 300
+nb_execution_excludepatterns = ["examples/howto_use_oryx.md"]
 suppress_warnings = ["mystnb.unknown_mime_type"]
 
 nb_custom_formats = {

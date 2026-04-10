@@ -9,7 +9,7 @@ myst_nb>=1.0.0
 numba
 numpyro
 optax
-oryx
+oryx @ git+https://github.com/jax-ml/oryx.git
 pymc
 pytensor
 scikit-learn
