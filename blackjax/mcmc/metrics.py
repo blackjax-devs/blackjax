@@ -227,18 +227,9 @@ def gaussian_euclidean(
             The scaled elements.
         """
 
-        ravelled_element, unravel_fn = ravel_pytree(element)
-
-        if inv:
-            left_hand_side_matrix = inv_mass_matrix_sqrt
-        else:
-            left_hand_side_matrix = mass_matrix_sqrt
-        if trans:
-            left_hand_side_matrix = left_hand_side_matrix.T
-
-        scaled = linear_map(left_hand_side_matrix, ravelled_element)
-
-        return unravel_fn(scaled)
+        return _scale(
+            mass_matrix_sqrt, inv_mass_matrix_sqrt, element, inv=inv, trans=trans
+        )
 
     return Metric(momentum_generator, kinetic_energy, is_turning, scale)
 
@@ -466,20 +457,69 @@ def gaussian_riemannian(
         mass_matrix_sqrt, inv_mass_matrix_sqrt, diag = _format_covariance(
             mass_matrix, is_inv=False
         )
-        ravelled_element, unravel_fn = ravel_pytree(element)
 
-        if inv:
-            left_hand_side_matrix = inv_mass_matrix_sqrt
-        else:
-            left_hand_side_matrix = mass_matrix_sqrt
-        if trans:
-            left_hand_side_matrix = left_hand_side_matrix.T
-
-        scaled = linear_map(left_hand_side_matrix, ravelled_element)
-
-        return unravel_fn(scaled)
+        return _scale(
+            mass_matrix_sqrt, inv_mass_matrix_sqrt, element, inv=inv, trans=trans
+        )
 
     return Metric(momentum_generator, kinetic_energy, is_turning, scale)
+
+
+def _scale(
+    mass_matrix_sqrt: Array,
+    inv_mass_matrix_sqrt: Array,
+    element: ArrayLikeTree,
+    *,
+    inv: bool,
+    trans: bool,
+) -> ArrayLikeTree:
+    """Scale elements by the mass matrix.
+
+    Parameters
+    ----------
+    position
+        The current position.
+
+    Returns
+    -------
+    scaled_elements
+        The scaled elements.
+    """
+    ravelled_element, unravel_fn = ravel_pytree(element)
+
+    left_hand_side_matrix = mass_matrix_sqrt
+
+    if inv:
+        left_hand_side_matrix = inv_mass_matrix_sqrt
+        # op = lambda L, z: jscipy.linalg.solve_triangular(L, z, lower=not trans)
+    else:
+        left_hand_side_matrix = mass_matrix_sqrt
+        # op = jnp.matmul
+    if trans:
+        left_hand_side_matrix = left_hand_side_matrix.T
+
+    scaled = linear_map(left_hand_side_matrix, ravelled_element)
+    # scaled = op(left_hand_side_matrix, ravelled_element)
+
+    return unravel_fn(scaled)
+
+
+# scale twice, which means multiplying or solving by M
+def _sq_scale(
+    mass_matrix_sqrt: Array,
+    inv_mass_matrix_sqrt: Array,
+    element: ArrayLikeTree,
+    *,
+    inv: bool,
+    trans: bool,
+):
+    element = _scale(
+        mass_matrix_sqrt, inv_mass_matrix_sqrt, element, inv=inv, trans=not trans
+    )
+    element = _scale(
+        mass_matrix_sqrt, inv_mass_matrix_sqrt, element, inv=inv, trans=trans
+    )
+    return element
 
 
 def _format_covariance(cov: Array, is_inv):
