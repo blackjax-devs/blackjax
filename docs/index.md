@@ -84,6 +84,7 @@ maxdepth: 1
 hidden:
 ---
 Quickstart <examples/quickstart.md>
+Design Principles <examples/design_principles.md>
 ```
 
 ```{toctree}
@@ -92,7 +93,7 @@ maxdepth: 1
 caption: PPL INTEGRATION
 hidden:
 ---
-Aesara<examples/howto_use_aesara.md>
+PyTensor<examples/howto_use_pytensor.md>
 Numpyro<examples/howto_use_numpyro.md>
 Oryx<examples/howto_use_oryx.md>
 PyMC<examples/howto_use_pymc.md>
