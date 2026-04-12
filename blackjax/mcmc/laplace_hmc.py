@@ -19,6 +19,15 @@ in a standard BlackJAX three-layer sampler that carries the MAP latent variables
 warm-start hint for the L-BFGS solver at every leapfrog evaluation, so the
 optimizer needs only a handful of iterations when ``phi`` moves by a small amount.
 
+The proposal strategy is swappable via ``build_proposal``, giving two usable variants:
+
++---------------------------+------------------+------------------------------+
+| Alias                     | Proposal         | Notes                        |
++===========================+==================+==============================+
+| ``blackjax.laplace_hmc``  | endpoint + M-H   | default, standard HMC        |
+| ``blackjax.laplace_multinomial_hmc`` | full trajectory | better ESS per gradient |
++---------------------------+------------------+------------------------------+
+
 Typical usage::
 
     sampler = blackjax.laplace_hmc(
@@ -29,6 +38,13 @@ Typical usage::
     state = sampler.init(phi_init)
     new_state, info = jax.jit(sampler.step)(rng_key, state)
     # new_state.theta_star: MAP of theta at the accepted phi
+
+    # Multinomial variant (no rejection step, samples from full trajectory):
+    sampler = blackjax.laplace_multinomial_hmc(
+        log_joint, theta_init=jnp.zeros(n),
+        step_size=0.1, inverse_mass_matrix=jnp.ones(d),
+        num_integration_steps=10,
+    )
 """
 from typing import Callable, NamedTuple
 
@@ -97,6 +113,7 @@ def init(
 def build_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: float = 1000,
+    build_proposal: Callable = hmc.hmc_proposal,
 ) -> Callable:
     """Build the Laplace-HMC kernel.
 
@@ -106,12 +123,16 @@ def build_kernel(
         Symplectic integrator used for the HMC trajectory.
     divergence_threshold
         Energy difference above which a transition is declared divergent.
+    build_proposal
+        Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`
+        (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`
+        for multinomial trajectory sampling (``blackjax.laplace_multinomial_hmc``).
 
     Returns
     -------
     A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -> (LaplaceHMCState, HMCInfo)``.
     """
-    hmc_kernel = hmc.build_kernel(integrator, divergence_threshold)
+    hmc_kernel = hmc.build_kernel(integrator, divergence_threshold, build_proposal)
 
     def kernel(
         rng_key: PRNGKey,
@@ -171,6 +192,7 @@ def as_top_level_api(
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.velocity_verlet,
+    build_proposal: Callable = hmc.hmc_proposal,
     **optimizer_kwargs,
 ) -> SamplingAlgorithm:
     """HMC on the Laplace-approximated marginal log-density.
@@ -202,6 +224,11 @@ def as_top_level_api(
         Default 1000.
     integrator
         Symplectic integrator.  Default: velocity Verlet.
+    build_proposal
+        Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`
+        (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`
+        for multinomial trajectory sampling; this is what
+        ``blackjax.laplace_multinomial_hmc`` uses.
     **optimizer_kwargs
         Forwarded to :func:`~blackjax.optimizers.lbfgs.minimize_lbfgs`.
         Useful keys: ``maxiter`` (default 30), ``gtol``, ``ftol``.
@@ -226,7 +253,7 @@ def as_top_level_api(
         print(new_state.theta_star)   # MAP latent at the new phi
     """
     laplace = laplace_marginal_factory(log_joint_fn, theta_init, **optimizer_kwargs)
-    kernel = build_kernel(integrator, divergence_threshold)
+    kernel = build_kernel(integrator, divergence_threshold, build_proposal)
     return build_sampling_algorithm(
         kernel,
         init,

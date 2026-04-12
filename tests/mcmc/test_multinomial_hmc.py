@@ -3,6 +3,8 @@
 Tests exercise both the top-level ``blackjax.multinomial_hmc`` alias and the
 refactored API where multinomial HMC is constructed by passing
 ``build_proposal=multinomial_hmc_proposal`` to the HMC kernel builder.
+
+Also covers ``blackjax.dynamic_multinomial_hmc``.
 """
 
 import jax
@@ -10,6 +12,7 @@ import jax.numpy as jnp
 from absl.testing import absltest
 
 import blackjax
+from blackjax.mcmc.dynamic_hmc import DynamicHMCState
 from blackjax.mcmc.hmc import HMCInfo, HMCState, multinomial_hmc_proposal
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
@@ -141,6 +144,57 @@ class MultinomialHMCTest(BlackJAXTest):
         self.assertEqual(
             float(info_alias.acceptance_rate),
             float(info_direct.acceptance_rate),
+        )
+
+
+class DynamicMultinomialHMCTest(BlackJAXTest):
+    """Smoke tests for blackjax.dynamic_multinomial_hmc."""
+
+    def test_alias_returns_dynamic_hmc_state(self):
+        sampler = blackjax.dynamic_multinomial_hmc(
+            std_normal_logdensity,
+            step_size=0.1,
+            inverse_mass_matrix=jnp.array([1.0]),
+        )
+        state = sampler.init(jnp.array(0.0), self.next_key())
+        self.assertIsInstance(state, DynamicHMCState)
+        new_state, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertIsInstance(new_state, DynamicHMCState)
+        self.assertIsInstance(info, HMCInfo)
+
+    def test_is_accepted_always_true(self):
+        """Multinomial proposal has no M-H rejection step."""
+        sampler = blackjax.dynamic_multinomial_hmc(
+            std_normal_logdensity,
+            step_size=0.1,
+            inverse_mass_matrix=jnp.array([1.0]),
+        )
+        state = sampler.init(jnp.array(0.0), self.next_key())
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertTrue(bool(info.is_accepted))
+
+    def test_alias_matches_explicit_build_proposal(self):
+        """dynamic_multinomial_hmc produces the same result as
+        dynamic_hmc(build_proposal=multinomial_hmc_proposal)."""
+        kwargs = dict(step_size=0.1, inverse_mass_matrix=jnp.array([1.0]))
+        sampler_alias = blackjax.dynamic_multinomial_hmc(
+            std_normal_logdensity, **kwargs
+        )
+        sampler_explicit = blackjax.dynamic_hmc(
+            std_normal_logdensity,
+            build_proposal=multinomial_hmc_proposal,
+            **kwargs,
+        )
+        init_key = self.next_key()
+        state = sampler_alias.init(jnp.array(0.0), init_key)
+        key = self.next_key()
+
+        new_alias, info_alias = jax.jit(sampler_alias.step)(key, state)
+        new_explicit, info_explicit = jax.jit(sampler_explicit.step)(key, state)
+
+        self.assertEqual(float(new_alias.logdensity), float(new_explicit.logdensity))
+        self.assertEqual(
+            float(info_alias.acceptance_rate), float(info_explicit.acceptance_rate)
         )
 
 

@@ -135,6 +135,26 @@ multinomial_hmc = GenerateSamplingAPI(
     functools.partial(_hmc.build_kernel, build_proposal=_hmc.multinomial_hmc_proposal),
 )
 
+dynamic_multinomial_hmc = GenerateSamplingAPI(
+    functools.partial(
+        _dynamic_hmc.as_top_level_api, build_proposal=_hmc.multinomial_hmc_proposal
+    ),
+    _dynamic_hmc.init,  # shares DynamicHMCState with standard dynamic_hmc
+    functools.partial(
+        _dynamic_hmc.build_kernel, build_proposal=_hmc.multinomial_hmc_proposal
+    ),
+)
+
+laplace_multinomial_hmc = GenerateSamplingAPI(
+    functools.partial(
+        _laplace_hmc.as_top_level_api, build_proposal=_hmc.multinomial_hmc_proposal
+    ),
+    _laplace_hmc.init,  # shares LaplaceHMCState with standard laplace_hmc
+    functools.partial(
+        _laplace_hmc.build_kernel, build_proposal=_hmc.multinomial_hmc_proposal
+    ),
+)
+
 hmc_family = [hmc, nuts, multinomial_hmc]
 
 # SMC
@@ -205,5 +225,7 @@ __all__ = [
     "ess",  # diagnostics
     "rhat",
     "multinomial_hmc",
+    "dynamic_multinomial_hmc",
+    "laplace_multinomial_hmc",
     "multipathfinder",
 ]

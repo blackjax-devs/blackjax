@@ -390,5 +390,77 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         )
 
 
+class TestLaplaceMultinomialHMC(BlackJAXTest):
+    """Smoke tests for blackjax.laplace_multinomial_hmc.
+
+    Checks that the multinomial proposal variant of Laplace-HMC:
+    - produces valid LaplaceHMCState
+    - always accepts (is_accepted is True)
+    - matches explicit build_proposal=multinomial_hmc_proposal
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.n = 4
+        self.y = jax.random.normal(self.next_key(), (self.n,))
+        self.theta_init = jnp.zeros(self.n)
+        self.log_joint, _ = make_gaussian_model(self.y)
+        self.kwargs = dict(
+            step_size=0.1,
+            inverse_mass_matrix=jnp.ones(1),
+            num_integration_steps=3,
+            maxiter=200,
+        )
+
+    def test_alias_returns_laplace_hmc_state(self):
+        sampler = blackjax.laplace_multinomial_hmc(
+            self.log_joint, self.theta_init, **self.kwargs
+        )
+        state = sampler.init(jnp.array(0.0))
+        self.assertIsInstance(state, LaplaceHMCState)
+        new_state, _ = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertIsInstance(new_state, LaplaceHMCState)
+
+    def test_is_accepted_always_true(self):
+        """Multinomial proposal has no M-H rejection step."""
+        from blackjax.mcmc.hmc import multinomial_hmc_proposal
+
+        sampler = blackjax.laplace_hmc(
+            self.log_joint,
+            self.theta_init,
+            build_proposal=multinomial_hmc_proposal,
+            **self.kwargs,
+        )
+        state = sampler.init(jnp.array(0.0))
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertTrue(bool(info.is_accepted))
+
+    def test_alias_matches_explicit_build_proposal(self):
+        """laplace_multinomial_hmc produces the same result as
+        laplace_hmc(build_proposal=multinomial_hmc_proposal)."""
+        from blackjax.mcmc.hmc import multinomial_hmc_proposal
+
+        sampler_alias = blackjax.laplace_multinomial_hmc(
+            self.log_joint, self.theta_init, **self.kwargs
+        )
+        sampler_explicit = blackjax.laplace_hmc(
+            self.log_joint,
+            self.theta_init,
+            build_proposal=multinomial_hmc_proposal,
+            **self.kwargs,
+        )
+        phi_init = jnp.array(0.0)
+        state = sampler_alias.init(phi_init)
+        key = self.next_key()
+
+        new_alias, info_alias = jax.jit(sampler_alias.step)(key, state)
+        new_explicit, info_explicit = jax.jit(sampler_explicit.step)(key, state)
+
+        self.assertEqual(float(new_alias.logdensity), float(new_explicit.logdensity))
+        self.assertEqual(
+            float(info_alias.acceptance_rate), float(info_explicit.acceptance_rate)
+        )
+
+
 if __name__ == "__main__":
     absltest.main()
