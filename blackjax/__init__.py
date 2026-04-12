@@ -21,6 +21,7 @@ from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
+from .mcmc import laplace_dynamic_hmc as _laplace_dynamic_hmc
 from .mcmc import laplace_hmc as _laplace_hmc
 from .mcmc import mala as _mala
 from .mcmc import marginal_latent_gaussian
@@ -157,6 +158,20 @@ laplace_mhmc = GenerateSamplingAPI(
     ),
 )
 
+laplace_dhmc = generate_top_level_api_from(_laplace_dynamic_hmc)
+
+laplace_dmhmc = GenerateSamplingAPI(
+    functools.partial(
+        _laplace_dynamic_hmc.as_top_level_api,
+        build_proposal=_hmc.multinomial_hmc_proposal,
+    ),
+    _laplace_dynamic_hmc.init,  # shares LaplaceDynamicHMCState with laplace_dhmc
+    functools.partial(
+        _laplace_dynamic_hmc.build_kernel,
+        build_proposal=_hmc.multinomial_hmc_proposal,
+    ),
+)
+
 hmc_family = [hmc, nuts, mhmc]
 
 # SMC
@@ -230,6 +245,8 @@ __all__ = [
     "dhmc",
     "dmhmc",
     "laplace_mhmc",
+    "laplace_dhmc",
+    "laplace_dmhmc",
     "multinomial_hmc",  # backward-compatible alias for mhmc
     "dynamic_hmc",  # backward-compatible alias for dhmc
     "multipathfinder",
