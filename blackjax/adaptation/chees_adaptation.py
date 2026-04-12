@@ -354,7 +354,7 @@ def chees_adaptation(
             optim,
             num_warmup_steps,
         )
-        kernel = blackjax.dynamic_hmc(logdensity_fn, **parameters).step
+        kernel = blackjax.dhmc(logdensity_fn, **parameters).step
         new_states, info = jax.vmap(kernel)(key_sample, last_states)
 
     Parameters

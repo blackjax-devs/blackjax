@@ -25,7 +25,7 @@ The proposal strategy is swappable via ``build_proposal``, giving two usable var
 | Alias                     | Proposal         | Notes                        |
 +===========================+==================+==============================+
 | ``blackjax.laplace_hmc``  | endpoint + M-H   | default, standard HMC        |
-| ``blackjax.laplace_multinomial_hmc`` | full trajectory | better ESS per gradient |
+| ``blackjax.laplace_mhmc`` | full trajectory | better ESS per gradient |
 +---------------------------+------------------+------------------------------+
 
 Typical usage::
@@ -40,7 +40,7 @@ Typical usage::
     # new_state.theta_star: MAP of theta at the accepted phi
 
     # Multinomial variant (no rejection step, samples from full trajectory):
-    sampler = blackjax.laplace_multinomial_hmc(
+    sampler = blackjax.laplace_mhmc(
         log_joint, theta_init=jnp.zeros(n),
         step_size=0.1, inverse_mass_matrix=jnp.ones(d),
         num_integration_steps=10,
@@ -126,7 +126,7 @@ def build_kernel(
     build_proposal
         Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`
         (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`
-        for multinomial trajectory sampling (``blackjax.laplace_multinomial_hmc``).
+        for multinomial trajectory sampling (``blackjax.laplace_mhmc``).
 
     Returns
     -------
@@ -228,7 +228,7 @@ def as_top_level_api(
         Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`
         (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`
         for multinomial trajectory sampling; this is what
-        ``blackjax.laplace_multinomial_hmc`` uses.
+        ``blackjax.laplace_mhmc`` uses.
     **optimizer_kwargs
         Forwarded to :func:`~blackjax.optimizers.lbfgs.minimize_lbfgs`.
         Useful keys: ``maxiter`` (default 30), ``gtol``, ``ftol``.

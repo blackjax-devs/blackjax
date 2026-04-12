@@ -106,7 +106,8 @@ rmh = GenerateSamplingAPI(rmh_as_top_level_api, random_walk.init, random_walk.bu
 irmh = GenerateSamplingAPI(
     irmh_as_top_level_api, random_walk.init, random_walk.build_irmh
 )
-dynamic_hmc = generate_top_level_api_from(_dynamic_hmc)
+dhmc = generate_top_level_api_from(_dynamic_hmc)
+dynamic_hmc = dhmc  # backward-compatible alias
 rmhmc = generate_top_level_api_from(_rmhmc)
 mala = generate_top_level_api_from(_mala)
 mgrad_gaussian = generate_top_level_api_from(marginal_latent_gaussian)
@@ -127,35 +128,36 @@ ghmc = generate_top_level_api_from(_ghmc)
 barker = generate_top_level_api_from(_barker)
 barker_proposal = barker  # backwards-compatible alias
 
-multinomial_hmc = GenerateSamplingAPI(
+mhmc = GenerateSamplingAPI(
     functools.partial(
         _hmc.as_top_level_api, build_proposal=_hmc.multinomial_hmc_proposal
     ),
-    _hmc.init,  # intentional: multinomial HMC shares HMCState with standard HMC
+    _hmc.init,  # intentional: mhmc shares HMCState with standard hmc
     functools.partial(_hmc.build_kernel, build_proposal=_hmc.multinomial_hmc_proposal),
 )
+multinomial_hmc = mhmc  # backward-compatible alias
 
-dynamic_multinomial_hmc = GenerateSamplingAPI(
+dmhmc = GenerateSamplingAPI(
     functools.partial(
         _dynamic_hmc.as_top_level_api, build_proposal=_hmc.multinomial_hmc_proposal
     ),
-    _dynamic_hmc.init,  # shares DynamicHMCState with standard dynamic_hmc
+    _dynamic_hmc.init,  # shares DynamicHMCState with dhmc
     functools.partial(
         _dynamic_hmc.build_kernel, build_proposal=_hmc.multinomial_hmc_proposal
     ),
 )
 
-laplace_multinomial_hmc = GenerateSamplingAPI(
+laplace_mhmc = GenerateSamplingAPI(
     functools.partial(
         _laplace_hmc.as_top_level_api, build_proposal=_hmc.multinomial_hmc_proposal
     ),
-    _laplace_hmc.init,  # shares LaplaceHMCState with standard laplace_hmc
+    _laplace_hmc.init,  # shares LaplaceHMCState with laplace_hmc
     functools.partial(
         _laplace_hmc.build_kernel, build_proposal=_hmc.multinomial_hmc_proposal
     ),
 )
 
-hmc_family = [hmc, nuts, multinomial_hmc]
+hmc_family = [hmc, nuts, mhmc]
 
 # SMC
 adaptive_persistent_sampling_smc = generate_top_level_api_from(
@@ -224,8 +226,11 @@ __all__ = [
     "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
     "ess",  # diagnostics
     "rhat",
-    "multinomial_hmc",
-    "dynamic_multinomial_hmc",
-    "laplace_multinomial_hmc",
+    "mhmc",
+    "dhmc",
+    "dmhmc",
+    "laplace_mhmc",
+    "multinomial_hmc",  # backward-compatible alias for mhmc
+    "dynamic_hmc",  # backward-compatible alias for dhmc
     "multipathfinder",
 ]

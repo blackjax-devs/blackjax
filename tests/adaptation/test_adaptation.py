@@ -90,7 +90,7 @@ def test_chees_adaptation(adaptation_filters):
         optim=optax.adam(learning_rate=0.5, b1=0, b2=0.95),
         num_steps=num_burnin_steps,
     )
-    algorithm = blackjax.dynamic_hmc(logprob_fn, **parameters)
+    algorithm = blackjax.dhmc(logprob_fn, **parameters)
     chain_keys = jax.random.split(inference_key, num_chains)
     final_states, (states, infos) = jax.vmap(
         lambda key, state: run_inference_algorithm(

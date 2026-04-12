@@ -1,10 +1,8 @@
-"""Tests for the Multinomial HMC kernel.
+"""Tests for mhmc and dmhmc kernels.
 
-Tests exercise both the top-level ``blackjax.multinomial_hmc`` alias and the
-refactored API where multinomial HMC is constructed by passing
-``build_proposal=multinomial_hmc_proposal`` to the HMC kernel builder.
-
-Also covers ``blackjax.dynamic_multinomial_hmc``.
+Tests exercise the canonical short-name aliases (``blackjax.mhmc``,
+``blackjax.dmhmc``) and verify backward-compatible aliases
+(``blackjax.multinomial_hmc``, ``blackjax.dynamic_hmc``) are the same objects.
 """
 
 import jax
@@ -17,12 +15,12 @@ from blackjax.mcmc.hmc import HMCInfo, HMCState, multinomial_hmc_proposal
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 
-class MultinomialHMCTest(BlackJAXTest):
-    """Unit tests for the multinomial HMC sampler."""
+class MHMCTest(BlackJAXTest):
+    """Unit tests for blackjax.mhmc (multinomial HMC, fixed steps)."""
 
     def test_sampling_algorithm_interface(self):
         """The high-level API returns a SamplingAlgorithm with init/step."""
-        sampler = blackjax.multinomial_hmc(
+        sampler = blackjax.mhmc(
             std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=jnp.array([1.0]),
@@ -37,7 +35,7 @@ class MultinomialHMCTest(BlackJAXTest):
 
     def test_correct_sampling(self):
         """On a standard normal, the sampler should produce reasonable samples."""
-        sampler = blackjax.multinomial_hmc(
+        sampler = blackjax.mhmc(
             std_normal_logdensity,
             step_size=0.5,
             inverse_mass_matrix=jnp.array([1.0]),
@@ -53,13 +51,12 @@ class MultinomialHMCTest(BlackJAXTest):
             states.append(state.position)
 
         samples = jnp.stack(states)
-        # Mean should be close to 0, std close to 1 for a standard normal
         self.assertAlmostEqual(float(jnp.mean(samples)), 0.0, delta=0.3)
         self.assertAlmostEqual(float(jnp.std(samples)), 1.0, delta=0.3)
 
     def test_divergence_detection(self):
         """With a huge step size the sampler should flag divergences."""
-        sampler = blackjax.multinomial_hmc(
+        sampler = blackjax.mhmc(
             std_normal_logdensity,
             step_size=1000.0,
             inverse_mass_matrix=jnp.array([1.0]),
@@ -72,7 +69,7 @@ class MultinomialHMCTest(BlackJAXTest):
 
     def test_acceptance_rate(self):
         """With a well-tuned step size the acceptance rate should be high."""
-        sampler = blackjax.multinomial_hmc(
+        sampler = blackjax.mhmc(
             std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=jnp.array([1.0]),
@@ -84,7 +81,7 @@ class MultinomialHMCTest(BlackJAXTest):
 
     def test_pytree_position(self):
         """The sampler should handle dict-structured positions."""
-        sampler = blackjax.multinomial_hmc(
+        sampler = blackjax.mhmc(
             std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=jnp.array([1.0, 1.0]),
@@ -114,8 +111,8 @@ class MultinomialHMCTest(BlackJAXTest):
         self.assertIsInstance(info, HMCInfo)
         self.assertTrue(info.is_accepted)
 
-    def test_top_level_api_matches_explicit_build_proposal(self):
-        """blackjax.multinomial_hmc produces the same results as
+    def test_mhmc_matches_explicit_build_proposal(self):
+        """blackjax.mhmc produces the same results as
         blackjax.hmc with build_proposal=multinomial_hmc_proposal.
         """
         kwargs = dict(
@@ -124,7 +121,7 @@ class MultinomialHMCTest(BlackJAXTest):
             num_integration_steps=10,
         )
 
-        sampler_alias = blackjax.multinomial_hmc(std_normal_logdensity, **kwargs)
+        sampler_alias = blackjax.mhmc(std_normal_logdensity, **kwargs)
         sampler_direct = blackjax.hmc(
             std_normal_logdensity,
             build_proposal=multinomial_hmc_proposal,
@@ -146,12 +143,16 @@ class MultinomialHMCTest(BlackJAXTest):
             float(info_direct.acceptance_rate),
         )
 
+    def test_backward_compat_alias(self):
+        """blackjax.multinomial_hmc is the same object as blackjax.mhmc."""
+        self.assertIs(blackjax.multinomial_hmc, blackjax.mhmc)
 
-class DynamicMultinomialHMCTest(BlackJAXTest):
-    """Smoke tests for blackjax.dynamic_multinomial_hmc."""
+
+class DMHMCTest(BlackJAXTest):
+    """Smoke tests for blackjax.dmhmc (dynamic steps + multinomial proposal)."""
 
     def test_alias_returns_dynamic_hmc_state(self):
-        sampler = blackjax.dynamic_multinomial_hmc(
+        sampler = blackjax.dmhmc(
             std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=jnp.array([1.0]),
@@ -164,7 +165,7 @@ class DynamicMultinomialHMCTest(BlackJAXTest):
 
     def test_is_accepted_always_true(self):
         """Multinomial proposal has no M-H rejection step."""
-        sampler = blackjax.dynamic_multinomial_hmc(
+        sampler = blackjax.dmhmc(
             std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=jnp.array([1.0]),
@@ -173,14 +174,12 @@ class DynamicMultinomialHMCTest(BlackJAXTest):
         _, info = jax.jit(sampler.step)(self.next_key(), state)
         self.assertTrue(bool(info.is_accepted))
 
-    def test_alias_matches_explicit_build_proposal(self):
-        """dynamic_multinomial_hmc produces the same result as
-        dynamic_hmc(build_proposal=multinomial_hmc_proposal)."""
+    def test_dmhmc_matches_explicit_build_proposal(self):
+        """blackjax.dmhmc produces the same result as
+        blackjax.dhmc(build_proposal=multinomial_hmc_proposal)."""
         kwargs = dict(step_size=0.1, inverse_mass_matrix=jnp.array([1.0]))
-        sampler_alias = blackjax.dynamic_multinomial_hmc(
-            std_normal_logdensity, **kwargs
-        )
-        sampler_explicit = blackjax.dynamic_hmc(
+        sampler_alias = blackjax.dmhmc(std_normal_logdensity, **kwargs)
+        sampler_explicit = blackjax.dhmc(
             std_normal_logdensity,
             build_proposal=multinomial_hmc_proposal,
             **kwargs,
@@ -196,6 +195,10 @@ class DynamicMultinomialHMCTest(BlackJAXTest):
         self.assertEqual(
             float(info_alias.acceptance_rate), float(info_explicit.acceptance_rate)
         )
+
+    def test_backward_compat_alias(self):
+        """blackjax.dynamic_hmc is the same object as blackjax.dhmc."""
+        self.assertIs(blackjax.dynamic_hmc, blackjax.dhmc)
 
 
 if __name__ == "__main__":

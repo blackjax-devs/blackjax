@@ -390,8 +390,8 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         )
 
 
-class TestLaplaceMultinomialHMC(BlackJAXTest):
-    """Smoke tests for blackjax.laplace_multinomial_hmc.
+class TestLaplaceMHMC(BlackJAXTest):
+    """Smoke tests for blackjax.laplace_mhmc.
 
     Checks that the multinomial proposal variant of Laplace-HMC:
     - produces valid LaplaceHMCState
@@ -413,9 +413,7 @@ class TestLaplaceMultinomialHMC(BlackJAXTest):
         )
 
     def test_alias_returns_laplace_hmc_state(self):
-        sampler = blackjax.laplace_multinomial_hmc(
-            self.log_joint, self.theta_init, **self.kwargs
-        )
+        sampler = blackjax.laplace_mhmc(self.log_joint, self.theta_init, **self.kwargs)
         state = sampler.init(jnp.array(0.0))
         self.assertIsInstance(state, LaplaceHMCState)
         new_state, _ = jax.jit(sampler.step)(self.next_key(), state)
@@ -436,11 +434,11 @@ class TestLaplaceMultinomialHMC(BlackJAXTest):
         self.assertTrue(bool(info.is_accepted))
 
     def test_alias_matches_explicit_build_proposal(self):
-        """laplace_multinomial_hmc produces the same result as
+        """laplace_mhmc produces the same result as
         laplace_hmc(build_proposal=multinomial_hmc_proposal)."""
         from blackjax.mcmc.hmc import multinomial_hmc_proposal
 
-        sampler_alias = blackjax.laplace_multinomial_hmc(
+        sampler_alias = blackjax.laplace_mhmc(
             self.log_joint, self.theta_init, **self.kwargs
         )
         sampler_explicit = blackjax.laplace_hmc(

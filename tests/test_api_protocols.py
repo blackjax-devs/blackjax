@@ -72,7 +72,18 @@ def _make_algorithm(name):
             inverse_mass_matrix=inv_mass,
         ),
         "barker": lambda: blackjax.barker(std_normal_logdensity, step_size=0.1),
-        "dynamic_hmc": lambda: blackjax.dynamic_hmc(
+        "dhmc": lambda: blackjax.dhmc(
+            std_normal_logdensity,
+            step_size=0.1,
+            inverse_mass_matrix=inv_mass,
+        ),
+        "mhmc": lambda: blackjax.mhmc(
+            std_normal_logdensity,
+            step_size=0.1,
+            inverse_mass_matrix=inv_mass,
+            num_integration_steps=10,
+        ),
+        "dmhmc": lambda: blackjax.dmhmc(
             std_normal_logdensity,
             step_size=0.1,
             inverse_mass_matrix=inv_mass,
@@ -117,7 +128,7 @@ def _make_algorithm(name):
 
 
 # Algorithms whose init requires rng_key (not None)
-_NEEDS_RNG_KEY = {"mclmc", "ghmc", "adjusted_mclmc_dynamic", "dynamic_hmc"}
+_NEEDS_RNG_KEY = {"mclmc", "ghmc", "adjusted_mclmc_dynamic", "dhmc", "dmhmc"}
 
 # All MCMC algorithms we test
 _MCMC_ALGORITHMS = [
@@ -128,7 +139,9 @@ _MCMC_ALGORITHMS = [
     "adjusted_mclmc",
     "adjusted_mclmc_dynamic",
     "barker",
-    "dynamic_hmc",
+    "dhmc",
+    "mhmc",
+    "dmhmc",
     "rmhmc",
     "ghmc",
     "elliptical_slice",

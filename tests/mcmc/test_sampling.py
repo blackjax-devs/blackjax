@@ -733,7 +733,7 @@ class LinearRegressionTest(chex.TestCase):
             optim=optax.adam(learning_rate=0.1),
             num_steps=1000,
         )
-        inference_algorithm = blackjax.dynamic_hmc(logposterior_fn, **parameters)
+        inference_algorithm = blackjax.dhmc(logposterior_fn, **parameters)
 
         chain_keys = jax.random.split(inference_key, num_chains)
         _, states = jax.vmap(
