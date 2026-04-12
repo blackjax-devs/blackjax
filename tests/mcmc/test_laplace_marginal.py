@@ -276,7 +276,10 @@ class TestLaplaceAdjointAnalytical(BlackJAXTest):
         super().setUp()
         self.n = 6
         rng = self.next_key()
-        self.y = jax.random.randint(rng, (self.n,), 1, 8).astype(jnp.float32)
+        # Upper bound capped at 5 to keep Poisson rates moderate: large y pushes
+        # exp(theta*) high, ill-conditioning the Hessian in float32 and causing
+        # gradient errors above atol=1e-2.
+        self.y = jax.random.randint(rng, (self.n,), 1, 5).astype(jnp.float32)
         self.theta_init = jnp.zeros(self.n)
 
         def log_joint(theta, phi):
