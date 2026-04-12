@@ -137,6 +137,6 @@ maxdepth: 1
 caption: DEVELOPER DOCUMENTATION
 hidden:
 ---
-Design Principles <examples/design_principles.md>
+Design Principles <developer/design_principles.md>
 Contributing a New Algorithm <developer/new_algorithm_guide.md>
 ```
