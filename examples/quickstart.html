@@ -51,11 +51,11 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/quickstart';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="BlackJAX Design Principles" href="design_principles.html" />
+    <link rel="next" title="Use with PyTensor models" href="howto_use_pytensor.html" />
     <link rel="prev" title="Welcome to Blackjax!" href="../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g9ef3df470" />
+  <meta name="docsearch:version" content="0.1.dev1+gb21890856" />
   </head>
   
   
@@ -150,7 +150,6 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Quickstart</a></li>
-<li class="toctree-l1"><a class="reference internal" href="design_principles.html">Design Principles</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
@@ -262,6 +261,7 @@
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
 <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developer/design_principles.html">Design Principles</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
 </ul>
 
@@ -479,7 +479,7 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34938.168, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1349.5513, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(65041.46, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34357.53, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1305.0559, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(63880.195, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -527,8 +527,8 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.07 s, sys: 149 ms, total: 3.22 s
-Wall time: 2.09 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.07 s, sys: 160 ms, total: 3.23 s
+Wall time: 2.13 s
 </pre></div>
 </div>
 </div>
@@ -553,7 +553,7 @@ Wall time: 2.09 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/f290bc219eb74467bc36c891b93ceee0b1dd6c53430060b012cf1be0939a17c7.png" src="../_images/f290bc219eb74467bc36c891b93ceee0b1dd6c53430060b012cf1be0939a17c7.png" />
+<img alt="../_images/b084d80a080d19c609d831f87ed3098c5bf4f58b6d440339071bb161ac1a923d.png" src="../_images/b084d80a080d19c609d831f87ed3098c5bf4f58b6d440339071bb161ac1a923d.png" />
 </div>
 </div>
 </section>
@@ -580,7 +580,7 @@ Wall time: 2.09 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34938.168, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1349.5513, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(65041.46, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34357.53, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1305.0559, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(63880.195, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -597,7 +597,7 @@ Wall time: 2.09 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17 s, sys: 587 ms, total: 17.5 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17 s, sys: 554 ms, total: 17.6 s
 Wall time: 14.3 s
 </pre></div>
 </div>
@@ -623,7 +623,7 @@ Wall time: 14.3 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/ffff931374066c8aec236448a97984089ba4186e8c1c6a5ec10aa13e46db5c82.png" src="../_images/ffff931374066c8aec236448a97984089ba4186e8c1c6a5ec10aa13e46db5c82.png" />
+<img alt="../_images/7e7d4449319047312e994e0fa5eb1108485ff422bbe07a3629b22cb4eeeba814.png" src="../_images/7e7d4449319047312e994e0fa5eb1108485ff422bbe07a3629b22cb4eeeba814.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -641,8 +641,8 @@ Wall time: 14.3 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.8 s, sys: 99.5 ms, total: 2.9 s
-Wall time: 1.31 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.79 s, sys: 108 ms, total: 2.9 s
+Wall time: 1.3 s
 </pre></div>
 </div>
 </div>
@@ -661,8 +661,8 @@ Wall time: 1.31 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.02 s, sys: 36.2 ms, total: 2.05 s
-Wall time: 863 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2 s, sys: 37.5 ms, total: 2.04 s
+Wall time: 844 ms
 </pre></div>
 </div>
 </div>
@@ -687,7 +687,7 @@ Wall time: 863 ms
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/d84effec94a900aa37df84829bf7905da526572b9ee0f27fac8126be28b877c9.png" src="../_images/d84effec94a900aa37df84829bf7905da526572b9ee0f27fac8126be28b877c9.png" />
+<img alt="../_images/88d1fb46f87c8e0285c34ae4de5479856129d49c48d7c2fab4db94b7d37e5fd4.png" src="../_images/88d1fb46f87c8e0285c34ae4de5479856129d49c48d7c2fab4db94b7d37e5fd4.png" />
 </div>
 </div>
 </section>
@@ -715,11 +715,11 @@ Wall time: 863 ms
       </div>
     </a>
     <a class="right-next"
-       href="design_principles.html"
+       href="howto_use_pytensor.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">BlackJAX Design Principles</p>
+        <p class="prev-next-title">Use with PyTensor models</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

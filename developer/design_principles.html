@@ -1,0 +1,911 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>BlackJAX Design Principles</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'developer/design_principles';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Contributing a New Algorithm to BlackJAX" href="new_algorithm_guide.html" />
+    <link rel="prev" title="Bibliography" href="../bib.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+gb21890856" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../examples/quickstart.html">Quickstart</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>BlackJAX Design Principles</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-architecture">1. Core Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kernels-are-pure-functions">1.1 Kernels Are Pure Functions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-three-layer-api">1.2 The Three-Layer API</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#composable-closures">1.3 Composable Closures</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#namedtuple-for-state">1.4 NamedTuple for State</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-sampling-algorithm-helper">1.5 <code class="docutils literal notranslate"><span class="pre">build_sampling_algorithm</span></code> Helper</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#explicit-state-threading">1.6 Explicit State Threading</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jax-idioms">2. JAX Idioms</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#control-flow">2.1 Control Flow</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#random-keys">2.2 Random Keys</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#array-operations">2.3 Array Operations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytree-operations">2.4 PyTree Operations</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#naming-conventions">3. Naming Conventions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#type-annotations">4. Type Annotations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-style">5. Documentation Style</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-organization">6. Module Organization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#all-exports">6.1 <code class="docutils literal notranslate"><span class="pre">__all__</span></code> Exports</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#section-comments">6.2 Section Comments</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-boundaries">6.3 Module Boundaries</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-conventions">7. Testing Conventions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-gold-standard-looks-like">8. What the Gold Standard Looks Like</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="blackjax-design-principles">
+<h1>BlackJAX Design Principles<a class="headerlink" href="#blackjax-design-principles" title="Link to this heading">#</a></h1>
+<p>This document describes the architectural principles, coding conventions, and style guidelines
+that define the “BlackJAX style”. The reference implementations are
+<code class="docutils literal notranslate"><span class="pre">trajectory.py</span></code>, <code class="docutils literal notranslate"><span class="pre">nuts.py</span></code>, <code class="docutils literal notranslate"><span class="pre">hmc.py</span></code>, <code class="docutils literal notranslate"><span class="pre">proposal.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">base.py</span></code> — these files set the
+quality bar that all new contributions should meet.</p>
+<hr class="docutils" />
+<section id="core-architecture">
+<h2>1. Core Architecture<a class="headerlink" href="#core-architecture" title="Link to this heading">#</a></h2>
+<section id="kernels-are-pure-functions">
+<h3>1.1 Kernels Are Pure Functions<a class="headerlink" href="#kernels-are-pure-functions" title="Link to this heading">#</a></h3>
+<p>Every BlackJAX kernel is a stateless pure function. All state is carried explicitly:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>There is no hidden state, no mutable closures, and no side effects. This makes kernels
+trivially JIT-compilable and composable.</p>
+</section>
+<section id="the-three-layer-api">
+<h3>1.2 The Three-Layer API<a class="headerlink" href="#the-three-layer-api" title="Link to this heading">#</a></h3>
+<p>Every algorithm in <code class="docutils literal notranslate"><span class="pre">blackjax/mcmc/</span></code>, <code class="docutils literal notranslate"><span class="pre">blackjax/vi/</span></code>, and <code class="docutils literal notranslate"><span class="pre">blackjax/sgmcmc/</span></code> exposes exactly
+three levels, defined in <code class="docutils literal notranslate"><span class="pre">blackjax/mcmc/&lt;name&gt;.py</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Layer</p></th>
+<th class="head"><p>Signature</p></th>
+<th class="head"><p>Purpose</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">init</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(position,</span> <span class="pre">logdensity_fn,</span> <span class="pre">*,</span> <span class="pre">rng_key=None)</span> <span class="pre">-&gt;</span> <span class="pre">State</span></code></p></td>
+<td><p>Creates the initial algorithm state</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">build_kernel</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(**params)</span> <span class="pre">-&gt;</span> <span class="pre">kernel_fn</span></code></p></td>
+<td><p>Returns a specialized kernel via closure; full control over all parameters</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">as_top_level_api</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">(logdensity_fn,</span> <span class="pre">**params)</span> <span class="pre">-&gt;</span> <span class="pre">SamplingAlgorithm</span></code></p></td>
+<td><p>Convenience wrapper; binds <code class="docutils literal notranslate"><span class="pre">logdensity_fn</span></code> and parameters once</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> (defined in <code class="docutils literal notranslate"><span class="pre">blackjax/base.py</span></code>) is a NamedTuple <code class="docutils literal notranslate"><span class="pre">(init,</span> <span class="pre">step)</span></code> where
+<code class="docutils literal notranslate"><span class="pre">step(rng_key,</span> <span class="pre">state)</span> <span class="pre">-&gt;</span> <span class="pre">(new_state,</span> <span class="pre">info)</span></code>.</p>
+<p><strong><code class="docutils literal notranslate"><span class="pre">init</span></code> signature rule:</strong> All <code class="docutils literal notranslate"><span class="pre">init</span></code> functions must follow <code class="docutils literal notranslate"><span class="pre">(position,</span> <span class="pre">logdensity_fn,</span> <span class="pre">*,</span> <span class="pre">rng_key=None,</span> <span class="pre">**kwargs)</span></code>.
+If an algorithm needs a random key at initialization (e.g., to sample initial momentum), pass
+<code class="docutils literal notranslate"><span class="pre">rng_key</span></code> as a keyword argument. Extra required arguments like <code class="docutils literal notranslate"><span class="pre">period</span></code> belong in
+<code class="docutils literal notranslate"><span class="pre">build_kernel</span></code> or <code class="docutils literal notranslate"><span class="pre">as_top_level_api</span></code>, not in <code class="docutils literal notranslate"><span class="pre">init</span></code>.</p>
+</section>
+<section id="composable-closures">
+<h3>1.3 Composable Closures<a class="headerlink" href="#composable-closures" title="Link to this heading">#</a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code> uses closures to specialize behavior at construction time, not at call time.
+The returned <code class="docutils literal notranslate"><span class="pre">kernel_fn</span></code> captures configuration (integrator choice, metric, etc.) via closure
+rather than re-deriving it on every step. This is the idiomatic JAX pattern for avoiding
+recompilation.</p>
+</section>
+<section id="namedtuple-for-state">
+<h3>1.4 NamedTuple for State<a class="headerlink" href="#namedtuple-for-state" title="Link to this heading">#</a></h3>
+<p>All algorithm state types (<code class="docutils literal notranslate"><span class="pre">HMCState</span></code>, <code class="docutils literal notranslate"><span class="pre">NUTSInfo</span></code>, <code class="docutils literal notranslate"><span class="pre">Trajectory</span></code>, <code class="docutils literal notranslate"><span class="pre">Proposal</span></code>) are
+<code class="docutils literal notranslate"><span class="pre">NamedTuple</span></code>s. This provides:</p>
+<ul class="simple">
+<li><p>Automatic JAX pytree registration (no <code class="docutils literal notranslate"><span class="pre">register_pytree_node</span></code> needed)</p></li>
+<li><p>Immutability (prevents accidental in-place mutation)</p></li>
+<li><p>Named field access for readability</p></li>
+<li><p>Structural typing compatibility with <code class="docutils literal notranslate"><span class="pre">Protocol</span></code></p></li>
+</ul>
+<p>When constructing a modified state, use explicit constructors rather than <code class="docutils literal notranslate"><span class="pre">_replace()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Preferred: explicit and grep-able</span>
+<span class="k">return</span> <span class="n">HMCState</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="n">new_position</span><span class="p">,</span> <span class="n">logdensity</span><span class="o">=</span><span class="n">new_logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="o">=</span><span class="n">new_grad</span><span class="p">)</span>
+
+<span class="c1"># Avoid: hides which fields change</span>
+<span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">position</span><span class="o">=</span><span class="n">new_position</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="build-sampling-algorithm-helper">
+<h3>1.5 <code class="docutils literal notranslate"><span class="pre">build_sampling_algorithm</span></code> Helper<a class="headerlink" href="#build-sampling-algorithm-helper" title="Link to this heading">#</a></h3>
+<p>The boilerplate <code class="docutils literal notranslate"><span class="pre">as_top_level_api</span></code> pattern — wrapping <code class="docutils literal notranslate"><span class="pre">init</span></code> and a bound kernel into a
+<code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> — is handled by <code class="docutils literal notranslate"><span class="pre">build_sampling_algorithm</span></code> in <code class="docutils literal notranslate"><span class="pre">blackjax/base.py</span></code>.
+Each module uses this helper rather than repeating the same wrapper structure. For algorithms
+whose <code class="docutils literal notranslate"><span class="pre">init</span></code> requires a <code class="docutils literal notranslate"><span class="pre">rng_key</span></code>, pass <code class="docutils literal notranslate"><span class="pre">pass_rng_key_to_init=True</span></code>.</p>
+</section>
+<section id="explicit-state-threading">
+<h3>1.6 Explicit State Threading<a class="headerlink" href="#explicit-state-threading" title="Link to this heading">#</a></h3>
+<p>All state is passed as function arguments and returned as function results. Never capture
+mutable state in closures. This is what makes BlackJAX kernels safe to use with
+<code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>, <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code>, and <code class="docutils literal notranslate"><span class="pre">jax.lax.while_loop</span></code>.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="jax-idioms">
+<h2>2. JAX Idioms<a class="headerlink" href="#jax-idioms" title="Link to this heading">#</a></h2>
+<section id="control-flow">
+<h3>2.1 Control Flow<a class="headerlink" href="#control-flow" title="Link to this heading">#</a></h3>
+<p>Use JAX’s functional control flow primitives for all branches and loops in traced code:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Use case</p></th>
+<th class="head"><p>Primitive</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Conditional branch</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">jax.lax.cond(pred,</span> <span class="pre">true_fn,</span> <span class="pre">false_fn)</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>Sequential accumulation</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Fixed-count loop</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">jax.lax.fori_loop</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p>While loop</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">jax.lax.while_loop</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p>Batching</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Never use Python <code class="docutils literal notranslate"><span class="pre">for</span></code>/<code class="docutils literal notranslate"><span class="pre">while</span></code>/<code class="docutils literal notranslate"><span class="pre">if</span></code> in code that will be traced (i.e., inside a kernel or
+any function called from a kernel). Python conditionals on traced values will either error
+or silently trace only one branch.</p>
+<p><strong>Modern <code class="docutils literal notranslate"><span class="pre">jax.lax.cond</span></code> form</strong> — use the no-operand form:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Modern (preferred)</span>
+<span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">true_branch</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">false_branch</span><span class="p">)</span>
+
+<span class="c1"># Legacy (avoid) — the operand=None pattern is deprecated</span>
+<span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">true_branch</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">false_branch</span><span class="p">,</span> <span class="n">operand</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="random-keys">
+<h3>2.2 Random Keys<a class="headerlink" href="#random-keys" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Internally</strong>: always use <code class="docutils literal notranslate"><span class="pre">jax.random.key()</span></code>, never <code class="docutils literal notranslate"><span class="pre">jax.random.PRNGKey()</span></code> (deprecated)</p></li>
+<li><p><strong>At the user boundary</strong>: accept both old-style and new-style PRNG keys</p></li>
+</ul>
+</section>
+<section id="array-operations">
+<h3>2.3 Array Operations<a class="headerlink" href="#array-operations" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use named keyword args for clip</span>
+<span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span> <span class="nb">max</span><span class="o">=</span><span class="n">upper</span><span class="p">)</span>   <span class="c1"># correct</span>
+<span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">a_min</span><span class="o">=</span><span class="n">lower</span><span class="p">,</span> <span class="n">a_max</span><span class="o">=</span><span class="n">upper</span><span class="p">)</span>  <span class="c1"># old arg names — avoid</span>
+
+<span class="c1"># Use jnp constants, not string dtype names</span>
+<span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>   <span class="c1"># correct</span>
+<span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;int32&quot;</span><span class="p">)</span>      <span class="c1"># avoid</span>
+</pre></div>
+</div>
+</section>
+<section id="pytree-operations">
+<h3>2.4 PyTree Operations<a class="headerlink" href="#pytree-operations" title="Link to this heading">#</a></h3>
+<p>Prefer <code class="docutils literal notranslate"><span class="pre">jax.tree.map</span></code> (not the deprecated <code class="docutils literal notranslate"><span class="pre">jax.tree_map</span></code>) for element-wise operations on
+pytrees. Only flatten a pytree to a 1D array (via <code class="docutils literal notranslate"><span class="pre">ravel_pytree</span></code>) when true linear-algebra
+operations are required — for example, a Cholesky decomposition or a dot product against a
+mass matrix. For element-wise operations (scaling, addition, masking), stay in pytree space:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Preferred: stay in pytree space when operations are element-wise</span>
+<span class="n">scaled</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">step_size</span> <span class="o">*</span> <span class="n">x</span><span class="p">,</span> <span class="n">momentum</span><span class="p">)</span>
+
+<span class="c1"># ravel_pytree: only at the linear-algebra boundary</span>
+<span class="n">flat</span><span class="p">,</span> <span class="n">unravel</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+<span class="n">new_flat</span> <span class="o">=</span> <span class="n">mass_matrix</span> <span class="o">@</span> <span class="n">flat</span>
+<span class="n">new_position</span> <span class="o">=</span> <span class="n">unravel</span><span class="p">(</span><span class="n">new_flat</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="naming-conventions">
+<h2>3. Naming Conventions<a class="headerlink" href="#naming-conventions" title="Link to this heading">#</a></h2>
+<p>Consistent naming is critical for an API used across many algorithms. Follow these rules
+without exception:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Item</p></th>
+<th class="head"><p>Convention</p></th>
+<th class="head"><p>Example</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Log-density function</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">logdensity_fn</span></code></p></td>
+<td><p>(not <code class="docutils literal notranslate"><span class="pre">log_prob</span></code>, <code class="docutils literal notranslate"><span class="pre">log_density</span></code>, <code class="docutils literal notranslate"><span class="pre">logpdf</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Log-density gradient</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">logdensity_grad</span></code></p></td>
+<td><p>(not <code class="docutils literal notranslate"><span class="pre">logdensitygrad</span></code>, <code class="docutils literal notranslate"><span class="pre">grad</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p>Step function in <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">step_fn</span></code></p></td>
+<td><p>(not <code class="docutils literal notranslate"><span class="pre">update_fn</span></code>, <code class="docutils literal notranslate"><span class="pre">kernel_fn</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Noise function parameter</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">noise_fn</span></code></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p>Momentum PRNG key</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">key_momentum</span></code></p></td>
+<td><p>(not <code class="docutils literal notranslate"><span class="pre">key_mometum</span></code>)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Descriptive names</p></td>
+<td><p>Write them out</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">initial_energy</span></code>, not <code class="docutils literal notranslate"><span class="pre">e0</span></code>; <code class="docutils literal notranslate"><span class="pre">trajectory_integrator</span></code>, not <code class="docutils literal notranslate"><span class="pre">traj_int</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>No abbreviations</strong> in public API names. Single-letter variable names (<code class="docutils literal notranslate"><span class="pre">l</span></code>, <code class="docutils literal notranslate"><span class="pre">g</span></code>) are only
+acceptable as local temporaries in short, obvious expressions.</p>
+</section>
+<hr class="docutils" />
+<section id="type-annotations">
+<h2>4. Type Annotations<a class="headerlink" href="#type-annotations" title="Link to this heading">#</a></h2>
+<p>All public function signatures must carry type annotations. Use modern Python 3.10+ syntax:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Old style</p></th>
+<th class="head"><p>Modern style</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Tuple[X,</span> <span class="pre">Y]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">tuple[X,</span> <span class="pre">Y]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Dict[str,</span> <span class="pre">X]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dict[str,</span> <span class="pre">X]</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">List[X]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">list[X]</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Optional[X]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">|</span> <span class="pre">None</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Union[X,</span> <span class="pre">Y]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">X</span> <span class="pre">|</span> <span class="pre">Y</span></code></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Do not import <code class="docutils literal notranslate"><span class="pre">Tuple</span></code>, <code class="docutils literal notranslate"><span class="pre">Dict</span></code>, <code class="docutils literal notranslate"><span class="pre">List</span></code>, <code class="docutils literal notranslate"><span class="pre">Optional</span></code>, or <code class="docutils literal notranslate"><span class="pre">Union</span></code> from <code class="docutils literal notranslate"><span class="pre">typing</span></code>. The only
+<code class="docutils literal notranslate"><span class="pre">typing</span></code> imports that remain useful are <code class="docutils literal notranslate"><span class="pre">Protocol</span></code>, <code class="docutils literal notranslate"><span class="pre">TypeAlias</span></code>, <code class="docutils literal notranslate"><span class="pre">Callable</span></code>, and <code class="docutils literal notranslate"><span class="pre">Any</span></code>.</p>
+<p>Use <code class="docutils literal notranslate"><span class="pre">Protocol</span></code> for structural typing of function signatures. <code class="docutils literal notranslate"><span class="pre">base.py</span></code> and <code class="docutils literal notranslate"><span class="pre">metrics.py</span></code>
+show the established patterns — extend them rather than writing plain <code class="docutils literal notranslate"><span class="pre">Callable</span></code>.</p>
+</section>
+<hr class="docutils" />
+<section id="documentation-style">
+<h2>5. Documentation Style<a class="headerlink" href="#documentation-style" title="Link to this heading">#</a></h2>
+<p>Docstrings follow the <strong>numpydoc</strong> format with <code class="docutils literal notranslate"><span class="pre">Parameters</span></code> and <code class="docutils literal notranslate"><span class="pre">Returns</span></code> sections.
+Every public function, class, and module needs a docstring.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span><span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an HMC transition kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    step_size</span>
+<span class="sd">        Size of the leapfrog integration step.</span>
+<span class="sd">    inverse_mass_matrix</span>
+<span class="sd">        Inverse of the mass matrix. Either a 1D array (diagonal) or 2D array (dense).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel function ``kernel(rng_key, state, logdensity_fn) -&gt; (HMCState, HMCInfo)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+<p>Magic numbers must be explained. If a constant has a mathematical derivation (e.g., a
+coefficient that comes from <code class="docutils literal notranslate"><span class="pre">Var[E]</span> <span class="pre">=</span> <span class="pre">O(ε⁶)</span></code>), document that derivation inline rather than
+leaving a bare numeric literal.</p>
+</section>
+<hr class="docutils" />
+<section id="module-organization">
+<h2>6. Module Organization<a class="headerlink" href="#module-organization" title="Link to this heading">#</a></h2>
+<section id="all-exports">
+<h3>6.1 <code class="docutils literal notranslate"><span class="pre">__all__</span></code> Exports<a class="headerlink" href="#all-exports" title="Link to this heading">#</a></h3>
+<p>Every module must define <code class="docutils literal notranslate"><span class="pre">__all__</span></code> at the top level, listing the public API.</p>
+</section>
+<section id="section-comments">
+<h3>6.2 Section Comments<a class="headerlink" href="#section-comments" title="Link to this heading">#</a></h3>
+<p>For long files, use section comments to delimit logical groups:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># --- Trajectory integration ---</span>
+
+<span class="c1"># --- Proposal generation ---</span>
+</pre></div>
+</div>
+</section>
+<section id="module-boundaries">
+<h3>6.3 Module Boundaries<a class="headerlink" href="#module-boundaries" title="Link to this heading">#</a></h3>
+<p>Resist the temptation to build monolithic files. The HMC family demonstrates the right
+decomposition:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>File</p></th>
+<th class="head"><p>Responsibility</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">integrators.py</span></code></p></td>
+<td><p>Leapfrog and higher-order integrators</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">metrics.py</span></code></p></td>
+<td><p>Kinetic energy and mass matrix logic</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">proposal.py</span></code></p></td>
+<td><p>Acceptance/rejection</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">trajectory.py</span></code></p></td>
+<td><p>Trajectory integration strategies</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">termination.py</span></code></p></td>
+<td><p>NUTS stopping criteria</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">hmc.py</span></code> / <code class="docutils literal notranslate"><span class="pre">nuts.py</span></code></p></td>
+<td><p>Assembly: wires the pieces together</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>A new algorithm should identify which existing building blocks it can reuse before adding
+new code. Only introduce new abstractions when there is genuine reuse across at least two
+algorithms.</p>
+<p>Utilities belong in dedicated modules by function:</p>
+<ul class="simple">
+<li><p>Diagnostics (PSIS, ESS, R-hat) → <code class="docutils literal notranslate"><span class="pre">diagnostics.py</span></code></p></li>
+<li><p>ECA / ensemble utilities → <code class="docutils literal notranslate"><span class="pre">eca.py</span></code></p></li>
+<li><p>Core type aliases and protocols → <code class="docutils literal notranslate"><span class="pre">base.py</span></code>, <code class="docutils literal notranslate"><span class="pre">types.py</span></code></p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="testing-conventions">
+<h2>7. Testing Conventions<a class="headerlink" href="#testing-conventions" title="Link to this heading">#</a></h2>
+<p>Tests live in <code class="docutils literal notranslate"><span class="pre">tests/</span></code>, mirroring the <code class="docutils literal notranslate"><span class="pre">blackjax/</span></code> module structure.</p>
+<ul class="simple">
+<li><p>All test classes inherit <code class="docutils literal notranslate"><span class="pre">BlackJAXTest</span></code> (from <code class="docutils literal notranslate"><span class="pre">tests/fixtures.py</span></code>) for date-based PRNG
+keys and JAX-aware assertions.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">self.next_key()</span></code> for each independent random operation.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">std_normal_logdensity</span></code> as the canonical test target.</p></li>
+<li><p>Decorate kernel tests with <code class="docutils literal notranslate"><span class="pre">&#64;chex.assert_max_traces(n=2)</span></code> to verify kernels do not trigger
+excess recompilation.</p></li>
+<li><p>Every MCMC algorithm must have a <strong>protocol conformance test</strong> that verifies:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">init(position,</span> <span class="pre">logdensity_fn)</span></code> returns the declared <code class="docutils literal notranslate"><span class="pre">State</span></code> type</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">step(rng_key,</span> <span class="pre">state)</span> <span class="pre">-&gt;</span> <span class="pre">(State,</span> <span class="pre">Info)</span></code> matches the <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> contract</p></li>
+<li><p>Parameter names match the declared API</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="what-the-gold-standard-looks-like">
+<h2>8. What the Gold Standard Looks Like<a class="headerlink" href="#what-the-gold-standard-looks-like" title="Link to this heading">#</a></h2>
+<p>The files that best embody all of the above principles are:</p>
+<ul class="simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">blackjax/mcmc/trajectory.py</span></code></strong> — composable trajectory strategies, clear abstractions</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">blackjax/mcmc/nuts.py</span></code></strong> — three-layer API, reuses every HMC building block</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">blackjax/mcmc/hmc.py</span></code></strong> — clean assembly of composable pieces</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">blackjax/mcmc/proposal.py</span></code></strong> — acceptance logic, proper use of NamedTuples</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">blackjax/base.py</span></code></strong> — protocol definitions, <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>, <code class="docutils literal notranslate"><span class="pre">build_sampling_algorithm</span></code></p></li>
+</ul>
+<p>When in doubt, read these files first.</p>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../bib.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Bibliography</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="new_algorithm_guide.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Contributing a New Algorithm to BlackJAX</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-architecture">1. Core Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kernels-are-pure-functions">1.1 Kernels Are Pure Functions</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-three-layer-api">1.2 The Three-Layer API</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#composable-closures">1.3 Composable Closures</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#namedtuple-for-state">1.4 NamedTuple for State</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#build-sampling-algorithm-helper">1.5 <code class="docutils literal notranslate"><span class="pre">build_sampling_algorithm</span></code> Helper</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#explicit-state-threading">1.6 Explicit State Threading</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jax-idioms">2. JAX Idioms</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#control-flow">2.1 Control Flow</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#random-keys">2.2 Random Keys</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#array-operations">2.3 Array Operations</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#pytree-operations">2.4 PyTree Operations</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#naming-conventions">3. Naming Conventions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#type-annotations">4. Type Annotations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-style">5. Documentation Style</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-organization">6. Module Organization</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#all-exports">6.1 <code class="docutils literal notranslate"><span class="pre">__all__</span></code> Exports</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#section-comments">6.2 Section Comments</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#module-boundaries">6.3 Module Boundaries</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#testing-conventions">7. Testing Conventions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-the-gold-standard-looks-like">8. What the Gold Standard Looks Like</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
