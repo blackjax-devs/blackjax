@@ -27,7 +27,13 @@ import jax.numpy as jnp
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["MySamplerState", "MySamplerInfo", "init", "build_kernel", "as_top_level_api"]
+__all__ = [
+    "MySamplerState",
+    "MySamplerInfo",
+    "init",
+    "build_kernel",
+    "as_top_level_api",
+]
 
 
 # ---------------------------------------------------------------------------
