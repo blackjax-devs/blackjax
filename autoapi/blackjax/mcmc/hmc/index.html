@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.ghmc" href="../ghmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g2fb6683bb" />
+  <meta name="docsearch:version" content="0.1.dev1+g794d2e6d7" />
   </head>
   
   
@@ -395,6 +395,7 @@
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.multinomial_hmc_proposal"><code class="docutils literal notranslate"><span class="pre">multinomial_hmc_proposal()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
 </ul>
@@ -434,10 +435,13 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.init" title="blackjax.mcmc.hmc.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(position, logdensity_fn)</p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.build_kernel" title="blackjax.mcmc.hmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([integrator, divergence_threshold])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.multinomial_hmc_proposal" title="blackjax.mcmc.hmc.multinomial_hmc_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multinomial_hmc_proposal</span></code></a>(→ Callable)</p></td>
+<td><p>Multinomial HMC proposal.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.build_kernel" title="blackjax.mcmc.hmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([integrator, divergence_threshold, ...])</p></td>
 <td><p>Build a HMC kernel.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.as_top_level_api" title="blackjax.mcmc.hmc.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.hmc.as_top_level_api" title="blackjax.mcmc.hmc.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
 <td><p>Implements the (basic) user interface for the HMC kernel.</p></td>
 </tr>
 </tbody>
@@ -541,8 +545,37 @@ momentum.</p>
 <dd></dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.hmc.multinomial_hmc_proposal">
+<span class="sig-name descname"><span class="pre">multinomial_hmc_proposal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.mcmc.metrics.KineticEnergy</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#multinomial_hmc_proposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.multinomial_hmc_proposal" title="Link to this definition">#</a></dt>
+<dd><p>Multinomial HMC proposal.</p>
+<p>Instead of proposing only the trajectory endpoint (as standard HMC does),
+this builds the full leapfrog trajectory of <code class="docutils literal notranslate"><span class="pre">num_integration_steps</span></code> and
+samples one state proportional to <code class="docutils literal notranslate"><span class="pre">exp(-H(z_i))</span></code> using progressive
+reservoir sampling (<code class="docutils literal notranslate"><span class="pre">progressive_uniform_sampling</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>integrator</strong> – Symplectic integrator used to build the trajectory step by step.</p></li>
+<li><p><strong>kinetic_energy</strong> – Function that computes the kinetic energy.</p></li>
+<li><p><strong>step_size</strong> – Size of the integration step.</p></li>
+<li><p><strong>num_integration_steps</strong> – Number of times we run the symplectic integrator to build the trajectory.</p></li>
+<li><p><strong>divergence_threshold</strong> – Threshold above which we say that there is a divergence.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>A kernel that generates a new chain state and information about the</em></p></li>
+<li><p>transition.  Returns the same 3-tuple as <code class="xref py py-func docutils literal notranslate"><span class="pre">hmc_proposal()</span></code> for</p></li>
+<li><p><strong>interface compatibility</strong> (<code class="docutils literal notranslate"><span class="pre">(sampled_state,</span> <span class="pre">info,</span> <span class="pre">None)</span></code>.)</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.hmc.build_kernel">
-<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.build_kernel" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">hmc_proposal</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.build_kernel" title="Link to this definition">#</a></dt>
 <dd><p>Build a HMC kernel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -550,6 +583,10 @@ momentum.</p>
 <li><p><strong>integrator</strong> – The symplectic integrator to use to integrate the Hamiltonian dynamics.</p></li>
 <li><p><strong>divergence_threshold</strong> – Value of the difference in energy above which we consider that the transition is
 divergent.</p></li>
+<li><p><strong>build_proposal</strong> – A callable with signature
+<code class="docutils literal notranslate"><span class="pre">(integrator,</span> <span class="pre">kinetic_energy,</span> <span class="pre">step_size,</span> <span class="pre">num_integration_steps,</span>
+<span class="pre">divergence_threshold)</span> <span class="pre">-&gt;</span> <span class="pre">generate</span></code> that builds the proposal function.
+Defaults to <code class="xref py py-func docutils literal notranslate"><span class="pre">hmc_proposal()</span></code> (standard endpoint HMC).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -565,7 +602,7 @@ divergent.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.hmc.as_top_level_api">
-<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.mcmc.metrics.MetricTypes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.as_top_level_api" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.mcmc.metrics.MetricTypes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">build_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">hmc_proposal</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/hmc.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.hmc.as_top_level_api" title="Link to this definition">#</a></dt>
 <dd><p>Implements the (basic) user interface for the HMC kernel.</p>
 <p>The general hmc kernel builder (<a class="reference internal" href="#blackjax.mcmc.hmc.build_kernel" title="blackjax.mcmc.hmc.build_kernel"><code class="xref py py-meth docutils literal notranslate"><span class="pre">blackjax.mcmc.hmc.build_kernel()</span></code></a>, alias
 <cite>blackjax.hmc.build_kernel</cite>) can be cumbersome to manipulate. Since most users only
@@ -618,6 +655,11 @@ which we say that the transition is divergent. The default value is
 commonly found in other libraries, and yet is arbitrary.</p></li>
 <li><p><strong>integrator</strong> – (algorithm parameter) The symplectic integrator to use to integrate the
 trajectory.</p></li>
+<li><p><strong>build_proposal</strong> – A callable with signature
+<code class="docutils literal notranslate"><span class="pre">(integrator,</span> <span class="pre">kinetic_energy,</span> <span class="pre">step_size,</span> <span class="pre">num_integration_steps,</span>
+<span class="pre">divergence_threshold)</span> <span class="pre">-&gt;</span> <span class="pre">generate</span></code> that builds the proposal function.
+Defaults to <code class="xref py py-func docutils literal notranslate"><span class="pre">hmc_proposal()</span></code> (standard endpoint HMC).  Pass
+<a class="reference internal" href="#blackjax.mcmc.hmc.multinomial_hmc_proposal" title="blackjax.mcmc.hmc.multinomial_hmc_proposal"><code class="xref py py-func docutils literal notranslate"><span class="pre">multinomial_hmc_proposal()</span></code></a> for multinomial trajectory sampling.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -696,6 +738,7 @@ trajectory.</p></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.multinomial_hmc_proposal"><code class="docutils literal notranslate"><span class="pre">multinomial_hmc_proposal()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.hmc.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
 </ul>

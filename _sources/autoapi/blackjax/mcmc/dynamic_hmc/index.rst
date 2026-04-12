@@ -60,7 +60,7 @@ Module Contents
 
 .. py:function:: init(position: blackjax.types.ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: blackjax.types.Array)
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10))
+.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), build_proposal: Callable = hmc_proposal)
 
    Build a Dynamic HMC kernel where the number of integration steps is chosen randomly.
 
@@ -69,13 +69,17 @@ Module Contents
    :param next_random_arg_fn: Function that generates the next `random_generator_arg` from its previous value.
    :param integration_steps_fn: Function that generates the next pseudo or quasi-random number of integration steps in the
                                 sequence, given the current `random_generator_arg`. Needs to return an `int`.
+   :param build_proposal: A callable with signature
+                          ``(integrator, kinetic_energy, step_size, num_integration_steps,
+                          divergence_threshold) -> generate`` that builds the proposal function.
+                          Defaults to :func:`hmc_proposal` (standard endpoint HMC).
 
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current state*
              * *of the chain and that returns a new state of the chain along with*
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.types.Array, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10)) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, inverse_mass_matrix: blackjax.types.Array, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), build_proposal: Callable = hmc_proposal) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the dynamic HMC kernel.
 
@@ -90,6 +94,11 @@ Module Contents
    :param next_random_arg_fn: Function that generates the next `random_generator_arg` from its previous value.
    :param integration_steps_fn: Function that generates the next pseudo or quasi-random number of integration steps in the
                                 sequence, given the current `random_generator_arg`.
+   :param build_proposal: A callable with signature
+                          ``(integrator, kinetic_energy, step_size, num_integration_steps,
+                          divergence_threshold) -> generate`` that builds the proposal function.
+                          Defaults to :func:`hmc_proposal` (standard endpoint HMC).  Pass
+                          :func:`multinomial_hmc_proposal` for multinomial trajectory sampling.
 
    :rtype: A ``SamplingAlgorithm``.
 

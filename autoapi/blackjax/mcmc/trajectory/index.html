@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.termination" href="../termination/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g2fb6683bb" />
+  <meta name="docsearch:version" content="0.1.dev1+g794d2e6d7" />
   </head>
   
   
@@ -389,6 +389,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.reorder_trajectories"><code class="docutils literal notranslate"><span class="pre">reorder_trajectories()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.merge_trajectories"><code class="docutils literal notranslate"><span class="pre">merge_trajectories()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.static_integration"><code class="docutils literal notranslate"><span class="pre">static_integration()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.static_progressive_integration"><code class="docutils literal notranslate"><span class="pre">static_progressive_integration()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.DynamicIntegrationState"><code class="docutils literal notranslate"><span class="pre">DynamicIntegrationState</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.DynamicIntegrationState.step"><code class="docutils literal notranslate"><span class="pre">DynamicIntegrationState.step</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.DynamicIntegrationState.proposal"><code class="docutils literal notranslate"><span class="pre">DynamicIntegrationState.proposal</span></code></a></li>
@@ -476,16 +477,19 @@ memory by keeping states that will subsequently be discarded.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.static_integration" title="blackjax.mcmc.trajectory.static_integration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">static_integration</span></code></a>(→ Callable)</p></td>
 <td><p>Generate a trajectory by integrating several times in one direction.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.dynamic_progressive_integration" title="blackjax.mcmc.trajectory.dynamic_progressive_integration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_progressive_integration</span></code></a>(integrator, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.static_progressive_integration" title="blackjax.mcmc.trajectory.static_progressive_integration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">static_progressive_integration</span></code></a>(→ Callable)</p></td>
+<td><p>Generate a trajectory by integrating a fixed number of steps and</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.dynamic_progressive_integration" title="blackjax.mcmc.trajectory.dynamic_progressive_integration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_progressive_integration</span></code></a>(integrator, ...)</p></td>
 <td><p>Integrate a trajectory and update the proposal sequentially in one direction</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.dynamic_recursive_integration" title="blackjax.mcmc.trajectory.dynamic_recursive_integration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_recursive_integration</span></code></a>(integrator, ...[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.dynamic_recursive_integration" title="blackjax.mcmc.trajectory.dynamic_recursive_integration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_recursive_integration</span></code></a>(integrator, ...[, ...])</p></td>
 <td><p>Integrate a trajectory and update the proposal recursively in Python</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.dynamic_multiplicative_expansion" title="blackjax.mcmc.trajectory.dynamic_multiplicative_expansion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_multiplicative_expansion</span></code></a>(→ Callable)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.dynamic_multiplicative_expansion" title="blackjax.mcmc.trajectory.dynamic_multiplicative_expansion"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_multiplicative_expansion</span></code></a>(→ Callable)</p></td>
 <td><p>Sample a trajectory and update the proposal sequentially</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.hmc_energy" title="blackjax.mcmc.trajectory.hmc_energy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc_energy</span></code></a>(kinetic_energy)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.trajectory.hmc_energy" title="blackjax.mcmc.trajectory.hmc_energy"><code class="xref py py-obj docutils literal notranslate"><span class="pre">hmc_energy</span></code></a>(kinetic_energy)</p></td>
 <td><p>Build the total HMC energy function from a kinetic energy function.</p></td>
 </tr>
 </tbody>
@@ -583,6 +587,36 @@ memory by keeping states that will subsequently be discarded.</p>
 <dd class="field-even"><p><ul class="simple">
 <li><p>An <code class="docutils literal notranslate"><span class="pre">integrate(initial_state,</span> <span class="pre">step_size,</span> <span class="pre">num_integration_steps)</span></code> function</p></li>
 <li><p><em>that returns the final IntegratorState after all steps.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.trajectory.static_progressive_integration">
+<span class="sig-name descname"><span class="pre">static_progressive_integration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_energy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/trajectory.html#static_progressive_integration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.trajectory.static_progressive_integration" title="Link to this definition">#</a></dt>
+<dd><p>Generate a trajectory by integrating a fixed number of steps and
+progressively sampling proposals using multinomial weighting.</p>
+<p>Unlike <code class="docutils literal notranslate"><span class="pre">static_integration</span></code>, which returns only the trajectory endpoint,
+this function samples one state from the <em>entire</em> trajectory proportional
+to <code class="docutils literal notranslate"><span class="pre">exp(-H(z_i))</span></code> using progressive reservoir sampling
+(<code class="docutils literal notranslate"><span class="pre">progressive_uniform_sampling</span></code>).  Only O(1) memory is needed regardless
+of trajectory length.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>integrator</strong> – One-step symplectic integrator.</p></li>
+<li><p><strong>kinetic_energy</strong> – Function to compute the current value of the kinetic energy.</p></li>
+<li><p><strong>num_integration_steps</strong> – Number of integration steps to take.</p></li>
+<li><p><strong>divergence_threshold</strong> – Value of the difference of energy between two consecutive states above
+which we say a transition is divergent.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>An <code class="docutils literal notranslate"><span class="pre">integrate(rng_key,</span> <span class="pre">initial_state,</span> <span class="pre">step_size)</span></code> function that returns</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(proposal,</span> <span class="pre">is_diverging)</span></code>.</p></li>
 </ul>
 </p>
 </dd>
@@ -804,6 +838,7 @@ optionally the position).</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.reorder_trajectories"><code class="docutils literal notranslate"><span class="pre">reorder_trajectories()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.merge_trajectories"><code class="docutils literal notranslate"><span class="pre">merge_trajectories()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.static_integration"><code class="docutils literal notranslate"><span class="pre">static_integration()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.static_progressive_integration"><code class="docutils literal notranslate"><span class="pre">static_progressive_integration()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.DynamicIntegrationState"><code class="docutils literal notranslate"><span class="pre">DynamicIntegrationState</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.DynamicIntegrationState.step"><code class="docutils literal notranslate"><span class="pre">DynamicIntegrationState.step</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.trajectory.DynamicIntegrationState.proposal"><code class="docutils literal notranslate"><span class="pre">DynamicIntegrationState.proposal</span></code></a></li>

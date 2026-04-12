@@ -51,6 +51,7 @@ Functions
    blackjax.mcmc.trajectory.reorder_trajectories
    blackjax.mcmc.trajectory.merge_trajectories
    blackjax.mcmc.trajectory.static_integration
+   blackjax.mcmc.trajectory.static_progressive_integration
    blackjax.mcmc.trajectory.dynamic_progressive_integration
    blackjax.mcmc.trajectory.dynamic_recursive_integration
    blackjax.mcmc.trajectory.dynamic_multiplicative_expansion
@@ -117,6 +118,27 @@ Module Contents
 
    :returns: * An ``integrate(initial_state, step_size, num_integration_steps)`` function
              * *that returns the final IntegratorState after all steps.*
+
+
+.. py:function:: static_progressive_integration(integrator: Callable, kinetic_energy: Callable, num_integration_steps: int, divergence_threshold: float) -> Callable
+
+   Generate a trajectory by integrating a fixed number of steps and
+   progressively sampling proposals using multinomial weighting.
+
+   Unlike ``static_integration``, which returns only the trajectory endpoint,
+   this function samples one state from the *entire* trajectory proportional
+   to ``exp(-H(z_i))`` using progressive reservoir sampling
+   (``progressive_uniform_sampling``).  Only O(1) memory is needed regardless
+   of trajectory length.
+
+   :param integrator: One-step symplectic integrator.
+   :param kinetic_energy: Function to compute the current value of the kinetic energy.
+   :param num_integration_steps: Number of integration steps to take.
+   :param divergence_threshold: Value of the difference of energy between two consecutive states above
+                                which we say a transition is divergent.
+
+   :returns: * An ``integrate(rng_key, initial_state, step_size)`` function that returns
+             * ``(proposal, is_diverging)``.
 
 
 .. py:class:: DynamicIntegrationState

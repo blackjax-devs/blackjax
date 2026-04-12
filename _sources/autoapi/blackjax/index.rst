@@ -25,6 +25,7 @@ Attributes
 .. autoapisummary::
 
    blackjax.laplace_hmc
+   blackjax.multinomial_hmc
    blackjax.multipathfinder
 
 
@@ -32,6 +33,8 @@ Package Contents
 ----------------
 
 .. py:data:: laplace_hmc
+
+.. py:data:: multinomial_hmc
 
 .. py:data:: multipathfinder
 
