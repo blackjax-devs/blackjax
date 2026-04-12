@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.integrators" href="../integrators/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g6538e467e" />
+  <meta name="docsearch:version" content="0.1.dev1+g55adb89aa" />
   </head>
   
   
@@ -421,7 +421,7 @@ optimizer needs only a handful of iterations when <code class="docutils literal 
 <span class="c1"># new_state.theta_star: MAP of theta at the accepted phi</span>
 
 <span class="c1"># Multinomial variant (no rejection step, samples from full trajectory):</span>
-<span class="n">sampler</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">laplace_multinomial_hmc</span><span class="p">(</span>
+<span class="n">sampler</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">laplace_mhmc</span><span class="p">(</span>
     <span class="n">log_joint</span><span class="p">,</span> <span class="n">theta_init</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>
     <span class="n">step_size</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">d</span><span class="p">),</span>
     <span class="n">num_integration_steps</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
@@ -525,7 +525,7 @@ returned by <a class="reference internal" href="../laplace_marginal/index.html#b
 <li><p><strong>divergence_threshold</strong> – Energy difference above which a transition is declared divergent.</p></li>
 <li><p><strong>build_proposal</strong> – Proposal builder.  Defaults to <code class="xref py py-func docutils literal notranslate"><span class="pre">hmc_proposal()</span></code>
 (endpoint + M-H).  Pass <a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.multinomial_hmc_proposal" title="blackjax.mcmc.hmc.multinomial_hmc_proposal"><code class="xref py py-func docutils literal notranslate"><span class="pre">multinomial_hmc_proposal()</span></code></a>
-for multinomial trajectory sampling (<code class="docutils literal notranslate"><span class="pre">blackjax.laplace_multinomial_hmc</span></code>).</p></li>
+for multinomial trajectory sampling (<code class="docutils literal notranslate"><span class="pre">blackjax.laplace_mhmc</span></code>).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -560,7 +560,7 @@ Default 1000.</p></li>
 <li><p><strong>build_proposal</strong> – Proposal builder.  Defaults to <code class="xref py py-func docutils literal notranslate"><span class="pre">hmc_proposal()</span></code>
 (endpoint + M-H).  Pass <a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.multinomial_hmc_proposal" title="blackjax.mcmc.hmc.multinomial_hmc_proposal"><code class="xref py py-func docutils literal notranslate"><span class="pre">multinomial_hmc_proposal()</span></code></a>
 for multinomial trajectory sampling; this is what
-<code class="docutils literal notranslate"><span class="pre">blackjax.laplace_multinomial_hmc</span></code> uses.</p></li>
+<code class="docutils literal notranslate"><span class="pre">blackjax.laplace_mhmc</span></code> uses.</p></li>
 <li><p><strong>**optimizer_kwargs</strong> – Forwarded to <code class="xref py py-func docutils literal notranslate"><span class="pre">minimize_lbfgs()</span></code>.
 Useful keys: <code class="docutils literal notranslate"><span class="pre">maxiter</span></code> (default 30), <code class="docutils literal notranslate"><span class="pre">gtol</span></code>, <code class="docutils literal notranslate"><span class="pre">ftol</span></code>.</p></li>
 </ul>

@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.base" href="../base/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g6538e467e" />
+  <meta name="docsearch:version" content="0.1.dev1+g55adb89aa" />
   </head>
   
   
@@ -610,7 +610,7 @@ lengths.</p>
     <span class="n">optim</span><span class="p">,</span>
     <span class="n">num_warmup_steps</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">dynamic_hmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">dhmc</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">)</span><span class="o">.</span><span class="n">step</span>
 <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">kernel</span><span class="p">)(</span><span class="n">key_sample</span><span class="p">,</span> <span class="n">last_states</span><span class="p">)</span>
 </pre></div>
 </div>

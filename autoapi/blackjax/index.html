@@ -55,7 +55,7 @@
     <link rel="prev" title="Reproducing the front page image of the repository" href="../../examples/howto_reproduce_the_blackjax_image.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g6538e467e" />
+  <meta name="docsearch:version" content="0.1.dev1+g55adb89aa" />
   </head>
   
   
@@ -378,10 +378,13 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#package-contents">Package Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dhmc"><code class="docutils literal notranslate"><span class="pre">dhmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dynamic_hmc"><code class="docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_hmc"><code class="docutils literal notranslate"><span class="pre">laplace_hmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mhmc"><code class="docutils literal notranslate"><span class="pre">mhmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.multinomial_hmc"><code class="docutils literal notranslate"><span class="pre">multinomial_hmc</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dynamic_multinomial_hmc"><code class="docutils literal notranslate"><span class="pre">dynamic_multinomial_hmc</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_multinomial_hmc"><code class="docutils literal notranslate"><span class="pre">laplace_multinomial_hmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dmhmc"><code class="docutils literal notranslate"><span class="pre">dmhmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_mhmc"><code class="docutils literal notranslate"><span class="pre">laplace_mhmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.multipathfinder"><code class="docutils literal notranslate"><span class="pre">multipathfinder</span></code></a></li>
 </ul>
 </li>
@@ -416,19 +419,28 @@
 <h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.dhmc" title="blackjax.dhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dhmc</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.dynamic_hmc" title="blackjax.dynamic_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></a></p></td>
+<td><p></p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.laplace_hmc" title="blackjax.laplace_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_hmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.multinomial_hmc" title="blackjax.multinomial_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multinomial_hmc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mhmc" title="blackjax.mhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mhmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.dynamic_multinomial_hmc" title="blackjax.dynamic_multinomial_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dynamic_multinomial_hmc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.multinomial_hmc" title="blackjax.multinomial_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multinomial_hmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.laplace_multinomial_hmc" title="blackjax.laplace_multinomial_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_multinomial_hmc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.dmhmc" title="blackjax.dmhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dmhmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.multipathfinder" title="blackjax.multipathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multipathfinder</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.laplace_mhmc" title="blackjax.laplace_mhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_mhmc</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.multipathfinder" title="blackjax.multipathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multipathfinder</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -438,8 +450,23 @@
 <section id="package-contents">
 <h2>Package Contents<a class="headerlink" href="#package-contents" title="Link to this heading">#</a></h2>
 <dl class="py data">
+<dt class="sig sig-object py" id="blackjax.dhmc">
+<span class="sig-name descname"><span class="pre">dhmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#dhmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.dhmc" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blackjax.dynamic_hmc">
+<span class="sig-name descname"><span class="pre">dynamic_hmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#dynamic_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.dynamic_hmc" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
 <dt class="sig sig-object py" id="blackjax.laplace_hmc">
 <span class="sig-name descname"><span class="pre">laplace_hmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#laplace_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.laplace_hmc" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blackjax.mhmc">
+<span class="sig-name descname"><span class="pre">mhmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#mhmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mhmc" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
@@ -448,13 +475,13 @@
 <dd></dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="blackjax.dynamic_multinomial_hmc">
-<span class="sig-name descname"><span class="pre">dynamic_multinomial_hmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#dynamic_multinomial_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.dynamic_multinomial_hmc" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.dmhmc">
+<span class="sig-name descname"><span class="pre">dmhmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#dmhmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.dmhmc" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
-<dt class="sig sig-object py" id="blackjax.laplace_multinomial_hmc">
-<span class="sig-name descname"><span class="pre">laplace_multinomial_hmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#laplace_multinomial_hmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.laplace_multinomial_hmc" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.laplace_mhmc">
+<span class="sig-name descname"><span class="pre">laplace_mhmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#laplace_mhmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.laplace_mhmc" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
@@ -515,10 +542,13 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#package-contents">Package Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dhmc"><code class="docutils literal notranslate"><span class="pre">dhmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dynamic_hmc"><code class="docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_hmc"><code class="docutils literal notranslate"><span class="pre">laplace_hmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mhmc"><code class="docutils literal notranslate"><span class="pre">mhmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.multinomial_hmc"><code class="docutils literal notranslate"><span class="pre">multinomial_hmc</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dynamic_multinomial_hmc"><code class="docutils literal notranslate"><span class="pre">dynamic_multinomial_hmc</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_multinomial_hmc"><code class="docutils literal notranslate"><span class="pre">laplace_multinomial_hmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dmhmc"><code class="docutils literal notranslate"><span class="pre">dmhmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_mhmc"><code class="docutils literal notranslate"><span class="pre">laplace_mhmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.multipathfinder"><code class="docutils literal notranslate"><span class="pre">multipathfinder</span></code></a></li>
 </ul>
 </li>

@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g6538e467e" />
+  <meta name="docsearch:version" content="0.1.dev1+g55adb89aa" />
   </head>
   
   
@@ -485,7 +485,14 @@
 <span class="n">irmh</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
     <span class="n">irmh_as_top_level_api</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">build_irmh</span>
 <span class="p">)</span>
-<span class="n">dynamic_hmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_dynamic_hmc</span><span class="p">)</span>
+<div class="viewcode-block" id="dhmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.dhmc">[docs]</a>
+<span class="n">dhmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_dynamic_hmc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="dynamic_hmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.dynamic_hmc">[docs]</a>
+<span class="n">dynamic_hmc</span> <span class="o">=</span> <span class="n">dhmc</span>  <span class="c1"># backward-compatible alias</span></div>
+
 <span class="n">rmhmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_rmhmc</span><span class="p">)</span>
 <span class="n">mala</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_mala</span><span class="p">)</span>
 <span class="n">mgrad_gaussian</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">marginal_latent_gaussian</span><span class="p">)</span>
@@ -509,44 +516,48 @@
 <span class="n">barker</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_barker</span><span class="p">)</span>
 <span class="n">barker_proposal</span> <span class="o">=</span> <span class="n">barker</span>  <span class="c1"># backwards-compatible alias</span>
 
-<div class="viewcode-block" id="multinomial_hmc">
-<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.multinomial_hmc">[docs]</a>
-<span class="n">multinomial_hmc</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
+<div class="viewcode-block" id="mhmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.mhmc">[docs]</a>
+<span class="n">mhmc</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
     <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
         <span class="n">_hmc</span><span class="o">.</span><span class="n">as_top_level_api</span><span class="p">,</span> <span class="n">build_proposal</span><span class="o">=</span><span class="n">_hmc</span><span class="o">.</span><span class="n">multinomial_hmc_proposal</span>
     <span class="p">),</span>
-    <span class="n">_hmc</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>  <span class="c1"># intentional: multinomial HMC shares HMCState with standard HMC</span>
+    <span class="n">_hmc</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>  <span class="c1"># intentional: mhmc shares HMCState with standard hmc</span>
     <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">_hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">,</span> <span class="n">build_proposal</span><span class="o">=</span><span class="n">_hmc</span><span class="o">.</span><span class="n">multinomial_hmc_proposal</span><span class="p">),</span>
 <span class="p">)</span></div>
 
+<div class="viewcode-block" id="multinomial_hmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.multinomial_hmc">[docs]</a>
+<span class="n">multinomial_hmc</span> <span class="o">=</span> <span class="n">mhmc</span>  <span class="c1"># backward-compatible alias</span></div>
 
-<div class="viewcode-block" id="dynamic_multinomial_hmc">
-<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.dynamic_multinomial_hmc">[docs]</a>
-<span class="n">dynamic_multinomial_hmc</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
+
+<div class="viewcode-block" id="dmhmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.dmhmc">[docs]</a>
+<span class="n">dmhmc</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
     <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
         <span class="n">_dynamic_hmc</span><span class="o">.</span><span class="n">as_top_level_api</span><span class="p">,</span> <span class="n">build_proposal</span><span class="o">=</span><span class="n">_hmc</span><span class="o">.</span><span class="n">multinomial_hmc_proposal</span>
     <span class="p">),</span>
-    <span class="n">_dynamic_hmc</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>  <span class="c1"># shares DynamicHMCState with standard dynamic_hmc</span>
+    <span class="n">_dynamic_hmc</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>  <span class="c1"># shares DynamicHMCState with dhmc</span>
     <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
         <span class="n">_dynamic_hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">,</span> <span class="n">build_proposal</span><span class="o">=</span><span class="n">_hmc</span><span class="o">.</span><span class="n">multinomial_hmc_proposal</span>
     <span class="p">),</span>
 <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="laplace_multinomial_hmc">
-<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.laplace_multinomial_hmc">[docs]</a>
-<span class="n">laplace_multinomial_hmc</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
+<div class="viewcode-block" id="laplace_mhmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.laplace_mhmc">[docs]</a>
+<span class="n">laplace_mhmc</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
     <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
         <span class="n">_laplace_hmc</span><span class="o">.</span><span class="n">as_top_level_api</span><span class="p">,</span> <span class="n">build_proposal</span><span class="o">=</span><span class="n">_hmc</span><span class="o">.</span><span class="n">multinomial_hmc_proposal</span>
     <span class="p">),</span>
-    <span class="n">_laplace_hmc</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>  <span class="c1"># shares LaplaceHMCState with standard laplace_hmc</span>
+    <span class="n">_laplace_hmc</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>  <span class="c1"># shares LaplaceHMCState with laplace_hmc</span>
     <span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span>
         <span class="n">_laplace_hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">,</span> <span class="n">build_proposal</span><span class="o">=</span><span class="n">_hmc</span><span class="o">.</span><span class="n">multinomial_hmc_proposal</span>
     <span class="p">),</span>
 <span class="p">)</span></div>
 
 
-<span class="n">hmc_family</span> <span class="o">=</span> <span class="p">[</span><span class="n">hmc</span><span class="p">,</span> <span class="n">nuts</span><span class="p">,</span> <span class="n">multinomial_hmc</span><span class="p">]</span>
+<span class="n">hmc_family</span> <span class="o">=</span> <span class="p">[</span><span class="n">hmc</span><span class="p">,</span> <span class="n">nuts</span><span class="p">,</span> <span class="n">mhmc</span><span class="p">]</span>
 
 <span class="c1"># SMC</span>
 <span class="n">adaptive_persistent_sampling_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span>
@@ -618,9 +629,12 @@
     <span class="s2">&quot;adjusted_mclmc_find_L_and_step_size&quot;</span><span class="p">,</span>  <span class="c1"># adjusted mclmc adaptation</span>
     <span class="s2">&quot;ess&quot;</span><span class="p">,</span>  <span class="c1"># diagnostics</span>
     <span class="s2">&quot;rhat&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;multinomial_hmc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;dynamic_multinomial_hmc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;laplace_multinomial_hmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dmhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;laplace_mhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;multinomial_hmc&quot;</span><span class="p">,</span>  <span class="c1"># backward-compatible alias for mhmc</span>
+    <span class="s2">&quot;dynamic_hmc&quot;</span><span class="p">,</span>  <span class="c1"># backward-compatible alias for dhmc</span>
     <span class="s2">&quot;multipathfinder&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>

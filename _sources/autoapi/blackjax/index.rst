@@ -24,23 +24,32 @@ Attributes
 
 .. autoapisummary::
 
+   blackjax.dhmc
+   blackjax.dynamic_hmc
    blackjax.laplace_hmc
+   blackjax.mhmc
    blackjax.multinomial_hmc
-   blackjax.dynamic_multinomial_hmc
-   blackjax.laplace_multinomial_hmc
+   blackjax.dmhmc
+   blackjax.laplace_mhmc
    blackjax.multipathfinder
 
 
 Package Contents
 ----------------
 
+.. py:data:: dhmc
+
+.. py:data:: dynamic_hmc
+
 .. py:data:: laplace_hmc
+
+.. py:data:: mhmc
 
 .. py:data:: multinomial_hmc
 
-.. py:data:: dynamic_multinomial_hmc
+.. py:data:: dmhmc
 
-.. py:data:: laplace_multinomial_hmc
+.. py:data:: laplace_mhmc
 
 .. py:data:: multipathfinder
 

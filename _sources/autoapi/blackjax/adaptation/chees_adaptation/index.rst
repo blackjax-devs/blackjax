@@ -176,7 +176,7 @@ Module Contents
            optim,
            num_warmup_steps,
        )
-       kernel = blackjax.dynamic_hmc(logdensity_fn, **parameters).step
+       kernel = blackjax.dhmc(logdensity_fn, **parameters).step
        new_states, info = jax.vmap(kernel)(key_sample, last_states)
 
    :param logdensity_fn: The log density probability density function from which we wish to sample.

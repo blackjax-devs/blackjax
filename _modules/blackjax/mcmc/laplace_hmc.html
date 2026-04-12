@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g6538e467e" />
+  <meta name="docsearch:version" content="0.1.dev1+g55adb89aa" />
   </head>
   
   
@@ -404,7 +404,7 @@
 <span class="sd">| Alias                     | Proposal         | Notes                        |</span>
 <span class="sd">+===========================+==================+==============================+</span>
 <span class="sd">| ``blackjax.laplace_hmc``  | endpoint + M-H   | default, standard HMC        |</span>
-<span class="sd">| ``blackjax.laplace_multinomial_hmc`` | full trajectory | better ESS per gradient |</span>
+<span class="sd">| ``blackjax.laplace_mhmc`` | full trajectory | better ESS per gradient |</span>
 <span class="sd">+---------------------------+------------------+------------------------------+</span>
 
 <span class="sd">Typical usage::</span>
@@ -419,7 +419,7 @@
 <span class="sd">    # new_state.theta_star: MAP of theta at the accepted phi</span>
 
 <span class="sd">    # Multinomial variant (no rejection step, samples from full trajectory):</span>
-<span class="sd">    sampler = blackjax.laplace_multinomial_hmc(</span>
+<span class="sd">    sampler = blackjax.laplace_mhmc(</span>
 <span class="sd">        log_joint, theta_init=jnp.zeros(n),</span>
 <span class="sd">        step_size=0.1, inverse_mass_matrix=jnp.ones(d),</span>
 <span class="sd">        num_integration_steps=10,</span>
@@ -525,7 +525,7 @@
 <span class="sd">    build_proposal</span>
 <span class="sd">        Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`</span>
 <span class="sd">        (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`</span>
-<span class="sd">        for multinomial trajectory sampling (``blackjax.laplace_multinomial_hmc``).</span>
+<span class="sd">        for multinomial trajectory sampling (``blackjax.laplace_mhmc``).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -630,7 +630,7 @@
 <span class="sd">        Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`</span>
 <span class="sd">        (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`</span>
 <span class="sd">        for multinomial trajectory sampling; this is what</span>
-<span class="sd">        ``blackjax.laplace_multinomial_hmc`` uses.</span>
+<span class="sd">        ``blackjax.laplace_mhmc`` uses.</span>
 <span class="sd">    **optimizer_kwargs</span>
 <span class="sd">        Forwarded to :func:`~blackjax.optimizers.lbfgs.minimize_lbfgs`.</span>
 <span class="sd">        Useful keys: ``maxiter`` (default 30), ``gtol``, ``ftol``.</span>
