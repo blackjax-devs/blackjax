@@ -20,7 +20,7 @@ from absl.testing import absltest
 
 import blackjax
 from blackjax.mcmc.hmc import HMCInfo, multinomial_hmc_proposal
-from blackjax.mcmc.laplace_dynamic_hmc import LaplaceDynamicHMCState, as_top_level_api
+from blackjax.mcmc.laplace_dynamic_hmc import LaplaceDynamicHMCState
 from blackjax.mcmc.laplace_marginal import laplace_marginal_factory
 from tests.fixtures import BlackJAXTest
 
@@ -64,7 +64,9 @@ class TestLaplaceDynamicHMCState(BlackJAXTest):
         self.assertTrue(jnp.isfinite(state.logdensity_grad))
         self.assertTrue(jnp.all(jnp.isfinite(state.theta_star)))
         self.assertEqual(state.theta_star.shape, (self.n,))
-        self.assertIsNotNone(state.random_generator_arg)  # shape depends on PRNG key style
+        self.assertIsNotNone(
+            state.random_generator_arg
+        )  # shape depends on PRNG key style
 
     def test_init_theta_star_consistent(self):
         from blackjax.mcmc.laplace_dynamic_hmc import init
@@ -133,9 +135,7 @@ class TestLaplaceDHMCKernel(BlackJAXTest):
 
     def test_blackjax_top_level_alias(self):
         """blackjax.laplace_dhmc exposes .init and .step."""
-        sampler = blackjax.laplace_dhmc(
-            self.log_joint, self.theta_init, **self.kwargs
-        )
+        sampler = blackjax.laplace_dhmc(self.log_joint, self.theta_init, **self.kwargs)
         state = sampler.init(jnp.array(0.0), self.next_key())
         new_state, info = jax.jit(sampler.step)(self.next_key(), state)
         self.assertIsInstance(new_state, LaplaceDynamicHMCState)
@@ -158,9 +158,7 @@ class TestLaplaceDMHMC(BlackJAXTest):
         )
 
     def test_alias_returns_laplace_dynamic_hmc_state(self):
-        sampler = blackjax.laplace_dmhmc(
-            self.log_joint, self.theta_init, **self.kwargs
-        )
+        sampler = blackjax.laplace_dmhmc(self.log_joint, self.theta_init, **self.kwargs)
         state = sampler.init(jnp.array(0.0), self.next_key())
         self.assertIsInstance(state, LaplaceDynamicHMCState)
         new_state, _ = jax.jit(sampler.step)(self.next_key(), state)
@@ -168,9 +166,7 @@ class TestLaplaceDMHMC(BlackJAXTest):
 
     def test_is_accepted_always_true(self):
         """Multinomial proposal has no M-H rejection step."""
-        sampler = blackjax.laplace_dmhmc(
-            self.log_joint, self.theta_init, **self.kwargs
-        )
+        sampler = blackjax.laplace_dmhmc(self.log_joint, self.theta_init, **self.kwargs)
         state = sampler.init(jnp.array(0.0), self.next_key())
         _, info = jax.jit(sampler.step)(self.next_key(), state)
         self.assertTrue(bool(info.is_accepted))
