@@ -11,160 +11,187 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Tuple
+"""Skeleton for a new MCMC sampling algorithm.
+
+Copy this file to ``blackjax/mcmc/<your_algorithm>.py``, replace every
+occurrence of ``MySampler`` / ``my_sampler`` with your algorithm's name, fill
+in the blanks, and delete these module-level comments.
+
+See ``docs/developer/new_algorithm_guide.md`` for the complete walkthrough.
+"""
+from typing import Callable, NamedTuple
 
 import jax
+import jax.numpy as jnp
 
-# import basic compoments that are already implemented
-# or that you have implemented with a general structure
-# for example, if you do a Metropolis-Hastings accept/reject step:
-import blackjax.mcmc.proposal as proposal
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = [
-    "SamplingAlgoState",
-    "SamplingAlgoInfo",
-    "init",
-    "build_kernel",
-    "sampling_algorithm",
-]
+__all__ = ["MySamplerState", "MySamplerInfo", "init", "build_kernel", "as_top_level_api"]
 
 
-class SamplingAlgoState(NamedTuple):
-    """State of your sampling algorithm.
+# ---------------------------------------------------------------------------
+# State and info
+# ---------------------------------------------------------------------------
 
-    Give an overview of the variables needed at each iteration of the model.
+
+class MySamplerState(NamedTuple):
+    """State of My Sampler.
+
+    position
+        Current position of the chain (a JAX pytree).
+    logdensity
+        Log-density at the current position.
     """
 
-    ...
+    position: ArrayTree
+    logdensity: float
+    # Add fields that the kernel needs to carry forward.
+    # Do NOT put tuning parameters or adaptation counters here.
 
 
-class SamplingAlgoInfo(NamedTuple):
-    """Additional information on your algorithm transition.
+class MySamplerInfo(NamedTuple):
+    """Transition information for My Sampler.
 
-    Given an overview of the collected values at each iteration of the model.
+    acceptance_rate
+        Metropolis–Hastings acceptance probability.
+    is_accepted
+        Whether the proposal was accepted.
     """
 
-    ...
+    acceptance_rate: float
+    is_accepted: bool
+    # Add any per-step diagnostics that do not need to persist.
 
 
-def init(position: ArrayLikeTree, logdensity_fn: Callable, *args, **kwargs):
-    # build an inital state
-    state = SamplingAlgoState(...)
-    return state
+# ---------------------------------------------------------------------------
+# Initializer
+# ---------------------------------------------------------------------------
 
 
-def build_kernel(*args, **kwargs):
-    """Build a your kernel.
+def init(
+    position: ArrayLikeTree,
+    logdensity_fn: Callable,
+    *,
+    rng_key: PRNGKey | None = None,
+) -> MySamplerState:
+    """Initialize My Sampler state.
 
     Parameters
     ----------
-    List and describe its parameters.
+    position
+        Initial chain position (array or pytree).
+    logdensity_fn
+        Log-density of the target distribution.
+    rng_key
+        Optional PRNG key, used only if your algorithm needs randomness at
+        initialization (e.g., to sample initial momentum).
 
     Returns
     -------
-    Describe the kernel that is returned.
+    The initial ``MySamplerState``.
+    """
+    logdensity = logdensity_fn(position)
+    return MySamplerState(position, logdensity)
+
+
+# ---------------------------------------------------------------------------
+# Kernel
+# ---------------------------------------------------------------------------
+
+
+def build_kernel(
+    # Add algorithm-level configuration here (integrator choice, threshold, …).
+    # These are captured by closure; they do NOT appear in the kernel signature.
+) -> Callable:
+    """Build My Sampler kernel.
+
+    Returns
+    -------
+    A kernel ``(rng_key, state, logdensity_fn, step_size) -> (MySamplerState, MySamplerInfo)``.
     """
 
     def kernel(
         rng_key: PRNGKey,
-        state: SamplingAlgoState,
+        state: MySamplerState,
         logdensity_fn: Callable,
-        *args,
-        **kwargs,
-    ) -> Tuple[SamplingAlgoState, SamplingAlgoInfo]:
-        """Generate a new sample with the sampling kernel."""
+        step_size: float,
+        # Add per-step parameters (step size, mass matrix, …) here.
+    ) -> tuple[MySamplerState, MySamplerInfo]:
+        """Generate a new sample with My Sampler."""
+        key_proposal, key_accept = jax.random.split(rng_key)
 
-        # build everything you'll need
-        proposal_generator = sampling_algorithm_proposal(...)
+        # 1. Generate a proposal.
+        new_position = ...  # replace with your proposal logic
 
-        # generate pseudorandom keys
-        key_other, key_proposal = jax.random.split(rng_key, 2)
+        # 2. Evaluate log-density at the proposal.
+        new_logdensity = logdensity_fn(new_position)
 
-        # generate the proposal with all its parts
-        proposal, info = proposal_generator(key_proposal, ...)
-        proposal = SamplingAlgoState(...)
+        # 3. Accept / reject (Metropolis–Hastings).
+        log_p_accept = new_logdensity - state.logdensity
+        is_accepted = jnp.log(jax.random.uniform(key_accept)) < log_p_accept
+        accepted_position = jax.tree.map(
+            lambda p, q: jnp.where(is_accepted, p, q),
+            new_position,
+            state.position,
+        )
+        accepted_logdensity = jnp.where(is_accepted, new_logdensity, state.logdensity)
 
-        return proposal, info
+        new_state = MySamplerState(accepted_position, accepted_logdensity)
+        info = MySamplerInfo(
+            acceptance_rate=jnp.exp(jnp.minimum(log_p_accept, 0.0)),
+            is_accepted=is_accepted,
+        )
+        return new_state, info
 
     return kernel
 
 
-class sampling_algorithm:
-    """Implements the (basic) user interface for your sampling kernel.
-
-    Describe in detail the inner mechanism of the algorithm and its use.
-
-    Example
-    -------
-    Illustrate the use of the algorithm.
-
-    Parameters
-    ----------
-    List and describe its parameters.
-
-    Returns
-    -------
-    A ``MCMCSamplingAlgorithm``.
-    """
-
-    init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
-
-    def __new__(  # type: ignore[misc]
-        cls,
-        logdensity_fn: Callable,
-        *args,
-        **kwargs,
-    ) -> SamplingAlgorithm:
-        kernel = cls.build_kernel(...)
-
-        def init_fn(position: ArrayLikeTree):
-            return cls.init(position, logdensity_fn, ...)
-
-        def step_fn(rng_key: PRNGKey, state):
-            return kernel(
-                rng_key,
-                state,
-                logdensity_fn,
-                ...,
-            )
-
-        return SamplingAlgorithm(init_fn, step_fn)
+# ---------------------------------------------------------------------------
+# Top-level API
+# ---------------------------------------------------------------------------
 
 
-# and other functions that help make `init` and/or `build_kernel` easier to read and understand
-def sampling_algorithm_proposal(*args, **kwags) -> Callable:
-    """Title
+def as_top_level_api(
+    logdensity_fn: Callable,
+    step_size: float,
+    # Add user-facing parameters here.
+) -> SamplingAlgorithm:
+    """My Sampler — user-facing convenience wrapper.
 
-    Description
+    Examples
+    --------
+
+    .. code::
+
+        sampler = blackjax.my_sampler(logdensity_fn, step_size=0.1)
+        state = sampler.init(initial_position)
+        new_state, info = sampler.step(rng_key, state)
 
     Parameters
     ----------
-    List and describe its parameters.
+    logdensity_fn
+        The log-density function of the target distribution.
+    step_size
+        Proposal step size.
 
     Returns
     -------
-    Describe what is returned.
+    A ``SamplingAlgorithm``.
     """
-    # as an example, a Metropolis-Hastings step with symmetric a symmetric transition would look like this:
-    acceptance_ratio = proposal.safe_energy_diff
-    sample_proposal = proposal.static_binomial_sampling
+    kernel = build_kernel()
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(step_size,),
+        # pass_rng_key_to_init=True  # uncomment if init needs rng_key
+    )
 
-    def generate(rng_key, state):
-        # propose a new sample
-        proposal_state = ...
 
-        # accept or reject the proposed sample
-        initial_energy = ...
-        proposal_energy = ...
-        new_proposal, is_diverging = acceptance_ratio(initial_energy, proposal_energy)
-        sampled_state, info = sample_proposal(rng_key, proposal, new_proposal)
-
-        # maybe add to the returned state and collect more useful information
-        sampled_state, info = ...
-
-        return sampled_state, info
-
-    return generate
+# ---------------------------------------------------------------------------
+# Private helpers
+# ---------------------------------------------------------------------------
+# Put lower-level proposal generators, energy functions, etc. below.
+# Keep them private (no entry in __all__) unless they are genuinely reusable
+# building blocks for other algorithms.

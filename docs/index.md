@@ -138,5 +138,5 @@ maxdepth: 1
 caption: DEVELOPER DOCUMENTATION
 hidden:
 ---
-Developer Guidelines<developer/guidelines.md>
+Contributing a New Algorithm <developer/new_algorithm_guide.md>
 ```
