@@ -13,6 +13,15 @@ blackjax.mcmc.laplace_hmc
    warm-start hint for the L-BFGS solver at every leapfrog evaluation, so the
    optimizer needs only a handful of iterations when ``phi`` moves by a small amount.
 
+   The proposal strategy is swappable via ``build_proposal``, giving two usable variants:
+
+   +---------------------------+------------------+------------------------------+
+   | Alias                     | Proposal         | Notes                        |
+   +===========================+==================+==============================+
+   | ``blackjax.laplace_hmc``  | endpoint + M-H   | default, standard HMC        |
+   | ``blackjax.laplace_multinomial_hmc`` | full trajectory | better ESS per gradient |
+   +---------------------------+------------------+------------------------------+
+
    Typical usage::
 
        sampler = blackjax.laplace_hmc(
@@ -23,6 +32,13 @@ blackjax.mcmc.laplace_hmc
        state = sampler.init(phi_init)
        new_state, info = jax.jit(sampler.step)(rng_key, state)
        # new_state.theta_star: MAP of theta at the accepted phi
+
+       # Multinomial variant (no rejection step, samples from full trajectory):
+       sampler = blackjax.laplace_multinomial_hmc(
+           log_joint, theta_init=jnp.zeros(n),
+           step_size=0.1, inverse_mass_matrix=jnp.ones(d),
+           num_integration_steps=10,
+       )
 
 
 
@@ -94,17 +110,20 @@ Module Contents
                    returned by :func:`~blackjax.mcmc.laplace_marginal.laplace_marginal_factory`.
 
 
-.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000) -> Callable
+.. py:function:: build_kernel(integrator: Callable = integrators.velocity_verlet, divergence_threshold: float = 1000, build_proposal: Callable = hmc.hmc_proposal) -> Callable
 
    Build the Laplace-HMC kernel.
 
    :param integrator: Symplectic integrator used for the HMC trajectory.
    :param divergence_threshold: Energy difference above which a transition is declared divergent.
+   :param build_proposal: Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`
+                          (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`
+                          for multinomial trajectory sampling (``blackjax.laplace_multinomial_hmc``).
 
    :rtype: A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -> (LaplaceHMCState, HMCInfo)``.
 
 
-.. py:function:: as_top_level_api(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, build_proposal: Callable = hmc.hmc_proposal, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
 
    HMC on the Laplace-approximated marginal log-density.
 
@@ -126,6 +145,10 @@ Module Contents
    :param divergence_threshold: Absolute energy difference above which a transition is declared divergent.
                                 Default 1000.
    :param integrator: Symplectic integrator.  Default: velocity Verlet.
+   :param build_proposal: Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`
+                          (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`
+                          for multinomial trajectory sampling; this is what
+                          ``blackjax.laplace_multinomial_hmc`` uses.
    :param \*\*optimizer_kwargs: Forwarded to :func:`~blackjax.optimizers.lbfgs.minimize_lbfgs`.
                                 Useful keys: ``maxiter`` (default 30), ``gtol``, ``ftol``.
 

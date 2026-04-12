@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g794d2e6d7" />
+  <meta name="docsearch:version" content="0.1.dev1+g6538e467e" />
   </head>
   
   
@@ -398,6 +398,15 @@
 <span class="sd">warm-start hint for the L-BFGS solver at every leapfrog evaluation, so the</span>
 <span class="sd">optimizer needs only a handful of iterations when ``phi`` moves by a small amount.</span>
 
+<span class="sd">The proposal strategy is swappable via ``build_proposal``, giving two usable variants:</span>
+
+<span class="sd">+---------------------------+------------------+------------------------------+</span>
+<span class="sd">| Alias                     | Proposal         | Notes                        |</span>
+<span class="sd">+===========================+==================+==============================+</span>
+<span class="sd">| ``blackjax.laplace_hmc``  | endpoint + M-H   | default, standard HMC        |</span>
+<span class="sd">| ``blackjax.laplace_multinomial_hmc`` | full trajectory | better ESS per gradient |</span>
+<span class="sd">+---------------------------+------------------+------------------------------+</span>
+
 <span class="sd">Typical usage::</span>
 
 <span class="sd">    sampler = blackjax.laplace_hmc(</span>
@@ -408,6 +417,13 @@
 <span class="sd">    state = sampler.init(phi_init)</span>
 <span class="sd">    new_state, info = jax.jit(sampler.step)(rng_key, state)</span>
 <span class="sd">    # new_state.theta_star: MAP of theta at the accepted phi</span>
+
+<span class="sd">    # Multinomial variant (no rejection step, samples from full trajectory):</span>
+<span class="sd">    sampler = blackjax.laplace_multinomial_hmc(</span>
+<span class="sd">        log_joint, theta_init=jnp.zeros(n),</span>
+<span class="sd">        step_size=0.1, inverse_mass_matrix=jnp.ones(d),</span>
+<span class="sd">        num_integration_steps=10,</span>
+<span class="sd">    )</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
@@ -496,6 +512,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">build_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">hmc_proposal</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Laplace-HMC kernel.</span>
 
@@ -505,12 +522,16 @@
 <span class="sd">        Symplectic integrator used for the HMC trajectory.</span>
 <span class="sd">    divergence_threshold</span>
 <span class="sd">        Energy difference above which a transition is declared divergent.</span>
+<span class="sd">    build_proposal</span>
+<span class="sd">        Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`</span>
+<span class="sd">        (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`</span>
+<span class="sd">        for multinomial trajectory sampling (``blackjax.laplace_multinomial_hmc``).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -&gt; (LaplaceHMCState, HMCInfo)``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">hmc_kernel</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
+    <span class="n">hmc_kernel</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">build_proposal</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
@@ -573,6 +594,7 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+    <span class="n">build_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">hmc_proposal</span><span class="p">,</span>
     <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;HMC on the Laplace-approximated marginal log-density.</span>
@@ -604,6 +626,11 @@
 <span class="sd">        Default 1000.</span>
 <span class="sd">    integrator</span>
 <span class="sd">        Symplectic integrator.  Default: velocity Verlet.</span>
+<span class="sd">    build_proposal</span>
+<span class="sd">        Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`</span>
+<span class="sd">        (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`</span>
+<span class="sd">        for multinomial trajectory sampling; this is what</span>
+<span class="sd">        ``blackjax.laplace_multinomial_hmc`` uses.</span>
 <span class="sd">    **optimizer_kwargs</span>
 <span class="sd">        Forwarded to :func:`~blackjax.optimizers.lbfgs.minimize_lbfgs`.</span>
 <span class="sd">        Useful keys: ``maxiter`` (default 30), ``gtol``, ``ftol``.</span>
@@ -628,7 +655,7 @@
 <span class="sd">        print(new_state.theta_star)   # MAP latent at the new phi</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">laplace</span> <span class="o">=</span> <span class="n">laplace_marginal_factory</span><span class="p">(</span><span class="n">log_joint_fn</span><span class="p">,</span> <span class="n">theta_init</span><span class="p">,</span> <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">build_proposal</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
         <span class="n">kernel</span><span class="p">,</span>
         <span class="n">init</span><span class="p">,</span>

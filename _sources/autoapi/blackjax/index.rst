@@ -26,6 +26,8 @@ Attributes
 
    blackjax.laplace_hmc
    blackjax.multinomial_hmc
+   blackjax.dynamic_multinomial_hmc
+   blackjax.laplace_multinomial_hmc
    blackjax.multipathfinder
 
 
@@ -35,6 +37,10 @@ Package Contents
 .. py:data:: laplace_hmc
 
 .. py:data:: multinomial_hmc
+
+.. py:data:: dynamic_multinomial_hmc
+
+.. py:data:: laplace_multinomial_hmc
 
 .. py:data:: multipathfinder
 
