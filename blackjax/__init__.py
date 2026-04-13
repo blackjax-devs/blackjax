@@ -231,7 +231,31 @@ __all__ = [
     "__version__",
     "dual_averaging",  # optimizers
     "lbfgs",
+    "hmc",  # mcmc
+    "mhmc",
+    "nuts",
+    "dhmc",
+    "dmhmc",
+    "mala",
+    "rmhmc",
+    "ghmc",
+    "barker",
+    "elliptical_slice",
+    "mclmc",
+    "adjusted_mclmc",
+    "adjusted_mclmc_dynamic",
+    "orbital_hmc",
+    "mgrad_gaussian",
+    "rmh",
+    "irmh",
+    "additive_step_random_walk",
     "laplace_hmc",
+    "laplace_mhmc",
+    "laplace_dhmc",
+    "laplace_dmhmc",
+    "multinomial_hmc",  # backward-compatible alias for mhmc
+    "dynamic_hmc",  # backward-compatible alias for dhmc
+    "barker_proposal",  # backward-compatible alias for barker
     "window_adaptation",  # mcmc adaptation
     "low_rank_window_adaptation",
     "meads_adaptation",
@@ -239,15 +263,25 @@ __all__ = [
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation
     "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
+    "adaptive_tempered_smc",  # smc
+    "tempered_smc",
+    "adaptive_persistent_sampling_smc",
+    "persistent_sampling_smc",
+    "partial_posteriors_smc",
+    "pretuning",
+    "inner_kernel_tuning",
+    "sgld",  # sgmcmc
+    "sghmc",
+    "sgnht",
+    "csgld",
+    "svgd",
+    "pathfinder",  # vi
+    "multipathfinder",
+    "meanfield_vi",
+    "fullrank_vi",
+    "schrodinger_follmer",
     "ess",  # diagnostics
     "rhat",
-    "mhmc",
-    "dhmc",
-    "dmhmc",
-    "laplace_mhmc",
-    "laplace_dhmc",
-    "laplace_dmhmc",
-    "multinomial_hmc",  # backward-compatible alias for mhmc
-    "dynamic_hmc",  # backward-compatible alias for dhmc
-    "multipathfinder",
+    "SamplingAlgorithm",  # base
+    "VIAlgorithm",
 ]
