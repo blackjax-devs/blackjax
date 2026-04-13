@@ -55,7 +55,7 @@
     <link rel="prev" title="Reproducing the front page image of the repository" href="../../examples/howto_reproduce_the_blackjax_image.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g55adb89aa" />
+  <meta name="docsearch:version" content="0.1.dev1+g08e244a0a" />
   </head>
   
   
@@ -201,6 +201,7 @@
 <li class="toctree-l3"><a class="reference internal" href="mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
 <li class="toctree-l3"><a class="reference internal" href="mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
@@ -385,6 +386,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.multinomial_hmc"><code class="docutils literal notranslate"><span class="pre">multinomial_hmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dmhmc"><code class="docutils literal notranslate"><span class="pre">dmhmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_mhmc"><code class="docutils literal notranslate"><span class="pre">laplace_mhmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_dhmc"><code class="docutils literal notranslate"><span class="pre">laplace_dhmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_dmhmc"><code class="docutils literal notranslate"><span class="pre">laplace_dmhmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.multipathfinder"><code class="docutils literal notranslate"><span class="pre">multipathfinder</span></code></a></li>
 </ul>
 </li>
@@ -440,6 +443,12 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.laplace_mhmc" title="blackjax.laplace_mhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_mhmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.laplace_dhmc" title="blackjax.laplace_dhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_dhmc</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.laplace_dmhmc" title="blackjax.laplace_dmhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_dmhmc</span></code></a></p></td>
+<td><p></p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.multipathfinder" title="blackjax.multipathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multipathfinder</span></code></a></p></td>
 <td><p></p></td>
 </tr>
@@ -482,6 +491,16 @@
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.laplace_mhmc">
 <span class="sig-name descname"><span class="pre">laplace_mhmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#laplace_mhmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.laplace_mhmc" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blackjax.laplace_dhmc">
+<span class="sig-name descname"><span class="pre">laplace_dhmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#laplace_dhmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.laplace_dhmc" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blackjax.laplace_dmhmc">
+<span class="sig-name descname"><span class="pre">laplace_dmhmc</span></span><a class="reference internal" href="../../_modules/blackjax.html#laplace_dmhmc"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.laplace_dmhmc" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
@@ -549,6 +568,8 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.multinomial_hmc"><code class="docutils literal notranslate"><span class="pre">multinomial_hmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.dmhmc"><code class="docutils literal notranslate"><span class="pre">dmhmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_mhmc"><code class="docutils literal notranslate"><span class="pre">laplace_mhmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_dhmc"><code class="docutils literal notranslate"><span class="pre">laplace_dhmc</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.laplace_dmhmc"><code class="docutils literal notranslate"><span class="pre">laplace_dmhmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.multipathfinder"><code class="docutils literal notranslate"><span class="pre">multipathfinder</span></code></a></li>
 </ul>
 </li>

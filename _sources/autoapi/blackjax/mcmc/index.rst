@@ -19,6 +19,7 @@ Submodules
    /autoapi/blackjax/mcmc/ghmc/index
    /autoapi/blackjax/mcmc/hmc/index
    /autoapi/blackjax/mcmc/integrators/index
+   /autoapi/blackjax/mcmc/laplace_dynamic_hmc/index
    /autoapi/blackjax/mcmc/laplace_hmc/index
    /autoapi/blackjax/mcmc/laplace_marginal/index
    /autoapi/blackjax/mcmc/mala/index
