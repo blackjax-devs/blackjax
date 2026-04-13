@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g08e244a0a" />
+  <meta name="docsearch:version" content="0.1.dev1+gb3b5d2979" />
   </head>
   
   
@@ -481,12 +481,24 @@
 
 
 <span class="c1"># MCMC</span>
-<span class="n">hmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_hmc</span><span class="p">)</span>
-<span class="n">nuts</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_nuts</span><span class="p">)</span>
-<span class="n">rmh</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span><span class="n">rmh_as_top_level_api</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">build_rmh</span><span class="p">)</span>
+<div class="viewcode-block" id="hmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.hmc">[docs]</a>
+<span class="n">hmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_hmc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="nuts">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.nuts">[docs]</a>
+<span class="n">nuts</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_nuts</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="rmh">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.rmh">[docs]</a>
+<span class="n">rmh</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span><span class="n">rmh_as_top_level_api</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">build_rmh</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="irmh">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.irmh">[docs]</a>
 <span class="n">irmh</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
     <span class="n">irmh_as_top_level_api</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">build_irmh</span>
-<span class="p">)</span>
+<span class="p">)</span></div>
+
 <div class="viewcode-block" id="dhmc">
 <a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.dhmc">[docs]</a>
 <span class="n">dhmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_dynamic_hmc</span><span class="p">)</span></div>
@@ -495,28 +507,64 @@
 <a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.dynamic_hmc">[docs]</a>
 <span class="n">dynamic_hmc</span> <span class="o">=</span> <span class="n">dhmc</span>  <span class="c1"># backward-compatible alias</span></div>
 
-<span class="n">rmhmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_rmhmc</span><span class="p">)</span>
-<span class="n">mala</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_mala</span><span class="p">)</span>
-<span class="n">mgrad_gaussian</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">marginal_latent_gaussian</span><span class="p">)</span>
+<div class="viewcode-block" id="rmhmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.rmhmc">[docs]</a>
+<span class="n">rmhmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_rmhmc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="mala">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.mala">[docs]</a>
+<span class="n">mala</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_mala</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="mgrad_gaussian">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.mgrad_gaussian">[docs]</a>
+<span class="n">mgrad_gaussian</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">marginal_latent_gaussian</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="laplace_hmc">
 <a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.laplace_hmc">[docs]</a>
 <span class="n">laplace_hmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_laplace_hmc</span><span class="p">)</span></div>
 
-<span class="n">orbital_hmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">periodic_orbital</span><span class="p">)</span>
+<div class="viewcode-block" id="orbital_hmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.orbital_hmc">[docs]</a>
+<span class="n">orbital_hmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">periodic_orbital</span><span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="additive_step_random_walk">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.additive_step_random_walk">[docs]</a>
 <span class="n">additive_step_random_walk</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
     <span class="n">_additive_step_random_walk</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">random_walk</span><span class="o">.</span><span class="n">build_additive_step</span>
-<span class="p">)</span>
+<span class="p">)</span></div>
+
 
 <span class="n">additive_step_random_walk</span><span class="o">.</span><span class="n">register_factory</span><span class="p">(</span><span class="s2">&quot;normal_random_walk&quot;</span><span class="p">,</span> <span class="n">normal_random_walk</span><span class="p">)</span>
 
-<span class="n">mclmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_mclmc</span><span class="p">)</span>
-<span class="n">adjusted_mclmc_dynamic</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_adjusted_mclmc_dynamic</span><span class="p">)</span>
-<span class="n">adjusted_mclmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_adjusted_mclmc</span><span class="p">)</span>
-<span class="n">elliptical_slice</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_elliptical_slice</span><span class="p">)</span>
-<span class="n">ghmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_ghmc</span><span class="p">)</span>
-<span class="n">barker</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_barker</span><span class="p">)</span>
-<span class="n">barker_proposal</span> <span class="o">=</span> <span class="n">barker</span>  <span class="c1"># backwards-compatible alias</span>
+<div class="viewcode-block" id="mclmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.mclmc">[docs]</a>
+<span class="n">mclmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_mclmc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="adjusted_mclmc_dynamic">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.adjusted_mclmc_dynamic">[docs]</a>
+<span class="n">adjusted_mclmc_dynamic</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_adjusted_mclmc_dynamic</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="adjusted_mclmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.adjusted_mclmc">[docs]</a>
+<span class="n">adjusted_mclmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_adjusted_mclmc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="elliptical_slice">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.elliptical_slice">[docs]</a>
+<span class="n">elliptical_slice</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_elliptical_slice</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ghmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.ghmc">[docs]</a>
+<span class="n">ghmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_ghmc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="barker">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.barker">[docs]</a>
+<span class="n">barker</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_barker</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="barker_proposal">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.barker_proposal">[docs]</a>
+<span class="n">barker_proposal</span> <span class="o">=</span> <span class="n">barker</span>  <span class="c1"># backwards-compatible alias</span></div>
+
 
 <div class="viewcode-block" id="mhmc">
 <a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.mhmc">[docs]</a>
@@ -582,15 +630,36 @@
 <span class="n">hmc_family</span> <span class="o">=</span> <span class="p">[</span><span class="n">hmc</span><span class="p">,</span> <span class="n">nuts</span><span class="p">,</span> <span class="n">mhmc</span><span class="p">]</span>
 
 <span class="c1"># SMC</span>
+<div class="viewcode-block" id="adaptive_persistent_sampling_smc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.adaptive_persistent_sampling_smc">[docs]</a>
 <span class="n">adaptive_persistent_sampling_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span>
     <span class="n">adaptive_persistent_sampling</span>
-<span class="p">)</span>
-<span class="n">adaptive_tempered_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">adaptive_tempered</span><span class="p">)</span>
-<span class="n">tempered_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">tempered</span><span class="p">)</span>
-<span class="n">inner_kernel_tuning</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_inner_kernel_tuning</span><span class="p">)</span>
-<span class="n">partial_posteriors_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_partial_posteriors_smc</span><span class="p">)</span>
-<span class="n">persistent_sampling_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">persistent_sampling</span><span class="p">)</span>
-<span class="n">pretuning</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_pretuning</span><span class="p">)</span>
+<span class="p">)</span></div>
+
+<div class="viewcode-block" id="adaptive_tempered_smc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.adaptive_tempered_smc">[docs]</a>
+<span class="n">adaptive_tempered_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">adaptive_tempered</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="tempered_smc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.tempered_smc">[docs]</a>
+<span class="n">tempered_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">tempered</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="inner_kernel_tuning">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.inner_kernel_tuning">[docs]</a>
+<span class="n">inner_kernel_tuning</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_inner_kernel_tuning</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="partial_posteriors_smc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.partial_posteriors_smc">[docs]</a>
+<span class="n">partial_posteriors_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_partial_posteriors_smc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="persistent_sampling_smc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.persistent_sampling_smc">[docs]</a>
+<span class="n">persistent_sampling_smc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">persistent_sampling</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="pretuning">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.pretuning">[docs]</a>
+<span class="n">pretuning</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_pretuning</span><span class="p">)</span></div>
+
 <span class="n">smc_family</span> <span class="o">=</span> <span class="p">[</span>
     <span class="n">tempered_smc</span><span class="p">,</span>
     <span class="n">adaptive_tempered_smc</span><span class="p">,</span>
@@ -601,35 +670,62 @@
 <span class="s2">&quot;Step_fn returning state has a .particles attribute&quot;</span>
 
 <span class="c1"># stochastic gradient mcmc</span>
-<span class="n">sgld</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_sgld</span><span class="p">)</span>
-<span class="n">sghmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_sghmc</span><span class="p">)</span>
-<span class="n">sgnht</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_sgnht</span><span class="p">)</span>
-<span class="n">csgld</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_csgld</span><span class="p">)</span>
-<span class="n">svgd</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_svgd</span><span class="p">)</span>
+<div class="viewcode-block" id="sgld">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.sgld">[docs]</a>
+<span class="n">sgld</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_sgld</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sghmc">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.sghmc">[docs]</a>
+<span class="n">sghmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_sghmc</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="sgnht">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.sgnht">[docs]</a>
+<span class="n">sgnht</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_sgnht</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="csgld">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.csgld">[docs]</a>
+<span class="n">csgld</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_csgld</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="svgd">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.svgd">[docs]</a>
+<span class="n">svgd</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_svgd</span><span class="p">)</span></div>
+
 
 <span class="c1"># variational inference</span>
+<div class="viewcode-block" id="fullrank_vi">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.fullrank_vi">[docs]</a>
 <span class="n">fullrank_vi</span> <span class="o">=</span> <span class="n">GenerateVariationalAPI</span><span class="p">(</span>
     <span class="n">_fullrank_vi</span><span class="o">.</span><span class="n">as_top_level_api</span><span class="p">,</span>
     <span class="n">_fullrank_vi</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>
     <span class="n">_fullrank_vi</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>
     <span class="n">_fullrank_vi</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="p">)</span></div>
+
+<div class="viewcode-block" id="meanfield_vi">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.meanfield_vi">[docs]</a>
 <span class="n">meanfield_vi</span> <span class="o">=</span> <span class="n">GenerateVariationalAPI</span><span class="p">(</span>
     <span class="n">_meanfield_vi</span><span class="o">.</span><span class="n">as_top_level_api</span><span class="p">,</span>
     <span class="n">_meanfield_vi</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>
     <span class="n">_meanfield_vi</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>
     <span class="n">_meanfield_vi</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="p">)</span></div>
+
+<div class="viewcode-block" id="schrodinger_follmer">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.schrodinger_follmer">[docs]</a>
 <span class="n">schrodinger_follmer</span> <span class="o">=</span> <span class="n">GenerateVariationalAPI</span><span class="p">(</span>
     <span class="n">_schrodinger_follmer</span><span class="o">.</span><span class="n">as_top_level_api</span><span class="p">,</span>
     <span class="n">_schrodinger_follmer</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>
     <span class="n">_schrodinger_follmer</span><span class="o">.</span><span class="n">step</span><span class="p">,</span>
     <span class="n">_schrodinger_follmer</span><span class="o">.</span><span class="n">sample</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="p">)</span></div>
 
+
+<div class="viewcode-block" id="pathfinder">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.pathfinder">[docs]</a>
 <span class="n">pathfinder</span> <span class="o">=</span> <span class="n">GeneratePathfinderAPI</span><span class="p">(</span>
     <span class="n">_pathfinder</span><span class="o">.</span><span class="n">as_top_level_api</span><span class="p">,</span> <span class="n">_pathfinder</span><span class="o">.</span><span class="n">approximate</span><span class="p">,</span> <span class="n">_pathfinder</span><span class="o">.</span><span class="n">sample</span>
-<span class="p">)</span>
+<span class="p">)</span></div>
+
 
 <div class="viewcode-block" id="multipathfinder">
 <a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.multipathfinder">[docs]</a>
@@ -641,7 +737,31 @@
     <span class="s2">&quot;__version__&quot;</span><span class="p">,</span>
     <span class="s2">&quot;dual_averaging&quot;</span><span class="p">,</span>  <span class="c1"># optimizers</span>
     <span class="s2">&quot;lbfgs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;hmc&quot;</span><span class="p">,</span>  <span class="c1"># mcmc</span>
+    <span class="s2">&quot;mhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;nuts&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dmhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mala&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rmhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ghmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;barker&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;elliptical_slice&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mclmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;adjusted_mclmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;adjusted_mclmc_dynamic&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;orbital_hmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mgrad_gaussian&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rmh&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;irmh&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;additive_step_random_walk&quot;</span><span class="p">,</span>
     <span class="s2">&quot;laplace_hmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;laplace_mhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;laplace_dhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;laplace_dmhmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;multinomial_hmc&quot;</span><span class="p">,</span>  <span class="c1"># backward-compatible alias for mhmc</span>
+    <span class="s2">&quot;dynamic_hmc&quot;</span><span class="p">,</span>  <span class="c1"># backward-compatible alias for dhmc</span>
+    <span class="s2">&quot;barker_proposal&quot;</span><span class="p">,</span>  <span class="c1"># backward-compatible alias for barker</span>
     <span class="s2">&quot;window_adaptation&quot;</span><span class="p">,</span>  <span class="c1"># mcmc adaptation</span>
     <span class="s2">&quot;low_rank_window_adaptation&quot;</span><span class="p">,</span>
     <span class="s2">&quot;meads_adaptation&quot;</span><span class="p">,</span>
@@ -649,17 +769,27 @@
     <span class="s2">&quot;pathfinder_adaptation&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mclmc_find_L_and_step_size&quot;</span><span class="p">,</span>  <span class="c1"># mclmc adaptation</span>
     <span class="s2">&quot;adjusted_mclmc_find_L_and_step_size&quot;</span><span class="p">,</span>  <span class="c1"># adjusted mclmc adaptation</span>
+    <span class="s2">&quot;adaptive_tempered_smc&quot;</span><span class="p">,</span>  <span class="c1"># smc</span>
+    <span class="s2">&quot;tempered_smc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;adaptive_persistent_sampling_smc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;persistent_sampling_smc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;partial_posteriors_smc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pretuning&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;inner_kernel_tuning&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sgld&quot;</span><span class="p">,</span>  <span class="c1"># sgmcmc</span>
+    <span class="s2">&quot;sghmc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sgnht&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;csgld&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;svgd&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pathfinder&quot;</span><span class="p">,</span>  <span class="c1"># vi</span>
+    <span class="s2">&quot;multipathfinder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;meanfield_vi&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fullrank_vi&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;schrodinger_follmer&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ess&quot;</span><span class="p">,</span>  <span class="c1"># diagnostics</span>
     <span class="s2">&quot;rhat&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;mhmc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;dhmc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;dmhmc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;laplace_mhmc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;laplace_dhmc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;laplace_dmhmc&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;multinomial_hmc&quot;</span><span class="p">,</span>  <span class="c1"># backward-compatible alias for mhmc</span>
-    <span class="s2">&quot;dynamic_hmc&quot;</span><span class="p">,</span>  <span class="c1"># backward-compatible alias for dhmc</span>
-    <span class="s2">&quot;multipathfinder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SamplingAlgorithm&quot;</span><span class="p">,</span>  <span class="c1"># base</span>
+    <span class="s2">&quot;VIAlgorithm&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
 
