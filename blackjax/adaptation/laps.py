@@ -271,7 +271,7 @@ def laps(
             state=state,
             logdensity_fn=logdensity_fn,
             step_size=adap.step_size,
-            num_integration_steps=adap.steps_per_sample,
+            integration_steps_params=(adap.steps_per_sample,),
             inverse_mass_matrix=inverse_mass_matrix,
             L_proposal_factor=1.25,
         )
