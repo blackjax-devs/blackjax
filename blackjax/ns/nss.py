@@ -227,6 +227,7 @@ def as_top_level_api(
             position,
             init_state_fn=jax.vmap(init_state_fn),
             update_inner_kernel_params_fn=update_inner_kernel_params_fn,
+            rng_key=rng_key,
         )
 
     def step_fn(rng_key, state):
