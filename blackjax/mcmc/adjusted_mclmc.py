@@ -16,6 +16,7 @@
 NOTE: For best performance, we recommend using adjusted_mclmc_dynamic instead of this module, which is primarily intended for use in parallelized versions of the algorithm.
 
 """
+import warnings
 from typing import Callable
 
 import jax
@@ -75,11 +76,12 @@ def build_kernel(
         state: HMCState,
         logdensity_fn: Callable,
         step_size: float,
-        num_integration_steps: int,
+        integration_steps_params: tuple = (1,),
         inverse_mass_matrix=1.0,
         L_proposal_factor: float = jnp.inf,
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
+        (num_integration_steps,) = integration_steps_params
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
@@ -120,7 +122,8 @@ def as_top_level_api(
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.isokinetic_mclachlan,
-    num_integration_steps,
+    num_integration_steps=None,
+    integration_steps_params: tuple | None = None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the MHMCHMC kernel.
 
@@ -141,13 +144,35 @@ def as_top_level_api(
     integrator
         The symplectic integrator to use to integrate the trajectory.
     num_integration_steps
-        Number of integration steps per transition.
-
+        Number of integration steps per transition.  Deprecated in favour of
+        ``integration_steps_params=(num_integration_steps,)``.  Providing both
+        raises a :class:`DeprecationWarning` and ``integration_steps_params``
+        takes precedence.
+    integration_steps_params
+        Tuple of parameters unpacked into the kernel's ``integration_steps_params``
+        argument.  For the static kernel this must be a 1-tuple
+        ``(num_steps,)``.  Defaults to ``(num_integration_steps,)`` when only
+        ``num_integration_steps`` is provided.
 
     Returns
     -------
     A ``SamplingAlgorithm``.
     """
+    if integration_steps_params is not None and num_integration_steps is not None:
+        warnings.warn(
+            "Both `num_integration_steps` and `integration_steps_params` were "
+            "provided. `num_integration_steps` is deprecated; "
+            "`integration_steps_params` will be used.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    if integration_steps_params is None:
+        if num_integration_steps is None:
+            raise ValueError(
+                "Either `num_integration_steps` or `integration_steps_params` "
+                "must be provided."
+            )
+        integration_steps_params = (num_integration_steps,)
 
     kernel = build_kernel(
         integrator=integrator,
@@ -159,7 +184,7 @@ def as_top_level_api(
         logdensity_fn,
         kernel_args=(
             step_size,
-            num_integration_steps,
+            integration_steps_params,
             inverse_mass_matrix,
             L_proposal_factor,
         ),

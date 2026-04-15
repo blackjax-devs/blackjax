@@ -77,8 +77,12 @@ def build_kernel(
     next_random_arg_fn
         Function that generates the next `random_generator_arg` from its previous value.
     integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`. Needs to return an `int`.
+        Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+        that draws the number of integration steps for a single transition.
+        Extra positional arguments beyond ``random_generator_arg`` are supplied
+        at call time via ``integration_steps_params`` on the inner kernel, so
+        tunable parameters (e.g. average number of steps, distribution bounds)
+        can be adapted without rebuilding the kernel.
     build_proposal
         A callable with signature
         ``(integrator, kinetic_energy, step_size, num_integration_steps,
@@ -100,11 +104,11 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         inverse_mass_matrix: Array,
-        **integration_steps_kwargs,
+        integration_steps_params: tuple = (),
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the HMC kernel."""
         num_integration_steps = integration_steps_fn(
-            state.random_generator_arg, **integration_steps_kwargs
+            state.random_generator_arg, *integration_steps_params
         )
         hmc_state = HMCState(state.position, state.logdensity, state.logdensity_grad)
         hmc_proposal, info = hmc_base(
@@ -138,6 +142,7 @@ def as_top_level_api(
     integrator: Callable = integrators.velocity_verlet,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    integration_steps_params: tuple = (),
     build_proposal: Callable = hmc_proposal,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the dynamic HMC kernel.
@@ -160,8 +165,15 @@ def as_top_level_api(
     next_random_arg_fn
         Function that generates the next `random_generator_arg` from its previous value.
     integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`.
+        Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+        that draws the number of integration steps for a single transition.
+    integration_steps_params
+        Extra positional arguments unpacked into ``integration_steps_fn`` after
+        ``random_generator_arg`` on every step.  Use this to pass tunable
+        parameters (e.g. ``(avg_num_integration_steps,)`` or
+        ``(lower_bound, upper_bound)``) without rebuilding the kernel.
+        Defaults to ``()`` so that a plain 1-arg ``integration_steps_fn`` works
+        unchanged.
     build_proposal
         A callable with signature
         ``(integrator, kinetic_energy, step_size, num_integration_steps,
@@ -185,7 +197,7 @@ def as_top_level_api(
         kernel,
         init,
         logdensity_fn,
-        kernel_args=(step_size, inverse_mass_matrix),
+        kernel_args=(step_size, inverse_mass_matrix, integration_steps_params),
         pass_rng_key_to_init=True,
     )
 

@@ -52,7 +52,7 @@ def init(
 
 
 def build_kernel(
-    integration_steps_fn,
+    integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
@@ -62,8 +62,12 @@ def build_kernel(
     Parameters
     ----------
     integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`. Needs to return an `int`.
+        Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+        that draws the number of integration steps for a single transition.
+        Extra positional arguments beyond ``random_generator_arg`` are supplied
+        at call time via ``integration_steps_params`` on the inner kernel, so
+        tunable parameters (e.g. average number of steps, distribution bounds)
+        can be adapted without rebuilding the kernel.
     integrator
         The integrator to use to integrate the Hamiltonian dynamics.
     divergence_threshold
@@ -85,10 +89,13 @@ def build_kernel(
         step_size: float,
         L_proposal_factor: float = jnp.inf,
         inverse_mass_matrix=1.0,
+        integration_steps_params: tuple = (),
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
 
-        num_integration_steps = integration_steps_fn(state.random_generator_arg)
+        num_integration_steps = integration_steps_fn(
+            state.random_generator_arg, *integration_steps_params
+        )
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
@@ -132,6 +139,7 @@ def as_top_level_api(
     integrator: Callable = integrators.isokinetic_mclachlan,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    integration_steps_params: tuple = (),
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the dynamic MHMCHMC kernel.
 
@@ -150,9 +158,15 @@ def as_top_level_api(
     next_random_arg_fn
         Function that generates the next `random_generator_arg` from its previous value.
     integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`.
-
+        Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+        that draws the number of integration steps for a single transition.
+    integration_steps_params
+        Extra positional arguments unpacked into ``integration_steps_fn`` after
+        ``random_generator_arg`` on every step.  Use this to pass tunable
+        parameters (e.g. ``(avg_num_integration_steps,)`` or
+        ``(lower_bound, upper_bound)``) without rebuilding the kernel.
+        Defaults to ``()`` so that a plain 1-arg ``integration_steps_fn`` works
+        unchanged.
 
     Returns
     -------
@@ -170,7 +184,12 @@ def as_top_level_api(
         kernel,
         init,
         logdensity_fn,
-        kernel_args=(step_size, L_proposal_factor, inverse_mass_matrix),
+        kernel_args=(
+            step_size,
+            L_proposal_factor,
+            inverse_mass_matrix,
+            integration_steps_params,
+        ),
         pass_rng_key_to_init=True,
     )
 
@@ -193,30 +212,36 @@ def trajectory_length(t: int, mu: float):
     return jnp.rint(0.5 + halton_sequence(t) * s)
 
 
-def make_random_trajectory_length_fn(random_trajectory_length: bool):
-    """Build a function that maps average integration steps to a step-count callable.
+def make_random_trajectory_length_fn(random_trajectory_length: bool) -> Callable:
+    """Build an ``integration_steps_fn`` with signature ``(key, avg_num_integration_steps) -> int``.
 
     Parameters
     ----------
     random_trajectory_length
-        If ``True``, returns a randomized trajectory length function; otherwise
-        returns a deterministic one that always yields ``ceil(avg)``.
+        If ``True``, returns a randomized trajectory length function (uniform
+        draw scaled by ``rescale(avg)``); otherwise returns a deterministic one
+        that always yields ``ceil(avg)``.
 
     Returns
     -------
-    A function ``integration_steps_fn(avg_num_integration_steps)`` that itself
-    returns a callable ``key -> int`` giving the number of steps for a single
-    transition.
+    A callable ``(random_generator_arg, avg_num_integration_steps) -> int``
+    suitable for use as ``integration_steps_fn`` in :func:`build_kernel`.
+    Pass ``integration_steps_params=(avg_num_integration_steps,)`` to the
+    kernel so the value is forwarded at each step without a closure.
     """
     if random_trajectory_length:
-        integration_steps_fn = lambda avg_num_integration_steps: lambda k: (
-            jnp.clip(
-                jnp.ceil(jax.random.uniform(k) * rescale(avg_num_integration_steps)),
+
+        def integration_steps_fn(key, avg_num_integration_steps):
+            return jnp.clip(
+                jnp.ceil(jax.random.uniform(key) * rescale(avg_num_integration_steps)),
                 min=1,
-            )
-        ).astype("int32")
+            ).astype(jnp.int32)
+
     else:
-        integration_steps_fn = lambda avg_num_integration_steps: lambda _: jnp.clip(
-            jnp.ceil(avg_num_integration_steps), min=1
-        ).astype("int32")
+
+        def integration_steps_fn(key, avg_num_integration_steps):
+            return jnp.clip(jnp.ceil(avg_num_integration_steps), min=1).astype(
+                jnp.int32
+            )
+
     return integration_steps_fn
