@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb3b5d2979" />
+  <meta name="docsearch:version" content="0.1.dev1+gb0dfebddb" />
   </head>
   
   
@@ -437,7 +437,7 @@
 <div class="viewcode-block" id="build_kernel">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html#blackjax.mcmc.adjusted_mclmc_dynamic.build_kernel">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
-    <span class="n">integration_steps_fn</span><span class="p">,</span>
+    <span class="n">integration_steps_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">isokinetic_mclachlan</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">next_random_arg_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
@@ -447,8 +447,12 @@
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    integration_steps_fn</span>
-<span class="sd">        Function that generates the next pseudo or quasi-random number of integration steps in the</span>
-<span class="sd">        sequence, given the current `random_generator_arg`. Needs to return an `int`.</span>
+<span class="sd">        Callable with signature ``(random_generator_arg, *integration_steps_params) -&gt; int``</span>
+<span class="sd">        that draws the number of integration steps for a single transition.</span>
+<span class="sd">        Extra positional arguments beyond ``random_generator_arg`` are supplied</span>
+<span class="sd">        at call time via ``integration_steps_params`` on the inner kernel, so</span>
+<span class="sd">        tunable parameters (e.g. average number of steps, distribution bounds)</span>
+<span class="sd">        can be adapted without rebuilding the kernel.</span>
 <span class="sd">    integrator</span>
 <span class="sd">        The integrator to use to integrate the Hamiltonian dynamics.</span>
 <span class="sd">    divergence_threshold</span>
@@ -470,10 +474,13 @@
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">L_proposal_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
         <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">integration_steps_params</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(),</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">DynamicHMCState</span><span class="p">,</span> <span class="n">HMCInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the MHMCHMC kernel.&quot;&quot;&quot;</span>
 
-        <span class="n">num_integration_steps</span> <span class="o">=</span> <span class="n">integration_steps_fn</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">random_generator_arg</span><span class="p">)</span>
+        <span class="n">num_integration_steps</span> <span class="o">=</span> <span class="n">integration_steps_fn</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">random_generator_arg</span><span class="p">,</span> <span class="o">*</span><span class="n">integration_steps_params</span>
+        <span class="p">)</span>
 
         <span class="n">key_momentum</span><span class="p">,</span> <span class="n">key_integrator</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">momentum</span> <span class="o">=</span> <span class="n">generate_unit_vector</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
@@ -520,6 +527,7 @@
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">isokinetic_mclachlan</span><span class="p">,</span>
     <span class="n">next_random_arg_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)[</span><span class="mi">1</span><span class="p">],</span>
     <span class="n">integration_steps_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+    <span class="n">integration_steps_params</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(),</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the dynamic MHMCHMC kernel.</span>
 
@@ -538,9 +546,15 @@
 <span class="sd">    next_random_arg_fn</span>
 <span class="sd">        Function that generates the next `random_generator_arg` from its previous value.</span>
 <span class="sd">    integration_steps_fn</span>
-<span class="sd">        Function that generates the next pseudo or quasi-random number of integration steps in the</span>
-<span class="sd">        sequence, given the current `random_generator_arg`.</span>
-
+<span class="sd">        Callable with signature ``(random_generator_arg, *integration_steps_params) -&gt; int``</span>
+<span class="sd">        that draws the number of integration steps for a single transition.</span>
+<span class="sd">    integration_steps_params</span>
+<span class="sd">        Extra positional arguments unpacked into ``integration_steps_fn`` after</span>
+<span class="sd">        ``random_generator_arg`` on every step.  Use this to pass tunable</span>
+<span class="sd">        parameters (e.g. ``(avg_num_integration_steps,)`` or</span>
+<span class="sd">        ``(lower_bound, upper_bound)``) without rebuilding the kernel.</span>
+<span class="sd">        Defaults to ``()`` so that a plain 1-arg ``integration_steps_fn`` works</span>
+<span class="sd">        unchanged.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -558,7 +572,12 @@
         <span class="n">kernel</span><span class="p">,</span>
         <span class="n">init</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">,</span>
-        <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">L_proposal_factor</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">),</span>
+        <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span>
+            <span class="n">step_size</span><span class="p">,</span>
+            <span class="n">L_proposal_factor</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="n">integration_steps_params</span><span class="p">,</span>
+        <span class="p">),</span>
         <span class="n">pass_rng_key_to_init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span></div>
 
@@ -582,32 +601,38 @@
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">rint</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">+</span> <span class="n">halton_sequence</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="o">*</span> <span class="n">s</span><span class="p">)</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">make_random_trajectory_length_fn</span><span class="p">(</span><span class="n">random_trajectory_length</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a function that maps average integration steps to a step-count callable.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">make_random_trajectory_length_fn</span><span class="p">(</span><span class="n">random_trajectory_length</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build an ``integration_steps_fn`` with signature ``(key, avg_num_integration_steps) -&gt; int``.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    random_trajectory_length</span>
-<span class="sd">        If ``True``, returns a randomized trajectory length function; otherwise</span>
-<span class="sd">        returns a deterministic one that always yields ``ceil(avg)``.</span>
+<span class="sd">        If ``True``, returns a randomized trajectory length function (uniform</span>
+<span class="sd">        draw scaled by ``rescale(avg)``); otherwise returns a deterministic one</span>
+<span class="sd">        that always yields ``ceil(avg)``.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A function ``integration_steps_fn(avg_num_integration_steps)`` that itself</span>
-<span class="sd">    returns a callable ``key -&gt; int`` giving the number of steps for a single</span>
-<span class="sd">    transition.</span>
+<span class="sd">    A callable ``(random_generator_arg, avg_num_integration_steps) -&gt; int``</span>
+<span class="sd">    suitable for use as ``integration_steps_fn`` in :func:`build_kernel`.</span>
+<span class="sd">    Pass ``integration_steps_params=(avg_num_integration_steps,)`` to the</span>
+<span class="sd">    kernel so the value is forwarded at each step without a closure.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">random_trajectory_length</span><span class="p">:</span>
-        <span class="n">integration_steps_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">avg_num_integration_steps</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
-                <span class="n">jnp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="o">*</span> <span class="n">rescale</span><span class="p">(</span><span class="n">avg_num_integration_steps</span><span class="p">)),</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">integration_steps_fn</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">avg_num_integration_steps</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">*</span> <span class="n">rescale</span><span class="p">(</span><span class="n">avg_num_integration_steps</span><span class="p">)),</span>
                 <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int32&quot;</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">integration_steps_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">avg_num_integration_steps</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">_</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">avg_num_integration_steps</span><span class="p">),</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1</span>
-        <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="s2">&quot;int32&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">integration_steps_fn</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">avg_num_integration_steps</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">avg_num_integration_steps</span><span class="p">),</span> <span class="nb">min</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span>
+            <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">integration_steps_fn</span>
 </pre></div>
 

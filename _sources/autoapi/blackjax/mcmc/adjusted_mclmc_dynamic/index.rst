@@ -34,12 +34,16 @@ Module Contents
    :rtype: The initial DynamicHMCState.
 
 
-.. py:function:: build_kernel(integration_steps_fn, integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1])
+.. py:function:: build_kernel(integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), integrator: Callable = integrators.isokinetic_mclachlan, divergence_threshold: float = 1000, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1])
 
    Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
-   :param integration_steps_fn: Function that generates the next pseudo or quasi-random number of integration steps in the
-                                sequence, given the current `random_generator_arg`. Needs to return an `int`.
+   :param integration_steps_fn: Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+                                that draws the number of integration steps for a single transition.
+                                Extra positional arguments beyond ``random_generator_arg`` are supplied
+                                at call time via ``integration_steps_params`` on the inner kernel, so
+                                tunable parameters (e.g. average number of steps, distribution bounds)
+                                can be adapted without rebuilding the kernel.
    :param integrator: The integrator to use to integrate the Hamiltonian dynamics.
    :param divergence_threshold: Value of the difference in energy above which we consider that the transition is divergent.
    :param next_random_arg_fn: Function that generates the next `random_generator_arg` from its previous value.
@@ -49,7 +53,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, L_proposal_factor: float = jnp.inf, inverse_mass_matrix=1.0, *, divergence_threshold: int = 1000, integrator: Callable = integrators.isokinetic_mclachlan, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10)) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, L_proposal_factor: float = jnp.inf, inverse_mass_matrix=1.0, *, divergence_threshold: int = 1000, integrator: Callable = integrators.isokinetic_mclachlan, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), integration_steps_params: tuple = ()) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the dynamic MHMCHMC kernel.
 
@@ -60,8 +64,14 @@ Module Contents
                                 commonly found in other libraries, and yet is arbitrary.
    :param integrator: (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
    :param next_random_arg_fn: Function that generates the next `random_generator_arg` from its previous value.
-   :param integration_steps_fn: Function that generates the next pseudo or quasi-random number of integration steps in the
-                                sequence, given the current `random_generator_arg`.
+   :param integration_steps_fn: Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+                                that draws the number of integration steps for a single transition.
+   :param integration_steps_params: Extra positional arguments unpacked into ``integration_steps_fn`` after
+                                    ``random_generator_arg`` on every step.  Use this to pass tunable
+                                    parameters (e.g. ``(avg_num_integration_steps,)`` or
+                                    ``(lower_bound, upper_bound)``) without rebuilding the kernel.
+                                    Defaults to ``()`` so that a plain 1-arg ``integration_steps_fn`` works
+                                    unchanged.
 
    :rtype: A ``SamplingAlgorithm``.
 

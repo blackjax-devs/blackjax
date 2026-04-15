@@ -35,11 +35,15 @@ Module Contents
    :value: 2.0
 
 
-.. py:function:: adjusted_mclmc_find_L_and_step_size(mclmc_kernel, num_steps, state, rng_key, target, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.0, diagonal_preconditioning=True, params=None, max='avg', num_windows=1, tuning_factor=1.3)
+.. py:function:: adjusted_mclmc_find_L_and_step_size(mclmc_kernel, logdensity_fn, num_steps, state, rng_key, target, frac_tune1=0.1, frac_tune2=0.1, frac_tune3=0.0, diagonal_preconditioning=True, params=None, max='avg', num_windows=1, tuning_factor=1.3)
 
    Finds the optimal value of the parameters for the MH-MCHMC algorithm.
 
-   :param mclmc_kernel: The kernel function used for the MCMC algorithm.
+   :param mclmc_kernel: The kernel function used for the MCMC algorithm.  Must have signature
+                        ``(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix,
+                        integration_steps_params) -> (state, info)``.
+   :param logdensity_fn: The log-density function of the target distribution.  Passed to
+                         ``mclmc_kernel`` on every adaptation step.
    :param num_steps: The number of MCMC steps that will subsequently be run, after tuning.
    :param state: The initial state of the MCMC algorithm.
    :param rng_key: The random number generator key.
@@ -56,12 +60,12 @@ Module Contents
    :rtype: A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
 
 
-.. py:function:: adjusted_mclmc_make_L_step_size_adaptation(kernel, dim, frac_tune1, frac_tune2, target, diagonal_preconditioning, fix_L_first_da=False, max='avg', tuning_factor=1.0)
+.. py:function:: adjusted_mclmc_make_L_step_size_adaptation(kernel, logdensity_fn, dim, frac_tune1, frac_tune2, target, diagonal_preconditioning, fix_L_first_da=False, max='avg', tuning_factor=1.0)
 
    Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC
 
 
-.. py:function:: adjusted_mclmc_make_adaptation_L(kernel, frac, l_factor, max='avg', eigenvector=None)
+.. py:function:: adjusted_mclmc_make_adaptation_L(kernel, logdensity_fn, frac, l_factor, max='avg', eigenvector=None)
 
    determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)
 

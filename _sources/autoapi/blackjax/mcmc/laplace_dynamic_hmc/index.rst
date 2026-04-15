@@ -120,7 +120,10 @@ Module Contents
    :param integrator: Symplectic integrator for the leapfrog trajectory.
    :param divergence_threshold: Energy difference above which a transition is declared divergent.
    :param next_random_arg_fn: Advances ``random_generator_arg`` each step.
-   :param integration_steps_fn: Draws the number of leapfrog steps from ``random_generator_arg``.
+   :param integration_steps_fn: Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+                                that draws the number of leapfrog steps for a single transition.
+                                Extra positional arguments are supplied at call time via
+                                ``integration_steps_params`` on the inner kernel.
    :param build_proposal: Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`
                           (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`
                           for multinomial trajectory sampling (``blackjax.laplace_dmhmc``).
@@ -129,7 +132,7 @@ Module Contents
              * ``(rng_key, state, laplace, step_size, inverse_mass_matrix) -> (LaplaceDynamicHMCState, HMCInfo)``.
 
 
-.. py:function:: as_top_level_api(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), build_proposal: Callable = hmc.hmc_proposal, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), integration_steps_params: tuple = (), build_proposal: Callable = hmc.hmc_proposal, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
 
    Dynamic HMC on the Laplace-approximated marginal log-density.
 
@@ -145,7 +148,11 @@ Module Contents
    :param divergence_threshold: Absolute energy difference above which a transition is divergent.
    :param integrator: Symplectic integrator.  Default: velocity Verlet.
    :param next_random_arg_fn: Advances ``random_generator_arg`` each step.
-   :param integration_steps_fn: Draws the number of leapfrog steps from ``random_generator_arg``.
+   :param integration_steps_fn: Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+                                that draws the number of leapfrog steps for a single transition.
+   :param integration_steps_params: Extra positional arguments unpacked into ``integration_steps_fn`` after
+                                    ``random_generator_arg`` on every step.  Defaults to ``()`` so that a
+                                    plain 1-arg ``integration_steps_fn`` works unchanged.
    :param build_proposal: Proposal builder.  Defaults to :func:`~blackjax.mcmc.hmc.hmc_proposal`
                           (``blackjax.laplace_dhmc``).  Pass
                           :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal` for

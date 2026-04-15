@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb3b5d2979" />
+  <meta name="docsearch:version" content="0.1.dev1+gb0dfebddb" />
   </head>
   
   
@@ -396,6 +396,7 @@
 <span class="sd">NOTE: For best performance, we recommend using adjusted_mclmc_dynamic instead of this module, which is primarily intended for use in parallelized versions of the algorithm.</span>
 
 <span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
@@ -460,11 +461,12 @@
         <span class="n">state</span><span class="p">:</span> <span class="n">HMCState</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">integration_steps_params</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,),</span>
         <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">L_proposal_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">HMCState</span><span class="p">,</span> <span class="n">HMCInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the MHMCHMC kernel.&quot;&quot;&quot;</span>
+        <span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,)</span> <span class="o">=</span> <span class="n">integration_steps_params</span>
 
         <span class="n">key_momentum</span><span class="p">,</span> <span class="n">key_integrator</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
         <span class="n">momentum</span> <span class="o">=</span> <span class="n">generate_unit_vector</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
@@ -508,7 +510,8 @@
     <span class="o">*</span><span class="p">,</span>
     <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">isokinetic_mclachlan</span><span class="p">,</span>
-    <span class="n">num_integration_steps</span><span class="p">,</span>
+    <span class="n">num_integration_steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">integration_steps_params</span><span class="p">:</span> <span class="nb">tuple</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the (basic) user interface for the MHMCHMC kernel.</span>
 
@@ -529,13 +532,35 @@
 <span class="sd">    integrator</span>
 <span class="sd">        The symplectic integrator to use to integrate the trajectory.</span>
 <span class="sd">    num_integration_steps</span>
-<span class="sd">        Number of integration steps per transition.</span>
-
+<span class="sd">        Number of integration steps per transition.  Deprecated in favour of</span>
+<span class="sd">        ``integration_steps_params=(num_integration_steps,)``.  Providing both</span>
+<span class="sd">        raises a :class:`DeprecationWarning` and ``integration_steps_params``</span>
+<span class="sd">        takes precedence.</span>
+<span class="sd">    integration_steps_params</span>
+<span class="sd">        Tuple of parameters unpacked into the kernel&#39;s ``integration_steps_params``</span>
+<span class="sd">        argument.  For the static kernel this must be a 1-tuple</span>
+<span class="sd">        ``(num_steps,)``.  Defaults to ``(num_integration_steps,)`` when only</span>
+<span class="sd">        ``num_integration_steps`` is provided.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">integration_steps_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">num_integration_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;Both `num_integration_steps` and `integration_steps_params` were &quot;</span>
+            <span class="s2">&quot;provided. `num_integration_steps` is deprecated; &quot;</span>
+            <span class="s2">&quot;`integration_steps_params` will be used.&quot;</span><span class="p">,</span>
+            <span class="ne">DeprecationWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">integration_steps_params</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">num_integration_steps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Either `num_integration_steps` or `integration_steps_params` &quot;</span>
+                <span class="s2">&quot;must be provided.&quot;</span>
+            <span class="p">)</span>
+        <span class="n">integration_steps_params</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,)</span>
 
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span>
         <span class="n">integrator</span><span class="o">=</span><span class="n">integrator</span><span class="p">,</span>
@@ -547,7 +572,7 @@
         <span class="n">logdensity_fn</span><span class="p">,</span>
         <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span>
             <span class="n">step_size</span><span class="p">,</span>
-            <span class="n">num_integration_steps</span><span class="p">,</span>
+            <span class="n">integration_steps_params</span><span class="p">,</span>
             <span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="n">L_proposal_factor</span><span class="p">,</span>
         <span class="p">),</span>

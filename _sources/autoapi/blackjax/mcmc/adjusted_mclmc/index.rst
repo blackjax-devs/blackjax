@@ -47,7 +47,7 @@ Module Contents
              * *information about the transition.*
 
 
-.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, L_proposal_factor: float = jnp.inf, inverse_mass_matrix=1.0, *, divergence_threshold: int = 1000, integrator: Callable = integrators.isokinetic_mclachlan, num_integration_steps) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logdensity_fn: Callable, step_size: float, L_proposal_factor: float = jnp.inf, inverse_mass_matrix=1.0, *, divergence_threshold: int = 1000, integrator: Callable = integrators.isokinetic_mclachlan, num_integration_steps=None, integration_steps_params: tuple | None = None) -> blackjax.base.SamplingAlgorithm
 
    Implements the (basic) user interface for the MHMCHMC kernel.
 
@@ -59,7 +59,14 @@ Module Contents
    :param divergence_threshold: The absolute value of the difference in energy between two states above
                                 which we say that the transition is divergent.
    :param integrator: The symplectic integrator to use to integrate the trajectory.
-   :param num_integration_steps: Number of integration steps per transition.
+   :param num_integration_steps: Number of integration steps per transition.  Deprecated in favour of
+                                 ``integration_steps_params=(num_integration_steps,)``.  Providing both
+                                 raises a :class:`DeprecationWarning` and ``integration_steps_params``
+                                 takes precedence.
+   :param integration_steps_params: Tuple of parameters unpacked into the kernel's ``integration_steps_params``
+                                    argument.  For the static kernel this must be a 1-tuple
+                                    ``(num_steps,)``.  Defaults to ``(num_integration_steps,)`` when only
+                                    ``num_integration_steps`` is provided.
 
    :rtype: A ``SamplingAlgorithm``.
 
