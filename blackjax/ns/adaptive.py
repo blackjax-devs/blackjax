@@ -59,7 +59,7 @@ def init(
     init_state_fn: Callable,
     loglikelihood_birth: float = jnp.nan,
     update_inner_kernel_params_fn: Optional[Callable] = None,
-    rng_key: Optional[jax.random.PRNGKey] = None,
+    rng_key: Optional[PRNGKey] = None,
 ) -> AdaptiveNSState:
     base_state = base_init(
         positions, init_state_fn, loglikelihood_birth=loglikelihood_birth
