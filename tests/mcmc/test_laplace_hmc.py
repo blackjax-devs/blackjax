@@ -246,7 +246,7 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
 
     def setUp(self):
         super().setUp()
-        self.n = 5
+        self.n = 10
         rng = self.next_key()
         phi_true = 0.5
         theta_true = jax.random.normal(rng, (self.n,)) * jnp.exp(phi_true)
