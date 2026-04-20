@@ -8,7 +8,6 @@ obviously more models. It should also be run in CI.
 import datetime
 import functools
 import time
-import warnings
 
 import jax
 import jax.numpy as jnp
@@ -63,7 +62,9 @@ def run_regression(algorithm, **parameters):
     return states
 
 
-def make_horseshoe_logdensity(N=100, M=200, m0=10, slab_scale=3.0, slab_df=25.0, seed=42):
+def make_horseshoe_logdensity(
+    N=100, M=200, m0=10, slab_scale=3.0, slab_df=25.0, seed=42
+):
     """Finnish (regularised) horseshoe sparse linear regression.
 
     Piironen & Vehtari (2017).  Pure JAX implementation; no TFP required.
@@ -93,41 +94,46 @@ def make_horseshoe_logdensity(N=100, M=200, m0=10, slab_scale=3.0, slab_df=25.0,
     y = jnp.array(rng.normal(np.array(X) @ beta0, 1.0), dtype=jnp.float32)
 
     half_slab_df = float(0.5 * slab_df)
-    slab_scale2 = float(slab_scale ** 2)
+    slab_scale2 = float(slab_scale**2)
     tau0_coef = float(m0 / (M - m0)) / float(N) ** 0.5  # tau0 = tau0_coef * sigma
 
     def logdensity_dict(params):
         # Unconstrained inputs; positive params stored as log(x).
-        alpha      = params["alpha"]       # scalar, R
-        log_sigma  = params["sigma"]       # log(sigma > 0)
-        log_tau    = params["tau_tilde"]   # log(tau_tilde > 0)
-        log_c2     = params["c2_tilde"]    # log(c2_tilde > 0)
-        log_lam    = params["lambda_"]     # log(lambda_ > 0), shape (M,)
+        alpha = params["alpha"]  # scalar, R
+        log_sigma = params["sigma"]  # log(sigma > 0)
+        log_tau = params["tau_tilde"]  # log(tau_tilde > 0)
+        log_c2 = params["c2_tilde"]  # log(c2_tilde > 0)
+        log_lam = params["lambda_"]  # log(lambda_ > 0), shape (M,)
         beta_tilde = params["beta_tilde"]  # shape (M,), R
 
-        sigma     = jnp.exp(log_sigma)
+        sigma = jnp.exp(log_sigma)
         tau_tilde = jnp.exp(log_tau)
-        c2_tilde  = jnp.exp(log_c2)
-        lambda_   = jnp.exp(log_lam)
+        c2_tilde = jnp.exp(log_c2)
+        lambda_ = jnp.exp(log_lam)
 
-        tau      = tau0_coef * sigma * tau_tilde
-        c2       = slab_scale2 * c2_tilde
+        tau = tau0_coef * sigma * tau_tilde
+        c2 = slab_scale2 * c2_tilde
         lam_tilde = jnp.sqrt(
-            c2 * jnp.square(lambda_)
-            / (c2 + jnp.square(tau) * jnp.square(lambda_))
+            c2 * jnp.square(lambda_) / (c2 + jnp.square(tau) * jnp.square(lambda_))
         )
         beta = tau * lam_tilde * beta_tilde
-        mu   = X @ beta + alpha
+        mu = X @ beta + alpha
 
         # Log-priors (constrained space)
-        lp  = stats.norm.logpdf(alpha, 0.0, 2.0)
-        lp += jnp.log(2.0) + stats.norm.logpdf(sigma, 0.0, 2.0)          # HalfNormal(2)
-        lp += jnp.log(2.0) - jnp.log(jnp.pi) - jnp.log1p(tau_tilde**2)  # HalfCauchy(1)
-        lp += (half_slab_df * jnp.log(half_slab_df)                       # InvGamma(a,a)
-               - jax.scipy.special.gammaln(half_slab_df)
-               - (half_slab_df + 1.0) * jnp.log(c2_tilde)
-               - half_slab_df / c2_tilde)
-        lp += jnp.sum(jnp.log(2.0) - jnp.log(jnp.pi) - jnp.log1p(lambda_**2))  # HalfCauchy(1)
+        lp = stats.norm.logpdf(alpha, 0.0, 2.0)
+        lp += jnp.log(2.0) + stats.norm.logpdf(sigma, 0.0, 2.0)  # HalfNormal(2)
+        lp += (
+            jnp.log(2.0) - jnp.log(jnp.pi) - jnp.log1p(tau_tilde**2)
+        )  # HalfCauchy(1)
+        lp += (
+            half_slab_df * jnp.log(half_slab_df)  # InvGamma(a,a)
+            - jax.scipy.special.gammaln(half_slab_df)
+            - (half_slab_df + 1.0) * jnp.log(c2_tilde)
+            - half_slab_df / c2_tilde
+        )
+        lp += jnp.sum(
+            jnp.log(2.0) - jnp.log(jnp.pi) - jnp.log1p(lambda_**2)
+        )  # HalfCauchy(1)
         lp += jnp.sum(stats.norm.logpdf(beta_tilde, 0.0, 1.0))
 
         # Likelihood
@@ -140,11 +146,11 @@ def make_horseshoe_logdensity(N=100, M=200, m0=10, slab_scale=3.0, slab_df=25.0,
 
     # Unconstrained init: log(1)=0 for positive params, 0 for real params
     init_dict = {
-        "alpha":      jnp.array(0.0),
-        "sigma":      jnp.array(0.0),
-        "tau_tilde":  jnp.array(0.0),
-        "c2_tilde":   jnp.array(0.0),
-        "lambda_":    jnp.zeros(M),
+        "alpha": jnp.array(0.0),
+        "sigma": jnp.array(0.0),
+        "tau_tilde": jnp.array(0.0),
+        "c2_tilde": jnp.array(0.0),
+        "lambda_": jnp.zeros(M),
         "beta_tilde": jnp.zeros(M),
     }
 
@@ -171,7 +177,9 @@ def _positions_2d(states):
 def _split_rhat(pos_2d):
     """Split-R̂: treat the two halves of a single chain as separate chains."""
     half = pos_2d.shape[0] // 2
-    return potential_scale_reduction(jnp.stack([pos_2d[:half], pos_2d[half : half * 2]]))
+    return potential_scale_reduction(
+        jnp.stack([pos_2d[:half], pos_2d[half : half * 2]])
+    )
 
 
 @pytest.mark.benchmark
@@ -187,8 +195,8 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
     logdensity_flat, init_flat, logdensity_dict, init_dict = make_horseshoe_logdensity()
 
     param_groups = ["alpha", "sigma", "tau_tilde", "c2_tilde", "lambda_", "beta_tilde"]
-    param_sizes  = [1, 1, 1, 1, 200, 200]
-    param_ends   = list(np.cumsum(param_sizes))
+    param_sizes = [1, 1, 1, 1, 200, 200]
+    param_ends = list(np.cumsum(param_sizes))
     param_starts = [0] + param_ends[:-1]
 
     # Warmup once outside the benchmark; share parameters across both sampling runs
@@ -197,8 +205,10 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
         blackjax.nuts, logdensity_flat
     ).run(warmup_key, init_flat, 1000)
     jax.block_until_ready(parameters)
-    print(f"\n  Warmup:  step_size={float(parameters['step_size']):.5f}"
-          f"  IMM diag mean={float(jnp.mean(jnp.diag(parameters['inverse_mass_matrix']))):.4f}\n")
+    print(
+        f"\n  Warmup:  step_size={float(parameters['step_size']):.5f}"  # noqa: E241,E231
+        f"  IMM diag mean={float(jnp.mean(jnp.diag(parameters['inverse_mass_matrix']))):.4f}\n"  # noqa: E231
+    )
 
     ip_flat = warmup_state.position
     ip_dict = jax.flatten_util.ravel_pytree(init_dict)[1](ip_flat)
@@ -224,11 +234,11 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
 
     results = {}
     for label, states, t_sample in [
-        ("flat (1 leaf)",   flat_states, benchmark.stats["mean"]),
+        ("flat (1 leaf)", flat_states, benchmark.stats["mean"]),
         ("dict (6 leaves)", dict_states, t_dict),
     ]:
         pos_2d = _positions_2d(states)
-        ess  = effective_sample_size(pos_2d[None])
+        ess = effective_sample_size(pos_2d[None])
         rhat = _split_rhat(pos_2d)
         group_stats = {
             name: dict(
@@ -248,37 +258,51 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
     r_flat = results["flat (1 leaf)"]
     r_dict = results["dict (6 leaves)"]
 
-    print("  Model: Finnish horseshoe  N=100 M=200  1 chain  1000 samples  (shared warmup)")
+    print(
+        "  Model: Finnish horseshoe  N=100 M=200  1 chain  1000 samples  (shared warmup)"
+    )
     print()
-    print(f"  {'Metric':<28} {'flat (1 leaf)':>16} {'dict (6 leaves)':>16}")
+    hdr = (
+        f"  {'Metric':<28} {'flat (1 leaf)':>16} {'dict (6 leaves)':>16}"  # noqa: E231
+    )
+    print(hdr)
     print("  " + "-" * 62)
     for key, label, fmt in [
-        ("t_sample",  "sample time (s)", ".2f"),
-        ("min_ess",   "min ESS",         ".1f"),
-        ("ess_per_s", "min ESS/s",       ".1f"),
+        ("t_sample", "sample time (s)", ".2f"),
+        ("min_ess", "min ESS", ".1f"),
+        ("ess_per_s", "min ESS/s", ".1f"),
     ]:
-        print(f"  {label:<28} {r_flat[key]:>16{fmt}} {r_dict[key]:>16{fmt}}")
+        row = (
+            f"  {label:<28} {r_flat[key]:>16{fmt}} {r_dict[key]:>16{fmt}}"  # noqa: E231
+        )
+        print(row)
     speedup = r_dict["t_sample"] / r_flat["t_sample"]
     print("  " + "-" * 62)
-    print(f"  {'sample speedup (dict/flat)':<28} {speedup:>16.2f}x")
+    print(f"  {'sample speedup (dict/flat)':<28} {speedup:>16.2f}x")  # noqa: E231
 
     print()
-    print(f"  {'Parameter':<14} {'size':>5}"
-          f"  {'ESS flat':>9} {'ESS dict':>9}"
-          f"  {'Rhat flat':>10} {'Rhat dict':>10}")
+    print(
+        f"  {'Parameter':<14} {'size':>5}"  # noqa: E231
+        f"  {'ESS flat':>9} {'ESS dict':>9}"  # noqa: E231
+        f"  {'Rhat flat':>10} {'Rhat dict':>10}"  # noqa: E231
+    )
     print("  " + "-" * 64)
     for name, size in zip(param_groups, param_sizes):
         sf = r_flat["group_stats"][name]
         sd = r_dict["group_stats"][name]
         print(
-            f"  {name:<14} {size:>5}"
-            f"  {sf['min_ess']:>9.1f} {sd['min_ess']:>9.1f}"
-            f"  {sf['max_rhat']:>10.3f} {sd['max_rhat']:>10.3f}"
+            f"  {name:<14} {size:>5}"  # noqa: E231
+            f"  {sf['min_ess']:>9.1f} {sd['min_ess']:>9.1f}"  # noqa: E231
+            f"  {sf['max_rhat']:>10.3f} {sd['max_rhat']:>10.3f}"  # noqa: E231
         )
     print()
 
-    assert r_flat["min_ess"] > 10, f"flat min ESS suspiciously low: {r_flat['min_ess']:.1f}"
-    assert r_dict["min_ess"] > 10, f"dict min ESS suspiciously low: {r_dict['min_ess']:.1f}"
+    assert (
+        r_flat["min_ess"] > 10
+    ), f"flat min ESS suspiciously low: {r_flat['min_ess']:.1f}"  # noqa: E231
+    assert (
+        r_dict["min_ess"] > 10
+    ), f"dict min ESS suspiciously low: {r_dict['min_ess']:.1f}"  # noqa: E231
 
 
 @pytest.mark.benchmark
