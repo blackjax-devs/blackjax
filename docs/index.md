@@ -84,6 +84,7 @@ maxdepth: 1
 hidden:
 ---
 Quickstart <examples/quickstart.md>
+Speed-up Guide <examples/speed_up_guide.md>
 ```
 
 ```{toctree}
