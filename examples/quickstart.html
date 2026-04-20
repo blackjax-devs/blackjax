@@ -51,11 +51,11 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/quickstart';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Use with PyTensor models" href="howto_use_pytensor.html" />
+    <link rel="next" title="Speed-up Guide" href="speed_up_guide.html" />
     <link rel="prev" title="Welcome to Blackjax!" href="../index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb0dfebddb" />
+  <meta name="docsearch:version" content="0.1.dev1+g2eb62abb6" />
   </head>
   
   
@@ -150,6 +150,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="speed_up_guide.html">Speed-up Guide</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
@@ -480,7 +481,7 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-35423.97, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1238.6677, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(66013.05, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34461.598, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1060.383, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(64088.32, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -528,8 +529,8 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.04 s, sys: 148 ms, total: 3.19 s
-Wall time: 2.06 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.06 s, sys: 119 ms, total: 3.18 s
+Wall time: 2.01 s
 </pre></div>
 </div>
 </div>
@@ -554,7 +555,7 @@ Wall time: 2.06 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/b97f095d2647c579c85eb6b88108c12511b910fb38824f7e57a6df8371770a93.png" src="../_images/b97f095d2647c579c85eb6b88108c12511b910fb38824f7e57a6df8371770a93.png" />
+<img alt="../_images/bbb3000c8f8ef43d7c27d4926e9323b6a5c3bbfdfca365219a539b917e74867a.png" src="../_images/bbb3000c8f8ef43d7c27d4926e9323b6a5c3bbfdfca365219a539b917e74867a.png" />
 </div>
 </div>
 </section>
@@ -581,7 +582,7 @@ Wall time: 2.06 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-35423.97, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1238.6677, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(66013.05, dtype=float32, weak_type=True)})
+<div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position={&#39;loc&#39;: 1.0, &#39;log_scale&#39;: 1.0}, logdensity=Array(-34461.598, dtype=float32), logdensity_grad={&#39;loc&#39;: Array(1060.383, dtype=float32, weak_type=True), &#39;log_scale&#39;: Array(64088.32, dtype=float32, weak_type=True)})
 </pre></div>
 </div>
 </div>
@@ -598,8 +599,8 @@ Wall time: 2.06 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.2 s, sys: 607 ms, total: 17.8 s
-Wall time: 14.6 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 17.1 s, sys: 410 ms, total: 17.5 s
+Wall time: 14.1 s
 </pre></div>
 </div>
 </div>
@@ -624,7 +625,7 @@ Wall time: 14.6 s
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/ccb889bf7432a667f96f7c0f1bf25d4824487a7c1c1ccc97106d0abb068d6aad.png" src="../_images/ccb889bf7432a667f96f7c0f1bf25d4824487a7c1c1ccc97106d0abb068d6aad.png" />
+<img alt="../_images/a6dbbe6be90857b5e6181907d26a183b6f5f4a29ab044065059df7262526153a.png" src="../_images/a6dbbe6be90857b5e6181907d26a183b6f5f4a29ab044065059df7262526153a.png" />
 </div>
 </div>
 <section id="use-stan-s-window-adaptation">
@@ -642,8 +643,8 @@ Wall time: 14.6 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.84 s, sys: 86.1 ms, total: 2.92 s
-Wall time: 1.32 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.95 s, sys: 83.7 ms, total: 3.03 s
+Wall time: 1.35 s
 </pre></div>
 </div>
 </div>
@@ -662,8 +663,8 @@ Wall time: 1.32 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2 s, sys: 42.7 ms, total: 2.05 s
-Wall time: 853 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.14 s, sys: 32.4 ms, total: 2.17 s
+Wall time: 877 ms
 </pre></div>
 </div>
 </div>
@@ -688,7 +689,7 @@ Wall time: 853 ms
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/a7693978e53f1e5fef392ed7a8aa3204a636fa2364501aca040fc10f705c0cfd.png" src="../_images/a7693978e53f1e5fef392ed7a8aa3204a636fa2364501aca040fc10f705c0cfd.png" />
+<img alt="../_images/3260c475a84aa5f6b014b5b833c55e16b536da30b73174aee67b6f668059edab.png" src="../_images/3260c475a84aa5f6b014b5b833c55e16b536da30b73174aee67b6f668059edab.png" />
 </div>
 </div>
 </section>
@@ -716,11 +717,11 @@ Wall time: 853 ms
       </div>
     </a>
     <a class="right-next"
-       href="howto_use_pytensor.html"
+       href="speed_up_guide.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use with PyTensor models</p>
+        <p class="prev-next-title">Speed-up Guide</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

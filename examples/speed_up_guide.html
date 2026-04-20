@@ -1,0 +1,759 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Speed-up Guide</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/speed_up_guide';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Use with PyTensor models" href="howto_use_pytensor.html" />
+    <link rel="prev" title="A Quick Introduction to Blackjax" href="quickstart.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g2eb62abb6" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Speed-up Guide</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#always-jit-the-step-function-at-the-outermost-scope">1. Always JIT the step function at the outermost scope</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-jax-lax-scan-instead-of-python-loops">2. Use <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> instead of Python loops</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flatten-multi-leaf-pytree-positions-before-passing-to-blackjax">3. Flatten multi-leaf pytree positions before passing to BlackJAX</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-fix-wrap-your-log-density-with-jax-flatten-util">The fix: wrap your log-density with <code class="docutils literal notranslate"><span class="pre">jax.flatten_util</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmark">Benchmark</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#when-does-this-matter">When does this matter?</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-vmap-over-chains-not-a-python-loop">4. Use <code class="docutils literal notranslate"><span class="pre">vmap</span></code> over chains, not a Python loop</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#avoid-recompilation-keep-shapes-and-dtypes-stable">5. Avoid recompilation: keep shapes and dtypes stable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-specific-tips">6. GPU-specific tips</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#profile-before-optimising">7. Profile before optimising</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#see-also">See also</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="speed-up-guide">
+<h1>Speed-up Guide<a class="headerlink" href="#speed-up-guide" title="Link to this heading">#</a></h1>
+<p><em>Last updated: 2026-04-19</em></p>
+<p>This guide collects actionable tips for getting the best performance out of BlackJAX.
+The recommendations build on the <a class="reference external" href="https://docs.jax.dev/en/latest/gpu_performance_tips.html">JAX performance documentation</a>
+and on benchmarks run against other JAX-based PPLs such as NumPyro.</p>
+<hr class="docutils" />
+<section id="always-jit-the-step-function-at-the-outermost-scope">
+<h2>1. Always JIT the step function at the outermost scope<a class="headerlink" href="#always-jit-the-step-function-at-the-outermost-scope" title="Link to this heading">#</a></h2>
+<p>BlackJAX kernels are plain Python callables.  Calling them without <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code>
+triggers a fresh XLA compilation on every Python invocation.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✗ slow — recompiles on every call</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+<span class="c1"># ✓ fast — compile once, run many</span>
+<span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">nuts</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1000</span><span class="p">):</span>
+    <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">run_inference_algorithm</span></code> and <code class="docutils literal notranslate"><span class="pre">window_adaptation</span></code> already JIT internally, but
+if you write your own loop wrap the whole function in a single <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> at the top:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">n_iter</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>See the <a class="reference external" href="https://docs.jax.dev/en/latest/jit-compilation.html">JAX JIT documentation</a>
+for a full explanation of what triggers recompilation.</p>
+</section>
+<hr class="docutils" />
+<section id="use-jax-lax-scan-instead-of-python-loops">
+<h2>2. Use <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> instead of Python loops<a class="headerlink" href="#use-jax-lax-scan-instead-of-python-loops" title="Link to this heading">#</a></h2>
+<p>A Python <code class="docutils literal notranslate"><span class="pre">for</span></code> loop over MCMC steps <strong>unrolls</strong> the entire computation graph at
+trace time — for 1 000 steps that is a 1 000× larger HLO program, slow to
+compile and large in memory.  <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> lowers to a single XLA <code class="docutils literal notranslate"><span class="pre">WhileOp</span></code>
+and compiles the body <em>once</em>, keeping compilation cost constant regardless of
+step count.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> applies <strong>implicit JIT compilation</strong> to its body function even
+when called outside an explicit <code class="docutils literal notranslate"><span class="pre">jax.jit</span></code> (you can verify this with
+<code class="docutils literal notranslate"><span class="pre">jax.disable_jit()</span></code>).  However, you should still wrap the <em>outer</em> function in
+<code class="docutils literal notranslate"><span class="pre">&#64;jax.jit</span></code> so that JAX caches the full trace — without it, Python-level setup
+code (key splitting, state initialisation) is re-executed and the whole
+function re-traced on every call.</p>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># ✗ Python loop inside jit — unrolls at trace time, O(n) compile cost</span>
+<span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_python_loop</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">):</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">initial_state</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">):</span>  <span class="c1"># unrolled by JAX tracer</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">state</span>
+
+<span class="c1"># ✓ lax.scan inside jit — O(1) compile cost, compact XLA WhileOp</span>
+<span class="nd">@jax</span><span class="o">.</span><span class="n">jit</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_scan</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">info</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>NumPyro, Oryx, and other JAX PPLs all rely on <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> internally for the
+same reason.  See <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.scan.html">JAX’s official scan docs</a>
+and <a class="reference external" href="https://github.com/jax-ml/jax/discussions/16106">JAX discussion #16106</a>
+for more background.</p>
+</section>
+<hr class="docutils" />
+<section id="flatten-multi-leaf-pytree-positions-before-passing-to-blackjax">
+<h2>3. Flatten multi-leaf pytree positions before passing to BlackJAX<a class="headerlink" href="#flatten-multi-leaf-pytree-positions-before-passing-to-blackjax" title="Link to this heading">#</a></h2>
+<div class="important admonition">
+<p class="admonition-title">Key insight from benchmarking</p>
+<p>When the sampler position is a <strong>dict with multiple named arrays</strong> (e.g. a
+model with parameters <code class="docutils literal notranslate"><span class="pre">alpha</span></code>, <code class="docutils literal notranslate"><span class="pre">beta</span></code>, <code class="docutils literal notranslate"><span class="pre">sigma</span></code>, …), JAX/XLA allocates a
+<strong>separate buffer for every leaf</strong> inside the <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> carry.  This
+multiplies the number of HLO nodes in the compiled program and increases both
+compile time and per-step execution time.</p>
+<p>Replacing the dict with a <strong>single flat 1-D array</strong> collapses all leaves into
+one buffer and eliminates the overhead.  In benchmarks on a Finnish horseshoe
+model with 6 named parameter groups (404 parameters total), this yielded a
+<strong>~1.3× speedup</strong> on sampling time.</p>
+</div>
+<section id="the-fix-wrap-your-log-density-with-jax-flatten-util">
+<h3>The fix: wrap your log-density with <code class="docutils literal notranslate"><span class="pre">jax.flatten_util</span></code><a class="headerlink" href="#the-fix-wrap-your-log-density-with-jax-flatten-util" title="Link to this heading">#</a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">init_flat</span><span class="p">,</span> <span class="n">unflatten</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">init_params</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">logdensity_flat</span><span class="p">(</span><span class="n">flat</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">unflatten</span><span class="p">(</span><span class="n">flat</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>After sampling, recover named parameters with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">samples_dict</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">unflatten</span><span class="p">)(</span><span class="n">samples</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+<span class="c1"># samples_dict[&quot;alpha&quot;].shape == (n_iter,)</span>
+</pre></div>
+</div>
+</section>
+<section id="benchmark">
+<h3>Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading">#</a></h3>
+<p>The benchmark is in <a class="reference download internal" download="" href="../_downloads/f0a49a7619b121824bf1264426b8a7da/test_benchmarks.py"><span class="xref download myst"><code class="docutils literal notranslate"><span class="pre">tests/test_benchmarks.py</span></code></span></a>
+(<code class="docutils literal notranslate"><span class="pre">test_horseshoe_nuts_flat_vs_dict</span></code>).  Run it with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">JAX_PLATFORM_NAME</span><span class="o">=</span>cpu<span class="w"> </span>pytest<span class="w"> </span>tests/test_benchmarks.py::test_horseshoe_nuts_flat_vs_dict<span class="w"> </span>-v<span class="w"> </span>-s
+</pre></div>
+</div>
+<p>Typical output on CPU (Finnish horseshoe N=100 M=200, 1 chain, 1 000 NUTS
+steps, shared warmup so only pytree-carry overhead differs):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>  <span class="n">Warmup</span><span class="p">:</span>  <span class="n">step_size</span><span class="o">=</span><span class="mf">0.00643</span>  <span class="n">IMM</span> <span class="n">diag</span> <span class="n">mean</span><span class="o">=</span><span class="mf">0.0032</span>
+
+  <span class="n">Model</span><span class="p">:</span> <span class="n">Finnish</span> <span class="n">horseshoe</span>  <span class="n">N</span><span class="o">=</span><span class="mi">100</span> <span class="n">M</span><span class="o">=</span><span class="mi">200</span>  <span class="mi">1</span> <span class="n">chain</span>  <span class="mi">1000</span> <span class="n">samples</span>  <span class="p">(</span><span class="n">shared</span> <span class="n">warmup</span><span class="p">)</span>
+
+  <span class="n">Metric</span>                          <span class="n">flat</span> <span class="p">(</span><span class="mi">1</span> <span class="n">leaf</span><span class="p">)</span>  <span class="nb">dict</span> <span class="p">(</span><span class="mi">6</span> <span class="n">leaves</span><span class="p">)</span>
+  <span class="o">--------------------------------------------------------------</span>
+  <span class="n">sample</span> <span class="n">time</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span>                          <span class="mf">4.94</span>             <span class="mf">6.35</span>
+  <span class="nb">min</span> <span class="n">ESS</span>                                  <span class="mf">93.3</span>             <span class="mf">46.3</span>
+  <span class="nb">min</span> <span class="n">ESS</span><span class="o">/</span><span class="n">s</span>                                <span class="mf">18.9</span>              <span class="mf">7.3</span>
+  <span class="o">--------------------------------------------------------------</span>
+  <span class="n">sample</span> <span class="n">speedup</span> <span class="p">(</span><span class="nb">dict</span><span class="o">/</span><span class="n">flat</span><span class="p">)</span>               <span class="mf">1.29</span><span class="n">x</span>
+
+  <span class="n">Parameter</span>       <span class="n">size</span>   <span class="n">ESS</span> <span class="n">flat</span>  <span class="n">ESS</span> <span class="nb">dict</span>   <span class="n">Rhat</span> <span class="n">flat</span>  <span class="n">Rhat</span> <span class="nb">dict</span>
+  <span class="o">----------------------------------------------------------------</span>
+  <span class="n">alpha</span>              <span class="mi">1</span>      <span class="mf">546.9</span>     <span class="mf">499.4</span>       <span class="mf">0.999</span>      <span class="mf">0.999</span>
+  <span class="n">sigma</span>              <span class="mi">1</span>     <span class="mf">1063.9</span>    <span class="mf">1114.3</span>       <span class="mf">1.003</span>      <span class="mf">1.002</span>
+  <span class="n">tau_tilde</span>          <span class="mi">1</span>      <span class="mf">849.5</span>     <span class="mf">885.6</span>       <span class="mf">0.999</span>      <span class="mf">0.999</span>
+  <span class="n">c2_tilde</span>           <span class="mi">1</span>      <span class="mf">562.0</span>     <span class="mf">485.7</span>       <span class="mf">0.999</span>      <span class="mf">0.999</span>
+  <span class="n">lambda_</span>          <span class="mi">200</span>      <span class="mf">232.5</span>     <span class="mf">230.1</span>       <span class="mf">1.036</span>      <span class="mf">1.016</span>
+  <span class="n">beta_tilde</span>       <span class="mi">200</span>       <span class="mf">93.3</span>      <span class="mf">46.3</span>       <span class="mf">1.013</span>      <span class="mf">1.014</span>
+</pre></div>
+</div>
+<p>Both parameterisations produce equivalent posteriors (R̂ ≈ 1).  The flat array
+is ~1.3× faster because the single-leaf carry reduces XLA buffer allocation
+overhead inside <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>.  <code class="docutils literal notranslate"><span class="pre">lambda_</span></code> and <code class="docutils literal notranslate"><span class="pre">beta_tilde</span></code> show the highest R̂,
+reflecting the well-known slow mixing of local shrinkage scales in horseshoe
+models — this is a property of the model geometry, not the parameterisation.</p>
+</section>
+<section id="when-does-this-matter">
+<h3>When does this matter?<a class="headerlink" href="#when-does-this-matter" title="Link to this heading">#</a></h3>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Scenario</p></th>
+<th class="head"><p>Impact</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Position is a <strong>single array</strong> (e.g. <code class="docutils literal notranslate"><span class="pre">jnp.zeros(D)</span></code>)</p></td>
+<td><p>None — already flat</p></td>
+</tr>
+<tr class="row-odd"><td><p>Position is a <strong>dict with 2–3 scalar leaves</strong></p></td>
+<td><p>Small (~10–20%)</p></td>
+</tr>
+<tr class="row-even"><td><p>Position is a <strong>dict with many leaves</strong> or large arrays</p></td>
+<td><p>Significant (~1.3×)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="use-vmap-over-chains-not-a-python-loop">
+<h2>4. Use <code class="docutils literal notranslate"><span class="pre">vmap</span></code> over chains, not a Python loop<a class="headerlink" href="#use-vmap-over-chains-not-a-python-loop" title="Link to this heading">#</a></h2>
+<p>To run multiple chains in parallel, use <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> rather than a Python loop.
+<code class="docutils literal notranslate"><span class="pre">vmap</span></code> batches the computation into a single XLA kernel call.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_chains</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">n_chains</span><span class="p">)</span>
+<span class="n">states</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">one_chain</span><span class="p">)(</span><span class="n">keys</span><span class="p">,</span> <span class="n">initial_positions</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="howto_sample_multiple_chains.html"><span class="std std-doc">howto_sample_multiple_chains.md</span></a> for a
+complete worked example.</p>
+</section>
+<hr class="docutils" />
+<section id="avoid-recompilation-keep-shapes-and-dtypes-stable">
+<h2>5. Avoid recompilation: keep shapes and dtypes stable<a class="headerlink" href="#avoid-recompilation-keep-shapes-and-dtypes-stable" title="Link to this heading">#</a></h2>
+<p>JAX recompiles whenever an input shape, dtype, or static argument changes.
+Common pitfalls in BlackJAX workflows:</p>
+<ul class="simple">
+<li><p><strong>Changing <code class="docutils literal notranslate"><span class="pre">num_steps</span></code></strong> between warmup and sampling — use <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code>
+with a fixed step count, or pass <code class="docutils literal notranslate"><span class="pre">num_steps</span></code> as a traced value.</p></li>
+<li><p><strong>Mixing float32 and float64</strong> — choose one dtype and stick to it.  On CPU
+<code class="docutils literal notranslate"><span class="pre">float64</span></code> is fine; on GPU <code class="docutils literal notranslate"><span class="pre">float32</span></code> is faster and avoids the x64 overhead.
+See <a class="reference external" href="https://docs.jax.dev/en/latest/config_options.html">JAX configuration options</a>.</p></li>
+<li><p><strong>Rebuilding the kernel inside a loop</strong> — construct <code class="docutils literal notranslate"><span class="pre">blackjax.nuts(...)</span></code> once
+outside the loop and reuse the <code class="docutils literal notranslate"><span class="pre">.step</span></code> function.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="gpu-specific-tips">
+<h2>6. GPU-specific tips<a class="headerlink" href="#gpu-specific-tips" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>Prefer <code class="docutils literal notranslate"><span class="pre">float32</span></code></strong> — GPU throughput is typically 2–32× higher for
+<code class="docutils literal notranslate"><span class="pre">float32</span></code> vs <code class="docutils literal notranslate"><span class="pre">float64</span></code>.  Enable <code class="docutils literal notranslate"><span class="pre">float64</span></code> only if numerical precision is
+critical.</p></li>
+<li><p><strong>Batch across chains</strong> — a single chain is often too small to saturate a
+GPU.  Running 8–64 chains with <code class="docutils literal notranslate"><span class="pre">vmap</span></code> amortises kernel launch overhead.
+See <a class="reference external" href="https://docs.jax.dev/en/latest/gpu_performance_tips.html">JAX GPU performance tips</a>.</p></li>
+<li><p><strong>Use <code class="docutils literal notranslate"><span class="pre">jax.block_until_ready</span></code></strong> when benchmarking — JAX dispatches
+asynchronously, so wall-clock time measured without <code class="docutils literal notranslate"><span class="pre">block_until_ready</span></code> is
+misleading.  See the <a class="reference external" href="https://docs.jax.dev/en/latest/benchmarking.html">JAX benchmarking guide</a>.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="profile-before-optimising">
+<h2>7. Profile before optimising<a class="headerlink" href="#profile-before-optimising" title="Link to this heading">#</a></h2>
+<p>Use JAX’s built-in profiler or Perfetto to identify the actual bottleneck
+before applying the tips above.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">jax</span><span class="o">.</span><span class="n">profiler</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="s2">&quot;/tmp/jax-trace&quot;</span><span class="p">):</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">initial_state</span><span class="p">)</span>
+    <span class="n">jax</span><span class="o">.</span><span class="n">block_until_ready</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<span class="c1"># open /tmp/jax-trace in https://ui.perfetto.dev</span>
+</pre></div>
+</div>
+<p>Most performance problems in BlackJAX workflows fall into one of three
+categories:</p>
+<ol class="arabic simple">
+<li><p><strong>Recompilation</strong> — check for shape/dtype changes; use <code class="docutils literal notranslate"><span class="pre">jax.make_jaxpr</span></code> to
+inspect traces.</p></li>
+<li><p><strong>Pytree overhead in scan</strong> — apply the flattening trick from §3 if your
+position is a multi-leaf dict.</p></li>
+<li><p><strong>Insufficient parallelism on GPU</strong> — increase chain count or batch size.</p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="see-also">
+<h2>See also<a class="headerlink" href="#see-also" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/jit-compilation.html">JAX: just-in-time compilation</a></p></li>
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/gpu_performance_tips.html">JAX: GPU performance tips</a></p></li>
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/benchmarking.html">JAX: benchmarking JAX code</a></p></li>
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/pytrees.html">JAX: pytrees</a></p></li>
+<li><p><a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.scan.html">JAX: <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code> API</a></p></li>
+<li><p><a class="reference internal" href="howto_sample_multiple_chains.html"><span class="std std-doc">BlackJAX: sampling with multiple chains</span></a></p></li>
+<li><p><a class="reference external" href="https://github.com/blackjax-devs/blackjax/issues/597">BlackJAX issue #597 — NUTS GPU performance</a></p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="quickstart.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">A Quick Introduction to Blackjax</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="howto_use_pytensor.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Use with PyTensor models</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#always-jit-the-step-function-at-the-outermost-scope">1. Always JIT the step function at the outermost scope</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-jax-lax-scan-instead-of-python-loops">2. Use <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> instead of Python loops</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#flatten-multi-leaf-pytree-positions-before-passing-to-blackjax">3. Flatten multi-leaf pytree positions before passing to BlackJAX</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-fix-wrap-your-log-density-with-jax-flatten-util">The fix: wrap your log-density with <code class="docutils literal notranslate"><span class="pre">jax.flatten_util</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#benchmark">Benchmark</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#when-does-this-matter">When does this matter?</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#use-vmap-over-chains-not-a-python-loop">4. Use <code class="docutils literal notranslate"><span class="pre">vmap</span></code> over chains, not a Python loop</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#avoid-recompilation-keep-shapes-and-dtypes-stable">5. Avoid recompilation: keep shapes and dtypes stable</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#gpu-specific-tips">6. GPU-specific tips</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#profile-before-optimising">7. Profile before optimising</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#see-also">See also</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

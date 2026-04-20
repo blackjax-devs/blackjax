@@ -55,7 +55,7 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb0dfebddb" />
+  <meta name="docsearch:version" content="0.1.dev1+g2eb62abb6" />
   </head>
   
   
@@ -150,6 +150,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="speed_up_guide.html">Speed-up Guide</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="nav bd-sidenav">
@@ -566,7 +567,7 @@ that calls the Numba-compiled gradient via a second <code class="docutils litera
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(1.2094681, dtype=float32, weak_type=True), logdensity=Array(-2.1364396, dtype=float32), logdensity_grad=Array(-0.5486496, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(1.159902, dtype=float32, weak_type=True), logdensity=Array(-2.1093283, dtype=float32), logdensity_grad=Array(-0.5449425, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -583,8 +584,8 @@ Python (and Numba) on every call. Let’s see the overhead:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 673 ms, sys: 73 μs, total: 673 ms
-Wall time: 673 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 756 ms, sys: 0 ns, total: 756 ms
+Wall time: 755 ms
 </pre></div>
 </div>
 </div>
@@ -598,8 +599,8 @@ Wall time: 673 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11 s, sys: 897 ms, total: 11.9 s
-Wall time: 11.8 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.95 s, sys: 760 ms, total: 10.7 s
+Wall time: 10.6 s
 </pre></div>
 </div>
 </div>

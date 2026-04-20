@@ -55,7 +55,7 @@
     <link rel="prev" title="Use with PyTensor models" href="howto_use_pytensor.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb0dfebddb" />
+  <meta name="docsearch:version" content="0.1.dev1+g2eb62abb6" />
   </head>
   
   
@@ -150,6 +150,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="speed_up_guide.html">Speed-up Guide</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
 <ul class="current nav bd-sidenav">
@@ -537,12 +538,6 @@
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>\Average acceptance rate: 0.91
-There were 0.00% divergent transitions
-</pre></div>
-</div>
-</div>
 </details>
 </div>
 <p>Finally let us now plot the distribution of the parameters. Note that since we use a transformed variable, Numpyro does not output the school treatment effect directly:</p>
@@ -562,9 +557,6 @@ There were 0.00% divergent transitions
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<img alt="../_images/c19c30f7f7b69bea151f3012ae24d5fddfc7bffacb01c5737bf5077aa5aab186.png" src="../_images/c19c30f7f7b69bea151f3012ae24d5fddfc7bffacb01c5737bf5077aa5aab186.png" />
-</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -572,9 +564,6 @@ There were 0.00% divergent transitions
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span>
 </pre></div>
 </div>
-</div>
-<div class="cell_output docutils container">
-<img alt="../_images/d9fa12b60e035d857db95f0e1e47204a1dd5747d349b8e004e39b7033feffeba.png" src="../_images/d9fa12b60e035d857db95f0e1e47204a1dd5747d349b8e004e39b7033feffeba.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -592,18 +581,6 @@ There were 0.00% divergent transitions
 </div>
 </div>
 </details>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Relative treatment effect for school 0: 0.31
-Relative treatment effect for school 1: 0.13
-Relative treatment effect for school 2: 0.37
-Relative treatment effect for school 3: 0.38
-Relative treatment effect for school 4: -0.30
-Relative treatment effect for school 5: -0.13
-Relative treatment effect for school 6: 0.17
-Relative treatment effect for school 7: -0.17
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 
