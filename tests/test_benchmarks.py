@@ -230,7 +230,9 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
         _sample, args=(logdensity_flat, ip_flat), iterations=1, rounds=1
     )
     t_flat = (
-        benchmark.stats["mean"] if benchmark.stats is not None else time.perf_counter() - t0
+        benchmark.stats["mean"]
+        if benchmark.stats is not None
+        else time.perf_counter() - t0
     )
     t0 = time.perf_counter()
     dict_states = _sample(logdensity_dict, ip_dict)
