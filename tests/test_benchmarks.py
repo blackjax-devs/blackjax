@@ -225,8 +225,12 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
         return states
 
     # benchmark records the flat sampling time; runs exactly once
+    t0 = time.perf_counter()
     flat_states = benchmark.pedantic(
         _sample, args=(logdensity_flat, ip_flat), iterations=1, rounds=1
+    )
+    t_flat = (
+        benchmark.stats["mean"] if benchmark.stats is not None else time.perf_counter() - t0
     )
     t0 = time.perf_counter()
     dict_states = _sample(logdensity_dict, ip_dict)
@@ -234,7 +238,7 @@ def test_horseshoe_nuts_flat_vs_dict(benchmark):
 
     results = {}
     for label, states, t_sample in [
-        ("flat (1 leaf)", flat_states, benchmark.stats["mean"]),
+        ("flat (1 leaf)", flat_states, t_flat),
         ("dict (6 leaves)", dict_states, t_dict),
     ]:
         pos_2d = _positions_2d(states)
