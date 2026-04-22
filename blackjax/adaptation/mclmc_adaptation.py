@@ -14,7 +14,7 @@
 """Algorithms to adapt the MCLMC kernel parameters, namely step size and L."""
 
 from typing import NamedTuple
-
+from blackjax.progress_bar import gen_scan_fn
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
@@ -39,6 +39,7 @@ class MCLMCAdaptationState(NamedTuple):
     inverse_mass_matrix: float
 
 
+
 def mclmc_find_L_and_step_size(
     mclmc_kernel,
     num_steps,
@@ -54,6 +55,7 @@ def mclmc_find_L_and_step_size(
     diagonal_preconditioning=True,
     params=None,
     l_factor=0.4,
+    progress_bar=False,  # <-- NEW: Add progress bar toggle here
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -144,12 +146,17 @@ def mclmc_find_L_and_step_size(
         trust_in_estimate=trust_in_estimate,
         num_effective_samples=num_effective_samples,
         diagonal_preconditioning=diagonal_preconditioning,
+        progress_bar=progress_bar, # <-- NEW: Pass it down
     )(state, params, num_steps, part1_key)
     total_num_tuning_integrator_steps += num_steps1 + num_steps2
 
-    if num_steps3 >= 2:  # at least 2 samples for ESS estimation
+    if num_steps3 >= 2:
         state, params = make_adaptation_L(
-            mclmc_kernel, logdensity_fn, frac=frac_tune3, l_factor=l_factor
+            mclmc_kernel, 
+            logdensity_fn,
+            frac=frac_tune3, 
+            l_factor=l_factor,
+            progress_bar=progress_bar, # <-- NEW: Pass it down
         )(state, params, num_steps, part2_key)
         total_num_tuning_integrator_steps += num_steps3
 
@@ -166,6 +173,7 @@ def make_L_step_size_adaptation(
     desired_energy_var=1e-3,
     trust_in_estimate=1.5,
     num_effective_samples=150,
+    progress_bar=False, # <-- NEW: Accept the argument
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for unadjusted MCLMC"""
 
@@ -231,7 +239,7 @@ def make_L_step_size_adaptation(
     def step(iteration_state, weight_and_key):
         """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
 
-        mask, rng_key = weight_and_key
+        _, mask, rng_key = weight_and_key
         state, params, adaptive_state, streaming_avg = iteration_state
 
         state, params, adaptive_state, success = predictor(
@@ -248,17 +256,20 @@ def make_L_step_size_adaptation(
 
         return (state, params, adaptive_state, streaming_avg), None
 
-    def run_steps(xs, state, params):
-        """Run adaptation steps via scan, returning final carry state."""
-        return jax.lax.scan(
+    
+    # NEW: Redefine run_steps to take `length` and use `gen_scan_fn`
+    def run_steps(xs, state, params, length):
+        scan_fn = gen_scan_fn(length, progress_bar)
+        mask, keys = xs
+        return scan_fn(
             step,
-            init=(
+            (
                 state,
                 params,
                 (0.0, 0.0, jnp.inf),
                 (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
             ),
-            xs=xs,
+            (jnp.arange(length), mask, keys),
         )[0]
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
@@ -277,9 +288,12 @@ def make_L_step_size_adaptation(
         # we use the last num_steps2 to compute the diagonal preconditioner
         mask = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
-        # run the steps
+        # NEW: Pass the length for the first scan
         state, params, _, (_, average) = run_steps(
-            xs=(mask, L_step_size_adaptation_keys), state=state, params=params
+            xs=(mask, L_step_size_adaptation_keys), 
+            state=state, 
+            params=params, 
+            length=num_steps1 + num_steps2
         )
 
         L = params.L
@@ -299,7 +313,10 @@ def make_L_step_size_adaptation(
                 steps = round(num_steps2 / 3)  # we do some small number of steps
                 keys = jax.random.split(final_key, steps)
                 state, params, _, (_, average) = run_steps(
-                    xs=(jnp.ones(steps), keys), state=state, params=params
+                    xs=(jnp.ones(steps), keys), 
+                    state=state, 
+                    params=params, 
+                    length=steps
                 )
 
         return state, MCLMCAdaptationState(L, params.step_size, inverse_mass_matrix)
@@ -307,14 +324,15 @@ def make_L_step_size_adaptation(
     return L_step_size_adaptation
 
 
-def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
+def make_adaptation_L(kernel, logdensity_fn, frac, l_factor, progress_bar=False): 
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
         num_steps_3 = round(num_steps * frac)
         adaptation_L_keys = jax.random.split(key, num_steps_3)
 
-        def step(state, key):
+        def step(state, step_input):
+            _, key = step_input
             next_state, _ = kernel(
                 rng_key=key,
                 state=state,
@@ -326,10 +344,12 @@ def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
 
             return next_state, next_state.position
 
-        state, samples = jax.lax.scan(
-            f=step,
-            init=state,
-            xs=adaptation_L_keys,
+        # NEW: Replace standard jax.lax.scan with gen_scan_fn
+        scan_fn = gen_scan_fn(num_steps_3, progress_bar)
+        state, samples = scan_fn(
+            step,
+            state,
+            (jnp.arange(num_steps_3), adaptation_L_keys),
         )
 
         flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
