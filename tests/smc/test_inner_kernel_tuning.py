@@ -143,25 +143,19 @@ class SMCParameterTuningTest(BlackJAXTest):
 
 class MeanAndStdFromParticlesTest(BlackJAXTest):
     def test_mean_and_std(self):
-        particles = np.array(
-            [
-                jnp.array([10]) + jax.random.normal(key) * jnp.array([0.5])
-                for key in jax.random.split(self.next_key(), 1000)
-            ]
-        )
+        particles = 10.0 + jax.random.normal(self.next_key(), shape=(2000, 1)) * 0.5
         mean = particles_means(particles)
         std = particles_stds(particles)
         cov = particles_covariance_matrix(particles)
         np.testing.assert_allclose(mean, 10.0, rtol=1e-1)
         np.testing.assert_allclose(std, 0.5, rtol=1e-1)
-        np.testing.assert_allclose(cov, 0.24, rtol=1e-1)
+        np.testing.assert_allclose(cov, 0.25, rtol=1e-1)
 
     def test_mean_and_std_multivariate_particles(self):
-        particles = np.array(
-            [
-                jnp.array([10.0, 15.0]) + jax.random.normal(key) * jnp.array([0.5, 0.7])
-                for key in jax.random.split(self.next_key(), 1000)
-            ]
+        # We use shape=(N, 1) to create perfectly correlated particles
+        particles = (
+            jnp.array([10.0, 15.0])
+            + jax.random.normal(self.next_key(), shape=(2000, 1)) * jnp.array([0.5, 0.7])
         )
 
         mean = particles_means(particles)
@@ -170,7 +164,7 @@ class MeanAndStdFromParticlesTest(BlackJAXTest):
         np.testing.assert_allclose(mean, np.array([10.0, 15.0]), rtol=1e-1)
         np.testing.assert_allclose(std, np.array([0.5, 0.7]), rtol=1e-1)
         np.testing.assert_allclose(
-            cov, np.array([[0.249529, 0.34934], [0.34934, 0.489076]]), atol=1e-1
+            cov, np.array([[0.25, 0.35], [0.35, 0.49]]), atol=1e-1
         )
 
     def test_mean_and_std_multivariable_particles(self):
