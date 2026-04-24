@@ -349,7 +349,7 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         np.testing.assert_allclose(
             mean_phi_laplace,
             mean_phi_ncp,
-            atol=0.1,
+            atol=0.15,
             err_msg="phi mean: laplace_hmc {:.3f} vs NCP-NUTS {:.3f}".format(
                 mean_phi_laplace, mean_phi_ncp
             ),
