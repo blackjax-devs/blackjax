@@ -21,12 +21,12 @@ optimizer needs only a handful of iterations when ``phi`` moves by a small amoun
 
 The proposal strategy is swappable via ``build_proposal``, giving two usable variants:
 
-+---------------------------+------------------+------------------------------+
-| Alias                     | Proposal         | Notes                        |
-+===========================+==================+==============================+
-| ``blackjax.laplace_hmc``  | endpoint + M-H   | default, standard HMC        |
-| ``blackjax.laplace_mhmc`` | full trajectory | better ESS per gradient |
-+---------------------------+------------------+------------------------------+
++---------------------------+-------------------+--------------------------------+
+| Alias                     | Proposal          | Notes                          |
++===========================+===================+================================+
+| ``blackjax.laplace_hmc``  | endpoint + M-H    | default, standard HMC          |
+| ``blackjax.laplace_mhmc`` | full trajectory   | better ESS per gradient        |
++---------------------------+-------------------+--------------------------------+
 
 Typical usage::
 
