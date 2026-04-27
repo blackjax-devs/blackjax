@@ -18,7 +18,6 @@ import jax
 import jax.numpy as jnp
 import jax.random
 from jax.flatten_util import ravel_pytree
-from jax.tree_util import tree_leaves
 from jax.typing import ArrayLike
 
 from blackjax.base import VIAlgorithm
@@ -177,7 +176,7 @@ def _log_fn_corrected(position, logdensity_fn):
     """
     log_pdf_val = logdensity_fn(position)
     norm = jax.tree.map(lambda a: 0.5 * jnp.sum(a**2), position)
-    norm = sum(tree_leaves(norm))
+    norm = sum(jax.tree.leaves(norm))
     return log_pdf_val + norm
 
 
