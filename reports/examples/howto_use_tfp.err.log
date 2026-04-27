@@ -45,20 +45,20 @@ def model():
 
 [36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/lazy_loader.py:56[39m, in [36mLazyLoader.__getattr__[39m[34m(self, item)[39m
 [32m     55[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34m__getattr__[39m([38;5;28mself[39m, item):
-[32m---> [39m[32m56[39m   module = [38;5;28;43mself[39;49m[43m.[49m[43m_load[49m[43m([49m[43m)[49m
+[32m---> [39m[32m56[39m   module = [30;43mself[39;49m[30;43m.[39;49m[30;43m_load[39;49m[30;43m([39;49m[30;43m)[39;49m
 [32m     57[39m   [38;5;28;01mreturn[39;00m [38;5;28mgetattr[39m(module, item)
 
 [36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/tensorflow_probability/python/internal/lazy_loader.py:43[39m, in [36mLazyLoader._load[39m[34m(self)[39m
 [32m     41[39m   [38;5;28mself[39m._on_first_access = [38;5;28;01mNone[39;00m
 [32m     42[39m [38;5;66;03m# Import the target module and insert it into the parent's namespace[39;00m
-[32m---> [39m[32m43[39m module = [43mimportlib[49m[43m.[49m[43mimport_module[49m[43m([49m[38;5;28;43mself[39;49m[43m.[49m[34;43m__name__[39;49m[43m)[49m
+[32m---> [39m[32m43[39m module = [30;43mimportlib[39;49m[30;43m.[39;49m[30;43mimport_module[39;49m[30;43m([39;49m[30;43mself[39;49m[30;43m.[39;49m[30;43m__name__[39;49m[30;43m)[39;49m
 [32m     44[39m [38;5;28;01mif[39;00m [38;5;28mself[39m._parent_module_globals [38;5;129;01mis[39;00m [38;5;129;01mnot[39;00m [38;5;28;01mNone[39;00m:
 [32m     45[39m   [38;5;28mself[39m._parent_module_globals[[38;5;28mself[39m._local_name] = module
 
 [36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/importlib/__init__.py:90[39m, in [36mimport_module[39m[34m(name, package)[39m
 [32m     88[39m             [38;5;28;01mbreak[39;00m
 [32m     89[39m         level += [32m1[39m
-[32m---> [39m[32m90[39m [38;5;28;01mreturn[39;00m [43m_bootstrap[49m[43m.[49m[43m_gcd_import[49m[43m([49m[43mname[49m[43m[[49m[43mlevel[49m[43m:[49m[43m][49m[43m,[49m[43m [49m[43mpackage[49m[43m,[49m[43m [49m[43mlevel[49m[43m)[49m
+[32m---> [39m[32m90[39m [38;5;28;01mreturn[39;00m [30;43m_bootstrap[39;49m[30;43m.[39;49m[30;43m_gcd_import[39;49m[30;43m([39;49m[30;43mname[39;49m[30;43m[[39;49m[30;43mlevel[39;49m[30;43m:[39;49m[30;43m][39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mpackage[39;49m[30;43m,[39;49m[30;43m [39;49m[30;43mlevel[39;49m[30;43m)[39;49m
 
 [36mFile [39m[32m<frozen importlib._bootstrap>:1387[39m, in [36m_gcd_import[39m[34m(name, package, level)[39m
 
@@ -139,7 +139,7 @@ def model():
 [32m    678[39m   jax.interpreters.xla.canonicalize_dtype_handlers[NumpyVariable] = (
 [32m    679[39m       jax.interpreters.xla.canonicalize_dtype_handlers[onp.ndarray])
 [32m    680[39m   jax.interpreters.xla.pytype_aval_mappings[NumpyVariable] = (
-[32m--> [39m[32m681[39m       [43mjax[49m[43m.[49m[43minterpreters[49m[43m.[49m[43mxla[49m[43m.[49m[43mpytype_aval_mappings[49m[onp.ndarray])
+[32m--> [39m[32m681[39m       [30;43mjax[39;49m[30;43m.[39;49m[30;43minterpreters[39;49m[30;43m.[39;49m[30;43mxla[39;49m[30;43m.[39;49m[30;43mpytype_aval_mappings[39;49m[onp.ndarray])
 [32m    682[39m   jax.core.pytype_aval_mappings[NumpyVariable] = (
 [32m    683[39m       jax.core.pytype_aval_mappings[onp.ndarray])
 [32m    686[39m Variable = NumpyVariable
