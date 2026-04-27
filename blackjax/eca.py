@@ -18,7 +18,6 @@ import jax.numpy as jnp
 from jax import device_put, lax, shard_map, vmap
 from jax.random import split
 from jax.sharding import NamedSharding, PartitionSpec
-from jax.tree_util import tree_map
 
 from blackjax.diagnostics import splitR
 
@@ -54,7 +53,7 @@ def eca_step(
         summary_statistics = vmap(summary_statistics_fn, (0, 0, None))(
             state, info, key_adaptation
         )
-        expected_value_summary_statistics = tree_map(
+        expected_value_summary_statistics = jax.tree.map(
             lambda summary_statistics: lax.psum(
                 jnp.sum(summary_statistics, axis=0), axis_name="chains"
             )
