@@ -51,11 +51,11 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'developer/design_principles';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Developer Guidelines" href="guidelines.html" />
+    <link rel="next" title="Contributing a New Algorithm to BlackJAX" href="new_algorithm_guide.html" />
     <link rel="prev" title="Bibliography" href="../bib.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga56c38cca" />
+  <meta name="docsearch:version" content="0.1.dev1+gb3fd7de13" />
   </head>
   
   
@@ -265,7 +265,6 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Design Principles</a></li>
-<li class="toctree-l1"><a class="reference internal" href="guidelines.html">Developer Guidelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="new_algorithm_guide.html">Contributing a New Algorithm</a></li>
 </ul>
 
@@ -379,7 +378,8 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-architecture">1. Core Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#philosophy">1. Philosophy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-architecture">2. Core Architecture</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kernels-are-pure-functions">1.1 Kernels Are Pure Functions</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-three-layer-api">1.2 The Three-Layer API</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#composable-closures">1.3 Composable Closures</a></li>
@@ -420,12 +420,23 @@
   <section id="blackjax-design-principles">
 <h1>BlackJAX Design Principles<a class="headerlink" href="#blackjax-design-principles" title="Link to this heading">#</a></h1>
 <p>This document describes the architectural principles, coding conventions, and style guidelines
-that define the “BlackJAX style”. The reference implementations are
+that define the “BlackJAX style”.</p>
+<section id="philosophy">
+<h2>1. Philosophy<a class="headerlink" href="#philosophy" title="Link to this heading">#</a></h2>
+<p>BlackJAX is built on a few core principles that guide its development:</p>
+<ul class="simple">
+<li><p><strong>Leverage JAX’s strengths</strong>: Embrace functional programming and the composable function-transformation approach.</p></li>
+<li><p><strong>Composable Building Blocks</strong>: Write small, general functions and compose them to create complex methods. Reuse the same building blocks for similar algorithms.</p></li>
+<li><p><strong>Ecosystem Compatibility</strong>: Maintain compatibility with the broader JAX ecosystem (Flax, Optax, GPJax, etc.).</p></li>
+<li><p><strong>Clarity and Understanding</strong>: Write code that is easy to read, understand, and well-documented, describing the inner mechanisms of the algorithms in detail.</p></li>
+</ul>
+<p>The reference implementations are
 <code class="docutils literal notranslate"><span class="pre">trajectory.py</span></code>, <code class="docutils literal notranslate"><span class="pre">nuts.py</span></code>, <code class="docutils literal notranslate"><span class="pre">hmc.py</span></code>, <code class="docutils literal notranslate"><span class="pre">proposal.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">base.py</span></code> — these files set the
 quality bar that all new contributions should meet.</p>
+</section>
 <hr class="docutils" />
 <section id="core-architecture">
-<h2>1. Core Architecture<a class="headerlink" href="#core-architecture" title="Link to this heading">#</a></h2>
+<h2>2. Core Architecture<a class="headerlink" href="#core-architecture" title="Link to this heading">#</a></h2>
 <section id="kernels-are-pure-functions">
 <h3>1.1 Kernels Are Pure Functions<a class="headerlink" href="#kernels-are-pure-functions" title="Link to this heading">#</a></h3>
 <p>Every BlackJAX kernel is a stateless pure function. All state is carried explicitly:</p>
@@ -805,11 +816,11 @@ excess recompilation.</p></li>
       </div>
     </a>
     <a class="right-next"
-       href="guidelines.html"
+       href="new_algorithm_guide.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Developer Guidelines</p>
+        <p class="prev-next-title">Contributing a New Algorithm to BlackJAX</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -831,7 +842,8 @@ excess recompilation.</p></li>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-architecture">1. Core Architecture</a><ul class="nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#philosophy">1. Philosophy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#core-architecture">2. Core Architecture</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#kernels-are-pure-functions">1.1 Kernels Are Pure Functions</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#the-three-layer-api">1.2 The Three-Layer API</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#composable-closures">1.3 Composable Closures</a></li>
