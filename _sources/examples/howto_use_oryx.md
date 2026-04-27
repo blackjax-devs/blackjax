@@ -128,7 +128,7 @@ print(initial_weights.keys())
 ```{code-cell} ipython3
 :tags: [hide-input]
 
-num_parameters = sum([layer.size for layer in jax.tree_util.tree_flatten(initial_weights)[0]])
+num_parameters = sum([layer.size for layer in jax.tree.flatten(initial_weights)[0]])
 print(f"Number of parameters in the model: {num_parameters}")
 ```
 
