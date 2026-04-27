@@ -1,17 +1,46 @@
 # Contributing a New Algorithm to BlackJAX
 
 This guide walks through everything needed to add a new algorithm — from file layout through
-registration, testing, and PR review. Read `examples/design_principles.md` first for the
+registration, testing, and PR review. Read `design_principles.md` first for the
 underlying rules; this document is the practical how-to.
 
-Skeleton files for copy-pasting are provided alongside this guide:
+Skeleton files for copy-pasting are provided:
 
-- [`sampling_algorithm.py`](sampling_algorithm.py) — MCMC sampler skeleton
-- [`approximate_inf_algorithm.py`](approximate_inf_algorithm.py) — VI algorithm skeleton
+- [`skeletons/sampling_algorithm.py`](skeletons/sampling_algorithm.py) — MCMC sampler skeleton
+- [`skeletons/approximate_inf_algorithm.py`](skeletons/approximate_inf_algorithm.py) — VI algorithm skeleton
 
 ---
 
-## 1. Orientation: Where Does My Algorithm Live?
+## 1. Orientation: Core Implementation
+
+BlackJAX supports sampling algorithms such as Markov Chain Monte Carlo (MCMC), Sequential Monte Carlo (SMC), Stochastic Gradient MCMC (SGMCMC), and approximate inference algorithms such as Variational Inference (VI).
+
+In all cases, BlackJAX takes a **Markovian approach**, where the current state contains all the information to obtain the next iteration.
+
+### 1.1 Sampling Algorithms
+The user-facing interface of a **sampling algorithm** (MCMC, SMC, SGMCMC) is made up of an initializer and an iterator:
+
+```python
+# Generic sampling algorithm:
+sampling_algorithm = blackjax.nuts(logdensity_fn, step_size, inverse_mass_matrix)
+state = sampling_algorithm.init(initial_position)
+new_state, info = sampling_algorithm.step(rng_key, state)
+```
+
+### 1.2 Approximate Inference Algorithms
+The user-facing interface of an **approximate inference algorithm** (VI) is made up of an initializer, iterator, and sampler:
+
+```python
+# Generic approximate inference algorithm:
+approx_inf_algorithm = blackjax.pathfinder(logdensity_fn)
+state = approx_inf_algorithm.init(initial_position)
+new_state, info = approx_inf_algorithm.step(rng_key, state)
+position_samples = approx_inf_algorithm.sample(rng_key, state, num_samples)
+```
+
+---
+
+## 2. Orientation: Where Does My Algorithm Live?
 
 | Algorithm family | Directory |
 |-----------------|-----------|
@@ -26,7 +55,7 @@ algorithm to an existing file.
 
 ---
 
-## 2. Adding an MCMC Sampler
+## 3. Adding an MCMC Sampler
 
 Every MCMC module must export exactly four public names (listed in `__all__`):
 
@@ -34,7 +63,7 @@ Every MCMC module must export exactly four public names (listed in `__all__`):
 __all__ = ["MyState", "MyInfo", "init", "build_kernel", "as_top_level_api"]
 ```
 
-### 2.1 State and Info NamedTuples
+### 3.1 State and Info NamedTuples
 
 ```python
 from typing import NamedTuple
@@ -72,7 +101,7 @@ Rules:
   belong in a separate `AdaptationState` returned by an adaptation routine.
 - `Info` carries anything useful for diagnostics that does *not* need to persist.
 
-### 2.2 `init`
+### 3.2 `init`
 
 ```python
 from typing import Callable
@@ -90,7 +119,7 @@ Rules:
   accept it as `rng_key` — a keyword-only argument.  Never add extra positional
   arguments to `init`; those belong in `build_kernel` or `as_top_level_api`.
 
-### 2.3 `build_kernel`
+### 3.3 `build_kernel`
 
 ```python
 def build_kernel(
@@ -127,7 +156,7 @@ Rules:
 - Use `jax.tree.map`, not the deprecated `jax.tree_map`.
 - Use `jax.random.key()` internally; never `jax.random.PRNGKey()`.
 
-### 2.4 `as_top_level_api`
+### 3.4 `as_top_level_api`
 
 Use `build_sampling_algorithm` from `blackjax.base` — do not repeat the
 `init_fn` / `step_fn` boilerplate by hand:
@@ -171,46 +200,6 @@ If `init` needs a `rng_key` (e.g. for MCLMC-style initialization), pass
 
 ---
 
-## 3. Reusing Building Blocks
-
-Before writing new code, decompose your algorithm into its basic components and check
-whether BlackJAX already implements them. The `blackjax/mcmc/proposal.py` module contains
-the lowest-level accept/reject primitives used by every MCMC algorithm:
-
-**Symmetric proposal (Metropolis)** — when `P(x'|x) = P(x|x')`:
-
-```python
-import blackjax.mcmc.proposal as proposal
-
-# Compute the log acceptance ratio.
-new_proposal, is_diverging = proposal.safe_energy_diff(initial_energy, proposal_energy)
-# Draw from the proposal distribution.
-sampled_state, info = proposal.static_binomial_sampling(rng_key, proposal, new_proposal)
-```
-
-See `blackjax/mcmc/hmc.py` for a complete example.
-
-**Asymmetric proposal (Metropolis–Hastings)** — when the transition kernel is not symmetric:
-
-```python
-compute_acceptance_ratio = proposal.compute_asymmetric_acceptance_ratio(transition_energy)
-sampled_state, info = proposal.static_binomial_sampling(rng_key, log_p_accept, state, new_state)
-```
-
-See `blackjax/mcmc/mala.py` for a complete example.
-
-**Non-reversible slice sampling** — swap `static_binomial_sampling` for
-`nonreversible_slice_sampling` on either of the above to get Neal's non-reversible
-update. The slice variable must then be carried in the kernel state rather than
-regenerated from a PRNG key each step. `blackjax/mcmc/ghmc.py` demonstrates this:
-it is HMC with a persistent momentum and a non-reversible slice sampling step.
-
-The key principle: **find and reuse** existing building blocks before introducing new
-abstractions. Only add a new module-level function when it will be shared by at least
-two algorithms.
-
----
-
 ## 4. Adding a Variational Inference Algorithm
 
 VI modules export:
@@ -244,7 +233,30 @@ def as_top_level_api(
 
 ---
 
-## 5. Registration in `blackjax/__init__.py`
+## 5. Reusing Building Blocks
+
+Before writing new code, decompose your algorithm into its basic components and check
+whether BlackJAX already implements them. The `blackjax/mcmc/proposal.py` module contains
+the lowest-level accept/reject primitives used by every MCMC algorithm.
+
+**Decomposition Example: The Metropolis-Hastings Step**
+
+In BlackJAX, two basic components handle the accept/reject step:
+
+- **Metropolis step**: If the proposal transition kernel is symmetric ($P(x'|x) = P(x|x')$), the acceptance probability is calculated using `mcmc.proposal.safe_energy_diff`, and the proposal is accepted/rejected using `mcmc.proposal.static_binomial_sampling`. (See `mcmc.hmc.hmc_proposal`).
+- **Metropolis-Hastings step**: For asymmetric kernels, use `mcmc.proposal.compute_asymmetric_acceptance_ratio` followed by `mcmc.proposal.static_binomial_sampling`. (See `mcmc.mala.build_kernel`).
+
+**Modular Swapping**
+
+You can easily test new variants by swapping these components. For example, replace `static_binomial_sampling` with `mcmc.proposal.nonreversible_slice_sampling` to implement Neal's [non-reversible slice sampling](https://arxiv.org/abs/2001.11950). 
+
+The key principle: **find and reuse** existing building blocks before introducing new
+abstractions. Only add a new module-level function when it will be shared by at least
+two algorithms.
+
+---
+
+## 6. Registration in `blackjax/__init__.py`
 
 ### MCMC / SGMCMC / SMC
 
@@ -276,9 +288,9 @@ my_vi = GenerateVariationalAPI(
 
 ---
 
-## 6. Testing
+## 7. Testing
 
-### 5.1 File location
+### 7.1 File location
 
 Tests mirror the module structure:
 
@@ -287,7 +299,7 @@ Tests mirror the module structure:
 | `blackjax/mcmc/my_sampler.py` | `tests/mcmc/test_my_sampler.py` |
 | `blackjax/vi/my_vi.py` | `tests/vi/test_my_vi.py` |
 
-### 5.2 Base class and fixtures
+### 7.2 Base class and fixtures
 
 ```python
 from absl.testing import absltest
@@ -302,7 +314,7 @@ from tests.fixtures import BlackJAXTest, std_normal_logdensity
   seeded from today's date so tests are deterministic and don't clash.
 - Use `std_normal_logdensity` as the canonical 1-D and N-D test target.
 
-### 5.3 Required test cases
+### 7.3 Required test cases
 
 Every new algorithm needs **at minimum**:
 
@@ -359,7 +371,7 @@ accuracy regression suite:
 },
 ```
 
-### 5.4 Run tests
+### 7.4 Run tests
 
 ```bash
 mamba run -n blackjax python -m pytest tests/mcmc/test_my_sampler.py -x
@@ -368,7 +380,7 @@ mamba run -n blackjax python -m pytest tests/mcmc/test_sampling.py -x
 
 ---
 
-## 7. PR Checklist
+## 8. PR Checklist
 
 Before opening a PR, verify each item:
 
@@ -403,7 +415,7 @@ Before opening a PR, verify each item:
 
 ---
 
-## 8. Common Pitfalls (informed by real PRs)
+## 9. Common Pitfalls (informed by real PRs)
 
 ### Adaptation state leaking into sampler state
 

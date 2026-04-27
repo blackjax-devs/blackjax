@@ -14,13 +14,24 @@ kernelspec:
 # BlackJAX Design Principles
 
 This document describes the architectural principles, coding conventions, and style guidelines
-that define the "BlackJAX style". The reference implementations are
+that define the "BlackJAX style".
+
+## 1. Philosophy
+
+BlackJAX is built on a few core principles that guide its development:
+
+- **Leverage JAX's strengths**: Embrace functional programming and the composable function-transformation approach.
+- **Composable Building Blocks**: Write small, general functions and compose them to create complex methods. Reuse the same building blocks for similar algorithms.
+- **Ecosystem Compatibility**: Maintain compatibility with the broader JAX ecosystem (Flax, Optax, GPJax, etc.).
+- **Clarity and Understanding**: Write code that is easy to read, understand, and well-documented, describing the inner mechanisms of the algorithms in detail.
+
+The reference implementations are
 `trajectory.py`, `nuts.py`, `hmc.py`, `proposal.py`, and `base.py` — these files set the
 quality bar that all new contributions should meet.
 
 ---
 
-## 1. Core Architecture
+## 2. Core Architecture
 
 ### 1.1 Kernels Are Pure Functions
 
