@@ -29,8 +29,8 @@ def _weighted_avg_and_std(values, weights):
 class SMCTest(BlackJAXTest):
     @chex.variants(with_jit=True)
     def test_smc(self):
-        num_mcmc_steps = 10
-        num_particles = 1000
+        num_mcmc_steps = 20
+        num_particles = 2000
 
         same_for_all_params = dict(
             step_size=1e-2, inverse_mass_matrix=jnp.eye(1), num_integration_steps=50
@@ -64,8 +64,8 @@ class SMCTest(BlackJAXTest):
 
     @chex.variants(with_jit=True)
     def test_smc_waste_free(self):
-        p = 500
-        num_particles = 1000
+        p = 100
+        num_particles = 2000
         num_resampled = num_particles // p
         init_key, sample_key = jax.random.split(self.next_key())
 
