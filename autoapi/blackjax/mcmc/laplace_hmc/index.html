@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.laplace_dynamic_hmc" href="../laplace_dynamic_hmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g2f29be0e0" />
+  <meta name="docsearch:version" content="0.1.dev1+ga56c38cca" />
   </head>
   
   
@@ -150,6 +150,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
@@ -264,6 +265,7 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/guidelines.html">Developer Guidelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
 </ul>
 
@@ -412,6 +414,24 @@ in a standard BlackJAX three-layer sampler that carries the MAP latent variables
 warm-start hint for the L-BFGS solver at every leapfrog evaluation, so the
 optimizer needs only a handful of iterations when <code class="docutils literal notranslate"><span class="pre">phi</span></code> moves by a small amount.</p>
 <p>The proposal strategy is swappable via <code class="docutils literal notranslate"><span class="pre">build_proposal</span></code>, giving two usable variants:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Alias</p></th>
+<th class="head"><p>Proposal</p></th>
+<th class="head"><p>Notes</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">blackjax.laplace_hmc</span></code>
+<code class="docutils literal notranslate"><span class="pre">blackjax.laplace_mhmc</span></code></p></td>
+<td><p>endpoint + M-H
+full trajectory</p></td>
+<td><p>default, standard HMC
+better ESS per gradient</p></td>
+</tr>
+</tbody>
+</table>
+</div>
 <p>Typical usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sampler</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">laplace_hmc</span><span class="p">(</span>
     <span class="n">log_joint</span><span class="p">,</span> <span class="n">theta_init</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">),</span>

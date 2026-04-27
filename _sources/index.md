@@ -84,6 +84,7 @@ maxdepth: 1
 hidden:
 ---
 Quickstart <examples/quickstart.md>
+MCMC Diagnostics <examples/diagnostics.md>
 Speed-up Guide <examples/speed_up_guide.md>
 ```
 
@@ -139,5 +140,6 @@ caption: DEVELOPER DOCUMENTATION
 hidden:
 ---
 Design Principles <developer/design_principles.md>
+Developer Guidelines <developer/guidelines.md>
 Contributing a New Algorithm <developer/new_algorithm_guide.md>
 ```

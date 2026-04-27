@@ -56,7 +56,7 @@
     <link rel="prev" title="Use a logdensity function that is not compatible with JAX’s primitives" href="howto_other_frameworks.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g2f29be0e0" />
+  <meta name="docsearch:version" content="0.1.dev1+ga56c38cca" />
   </head>
   
   
@@ -151,6 +151,7 @@
     <div class="bd-toc-item navbar-nav active">
         <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagnostics.html">MCMC Diagnostics</a></li>
 <li class="toctree-l1"><a class="reference internal" href="speed_up_guide.html">Speed-up Guide</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
@@ -265,6 +266,7 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/guidelines.html">Developer Guidelines</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
 </ul>
 
@@ -617,8 +619,8 @@ $$</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.59 s, sys: 74.8 ms, total: 1.67 s
-Wall time: 802 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.46 s, sys: 81.5 ms, total: 1.54 s
+Wall time: 757 ms
 </pre></div>
 </div>
 </div>
@@ -635,13 +637,6 @@ Wall time: 802 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/arviz/__init__.py:50: FutureWarning: 
-ArviZ is undergoing a major refactor to improve flexibility and extensibility while maintaining a user-friendly interface.
-Some upcoming changes may be backward incompatible.
-For details and migration guidance, visit: https://python.arviz.org/en/latest/user_guide/migration_guide.html
-  warn(
-</pre></div>
-</div>
 <img alt="../_images/71152f92a9d1cda08b9ebcec8b40819f45c682a49a824e913443acbbc00c9f58.png" src="../_images/71152f92a9d1cda08b9ebcec8b40819f45c682a49a824e913443acbbc00c9f58.png" />
 </div>
 </div>
@@ -763,8 +758,8 @@ For details and migration guidance, visit: https://python.arviz.org/en/latest/us
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 1.04 s, sys: 14.2 ms, total: 1.06 s
-Wall time: 473 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 962 ms, sys: 21 ms, total: 983 ms
+Wall time: 441 ms
 </pre></div>
 </div>
 </div>
