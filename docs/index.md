@@ -140,6 +140,5 @@ caption: DEVELOPER DOCUMENTATION
 hidden:
 ---
 Design Principles <developer/design_principles.md>
-Developer Guidelines <developer/guidelines.md>
 Contributing a New Algorithm <developer/new_algorithm_guide.md>
 ```

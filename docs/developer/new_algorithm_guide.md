@@ -248,7 +248,7 @@ In BlackJAX, two basic components handle the accept/reject step:
 
 **Modular Swapping**
 
-You can easily test new variants by swapping these components. For example, replace `static_binomial_sampling` with `mcmc.proposal.nonreversible_slice_sampling` to implement Neal's [non-reversible slice sampling](https://arxiv.org/abs/2001.11950). 
+You can easily test new variants by swapping these components. For example, replace `static_binomial_sampling` with `mcmc.proposal.nonreversible_slice_sampling` to implement Neal's [non-reversible slice sampling](https://arxiv.org/abs/2001.11950).
 
 The key principle: **find and reuse** existing building blocks before introducing new
 abstractions. Only add a new module-level function when it will be shared by at least
