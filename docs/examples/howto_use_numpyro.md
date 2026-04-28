@@ -9,6 +9,8 @@ kernelspec:
   display_name: Python 3 (ipykernel)
   language: python
   name: python3
+execution:
+  allow_errors: true
 ---
 
 # Use with Numpyro models
@@ -16,14 +18,14 @@ kernelspec:
 Blackjax accepts any log-probability function as long as it is compatible with JAX's primitive. In this notebook we show how we can use Numpyro as a modeling language together with Blackjax as an inference library.
 
 
-``` {admonition} Before you start
+```{admonition} Before you start
 You will need [Numpyro](https://github.com/pyro-ppl/numpyro) to run this example. Please follow the installation instructions on Numpyro's repository.
 ```
 
 We reproduce the Eight Schools example from the [Numpyro documentation](https://github.com/pyro-ppl/numpyro) (all credit for the model goes to the Numpyro team).
 
-```{code-cell} ipython3
-:tags: [hide-cell]
+```{code-cell}
+:tags: [hide-input]
 
 import numpy as np
 
@@ -33,7 +35,7 @@ y = np.array([28.0, 8.0, -3.0, 7.0, -1.0, 1.0, 18.0, 12.0])
 sigma = np.array([15.0, 10.0, 16.0, 11.0, 9.0, 11.0, 10.0, 18.0])
 ```
 
-```{code-cell} ipython3
+```{code-cell}
 :tags: [remove-output]
 
 import jax
@@ -44,7 +46,7 @@ rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
 
 We implement the non-centered version of the hierarchical model:
 
-```{code-cell} ipython3
+```{code-cell}
 :tags: [remove-output]
 
 import numpyro
@@ -72,7 +74,7 @@ The model applies a transformation to the `theta` variable. As a result, the sam
 
 We need to translate the model into a log-probability function that will be used by Blackjax to perform inference. For that we use the `initialize_model` function in Numpyro's internals. We will also use the initial position it returns to initialize the inference:
 
-```{code-cell} ipython3
+```{code-cell}
 from numpyro.infer.util import initialize_model
 
 rng_key, init_key = jax.random.split(rng_key)
@@ -86,14 +88,14 @@ init_params, potential_fn_gen, *_ = initialize_model(
 
 Numpyro return a potential function, which is easily transformed back into a logdensity function that is required by Blackjax:
 
-```{code-cell} ipython3
+```{code-cell}
 logdensity_fn = lambda position: -potential_fn_gen(J, sigma, y)(position)
 initial_position = init_params.z
 ```
 
 We can now run the window adaptation for the NUTS sampler:
 
-```{code-cell} ipython3
+```{code-cell}
 import blackjax
 
 num_warmup = 2000
@@ -108,8 +110,8 @@ kernel = blackjax.nuts(logdensity_fn, **parameters).step
 
 Let us now perform inference with the tuned kernel:
 
-```{code-cell} ipython3
-:tags: [hide-cell]
+```{code-cell}
+:tags: [hide-input]
 
 def inference_loop(rng_key, kernel, initial_state, num_samples):
     @jax.jit
@@ -127,7 +129,7 @@ def inference_loop(rng_key, kernel, initial_state, num_samples):
     )
 ```
 
-```{code-cell} ipython3
+```{code-cell}
 num_sample = 1000
 rng_key, sample_key = jax.random.split(rng_key)
 states, infos = inference_loop(sample_key, kernel, last_state, num_sample)
@@ -136,8 +138,8 @@ _ = states.position["mu"].block_until_ready()
 
 To make sure that the model sampled correctly, let's compute the average acceptance rate and the number of divergences:
 
-```{code-cell} ipython3
-:tags: [hide-cell]
+```{code-cell}
+:tags: [hide-input]
 
 acceptance_rate = np.mean(infos[0])
 num_divergent = np.mean(infos[1])
@@ -148,23 +150,23 @@ print(f"There were {100*num_divergent:.2f}% divergent transitions")
 
 Finally let us now plot the distribution of the parameters. Note that since we use a transformed variable, Numpyro does not output the school treatment effect directly:
 
-```{code-cell} ipython3
+```{code-cell}
 import matplotlib.pyplot as plt
 import arviz as az
 
 idata = az.from_dict(posterior={k: v[None, ...] for k, v in states.position.items()})
 ```
 
-```{code-cell} ipython3
+```{code-cell}
 az.plot_posterior(idata, var_names=["mu", "tau"]);
 ```
 
-```{code-cell} ipython3
+```{code-cell}
 az.plot_trace(idata, var_names=["theta_base"], compact=False)
 plt.tight_layout();
 ```
 
-```{code-cell} ipython3
+```{code-cell}
 :tags: [hide-input]
 
 for i in range(J):
