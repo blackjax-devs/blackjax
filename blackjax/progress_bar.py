@@ -42,6 +42,7 @@ def progress_bar_scan(num_samples, print_rate=None):
 
     def _update_bar(arg, chain_id):
         import warnings
+
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", DeprecationWarning)
             try:
