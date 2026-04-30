@@ -41,13 +41,17 @@ def progress_bar_scan(num_samples, print_rate=None):
         return idx
 
     def _update_bar(arg, chain_id):
-        try:
-            from fastprogress.fastprogress import progress_bar
-        except ImportError as e:
-            raise ImportError(
-                "fastprogress is required to use progress bars. "
-                "Install it with: pip install fastprogress"
-            ) from e
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            try:
+                from fastprogress.fastprogress import progress_bar
+            except ImportError as e:
+                raise ImportError(
+                    "fastprogress is required to use progress bars. "
+                    "Install it with: pip install fastprogress"
+                ) from e
         chain_id = int(chain_id)
         if arg == 0:
             chain_id = _calc_chain_idx(arg)
