@@ -250,3 +250,143 @@ print("Posterior E[π]:", pi_samples.mean(0).round(2), "  true:", true_pi)
 accept = float(infos.acceptance_rate.mean())
 print(f"Mean acceptance rate: {accept:.2f}")
 ```
+
+## Alternative: NumPyro model syntax
+
+The pure Funsor approach above requires writing the factor graph explicitly. If
+you already use NumPyro, you can write the model in the familiar `numpyro.sample`
+/ `numpyro.plate` style and let Funsor handle the discrete marginalisation
+transparently via the `@config_enumerate` decorator.
+
+Under the hood, `initialize_model` detects the decorated discrete sites and
+wires in Funsor's variable elimination automatically. The continuous parameters
+are reparameterised (e.g. `π` via a stick-breaking transform onto the simplex),
+and the returned `potential_fn` is fully JAX-differentiable — no changes to the
+BlackJax call site are required.
+
+```{admonition} Before you start
+You will need [NumPyro](https://github.com/pyro-ppl/numpyro) in addition to
+Funsor:
+
+    pip install numpyro "funsor>=0.4.7"
+```
+
+```{code-cell} ipython3
+:tags: [remove-output]
+
+import numpyro
+import numpyro.distributions as dist
+from numpyro.contrib.funsor import config_enumerate
+from numpyro.infer.util import initialize_model
+```
+
+The model is written identically to a standard NumPyro model. The only
+addition is `@config_enumerate`, which marks the discrete site `z` for
+enumeration. Priors and the likelihood are expressed with NumPyro distributions;
+no manual log-prob arithmetic is needed.
+
+```{code-cell} ipython3
+@config_enumerate
+def gmm_model_npy(data, K):
+    # Continuous parameters — sampled by BlackJax NUTS
+    pi = numpyro.sample("pi", dist.Dirichlet(jnp.ones(K)))
+    with numpyro.plate("components", K):
+        mu = numpyro.sample("mu", dist.Normal(0.0, 5.0))
+
+    # Discrete assignment — Funsor marginalises this out
+    with numpyro.plate("obs", len(data)):
+        z = numpyro.sample("z", dist.Categorical(pi))
+        numpyro.sample("x", dist.Normal(mu[z], 1.0), obs=data)
+```
+
+`initialize_model` returns an initial position containing only the continuous
+variables (in unconstrained space) and a `potential_fn_gen` that already wraps
+the Funsor enumeration — the same pattern used in the plain NumPyro tutorial.
+
+```{code-cell} ipython3
+rng_key, init_key_npy = jax.random.split(rng_key)
+
+init_params_npy, potential_fn_gen_npy, *_ = initialize_model(
+    init_key_npy,
+    gmm_model_npy,
+    model_args=(data, K),
+    dynamic_args=True,
+)
+initial_position_npy = init_params_npy.z
+print("Sites and shapes:", {k: v.shape for k, v in initial_position_npy.items()})
+```
+
+```{note}
+`pi` has shape `(K-1,)` here because NumPyro automatically applies a
+stick-breaking transform, mapping the (K-1)-dimensional unconstrained space
+bijectively onto the K-simplex.
+```
+
+```{code-cell} ipython3
+logdensity_fn_npy = lambda position: -potential_fn_gen_npy(data, K)(position)
+
+print("log p(data | init):", logdensity_fn_npy(initial_position_npy))
+print("grad w.r.t. mu    :", jax.grad(logdensity_fn_npy)(initial_position_npy)["mu"])
+```
+
+Window adaptation and the inference loop are identical to before.
+
+```{code-cell} ipython3
+%%time
+
+rng_key, warmup_key_npy = jax.random.split(rng_key)
+
+adapt_npy = blackjax.window_adaptation(blackjax.nuts, logdensity_fn_npy)
+(last_state_npy, params_npy), _ = adapt_npy.run(
+    warmup_key_npy, initial_position_npy, num_steps=1000
+)
+kernel_npy = blackjax.nuts(logdensity_fn_npy, **params_npy).step
+```
+
+```{code-cell} ipython3
+%%time
+
+rng_key, sample_key_npy = jax.random.split(rng_key)
+states_npy, infos_npy = inference_loop(
+    sample_key_npy, kernel_npy, last_state_npy, num_samples=1000
+)
+```
+
+To recover `π` on the simplex, apply the stick-breaking transform to the
+unconstrained samples.
+
+```{code-cell} ipython3
+from numpyro.distributions.transforms import StickBreakingTransform
+
+mu_samples_npy = states_npy.position["mu"]
+pi_samples_npy = jax.vmap(StickBreakingTransform())(states_npy.position["pi"])
+
+fig, axes = plt.subplots(2, K, figsize=(9, 4), sharey="row")
+for k in range(K):
+    axes[0, k].hist(np.array(mu_samples_npy[:, k]), bins=40, density=True)
+    axes[0, k].axvline(true_mu[k], color="red", linestyle="--", label="true")
+    axes[0, k].set_title(f"μ[{k}]")
+    axes[1, k].hist(np.array(pi_samples_npy[:, k]), bins=40, density=True)
+    axes[1, k].axvline(true_pi[k], color="red", linestyle="--", label="true")
+    axes[1, k].set_title(f"π[{k}]")
+axes[0, 0].legend()
+plt.tight_layout();
+```
+
+```{code-cell} ipython3
+:tags: [hide-input]
+
+print("Posterior E[μ]:", mu_samples_npy.mean(0).round(2), "  true:", true_mu)
+print("Posterior E[π]:", pi_samples_npy.mean(0).round(2), "  true:", true_pi)
+print(f"Mean acceptance rate: {float(infos_npy.acceptance_rate.mean()):.2f}")
+```
+
+## Which approach to use
+
+| | Pure Funsor | NumPyro + Funsor |
+|---|---|---|
+| Model syntax | Explicit named-tensor algebra | `numpyro.sample` / `numpyro.plate` |
+| Priors and transforms | Manual | Automatic |
+| Discrete marginalisation | `reduce(logaddexp, "z")` | `@config_enumerate` + `initialize_model` |
+| Requires NumPyro | No | Yes |
+| Best for | Understanding Funsor internals | Production models, complex plate structure |
