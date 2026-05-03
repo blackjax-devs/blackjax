@@ -45,7 +45,6 @@ example:
 ```{code-cell} ipython3
 :tags: [remove-output]
 
-import math
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -59,6 +58,7 @@ funsor.set_backend("jax")          # must be called before Tensor/Variable are u
 from funsor.domains import Bint
 from funsor.tensor import Tensor
 from funsor.terms import Variable
+from funsor.jax.distributions import Categorical, Normal
 
 from datetime import date
 rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
@@ -107,6 +107,11 @@ do all the work:
   over `{0, …, K-1}`.
 - `f(k=z)` — substitution: renames the `"k"` axis to `"z"`, transferring the
   name so that expressions over different named axes broadcast correctly.
+- `Normal(loc=..., scale=..., value=x)` / `Categorical(probs=..., value=z)` —
+  distribution objects from `funsor.jax.distributions` that accept a Funsor as
+  `value` and return the log-probability as a Funsor over that variable's named
+  dimensions. Distinct named dimensions in `loc` and `value` broadcast as an
+  outer product automatically.
 
 The mixing weights `π` live on the K-simplex. Rather than sampling all K
 components of `log_pi` (which leaves a constant-shift null direction that
@@ -115,54 +120,45 @@ K−1 free parameters. The map `ℝ^{K-1} → Δ^{K-1}` is bijective, so no
 Jacobian correction is needed.
 
 ```{code-cell} ipython3
-LOG_2PI = math.log(2.0 * math.pi)   # Python float — treated as a Funsor Number
-
 def gmm_logdensity(position):
     mu     = position["mu"]          # (K,)   component means
     log_pi = position["log_pi"]      # (K-1,) unconstrained free logits
     # Prepend a fixed zero so softmax maps K-1 reals bijectively onto Δ^{K-1}.
     pi = jax.nn.softmax(jnp.concatenate([jnp.zeros(1), log_pi]))   # (K,)
 
-    # ── μ prior: μ_k ~ Normal(0, 5) ─────────────────────────────────────────
-    log_mu_prior = jnp.sum(-0.5 * (mu / 5.0) ** 2 - math.log(5.0) - 0.5 * LOG_2PI)
-
-    # ── Wrap JAX arrays as named Funsor tensors ──────────────────────────────
+    # ── Named Funsor tensors ─────────────────────────────────────────────────
     # Tensor(arr, inputs): arr is indexed by the dimensions named in inputs.
+    # pi_f has no named dim: Categorical indexes it internally via value=z.
     mu_f = Tensor(mu,   {"k": Bint[K]})   # mu_f[k]  for k ∈ {0, …, K-1}
-    pi_f = Tensor(pi,   {"k": Bint[K]})   # pi_f[k]
+    pi_f = Tensor(pi,   {})               # (K,) simplex, no named dim
     x_f  = Tensor(data, {"n": Bint[N]})   # x_f[n]   for n ∈ {0, …, N-1}
 
     # ── Discrete variable: component assignment ──────────────────────────────
     z = Variable("z", Bint[K])
 
-    # ── log p(z | π): Funsor with named dim "z" ─────────────────────────────
-    # pi_f(k=z) substitutes k→z, renaming the axis.
-    # .log() applies element-wise: log π[z].
-    log_cat_prior = pi_f(k=z).log()       # inputs: {"z": Bint[K]}
+    # ── log p(z | π) — Categorical, Funsor over {"z"} ───────────────────────
+    log_cat_prior = Categorical(probs=pi_f, value=z)              # inputs: {"z": Bint[K]}
 
-    # ── log p(x_n | z): Funsor over {"z", "n"} ──────────────────────────────
-    # mu_f(k=z) has inputs {"z": Bint[K]}.
-    # x_f       has inputs {"n": Bint[N]}.
-    # Their difference creates an outer product automatically:
-    #   inputs {"z": Bint[K], "n": Bint[N]}, underlying shape (K, N).
-    mu_z   = mu_f(k=z)
-    sq_err = (x_f - mu_z) ** 2           # inputs: {"z": Bint[K], "n": Bint[N]}
-    log_lik = -0.5 * sq_err - 0.5 * LOG_2PI   # Normal(μ[z], σ=1) log-prob at x[n]
-
-    # ── Joint log p(x_n, z): broadcast log_cat_prior over "n" ───────────────
-    log_joint = log_cat_prior + log_lik   # inputs: {"z": Bint[K], "n": Bint[N]}
+    # ── log p(x_n | z) — Normal likelihood, Funsor over {"z", "n"} ──────────
+    # mu_f(k=z) substitutes k→z: Funsor over {"z": Bint[K]}.
+    # Normal's loc depends on "z" and value depends on "n", so the result
+    # spans both dimensions automatically as an outer product.
+    mu_z    = mu_f(k=z)
+    log_lik = Normal(loc=mu_z, scale=1.0, value=x_f)             # inputs: {"z": Bint[K], "n": Bint[N]}
 
     # ── Exact marginalisation of z ───────────────────────────────────────────
     # reduce(logaddexp, "z") computes log Σ_z exp(log_joint) for every n.
-    # This is exact variable elimination: Funsor evaluates all K states and
-    # combines them with logsumexp entirely inside JAX — no sampling, no
-    # approximation, and the result is differentiable w.r.t. mu and pi.
-    log_marginal_n = log_joint.reduce(ops.logaddexp, "z")  # inputs: {"n": Bint[N]}
+    # Funsor evaluates all K states and combines with logsumexp inside JAX —
+    # the result is fully differentiable w.r.t. mu and pi.
+    log_joint      = log_cat_prior + log_lik                      # inputs: {"z": Bint[K], "n": Bint[N]}
+    log_marginal_n = log_joint.reduce(ops.logaddexp, "z")         # inputs: {"n": Bint[N]}
 
-    # ── Sum over observations + μ prior ─────────────────────────────────────
-    log_p = log_marginal_n.reduce(ops.add, "n")            # scalar Funsor, inputs: {}
+    # ── μ prior: μ_k ~ Normal(0, 5), summed over K components ───────────────
+    log_mu_prior = Normal(loc=0., scale=5., value=mu_f).reduce(ops.add, "k")
 
-    return log_p.data + log_mu_prior
+    # ── Total log-density ────────────────────────────────────────────────────
+    log_p = log_marginal_n.reduce(ops.add, "n")                   # scalar Funsor, inputs: {}
+    return log_p.data + log_mu_prior.data
 ```
 
 Let us verify that the log-density is finite at a sensible initialisation and
