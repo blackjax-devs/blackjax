@@ -37,7 +37,7 @@ Funsor; BlackJax NUTS then samples the continuous parameters `μ` and `π`.
 You will need [Funsor](https://github.com/pyro-ppl/funsor) to run this
 example:
 
-    pip install funsor
+    pip install "funsor>=0.4.7"
 ```
 
 ## Setup and data
@@ -108,13 +108,23 @@ do all the work:
 - `f(k=z)` — substitution: renames the `"k"` axis to `"z"`, transferring the
   name so that expressions over different named axes broadcast correctly.
 
+The mixing weights `π` live on the K-simplex. Rather than sampling all K
+components of `log_pi` (which leaves a constant-shift null direction that
+confuses the mass matrix), we fix the first logit to zero and sample only
+K−1 free parameters. The map `ℝ^{K-1} → Δ^{K-1}` is bijective, so no
+Jacobian correction is needed.
+
 ```{code-cell} ipython3
 LOG_2PI = math.log(2.0 * math.pi)   # Python float — treated as a Funsor Number
 
 def gmm_logdensity(position):
-    mu     = position["mu"]          # (K,)  component means
-    log_pi = position["log_pi"]      # (K,)  unconstrained; softmax gives the simplex
-    pi     = jax.nn.softmax(log_pi)  # (K,)  mixing weights — plain JAX, not yet Funsor
+    mu     = position["mu"]          # (K,)   component means
+    log_pi = position["log_pi"]      # (K-1,) unconstrained free logits
+    # Prepend a fixed zero so softmax maps K-1 reals bijectively onto Δ^{K-1}.
+    pi = jax.nn.softmax(jnp.concatenate([jnp.zeros(1), log_pi]))   # (K,)
+
+    # ── μ prior: μ_k ~ Normal(0, 5) ─────────────────────────────────────────
+    log_mu_prior = jnp.sum(-0.5 * (mu / 5.0) ** 2 - math.log(5.0) - 0.5 * LOG_2PI)
 
     # ── Wrap JAX arrays as named Funsor tensors ──────────────────────────────
     # Tensor(arr, inputs): arr is indexed by the dimensions named in inputs.
@@ -128,7 +138,7 @@ def gmm_logdensity(position):
     # ── log p(z | π): Funsor with named dim "z" ─────────────────────────────
     # pi_f(k=z) substitutes k→z, renaming the axis.
     # .log() applies element-wise: log π[z].
-    log_prior = pi_f(k=z).log()           # inputs: {"z": Bint[K]}
+    log_cat_prior = pi_f(k=z).log()       # inputs: {"z": Bint[K]}
 
     # ── log p(x_n | z): Funsor over {"z", "n"} ──────────────────────────────
     # mu_f(k=z) has inputs {"z": Bint[K]}.
@@ -139,8 +149,8 @@ def gmm_logdensity(position):
     sq_err = (x_f - mu_z) ** 2           # inputs: {"z": Bint[K], "n": Bint[N]}
     log_lik = -0.5 * sq_err - 0.5 * LOG_2PI   # Normal(μ[z], σ=1) log-prob at x[n]
 
-    # ── Joint log p(x_n, z): broadcast log_prior over "n" ───────────────────
-    log_joint = log_prior + log_lik       # inputs: {"z": Bint[K], "n": Bint[N]}
+    # ── Joint log p(x_n, z): broadcast log_cat_prior over "n" ───────────────
+    log_joint = log_cat_prior + log_lik   # inputs: {"z": Bint[K], "n": Bint[N]}
 
     # ── Exact marginalisation of z ───────────────────────────────────────────
     # reduce(logaddexp, "z") computes log Σ_z exp(log_joint) for every n.
@@ -149,10 +159,10 @@ def gmm_logdensity(position):
     # approximation, and the result is differentiable w.r.t. mu and pi.
     log_marginal_n = log_joint.reduce(ops.logaddexp, "z")  # inputs: {"n": Bint[N]}
 
-    # ── Sum over observations ────────────────────────────────────────────────
+    # ── Sum over observations + μ prior ─────────────────────────────────────
     log_p = log_marginal_n.reduce(ops.add, "n")            # scalar Funsor, inputs: {}
 
-    return log_p.data    # unwrap to a JAX scalar
+    return log_p.data + log_mu_prior
 ```
 
 Let us verify that the log-density is finite at a sensible initialisation and
@@ -161,7 +171,7 @@ that `jax.grad` can differentiate through the Funsor marginalisation:
 ```{code-cell} ipython3
 position0 = {
     "mu":     jnp.array([-3., 0., 3.]),
-    "log_pi": jnp.zeros(K),
+    "log_pi": jnp.zeros(K - 1),   # K-1 free logits; first logit fixed at 0
 }
 print("log p(data | init):", gmm_logdensity(position0))
 print("grad w.r.t. mu    :", jax.grad(gmm_logdensity)(position0)["mu"])
@@ -208,11 +218,20 @@ states, infos = inference_loop(sample_key, kernel, last_state, num_samples=1000)
 
 ## Results
 
+```{note}
+GMMs are invariant to permutation of component labels. NUTS converges to one
+of the K! symmetric modes; the component indices carry no absolute meaning
+across runs with different random seeds.
+```
+
 ```{code-cell} ipython3
 import arviz as az
 
-mu_samples  = states.position["mu"]
-pi_samples  = jax.vmap(jax.nn.softmax)(states.position["log_pi"])
+mu_samples = states.position["mu"]
+# Reconstruct full K-simplex from K-1 free logits.
+pi_samples = jax.vmap(
+    lambda lp: jax.nn.softmax(jnp.concatenate([jnp.zeros(1), lp]))
+)(states.position["log_pi"])
 
 idata = az.from_dict({"posterior": {
     "mu": mu_samples[None, ...],    # shape (1, 1000, K)
