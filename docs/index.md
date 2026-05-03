@@ -96,6 +96,7 @@ hidden:
 ---
 PyTensor<examples/howto_use_pytensor.md>
 Numpyro<examples/howto_use_numpyro.md>
+Funsor<examples/howto_use_funsor.md>
 Oryx<examples/howto_use_oryx.md>
 PyMC<examples/howto_use_pymc.md>
 Tensorflow-Probability<examples/howto_use_tfp.md>
