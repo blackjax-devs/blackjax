@@ -1,6 +1,7 @@
 -e ./
 arviz
 flax
+funsor
 ipython
 jax>=0.4.25
 jaxlib>=0.4.25
