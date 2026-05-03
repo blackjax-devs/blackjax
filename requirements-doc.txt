@@ -1,9 +1,10 @@
 -e ./
 arviz
 flax
+funsor>=0.4.7
 ipython
-jax>=0.4.25
-jaxlib>=0.4.25
+jax>=0.9.0
+jaxlib>=0.9.0
 jupytext
 myst_nb>=1.0.0
 numba
