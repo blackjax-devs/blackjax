@@ -214,11 +214,11 @@ import arviz as az
 mu_samples  = states.position["mu"]
 pi_samples  = jax.vmap(jax.nn.softmax)(states.position["log_pi"])
 
-idata = az.from_dict(posterior={
+idata = az.from_dict({"posterior": {
     "mu": mu_samples[None, ...],    # shape (1, 1000, K)
     "pi": pi_samples[None, ...],
-})
-az.plot_posterior(idata, var_names=["mu", "pi"]);
+}})
+az.plot_dist(idata, var_names=["mu", "pi"]);
 ```
 
 ```{code-cell} ipython3
@@ -227,6 +227,6 @@ az.plot_posterior(idata, var_names=["mu", "pi"]);
 print("Posterior E[μ]:", mu_samples.mean(0).round(2), "  true:", true_mu)
 print("Posterior E[π]:", pi_samples.mean(0).round(2), "  true:", true_pi)
 
-accept = float(infos[1].acceptance_rate.mean())
+accept = float(infos.acceptance_rate.mean())
 print(f"Mean acceptance rate: {accept:.2f}")
 ```
