@@ -1,0 +1,53 @@
+Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/nbclient/client.py", line 1323, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+import arviz as az
+
+mu_samples = states.position["mu"]
+# Reconstruct full K-simplex from K-1 free logits.
+pi_samples = jax.vmap(
+    lambda lp: jax.nn.softmax(jnp.concatenate([jnp.zeros(1), lp]))
+)(states.position["log_pi"])
+
+idata = az.from_dict({"posterior": {
+    "mu": mu_samples[None, ...],    # shape (1, 1000, K)
+    "pi": pi_samples[None, ...],
+}})
+az.plot_dist(idata, var_names=["mu", "pi"]);
+------------------
+
+
+[31m---------------------------------------------------------------------------[39m
+[31mTypeError[39m                                 Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[9][39m[32m, line 13[39m
+[32m      9[39m idata = az.from_dict({"posterior": {
+[32m     10[39m     [33m"mu"[39m: mu_samples[[38;5;28;01mNone[39;00m, ...],    [38;5;66;03m# shape (1, 1000, K)[39;00m
+[32m     11[39m     [33m"pi"[39m: pi_samples[[38;5;28;01mNone[39;00m, ...],
+[32m     12[39m }})
+[32m---> [39m[32m13[39m az.plot_dist(idata, var_names=[[33m"mu"[39m, [33m"pi"[39m]);
+
+[36mFile [39m[32m/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/arviz/plots/distplot.py:232[39m, in [36mplot_dist[39m[34m(values, values2, color, kind, cumulative, label, rotated, rug, bw, quantiles, contour, fill_last, figsize, textsize, plot_kwargs, fill_kwargs, rug_kwargs, contour_kwargs, contourf_kwargs, pcolormesh_kwargs, hist_kwargs, is_circular, ax, backend, backend_kwargs, show, **kwargs)[39m
+[32m    229[39m backend = backend.lower()
+[32m    231[39m plot = get_plotting_function([33m"[39m[33mplot_dist[39m[33m"[39m, [33m"[39m[33mdistplot[39m[33m"[39m, backend)
+[32m--> [39m[32m232[39m ax = [30;43mplot[39;49m[30;43m([39;49m[30;43m*[39;49m[30;43m*[39;49m[30;43mdist_plot_args[39;49m[30;43m)[39;49m
+[32m    233[39m [38;5;28;01mreturn[39;00m ax
+
+[31mTypeError[39m: plot_dist() got an unexpected keyword argument 'var_names'
+

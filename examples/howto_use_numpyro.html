@@ -51,11 +51,11 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/howto_use_numpyro';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Use with Oryx models" href="howto_use_oryx.html" />
+    <link rel="next" title="Use with Funsor" href="howto_use_funsor.html" />
     <link rel="prev" title="Use with PyTensor models" href="howto_use_pytensor.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ge7dd7a954" />
+  <meta name="docsearch:version" content="0.1.dev1+g5808886d5" />
   </head>
   
   
@@ -157,6 +157,7 @@
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="howto_use_pytensor.html">PyTensor</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_funsor.html">Funsor</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_use_oryx.html">Oryx</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_use_pymc.html">PyMC</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_use_tfp.html">Tensorflow-Probability</a></li>
@@ -539,6 +540,12 @@
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>\Average acceptance rate: 0.89
+There were 0.00% divergent transitions
+</pre></div>
+</div>
+</div>
 </details>
 </div>
 <p>Finally let us now plot the distribution of the parameters. Note that since we use a transformed variable, Numpyro does not output the school treatment effect directly:</p>
@@ -558,6 +565,9 @@
 </pre></div>
 </div>
 </div>
+<div class="cell_output docutils container">
+<img alt="../_images/df6ec0682cbee879b86e8e0ee6b65f7674a91de9be5badb872e2a53b8a925577.png" src="../_images/df6ec0682cbee879b86e8e0ee6b65f7674a91de9be5badb872e2a53b8a925577.png" />
+</div>
 </div>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -565,6 +575,9 @@
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">();</span>
 </pre></div>
 </div>
+</div>
+<div class="cell_output docutils container">
+<img alt="../_images/b473e4dff935be39efea4b4c63698936f1d9c91c9327f1ee3ea29da49b23b3ef.png" src="../_images/b473e4dff935be39efea4b4c63698936f1d9c91c9327f1ee3ea29da49b23b3ef.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -582,6 +595,18 @@
 </div>
 </div>
 </details>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Relative treatment effect for school 0: 0.40
+Relative treatment effect for school 1: -0.15
+Relative treatment effect for school 2: -0.26
+Relative treatment effect for school 3: -0.21
+Relative treatment effect for school 4: 0.17
+Relative treatment effect for school 5: 0.35
+Relative treatment effect for school 6: 0.12
+Relative treatment effect for school 7: -0.16
+</pre></div>
+</div>
+</div>
 </div>
 </section>
 
@@ -606,11 +631,11 @@
       </div>
     </a>
     <a class="right-next"
-       href="howto_use_oryx.html"
+       href="howto_use_funsor.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use with Oryx models</p>
+        <p class="prev-next-title">Use with Funsor</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
