@@ -225,7 +225,7 @@ across runs with different random seeds.
 ```
 
 ```{code-cell} ipython3
-import arviz as az
+import matplotlib.pyplot as plt
 
 mu_samples = states.position["mu"]
 # Reconstruct full K-simplex from K-1 free logits.
@@ -233,11 +233,16 @@ pi_samples = jax.vmap(
     lambda lp: jax.nn.softmax(jnp.concatenate([jnp.zeros(1), lp]))
 )(states.position["log_pi"])
 
-idata = az.from_dict({"posterior": {
-    "mu": mu_samples[None, ...],    # shape (1, 1000, K)
-    "pi": pi_samples[None, ...],
-}})
-az.plot_dist(idata, var_names=["mu", "pi"]);
+fig, axes = plt.subplots(2, K, figsize=(9, 4), sharey="row")
+for k in range(K):
+    axes[0, k].hist(np.array(mu_samples[:, k]), bins=40, density=True)
+    axes[0, k].axvline(true_mu[k], color="red", linestyle="--", label="true")
+    axes[0, k].set_title(f"μ[{k}]")
+    axes[1, k].hist(np.array(pi_samples[:, k]), bins=40, density=True)
+    axes[1, k].axvline(true_pi[k], color="red", linestyle="--", label="true")
+    axes[1, k].set_title(f"π[{k}]")
+axes[0, 0].legend()
+plt.tight_layout();
 ```
 
 ```{code-cell} ipython3
