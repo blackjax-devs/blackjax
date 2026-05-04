@@ -229,6 +229,12 @@ pi_samples = jax.vmap(
     lambda lp: jax.nn.softmax(jnp.concatenate([jnp.zeros(1), lp]))
 )(states.position["log_pi"])
 
+# Resolve label switching: sort components by ascending mean value so the
+# plotting order matches true_mu = [-4, 0, 4].
+sort_idx   = jnp.argsort(mu_samples, axis=1)
+mu_samples = jnp.take_along_axis(mu_samples, sort_idx, axis=1)
+pi_samples = jnp.take_along_axis(pi_samples, sort_idx, axis=1)
+
 fig, axes = plt.subplots(2, K, figsize=(9, 4), sharey="row")
 for k in range(K):
     axes[0, k].hist(np.array(mu_samples[:, k]), bins=40, density=True)
@@ -360,6 +366,10 @@ from numpyro.distributions.transforms import StickBreakingTransform
 
 mu_samples_npy = states_npy.position["mu"]
 pi_samples_npy = jax.vmap(StickBreakingTransform())(states_npy.position["pi"])
+
+sort_idx_npy   = jnp.argsort(mu_samples_npy, axis=1)
+mu_samples_npy = jnp.take_along_axis(mu_samples_npy, sort_idx_npy, axis=1)
+pi_samples_npy = jnp.take_along_axis(pi_samples_npy, sort_idx_npy, axis=1)
 
 fig, axes = plt.subplots(2, K, figsize=(9, 4), sharey="row")
 for k in range(K):
