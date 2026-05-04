@@ -71,3 +71,39 @@ exclude = [
 
 [tool.setuptools_scm]
 write_to = "blackjax/_version.py"
+
+[dependency-groups]
+dev = [
+    "chex>=0.1.83",
+    "pre-commit",
+    "pytest",
+    "pytest-benchmark",
+    "pytest-cov",
+    "pytest-xdist",
+    "setuptools-scm",
+]
+docs = [
+    "arviz",
+    "flax",
+    "funsor>=0.4.7",
+    "ipython",
+    "jupytext",
+    "myst_nb>=1.0.0",
+    "numba",
+    "numpyro",
+    "optax",
+    "oryx @ git+https://github.com/jax-ml/oryx.git",
+    "pymc",
+    "pytensor",
+    "scikit-learn",
+    "scipy",
+    "sphinx",
+    "sphinx-autoapi",
+    "sphinx-autobuild",
+    "sphinx-book-theme",
+    "sphinx-design",
+    "sphinx-math-dollar",
+    "sphinxcontrib-bibtex",
+    "tfp-nightly[jax]",
+    "versioneer",
+]
