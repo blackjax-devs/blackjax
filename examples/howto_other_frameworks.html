@@ -55,7 +55,7 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g02fd28658" />
+  <meta name="docsearch:version" content="0.1.dev1+g01e0d708e" />
   </head>
   
   
@@ -168,6 +168,7 @@
 <li class="toctree-l1"><a class="reference internal" href="howto_custom_gradients.html">Use custom gradients?</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Use non-JAX log-prob functions?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
 </ul>
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
@@ -586,8 +587,8 @@ Python (and Numba) on every call. Let’s see the overhead:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 733 ms, sys: 20 μs, total: 733 ms
-Wall time: 733 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 698 ms, sys: 0 ns, total: 698 ms
+Wall time: 698 ms
 </pre></div>
 </div>
 </div>
@@ -601,8 +602,8 @@ Wall time: 733 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11 s, sys: 738 ms, total: 11.8 s
-Wall time: 11.7 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 12 s, sys: 749 ms, total: 12.8 s
+Wall time: 12.7 s
 </pre></div>
 </div>
 </div>
