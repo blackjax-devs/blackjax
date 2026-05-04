@@ -11,32 +11,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python
-      uses: actions/setup-python@v4
       with:
-        python-version: 3.12
+        fetch-depth: 0
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: "3.12"
     - name: Build sdist and wheel
-      run: |
-        python -m pip install -U pip
-        python -m pip install build
-        python -m build
+      run: uv build
     - name: Check that the package version matches the Release name
       run: |
-        grep -Rq "^Version: ${GITHUB_REF:10}$" blackjax.egg-info/PKG-INFO
+        TAG_VERSION="${GITHUB_REF:10}"
+        TAG_VERSION="${TAG_VERSION#v}"
+        ls dist/blackjax-${TAG_VERSION}.tar.gz || (echo "Version mismatch: dist/ has $(ls dist/)" && exit 1)
     - name: Check sdist install and imports
       run: |
-        mkdir -p test-sdist
-        cd test-sdist
-        python -m venv venv-sdist
-        venv-sdist/bin/python -m pip install ../dist/blackjax-*.tar.gz
-        venv-sdist/bin/python -c "import blackjax"
+        uv venv /tmp/venv-sdist
+        uv pip install --python /tmp/venv-sdist/bin/python dist/blackjax-*.tar.gz
+        /tmp/venv-sdist/bin/python -c "import blackjax"
     - name: Check wheel install and imports
       run: |
-        mkdir -p test-wheel
-        cd test-wheel
-        python -m venv venv-wheel
-        venv-wheel/bin/python -m pip install ../dist/blackjax-*.whl
-        venv-wheel/bin/python -c "import blackjax"
+        uv venv /tmp/venv-wheel
+        uv pip install --python /tmp/venv-wheel/bin/python dist/blackjax-*.whl
+        /tmp/venv-wheel/bin/python -c "import blackjax"
     - name: Publish to PyPi
       uses: pypa/gh-action-pypi-publish@v1.13.0
       with:
@@ -48,12 +45,13 @@ jobs:
     needs: release-job
     runs-on: ubuntu-latest
     steps:
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: 3.12
+        python-version: "3.12"
     - name: Give PyPI some time to update the index
       run: sleep 240
     - name: Attempt install from PyPI
       run: |
-        pip install blackjax==${GITHUB_REF:10}
+        TAG_VERSION="${GITHUB_REF:10}"
+        uv pip install blackjax==${TAG_VERSION#v}

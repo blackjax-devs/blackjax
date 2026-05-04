@@ -1,15 +1,15 @@
-PKG_VERSION = $(shell python setup.py --version)
+PKG_VERSION = $(shell uv run python -m setuptools_scm)
 
 test:
-	JAX_PLATFORM_NAME=cpu pytest -n 4 --cov=blackjax --cov-report term --cov-report html:coverage tests
+	JAX_PLATFORM_NAME=cpu uv run pytest -n 4 --cov=blackjax --cov-report term --cov-report html:coverage tests
 
 # We launch the package release by tagging the master branch with the package's
-# new version number. The version number is read from `blackjax/__init__.py`
+# new version number. The version number is read from git via setuptools_scm.
 release:
 	git tag -a $(PKG_VERSION) -m $(PKG_VERSION)
 	git push --tag
 
 
 build-docs:
-	pip install -r requirements-doc.txt
-	PYDEVD_DISABLE_FILE_VALIDATION=1 sphinx-build -b html docs docs/_build/html
+	uv sync --group docs
+	PYDEVD_DISABLE_FILE_VALIDATION=1 uv run sphinx-build -b html docs docs/_build/html
