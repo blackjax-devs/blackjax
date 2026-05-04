@@ -87,7 +87,8 @@ The HMC kernel is easy to obtain:
 hmc_kernel = jax.jit(hmc.step)
 ```
 
-BlackJAX does not provide a default inference loop, but it easy to implement with JAX's `lax.scan`:
+BlackJAX provides `run_inference_algorithm` as a convenience wrapper, or you can
+write the loop manually with `jax.lax.scan`. The manual pattern is:
 
 ```{code-cell}
 def inference_loop(rng_key, kernel, initial_state, num_samples):

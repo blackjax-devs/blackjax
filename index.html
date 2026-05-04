@@ -54,7 +54,7 @@
     <link rel="next" title="A Quick Introduction to Blackjax" href="examples/quickstart.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb93ef5ef0" />
+  <meta name="docsearch:version" content="0.1.dev1+g02fd28658" />
   </head>
   
   
@@ -382,7 +382,18 @@
                 <ul class="visible nav section-nav flex-column">
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Welcome to Blackjax!</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#hello-world">Hello World</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#algorithm-reference">Algorithm Reference</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcmc">MCMC</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcmc-mclmc-family">MCMC — MCLMC family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcmc-laplace-preconditioned-family">MCMC — Laplace-preconditioned family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic-gradient-mcmc">Stochastic Gradient MCMC</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sequential-monte-carlo">Sequential Monte Carlo</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#variational-inference">Variational Inference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adaptation-warmup">Adaptation / Warmup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagnostics-utilities">Diagnostics &amp; Utilities</a><ul class="nav section-nav flex-column">
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -472,7 +483,381 @@ run on CPU only. <strong>If you want to use BlackJAX on GPU/TPU</strong> we reco
 <a class="reference external" href="https://github.com/google/jax#installation">these instructions</a> to install JAX
 with the relevant hardware acceleration support.</p>
 </div>
-<div class="toctree-wrapper compound">
+</section>
+<section id="algorithm-reference">
+<h1>Algorithm Reference<a class="headerlink" href="#algorithm-reference" title="Link to this heading">#</a></h1>
+<p>Every public algorithm in <code class="docutils literal notranslate"><span class="pre">blackjax</span></code> is listed below. <strong>Guide</strong> links point to
+a worked example; <strong>API</strong> links go to the generated reference. Algorithms
+marked <em>Sampling Book</em> are covered in depth at
+<a class="reference external" href="https://blackjax-devs.github.io/sampling-book">blackjax-devs.github.io/sampling-book</a>.</p>
+<section id="mcmc">
+<h2>MCMC<a class="headerlink" href="#mcmc" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">blackjax.X</span></code></p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Guide</p></th>
+<th class="head"><p>API</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">hmc</span></code></p></td>
+<td><p>Hamiltonian Monte Carlo (static trajectory)</p></td>
+<td><p><a class="reference internal" href="examples/quickstart.html"><span class="std std-doc">Quickstart</span></a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/hmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">nuts</span></code></p></td>
+<td><p>No-U-Turn Sampler (dynamic trajectory)</p></td>
+<td><p><a class="reference internal" href="examples/quickstart.html"><span class="std std-doc">Quickstart</span></a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/nuts/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dhmc</span></code> / <code class="docutils literal notranslate"><span class="pre">dynamic_hmc</span></code></p></td>
+<td><p>Dynamic HMC (alias of <code class="docutils literal notranslate"><span class="pre">nuts</span></code> trajectory logic, fixed integration)</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/dynamic_hmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mhmc</span></code> / <code class="docutils literal notranslate"><span class="pre">multinomial_hmc</span></code></p></td>
+<td><p>HMC with multinomial trajectory proposal</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/hmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dmhmc</span></code></p></td>
+<td><p>Dynamic HMC with multinomial proposal</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/dynamic_hmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rmhmc</span></code></p></td>
+<td><p>Riemannian Manifold HMC</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/rmhmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mala</span></code></p></td>
+<td><p>Metropolis-Adjusted Langevin Algorithm</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/mala/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">ghmc</span></code></p></td>
+<td><p>Generalised HMC (persistent momentum)</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/ghmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">barker</span></code></p></td>
+<td><p>Barker proposal (gradient-based MH)</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/barker/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">rmh</span></code></p></td>
+<td><p>Random-walk Metropolis-Hastings</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/random_walk/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">irmh</span></code></p></td>
+<td><p>Independent Random-walk MH</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/random_walk/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">additive_step_random_walk</span></code> / <code class="docutils literal notranslate"><span class="pre">normal_random_walk</span></code></p></td>
+<td><p>Additive-step random walk (Gaussian or custom)</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/random_walk/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mgrad_gaussian</span></code></p></td>
+<td><p>Marginal latent Gaussian sampler</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">elliptical_slice</span></code></p></td>
+<td><p>Elliptical slice sampling</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/elliptical_slice/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">orbital_hmc</span></code></p></td>
+<td><p>Periodic orbital / periodic HMC</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/periodic_orbital/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="mcmc-mclmc-family">
+<h2>MCMC — MCLMC family<a class="headerlink" href="#mcmc-mclmc-family" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">blackjax.X</span></code></p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Guide</p></th>
+<th class="head"><p>API</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">mclmc</span></code></p></td>
+<td><p>Microcanonical Langevin Monte Carlo</p></td>
+<td><p><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">Sampling Book</a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/mclmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">adjusted_mclmc</span></code></p></td>
+<td><p>Adjusted MCLMC (MH correction)</p></td>
+<td><p><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">Sampling Book</a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/adjusted_mclmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">adjusted_mclmc_dynamic</span></code></p></td>
+<td><p>Adjusted MCLMC with dynamic step-size</p></td>
+<td><p><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">Sampling Book</a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/adjusted_mclmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="mcmc-laplace-preconditioned-family">
+<h2>MCMC — Laplace-preconditioned family<a class="headerlink" href="#mcmc-laplace-preconditioned-family" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">blackjax.X</span></code></p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Guide</p></th>
+<th class="head"><p>API</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">laplace_hmc</span></code></p></td>
+<td><p>HMC with Laplace approximation preconditioning</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="#autoapi/blackjax/mcmc/laplace/index"><span class="xref myst">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">laplace_dhmc</span></code></p></td>
+<td><p>Dynamic HMC with Laplace preconditioning</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">laplace_mhmc</span></code></p></td>
+<td><p>Multinomial HMC with Laplace preconditioning</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="#autoapi/blackjax/mcmc/laplace/index"><span class="xref myst">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">laplace_dmhmc</span></code></p></td>
+<td><p>Dynamic multinomial HMC with Laplace preconditioning</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="stochastic-gradient-mcmc">
+<h2>Stochastic Gradient MCMC<a class="headerlink" href="#stochastic-gradient-mcmc" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">blackjax.X</span></code></p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Guide</p></th>
+<th class="head"><p>API</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sgld</span></code></p></td>
+<td><p>Stochastic Gradient Langevin Dynamics</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/sgmcmc/sgld/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sghmc</span></code></p></td>
+<td><p>Stochastic Gradient HMC</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/sgmcmc/sghmc/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sgnht</span></code></p></td>
+<td><p>Stochastic Gradient Nosé–Hoover Thermostat</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/sgmcmc/sgnht/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">csgld</span></code></p></td>
+<td><p>Cyclical SGLD</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/sgmcmc/csgld/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">svgd</span></code></p></td>
+<td><p>Stein Variational Gradient Descent</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/vi/svgd/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="sequential-monte-carlo">
+<h2>Sequential Monte Carlo<a class="headerlink" href="#sequential-monte-carlo" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">blackjax.X</span></code></p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Guide</p></th>
+<th class="head"><p>API</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tempered_smc</span></code></p></td>
+<td><p>Tempered (annealed) SMC</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/smc/tempered/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></p></td>
+<td><p>Adaptive tempering schedule SMC</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/smc/adaptive_tempered/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">partial_posteriors_smc</span></code></p></td>
+<td><p>SMC over a sequence of partial posteriors</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/smc/partial_posteriors_path/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">persistent_sampling_smc</span></code></p></td>
+<td><p>Persistent-particle SMC</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/smc/persistent_sampling/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">adaptive_persistent_sampling_smc</span></code></p></td>
+<td><p>Adaptive persistent-particle SMC</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/smc/adaptive_persistent_sampling/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">inner_kernel_tuning</span></code></p></td>
+<td><p>SMC with per-step inner-kernel tuning</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/smc/inner_kernel_tuning/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pretuning</span></code></p></td>
+<td><p>SMC pretuning step</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/smc/pretuning/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="variational-inference">
+<h2>Variational Inference<a class="headerlink" href="#variational-inference" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">blackjax.X</span></code></p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Guide</p></th>
+<th class="head"><p>API</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">meanfield_vi</span></code></p></td>
+<td><p>Mean-field (diagonal) ADVI</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/vi/meanfield_vi/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fullrank_vi</span></code></p></td>
+<td><p>Full-rank (dense covariance) ADVI</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/vi/fullrank_vi/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">pathfinder</span></code></p></td>
+<td><p>Pathfinder variational inference</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/vi/pathfinder/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">multipathfinder</span></code></p></td>
+<td><p>Multi-path Pathfinder</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/vi/multipathfinder/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">schrodinger_follmer</span></code></p></td>
+<td><p>Schrödinger–Föllmer sampler</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/vi/schrodinger_follmer/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="adaptation-warmup">
+<h2>Adaptation / Warmup<a class="headerlink" href="#adaptation-warmup" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">blackjax.X</span></code></p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Guide</p></th>
+<th class="head"><p>API</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">window_adaptation</span></code></p></td>
+<td><p>Dual-averaging step-size + mass-matrix warmup (HMC/NUTS)</p></td>
+<td><p><a class="reference internal" href="examples/quickstart.html"><span class="std std-doc">Quickstart</span></a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/adaptation/window_adaptation/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mclmc_find_L_and_step_size</span></code></p></td>
+<td><p>MCLMC trajectory-length + step-size tuning</p></td>
+<td><p><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">Sampling Book</a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">adjusted_mclmc_find_L_and_step_size</span></code></p></td>
+<td><p>Adjusted MCLMC tuning</p></td>
+<td><p><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">Sampling Book</a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">chees_adaptation</span></code></p></td>
+<td><p>CHEES (chain-ensemble adaptation)</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/adaptation/chees_adaptation/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">meads_adaptation</span></code></p></td>
+<td><p>MEADS (mass-matrix via ensemble)</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/adaptation/meads_adaptation/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">pathfinder_adaptation</span></code></p></td>
+<td><p>Pathfinder-based warmup</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/adaptation/pathfinder_adaptation/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">low_rank_window_adaptation</span></code></p></td>
+<td><p>Window adaptation with low-rank mass matrix</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/adaptation/low_rank_adaptation/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="diagnostics-utilities">
+<h2>Diagnostics &amp; Utilities<a class="headerlink" href="#diagnostics-utilities" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Name</p></th>
+<th class="head"><p>Description</p></th>
+<th class="head"><p>Guide</p></th>
+<th class="head"><p>API</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">blackjax.ess</span></code></p></td>
+<td><p>Effective Sample Size</p></td>
+<td><p><a class="reference internal" href="examples/diagnostics.html"><span class="std std-doc">Diagnostics Guide</span></a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/diagnostics/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">blackjax.rhat</span></code></p></td>
+<td><p>Potential Scale Reduction (R̂)</p></td>
+<td><p><a class="reference internal" href="examples/diagnostics.html"><span class="std std-doc">Diagnostics Guide</span></a></p></td>
+<td><p><a class="reference internal" href="autoapi/blackjax/diagnostics/index.html"><span class="doc std std-doc">API</span></a></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">run_inference_algorithm</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>-based inference loop utility</p></td>
+<td><p><a class="reference internal" href="examples/speed_up_guide.html"><span class="std std-doc">Speed-up Guide</span></a></p></td>
+<td><p><a class="reference internal" href="#autoapi/blackjax/util/index"><span class="xref myst">API</span></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">store_only_expectation_values</span></code></p></td>
+<td><p>Memory-efficient streaming expectations</p></td>
+<td><p>—</p></td>
+<td><p><a class="reference internal" href="#autoapi/blackjax/util/index"><span class="xref myst">API</span></a></p></td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="toctree-wrapper compound">
 </div>
@@ -484,6 +869,9 @@ with the relevant hardware acceleration support.</p>
 </div>
 <div class="toctree-wrapper compound">
 </div>
+<div class="toctree-wrapper compound">
+</div>
+</section>
 </section>
 
 
@@ -526,7 +914,18 @@ with the relevant hardware acceleration support.</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#">Welcome to Blackjax!</a></li>
 <li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#hello-world">Hello World</a></li>
-<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#algorithm-reference">Algorithm Reference</a><ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcmc">MCMC</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcmc-mclmc-family">MCMC — MCLMC family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mcmc-laplace-preconditioned-family">MCMC — Laplace-preconditioned family</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stochastic-gradient-mcmc">Stochastic Gradient MCMC</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sequential-monte-carlo">Sequential Monte Carlo</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#variational-inference">Variational Inference</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#adaptation-warmup">Adaptation / Warmup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#diagnostics-utilities">Diagnostics &amp; Utilities</a><ul class="nav section-nav flex-column">
+</ul>
+</li>
 </ul>
 </li>
 </ul>
