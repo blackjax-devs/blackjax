@@ -21,6 +21,48 @@ and on benchmarks run against other JAX-based PPLs such as NumPyro.
 
 ---
 
+## 0. Use the standard inference loop
+
+`run_inference_algorithm` is the recommended way to run a sampler. It wraps
+`jax.lax.scan` and `jax.jit` correctly, giving O(1) compile time and a single
+compiled kernel regardless of step count:
+
+```python
+import blackjax
+from blackjax.util import run_inference_algorithm
+
+nuts = blackjax.nuts(logdensity_fn, step_size, inv_mass_matrix)
+
+final_state, (states, infos) = run_inference_algorithm(
+    rng_key,
+    nuts,
+    num_steps=1_000,
+    initial_position=initial_position,
+    transform=lambda state, info: (state.position, info),
+)
+```
+
+If you need custom control flow (early stopping, per-step callbacks, adaptive
+hyperparameter updates), write the loop manually using the canonical form:
+
+```python
+@jax.jit
+def run(rng_key, initial_state, n_steps):
+    def step(state, key):
+        state, info = kernel(key, state)
+        return state, info
+
+    return jax.lax.scan(step, initial_state, jax.random.split(rng_key, n_steps))
+
+final_state, (states, infos) = run(rng_key, initial_state, 1_000)
+```
+
+Both patterns compile the kernel **once** regardless of step count. The most
+common mistake — calling `.step` in a Python `for` loop without `jax.jit` — is
+covered in §1 below.
+
+---
+
 ## 1. Always JIT the step function at the outermost scope
 
 BlackJAX kernels are plain Python callables.  Calling them without `jax.jit`
