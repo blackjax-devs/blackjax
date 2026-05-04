@@ -117,10 +117,10 @@ marked *Sampling Book* are covered in depth at
 
 | `blackjax.X` | Description | Guide | API |
 |---|---|---|---|
-| `laplace_hmc` | HMC with Laplace approximation preconditioning | — | [API](autoapi/blackjax/mcmc/laplace/index) |
-| `laplace_dhmc` | Dynamic HMC with Laplace preconditioning | — | [API](autoapi/blackjax/mcmc/laplace_dynamic_hmc/index) |
-| `laplace_mhmc` | Multinomial HMC with Laplace preconditioning | — | [API](autoapi/blackjax/mcmc/laplace/index) |
-| `laplace_dmhmc` | Dynamic multinomial HMC with Laplace preconditioning | — | [API](autoapi/blackjax/mcmc/laplace_dynamic_hmc/index) |
+| `laplace_hmc` | HMC with Laplace approximation preconditioning | [How-to](examples/howto_laplace_hmc.md) | [API](autoapi/blackjax/mcmc/laplace/index) |
+| `laplace_dhmc` | Dynamic HMC with Laplace preconditioning | [How-to](examples/howto_laplace_hmc.md) | [API](autoapi/blackjax/mcmc/laplace_dynamic_hmc/index) |
+| `laplace_mhmc` | Multinomial HMC with Laplace preconditioning | [How-to](examples/howto_laplace_hmc.md) | [API](autoapi/blackjax/mcmc/laplace/index) |
+| `laplace_dmhmc` | Dynamic multinomial HMC with Laplace preconditioning | [How-to](examples/howto_laplace_hmc.md) | [API](autoapi/blackjax/mcmc/laplace_dynamic_hmc/index) |
 
 ## Stochastic Gradient MCMC
 
@@ -209,6 +209,7 @@ Sample with multiple chains?<examples/howto_sample_multiple_chains.md>
 Use custom gradients?<examples/howto_custom_gradients.md>
 Use non-JAX log-prob functions?<examples/howto_other_frameworks.md>
 Build a Metropolis-Within-Gibbs sampler?<examples/howto_metropolis_within_gibbs.md>
+Use Laplace-preconditioned HMC?<examples/howto_laplace_hmc.md>
 Sample from the word BlackJAX using BlackJAX?<examples/howto_reproduce_the_blackjax_image.md>
 ```
 
