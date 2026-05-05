@@ -1,6 +1,7 @@
 PKG_VERSION = $(shell uv run python -m setuptools_scm)
 
 test:
+    uv sync --group dev --extra progress
 	JAX_PLATFORM_NAME=cpu uv run pytest -n auto -vv --benchmark-disable --cov=blackjax --cov-report=xml --cov-report=term tests
 
 # We launch the package release by tagging the master branch with the package's
