@@ -17,7 +17,7 @@ Thank you for interested in contributing to Blackjax! We value the following con
    ```
 2. Set up the dev environment:
    ```bash
-   uv sync --group dev
+   uv sync --group dev --extra progress
    ```
    This creates a local `.venv/` and installs all dev dependencies. No need to activate — prefix commands with `uv run`, or run `source .venv/bin/activate` once per shell session.
 
