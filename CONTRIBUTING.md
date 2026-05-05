@@ -11,10 +11,19 @@ Thank you for interested in contributing to Blackjax! We value the following con
 
 ## How to contribute?
 
-1. Run `pip install -r requirements.txt` to install all the dev
-   dependencies.
-2. Run `pre-commit run --all-files` and `make test` before pushing on the repo; CI should pass if
-   these pass locally.
+1. Install [uv](https://github.com/astral-sh/uv) if you don't have it:
+   ```bash
+   curl -LsSf https://astral.sh/uv/install.sh | sh
+   ```
+2. Set up the dev environment:
+   ```bash
+   uv sync --group dev
+   ```
+   This creates a local `.venv/` and installs all dev dependencies. No need to activate — prefix commands with `uv run`, or run `source .venv/bin/activate` once per shell session.
+
+   **GPU/CUDA users:** `uv sync` installs the CPU build of JAX by default. For GPU work, either run `uv pip install "jax[cuda12]"` afterwards, or use mamba to manage the CUDA toolkit and run `uv sync` inside that conda environment.
+
+3. Run `uv run pre-commit run --all-files` and `make test` before pushing; CI should pass if these pass locally.
 
 ## Editing documentations
 
