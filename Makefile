@@ -1,7 +1,7 @@
 PKG_VERSION = $(shell uv run python -m setuptools_scm)
 
 test:
-	JAX_PLATFORM_NAME=cpu uv run pytest -n 4 --cov=blackjax --cov-report term --cov-report html:coverage tests
+	JAX_PLATFORM_NAME=cpu uv run pytest -n auto -vv --benchmark-disable --cov=blackjax --cov-report=xml --cov-report=term tests
 
 # We launch the package release by tagging the master branch with the package's
 # new version number. The version number is read from git via setuptools_scm.
