@@ -93,7 +93,15 @@ def mclmc_find_L_and_step_size(
 
     Returns
     -------
-    A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
+    final_state
+        The final integrator state after the three tuning phases.
+    final_params
+        An ``MCLMCAdaptationState`` containing the adapted ``L``,
+        ``step_size``, and ``inverse_mass_matrix``.
+    total_num_tuning_integrator_steps
+        The total number of integrator steps consumed across all three
+        tuning phases (frac_tune1 + frac_tune2 + frac_tune3 of
+        ``num_steps``).
 
     Example
     -------
@@ -104,6 +112,7 @@ def mclmc_find_L_and_step_size(
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
+            num_tuning_steps,
         ) = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
             logdensity_fn=logdensity_fn,
