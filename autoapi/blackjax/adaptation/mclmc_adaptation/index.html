@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.mass_matrix" href="../mass_matrix/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g820718a91" />
+  <meta name="docsearch:version" content="0.1.dev1+g8a477ca8c" />
   </head>
   
   
@@ -496,8 +496,16 @@ must be <code class="docutils literal notranslate"><span class="pre">kernel(rng_
 <li><p><strong>l_factor</strong> – The factor scaling the estimated autocorrelation length to obtain momentum decoherence length L.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>A tuple containing the final state of the MCMC algorithm and the final hyperparameters.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>final_state</em> – The final integrator state after the three tuning phases.</p></li>
+<li><p><em>final_params</em> – An <code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState</span></code> containing the adapted <code class="docutils literal notranslate"><span class="pre">L</span></code>,
+<code class="docutils literal notranslate"><span class="pre">step_size</span></code>, and <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>.</p></li>
+<li><p><em>total_num_tuning_integrator_steps</em> – The total number of integrator steps consumed across all three
+tuning phases (frac_tune1 + frac_tune2 + frac_tune3 of
+<code class="docutils literal notranslate"><span class="pre">num_steps</span></code>).</p></li>
+</ul>
+</p>
 </dd>
 </dl>
 <p class="rubric">Example</p>
@@ -506,6 +514,7 @@ must be <code class="docutils literal notranslate"><span class="pre">kernel(rng_
 <span class="p">(</span>
     <span class="n">blackjax_state_after_tuning</span><span class="p">,</span>
     <span class="n">blackjax_mclmc_sampler_params</span><span class="p">,</span>
+    <span class="n">num_tuning_steps</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mclmc_find_L_and_step_size</span><span class="p">(</span>
     <span class="n">mclmc_kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span>
     <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
