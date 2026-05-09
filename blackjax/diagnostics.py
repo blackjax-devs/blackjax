@@ -21,6 +21,7 @@ from blackjax.types import Array, ArrayLike
 
 __all__ = [
     "potential_scale_reduction",
+    "nested_rhat",
     "effective_sample_size",
     "psis_weights",
 ]
@@ -77,6 +78,138 @@ def potential_scale_reduction(
         / (num_samples)
     )
     return rhat_value.squeeze()
+
+
+def nested_rhat(
+    input_array: ArrayLike,
+    superchain_axis: int = 0,
+    chain_axis: int = 1,
+    sample_axis: int = 2,
+) -> Array:
+    r"""Margossian et al. (2024)'s nested :math:`\hat{R}` for assessing MCMC
+    convergence when running many short chains.
+
+    Nested :math:`\hat{R}` generalises the potential scale reduction factor to
+    a *nested* design where chains are grouped into *superchains*.  It monitors
+    the nonstationary variance (related to warmup bias) while the persistent
+    variance shrinks with the number of chains, making it well-suited for the
+    many-short-chains regime common on GPUs.
+
+    Parameters
+    ----------
+    input_array
+        An array whose axes include a superchain dimension, a chain dimension,
+        and a sample dimension.  Any remaining axes are treated as parameter
+        dimensions and the diagnostic is computed element-wise over them.
+    superchain_axis
+        The axis indexing superchains (K).  Default 0.
+    chain_axis
+        The axis indexing chains within a superchain (M).  Default 1.
+    sample_axis
+        The axis indexing samples within a chain (N).  Default 2.
+
+    Returns
+    -------
+    Array
+        Nested :math:`\hat{R}_\nu` with the superchain, chain, and sample
+        dimensions squeezed out.
+
+    Notes
+    -----
+    Following Definition 2.2 in Margossian et al. (2024), we compute
+
+    .. math::
+
+        \hat{B}_\nu = \frac{1}{K-1}\sum_{k=1}^{K}
+            \bigl(\bar{f}^{(\cdot\cdot k)} - \bar{f}^{(\cdots)}\bigr)^2,
+
+    .. math::
+
+        \hat{W}_\nu = \frac{1}{K}\sum_{k=1}^{K}
+            \bigl(\hat{B}_k + \hat{W}_k\bigr),
+
+    where :math:`\hat{B}_k` is the between-chain variance within superchain
+    *k* (0 when *M* = 1) and :math:`\hat{W}_k` is the within-chain variance
+    (0 when *N* = 1).  Then
+
+    .. math::
+
+        \hat{R}_\nu = \sqrt{1 + \frac{\hat{B}_\nu}{\hat{W}_\nu}}.
+
+    When *M* = 1 the diagnostic reduces to the classical :math:`\hat{R}`.
+
+    References
+    ----------
+    Margossian, C. C., Hoffman, M. D., Sountsov, P., Riou-Durand, L.,
+    Vehtari, A., & Gelman, A. (2024). Nested Rhat: Assessing the convergence
+    of Markov chain Monte Carlo when running many short chains.
+    *Bayesian Analysis*.  https://arxiv.org/abs/2110.13017
+    """
+    K = input_array.shape[superchain_axis]
+    M = input_array.shape[chain_axis]
+    N = input_array.shape[sample_axis]
+
+    assert K > 1, (
+        "nested_rhat requires at least 2 superchains "
+        f"(got {K} along superchain_axis={superchain_axis})."
+    )
+    assert M > 1 or N > 1, (
+        "nested_rhat requires either M > 1 (chains per superchain) or "
+        "N > 1 (samples per chain)."
+    )
+
+    # --- means at each level ---
+    # chain mean: average over samples for each chain
+    # f_bar^(.mk) — shape keeps superchain and chain dims
+    chain_mean = jnp.mean(input_array, axis=sample_axis, keepdims=True)
+
+    # superchain mean: average chain means within each superchain
+    # f_bar^(..k) — shape keeps superchain dim
+    superchain_mean = jnp.mean(chain_mean, axis=chain_axis, keepdims=True)
+
+    # grand mean: average over superchains
+    # f_bar^(...)
+    grand_mean = jnp.mean(superchain_mean, axis=superchain_axis, keepdims=True)
+
+    # --- between-superchain variance B_hat_nu  (eq. 6) ---
+    # 1/(K-1) * sum_k (f_bar^(..k) - f_bar^(...))^2
+    B_nu = jnp.sum(
+        jnp.square(superchain_mean - grand_mean),
+        axis=superchain_axis,
+        keepdims=True,
+    ) / (K - 1)
+
+    # --- within-superchain components (per superchain k) ---
+    # B_hat_k: between-chain variance within superchain k
+    if M > 1:
+        # 1/(M-1) * sum_m (f_bar^(.mk) - f_bar^(..k))^2
+        B_k = jnp.sum(
+            jnp.square(chain_mean - superchain_mean),
+            axis=chain_axis,
+            keepdims=True,
+        ) / (M - 1)
+    else:
+        B_k = jnp.zeros_like(superchain_mean)
+
+    # W_hat_k: within-chain variance
+    if N > 1:
+        # 1/M * sum_m [ 1/(N-1) * sum_n (f^(nmk) - f_bar^(.mk))^2 ]
+        per_chain_var = jnp.sum(
+            jnp.square(input_array - chain_mean),
+            axis=sample_axis,
+            keepdims=True,
+        ) / (N - 1)
+        W_k = jnp.mean(per_chain_var, axis=chain_axis, keepdims=True)
+    else:
+        W_k = jnp.zeros_like(superchain_mean)
+
+    # W_hat_nu = 1/K * sum_k (B_hat_k + W_hat_k)   (eq. 7)
+    W_nu = jnp.mean(B_k + W_k, axis=superchain_axis, keepdims=True)
+
+    # R_hat_nu = sqrt(1 + B_hat_nu / W_hat_nu)      (eq. 8)
+    nested_rhat_value = jnp.sqrt(1.0 + B_nu / W_nu)
+
+    return nested_rhat_value.squeeze()
 
 
 def effective_sample_size(
