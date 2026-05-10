@@ -114,3 +114,8 @@ coverage
 .claude
 CLAUDE.md
 GEMINI.md
+
+# Per-user-device agent transcripts and consolidated timelines.
+# Lives at ../.agent_logs/ (parent dir, outside this repo) — these patterns
+# defend against future structural changes that move .agent_logs/ inside.
+.agent_logs/
