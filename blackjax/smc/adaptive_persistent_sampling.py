@@ -223,8 +223,12 @@ def as_top_level_api(
         The init method has signature
         (position: ArrayLikeTree) -> PersistentSMCState
         The step method has signature
-        (rng_key: PRNGKey, state: PersistentSMCState, lmbda: float | Array) ->
+        (rng_key: PRNGKey, state: PersistentSMCState) ->
         (new_state: PersistentSMCState, info: PersistentStateInfo)
+
+        Note: unlike `blackjax.smc.persistent_sampling`, the adaptive variant
+        does NOT take `lmbda` as a step argument — the next tempering value
+        is computed internally by the root solver to hit `target_ess`.
     """
 
     kernel = build_kernel(
