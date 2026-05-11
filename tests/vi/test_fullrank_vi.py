@@ -87,23 +87,28 @@ class FRVIUnitTest(BlackJAXTest):
         self.assertEqual(state.chol_params.shape, new_state.chol_params.shape)
 
     def test_elbo_decreases_over_steps(self):
-        """ELBO (KL divergence) should decrease after several optimization steps."""
+        """ELBO should decrease over Adam optimization steps (windowed-mean comparison).
+
+        We compare mean(elbos[-20:]) < mean(elbos[:20]) to reduce single-sample MC
+        noise variance (~4.5× reduction from window averaging). Direct comparison of
+        step-50 vs step-1 single-sample estimates is too flaky on low-dimensional
+        problems at standard learning rates.
+        """
         position = jnp.zeros(2)
         state = init(position, self.optimizer)
 
         def logdensity_fn(x):
             return -0.5 * jnp.sum((x - 3.0) ** 2)
 
-        initial_elbo = None
-        for i in range(50):
+        elbos = []
+        for i in range(200):
             subkey = jax.random.fold_in(self.next_key(), i)
             state, info = jax.jit(step, static_argnums=(2, 3))(
                 subkey, state, logdensity_fn, self.optimizer
             )
-            if initial_elbo is None:
-                initial_elbo = float(info.elbo)
+            elbos.append(float(info.elbo))
 
-        assert float(info.elbo) < initial_elbo
+        assert jnp.mean(jnp.array(elbos[-20:])) < jnp.mean(jnp.array(elbos[:20]))
 
     def test_sample_shape(self):
         """sample returns (num_samples, dim) shaped output."""
