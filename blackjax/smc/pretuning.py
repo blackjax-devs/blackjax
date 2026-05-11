@@ -132,7 +132,10 @@ def build_pretune(
 
         def round_to_integer_fn(x):
             for k in natural_parameters:
-                x[k] = jax.tree.map(lambda a: jnp.abs(jnp.round(a).astype(int)), x[k])
+                x[k] = jax.tree.map(
+                    lambda a: jnp.maximum(jnp.abs(jnp.round(a)).astype(int), 1),
+                    x[k],
+                )
             return x
 
     if positive_parameters is None:
