@@ -16,13 +16,14 @@
 NOTE: For best performance, we recommend using adjusted_mclmc_dynamic instead of this module, which is primarily intended for use in parallelized versions of the algorithm.
 
 """
-from typing import Callable, Union
+import warnings
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.hmc import HMCInfo, HMCState
 from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
@@ -31,30 +32,37 @@ from blackjax.util import generate_unit_vector
 __all__ = ["init", "build_kernel", "as_top_level_api"]
 
 
-def init(position: ArrayLikeTree, logdensity_fn: Callable):
+def init(position: ArrayLikeTree, logdensity_fn: Callable) -> HMCState:
+    """Create an initial state for the MHMCHMC kernel.
+
+    Parameters
+    ----------
+    position
+        Initial position of the chain.
+    logdensity_fn
+        Log-density function of the target distribution.
+
+    Returns
+    -------
+    The initial HMCState.
+    """
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return HMCState(position, logdensity, logdensity_grad)
 
 
 def build_kernel(
-    logdensity_fn: Callable,
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
-    inverse_mass_matrix=1.0,
 ):
-    """Build an MHMCHMC kernel where the number of integration steps is chosen randomly.
+    """Build an MHMCHMC kernel.
 
     Parameters
     ----------
     integrator
-        The integrator to use to integrate the Hamiltonian dynamics.
+        The symplectic integrator to use to integrate the Hamiltonian dynamics.
     divergence_threshold
-        Value of the difference in energy above which we consider that the transition is divergent.
-    next_random_arg_fn
-        Function that generates the next `random_generator_arg` from its previous value.
-    integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`. Needs to return an `int`.
+        Value of the difference in energy above which we consider that the
+        transition is divergent.
 
     Returns
     -------
@@ -66,11 +74,14 @@ def build_kernel(
     def kernel(
         rng_key: PRNGKey,
         state: HMCState,
+        logdensity_fn: Callable,
         step_size: float,
-        num_integration_steps: int,
+        integration_steps_params: tuple = (1,),
+        inverse_mass_matrix=1.0,
         L_proposal_factor: float = jnp.inf,
     ) -> tuple[HMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
+        (num_integration_steps,) = integration_steps_params
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
@@ -111,7 +122,8 @@ def as_top_level_api(
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.isokinetic_mclachlan,
-    num_integration_steps,
+    num_integration_steps=None,
+    integration_steps_params: tuple | None = None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the MHMCHMC kernel.
 
@@ -121,50 +133,67 @@ def as_top_level_api(
         The log-density function we wish to draw samples from.
     step_size
         The value to use for the step size in the symplectic integrator.
+    L_proposal_factor
+        Factor controlling partial momentum refreshment. ``jnp.inf`` disables
+        refreshment (standard HMC-like behavior).
+    inverse_mass_matrix
+        Inverse mass matrix for the isokinetic integrator. Scalar or array.
     divergence_threshold
         The absolute value of the difference in energy between two states above
-        which we say that the transition is divergent. The default value is
-        commonly found in other libraries, and yet is arbitrary.
+        which we say that the transition is divergent.
     integrator
-        (algorithm parameter) The symplectic integrator to use to integrate the trajectory.
-    next_random_arg_fn
-        Function that generates the next `random_generator_arg` from its previous value.
-    integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`.
-
+        The symplectic integrator to use to integrate the trajectory.
+    num_integration_steps
+        Number of integration steps per transition.  Deprecated in favour of
+        ``integration_steps_params=(num_integration_steps,)``.  Providing both
+        raises a :class:`DeprecationWarning` and ``integration_steps_params``
+        takes precedence.
+    integration_steps_params
+        Tuple of parameters unpacked into the kernel's ``integration_steps_params``
+        argument.  For the static kernel this must be a 1-tuple
+        ``(num_steps,)``.  Defaults to ``(num_integration_steps,)`` when only
+        ``num_integration_steps`` is provided.
 
     Returns
     -------
     A ``SamplingAlgorithm``.
     """
+    if integration_steps_params is not None and num_integration_steps is not None:
+        warnings.warn(
+            "Both `num_integration_steps` and `integration_steps_params` were "
+            "provided. `num_integration_steps` is deprecated; "
+            "`integration_steps_params` will be used.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+    if integration_steps_params is None:
+        if num_integration_steps is None:
+            raise ValueError(
+                "Either `num_integration_steps` or `integration_steps_params` "
+                "must be provided."
+            )
+        integration_steps_params = (num_integration_steps,)
 
     kernel = build_kernel(
-        logdensity_fn=logdensity_fn,
         integrator=integrator,
-        inverse_mass_matrix=inverse_mass_matrix,
         divergence_threshold=divergence_threshold,
     )
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def update_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key=rng_key,
-            state=state,
-            step_size=step_size,
-            num_integration_steps=num_integration_steps,
-            L_proposal_factor=L_proposal_factor,
-        )
-
-    return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(
+            step_size,
+            integration_steps_params,
+            inverse_mass_matrix,
+            L_proposal_factor,
+        ),
+    )
 
 
 def adjusted_mclmc_proposal(
     integrator: Callable,
-    step_size: Union[float, ArrayLikeTree],
+    step_size: float | ArrayLikeTree,
     L_proposal_factor: float,
     num_integration_steps: int = 1,
     divergence_threshold: float = 1000,
@@ -208,8 +237,15 @@ def adjusted_mclmc_proposal(
         return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
 
     def build_trajectory(state, num_integration_steps, rng_key):
+        # Derive zero from state.logdensity so it inherits the correct sharding
+        # (varying inside shard_map, plain scalar outside) without needing pcast.
+        initial_kinetic_energy = state.logdensity * 0.0
+
         return jax.lax.fori_loop(
-            0 * num_integration_steps, num_integration_steps, step, (state, 0, rng_key)
+            0 * num_integration_steps,
+            num_integration_steps,
+            step,
+            (state, initial_kinetic_energy, rng_key),
         )
 
     def generate(
@@ -240,3 +276,13 @@ def adjusted_mclmc_proposal(
         return sampled_state, info, other_proposal_info
 
     return generate
+
+
+def rescale(mu):
+    """returns s, such that
+     round(U(0, 1) * s + 0.5)
+    has expected value mu.
+    """
+    k = jnp.floor(2 * mu - 1)
+    x = k * (mu - 0.5 * (k + 1)) / (k + 1 - mu)
+    return k + x

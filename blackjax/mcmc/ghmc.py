@@ -21,7 +21,7 @@ from jax.flatten_util import ravel_pytree
 import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.proposal import nonreversible_slice_sampling
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
@@ -52,13 +52,13 @@ class GHMCState(NamedTuple):
 
 def init(
     position: ArrayLikeTree,
-    rng_key: PRNGKey,
     logdensity_fn: Callable,
+    rng_key: PRNGKey,
 ) -> GHMCState:
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
 
-    key_mometum, key_slice = jax.random.split(rng_key)
-    momentum = generate_gaussian_noise(key_mometum, position)
+    key_momentum, key_slice = jax.random.split(rng_key)
+    momentum = generate_gaussian_noise(key_momentum, position)
     slice = jax.random.uniform(key_slice, minval=-1.0, maxval=1.0)
 
     return GHMCState(position, momentum, logdensity, logdensity_grad, slice)
@@ -204,7 +204,7 @@ def as_top_level_api(
     delta: float,
     *,
     divergence_threshold: int = 1000,
-    noise_gn: Callable = lambda _: 0.0,
+    noise_fn: Callable = lambda _: 0.0,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the Generalized HMC kernel.
 
@@ -261,7 +261,7 @@ def as_top_level_api(
         The absolute value of the difference in energy between two states above
         which we say that the transition is divergent. The default value is
         commonly found in other libraries, and yet is arbitrary.
-    noise_gn
+    noise_fn
         A function that takes as input the slice variable and outputs a random
         variable used as a noise correction of the persistent slice update.
         The parameter defaults to a random variable with a single atom at 0.
@@ -271,20 +271,11 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
 
-    kernel = build_kernel(noise_gn, divergence_threshold)
-
-    def init_fn(position: ArrayLikeTree, rng_key: PRNGKey):
-        return init(position, rng_key, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            momentum_inverse_scale,
-            alpha,
-            delta,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    kernel = build_kernel(noise_fn, divergence_threshold)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(step_size, momentum_inverse_scale, alpha, delta),
+        pass_rng_key_to_init=True,
+    )

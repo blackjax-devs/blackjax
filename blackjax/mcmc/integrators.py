@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Any, Callable, NamedTuple, Tuple
+from typing import Any, Callable, NamedTuple, TypeAlias
 
 import jax
 import jax.numpy as jnp
@@ -149,11 +149,39 @@ def generalized_two_stage_integrator(
 
 
 def new_integrator_state(logdensity_fn, position, momentum):
+    """Create an IntegratorState from a position and momentum.
+
+    Parameters
+    ----------
+    logdensity_fn
+        Log-density function of the target distribution.
+    position
+        Current position in the parameter space.
+    momentum
+        Current momentum.
+
+    Returns
+    -------
+    An IntegratorState with position, momentum, logdensity, and logdensity_grad.
+    """
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
 
 def euclidean_position_update_fn(logdensity_fn: Callable):
+    """Build the position update operator for Euclidean HMC.
+
+    Parameters
+    ----------
+    logdensity_fn
+        Log-density function used to compute gradients after each position update.
+
+    Returns
+    -------
+    An ``update`` function with signature
+    ``(position, kinetic_grad, step_size, coef, auxiliary_info) ->
+    (new_position, logdensity, logdensity_grad, None)``.
+    """
     logdensity_and_grad_fn = jax.value_and_grad(logdensity_fn)
 
     def update(
@@ -164,7 +192,7 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
         auxiliary_info=None,
     ):
         del auxiliary_info
-        new_position = jax.tree_util.tree_map(
+        new_position = jax.tree.map(
             lambda x, grad: x + step_size * coef * grad,
             position,
             kinetic_grad,
@@ -176,6 +204,19 @@ def euclidean_position_update_fn(logdensity_fn: Callable):
 
 
 def euclidean_momentum_update_fn(kinetic_energy_fn: KineticEnergy):
+    """Build the momentum update operator for Euclidean HMC.
+
+    Parameters
+    ----------
+    kinetic_energy_fn
+        Kinetic energy function whose gradient gives the velocity.
+
+    Returns
+    -------
+    An ``update`` function with signature
+    ``(momentum, logdensity_grad, step_size, coef, auxiliary_info, is_last_call) ->
+    (new_momentum, kinetic_grad, None)``.
+    """
     kinetic_energy_grad_fn = jax.grad(kinetic_energy_fn)
 
     def update(
@@ -187,7 +228,7 @@ def euclidean_momentum_update_fn(kinetic_energy_fn: KineticEnergy):
         is_last_call=False,
     ):
         del auxiliary_info
-        new_momentum = jax.tree_util.tree_map(
+        new_momentum = jax.tree.map(
             lambda x, grad: x + step_size * coef * grad,
             momentum,
             logdensity_grad,
@@ -209,6 +250,15 @@ def format_euclidean_state_output(
     position_update_info,
     momentum_update_info,
 ):
+    """Format the output of a Euclidean integrator step into an IntegratorState.
+
+    Discards auxiliary integration info not needed for Euclidean dynamics.
+
+    Returns
+    -------
+    An IntegratorState with the updated position, momentum, logdensity, and
+    logdensity_grad.
+    """
     del kinetic_grad, position_update_info, momentum_update_info
     return IntegratorState(position, momentum, logdensity, logdensity_grad)
 
@@ -216,8 +266,18 @@ def format_euclidean_state_output(
 def generate_euclidean_integrator(coefficients):
     """Generate symplectic integrator for solving a Hamiltonian system.
 
-    The resulting integrator is volume-preserve and preserves the symplectic structure
-    of phase space.
+    The resulting integrator is volume-preserving and preserves the symplectic
+    structure of phase space.
+
+    Parameters
+    ----------
+    coefficients
+        Palindromic list of alternating momentum/position update coefficients.
+
+    Returns
+    -------
+    A factory function ``euclidean_integrator(logdensity_fn, kinetic_energy_fn)``
+    that returns a one-step integrator ``(state, step_size) -> new_state``.
     """
 
     def euclidean_integrator(
@@ -305,13 +365,28 @@ omelyan_coefficients = [b1, a1, b2, a2, b3, a3, b3, a2, b2, a1, b1]
 omelyan = generate_euclidean_integrator(omelyan_coefficients)
 
 
-# Intergrators with non Euclidean updates
+# Integrators with non Euclidean updates
 def _normalized_flatten_array(x, tol=1e-13):
     norm = jnp.linalg.norm(x)
     return jnp.where(norm > tol, x / norm, x), norm
 
 
 def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
+    """Build the ESH dynamics momentum update operator.
+
+    Parameters
+    ----------
+    inverse_mass_matrix
+        Inverse mass matrix. Scalar or array.
+
+    Returns
+    -------
+    An ``update`` function implementing one ESH momentum update step.
+    The function signature is
+    ``(momentum, logdensity_grad, step_size, coef,
+    previous_kinetic_energy_change, is_last_call) ->
+    (new_momentum, kinetic_grad, kinetic_energy_change)``.
+    """
     sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
 
     def update(
@@ -330,7 +405,6 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         """
         del is_last_call
 
-        logdensity_grad = logdensity_grad
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
         flatten_grads = flatten_grads * sqrt_inverse_mass_matrix
         flatten_momentum, _ = ravel_pytree(momentum)
@@ -367,6 +441,13 @@ def format_isokinetic_state_output(
     position_update_info,
     momentum_update_info,
 ):
+    """Format the output of an isokinetic integrator step.
+
+    Returns
+    -------
+    A tuple of ``(IntegratorState, momentum_update_info)`` where
+    ``momentum_update_info`` carries the accumulated kinetic energy change.
+    """
     del kinetic_grad, position_update_info
     return (
         IntegratorState(position, momentum, logdensity, logdensity_grad),
@@ -375,6 +456,20 @@ def format_isokinetic_state_output(
 
 
 def generate_isokinetic_integrator(coefficients):
+    """Generate an isokinetic (ESH-dynamics) integrator.
+
+    Parameters
+    ----------
+    coefficients
+        Palindromic list of alternating momentum/position update coefficients.
+
+    Returns
+    -------
+    A factory function ``isokinetic_integrator(logdensity_fn, inverse_mass_matrix)``
+    that returns a one-step integrator
+    ``(state, step_size) -> (new_state, kinetic_energy_change)``.
+    """
+
     def isokinetic_integrator(
         logdensity_fn: Callable, inverse_mass_matrix: ArrayTree = 1.0
     ) -> GeneralIntegrator:
@@ -425,9 +520,8 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     # return new_momentum
     return jax.lax.cond(
         jnp.isinf(L),
-        lambda _: momentum,
-        lambda _: new_momentum,
-        operand=None,
+        lambda: momentum,
+        lambda: new_momentum,
     )
 
 
@@ -461,9 +555,12 @@ def with_isokinetic_maruyama(integrator):
 
 
 FixedPointSolver = Callable[
-    [Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]], ArrayTree],
-    Tuple[ArrayTree, ArrayTree, Any],
+    [Callable[[ArrayTree], tuple[ArrayTree, ArrayTree]], ArrayTree],
+    tuple[ArrayTree, ArrayTree, Any],
 ]
+
+#: Iteration state for the fixed-point solver: (iteration count, current x, auxiliary data, norm).
+FixedPointIterState: TypeAlias = tuple[int, ArrayTree, ArrayTree, float]
 
 
 class FixedPointIterationInfo(NamedTuple):
@@ -473,20 +570,20 @@ class FixedPointIterationInfo(NamedTuple):
 
 
 def solve_fixed_point_iteration(
-    func: Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]],
+    func: Callable[[ArrayTree], tuple[ArrayTree, ArrayTree]],
     x0: ArrayTree,
     *,
     convergence_tol: float = 1e-6,
     divergence_tol: float = 1e10,
     max_iters: int = 100,
     norm_fn: Callable[[ArrayTree], float] = lambda x: jnp.max(jnp.abs(x)),
-) -> Tuple[ArrayTree, ArrayTree, FixedPointIterationInfo]:
+) -> tuple[ArrayTree, ArrayTree, FixedPointIterationInfo]:
     """Solve for x = func(x) using a fixed point iteration"""
 
     def compute_norm(x: ArrayTree, xp: ArrayTree) -> float:
-        return norm_fn(ravel_pytree(jax.tree_util.tree_map(jnp.subtract, x, xp))[0])
+        return norm_fn(ravel_pytree(jax.tree.map(jnp.subtract, x, xp))[0])
 
-    def cond_fn(args: Tuple[int, ArrayTree, ArrayTree, float]) -> bool:
+    def cond_fn(args: FixedPointIterState) -> bool:
         n, _, _, norm = args
         return (
             (n < max_iters)
@@ -495,9 +592,7 @@ def solve_fixed_point_iteration(
             & (norm > convergence_tol)
         )
 
-    def body_fn(
-        args: Tuple[int, ArrayTree, ArrayTree, float]
-    ) -> Tuple[int, ArrayTree, ArrayTree, float]:
+    def body_fn(args: FixedPointIterState) -> FixedPointIterState:
         n, x, _, _ = args
         xn, aux = func(x)
         norm = compute_norm(xn, x)
@@ -540,23 +635,19 @@ def implicit_midpoint(
             q: ArrayTree,
             p: ArrayTree,
             dUdq: ArrayTree,
-            initial: Tuple[ArrayTree, ArrayTree] = (position, momentum),
-        ) -> Tuple[ArrayTree, ArrayTree]:
+            initial: tuple[ArrayTree, ArrayTree] = (position, momentum),
+        ) -> tuple[ArrayTree, ArrayTree]:
             dTdq, dHdp = kinetic_energy_grad_fn(q, p)
-            dHdq = jax.tree_util.tree_map(jnp.subtract, dTdq, dUdq)
+            dHdq = jax.tree.map(jnp.subtract, dTdq, dUdq)
 
             # Take a step from the _initial coordinates_ using the gradients of the
             # Hamiltonian evaluated at the current guess for the midpoint
-            q = jax.tree_util.tree_map(
-                lambda q_, d_: q_ + 0.5 * step_size * d_, initial[0], dHdp
-            )
-            p = jax.tree_util.tree_map(
-                lambda p_, d_: p_ - 0.5 * step_size * d_, initial[1], dHdq
-            )
+            q = jax.tree.map(lambda q_, d_: q_ + 0.5 * step_size * d_, initial[0], dHdp)
+            p = jax.tree.map(lambda p_, d_: p_ - 0.5 * step_size * d_, initial[1], dHdq)
             return q, p
 
         # Solve for the midpoint numerically
-        def _step(args: ArrayTree) -> Tuple[ArrayTree, ArrayTree]:
+        def _step(args: ArrayTree) -> tuple[ArrayTree, ArrayTree]:
             q, p = args
             _, dLdq = logdensity_and_grad_fn(q)
             return _update(q, p, dLdq), dLdq

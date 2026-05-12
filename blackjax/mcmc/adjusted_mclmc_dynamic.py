@@ -12,47 +12,68 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Metropolis Hastings Microcanonical Hamiltonian Monte Carlo (MHMCHMC) Kernel. This is closely related to the Microcanonical Langevin Monte Carlo (MCLMC) Kernel, which is an unadjusted method. This kernel adds a Metropolis-Hastings correction to the MCLMC kernel. It also only refreshes the momentum variable after each MH step, rather than during the integration of the trajectory. Hence "Hamiltonian" and not "Langevin"."""
-from typing import Callable, Union
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
+from blackjax.mcmc.adjusted_mclmc import adjusted_mclmc_proposal, rescale
 from blackjax.mcmc.dynamic_hmc import DynamicHMCState, halton_sequence
 from blackjax.mcmc.hmc import HMCInfo
-from blackjax.mcmc.proposal import static_binomial_sampling
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
 from blackjax.util import generate_unit_vector
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
 
 
-def init(position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array):
+def init(
+    position: ArrayLikeTree, logdensity_fn: Callable, random_generator_arg: Array
+) -> DynamicHMCState:
+    """Create an initial state for the dynamic MHMCHMC kernel.
+
+    Parameters
+    ----------
+    position
+        Initial position of the chain.
+    logdensity_fn
+        Log-density function of the target distribution.
+    random_generator_arg
+        Argument passed to ``integration_steps_fn`` and ``next_random_arg_fn``
+        to generate the number of integration steps.
+
+    Returns
+    -------
+    The initial DynamicHMCState.
+    """
     logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
     return DynamicHMCState(position, logdensity, logdensity_grad, random_generator_arg)
 
 
 def build_kernel(
-    integration_steps_fn,
+    integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
     integrator: Callable = integrators.isokinetic_mclachlan,
     divergence_threshold: float = 1000,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
-    inverse_mass_matrix=1.0,
 ):
     """Build a Dynamic MHMCHMC kernel where the number of integration steps is chosen randomly.
 
     Parameters
     ----------
+    integration_steps_fn
+        Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+        that draws the number of integration steps for a single transition.
+        Extra positional arguments beyond ``random_generator_arg`` are supplied
+        at call time via ``integration_steps_params`` on the inner kernel, so
+        tunable parameters (e.g. average number of steps, distribution bounds)
+        can be adapted without rebuilding the kernel.
     integrator
         The integrator to use to integrate the Hamiltonian dynamics.
     divergence_threshold
         Value of the difference in energy above which we consider that the transition is divergent.
     next_random_arg_fn
         Function that generates the next `random_generator_arg` from its previous value.
-    integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`. Needs to return an `int`.
 
     Returns
     -------
@@ -67,10 +88,14 @@ def build_kernel(
         logdensity_fn: Callable,
         step_size: float,
         L_proposal_factor: float = jnp.inf,
+        inverse_mass_matrix=1.0,
+        integration_steps_params: tuple = (),
     ) -> tuple[DynamicHMCState, HMCInfo]:
         """Generate a new sample with the MHMCHMC kernel."""
 
-        num_integration_steps = integration_steps_fn(state.random_generator_arg)
+        num_integration_steps = integration_steps_fn(
+            state.random_generator_arg, *integration_steps_params
+        )
 
         key_momentum, key_integrator = jax.random.split(rng_key, 2)
         momentum = generate_unit_vector(key_momentum, state.position)
@@ -114,6 +139,7 @@ def as_top_level_api(
     integrator: Callable = integrators.isokinetic_mclachlan,
     next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1],
     integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10),
+    integration_steps_params: tuple = (),
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the dynamic MHMCHMC kernel.
 
@@ -132,9 +158,15 @@ def as_top_level_api(
     next_random_arg_fn
         Function that generates the next `random_generator_arg` from its previous value.
     integration_steps_fn
-        Function that generates the next pseudo or quasi-random number of integration steps in the
-        sequence, given the current `random_generator_arg`.
-
+        Callable with signature ``(random_generator_arg, *integration_steps_params) -> int``
+        that draws the number of integration steps for a single transition.
+    integration_steps_params
+        Extra positional arguments unpacked into ``integration_steps_fn`` after
+        ``random_generator_arg`` on every step.  Use this to pass tunable
+        parameters (e.g. ``(avg_num_integration_steps,)`` or
+        ``(lower_bound, upper_bound)``) without rebuilding the kernel.
+        Defaults to ``()`` so that a plain 1-arg ``integration_steps_fn`` works
+        unchanged.
 
     Returns
     -------
@@ -145,115 +177,71 @@ def as_top_level_api(
         integration_steps_fn=integration_steps_fn,
         integrator=integrator,
         next_random_arg_fn=next_random_arg_fn,
-        inverse_mass_matrix=inverse_mass_matrix,
         divergence_threshold=divergence_threshold,
     )
 
-    def init_fn(position: ArrayLikeTree, rng_key: Array):
-        return init(position, logdensity_fn, rng_key)
-
-    def update_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(
             step_size,
             L_proposal_factor,
-        )
+            inverse_mass_matrix,
+            integration_steps_params,
+        ),
+        pass_rng_key_to_init=True,
+    )
 
-    return SamplingAlgorithm(init_fn, update_fn)  # type: ignore[arg-type]
 
-
-def adjusted_mclmc_proposal(
-    integrator: Callable,
-    step_size: Union[float, ArrayLikeTree],
-    L_proposal_factor: float,
-    num_integration_steps: int = 1,
-    divergence_threshold: float = 1000,
-    *,
-    sample_proposal: Callable = static_binomial_sampling,
-) -> Callable:
-    """Vanilla MHMCHMC algorithm.
-
-    The algorithm integrates the trajectory applying a integrator
-    `num_integration_steps` times in one direction to get a proposal and uses a
-    Metropolis-Hastings acceptance step to either reject or accept this
-    proposal. This is what people usually refer to when they talk about "the
-    HMC algorithm".
+def trajectory_length(t: int, mu: float):
+    """Quasi-random trajectory length using the Halton sequence.
 
     Parameters
     ----------
-    integrator
-        integrator used to build the trajectory step by step.
-    kinetic_energy
-        Function that computes the kinetic energy.
-    step_size
-        Size of the integration step.
-    num_integration_steps
-        Number of times we run the integrator to build the trajectory
-    divergence_threshold
-        Threshold above which we say that there is a divergence.
+    t
+        Step index used to index into the Halton sequence.
+    mu
+        Target average number of integration steps.
 
     Returns
     -------
-    A kernel that generates a new chain state and information about the transition.
-
+    Number of integration steps as a rounded integer.
     """
-
-    def step(i, vars):
-        state, kinetic_energy, rng_key = vars
-        rng_key, next_rng_key = jax.random.split(rng_key)
-        next_state, next_kinetic_energy = integrator(
-            state, step_size, L_proposal_factor, rng_key
-        )
-
-        return next_state, kinetic_energy + next_kinetic_energy, next_rng_key
-
-    def build_trajectory(state, num_integration_steps, rng_key):
-        return jax.lax.fori_loop(
-            0 * num_integration_steps, num_integration_steps, step, (state, 0, rng_key)
-        )
-
-    def generate(
-        rng_key, state: integrators.IntegratorState
-    ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
-        """Generate a new chain state."""
-        end_state, kinetic_energy, rng_key = build_trajectory(
-            state, num_integration_steps, rng_key
-        )
-
-        new_energy = -end_state.logdensity
-        delta_energy = -state.logdensity + end_state.logdensity - kinetic_energy
-        delta_energy = jnp.where(jnp.isnan(delta_energy), -jnp.inf, delta_energy)
-        is_diverging = -delta_energy > divergence_threshold
-        sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
-        do_accept, p_accept, other_proposal_info = info
-
-        info = HMCInfo(
-            state.momentum,
-            p_accept,
-            do_accept,
-            is_diverging,
-            new_energy,
-            end_state,
-            num_integration_steps,
-        )
-
-        return sampled_state, info, other_proposal_info
-
-    return generate
-
-
-def rescale(mu):
-    """returns s, such that
-     round(U(0, 1) * s + 0.5)
-    has expected value mu.
-    """
-    k = jnp.floor(2 * mu - 1)
-    x = k * (mu - 0.5 * (k + 1)) / (k + 1 - mu)
-    return k + x
-
-
-def trajectory_length(t, mu):
     s = rescale(mu)
     return jnp.rint(0.5 + halton_sequence(t) * s)
+
+
+def make_random_trajectory_length_fn(random_trajectory_length: bool) -> Callable:
+    """Build an ``integration_steps_fn`` with signature ``(key, avg_num_integration_steps) -> int``.
+
+    Parameters
+    ----------
+    random_trajectory_length
+        If ``True``, returns a randomized trajectory length function (uniform
+        draw scaled by ``rescale(avg)``); otherwise returns a deterministic one
+        that always yields ``ceil(avg)``.
+
+    Returns
+    -------
+    A callable ``(random_generator_arg, avg_num_integration_steps) -> int``
+    suitable for use as ``integration_steps_fn`` in :func:`build_kernel`.
+    Pass ``integration_steps_params=(avg_num_integration_steps,)`` to the
+    kernel so the value is forwarded at each step without a closure.
+    """
+    if random_trajectory_length:
+
+        def integration_steps_fn(key, avg_num_integration_steps):
+            return jnp.clip(
+                jnp.ceil(jax.random.uniform(key) * rescale(avg_num_integration_steps)),
+                min=1,
+            ).astype(jnp.int32)
+
+    else:
+
+        def integration_steps_fn(key, avg_num_integration_steps):
+            return jnp.clip(jnp.ceil(avg_num_integration_steps), min=1).astype(
+                jnp.int32
+            )
+
+    return integration_steps_fn

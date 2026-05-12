@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, NamedTuple, Optional, Protocol
+from typing import Any, Callable, NamedTuple, Protocol
 
 import jax
 import jax.numpy as jnp
@@ -90,7 +90,7 @@ def init(particles: ArrayLikeTree, init_update_params: ArrayTree) -> SMCState:
     """
     # Infer the number of particles from the size of the leading dimension of
     # the first leaf of the inputted PyTree.
-    num_particles = jax.tree_util.tree_flatten(particles)[0][0].shape[0]
+    num_particles = jax.tree.flatten(particles)[0][0].shape[0]
     weights = jnp.ones(num_particles) / num_particles
     return SMCState(particles, weights, init_update_params)
 
@@ -101,7 +101,7 @@ def step(
     update_fn: Callable,
     weight_fn: Callable,
     resample_fn: Callable,
-    num_resampled: Optional[int] = None,
+    num_resampled: int | None = None,
 ) -> tuple[SMCState, SMCInfo]:
     """General SMC sampling step.
 

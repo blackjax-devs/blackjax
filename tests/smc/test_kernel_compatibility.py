@@ -1,5 +1,3 @@
-import unittest
-
 import jax
 from jax import numpy as jnp
 from jax.scipy.stats import multivariate_normal
@@ -8,9 +6,10 @@ import blackjax
 from blackjax import adaptive_tempered_smc
 from blackjax.mcmc.random_walk import normal
 from blackjax.smc import extend_params
+from tests.fixtures import BlackJAXTest
 
 
-class SMCAndMCMCIntegrationTest(unittest.TestCase):
+class SMCAndMCMCIntegrationTest(BlackJAXTest):
     """
     An integration test that verifies which MCMC can be used as
     SMC mutation step kernels.
@@ -18,10 +17,9 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
 
     def setUp(self):
         super().setUp()
-        self.key = jax.random.key(42)
         self.n_particles = 3
         self.initial_particles = jax.random.multivariate_normal(
-            self.key, jnp.zeros(2), jnp.eye(2), (self.n_particles,)
+            self.next_key(), jnp.zeros(2), jnp.eye(2), (self.n_particles,)
         )
 
     def check_compatible(self, mcmc_step_fn, mcmc_init_fn, mcmc_parameters):
@@ -39,7 +37,7 @@ class SMCAndMCMCIntegrationTest(unittest.TestCase):
             root_solver=self.root_solver,
             num_mcmc_steps=1,
         )
-        kernel(self.key, init(self.initial_particles))
+        kernel(self.next_key(), init(self.initial_particles))
 
     def test_compatible_with_rwm(self):
         rwm = blackjax.additive_step_random_walk.build_kernel()

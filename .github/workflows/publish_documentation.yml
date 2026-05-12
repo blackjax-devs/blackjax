@@ -14,15 +14,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: 3.12
+          python-version: "3.12"
 
       - name: Build the documentation with Sphinx
         run: |
-          pip install -r requirements-doc.txt
-          sphinx-build -b html docs docs/build/html
+          uv sync --group docs
+          uv run sphinx-build -b html docs docs/build/html
 
       - name: Publish the documentation
         uses: JamesIves/github-pages-deploy-action@3.6.2

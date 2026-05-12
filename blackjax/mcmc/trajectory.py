@@ -61,9 +61,7 @@ class Trajectory(NamedTuple):
 
 def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Trajectory:
     """Append a state to the (right of the) trajectory to form a new trajectory."""
-    momentum_sum = jax.tree_util.tree_map(
-        jnp.add, trajectory.momentum_sum, state.momentum
-    )
+    momentum_sum = jax.tree.map(jnp.add, trajectory.momentum_sum, state.momentum)
     return Trajectory(
         trajectory.leftmost_state, state, momentum_sum, trajectory.num_states + 1
     )
@@ -72,23 +70,51 @@ def append_to_trajectory(trajectory: Trajectory, state: IntegratorState) -> Traj
 def reorder_trajectories(
     direction: int, trajectory: Trajectory, new_trajectory: Trajectory
 ) -> tuple[Trajectory, Trajectory]:
-    """Order the two trajectories depending on the direction."""
+    """Order two trajectories depending on the integration direction.
+
+    Parameters
+    ----------
+    direction
+        Integration direction: ``1`` for forward, ``-1`` for backward.
+    trajectory
+        The existing trajectory (from the previous expansion step).
+    new_trajectory
+        The newly sampled sub-trajectory.
+
+    Returns
+    -------
+    A ``(left_trajectory, right_trajectory)`` tuple ordered so that
+    ``left_trajectory`` precedes ``right_trajectory`` in time.
+    """
     return jax.lax.cond(
         direction > 0,
-        lambda _: (
+        lambda: (
             trajectory,
             new_trajectory,
         ),
-        lambda _: (
+        lambda: (
             new_trajectory,
             trajectory,
         ),
-        operand=None,
     )
 
 
 def merge_trajectories(left_trajectory: Trajectory, right_trajectory: Trajectory):
-    momentum_sum = jax.tree_util.tree_map(
+    """Merge two trajectories into one by concatenating left and right.
+
+    Parameters
+    ----------
+    left_trajectory
+        The left (earlier) sub-trajectory.
+    right_trajectory
+        The right (later) sub-trajectory.
+
+    Returns
+    -------
+    A new Trajectory spanning from the leftmost state of ``left_trajectory``
+    to the rightmost state of ``right_trajectory``.
+    """
+    momentum_sum = jax.tree.map(
         jnp.add, left_trajectory.momentum_sum, right_trajectory.momentum_sum
     )
     return Trajectory(
@@ -111,12 +137,25 @@ def static_integration(
     integrator: Callable,
     direction: int = 1,
 ) -> Callable:
-    """Generate a trajectory by integrating several times in one direction."""
+    """Generate a trajectory by integrating several times in one direction.
+
+    Parameters
+    ----------
+    integrator
+        One-step symplectic integrator.
+    direction
+        Integration direction: ``1`` for forward, ``-1`` for backward.
+
+    Returns
+    -------
+    An ``integrate(initial_state, step_size, num_integration_steps)`` function
+    that returns the final IntegratorState after all steps.
+    """
 
     def integrate(
         initial_state: IntegratorState, step_size, num_integration_steps
     ) -> IntegratorState:
-        directed_step_size = jax.tree_util.tree_map(
+        directed_step_size = jax.tree.map(
             lambda step_size: direction * step_size, step_size
         )
 
@@ -124,6 +163,71 @@ def static_integration(
             return integrator(state, directed_step_size)
 
         return jax.lax.fori_loop(0, num_integration_steps, one_step, initial_state)
+
+    return integrate
+
+
+def static_progressive_integration(
+    integrator: Callable,
+    kinetic_energy: Callable,
+    num_integration_steps: int,
+    divergence_threshold: float,
+) -> Callable:
+    """Generate a trajectory by integrating a fixed number of steps and
+    progressively sampling proposals using multinomial weighting.
+
+    Unlike ``static_integration``, which returns only the trajectory endpoint,
+    this function samples one state from the *entire* trajectory proportional
+    to ``exp(-H(z_i))`` using progressive reservoir sampling
+    (``progressive_uniform_sampling``).  Only O(1) memory is needed regardless
+    of trajectory length.
+
+    Parameters
+    ----------
+    integrator
+        One-step symplectic integrator.
+    kinetic_energy
+        Function to compute the current value of the kinetic energy.
+    num_integration_steps
+        Number of integration steps to take.
+    divergence_threshold
+        Value of the difference of energy between two consecutive states above
+        which we say a transition is divergent.
+
+    Returns
+    -------
+    An ``integrate(rng_key, initial_state, step_size)`` function that returns
+    ``(proposal, is_diverging)``.
+    """
+    hmc_energy_fn = hmc_energy(kinetic_energy)
+    _, generate_proposal = proposal_generator(hmc_energy_fn)
+    sample_proposal = progressive_uniform_sampling
+
+    def integrate(
+        rng_key: PRNGKey,
+        initial_state: IntegratorState,
+        step_size,
+    ):
+        initial_energy = hmc_energy_fn(initial_state)
+        init_proposal = Proposal(initial_state, initial_energy, 0.0, -jnp.inf)
+
+        def one_step(i, carry):
+            current_state, current_proposal, any_divergent = carry
+            step_key = jax.random.fold_in(rng_key, i)
+
+            new_state = integrator(current_state, step_size)
+            new_proposal = generate_proposal(initial_energy, new_state)
+            is_diverging = -new_proposal.weight > divergence_threshold
+            any_divergent = any_divergent | is_diverging
+            sampled_proposal = sample_proposal(step_key, current_proposal, new_proposal)
+
+            return (new_state, sampled_proposal, any_divergent)
+
+        (_, final_proposal, is_diverging) = jax.lax.fori_loop(
+            0, num_integration_steps, one_step, (initial_state, init_proposal, False)
+        )
+
+        return final_proposal, is_diverging
 
     return integrate
 
@@ -159,6 +263,9 @@ def dynamic_progressive_integration(
         Value of the difference of energy between two consecutive states above
         which we say a transition is divergent.
 
+    Returns
+    -------
+    An ``integrate(rng_key, state, direction, termination_state, max_num_steps, step_size, initial_energy)`` function returning ``(proposal, new_trajectory, termination_state, is_diverging, has_terminated)``.
     """
     _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling
@@ -221,15 +328,14 @@ def dynamic_progressive_integration(
             # take one step to get the leftmost state of the tree.
             (new_trajectory, sampled_proposal) = jax.lax.cond(
                 step == 0,
-                lambda _: (
+                lambda: (
                     Trajectory(new_state, new_state, new_state.momentum, 1),
                     new_proposal,
                 ),
-                lambda _: (
+                lambda: (
                     append_to_trajectory(trajectory, new_state),
                     sample_proposal(proposal_key, proposal, new_proposal),
                 ),
-                operand=None,
             )
 
             new_termination_state = update_termination_state(
@@ -269,14 +375,13 @@ def dynamic_progressive_integration(
         # In the while_loop we always extend on the right most direction.
         new_trajectory = jax.lax.cond(
             direction > 0,
-            lambda _: trajectory,
-            lambda _: Trajectory(
+            lambda: trajectory,
+            lambda: Trajectory(
                 trajectory.rightmost_state,
                 trajectory.leftmost_state,
                 trajectory.momentum_sum,
                 trajectory.num_states,
             ),
-            operand=None,
         )
 
         return (
@@ -301,7 +406,7 @@ def dynamic_recursive_integration(
     until the termination criterion is met.
 
     This is the implementation of Algorithm 6 from :cite:p:`hoffman2014no` with
-    multinomial sampling. The implemenation here is mostly for validating the
+    multinomial sampling. The implementation here is mostly for validating the
     progressive implementation to make sure the two are equivalent. The recursive
     implementation should not be used for actually sampling as it cannot be jitted and
     thus likely slow.
@@ -321,6 +426,9 @@ def dynamic_recursive_integration(
         Bool to indicate whether to perform additional U turn check between two
         trajectory.
 
+    Returns
+    -------
+    A ``buildtree_integrate(rng_key, state, direction, tree_depth, step_size, initial_energy)`` function returning ``(rng_key, proposal, trajectory, is_diverging, is_turning)``.
     """
     _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling
@@ -388,9 +496,8 @@ def dynamic_recursive_integration(
             if (not is_diverging) & (not is_turning):
                 start_state = jax.lax.cond(
                     direction > 0,
-                    lambda _: trajectory.rightmost_state,
-                    lambda _: trajectory.leftmost_state,
-                    operand=None,
+                    lambda: trajectory.rightmost_state,
+                    lambda: trajectory.leftmost_state,
                 )
                 (
                     rng_key,
@@ -418,7 +525,7 @@ def dynamic_recursive_integration(
                         trajectory.momentum_sum,
                     )
                     if use_robust_uturn_check & (tree_depth - 1 > 0):
-                        momentum_sum_left = jax.tree_util.tree_map(
+                        momentum_sum_left = jax.tree.map(
                             jnp.add,
                             left_trajectory.momentum_sum,
                             right_trajectory.leftmost_state.momentum,
@@ -428,7 +535,7 @@ def dynamic_recursive_integration(
                             right_trajectory.leftmost_state.momentum,
                             momentum_sum_left,
                         )
-                        momentum_sum_right = jax.tree_util.tree_map(
+                        momentum_sum_right = jax.tree.map(
                             jnp.add,
                             left_trajectory.rightmost_state.momentum,
                             right_trajectory.momentum_sum,
@@ -493,14 +600,16 @@ def dynamic_multiplicative_expansion(
         and the integrated trajectory.
     uturn_check_fn
         Function used to check the U-Turn criterion.
-    step_size
-        The step size used by the symplectic integrator.
     max_num_expansions
         The maximum number of trajectory expansions until the proposal is returned.
     rate
         The rate of the geometrical expansion. Typically 2 in NUTS, this is why
         the literature often refers to "tree doubling".
 
+    Returns
+    -------
+    An ``expand(rng_key, initial_expansion_state, initial_energy, step_size)``
+    function that returns ``(expansion_state, (is_diverging, is_turning))``.
     """
     proposal_sampler = progressive_biased_sampling
 
@@ -541,9 +650,8 @@ def dynamic_multiplicative_expansion(
             direction = jnp.where(jax.random.bernoulli(direction_key), 1, -1)
             start_state = jax.lax.cond(
                 direction > 0,
-                lambda _: trajectory.rightmost_state,
-                lambda _: trajectory.leftmost_state,
-                operand=None,
+                lambda: trajectory.rightmost_state,
+                lambda: trajectory.leftmost_state,
             )
             (
                 new_proposal,
@@ -620,6 +728,20 @@ def dynamic_multiplicative_expansion(
 
 
 def hmc_energy(kinetic_energy):
+    """Build the total HMC energy function from a kinetic energy function.
+
+    Parameters
+    ----------
+    kinetic_energy
+        A function that computes the kinetic energy given the momentum (and
+        optionally the position).
+
+    Returns
+    -------
+    An ``energy(state)`` function that returns the total energy
+    ``-logdensity + kinetic_energy(momentum)``.
+    """
+
     def energy(state):
         return -state.logdensity + kinetic_energy(
             state.momentum, position=state.position

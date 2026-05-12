@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Any, Callable, Optional
+from typing import Any, Callable
 
 import jax
 import jax.numpy as jnp
@@ -169,7 +169,7 @@ def as_top_level_api(
     )
 
     def init_fn(
-        position: ArrayLikeTree, rng_key: Optional[PRNGKey] = None
+        position: ArrayLikeTree, rng_key: PRNGKey | None = None
     ) -> tempered.TemperedSMCState:
         del rng_key
         return init(position)

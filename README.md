@@ -124,6 +124,10 @@ information related to the transition are returned separately. They can thus be
 easily composed and exchanged. We specialize these kernels by closure instead of
 passing parameters.
 
+## New algorithms
+
+We want to make implementing and testing new algorithms easy with BlackJAX. You can test new algorithms by reusing the basic components of the many known methods already implemented in the library. Follow the [developer guidelines](https://blackjax-devs.github.io/blackjax/developer/guidelines.html) to implement your method and test new ideas on existing methods without writing everything from scratch.
+
 ## Contributions
 
 Please follow our [short guide](https://github.com/blackjax-devs/blackjax/blob/main/CONTRIBUTING.md).

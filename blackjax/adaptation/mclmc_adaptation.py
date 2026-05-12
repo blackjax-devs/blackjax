@@ -44,6 +44,7 @@ def mclmc_find_L_and_step_size(
     num_steps,
     state,
     rng_key,
+    logdensity_fn=None,
     frac_tune1=0.1,
     frac_tune2=0.1,
     frac_tune3=0.1,
@@ -52,7 +53,7 @@ def mclmc_find_L_and_step_size(
     num_effective_samples=150,
     diagonal_preconditioning=True,
     params=None,
-    Lfactor=0.4,
+    l_factor=0.4,
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -60,13 +61,17 @@ def mclmc_find_L_and_step_size(
     Parameters
     ----------
     mclmc_kernel
-        The kernel function used for the MCMC algorithm.
+        The kernel function built by ``mclmc.build_kernel``.  Its call signature
+        must be ``kernel(rng_key, state, logdensity_fn, inverse_mass_matrix, L,
+        step_size)``, matching the standard BlackJAX kernel pattern.
     num_steps
         The number of MCMC steps that will subsequently be run, after tuning.
     state
         The initial state of the MCMC algorithm.
     rng_key
         The random number generator key.
+    logdensity_fn
+        The log-density function of the target distribution.
     frac_tune1
         The fraction of tuning for the first step of the adaptation.
     frac_tune2
@@ -83,33 +88,46 @@ def mclmc_find_L_and_step_size(
         Whether to do diagonal preconditioning (i.e. a mass matrix)
     params
         Initial params to start tuning from (optional)
-    Lfactor
+    l_factor
         The factor scaling the estimated autocorrelation length to obtain momentum decoherence length L.
 
     Returns
     -------
-    A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
+    final_state
+        The final integrator state after the three tuning phases.
+    final_params
+        An ``MCLMCAdaptationState`` containing the adapted ``L``,
+        ``step_size``, and ``inverse_mass_matrix``.
+    total_num_tuning_integrator_steps
+        The total number of integrator steps consumed across all three
+        tuning phases (frac_tune1 + frac_tune2 + frac_tune3 of
+        ``num_steps``).
 
     Example
     -------
-    .. code::
-        kernel = lambda inverse_mass_matrix : blackjax.mcmc.mclmc.build_kernel(
-        logdensity_fn=logdensity_fn,
-        integrator=integrator,
-        inverse_mass_matrix=inverse_mass_matrix,
-        )
+    .. code-block:: python
+
+        kernel = blackjax.mcmc.mclmc.build_kernel(integrator=integrator)
 
         (
             blackjax_state_after_tuning,
             blackjax_mclmc_sampler_params,
+            num_tuning_steps,
         ) = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
+            logdensity_fn=logdensity_fn,
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
             diagonal_preconditioning=preconditioning,
         )
     """
+    if logdensity_fn is None:
+        raise ValueError(
+            "logdensity_fn is required. Pass the log-density function of the "
+            "target distribution."
+        )
+
     dim = pytree_size(state.position)
     if params is None:
         params = MCLMCAdaptationState(
@@ -127,6 +145,7 @@ def mclmc_find_L_and_step_size(
 
     state, params = make_L_step_size_adaptation(
         kernel=mclmc_kernel,
+        logdensity_fn=logdensity_fn,
         dim=dim,
         frac_tune1=frac_tune1,
         frac_tune2=frac_tune2,
@@ -139,7 +158,7 @@ def mclmc_find_L_and_step_size(
 
     if num_steps3 >= 2:  # at least 2 samples for ESS estimation
         state, params = make_adaptation_L(
-            mclmc_kernel(params.inverse_mass_matrix), frac=frac_tune3, Lfactor=Lfactor
+            mclmc_kernel, logdensity_fn, frac=frac_tune3, l_factor=l_factor
         )(state, params, num_steps, part2_key)
         total_num_tuning_integrator_steps += num_steps3
 
@@ -148,6 +167,7 @@ def mclmc_find_L_and_step_size(
 
 def make_L_step_size_adaptation(
     kernel,
+    logdensity_fn,
     dim,
     frac_tune1,
     frac_tune2,
@@ -169,9 +189,11 @@ def make_L_step_size_adaptation(
         rng_key, nan_key = jax.random.split(rng_key)
 
         # dynamics
-        next_state, info = kernel(params.inverse_mass_matrix)(
+        next_state, info = kernel(
             rng_key=rng_key,
             state=previous_state,
+            logdensity_fn=logdensity_fn,
+            inverse_mass_matrix=params.inverse_mass_matrix,
             L=params.L,
             step_size=params.step_size,
         )
@@ -186,13 +208,18 @@ def make_L_step_size_adaptation(
             nan_key,
         )
 
-        # Warning: var = 0 if there were nans, but we will give it a very small weight
+        # Warning: var = 0 if there were nans, but we will give it a very small weight.
+        #
+        # The step-size adaptation exploits the scaling relation Var[E] = O(eps^6)
+        # for the leapfrog integrator (see Bou-Rabee & Sanz-Serna, 2018).
+        # xi measures the energy-variance ratio relative to the target; the
+        # exponent 6.0 throughout this block originates from that relation.
         xi = (
             jnp.square(energy_change) / (dim * desired_energy_var)
-        ) + 1e-8  # 1e-8 is added to avoid divergences in log xi
+        ) + 1e-8  # small offset to prevent log(0) divergence
         weight = jnp.exp(
             -0.5 * jnp.square(jnp.log(xi) / (6.0 * trust_in_estimate))
-        )  # the weight reduces the impact of stepsizes which are much larger on much smaller than the desired one.
+        )  # Gaussian weight that down-weights step sizes far from the optimum
 
         x_average = decay_rate * x_average + weight * (
             xi / jnp.power(params.step_size, 6.0)
@@ -200,7 +227,7 @@ def make_L_step_size_adaptation(
         time = decay_rate * time + weight
         step_size = jnp.power(
             x_average / time, -1.0 / 6.0
-        )  # We use the Var[E] = O(eps^6) relation here.
+        )  # invert the Var[E] = O(eps^6) relation to obtain the optimal step size
         step_size = (step_size < step_size_max) * step_size + (
             step_size > step_size_max
         ) * step_size_max  # if the proposed stepsize is above the stepsize where we have seen divergences
@@ -230,16 +257,18 @@ def make_L_step_size_adaptation(
 
         return (state, params, adaptive_state, streaming_avg), None
 
-    run_steps = lambda xs, state, params: jax.lax.scan(
-        step,
-        init=(
-            state,
-            params,
-            (0.0, 0.0, jnp.inf),
-            (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
-        ),
-        xs=xs,
-    )[0]
+    def run_steps(xs, state, params):
+        """Run adaptation steps via scan, returning final carry state."""
+        return jax.lax.scan(
+            step,
+            init=(
+                state,
+                params,
+                (0.0, 0.0, jnp.inf),
+                (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
+            ),
+            xs=xs,
+        )[0]
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
@@ -287,7 +316,7 @@ def make_L_step_size_adaptation(
     return L_step_size_adaptation
 
 
-def make_adaptation_L(kernel, frac, Lfactor):
+def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
@@ -298,6 +327,8 @@ def make_adaptation_L(kernel, frac, Lfactor):
             next_state, _ = kernel(
                 rng_key=key,
                 state=state,
+                logdensity_fn=logdensity_fn,
+                inverse_mass_matrix=params.inverse_mass_matrix,
                 L=params.L,
                 step_size=params.step_size,
             )
@@ -314,7 +345,7 @@ def make_adaptation_L(kernel, frac, Lfactor):
         ess = effective_sample_size(flat_samples[None, ...])
 
         return state, params._replace(
-            L=Lfactor * params.step_size * jnp.mean(num_steps_3 / ess)
+            L=l_factor * params.step_size * jnp.mean(num_steps_3 / ess)
         )
 
     return adaptation_L
@@ -326,11 +357,11 @@ def handle_nans(
     """if there are nans, let's reduce the stepsize, and not update the state. The
     function returns the old state in this case."""
 
-    reduced_step_size = 0.8
+    reduced_step_size = 0.8  # multiplicative shrinkage factor applied on NaN recovery
     p, unravel_fn = ravel_pytree(next_state.position)
     q, unravel_fn = ravel_pytree(next_state.momentum)
     nonans = jnp.logical_and(jnp.all(jnp.isfinite(p)), jnp.all(jnp.isfinite(q)))
-    state, step_size, kinetic_change = jax.tree_util.tree_map(
+    state, step_size, kinetic_change = jax.tree.map(
         lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
         (next_state, step_size_max, kinetic_change),
         (previous_state, step_size * reduced_step_size, 0.0),

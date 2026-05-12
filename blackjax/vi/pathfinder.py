@@ -11,13 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 import jax.random
 from jax.flatten_util import ravel_pytree
 
+from blackjax.base import VIAlgorithm
 from blackjax.optimizers.lbfgs import (
     _minimize_lbfgs,
     bfgs_sample,
@@ -34,7 +35,7 @@ class PathfinderState(NamedTuple):
     Pathfinder locates normal approximations to the target density along a
     quasi-Newton optimization path, with local covariance estimated using
     the inverse Hessian estimates produced by the L-BFGS optimizer.
-    PathfinderState stores for an interation fo the L-BFGS optimizer the
+    PathfinderState stores for an iteration of the L-BFGS optimizer the
     resulting ELBO and all factors needed to sample from the approximated
     target density.
 
@@ -43,7 +44,7 @@ class PathfinderState(NamedTuple):
     grad_position:
         gradient of target distribution wrt position
     alpha, beta, gamma:
-        factored rappresentation of the inverse hessian
+        factored representation of the inverse hessian
     elbo:
         ELBO of approximation wrt target distribution
 
@@ -61,11 +62,6 @@ class PathfinderInfo(NamedTuple):
     """Extra information returned by the Pathfinder algorithm."""
 
     path: PathfinderState
-
-
-class PathFinderAlgorithm(NamedTuple):
-    approximate: Callable
-    sample: Callable
 
 
 def approximate(
@@ -92,7 +88,7 @@ def approximate(
     Parameters
     ----------
     rng_key
-        PRPNG key
+        PRNG key
     logdensity_fn
         (un-normalized) log densify function of target distribution to take
         approximate samples from
@@ -101,17 +97,17 @@ def approximate(
     num_samples
         number of samples to draw to estimate ELBO
     maxiter
-        Maximum number of iterations of the LGBFS algorithm.
+        Maximum number of iterations of the L-BFGS algorithm.
     maxcor
-        Maximum number of metric corrections of the LGBFS algorithm ("history
+        Maximum number of metric corrections of the L-BFGS algorithm ("history
         size")
     ftol
-        The LGBFS algorithm terminates the minimization when `(f_k - f_{k+1}) <
+        The L-BFGS algorithm terminates the minimization when `(f_k - f_{k+1}) <
         ftol`
     gtol
-        The LGBFS algorithm terminates the minimization when `|g_k|_norm < gtol`
+        The L-BFGS algorithm terminates the minimization when `|g_k|_norm < gtol`
     maxls
-        The maximum number of line search steps (per iteration) for the LGBFS
+        The maximum number of line search steps (per iteration) for the L-BFGS
         algorithm
     **lbfgs_kwargs
         other keyword arguments passed to `jaxopt.LBFGS`.
@@ -205,7 +201,7 @@ def approximate(
 def sample(
     rng_key: PRNGKey,
     state: PathfinderState,
-    num_samples: Union[int, tuple[()], tuple[int]] = (),
+    num_samples: int | tuple[()] | tuple[int] = (),
 ) -> ArrayTree:
     """Draw from the Pathfinder approximation of the target distribution.
 
@@ -242,7 +238,7 @@ def sample(
         return jax.vmap(unravel_fn)(phi), logq
 
 
-def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
+def as_top_level_api(logdensity_fn: Callable) -> VIAlgorithm:
     """Implements the (basic) user interface for the pathfinder kernel.
 
     Pathfinder locates normal approximations to the target density along a
@@ -251,8 +247,8 @@ def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
     Pathfinder returns draws from the approximation with the lowest estimated
     Kullback-Leibler (KL) divergence to the true posterior.
 
-    Note: all the heavy processing in performed in the init function, step
-    function is just a drawing a sample from a normal distribution
+    As Pathfinder is a one-shot algorithm, the returned ``VIAlgorithm.step``
+    is a no-op; all computation happens inside ``VIAlgorithm.init``.
 
     Parameters
     ----------
@@ -262,11 +258,11 @@ def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
 
     Returns
     -------
-    A ``VISamplingAlgorithm``.
+    A ``VIAlgorithm``.
 
     """
 
-    def approximate_fn(
+    def init_fn(
         rng_key: PRNGKey,
         position: ArrayLikeTree,
         num_samples: int = 200,
@@ -276,7 +272,11 @@ def as_top_level_api(logdensity_fn: Callable) -> PathFinderAlgorithm:
             rng_key, logdensity_fn, position, num_samples, **lbfgs_parameters
         )
 
+    def step_fn(rng_key: PRNGKey, state: PathfinderState):
+        """Pathfinder is one-shot; this is a no-op for API compatibility."""
+        return state, PathfinderInfo(path=state)
+
     def sample_fn(rng_key: PRNGKey, state: PathfinderState, num_samples: int):
         return sample(rng_key, state, num_samples)
 
-    return PathFinderAlgorithm(approximate_fn, sample_fn)
+    return VIAlgorithm(init_fn, step_fn, sample_fn)

@@ -7,24 +7,20 @@ import jax.scipy.stats as stats
 from absl.testing import absltest
 
 from blackjax.vi.schrodinger_follmer import as_top_level_api as schrodinger_follmer
+from tests.fixtures import BlackJAXTest
 
 
-class SchrodingerFollmerTest(chex.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(1)
-
+class SchrodingerFollmerTest(BlackJAXTest):
     @chex.all_variants(with_pmap=True)
     def test_recover_posterior(self):
         """Simple Normal mean test"""
 
         ndim = 2
 
-        rng_key_chol, rng_key_observed, rng_key_init = jax.random.split(self.key, 3)
-        L = jnp.tril(jax.random.normal(rng_key_chol, (ndim, ndim)))
-        true_mu = jnp.arange(ndim)
-        true_cov = L @ L.T
-        true_prec = jnp.linalg.pinv(true_cov)
+        rng_key_observed, rng_key_init = jax.random.split(self.next_key(), 2)
+        true_mu = jnp.arange(ndim, dtype=float)
+        true_cov = jnp.array([[1.0, 0.5], [0.5, 2.0]])
+        true_prec = jnp.linalg.inv(true_cov)
 
         def logp_posterior_conjugate_normal_model(
             observed, prior_mu, prior_prec, true_prec

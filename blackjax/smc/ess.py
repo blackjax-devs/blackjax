@@ -82,12 +82,12 @@ def ess_solver(
         The increment that solves for the target ESS.
 
     """
-    logprob = logdensity_fn(particles)
-    n_particles = logprob.shape[0]
+    logdensity = logdensity_fn(particles)
+    n_particles = logdensity.shape[0]
     target_val = jnp.log(n_particles * target_ess)
 
     def fun_to_solve(delta: float | Array) -> Array:
-        log_weights = jnp.nan_to_num(-delta * logprob)
+        log_weights = jnp.nan_to_num(-delta * logdensity)
         ess_val = log_ess(log_weights)
 
         return ess_val - target_val

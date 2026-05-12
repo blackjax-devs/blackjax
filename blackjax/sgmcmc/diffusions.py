@@ -38,7 +38,7 @@ def overdamped_langevin():
         temperature: float = 1.0,
     ) -> ArrayTree:
         noise = generate_gaussian_noise(rng_key, position)
-        position = jax.tree_util.tree_map(
+        position = jax.tree.map(
             lambda p, g, n: p
             + step_size * g
             + jnp.sqrt(2 * temperature * step_size) * n,
@@ -69,10 +69,8 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
         temperature: float = 1.0,
     ):
         noise = generate_gaussian_noise(rng_key, position)
-        position = jax.tree_util.tree_map(
-            lambda x, p: x + step_size * p, position, momentum
-        )
-        momentum = jax.tree_util.tree_map(
+        position = jax.tree.map(lambda x, p: x + step_size * p, position, momentum)
+        momentum = jax.tree.map(
             lambda p, g, n: (1.0 - alpha * step_size) * p
             + step_size * g
             + jnp.sqrt(
@@ -106,10 +104,8 @@ def sgnht(alpha: float = 0.01, beta: float = 0):
         temperature: float = 1.0,
     ):
         noise = generate_gaussian_noise(rng_key, position)
-        position = jax.tree_util.tree_map(
-            lambda x, p: x + step_size * p, position, momentum
-        )
-        momentum = jax.tree_util.tree_map(
+        position = jax.tree.map(lambda x, p: x + step_size * p, position, momentum)
+        momentum = jax.tree.map(
             lambda p, g, n: (1.0 - xi * step_size) * p
             + step_size * g
             + jnp.sqrt(
@@ -120,8 +116,8 @@ def sgnht(alpha: float = 0.01, beta: float = 0):
             logdensity_grad,
             noise,
         )
-        momentum_dot = jax.tree_util.tree_reduce(
-            operator.add, jax.tree_util.tree_map(lambda x: jnp.sum(x * x), momentum)
+        momentum_dot = jax.tree.reduce(
+            operator.add, jax.tree.map(lambda x: jnp.sum(x * x), momentum)
         )
         d = pytree_size(momentum)
         xi = xi + step_size * (momentum_dot / d - temperature)

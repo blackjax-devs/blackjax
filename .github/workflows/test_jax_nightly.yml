@@ -1,0 +1,25 @@
+name: JAX Nightly
+
+on:
+  schedule:
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  test-jax-nightly:
+    name: Run tests against JAX HEAD
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        python-version: "3.12"
+    - name: Install dependencies
+      run: uv sync --group dev --extra progress
+    - name: Install JAX nightly
+      run: |
+        uv pip install --prerelease=allow --force-reinstall jax jaxlib \
+          -f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html
+    - name: Run tests
+      run: uv run pytest -n auto -vv --benchmark-disable tests

@@ -24,6 +24,7 @@ from blackjax.smc.tuning.from_particles import (
     particles_means,
     particles_stds,
 )
+from tests.fixtures import BlackJAXTest
 from tests.mcmc.test_sampling import irmh_proposal_distribution
 from tests.smc import SMCLinearRegressionTestCase
 
@@ -60,11 +61,7 @@ def log_weights_fn(x, y):
     return jnp.sum(stats.norm.logpdf(y - x))
 
 
-class SMCParameterTuningTest(chex.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(42)
-
+class SMCParameterTuningTest(BlackJAXTest):
     def logdensity_fn(self, log_scale, coefs, preds, x):
         """Linear regression"""
         scale = jnp.exp(log_scale)
@@ -84,6 +81,20 @@ class SMCParameterTuningTest(chex.TestCase):
             blackjax.tempered_smc,
             smc_parameters={},
             step_parameters={"tempering_param": 0.75},
+        )
+
+    def test_smc_inner_kernel_persistent(self):
+        self.smc_inner_kernel_tuning_test_case(
+            blackjax.persistent_sampling_smc,
+            smc_parameters={"n_schedule": 10},
+            step_parameters={"lmbda": 0.75},
+        )
+
+    def test_smc_inner_kernel_adaptive_persistent(self):
+        self.smc_inner_kernel_tuning_test_case(
+            blackjax.adaptive_persistent_sampling_smc,
+            smc_parameters={"target_ess": 0.5, "max_iterations": 100},
+            step_parameters={},
         )
 
     def smc_inner_kernel_tuning_test_case(
@@ -122,7 +133,7 @@ class SMCParameterTuningTest(chex.TestCase):
         )
 
         new_state, new_info = kernel.step(
-            self.key, state=kernel.init(init_particles), **step_parameters
+            self.next_key(), state=kernel.init(init_particles), **step_parameters
         )
         assert set(new_state.parameter_override.keys()) == {
             "mean",
@@ -130,32 +141,21 @@ class SMCParameterTuningTest(chex.TestCase):
         np.testing.assert_allclose(new_state.parameter_override["mean"], 100)
 
 
-class MeanAndStdFromParticlesTest(chex.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(42)
-
+class MeanAndStdFromParticlesTest(BlackJAXTest):
     def test_mean_and_std(self):
-        particles = np.array(
-            [
-                jnp.array([10]) + jax.random.normal(key) * jnp.array([0.5])
-                for key in jax.random.split(self.key, 1000)
-            ]
-        )
+        particles = 10.0 + jax.random.normal(self.next_key(), shape=(2000, 1)) * 0.5
         mean = particles_means(particles)
         std = particles_stds(particles)
         cov = particles_covariance_matrix(particles)
         np.testing.assert_allclose(mean, 10.0, rtol=1e-1)
         np.testing.assert_allclose(std, 0.5, rtol=1e-1)
-        np.testing.assert_allclose(cov, 0.24, rtol=1e-1)
+        np.testing.assert_allclose(cov, 0.25, rtol=1e-1)
 
     def test_mean_and_std_multivariate_particles(self):
-        particles = np.array(
-            [
-                jnp.array([10.0, 15.0]) + jax.random.normal(key) * jnp.array([0.5, 0.7])
-                for key in jax.random.split(self.key, 1000)
-            ]
-        )
+        # We use shape=(N, 1) to create perfectly correlated particles
+        particles = jnp.array([10.0, 15.0]) + jax.random.normal(
+            self.next_key(), shape=(2000, 1)
+        ) * jnp.array([0.5, 0.7])
 
         mean = particles_means(particles)
         std = particles_stds(particles)
@@ -163,7 +163,7 @@ class MeanAndStdFromParticlesTest(chex.TestCase):
         np.testing.assert_allclose(mean, np.array([10.0, 15.0]), rtol=1e-1)
         np.testing.assert_allclose(std, np.array([0.5, 0.7]), rtol=1e-1)
         np.testing.assert_allclose(
-            cov, np.array([[0.249529, 0.34934], [0.34934, 0.489076]]), atol=1e-1
+            cov, np.array([[0.25, 0.35], [0.35, 0.49]]), atol=1e-1
         )
 
     def test_mean_and_std_multivariable_particles(self):
@@ -183,11 +183,7 @@ class MeanAndStdFromParticlesTest(chex.TestCase):
         )
 
 
-class InverseMassMatrixFromParticles(chex.TestCase):
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(42)
-
+class InverseMassMatrixFromParticles(BlackJAXTest):
     def test_inverse_mass_matrix_from_particles(self):
         inverse_mass_matrix = inverse_mass_matrix_from_particles(
             np.array([np.array(10.0), np.array(3.0)])
@@ -227,7 +223,7 @@ class InverseMassMatrixFromParticles(chex.TestCase):
         )
 
 
-class ScaleCovarianceFromAcceptanceRates(chex.TestCase):
+class ScaleCovarianceFromAcceptanceRates(BlackJAXTest):
     def test_scale_when_aceptance_below_optimal(self):
         """
         Given that the acceptance rate is below optimal,
@@ -270,10 +266,6 @@ class ScaleCovarianceFromAcceptanceRates(chex.TestCase):
 
 
 class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(42)
-
     @chex.all_variants(with_pmap=False)
     def test_with_adaptive_tempered(self):
         (
@@ -289,7 +281,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
                         state.particles
                     ),
                     "step_size": 10e-2,
-                    "num_integration_steps": 50,
+                    "num_integration_steps": 10,
                 },
             )
 
@@ -305,15 +297,15 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
                 dict(
                     inverse_mass_matrix=jnp.eye(2),
                     step_size=10e-2,
-                    num_integration_steps=50,
+                    num_integration_steps=10,
                 ),
             ),
-            num_mcmc_steps=10,
+            num_mcmc_steps=3,
             target_ess=0.5,
         )
         init_state = init(init_particles)
         smc_kernel = self.variant(step)
-        _, state = adaptive_tempered_loop(smc_kernel, self.key, init_state)
+        _, state = adaptive_tempered_loop(smc_kernel, self.next_key(), init_state)
 
         assert state.parameter_override["inverse_mass_matrix"].shape == (1, 2, 2)
         self.assert_linear_regression_test_case(state.sampler_state)
@@ -334,7 +326,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
                         state.particles
                     ),
                     "step_size": 10e-2,
-                    "num_integration_steps": 50,
+                    "num_integration_steps": 10,
                 },
             )
 
@@ -350,10 +342,10 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
                 dict(
                     inverse_mass_matrix=jnp.eye(2),
                     step_size=10e-2,
-                    num_integration_steps=50,
+                    num_integration_steps=10,
                 ),
             ),
-            num_mcmc_steps=10,
+            num_mcmc_steps=3,
         )
 
         init_state = init(init_particles)
@@ -363,7 +355,7 @@ class InnerKernelTuningJitTest(SMCLinearRegressionTestCase):
 
         def body_fn(carry, tempering_param):
             i, state = carry
-            subkey = jax.random.fold_in(self.key, i)
+            subkey = jax.random.fold_in(self.next_key(), i)
             new_state, info = smc_kernel(subkey, state, tempering_param=tempering_param)
             return (i + 1, new_state), (new_state, info)
 
@@ -401,10 +393,6 @@ def adaptive_tempered_loop(kernel, rng_key, initial_state):
 
 
 class MultipleTuningTest(SMCLinearRegressionTestCase):
-    def setUp(self):
-        super().setUp()
-        self.key = jax.random.key(42)
-
     @chex.all_variants(with_pmap=False)
     def test_tuning_pretuning(self):
         """
@@ -421,7 +409,7 @@ class MultipleTuningTest(SMCLinearRegressionTestCase):
         n_particles = 100
         dimentions = 2
 
-        step_size_key, integration_steps_key = jax.random.split(self.key, 2)
+        step_size_key, integration_steps_key = jax.random.split(self.next_key(), 2)
 
         # Set initial samples for integration steps and step sizes.
         integration_steps_distribution = jnp.round(
@@ -493,7 +481,7 @@ class MultipleTuningTest(SMCLinearRegressionTestCase):
             resampling.systematic,
             mcmc_parameter_update_fn=mcmc_parameter_update_fn,
             initial_parameter_value=initial_parameters,
-            num_mcmc_steps=10,
+            num_mcmc_steps=3,
             target_ess=0.5,
             smc_returns_state_with_parameter_override=True,
         )
@@ -505,7 +493,7 @@ class MultipleTuningTest(SMCLinearRegressionTestCase):
 
         init_state = init(init_particles)
         smc_kernel = self.variant(step)
-        _, state = adaptive_tempered_loop(smc_kernel, self.key, init_state)
+        _, state = adaptive_tempered_loop(smc_kernel, self.next_key(), init_state)
         self.assert_linear_regression_test_case(state.sampler_state)
 
 

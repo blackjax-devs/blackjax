@@ -12,14 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the HMC Kernel"""
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import jax
+import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.trajectory as trajectory
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.proposal import safe_energy_diff, static_binomial_sampling
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
@@ -30,6 +31,7 @@ __all__ = [
     "init",
     "build_kernel",
     "as_top_level_api",
+    "multinomial_hmc_proposal",
 ]
 
 
@@ -90,9 +92,166 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable):
     return HMCState(position, logdensity, logdensity_grad)
 
 
+def flip_momentum(
+    state: integrators.IntegratorState,
+) -> integrators.IntegratorState:
+    """Flip the momentum at the end of the trajectory.
+
+    To guarantee time-reversibility (hence detailed balance) we
+    need to flip the last state's momentum. If we run the hamiltonian
+    dynamics starting from the last state with flipped momentum we
+    should indeed retrieve the initial state (with flipped momentum).
+
+    """
+    flipped_momentum = jax.tree.map(lambda m: -1.0 * m, state.momentum)
+    return integrators.IntegratorState(
+        state.position,
+        flipped_momentum,
+        state.logdensity,
+        state.logdensity_grad,
+    )
+
+
+def hmc_proposal(
+    integrator: Callable,
+    kinetic_energy: metrics.KineticEnergy,
+    step_size: float | ArrayLikeTree,
+    num_integration_steps: int = 1,
+    divergence_threshold: float = 1000,
+    *,
+    sample_proposal: Callable = static_binomial_sampling,
+) -> Callable:
+    """Vanilla HMC algorithm.
+
+    The algorithm integrates the trajectory applying a symplectic integrator
+    `num_integration_steps` times in one direction to get a proposal and uses a
+    Metropolis-Hastings acceptance step to either reject or accept this
+    proposal. This is what people usually refer to when they talk about "the
+    HMC algorithm".
+
+    Parameters
+    ----------
+    integrator
+        Symplectic integrator used to build the trajectory step by step.
+    kinetic_energy
+        Function that computes the kinetic energy.
+    step_size
+        Size of the integration step.
+    num_integration_steps
+        Number of times we run the symplectic integrator to build the trajectory
+    divergence_threshold
+        Threshold above which we say that there is a divergence.
+
+    Returns
+    -------
+    A kernel that generates a new chain state and information about the transition.
+
+    """
+    build_trajectory = trajectory.static_integration(integrator)
+    hmc_energy_fn = hmc_energy(kinetic_energy)
+
+    def generate(
+        rng_key, state: integrators.IntegratorState
+    ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
+        """Generate a new chain state."""
+        end_state = build_trajectory(state, step_size, num_integration_steps)
+        end_state = flip_momentum(end_state)
+        proposal_energy = hmc_energy_fn(state)
+        new_energy = hmc_energy_fn(end_state)
+        delta_energy = safe_energy_diff(proposal_energy, new_energy)
+        is_diverging = -delta_energy > divergence_threshold
+        sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
+        do_accept, p_accept, other_proposal_info = info
+
+        info = HMCInfo(
+            state.momentum,
+            p_accept,
+            do_accept,
+            is_diverging,
+            new_energy,
+            end_state,
+            num_integration_steps,
+        )
+
+        return sampled_state, info, other_proposal_info
+
+    return generate
+
+
+def multinomial_hmc_proposal(
+    integrator: Callable,
+    kinetic_energy: metrics.KineticEnergy,
+    step_size: float | ArrayLikeTree,
+    num_integration_steps: int = 1,
+    divergence_threshold: float = 1000,
+) -> Callable:
+    """Multinomial HMC proposal.
+
+    Instead of proposing only the trajectory endpoint (as standard HMC does),
+    this builds the full leapfrog trajectory of ``num_integration_steps`` and
+    samples one state proportional to ``exp(-H(z_i))`` using progressive
+    reservoir sampling (``progressive_uniform_sampling``).
+
+    Parameters
+    ----------
+    integrator
+        Symplectic integrator used to build the trajectory step by step.
+    kinetic_energy
+        Function that computes the kinetic energy.
+    step_size
+        Size of the integration step.
+    num_integration_steps
+        Number of times we run the symplectic integrator to build the trajectory.
+    divergence_threshold
+        Threshold above which we say that there is a divergence.
+
+    Returns
+    -------
+    A kernel that generates a new chain state and information about the
+    transition.  Returns the same 3-tuple as :func:`hmc_proposal` for
+    interface compatibility: ``(sampled_state, info, None)``.
+
+    """
+    build_trajectory = trajectory.static_progressive_integration(
+        integrator, kinetic_energy, num_integration_steps, divergence_threshold
+    )
+
+    def generate(
+        rng_key, state: integrators.IntegratorState
+    ) -> tuple[integrators.IntegratorState, HMCInfo, None]:
+        """Generate a new chain state.
+
+        ``is_accepted`` is always ``True`` because multinomial HMC has no
+        Metropolis-Hastings rejection step; the sample is drawn directly
+        from the trajectory.  ``acceptance_rate`` is a diagnostic measuring
+        the average weight of trajectory states relative to the initial
+        energy.
+        """
+        proposal, is_diverging = build_trajectory(rng_key, state, step_size)
+
+        # Diagnostic only: average exponentiated energy difference across
+        # the trajectory.  Not a standard MH acceptance probability.
+        acceptance_rate = jnp.exp(proposal.sum_log_p_accept) / num_integration_steps
+
+        info = HMCInfo(
+            momentum=state.momentum,
+            acceptance_rate=acceptance_rate,
+            is_accepted=True,
+            is_divergent=is_diverging,
+            energy=proposal.energy,
+            proposal=proposal.state,
+            num_integration_steps=num_integration_steps,
+        )
+
+        return proposal.state, info, None
+
+    return generate
+
+
 def build_kernel(
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: float = 1000,
+    build_proposal: Callable = hmc_proposal,
 ):
     """Build a HMC kernel.
 
@@ -103,6 +262,11 @@ def build_kernel(
     divergence_threshold
         Value of the difference in energy above which we consider that the transition is
         divergent.
+    build_proposal
+        A callable with signature
+        ``(integrator, kinetic_energy, step_size, num_integration_steps,
+        divergence_threshold) -> generate`` that builds the proposal function.
+        Defaults to :func:`hmc_proposal` (standard endpoint HMC).
 
     Returns
     -------
@@ -124,7 +288,7 @@ def build_kernel(
 
         metric = metrics.default_metric(inverse_mass_matrix)
         symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
-        proposal_generator = hmc_proposal(
+        generate = build_proposal(
             symplectic_integrator,
             metric.kinetic_energy,
             step_size,
@@ -140,7 +304,7 @@ def build_kernel(
         integrator_state = integrators.IntegratorState(
             position, momentum, logdensity, logdensity_grad
         )
-        proposal, info, _ = proposal_generator(key_integrator, integrator_state)
+        proposal, info, _ = generate(key_integrator, integrator_state)
         proposal = HMCState(
             proposal.position, proposal.logdensity, proposal.logdensity_grad
         )
@@ -158,6 +322,7 @@ def as_top_level_api(
     *,
     divergence_threshold: int = 1000,
     integrator: Callable = integrators.velocity_verlet,
+    build_proposal: Callable = hmc_proposal,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the HMC kernel.
 
@@ -227,112 +392,23 @@ def as_top_level_api(
     integrator
         (algorithm parameter) The symplectic integrator to use to integrate the
         trajectory.
+    build_proposal
+        A callable with signature
+        ``(integrator, kinetic_energy, step_size, num_integration_steps,
+        divergence_threshold) -> generate`` that builds the proposal function.
+        Defaults to :func:`hmc_proposal` (standard endpoint HMC).  Pass
+        :func:`multinomial_hmc_proposal` for multinomial trajectory sampling.
 
     Returns
     -------
     A ``SamplingAlgorithm``.
     """
 
-    kernel = build_kernel(integrator, divergence_threshold)
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            inverse_mass_matrix,
-            num_integration_steps,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
-
-
-def hmc_proposal(
-    integrator: Callable,
-    kinetic_energy: metrics.KineticEnergy,
-    step_size: Union[float, ArrayLikeTree],
-    num_integration_steps: int = 1,
-    divergence_threshold: float = 1000,
-    *,
-    sample_proposal: Callable = static_binomial_sampling,
-) -> Callable:
-    """Vanilla HMC algorithm.
-
-    The algorithm integrates the trajectory applying a symplectic integrator
-    `num_integration_steps` times in one direction to get a proposal and uses a
-    Metropolis-Hastings acceptance step to either reject or accept this
-    proposal. This is what people usually refer to when they talk about "the
-    HMC algorithm".
-
-    Parameters
-    ----------
-    integrator
-        Symplectic integrator used to build the trajectory step by step.
-    kinetic_energy
-        Function that computes the kinetic energy.
-    step_size
-        Size of the integration step.
-    num_integration_steps
-        Number of times we run the symplectic integrator to build the trajectory
-    divergence_threshold
-        Threshold above which we say that there is a divergence.
-
-    Returns
-    -------
-    A kernel that generates a new chain state and information about the transition.
-
-    """
-    build_trajectory = trajectory.static_integration(integrator)
-    hmc_energy_fn = hmc_energy(kinetic_energy)
-
-    def generate(
-        rng_key, state: integrators.IntegratorState
-    ) -> tuple[integrators.IntegratorState, HMCInfo, ArrayTree]:
-        """Generate a new chain state."""
-        end_state = build_trajectory(state, step_size, num_integration_steps)
-        end_state = flip_momentum(end_state)
-        proposal_energy = hmc_energy_fn(state)
-        new_energy = hmc_energy_fn(end_state)
-        delta_energy = safe_energy_diff(proposal_energy, new_energy)
-        is_diverging = -delta_energy > divergence_threshold
-        sampled_state, info = sample_proposal(rng_key, delta_energy, state, end_state)
-        do_accept, p_accept, other_proposal_info = info
-
-        info = HMCInfo(
-            state.momentum,
-            p_accept,
-            do_accept,
-            is_diverging,
-            new_energy,
-            end_state,
-            num_integration_steps,
-        )
-
-        return sampled_state, info, other_proposal_info
-
-    return generate
-
-
-def flip_momentum(
-    state: integrators.IntegratorState,
-) -> integrators.IntegratorState:
-    """Flip the momentum at the end of the trajectory.
-
-    To guarantee time-reversibility (hence detailed balance) we
-    need to flip the last state's momentum. If we run the hamiltonian
-    dynamics starting from the last state with flipped momentum we
-    should indeed retrieve the initial state (with flipped momentum).
-
-    """
-    flipped_momentum = jax.tree_util.tree_map(lambda m: -1.0 * m, state.momentum)
-    return integrators.IntegratorState(
-        state.position,
-        flipped_momentum,
-        state.logdensity,
-        state.logdensity_grad,
+    kernel = build_kernel(integrator, divergence_threshold, build_proposal)
+    metric = metrics.default_metric(inverse_mass_matrix)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(step_size, metric, num_integration_steps),
     )

@@ -31,10 +31,10 @@ Sampling with a few chains has become ubiquitous in modern probabilistic program
 `JAX` provides two distinct primitives to "run things in parallel", and it is important to understand the difference to make the best use of Blackjax:
 
 - [jax.vmap](https://jax.readthedocs.io/en/latest/jax.html?highlight=vmap#jax.vmap) is used to SIMD vectorize `JAX` code. It is important to remember that vectorization happens at the *instruction level*, each CPU or GPU  instruction will the process the information from your different chains, *one intructions at a time*. This can have some unexpected consequences;
-- [jax.pmap](https://jax.readthedocs.io/en/latest/_autosummary/jax.pmap.html#jax.pmap) is a higher level abstraction, where processes are split across multiple devices: GPUs, TPUs, or CPU cores.
+- JAX's [sharding API](https://docs.jax.dev/en/latest/sharding.html) is a higher-level abstraction where computation is distributed across multiple devices (GPUs, TPUs, or CPU cores) by annotating arrays with a `NamedSharding`. This replaces the now-deprecated `jax.pmap`.
 
-For detailed walkthrough both primitives we invite your to read JAX's tutorials on [Automatic Vectorization](https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html)
-and [Parallel Evaluation](https://jax.readthedocs.io/en/latest/jax-101/06-parallelism.html).
+For detailed walkthroughs of both primitives we invite you to read JAX's tutorials on [Automatic Vectorization](https://jax.readthedocs.io/en/latest/jax-101/03-vectorization.html)
+and [Distributed arrays and automatic parallelism](https://docs.jax.dev/en/latest/notebooks/Distributed_arrays_and_automatic_parallelization.html).
 
 ## NUTS in parallel
 
@@ -98,7 +98,7 @@ step_size = 1e-3
 nuts = blackjax.nuts(logdensity, step_size, inv_mass_matrix)
 ```
 
-And finally, to put `jax.vmap` and `jax.pmap` on an equal foot we sample as many chains as the machine has CPU cores:
+And finally, to compare `jax.vmap` against device-parallel execution we sample as many chains as the machine has CPU cores:
 
 ```{code-cell} ipython3
 import multiprocessing
@@ -155,15 +155,15 @@ Remember when we said SIMD vectorization happens at the instruction level? At ea
 You may be thinking that instead of applying `jax.vmap` to `one_step` we could apply it to the `inference_loop_multiple_chains`, and the chains will run independently. Unfortunately, this is not how SIMD vectorization work although, granted, JAX's user interface could led you to think otherwise.
 ```
 
-### Using `jax.pmap`
+### Using JAX's sharding API
 
-Now you may be thinking: we are limited by one chain if we synchronize at the step level, but things being random, chains that run truly in parallel should take in total roughly similar numbers of integration steps. So `jax.pmap` should help here. This is true, let's prove it!
+Now you may be thinking: we are limited by one chain if we synchronize at the step level, but things being random, chains that run truly in parallel should take in total roughly similar numbers of integration steps. So running chains on separate devices should help here. This is true, let's prove it!
 
-#### A note on using `jax.pmap` on CPU
+#### A note on using the sharding API on CPU
 
 JAX will treat your CPU as a single device by default, regardless of the number of cores available.
 
-Unfortunately, this means that using `pmap` is not possible out of the box -- we'll first need
+Unfortunately, this means that multi-device parallelism is not possible out of the box -- we'll first need
 to instruct JAX to split the CPU into multiple devices. See [this issue](https://github.com/google/jax/issues/1408) for more discussion on this topic.
 
 Currently, this can only be done via `XLA_FLAGS` environmental variable.
@@ -181,68 +181,66 @@ os.environ["XLA_FLAGS"] = "--xla_force_host_platform_device_count={}".format(
 )
 ```
 
-We advise you to confirm that JAX has successfuly recognized our CPU as multiple devices with the following command before moving forward:
+We advise you to confirm that JAX has successfully recognized our CPU as multiple devices with the following command before moving forward:
 
 ```{code-cell} ipython3
 len(jax.devices())
 ```
 
-##### Choosing the number of devices
-
-`jax.pmap` has one more limitation: it is not able to parallelize the execution when you ask it to perform more computations than there are available deviced. The following code snippet asks `jax.pmap` perform 1024 operations in parallel:
-
-```{code-cell} ipython3
-def fn(x):
-    return x + 1
-
-try:
-    data = jnp.arange(1024)
-    parallel_fn = jax.pmap(fn)
-    parallel_fn(data)
-except Exception as e:
-    print(e)
-```
-
-This means that you will only be able to run as many MCMC chains as you have CPU cores. See this [question](https://github.com/google/jax/discussions/4198) for a more detailed discussion,
-and a workaround involving nesting `jax.pmap` and `jax.vmap` calls.
-
-Another option (we advise against) is to set the device count to a number larger than the core count, e.g. `200`, but it's [unclear what side effects it might have](https://github.com/google/jax/issues/1408#issuecomment-536158048).
-
 ### Back to our example
 
-In case of `jax.pmap`, we apply the transformation directly to the original `inference_loop` function.
+JAX's sharding API (introduced as the replacement for the deprecated `jax.pmap`) lets us distribute computation across devices using `jax.shard_map`. This runs the function independently on each device, one chain per device.
+
+The recipe is:
+1. Create a `Mesh` that names the device axis `'chain'`.
+2. Shard the per-chain inputs (RNG keys and initial states) with `jax.device_put`.
+3. Use `jax.shard_map` to dispatch one chain per device, then compile with `jax.jit`.
+
+Inside `shard_map`, each device receives a `(1, ...)` slice of the input, so we squeeze the leading axis on the way in and restore it on the way out.
 
 ```{code-cell} ipython3
-inference_loop_multiple_chains = jax.pmap(inference_loop, in_axes=(0, None, 0, None), static_broadcasted_argnums=(1, 3))
+from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
+
+mesh = jax.make_mesh((num_chains,), ('chain',))
+sharding = NamedSharding(mesh, P('chain'))
+```
+
+```{code-cell} ipython3
+rng_key, sample_key = jax.random.split(rng_key)
+sample_keys = jax.device_put(jax.random.split(sample_key, num_chains), sharding)
+initial_states_sharded = jax.device_put(initial_states, sharding)
 ```
 
 ```{note}
-We could have done that in the `jax.vmap` example (and it wouldn't have helped), but we prefered to highlight in the code the fact that vectorization happens at the instruction level.
+You can inspect the sharding with `jax.debug.visualize_array_sharding(initial_states_sharded.position["loc"])` to confirm each chain is on its own device.
 ```
 
-We are now ready to sample:
+```{code-cell} ipython3
+def run_one_chain(key, state):
+    result = inference_loop(key[0], nuts.step, jax.tree.map(lambda x: x[0], state), 2_000)
+    return jax.tree.map(lambda x: x[None], result)
+```
 
 ```{code-cell} ipython3
 %%time
-rng_key, sample_key = jax.random.split(rng_key)
-sample_keys = jax.random.split(sample_key, num_chains)
-
-pmap_states = inference_loop_multiple_chains(
-    sample_keys, nuts.step, initial_states, 2_000
-)
-_ = pmap_states.position["loc"].block_until_ready()
+sharded_states = jax.jit(jax.shard_map(
+    run_one_chain,
+    mesh=mesh,
+    in_specs=(P('chain'), P('chain')),
+    out_specs=P('chain'),
+    check_vma=False,
+))(sample_keys, initial_states_sharded)
+_ = sharded_states.position["loc"].block_until_ready()
 ```
 
-Wow, this was much faster, our intuition was correct! Note that the samples are transposed compared to the ones obtained with `jax.vmap`.
-
-Also, note how the shape of the posterior samples are different:
+Wow, this was much faster, our intuition was correct! Note that the sample shape is `(num_chains, num_samples)`, the same convention as the `jax.vmap` example.
 
 ```{code-cell} ipython3
-states.position["loc"].shape, pmap_states.position["loc"].shape
+states.position["loc"].shape, sharded_states.position["loc"].shape
 ```
 
 ### Conclusions
 
-In this example the different between `jax.vmap` and `jax.pmap` is dramatic: it takes several minutes to `jax.vmap` and a few seconds for `jax.pmap` to sample the same number of chains. This is expected for NUTS, and other adaptive algorithms: each chain runs a different number of internal steps for each sample generated and we need to wait for the slowest chain.
+In this example the difference between `jax.vmap` and the sharding API is dramatic: it takes several minutes with `jax.vmap` and a few seconds with device-parallel execution to sample the same number of chains. This is expected for NUTS, and other adaptive algorithms: each chain runs a different number of internal steps for each sample generated and we need to wait for the slowest chain.
 
-We saw one possible solutions for those who just want a few chains to run diagnostics: parallelize using `jax.pmap`. For the thousands of chains we mentionned earlier you will need something different: either distribute on several machine (expensive), or design new algorithms altogether. HMC, for instance, runs the same number of integration steps on every chain and thus doesn't exhibit the same synchronization problem. That's the idea behind algorithms like ChEEs and MEADS! This is a very active area of research, and now you understand why.
+We saw one possible solution for those who just want a few chains to run diagnostics: distribute chains across devices using JAX's sharding API. For the thousands of chains we mentioned earlier you will need something different: either distribute on several machines (expensive), or design new algorithms altogether. HMC, for instance, runs the same number of integration steps on every chain and thus doesn't exhibit the same synchronization problem. That's the idea behind algorithms like ChEEs and MEADS! This is a very active area of research, and now you understand why.

@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, Union
+from typing import Callable
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc import hmc
-from blackjax.types import ArrayTree, PRNGKey
 
 __all__ = ["init", "build_kernel", "as_top_level_api"]
 
@@ -30,7 +29,7 @@ build_kernel = hmc.build_kernel
 def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
-    mass_matrix: Union[metrics.Metric, Callable],
+    mass_matrix: metrics.Metric | Callable,
     num_integration_steps: int,
     *,
     divergence_threshold: int = 1000,
@@ -71,19 +70,9 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
     kernel = build_kernel(integrator, divergence_threshold)
-
-    def init_fn(position: ArrayTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            mass_matrix,
-            num_integration_steps,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(step_size, mass_matrix, num_integration_steps),
+    )

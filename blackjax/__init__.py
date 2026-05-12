@@ -1,10 +1,12 @@
 import dataclasses
+import functools
 from typing import Callable
 
 from blackjax._version import __version__
 
 from .adaptation.adjusted_mclmc_adaptation import adjusted_mclmc_find_L_and_step_size
 from .adaptation.chees_adaptation import chees_adaptation
+from .adaptation.low_rank_adaptation import low_rank_window_adaptation
 from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.meads_adaptation import meads_adaptation
 from .adaptation.pathfinder_adaptation import pathfinder_adaptation
@@ -14,11 +16,13 @@ from .diagnostics import effective_sample_size as ess
 from .diagnostics import potential_scale_reduction as rhat
 from .mcmc import adjusted_mclmc as _adjusted_mclmc
 from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
-from .mcmc import barker
+from .mcmc import barker as _barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
 from .mcmc import hmc as _hmc
+from .mcmc import laplace_dynamic_hmc as _laplace_dynamic_hmc
+from .mcmc import laplace_hmc as _laplace_hmc
 from .mcmc import mala as _mala
 from .mcmc import marginal_latent_gaussian
 from .mcmc import mclmc as _mclmc
@@ -44,11 +48,12 @@ from .smc import partial_posteriors_path as _partial_posteriors_smc
 from .smc import persistent_sampling
 from .smc import pretuning as _pretuning
 from .smc import tempered
+from .vi import fullrank_vi as _fullrank_vi
 from .vi import meanfield_vi as _meanfield_vi
+from .vi import multipathfinder as _multipathfinder
 from .vi import pathfinder as _pathfinder
 from .vi import schrodinger_follmer as _schrodinger_follmer
 from .vi import svgd as _svgd
-from .vi.pathfinder import PathFinderAlgorithm
 
 """
 The above three classes exist as a backwards compatible way of exposing both the high level, differentiable
@@ -87,7 +92,7 @@ class GeneratePathfinderAPI:
     approximate: Callable
     sample: Callable
 
-    def __call__(self, *args, **kwargs) -> PathFinderAlgorithm:
+    def __call__(self, *args, **kwargs) -> VIAlgorithm:
         return self.differentiable(*args, **kwargs)
 
 
@@ -104,10 +109,12 @@ rmh = GenerateSamplingAPI(rmh_as_top_level_api, random_walk.init, random_walk.bu
 irmh = GenerateSamplingAPI(
     irmh_as_top_level_api, random_walk.init, random_walk.build_irmh
 )
-dynamic_hmc = generate_top_level_api_from(_dynamic_hmc)
+dhmc = generate_top_level_api_from(_dynamic_hmc)
+dynamic_hmc = dhmc  # backward-compatible alias
 rmhmc = generate_top_level_api_from(_rmhmc)
 mala = generate_top_level_api_from(_mala)
 mgrad_gaussian = generate_top_level_api_from(marginal_latent_gaussian)
+laplace_hmc = generate_top_level_api_from(_laplace_hmc)
 orbital_hmc = generate_top_level_api_from(periodic_orbital)
 
 additive_step_random_walk = GenerateSamplingAPI(
@@ -123,9 +130,53 @@ adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
 adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
 ghmc = generate_top_level_api_from(_ghmc)
-barker_proposal = generate_top_level_api_from(barker)
+barker = generate_top_level_api_from(_barker)
+barker_proposal = barker  # backwards-compatible alias
 
-hmc_family = [hmc, nuts]
+mhmc = GenerateSamplingAPI(
+    functools.partial(
+        _hmc.as_top_level_api, build_proposal=_hmc.multinomial_hmc_proposal
+    ),
+    _hmc.init,  # intentional: mhmc shares HMCState with standard hmc
+    functools.partial(_hmc.build_kernel, build_proposal=_hmc.multinomial_hmc_proposal),
+)
+multinomial_hmc = mhmc  # backward-compatible alias
+
+dmhmc = GenerateSamplingAPI(
+    functools.partial(
+        _dynamic_hmc.as_top_level_api, build_proposal=_hmc.multinomial_hmc_proposal
+    ),
+    _dynamic_hmc.init,  # shares DynamicHMCState with dhmc
+    functools.partial(
+        _dynamic_hmc.build_kernel, build_proposal=_hmc.multinomial_hmc_proposal
+    ),
+)
+
+laplace_mhmc = GenerateSamplingAPI(
+    functools.partial(
+        _laplace_hmc.as_top_level_api, build_proposal=_hmc.multinomial_hmc_proposal
+    ),
+    _laplace_hmc.init,  # shares LaplaceHMCState with laplace_hmc
+    functools.partial(
+        _laplace_hmc.build_kernel, build_proposal=_hmc.multinomial_hmc_proposal
+    ),
+)
+
+laplace_dhmc = generate_top_level_api_from(_laplace_dynamic_hmc)
+
+laplace_dmhmc = GenerateSamplingAPI(
+    functools.partial(
+        _laplace_dynamic_hmc.as_top_level_api,
+        build_proposal=_hmc.multinomial_hmc_proposal,
+    ),
+    _laplace_dynamic_hmc.init,  # shares LaplaceDynamicHMCState with laplace_dhmc
+    functools.partial(
+        _laplace_dynamic_hmc.build_kernel,
+        build_proposal=_hmc.multinomial_hmc_proposal,
+    ),
+)
+
+hmc_family = [hmc, nuts, mhmc]
 
 # SMC
 adaptive_persistent_sampling_smc = generate_top_level_api_from(
@@ -159,6 +210,12 @@ csgld = generate_top_level_api_from(_csgld)
 svgd = generate_top_level_api_from(_svgd)
 
 # variational inference
+fullrank_vi = GenerateVariationalAPI(
+    _fullrank_vi.as_top_level_api,
+    _fullrank_vi.init,
+    _fullrank_vi.step,
+    _fullrank_vi.sample,
+)
 meanfield_vi = GenerateVariationalAPI(
     _meanfield_vi.as_top_level_api,
     _meanfield_vi.init,
@@ -176,17 +233,64 @@ pathfinder = GeneratePathfinderAPI(
     _pathfinder.as_top_level_api, _pathfinder.approximate, _pathfinder.sample
 )
 
+multipathfinder = _multipathfinder.as_top_level_api
+
 
 __all__ = [
     "__version__",
     "dual_averaging",  # optimizers
     "lbfgs",
+    "hmc",  # mcmc
+    "mhmc",
+    "nuts",
+    "dhmc",
+    "dmhmc",
+    "mala",
+    "rmhmc",
+    "ghmc",
+    "barker",
+    "elliptical_slice",
+    "mclmc",
+    "adjusted_mclmc",
+    "adjusted_mclmc_dynamic",
+    "orbital_hmc",
+    "mgrad_gaussian",
+    "rmh",
+    "irmh",
+    "additive_step_random_walk",
+    "laplace_hmc",
+    "laplace_mhmc",
+    "laplace_dhmc",
+    "laplace_dmhmc",
+    "multinomial_hmc",  # backward-compatible alias for mhmc
+    "dynamic_hmc",  # backward-compatible alias for dhmc
+    "barker_proposal",  # backward-compatible alias for barker
     "window_adaptation",  # mcmc adaptation
+    "low_rank_window_adaptation",
     "meads_adaptation",
     "chees_adaptation",
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation
     "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
+    "adaptive_tempered_smc",  # smc
+    "tempered_smc",
+    "adaptive_persistent_sampling_smc",
+    "persistent_sampling_smc",
+    "partial_posteriors_smc",
+    "pretuning",
+    "inner_kernel_tuning",
+    "sgld",  # sgmcmc
+    "sghmc",
+    "sgnht",
+    "csgld",
+    "svgd",
+    "pathfinder",  # vi
+    "multipathfinder",
+    "meanfield_vi",
+    "fullrank_vi",
+    "schrodinger_follmer",
     "ess",  # diagnostics
     "rhat",
+    "SamplingAlgorithm",  # base
+    "VIAlgorithm",
 ]

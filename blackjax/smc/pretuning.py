@@ -1,4 +1,4 @@
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -17,12 +17,12 @@ from blackjax.util import generate_gaussian_noise
 
 class SMCInfoWithParameterDistribution(NamedTuple):
     """Stores both the sampling status and also a dictionary
-    with parameter names as keys and (n_particles, *) arrays as values.
+    with parameter names as keys and ``(n_particles, *)`` arrays as values.
     The latter represents a parameter per chain for the next mutation step.
     """
 
     smc_info: SMCInfo
-    parameter_override: Dict[str, ArrayTree]
+    parameter_override: dict[str, ArrayTree]
 
 
 def esjd(m):
@@ -114,8 +114,8 @@ def build_pretune(
     sigma_parameters: ArrayLikeTree,
     n_particles: int,
     performance_of_chain_measure_factory: Callable = default_measure_factory,
-    natural_parameters: Optional[List[str]] = None,
-    positive_parameters: Optional[List[str]] = None,
+    natural_parameters: list[str] | None = None,
+    positive_parameters: list[str] | None = None,
 ):
     """Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure.
     The goal is to maintain a probability distribution of parameters, in order
@@ -132,7 +132,10 @@ def build_pretune(
 
         def round_to_integer_fn(x):
             for k in natural_parameters:
-                x[k] = jax.tree.map(lambda a: jnp.abs(jnp.round(a).astype(int)), x[k])
+                x[k] = jax.tree.map(
+                    lambda a: jnp.maximum(jnp.abs(jnp.round(a)).astype(int), 1),
+                    x[k],
+                )
             return x
 
     if positive_parameters is None:
@@ -226,13 +229,17 @@ def build_kernel(
         A function that returns the probability at a given position.
     mcmc_step_fn:
         The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
-        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
+        ``mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())``
     mcmc_init_fn
         A callable that initializes the inner kernel
-    pretune_fn:
+    pretune_fn
         A callable that can update the probability distribution of parameters.
-    extra_parameters:
-        parameters to be used for the creation of the smc_algorithm.
+    extra_parameters
+        Parameters to be used for the creation of the smc_algorithm.
+
+    Returns
+    -------
+    A ``kernel(rng_key, state, **extra_step_parameters) -> (StateWithParameterOverride, SMCInfo)`` function.
     """
     delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
 
@@ -267,7 +274,7 @@ def build_kernel(
 
     def kernel(
         rng_key: PRNGKey, state: StateWithParameterOverride, **extra_step_parameters
-    ) -> Tuple[StateWithParameterOverride, SMCInfo]:
+    ) -> tuple[StateWithParameterOverride, SMCInfo]:
         extra_parameters["update_particles_fn"] = pretuned_step
         step_fn = smc_algorithm(
             logprior_fn=logprior_fn,
@@ -289,6 +296,22 @@ def build_kernel(
 
 
 def init(alg_init_fn, position, initial_parameter_value):
+    """Initialize a pretuning SMC state.
+
+    Parameters
+    ----------
+    alg_init_fn
+        The ``init`` function of the underlying SMC algorithm.
+    position
+        Initial particle positions (PyTree).
+    initial_parameter_value
+        Initial dict of MCMC parameters assigned to each chain.
+
+    Returns
+    -------
+    A StateWithParameterOverride wrapping the SMC state and the initial
+    parameter distribution.
+    """
     return StateWithParameterOverride(alg_init_fn(position), initial_parameter_value)
 
 
@@ -311,21 +334,31 @@ def as_top_level_api(
     Parameters
     ----------
     smc_algorithm
-        Either blackjax.adaptive_tempered_smc or blackjax.tempered_smc (or any other implementation of
-        a sampling algorithm that returns an SMCState and SMCInfo pair).
+        Either ``blackjax.adaptive_tempered_smc`` or ``blackjax.tempered_smc``
+        (or any implementation returning an SMCState/SMCInfo pair).
     logprior_fn
-        A function that computes the log density of the prior distribution
+        A function that computes the log density of the prior distribution.
     loglikelihood_fn
-        A function that returns the probability at a given position.
-    mcmc_step_fn:
-        The transition kernel, should take as parameters the dictionary output of mcmc_parameter_update_fn.
-        mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **mcmc_parameter_update_fn())
+        A function that returns the log-likelihood at a given position.
+    mcmc_step_fn
+        The transition kernel; takes parameters from ``mcmc_parameter_update_fn``.
+        Signature: ``mcmc_step_fn(rng_key, state, tempered_logposterior_fn, **params)``.
     mcmc_init_fn
-        A callable that initializes the inner kernel
-    pretune_fn:
-        A callable that can update the probability distribution of parameters.
-    extra_parameters:
-        parameters to be used for the creation of the smc_algorithm.
+        A callable that initializes the inner MCMC kernel.
+    resampling_fn
+        Resampling function (from ``blackjax.smc.resampling``).
+    num_mcmc_steps
+        Number of MCMC steps per SMC iteration.
+    initial_parameter_value
+        Initial dict of MCMC parameters assigned to each chain.
+    pretune_fn
+        A callable that updates the probability distribution of parameters.
+    extra_parameters
+        Additional keyword arguments forwarded to the smc_algorithm.
+
+    Returns
+    -------
+    A ``SamplingAlgorithm`` with ``init`` and ``step`` methods.
     """
 
     kernel = build_kernel(
@@ -346,7 +379,7 @@ def as_top_level_api(
 
     def step_fn(
         rng_key: PRNGKey, state, **extra_step_parameters
-    ) -> Tuple[StateWithParameterOverride, SMCInfo]:
+    ) -> tuple[StateWithParameterOverride, SMCInfo]:
         return kernel(rng_key, state, **extra_step_parameters)
 
     return SamplingAlgorithm(init_fn, step_fn)

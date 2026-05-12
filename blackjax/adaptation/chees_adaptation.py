@@ -1,7 +1,7 @@
 """Public API for ChEES-HMC"""
 
 from functools import partial
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -74,7 +74,7 @@ def base(
     target_acceptance_rate: float,
     decay_rate: float,
     max_leapfrog_steps: int,
-) -> Tuple[Callable, Callable]:
+) -> tuple[Callable, Callable]:
     """Maximizing the Change in the Estimator of the Expected Square criterion
     (trajectory length) and dual averaging procedure (step size) for the jittered
     Hamiltonian Monte Carlo kernel :cite:p:`hoffman2021adaptive`.
@@ -176,20 +176,20 @@ def base(
         ) * log_step_size_ma + update_weight * new_log_step_size
 
         w = jnp.where(~is_divergent, acceptance_probabilities, 0.0)
-        proposals_mean = jax.tree_util.tree_map(
+        proposals_mean = jax.tree.map(
             lambda p: weighted_empirical_mean(p, w), proposed_positions
         )
         # The above weighted mean is presumably better than the simple mean:
-        # proposals_mean = jax.tree_util.tree_map(
+        # proposals_mean = jax.tree.map(
         #     lambda p: jnp.nanmean(p, axis=0), proposed_positions
         # )
-        initials_mean = jax.tree_util.tree_map(
+        initials_mean = jax.tree.map(
             lambda p: jnp.nanmean(p, axis=0), initial_positions
         )
-        proposals_centered = jax.tree_util.tree_map(
+        proposals_centered = jax.tree.map(
             lambda p, pm: p - pm, proposed_positions, proposals_mean
         )
-        initials_centered = jax.tree_util.tree_map(
+        initials_centered = jax.tree.map(
             lambda p, pm: p - pm, initial_positions, initials_mean
         )
 
@@ -216,7 +216,7 @@ def base(
             trajectory_gradient, optim_state, log_trajectory_length
         )
 
-        updates = jax.tree_util.tree_map(
+        updates = jax.tree.map(
             lambda u: jnp.clip(u, -LOG_UPDATE_CLIP, LOG_UPDATE_CLIP), updates
         )
         log_trajectory_length_ = optax.apply_updates(log_trajectory_length, updates)
@@ -310,7 +310,7 @@ def chees_adaptation(
     logdensity_fn: Callable,
     num_chains: int,
     *,
-    jitter_generator: Optional[Callable] = None,
+    jitter_generator: Callable | None = None,
     jitter_amount: float = 1.0,
     target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE,
     decay_rate: float = 0.5,
@@ -354,7 +354,7 @@ def chees_adaptation(
             optim,
             num_warmup_steps,
         )
-        kernel = blackjax.dynamic_hmc(logdensity_fn, **parameters).step
+        kernel = blackjax.dhmc(logdensity_fn, **parameters).step
         new_states, info = jax.vmap(kernel)(key_sample, last_states)
 
     Parameters
@@ -398,8 +398,8 @@ def chees_adaptation(
         max_sampling_steps: int = 1000,
     ):
         assert all(
-            jax.tree_util.tree_flatten(
-                jax.tree_util.tree_map(lambda p: p.shape[0] == num_chains, positions)
+            jax.tree.flatten(
+                jax.tree.map(lambda p: p.shape[0] == num_chains, positions)
             )[0]
         ), "initial `positions` leading dimension must be equal to the `num_chains`"
         num_dim = pytree_size(positions) // num_chains
@@ -447,8 +447,9 @@ def chees_adaptation(
                 logdensity_fn=logdensity_fn,
                 step_size=adaptation_state.step_size,
                 inverse_mass_matrix=jnp.ones(num_dim),
-                num_leapfrog_steps=adaptation_state.trajectory_length
-                / adaptation_state.step_size,
+                integration_steps_params=(
+                    adaptation_state.trajectory_length / adaptation_state.step_size,
+                ),
             )
             new_states, info = jax.vmap(_step_fn)(keys, states)
             new_adaptation_state = update(
@@ -483,9 +484,8 @@ def chees_adaptation(
             "step_size": jnp.exp(last_adaptation_state.log_step_size_moving_average),
             "inverse_mass_matrix": jnp.ones(num_dim),
             "next_random_arg_fn": next_random_arg_fn,
-            "integration_steps_fn": lambda arg: integration_steps_fn(
-                arg, num_leapfrog_steps
-            ),
+            "integration_steps_fn": integration_steps_fn,
+            "integration_steps_params": (num_leapfrog_steps,),
         }
 
         return AdaptationResults(last_states, parameters), info

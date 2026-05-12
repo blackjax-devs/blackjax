@@ -1,10 +1,11 @@
-import chex
 import jax.numpy as jnp
 import jax.scipy.stats as stats
 import numpy as np
 
+from tests.fixtures import BlackJAXTest
 
-class SMCLinearRegressionTestCase(chex.TestCase):
+
+class SMCLinearRegressionTestCase(BlackJAXTest):
     def logdensity_by_observation(self, log_scale, coefs, preds, x):
         scale = jnp.exp(log_scale)
         y = jnp.dot(x, coefs)

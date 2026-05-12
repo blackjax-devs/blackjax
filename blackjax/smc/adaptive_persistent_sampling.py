@@ -108,7 +108,7 @@ def build_kernel(
                 normalize_to_one=True,  # needed to compute ESS correctly
             )
 
-            ess_val = persistent_sampling.compute_persistent_ess(log_weights)
+            ess_val = jnp.log(persistent_sampling.compute_persistent_ess(log_weights))
             return ess_val - target_val
 
         # in case no solution is found, delta is set to 0 using nan_to_num,
@@ -223,8 +223,12 @@ def as_top_level_api(
         The init method has signature
         (position: ArrayLikeTree) -> PersistentSMCState
         The step method has signature
-        (rng_key: PRNGKey, state: PersistentSMCState, lmbda: float | Array) ->
+        (rng_key: PRNGKey, state: PersistentSMCState) ->
         (new_state: PersistentSMCState, info: PersistentStateInfo)
+
+        Note: unlike `blackjax.smc.persistent_sampling`, the adaptive variant
+        does NOT take `lmbda` as a step argument — the next tempering value
+        is computed internally by the root solver to hit `target_ess`.
     """
 
     kernel = build_kernel(

@@ -19,7 +19,7 @@ import jax.numpy as jnp
 
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["PeriodicOrbitalState", "init", "build_kernel", "as_top_level_api"]
@@ -100,7 +100,7 @@ def init(
     gradient.
     """
 
-    positions = jax.tree_util.tree_map(
+    positions = jax.tree.map(
         lambda position: jnp.array([position for _ in range(period)]), position
     )
 
@@ -191,14 +191,12 @@ def build_kernel(
         ) = state
 
         choice_indx = jax.random.choice(key_choice, len(weights), p=weights)
-        position = jax.tree_util.tree_map(
-            lambda positions: positions[choice_indx], positions
-        )
+        position = jax.tree.map(lambda positions: positions[choice_indx], positions)
         direction = directions[choice_indx]
         period = jnp.max(directions) + 1
         direction = jnp.mod(direction + jnp.array(period / 2, int), period)
         logdensity = logdensities[choice_indx]
-        logdensity_grad = jax.tree_util.tree_map(
+        logdensity_grad = jax.tree.map(
             lambda p_energy_grad: p_energy_grad[choice_indx], logdensities_grad
         )
 
@@ -269,22 +267,13 @@ def as_top_level_api(
     A ``SamplingAlgorithm``.
     """
     kernel = build_kernel(bijection)
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn, period)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-            inverse_mass_matrix,
-            period,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        init_args=(period,),
+        kernel_args=(step_size, inverse_mass_matrix, period),
+    )
 
 
 def periodic_orbital_proposal(
@@ -337,9 +326,8 @@ def periodic_orbital_proposal(
         def orbit_fn(state, i):
             state = jax.lax.cond(
                 i != 0,
-                lambda _: bijection(state, jnp.sign(i) * step_size),
-                lambda _: init_state,
-                operand=None,
+                lambda: bijection(state, jnp.sign(i) * step_size),
+                lambda: init_state,
             )
             kinetic_energy = kinetic_energy_fn(state.momentum)
             weight = state.logdensity - kinetic_energy

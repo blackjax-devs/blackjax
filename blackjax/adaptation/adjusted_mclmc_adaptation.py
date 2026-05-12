@@ -16,6 +16,7 @@ Lratio_upperbound = 2.0
 
 def adjusted_mclmc_find_L_and_step_size(
     mclmc_kernel,
+    logdensity_fn,
     num_steps,
     state,
     rng_key,
@@ -35,7 +36,12 @@ def adjusted_mclmc_find_L_and_step_size(
     Parameters
     ----------
     mclmc_kernel
-        The kernel function used for the MCMC algorithm.
+        The kernel function used for the MCMC algorithm.  Must have signature
+        ``(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix,
+        integration_steps_params) -> (state, info)``.
+    logdensity_fn
+        The log-density function of the target distribution.  Passed to
+        ``mclmc_kernel`` on every adaptation step.
     num_steps
         The number of MCMC steps that will subsequently be run, after tuning.
     state
@@ -89,6 +95,7 @@ def adjusted_mclmc_find_L_and_step_size(
             num_tuning_integrator_steps,
         ) = adjusted_mclmc_make_L_step_size_adaptation(
             kernel=mclmc_kernel,
+            logdensity_fn=logdensity_fn,
             dim=dim,
             frac_tune1=frac_tune1,
             frac_tune2=frac_tune2,
@@ -112,8 +119,9 @@ def adjusted_mclmc_find_L_and_step_size(
                 num_tuning_integrator_steps,
             ) = adjusted_mclmc_make_adaptation_L(
                 mclmc_kernel,
+                logdensity_fn=logdensity_fn,
                 frac=frac_tune3,
-                Lfactor=0.5,
+                l_factor=0.5,
                 max=max,
                 eigenvector=eigenvector,
             )(
@@ -129,6 +137,7 @@ def adjusted_mclmc_find_L_and_step_size(
                 num_tuning_integrator_steps,
             ) = adjusted_mclmc_make_L_step_size_adaptation(
                 kernel=mclmc_kernel,
+                logdensity_fn=logdensity_fn,
                 dim=dim,
                 frac_tune1=frac_tune1,
                 frac_tune2=0,
@@ -148,6 +157,7 @@ def adjusted_mclmc_find_L_and_step_size(
 
 def adjusted_mclmc_make_L_step_size_adaptation(
     kernel,
+    logdensity_fn,
     dim,
     frac_tune1,
     frac_tune2,
@@ -176,9 +186,10 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             state, info = kernel(
                 rng_key=rng_key,
                 state=previous_state,
-                avg_num_integration_steps=avg_num_integration_steps,
+                logdensity_fn=logdensity_fn,
                 step_size=params.step_size,
                 inverse_mass_matrix=params.inverse_mass_matrix,
+                integration_steps_params=(avg_num_integration_steps,),
             )
 
             # step updating
@@ -336,7 +347,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
 
 def adjusted_mclmc_make_adaptation_L(
-    kernel, frac, Lfactor, max="avg", eigenvector=None
+    kernel, logdensity_fn, frac, l_factor, max="avg", eigenvector=None
 ):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
@@ -348,9 +359,10 @@ def adjusted_mclmc_make_adaptation_L(
             next_state, info = kernel(
                 rng_key=key,
                 state=state,
+                logdensity_fn=logdensity_fn,
                 step_size=params.step_size,
-                avg_num_integration_steps=params.L / params.step_size,
                 inverse_mass_matrix=params.inverse_mass_matrix,
+                integration_steps_params=(params.L / params.step_size,),
             )
             return next_state, (next_state.position, info)
 
@@ -379,7 +391,8 @@ def adjusted_mclmc_make_adaptation_L(
             state,
             params._replace(
                 L=jnp.clip(
-                    Lfactor * params.L / jnp.mean(ess), max=params.L * Lratio_upperbound
+                    l_factor * params.L / jnp.mean(ess),
+                    max=params.L * Lratio_upperbound,
                 )
             ),
             info.num_integration_steps.sum(),
@@ -395,7 +408,7 @@ def handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_ch
     reduced_step_size = 0.8
     p, unravel_fn = ravel_pytree(next_state.position)
     nonans = jnp.all(jnp.isfinite(p))
-    state, step_size, kinetic_change = jax.tree_util.tree_map(
+    state, step_size, kinetic_change = jax.tree.map(
         lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
         (next_state, step_size_max, kinetic_change),
         (previous_state, step_size * reduced_step_size, 0.0),

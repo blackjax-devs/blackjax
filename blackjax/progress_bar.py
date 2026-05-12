@@ -16,7 +16,6 @@ Adapted from Jeremie Coullon's blog post :cite:p:`progress_bar`.
 """
 from threading import Lock
 
-from fastprogress.fastprogress import progress_bar
 from jax import lax
 from jax.experimental import io_callback
 from jax.numpy import array
@@ -42,6 +41,17 @@ def progress_bar_scan(num_samples, print_rate=None):
         return idx
 
     def _update_bar(arg, chain_id):
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            try:
+                from fastprogress.fastprogress import progress_bar
+            except ImportError as e:
+                raise ImportError(
+                    "fastprogress is required to use progress bars. "
+                    "Install it with: pip install fastprogress"
+                ) from e
         chain_id = int(chain_id)
         if arg == 0:
             chain_id = _calc_chain_idx(arg)
@@ -60,16 +70,14 @@ def progress_bar_scan(num_samples, print_rate=None):
         chain_id = lax.cond(
             # update every multiple of `print_rate` except at the end
             (iter_num % print_rate == 0) | (iter_num == (num_samples - 1)),
-            lambda _: io_callback(_update_bar, array(0), iter_num, chain_id),
-            lambda _: chain_id,
-            operand=None,
+            lambda: io_callback(_update_bar, array(0), iter_num, chain_id),
+            lambda: chain_id,
         )
 
         _ = lax.cond(
             iter_num == num_samples - 1,
-            lambda _: io_callback(_close_bar, None, iter_num + 1, chain_id),
-            lambda _: None,
-            operand=None,
+            lambda: io_callback(_close_bar, None, iter_num + 1, chain_id),
+            lambda: None,
         )
         return chain_id
 

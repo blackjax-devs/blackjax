@@ -128,19 +128,18 @@ def progressive_uniform_sampling(
 
     return jax.lax.cond(
         do_accept,
-        lambda _: Proposal(
+        lambda: Proposal(
             new_proposal.state,
             new_proposal.energy,
             new_weight,
             new_sum_log_p_accept,
         ),
-        lambda _: Proposal(
+        lambda: Proposal(
             proposal.state,
             proposal.energy,
             new_weight,
             new_sum_log_p_accept,
         ),
-        operand=None,
     )
 
 
@@ -162,19 +161,18 @@ def progressive_biased_sampling(
 
     return jax.lax.cond(
         do_accept,
-        lambda _: Proposal(
+        lambda: Proposal(
             new_proposal.state,
             new_proposal.energy,
             new_weight,
             new_sum_log_p_accept,
         ),
-        lambda _: Proposal(
+        lambda: Proposal(
             proposal.state,
             proposal.energy,
             new_weight,
             new_sum_log_p_accept,
         ),
-        operand=None,
     )
 
 
@@ -230,9 +228,8 @@ def static_binomial_sampling(
     return (
         jax.lax.cond(
             do_accept,
-            lambda _: new_proposal,
-            lambda _: proposal,
-            operand=None,
+            lambda: new_proposal,
+            lambda: proposal,
         ),
         info,
     )
@@ -260,9 +257,8 @@ def nonreversible_slice_sampling(
     return (
         jax.lax.cond(
             do_accept,
-            lambda _: new_proposal,
-            lambda _: proposal,
-            operand=None,
+            lambda: new_proposal,
+            lambda: proposal,
         ),
         info,
     )

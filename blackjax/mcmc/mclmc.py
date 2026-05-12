@@ -17,7 +17,7 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.integrators import (
     IntegratorState,
     isokinetic_mclachlan,
@@ -44,6 +44,7 @@ class MCLMCInfo(NamedTuple):
     logdensity: float
     kinetic_change: float
     energy_change: float
+    nonans: bool
 
 
 def init(position: ArrayLike, logdensity_fn, rng_key):
@@ -51,33 +52,32 @@ def init(position: ArrayLike, logdensity_fn, rng_key):
         raise ValueError(
             "The target distribution must have more than 1 dimension for MCLMC."
         )
-    l, g = jax.value_and_grad(logdensity_fn)(position)
+    logdensity, logdensity_grad = jax.value_and_grad(logdensity_fn)(position)
 
     return IntegratorState(
         position=position,
         momentum=generate_unit_vector(rng_key, position),
-        logdensity=l,
-        logdensity_grad=g,
+        logdensity=logdensity,
+        logdensity_grad=logdensity_grad,
     )
 
 
 def build_kernel(
-    logdensity_fn,
-    inverse_mass_matrix,
-    integrator,
-    desired_energy_var_max_ratio=jnp.inf,
-    desired_energy_var=5e-4,
+    integrator: Callable = isokinetic_mclachlan,
+    desired_energy_var_max_ratio: float = jnp.inf,
+    desired_energy_var: float = 5e-4,
 ):
-    """Build a HMC kernel.
+    """Build an MCLMC kernel.
 
     Parameters
     ----------
     integrator
-        The symplectic integrator to use to integrate the Hamiltonian dynamics.
-    L
-        the momentum decoherence rate.
-    step_size
-        step size of the integrator.
+        The isokinetic integrator to use.
+    desired_energy_var_max_ratio
+        Maximum ratio of energy variance to desired energy variance before
+        rejecting a transition.
+    desired_energy_var
+        The target energy variance per dimension.
 
     Returns
     -------
@@ -87,43 +87,46 @@ def build_kernel(
 
     """
 
-    step = with_isokinetic_maruyama(
-        integrator(logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix)
-    )
-
     def kernel(
-        rng_key: PRNGKey, state: IntegratorState, L: float, step_size: float
+        rng_key: PRNGKey,
+        state: IntegratorState,
+        logdensity_fn: Callable,
+        inverse_mass_matrix: ArrayLike,
+        L: float,
+        step_size: float,
     ) -> tuple[IntegratorState, MCLMCInfo]:
-        (position, momentum, logdensity, logdensitygrad), kinetic_change = step(
-            state, step_size, L, rng_key
+        step = with_isokinetic_maruyama(
+            integrator(
+                logdensity_fn=logdensity_fn, inverse_mass_matrix=inverse_mass_matrix
+            )
         )
 
-        energy_error = kinetic_change - logdensity + state.logdensity
+        kernel_key, energy_cutoff_key, nan_key = jax.random.split(rng_key, 3)
 
+        (position, momentum, logdensity, logdensity_grad), kinetic_change = step(
+            state, step_size, L, kernel_key
+        )
+
+        energy_change = kinetic_change - logdensity + state.logdensity
         eev_max_per_dim = desired_energy_var_max_ratio * desired_energy_var
         ndims = pytree_size(position)
 
-        new_state, new_info = jax.lax.cond(
-            jnp.abs(energy_error) > jnp.sqrt(ndims * eev_max_per_dim),
-            lambda: (
-                state,
-                MCLMCInfo(
-                    logdensity=state.logdensity,
-                    energy_change=0.0,
-                    kinetic_change=0.0,
-                ),
+        new_state, info = handle_high_energy(
+            state,
+            IntegratorState(position, momentum, logdensity, logdensity_grad),
+            MCLMCInfo(
+                logdensity=logdensity,
+                energy_change=energy_change,
+                kinetic_change=kinetic_change,
+                nonans=True,
             ),
-            lambda: (
-                IntegratorState(position, momentum, logdensity, logdensitygrad),
-                MCLMCInfo(
-                    logdensity=logdensity,
-                    energy_change=energy_error,
-                    kinetic_change=kinetic_change,
-                ),
-            ),
+            energy_cutoff_key,
+            cutoff=jnp.sqrt(ndims * eev_max_per_dim),
         )
 
-        return new_state, new_info
+        new_state, info = handle_nans(state, new_state, info, nan_key)
+
+        return new_state, info
 
     return kernel
 
@@ -183,16 +186,74 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(
-        logdensity_fn,
-        inverse_mass_matrix,
-        integrator,
+        integrator=integrator,
         desired_energy_var_max_ratio=desired_energy_var_max_ratio,
     )
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(inverse_mass_matrix, L, step_size),
+        pass_rng_key_to_init=True,
+    )
 
-    def init_fn(position: ArrayLike, rng_key: PRNGKey):
-        return init(position, logdensity_fn, rng_key)
 
-    def update_fn(rng_key, state):
-        return kernel(rng_key, state, L, step_size)
+def handle_nans(previous_state, next_state, info, key):
+    new_momentum = generate_unit_vector(key, previous_state.position)
 
-    return SamplingAlgorithm(init_fn, update_fn)
+    # Make nonans pytree compatible
+    def isfinite_pytree(x):
+        # Recursively check if all leaves in a pytree are finite
+        # Will return True if all are finite, False otherwise
+        leaves, _ = jax.tree.flatten(x)
+        return jnp.all(jnp.stack([jnp.all(jnp.isfinite(leaf)) for leaf in leaves]))
+
+    nonans = jnp.logical_and(
+        isfinite_pytree(next_state.position), isfinite_pytree(next_state.momentum)
+    )
+
+    state, info = jax.lax.cond(
+        nonans,
+        lambda: (next_state, info),
+        lambda: (
+            IntegratorState(
+                previous_state.position,
+                new_momentum,
+                previous_state.logdensity,
+                previous_state.logdensity_grad,
+            ),
+            MCLMCInfo(
+                logdensity=previous_state.logdensity,
+                energy_change=jnp.zeros_like(info.energy_change),
+                kinetic_change=jnp.zeros_like(info.kinetic_change),
+                nonans=nonans,
+            ),
+        ),
+    )
+
+    return state, info
+
+
+def handle_high_energy(previous_state, next_state, info, key, cutoff):
+    new_momentum = generate_unit_vector(key, previous_state.position)
+
+    state, info = jax.lax.cond(
+        jnp.abs(info.energy_change) > cutoff,
+        lambda: (
+            IntegratorState(
+                previous_state.position,
+                new_momentum,
+                previous_state.logdensity,
+                previous_state.logdensity_grad,
+            ),
+            MCLMCInfo(
+                logdensity=previous_state.logdensity,
+                energy_change=jnp.zeros_like(info.energy_change),
+                kinetic_change=jnp.zeros_like(info.kinetic_change),
+                nonans=info.nonans,
+            ),
+        ),
+        lambda: (next_state, info),
+    )
+
+    return state, info

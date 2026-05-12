@@ -17,22 +17,19 @@ jobs:
         python-version: [ '3.12' ]
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Set up benchmark environment
-        run: |
-          python -m pip install -U pip
-          pip install -r requirements.txt
+        run: uv sync --group dev
       - name: Load previous benchmark data from cache
         uses: actions/cache@v3
         with:
           path: ./benchmark-cache
           key: benchmark
       - name: Run benchmarks
-        run: |
-          pytest --benchmark-only --benchmark-json output.json
+        run: uv run pytest --benchmark-only --benchmark-json output.json
       - name: Write benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:

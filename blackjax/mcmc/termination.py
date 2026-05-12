@@ -29,7 +29,19 @@ class IterativeUTurnState(NamedTuple):
 
 
 def iterative_uturn_numpyro(is_turning: CheckTurning):
-    """Numpyro style dynamic U-Turn criterion."""
+    """Numpyro style dynamic U-Turn criterion.
+
+    Parameters
+    ----------
+    is_turning
+        A function that checks whether a trajectory is turning back on itself,
+        given the left momentum, right momentum, and summed momentum.
+
+    Returns
+    -------
+    A tuple of ``(new_state, update_criterion_state, is_iterative_turning)``
+    functions that together implement the iterative U-turn criterion.
+    """
 
     def new_state(chain_state, max_num_doublings) -> IterativeUTurnState:
         flat, _ = jax.flatten_util.ravel_pytree(chain_state.position)

@@ -10,13 +10,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple, TypeAlias
 
 from typing_extensions import Protocol
 
 from .types import ArrayLikeTree, PRNGKey
 
-Position = ArrayLikeTree
+Position: TypeAlias = ArrayLikeTree
 State = NamedTuple
 Info = NamedTuple
 
@@ -24,7 +24,7 @@ Info = NamedTuple
 class InitFn(Protocol):
     """A `Callable` used to initialize the kernel state.
 
-    Sampling algorithms often need to carry over some informations between
+    Sampling algorithms often need to carry over some information between
     steps, often to avoid computing the same quantity twice. Therefore the
     kernels do not operate on the chain positions themselves, but on states that
     contain this position and other information.
@@ -34,7 +34,7 @@ class InitFn(Protocol):
 
     """
 
-    def __call__(self, position: Position, rng_key: Optional[PRNGKey]) -> State:
+    def __call__(self, position: Position, rng_key: PRNGKey | None) -> State:
         """Initialize the algorithm's state.
 
         Parameters
@@ -114,20 +114,22 @@ class SamplingAlgorithm(NamedTuple):
 
 
 class VIAlgorithm(NamedTuple):
-    """A pair of functions that represents a Variational Inference algorithm.
+    """A trio of functions that represents a Variational Inference algorithm.
 
-    Blackjax variational inference algorithms are implemented as a pair of pure
-    functions: an approximator, which takes a target probability density (and
-    potentially a guide), and a sampling function that uses the approximation to
-    draw samples.
+    Blackjax variational inference algorithms are implemented as three pure
+    functions: an initializer, an update step, and a sampler.
 
-    approximate
-        A pure function, which when called with an initial position (and
-        potentially a guide function) returns a state that allows to build
-        an approximation to the target probability density function.
+    init
+        A pure function which initializes the VI state from an initial position.
+        For iterative algorithms (e.g. mean-field VI) this sets up the optimizer
+        state. For one-shot algorithms (e.g. Pathfinder) this builds the full
+        approximation.
+    step
+        A pure function that advances the VI approximation by one step, taking
+        a rng key and the current state and returning an updated state and
+        diagnostic info. For one-shot algorithms this is a no-op.
     sample
-        A pure function which returns samples from the approximation computed
-        by `approximate`.
+        A pure function that draws samples from the current approximation.
 
     """
 
@@ -147,3 +149,58 @@ class AdaptationAlgorithm(NamedTuple):
     """A function that implements an adaptation algorithm."""
 
     run: RunFn
+
+
+def build_sampling_algorithm(
+    kernel: Callable,
+    init_state: Callable,
+    logdensity_fn: Callable,
+    init_args: tuple = (),
+    kernel_args: tuple = (),
+    *,
+    pass_rng_key_to_init: bool = False,
+) -> SamplingAlgorithm:
+    """Build a ``SamplingAlgorithm`` from standard components.
+
+    Most BlackJAX MCMC algorithms follow the same boilerplate in their
+    ``as_top_level_api`` functions: create an ``init_fn`` that delegates to the
+    module-level ``init`` and a ``step_fn`` that calls the built kernel with
+    fixed parameters.  This helper eliminates that repetition.
+
+    Parameters
+    ----------
+    kernel
+        A kernel function with signature
+        ``(rng_key, state, logdensity_fn, *kernel_args) -> (state, info)``.
+    init_state
+        An initialization function with signature
+        ``(position, logdensity_fn, *init_args) -> state`` (or
+        ``(position, logdensity_fn, *init_args, rng_key) -> state`` when
+        ``pass_rng_key_to_init`` is True).
+    logdensity_fn
+        The log-density function of the target distribution.  Passed to both
+        ``init_state`` and ``kernel``.
+    init_args
+        Extra positional arguments forwarded to ``init_state`` after
+        ``logdensity_fn`` (e.g. extra state needed for initialization).
+    kernel_args
+        Extra positional arguments forwarded to ``kernel`` after
+        ``logdensity_fn`` on every step (e.g. ``(step_size, metric)``).
+    pass_rng_key_to_init
+        If True, ``rng_key`` is appended to the ``init_state`` call
+        (for algorithms like mclmc/ghmc that need it for initialization).
+
+    Returns
+    -------
+    A ``SamplingAlgorithm``.
+    """
+
+    def init_fn(position: Position, rng_key: PRNGKey | None = None):
+        if pass_rng_key_to_init:
+            return init_state(position, logdensity_fn, *init_args, rng_key)
+        return init_state(position, logdensity_fn, *init_args)
+
+    def step_fn(rng_key: PRNGKey, state: State) -> tuple[State, Info]:
+        return kernel(rng_key, state, logdensity_fn, *kernel_args)
+
+    return SamplingAlgorithm(init_fn, step_fn)
