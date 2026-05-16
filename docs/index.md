@@ -207,6 +207,7 @@ hidden:
 ---
 Sample with multiple chains?<examples/howto_sample_multiple_chains.md>
 Use custom gradients?<examples/howto_custom_gradients.md>
+Use reparameterization gradients?<examples/howto_use_reparameterization_gradients.md>
 Use non-JAX log-prob functions?<examples/howto_other_frameworks.md>
 Build a Metropolis-Within-Gibbs sampler?<examples/howto_metropolis_within_gibbs.md>
 Use Laplace-preconditioned HMC?<examples/howto_laplace_hmc.md>
