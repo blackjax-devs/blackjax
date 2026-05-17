@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gae12ee4f9" />
+  <meta name="docsearch:version" content="0.1.dev1+g29e3a566a" />
   </head>
   
   
@@ -479,7 +479,13 @@
     <span class="n">target_val</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">n_particles</span> <span class="o">*</span> <span class="n">target_ess</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fun_to_solve</span><span class="p">(</span><span class="n">delta</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-        <span class="n">log_weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="o">-</span><span class="n">delta</span> <span class="o">*</span> <span class="n">logdensity</span><span class="p">)</span>
+        <span class="c1"># NOTE: sign must match the SMC weight update in</span>
+        <span class="c1"># ``blackjax.smc.tempered`` (`log_weights_fn` uses</span>
+        <span class="c1"># ``delta * loglikelihood_fn(position)``). A sign mismatch makes the</span>
+        <span class="c1"># bisection find a δ that targets the wrong distribution, which is</span>
+        <span class="c1"># silent for symmetric log-likelihoods but breaks adaptive tempering</span>
+        <span class="c1"># on asymmetric ones. See issue #914.</span>
+        <span class="n">log_weights</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">delta</span> <span class="o">*</span> <span class="n">logdensity</span><span class="p">)</span>
         <span class="n">ess_val</span> <span class="o">=</span> <span class="n">log_ess</span><span class="p">(</span><span class="n">log_weights</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">ess_val</span> <span class="o">-</span> <span class="n">target_val</span>
