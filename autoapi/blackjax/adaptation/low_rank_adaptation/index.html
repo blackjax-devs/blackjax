@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.laps_burn_in" href="../laps_burn_in/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g29e3a566a" />
+  <meta name="docsearch:version" content="0.1.dev1+gb094083cc" />
   </head>
   
   
@@ -602,8 +602,14 @@ Default <code class="docutils literal notranslate"><span class="pre">2.0</span><
 <dd class="field-even"><p><ul class="simple">
 <li><p>An <code class="docutils literal notranslate"><span class="pre">AdaptationAlgorithm</span></code> whose <code class="docutils literal notranslate"><span class="pre">run</span></code> method returns</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">(AdaptationResults,</span> <span class="pre">info)</span></code>.  <code class="docutils literal notranslate"><span class="pre">AdaptationResults.parameters</span></code> contains</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">step_size</span></code>, <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> (a <code class="xref py py-func docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Metric</span></code> object), and any <code class="docutils literal notranslate"><span class="pre">extra_parameters</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">step_size</span></code>, <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> (a</p></li>
+<li><p><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a> NamedTuple holding</p></li>
+<li><p>the pure-array payload <code class="docutils literal notranslate"><span class="pre">(sigma,</span> <span class="pre">U,</span> <span class="pre">lam)</span></code>), and any <code class="docutils literal notranslate"><span class="pre">extra_parameters</span></code>.</p></li>
+<li><p><em>The kernel layer normalises this into a full</em></p></li>
+<li><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code> via</p></li>
+<li><p><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.default_metric" title="blackjax.mcmc.metrics.default_metric"><code class="xref py py-func docutils literal notranslate"><span class="pre">default_metric()</span></code></a> at call time. Returning the</p></li>
+<li><p>pure-array form (rather than the closure-bearing <code class="docutils literal notranslate"><span class="pre">Metric</span></code>) lets the</p></li>
+<li><p>warmup compose with <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> over chains; see GH #916.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">AdaptationResults.state</span></code> is re-initialised at the optimal translation</p></li>
 <li><p><em>μ</em> = x̄ + σ²⊙ᾱ, so it can be passed directly as the starting state for*</p></li>
 <li><p><em>production sampling.  The last chain state from warmup is available as</em></p></li>

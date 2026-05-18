@@ -173,8 +173,14 @@ Module Contents
 
    :returns: * An ``AdaptationAlgorithm`` whose ``run`` method returns
              * ``(AdaptationResults, info)``.  ``AdaptationResults.parameters`` contains
-             * ``step_size``, ``inverse_mass_matrix`` (a :func:`gaussian_euclidean_low_rank`
-             * ``Metric`` object), and any ``extra_parameters``.
+             * ``step_size``, ``inverse_mass_matrix`` (a
+             * :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` NamedTuple holding
+             * the pure-array payload ``(sigma, U, lam)``), and any ``extra_parameters``.
+             * *The kernel layer normalises this into a full*
+             * :class:`~blackjax.mcmc.metrics.Metric` via
+             * :func:`~blackjax.mcmc.metrics.default_metric` at call time. Returning the
+             * pure-array form (rather than the closure-bearing ``Metric``) lets the
+             * warmup compose with ``jax.vmap`` over chains; see GH #916.
              * ``AdaptationResults.state`` is re-initialised at the optimal translation
              * *μ* = x̄ + σ²⊙ᾱ, so it can be passed directly as the starting state for*
              * *production sampling.  The last chain state from warmup is available as*

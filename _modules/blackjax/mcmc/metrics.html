@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g29e3a566a" />
+  <meta name="docsearch:version" content="0.1.dev1+gb094083cc" />
   </head>
   
   
@@ -422,6 +422,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_gaussian_noise</span><span class="p">,</span> <span class="n">linear_map</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;LowRankInverseMassMatrix&quot;</span><span class="p">,</span>
     <span class="s2">&quot;default_metric&quot;</span><span class="p">,</span>
     <span class="s2">&quot;gaussian_euclidean&quot;</span><span class="p">,</span>
     <span class="s2">&quot;gaussian_euclidean_low_rank&quot;</span><span class="p">,</span>
@@ -467,7 +468,59 @@
     <span class="n">scale</span><span class="p">:</span> <span class="n">Scale</span>
 
 
-<span class="n">MetricTypes</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Metric</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLikeTree</span><span class="p">],</span> <span class="n">Array</span><span class="p">]</span>
+<div class="viewcode-block" id="LowRankInverseMassMatrix">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pure-array description of a low-rank inverse mass matrix.</span>
+
+<span class="sd">    The inverse mass matrix has the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        M^{-1} = \\operatorname{diag}(\\sigma)</span>
+<span class="sd">                 \\bigl(I + U(\\Lambda - I)U^\\top\\bigr)</span>
+<span class="sd">                 \\operatorname{diag}(\\sigma)</span>
+
+<span class="sd">    where :math:`\\sigma \\in \\mathbb{R}^d_{&gt;0}`, :math:`U \\in \\mathbb{R}^{d \\times k}`</span>
+<span class="sd">    has orthonormal columns and :math:`\\Lambda = \\operatorname{diag}(\\lambda)`.</span>
+
+<span class="sd">    This is the array-only payload produced by</span>
+<span class="sd">    :func:`~blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation`.</span>
+<span class="sd">    Unlike a fully-constructed :class:`Metric` (whose fields are Python closures</span>
+<span class="sd">    that capture these arrays), this NamedTuple is a pure JAX pytree and can be</span>
+<span class="sd">    safely transported across ``jax.vmap`` / ``jax.pmap`` boundaries.</span>
+
+<span class="sd">    :func:`default_metric` expands this into a :class:`Metric` at the kernel</span>
+<span class="sd">    call site via :func:`gaussian_euclidean_low_rank`.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sigma</span>
+<span class="sd">        Shape ``(d,)``. Positive diagonal scaling.</span>
+<span class="sd">    U</span>
+<span class="sd">        Shape ``(d, k)``. Matrix with orthonormal columns.</span>
+<span class="sd">    lam</span>
+<span class="sd">        Shape ``(k,)``. Positive eigenvalues.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="LowRankInverseMassMatrix.sigma">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix.sigma">[docs]</a>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="LowRankInverseMassMatrix.U">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix.U">[docs]</a>
+    <span class="n">U</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="LowRankInverseMassMatrix.lam">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix.lam">[docs]</a>
+    <span class="n">lam</span><span class="p">:</span> <span class="n">Array</span></div>
+</div>
+
+
+
+<span class="n">MetricTypes</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="n">Metric</span> <span class="o">|</span> <span class="n">LowRankInverseMassMatrix</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">|</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ArrayLikeTree</span><span class="p">],</span> <span class="n">Array</span><span class="p">]</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="default_metric">
@@ -475,9 +528,14 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">default_metric</span><span class="p">(</span><span class="n">metric</span><span class="p">:</span> <span class="n">MetricTypes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Metric</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert an input metric into a ``Metric`` object following sensible default rules.</span>
 
-<span class="sd">    The metric can be specified in three different ways:</span>
+<span class="sd">    The metric can be specified in four different ways:</span>
 
 <span class="sd">    - A ``Metric`` object that implements the full interface</span>
+<span class="sd">    - A ``LowRankInverseMassMatrix`` NamedTuple holding ``(sigma, U, lam)``,</span>
+<span class="sd">      which is expanded to a full :class:`Metric` via</span>
+<span class="sd">      :func:`gaussian_euclidean_low_rank`. This is the form returned by</span>
+<span class="sd">      :func:`~blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation`</span>
+<span class="sd">      and is safe to transport across ``jax.vmap`` boundaries.</span>
 <span class="sd">    - An ``Array`` which is assumed to specify the inverse mass matrix of a static</span>
 <span class="sd">      metric</span>
 <span class="sd">    - A function that takes a coordinate position and returns the mass matrix at that</span>
@@ -488,6 +546,13 @@
 <span class="sd">    A ``Metric`` object with ``sample_momentum``, ``kinetic_energy``,</span>
 <span class="sd">    ``check_turning``, and ``scale`` fields.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># LowRankInverseMassMatrix must be checked before Metric because both are</span>
+    <span class="c1"># NamedTuples; isinstance(metric, Metric) on a LowRankInverseMassMatrix is</span>
+    <span class="c1"># already False (distinct types), but listing the low-rank case first keeps</span>
+    <span class="c1"># the dispatch order obvious.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">gaussian_euclidean_low_rank</span><span class="p">(</span><span class="n">metric</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">U</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">Metric</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">metric</span>
 

@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g29e3a566a" />
+  <meta name="docsearch:version" content="0.1.dev1+gb094083cc" />
   </head>
   
   
@@ -440,7 +440,7 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.window_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_schedule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">gaussian_euclidean_low_rank</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">,</span> <span class="n">gaussian_euclidean_low_rank</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.progress_bar</span><span class="w"> </span><span class="kn">import</span> <span class="n">gen_scan_fn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">pytree_size</span>
@@ -912,8 +912,15 @@
 <span class="sd">    -------</span>
 <span class="sd">    An ``AdaptationAlgorithm`` whose ``run`` method returns</span>
 <span class="sd">    ``(AdaptationResults, info)``.  ``AdaptationResults.parameters`` contains</span>
-<span class="sd">    ``step_size``, ``inverse_mass_matrix`` (a :func:`gaussian_euclidean_low_rank`</span>
-<span class="sd">    ``Metric`` object), and any ``extra_parameters``.</span>
+<span class="sd">    ``step_size``, ``inverse_mass_matrix`` (a</span>
+<span class="sd">    :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` NamedTuple holding</span>
+<span class="sd">    the pure-array payload ``(sigma, U, lam)``), and any ``extra_parameters``.</span>
+<span class="sd">    The kernel layer normalises this into a full</span>
+<span class="sd">    :class:`~blackjax.mcmc.metrics.Metric` via</span>
+<span class="sd">    :func:`~blackjax.mcmc.metrics.default_metric` at call time. Returning the</span>
+<span class="sd">    pure-array form (rather than the closure-bearing ``Metric``) lets the</span>
+<span class="sd">    warmup compose with ``jax.vmap`` over chains; see GH #916.</span>
+
 <span class="sd">    ``AdaptationResults.state`` is re-initialised at the optimal translation</span>
 <span class="sd">    μ* = x̄ + σ²⊙ᾱ, so it can be passed directly as the starting state for</span>
 <span class="sd">    production sampling.  The last chain state from warmup is available as</span>
@@ -989,10 +996,13 @@
         <span class="p">)</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
         <span class="n">step_size</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_star</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span> <span class="o">=</span> <span class="n">adapt_final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
-        <span class="n">metric</span> <span class="o">=</span> <span class="n">gaussian_euclidean_low_rank</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span><span class="p">)</span>
+        <span class="c1"># Return the inverse mass matrix as a pure-array NamedTuple so that the</span>
+        <span class="c1"># warmup composes with `jax.vmap` over chains. The kernel layer expands</span>
+        <span class="c1"># this into a full `Metric` via `default_metric` at call time. See #916.</span>
+        <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">)</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">step_size</span><span class="p">,</span>
-            <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">metric</span><span class="p">,</span>
+            <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">}</span>
         <span class="c1"># Re-initialise chain state at the optimal translation μ* = x̄ + σ²⊙ᾱ.</span>

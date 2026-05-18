@@ -23,6 +23,14 @@ blackjax.mcmc.metrics
 
 
 
+Classes
+-------
+
+.. autoapisummary::
+
+   blackjax.mcmc.metrics.LowRankInverseMassMatrix
+
+
 Functions
 ---------
 
@@ -37,13 +45,69 @@ Functions
 Module Contents
 ---------------
 
+.. py:class:: LowRankInverseMassMatrix
+
+
+
+   Pure-array description of a low-rank inverse mass matrix.
+
+   The inverse mass matrix has the form
+
+   .. math::
+
+       M^{-1} = \operatorname{diag}(\sigma)
+                \bigl(I + U(\Lambda - I)U^\top\bigr)
+                \operatorname{diag}(\sigma)
+
+   where :math:`\sigma \in \mathbb{R}^d_{>0}`, :math:`U \in \mathbb{R}^{d \times k}`
+   has orthonormal columns and :math:`\Lambda = \operatorname{diag}(\lambda)`.
+
+   This is the array-only payload produced by
+   :func:`~blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation`.
+   Unlike a fully-constructed :class:`Metric` (whose fields are Python closures
+   that capture these arrays), this NamedTuple is a pure JAX pytree and can be
+   safely transported across ``jax.vmap`` / ``jax.pmap`` boundaries.
+
+   :func:`default_metric` expands this into a :class:`Metric` at the kernel
+   call site via :func:`gaussian_euclidean_low_rank`.
+
+   .. attribute:: sigma
+
+      Shape ``(d,)``. Positive diagonal scaling.
+
+   .. attribute:: U
+
+      Shape ``(d, k)``. Matrix with orthonormal columns.
+
+   .. attribute:: lam
+
+      Shape ``(k,)``. Positive eigenvalues.
+
+
+   .. py:attribute:: sigma
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: U
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: lam
+      :type:  blackjax.types.Array
+
+
 .. py:function:: default_metric(metric: MetricTypes) -> Metric
 
    Convert an input metric into a ``Metric`` object following sensible default rules.
 
-   The metric can be specified in three different ways:
+   The metric can be specified in four different ways:
 
    - A ``Metric`` object that implements the full interface
+   - A ``LowRankInverseMassMatrix`` NamedTuple holding ``(sigma, U, lam)``,
+     which is expanded to a full :class:`Metric` via
+     :func:`gaussian_euclidean_low_rank`. This is the form returned by
+     :func:`~blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation`
+     and is safe to transport across ``jax.vmap`` boundaries.
    - An ``Array`` which is assumed to specify the inverse mass matrix of a static
      metric
    - A function that takes a coordinate position and returns the mass matrix at that

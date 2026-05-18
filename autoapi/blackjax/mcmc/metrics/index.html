@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.mclmc" href="../mclmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g29e3a566a" />
+  <meta name="docsearch:version" content="0.1.dev1+gb094083cc" />
   </head>
   
   
@@ -381,8 +381,18 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix.sigma"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix.U"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.U</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix.lam"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.lam</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.U</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.lam</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.default_metric"><code class="docutils literal notranslate"><span class="pre">default_metric()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a></li>
@@ -412,6 +422,17 @@ dynamic is independent of the position and only depends on the momentum
 <div class="math notranslate nohighlight">
 \[K(p) = \frac{1}{2} p^T M^{-1} p\]</div>
 <p>We can also generate a relativistic dynamic <span id="id2">[<a class="reference internal" href="../../../../bib.html#id26" title="Xiaoyu Lu, Valerio Perrone, Leonard Hasenclever, Yee Whye Teh, and Sebastian Vollmer. Relativistic monte carlo. In Artificial Intelligence and Statistics, 1236–1245. PMLR, 2017.">LPH+17</a>]</span>.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a></p></td>
+<td><p>Pure-array description of a low-rank inverse mass matrix.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
@@ -434,13 +455,71 @@ dynamic is independent of the position and only depends on the momentum
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.mcmc.metrics.LowRankInverseMassMatrix">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">LowRankInverseMassMatrix</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#LowRankInverseMassMatrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="Link to this definition">#</a></dt>
+<dd><p>Pure-array description of a low-rank inverse mass matrix.</p>
+<p>The inverse mass matrix has the form</p>
+<div class="math notranslate nohighlight">
+\[M^{-1} = \operatorname{diag}(\sigma)
+         \bigl(I + U(\Lambda - I)U^\top\bigr)
+         \operatorname{diag}(\sigma)\]</div>
+<p>where <span class="math notranslate nohighlight">\(\sigma \in \mathbb{R}^d_{&gt;0}\)</span>, <span class="math notranslate nohighlight">\(U \in \mathbb{R}^{d \times k}\)</span>
+has orthonormal columns and <span class="math notranslate nohighlight">\(\Lambda = \operatorname{diag}(\lambda)\)</span>.</p>
+<p>This is the array-only payload produced by
+<a class="reference internal" href="../../adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation" title="blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">low_rank_window_adaptation()</span></code></a>.
+Unlike a fully-constructed <code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code> (whose fields are Python closures
+that capture these arrays), this NamedTuple is a pure JAX pytree and can be
+safely transported across <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> / <code class="docutils literal notranslate"><span class="pre">jax.pmap</span></code> boundaries.</p>
+<p><a class="reference internal" href="#blackjax.mcmc.metrics.default_metric" title="blackjax.mcmc.metrics.default_metric"><code class="xref py py-func docutils literal notranslate"><span class="pre">default_metric()</span></code></a> expands this into a <code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code> at the kernel
+call site via <a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.metrics.LowRankInverseMassMatrix.sigma">
+<span class="sig-name descname"><span class="pre">sigma</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#LowRankInverseMassMatrix.sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix.sigma" title="Link to this definition">#</a></dt>
+<dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>. Positive diagonal scaling.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.metrics.LowRankInverseMassMatrix.U">
+<span class="sig-name descname"><span class="pre">U</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#LowRankInverseMassMatrix.U"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix.U" title="Link to this definition">#</a></dt>
+<dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">k)</span></code>. Matrix with orthonormal columns.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.metrics.LowRankInverseMassMatrix.lam">
+<span class="sig-name descname"><span class="pre">lam</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#LowRankInverseMassMatrix.lam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix.lam" title="Link to this definition">#</a></dt>
+<dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(k,)</span></code>. Positive eigenvalues.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">sigma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#LowRankInverseMassMatrix.sigma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id4">
+<span class="sig-name descname"><span class="pre">U</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#LowRankInverseMassMatrix.U"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id4" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">lam</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#LowRankInverseMassMatrix.lam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id5" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.default_metric">
 <span class="sig-name descname"><span class="pre">default_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">MetricTypes</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#default_metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.default_metric" title="Link to this definition">#</a></dt>
 <dd><p>Convert an input metric into a <code class="docutils literal notranslate"><span class="pre">Metric</span></code> object following sensible default rules.</p>
-<p>The metric can be specified in three different ways:</p>
+<p>The metric can be specified in four different ways:</p>
 <ul class="simple">
 <li><p>A <code class="docutils literal notranslate"><span class="pre">Metric</span></code> object that implements the full interface</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code> NamedTuple holding <code class="docutils literal notranslate"><span class="pre">(sigma,</span> <span class="pre">U,</span> <span class="pre">lam)</span></code>,
+which is expanded to a full <code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code> via
+<a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a>. This is the form returned by
+<a class="reference internal" href="../../adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation" title="blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">low_rank_window_adaptation()</span></code></a>
+and is safe to transport across <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> boundaries.</p></li>
 <li><p>An <code class="docutils literal notranslate"><span class="pre">Array</span></code> which is assumed to specify the inverse mass matrix of a static
 metric</p></li>
 <li><p>A function that takes a coordinate position and returns the mass matrix at that
@@ -461,7 +540,7 @@ location</p></li>
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_euclidean">
 <span class="sig-name descname"><span class="pre">gaussian_euclidean</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean" title="Link to this definition">#</a></dt>
 <dd><p>Hamiltonian dynamic on euclidean manifold with normally-distributed momentum
-<span id="id4">[<a class="reference internal" href="../../../../bib.html#id36" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
+<span id="id6">[<a class="reference internal" href="../../../../bib.html#id36" title="Michael Betancourt. A general metric for riemannian manifold hamiltonian monte carlo. In Geometric Science of Information: First International Conference, GSI 2013, Paris, France, August 28-30, 2013. Proceedings, 327–334. Springer, 2013.">Bet13</a>]</span>.</p>
 <p>The gaussian euclidean metric is a euclidean metric further characterized
 by setting the conditional probability density <span class="math notranslate nohighlight">\(\pi(momentum|position)\)</span>
 to follow a standard gaussian distribution. A Newtonian hamiltonian
@@ -493,7 +572,7 @@ itself given the values of the momentum along the trajectory.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.metrics.gaussian_euclidean_low_rank">
 <span class="sig-name descname"><span class="pre">gaussian_euclidean_low_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sigma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">U</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lam</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Metric</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#gaussian_euclidean_low_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="Link to this definition">#</a></dt>
-<dd><p>Euclidean metric with low-rank-modified mass matrix <span id="id5">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
+<dd><p>Euclidean metric with low-rank-modified mass matrix <span id="id7">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
 <p>The inverse mass matrix has the form</p>
 <div class="math notranslate nohighlight">
 \[M^{-1} = \operatorname{diag}(\sigma)
@@ -590,8 +669,18 @@ location (positive definite, one or two-dimensional array).</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix.sigma"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix.U"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.U</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix.lam"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.lam</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.sigma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id4"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.U</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix.lam</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.default_metric"><code class="docutils literal notranslate"><span class="pre">default_metric()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a></li>
