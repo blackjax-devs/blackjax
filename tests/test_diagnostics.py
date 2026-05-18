@@ -85,7 +85,6 @@ class DiagnosticsTest(chex.TestCase):
         np.testing.assert_array_equal(ess_val.shape, event_shape)
         np.testing.assert_allclose(ess_val, num_chains * self.num_samples, rtol=10)
 
-
     @chex.all_variants(with_pmap=False)
     @parameterized.parameters(
         # (num_superchains, num_chains, num_samples, event_shape)
