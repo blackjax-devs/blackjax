@@ -19,6 +19,7 @@ from absl.testing import absltest
 
 import blackjax
 from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric, _spd_mean
+from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.fixtures import BlackJAXTest
 
 
@@ -216,6 +217,80 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
                 self.next_key(), jnp.zeros(d), num_steps=200
             )
             self.assertEqual(state.position.shape, (d,))
+
+    def test_inverse_mass_matrix_is_pure_pytree(self):
+        """``params['inverse_mass_matrix']`` is an array-only NamedTuple (GH #916).
+
+        The warmup must return ``LowRankInverseMassMatrix(sigma, U, lam)``
+        — a pure JAX pytree — rather than a closure-bearing ``Metric``, so
+        the result can be transported across ``jax.vmap`` / ``jax.pmap``.
+        """
+        d = 5
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+        warmup = blackjax.low_rank_window_adaptation(
+            blackjax.nuts, logdensity_fn, max_rank=3
+        )
+        (_, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=200)
+        imm = params["inverse_mass_matrix"]
+        self.assertIsInstance(imm, LowRankInverseMassMatrix)
+        self.assertEqual(imm.sigma.shape, (d,))
+        self.assertEqual(imm.U.shape, (d, 3))
+        self.assertEqual(imm.lam.shape, (3,))
+        # All fields are JAX arrays (no Python closures captured as leaves).
+        leaves = jax.tree_util.tree_leaves(imm)
+        self.assertEqual(len(leaves), 3)
+        for leaf in leaves:
+            self.assertTrue(hasattr(leaf, "shape"))
+
+    def test_multi_chain_vmap(self):
+        """Warmup composes with ``jax.vmap`` over chains (GH #916 reproducer).
+
+        Before the fix this raised ``TypeError: Output from batched function
+        ... is not a valid JAX type`` because the returned ``Metric`` carried
+        Python closures that vmap could not stack.
+        """
+        d = 8
+        num_chains = 3
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+
+        warmup = blackjax.low_rank_window_adaptation(
+            blackjax.hmc,
+            logdensity_fn,
+            num_integration_steps=5,
+            max_rank=2,
+        )
+
+        chain_keys = jax.random.split(self.next_key(), num_chains)
+        init_positions = jnp.tile(jnp.zeros(d)[None, :], (num_chains, 1))
+
+        @jax.vmap
+        def run_one(k, x):
+            (state, params), _ = warmup.run(k, x, num_steps=150)
+            return state, params
+
+        states, params = run_one(chain_keys, init_positions)
+        self.assertEqual(states.position.shape, (num_chains, d))
+
+        imm = params["inverse_mass_matrix"]
+        self.assertIsInstance(imm, LowRankInverseMassMatrix)
+        # Each field carries an extra leading batch axis from vmap.
+        self.assertEqual(imm.sigma.shape, (num_chains, d))
+        self.assertEqual(imm.U.shape, (num_chains, d, 2))
+        self.assertEqual(imm.lam.shape, (num_chains, 2))
+        self.assertEqual(params["step_size"].shape, (num_chains,))
+
+        # The per-chain payload is consumable by the kernel: pick chain 0,
+        # build a NUTS kernel, and take one step (smoke test of the
+        # default_metric dispatch on LowRankInverseMassMatrix).
+        chain0_imm = jax.tree.map(lambda x: x[0], imm)
+        chain0_state = jax.tree.map(lambda x: x[0], states)
+        nuts = blackjax.nuts(
+            logdensity_fn,
+            step_size=float(params["step_size"][0]),
+            inverse_mass_matrix=chain0_imm,
+        )
+        new_state, _info = nuts.step(self.next_key(), chain0_state)
+        self.assertEqual(new_state.position.shape, (d,))
 
 
 if __name__ == "__main__":
