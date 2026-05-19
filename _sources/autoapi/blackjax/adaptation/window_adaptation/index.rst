@@ -50,7 +50,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8, initial_inverse_mass_matrix: blackjax.types.Array | None = None) -> tuple[Callable, Callable, Callable]
+.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0) -> tuple[Callable, Callable, Callable]
 
    Warmup scheme for sampling procedures based on euclidean manifold HMC.
    The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -92,6 +92,9 @@ Module Contents
    :param initial_inverse_mass_matrix: Optional seed value for the inverse mass matrix passed through to
                                        ``mass_matrix_adaptation``.  ``None`` (default) uses the standard
                                        identity initialisation.
+   :param imm_shrinkage_to_previous: Pseudo-count controlling shrinkage of the IMM toward the previous
+                                     window's IMM. Default 0.0 gives the current Stan behavior. Passed
+                                     through to ``mass_matrix_adaptation``.
 
    :returns: * *init* -- Function that initializes the warmup.
              * *update* -- Function that moves the warmup one step.
@@ -99,7 +102,7 @@ Module Contents
                state.
 
 
-.. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, progress_bar: bool = False, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, progress_bar: bool = False, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the value of the inverse mass matrix and step size parameters of
    algorithms in the HMC fmaily. See Blackjax.hmc_family
@@ -134,6 +137,29 @@ Module Contents
 
                                        A ``ValueError`` is raised at construction time (before any JIT
                                        tracing) if the shape is inconsistent.
+   :param imm_shrinkage_to_previous: Bayesian pseudo-count controlling shrinkage of the per-window
+                                     adapted inverse mass matrix toward the *previous* window's IMM, in
+                                     addition to the existing Stan-style shrinkage toward
+                                     ``1e-3 · I`` (pseudo-count 5). Default ``0.0`` reproduces Stan's
+                                     behavior exactly: each window's Welford estimate replaces the
+                                     previous IMM (no persistence). A positive value blends a fraction
+                                     ``k_prev / (count + 5 + k_prev)`` of the previous IMM into the
+                                     new one, where ``count`` is the number of samples in the window
+                                     and ``k_prev`` is this argument.
+
+                                     Useful when ``initial_inverse_mass_matrix`` carries high-confidence
+                                     information (e.g., from a converged pre-warmup Pathfinder fit) that
+                                     should persist beyond window 1's reset. Practical band for typical
+                                     Stan window sizes (25–500): ``5 ≤ k_prev ≤ 50`` gives mild-to-
+                                     moderate persistence; ``k_prev ≈ window_size`` gives balanced 50/50
+                                     weight between the previous IMM and the new window's data;
+                                     ``k_prev >> window_size`` effectively freezes the IMM at
+                                     ``initial_inverse_mass_matrix`` (anti-pattern unless the seed is
+                                     truly known-correct). See ``mass_matrix_adaptation`` for the full
+                                     precision-weighted-average formula.
+
+                                     Validated at construction time — negative values raise
+                                     ``ValueError`` before any JIT tracing.
    :param initial_step_size: The initial step size used in the algorithm.
    :param target_acceptance_rate: The acceptance rate that we target during step size adaptation.
    :param progress_bar: Whether we should display a progress bar.

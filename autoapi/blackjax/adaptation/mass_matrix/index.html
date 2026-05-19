@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.low_rank_adaptation" href="../low_rank_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g85f5d356f" />
+  <meta name="docsearch:version" content="0.1.dev1+gc46ac5677" />
   </head>
   
   
@@ -501,13 +501,49 @@ also the current number of iterations of the algorithm.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.mass_matrix.mass_matrix_adaptation">
-<span class="sig-name descname"><span class="pre">mass_matrix_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_diagonal_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mass_matrix.html#mass_matrix_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mass_matrix.mass_matrix_adaptation" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">mass_matrix_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_diagonal_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imm_shrinkage_to_previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mass_matrix.html#mass_matrix_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mass_matrix.mass_matrix_adaptation" title="Link to this definition">#</a></dt>
 <dd><p>Adapts the values in the mass matrix by computing the covariance
 between parameters.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>is_diagonal_matrix</strong> – When True the algorithm adapts and returns a diagonal mass matrix
-(default), otherwise adaps and returns a dense mass matrix.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>is_diagonal_matrix</strong> – When True the algorithm adapts and returns a diagonal mass matrix
+(default), otherwise adaps and returns a dense mass matrix.</p></li>
+<li><p><strong>imm_shrinkage_to_previous</strong> – <p>Bayesian pseudo-count controlling shrinkage of the per-window adapted
+IMM toward the previous window’s IMM. Interpretable as “the number of
+imaginary additional samples in the current window’s accumulator that
+have already settled to <code class="docutils literal notranslate"><span class="pre">IMM_prev</span></code>’s value”. Combined with the
+existing Stan-pseudo-count 5 (which targets <code class="docutils literal notranslate"><span class="pre">1e-3·I</span></code>) and the
+actual <code class="docutils literal notranslate"><span class="pre">count</span></code> samples in the window, the final IMM is the
+precision-weighted average:</p>
+<div class="math notranslate nohighlight">
+\[\text{IMM}_\text{new} =
+\frac{\text{count}}{\text{denom}} \cdot \text{cov}_\text{window} +
+\frac{k_\text{prev}}{\text{denom}} \cdot \text{IMM}_\text{prev} +
+\frac{5}{\text{denom}} \cdot 10^{-3} \cdot I\]</div>
+<p>where <span class="math notranslate nohighlight">\(\text{denom} = \text{count} + 5 + k_\text{prev}\)</span> and
+<span class="math notranslate nohighlight">\(k_\text{prev}\)</span> is this argument.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">0.0</span></code> (default): Stan-vanilla behavior, no shrinkage to previous.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">5</span></code>: matches Stan’s existing identity-shrinkage scale; mild,
+barely-perceptible persistence across windows.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">≈</span> <span class="pre">window_size</span> <span class="pre">/</span> <span class="pre">4</span></code>: ~20% weight on the previous IMM; moderate
+persistence.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">≈</span> <span class="pre">window_size</span></code>: ~50% weight; previous IMM treated as equally
+informative as the new window’s data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&gt;&gt;</span> <span class="pre">window_size</span></code>: weight saturates near 100%; Welford effectively
+disabled (anti-pattern unless the prior IMM is <em>much</em> better than
+the chain can produce).</p></li>
+</ul>
+<p>Stan-default window sizes range 25 → 500 across Phase II, so the
+practical “moderate persistence” band is roughly
+<code class="docutils literal notranslate"><span class="pre">5</span> <span class="pre">≤</span> <span class="pre">k_prev</span> <span class="pre">≤</span> <span class="pre">50</span></code>. Use larger values only when the prior IMM
+comes from a high-confidence source (e.g., a converged pre-warmup
+Pathfinder/multipathfinder fit on the right model). No upper bound
+is enforced — only <code class="docutils literal notranslate"><span class="pre">k_prev</span> <span class="pre">&gt;=</span> <span class="pre">0.0</span></code> is validated (raises
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> on negative).</p>
+</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">

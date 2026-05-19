@@ -84,13 +84,49 @@ Module Contents
       :type:  WelfordAlgorithmState
 
 
-.. py:function:: mass_matrix_adaptation(is_diagonal_matrix: bool = True) -> tuple[Callable, Callable, Callable]
+.. py:function:: mass_matrix_adaptation(is_diagonal_matrix: bool = True, imm_shrinkage_to_previous: float = 0.0) -> tuple[Callable, Callable, Callable]
 
    Adapts the values in the mass matrix by computing the covariance
    between parameters.
 
    :param is_diagonal_matrix: When True the algorithm adapts and returns a diagonal mass matrix
                               (default), otherwise adaps and returns a dense mass matrix.
+   :param imm_shrinkage_to_previous: Bayesian pseudo-count controlling shrinkage of the per-window adapted
+                                     IMM toward the previous window's IMM. Interpretable as "the number of
+                                     imaginary additional samples in the current window's accumulator that
+                                     have already settled to ``IMM_prev``'s value". Combined with the
+                                     existing Stan-pseudo-count 5 (which targets ``1e-3·I``) and the
+                                     actual ``count`` samples in the window, the final IMM is the
+                                     precision-weighted average:
+
+                                     .. math::
+
+                                         \text{IMM}_\text{new} =
+                                         \frac{\text{count}}{\text{denom}} \cdot \text{cov}_\text{window} +
+                                         \frac{k_\text{prev}}{\text{denom}} \cdot \text{IMM}_\text{prev} +
+                                         \frac{5}{\text{denom}} \cdot 10^{-3} \cdot I
+
+                                     where :math:`\text{denom} = \text{count} + 5 + k_\text{prev}` and
+                                     :math:`k_\text{prev}` is this argument.
+
+                                     - ``0.0`` (default): Stan-vanilla behavior, no shrinkage to previous.
+                                     - ``5``: matches Stan's existing identity-shrinkage scale; mild,
+                                       barely-perceptible persistence across windows.
+                                     - ``≈ window_size / 4``: ~20% weight on the previous IMM; moderate
+                                       persistence.
+                                     - ``≈ window_size``: ~50% weight; previous IMM treated as equally
+                                       informative as the new window's data.
+                                     - ``>> window_size``: weight saturates near 100%; Welford effectively
+                                       disabled (anti-pattern unless the prior IMM is *much* better than
+                                       the chain can produce).
+
+                                     Stan-default window sizes range 25 → 500 across Phase II, so the
+                                     practical "moderate persistence" band is roughly
+                                     ``5 ≤ k_prev ≤ 50``. Use larger values only when the prior IMM
+                                     comes from a high-confidence source (e.g., a converged pre-warmup
+                                     Pathfinder/multipathfinder fit on the right model). No upper bound
+                                     is enforced — only ``k_prev >= 0.0`` is validated (raises
+                                     ``ValueError`` on negative).
 
    :returns: * *init* -- A function that initializes the step of the mass matrix adaptation.
              * *update* -- A function that updates the state of the mass matrix.
