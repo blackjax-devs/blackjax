@@ -68,6 +68,7 @@ class MassMatrixAdaptationState(NamedTuple):
 
 def mass_matrix_adaptation(
     is_diagonal_matrix: bool = True,
+    imm_shrinkage_to_previous: float = 0.0,
 ) -> tuple[Callable, Callable, Callable]:
     """Adapts the values in the mass matrix by computing the covariance
     between parameters.
@@ -77,6 +78,12 @@ def mass_matrix_adaptation(
     is_diagonal_matrix
         When True the algorithm adapts and returns a diagonal mass matrix
         (default), otherwise adaps and returns a dense mass matrix.
+    imm_shrinkage_to_previous
+        Pseudo-count controlling shrinkage of the new IMM toward the previous
+        window's IMM. Default 0.0 gives the current Stan behavior (shrink only
+        toward 1e-3·I). Use a positive value (e.g., 20.0) to make the IMM
+        adaptation sticky across windows. A ``ValueError`` is raised if this
+        value is negative.
 
     Returns
     -------
@@ -89,6 +96,12 @@ def mass_matrix_adaptation(
         state.
 
     """
+    if imm_shrinkage_to_previous < 0.0:
+        raise ValueError(
+            f"imm_shrinkage_to_previous must be >= 0.0, "
+            f"got {imm_shrinkage_to_previous}"
+        )
+
     wc_init, wc_update, wc_final = welford_algorithm(is_diagonal_matrix)
 
     def init(
@@ -150,18 +163,36 @@ def mass_matrix_adaptation(
         In this step we compute the mass matrix from the covariance matrix computed
         by the Welford algorithm, and re-initialize the later.
 
+        The IMM is regularized as a convex combination of three terms:
+        1. This window's empirical covariance (weight: count / denom)
+        2. The previous window's IMM (weight: imm_shrinkage_to_previous / denom)
+        3. A small identity matrix 1e-3·I (weight: 5 / denom)
+
+        where denom = count + 5 + imm_shrinkage_to_previous.
+
+        When imm_shrinkage_to_previous = 0.0 (default), this reduces to the
+        standard Stan formula with only the first and third terms.
+
         """
-        _, wc_state = mm_state
+        previous_imm, wc_state = mm_state
         covariance, count, mean = wc_final(wc_state)
 
-        # Regularize the covariance matrix, see Stan
-        scaled_covariance = (count / (count + 5)) * covariance
-        shrinkage = 1e-3 * (5 / (count + 5))
+        # Unified regularization formula with three shrinkage targets
+        denom = count + 5 + imm_shrinkage_to_previous
+        beta_data = count / denom
+        beta_prev = imm_shrinkage_to_previous / denom
+        beta_ident = 5 / denom
+
         if is_diagonal_matrix:
-            inverse_mass_matrix = scaled_covariance + shrinkage
+            inverse_mass_matrix = (
+                beta_data * covariance + beta_prev * previous_imm + beta_ident * 1e-3
+            )
         else:
-            inverse_mass_matrix = scaled_covariance + shrinkage * jnp.identity(
-                mean.shape[0]
+            d = mean.shape[0]
+            inverse_mass_matrix = (
+                beta_data * covariance
+                + beta_prev * previous_imm
+                + beta_ident * 1e-3 * jnp.identity(d)
             )
 
         ndims = jnp.shape(inverse_mass_matrix)[-1]
