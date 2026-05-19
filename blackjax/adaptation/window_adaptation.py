@@ -308,12 +308,29 @@ def window_adaptation(
         A ``ValueError`` is raised at construction time (before any JIT
         tracing) if the shape is inconsistent.
     imm_shrinkage_to_previous
-        Pseudo-count controlling shrinkage of the IMM toward the previous
-        window's IMM. Default 0.0 gives the current Stan behavior (shrink only
-        toward identity). Use a positive value (e.g., 20.0) to make the IMM
-        adaptation sticky across windows, preserving the influence of
-        ``initial_inverse_mass_matrix`` longer. A ``ValueError`` is raised at
-        construction time if this value is negative.
+        Bayesian pseudo-count controlling shrinkage of the per-window
+        adapted inverse mass matrix toward the *previous* window's IMM, in
+        addition to the existing Stan-style shrinkage toward
+        ``1e-3 · I`` (pseudo-count 5). Default ``0.0`` reproduces Stan's
+        behavior exactly: each window's Welford estimate replaces the
+        previous IMM (no persistence). A positive value blends a fraction
+        ``k_prev / (count + 5 + k_prev)`` of the previous IMM into the
+        new one, where ``count`` is the number of samples in the window
+        and ``k_prev`` is this argument.
+
+        Useful when ``initial_inverse_mass_matrix`` carries high-confidence
+        information (e.g., from a converged pre-warmup Pathfinder fit) that
+        should persist beyond window 1's reset. Practical band for typical
+        Stan window sizes (25–500): ``5 ≤ k_prev ≤ 50`` gives mild-to-
+        moderate persistence; ``k_prev ≈ window_size`` gives balanced 50/50
+        weight between the previous IMM and the new window's data;
+        ``k_prev >> window_size`` effectively freezes the IMM at
+        ``initial_inverse_mass_matrix`` (anti-pattern unless the seed is
+        truly known-correct). See ``mass_matrix_adaptation`` for the full
+        precision-weighted-average formula.
+
+        Validated at construction time — negative values raise
+        ``ValueError`` before any JIT tracing.
     initial_step_size
         The initial step size used in the algorithm.
     target_acceptance_rate
