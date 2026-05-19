@@ -48,6 +48,7 @@
     <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
     <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/adaptation/pathfinder_adaptation/index';</script>
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
@@ -55,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.meads_adaptation" href="../meads_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ge5ef767de" />
+  <meta name="docsearch:version" content="0.1.dev1+g85f5d356f" />
   </head>
   
   
@@ -406,7 +407,7 @@
                   
   <section id="module-blackjax.adaptation.pathfinder_adaptation">
 <span id="blackjax-adaptation-pathfinder-adaptation"></span><h1>blackjax.adaptation.pathfinder_adaptation<a class="headerlink" href="#module-blackjax.adaptation.pathfinder_adaptation" title="Link to this heading">#</a></h1>
-<p>Implementation of the Pathinder warmup for the HMC family of sampling algorithms.</p>
+<p>Implementation of the Pathfinder warmup for the HMC family of sampling algorithms.</p>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
@@ -482,14 +483,47 @@ the mcmc algorithm reaches a given target acceptance rate.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation">
-<span class="sig-name descname"><span class="pre">pathfinder_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation_info_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">return_all_adapt_info</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_parameters</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.AdaptationAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/pathfinder_adaptation.html#pathfinder_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">pathfinder_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_paths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_samples_per_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">200</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psis_imm_n_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imm_estimator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'lbfgs_psis_mixture'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'psis_empirical'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'lbfgs_psis_mixture'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation_info_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">return_all_adapt_info</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_parameters</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.AdaptationAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/pathfinder_adaptation.html#pathfinder_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.pathfinder_adaptation.pathfinder_adaptation" title="Link to this definition">#</a></dt>
 <dd><p>Adapt the value of the inverse mass matrix and step size parameters of
-algorithms in the HMC fmaily.</p>
+algorithms in the HMC family.</p>
+<p>Supports single-chain (original behaviour) and multi-chain dispatch via
+<cite>blackjax.vi.multipathfinder</cite>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>algorithm</strong> – The algorithm whose parameters are being tuned.</p></li>
 <li><p><strong>logdensity_fn</strong> – The log density probability density function from which we wish to sample.</p></li>
+<li><p><strong>num_chains</strong> – Number of independent chains to initialise.  When 1 (default) the
+behaviour is identical to the original single-chain pathfinder
+adaptation.  When &gt; 1, <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> chains are run in parallel with
+per-chain init positions drawn from the PSIS mixture and a shared
+dense <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> IMM.</p></li>
+<li><p><strong>n_paths</strong> – Number of independent L-BFGS paths for the multi-path Pathfinder run.
+Defaults to <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> (one path per chain).  Ignored when both
+<code class="docutils literal notranslate"><span class="pre">num_chains</span> <span class="pre">==</span> <span class="pre">1</span></code> and <code class="docutils literal notranslate"><span class="pre">n_paths</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> (or explicitly 1) —
+the original single-path code path is used in that case.</p></li>
+<li><p><strong>num_samples_per_path</strong> – Number of samples drawn per path to estimate ELBO and PSIS weights.
+Only used when <code class="docutils literal notranslate"><span class="pre">effective_n_paths</span> <span class="pre">&gt;=</span> <span class="pre">2</span></code>.  Default 200.</p></li>
+<li><p><strong>psis_imm_n_samples</strong> – Number of PSIS-resampled draws used to estimate the post-PSIS
+empirical covariance for the IMM.  Only used when
+<code class="docutils literal notranslate"><span class="pre">imm_estimator=&quot;psis_empirical&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">effective_n_paths</span> <span class="pre">&gt;=</span> <span class="pre">2</span></code>.
+Default 2000.</p></li>
+<li><p><strong>imm_estimator</strong> – <p>Method for deriving the inverse mass matrix when <code class="docutils literal notranslate"><span class="pre">effective_n_paths</span> <span class="pre">&gt;=</span> <span class="pre">2</span></code>.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;lbfgs_psis_mixture&quot;</span></code> <em>(default)</em></dt><dd><p>Analytic PSIS-weighted mixture covariance via the law of total
+variance (within-component + between-component terms).  Returns a
+dense <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> matrix.  When <code class="docutils literal notranslate"><span class="pre">n_paths=1</span></code> this equals the
+single-path L-BFGS inverse Hessian exactly.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;psis_empirical&quot;</span></code></dt><dd><p>Empirical covariance estimated from <code class="docutils literal notranslate"><span class="pre">psis_imm_n_samples</span></code> draws
+importance-resampled according to PSIS weights.  Returns a dense
+<code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> matrix.</p>
+</dd>
+</dl>
+<p>Ignored for the single-chain single-path dispatch (<code class="docutils literal notranslate"><span class="pre">num_chains=1</span></code>,
+<code class="docutils literal notranslate"><span class="pre">effective_n_paths=1</span></code>).  Passing a non-default value in that case
+raises a <code class="docutils literal notranslate"><span class="pre">UserWarning</span></code>.</p>
+</p></li>
 <li><p><strong>initial_step_size</strong> – The initial step size used in the algorithm.</p></li>
 <li><p><strong>target_acceptance_rate</strong> – The acceptance rate that we target during step size adaptation.</p></li>
 <li><p><strong>adaptation_info_fn</strong> – Function to select the adaptation info returned. See return_all_adapt_info
@@ -508,6 +542,81 @@ integration steps for HMC.</p></li>
 </p>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p><strong>Dispatch table</strong> — the <code class="docutils literal notranslate"><span class="pre">(num_chains,</span> <span class="pre">effective_n_paths)</span></code> combination
+selects the internal code path:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>num_chains</p></th>
+<th class="head"><p>effective_n_paths</p></th>
+<th class="head"><p>imm_estimator</p></th>
+<th class="head"><p>Behaviour</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1</p></td>
+<td><p>(ignored)</p></td>
+<td><p><strong>Original</strong> single-path Pathfinder + DA.
+scalar step_size, <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> IMM.</p></td>
+</tr>
+<tr class="row-odd"><td><p>1</p></td>
+<td><p>&gt;= 2</p></td>
+<td><p>lbfgs_psis_mixture</p></td>
+<td><p>Multipathfinder; analytic PSIS-weighted
+mixture covariance; <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> dense IMM.</p></td>
+</tr>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>&gt;= 2</p></td>
+<td><p>psis_empirical</p></td>
+<td><p>Multipathfinder; empirical covariance from
+psis_imm_n_samples resampled draws;
+<code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> dense IMM.</p></td>
+</tr>
+<tr class="row-odd"><td><p>&gt;= 2</p></td>
+<td><p>1</p></td>
+<td><p>(ignored)</p></td>
+<td><p>Single-path Pathfinder; broadcast init x
+chains; vmap DA. step_size (num_chains,).
+<code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> IMM from L-BFGS inverse Hessian.</p></td>
+</tr>
+<tr class="row-even"><td><p>&gt;= 2</p></td>
+<td><p>&gt;= 2</p></td>
+<td><p>lbfgs_psis_mixture</p></td>
+<td><p><strong>Paper-canonical</strong> (Zhang et al. 2022).
+Multipathfinder -&gt; PSIS init -&gt; analytic
+mixture covariance -&gt; vmap DA.</p></td>
+</tr>
+<tr class="row-odd"><td><p>&gt;= 2</p></td>
+<td><p>&gt;= 2</p></td>
+<td><p>psis_empirical</p></td>
+<td><p>Multipathfinder -&gt; PSIS init -&gt; empirical
+covariance -&gt; vmap DA.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Return contract:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">num_chains</span> <span class="pre">==</span> <span class="pre">1</span></code>: identical to the pre-change API.
+<code class="docutils literal notranslate"><span class="pre">parameters[&quot;step_size&quot;]</span></code> is a scalar;
+<code class="docutils literal notranslate"><span class="pre">parameters[&quot;inverse_mass_matrix&quot;]</span></code> is uniformly <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">num_chains</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>: <code class="docutils literal notranslate"><span class="pre">parameters[&quot;step_size&quot;]</span></code> is <code class="docutils literal notranslate"><span class="pre">(num_chains,)</span></code>;
+<code class="docutils literal notranslate"><span class="pre">parameters[&quot;inverse_mass_matrix&quot;]</span></code> is the single shared <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> IMM
+(not broadcast — the caller broadcasts if needed).</p></li>
+<li><p>When <code class="docutils literal notranslate"><span class="pre">effective_n_paths</span> <span class="pre">&gt;=</span> <span class="pre">2</span></code>, <code class="docutils literal notranslate"><span class="pre">parameters</span></code> also includes
+<code class="docutils literal notranslate"><span class="pre">&quot;_pathfinder_psis_pareto_k&quot;</span></code> (scalar) for downstream diagnostics.</p></li>
+</ul>
+<p><strong>PSIS-weighted mixture covariance math</strong> (<code class="docutils literal notranslate"><span class="pre">imm_estimator=&quot;lbfgs_psis_mixture&quot;</span></code>):</p>
+<p>Multipathfinder produces a mixture of Laplace approximations
+<code class="docutils literal notranslate"><span class="pre">p(theta)</span> <span class="pre">approx</span> <span class="pre">sum_i</span> <span class="pre">w_i</span> <span class="pre">*</span> <span class="pre">N(mu_i,</span> <span class="pre">Sigma_i)</span></code> where <code class="docutils literal notranslate"><span class="pre">mu_i</span></code> is path <code class="docutils literal notranslate"><span class="pre">i</span></code>’s
+L-BFGS optimum position and <code class="docutils literal notranslate"><span class="pre">Sigma_i</span></code> is its L-BFGS inverse-Hessian estimate.
+Weights <code class="docutils literal notranslate"><span class="pre">w_i</span></code> are aggregate (per-path sum) PSIS weights.</p>
+<p>By the law of total variance:</p>
+<div class="math notranslate nohighlight">
+\[\Sigma_{\text{mix}} = \sum_i w_i \Sigma_i
+    + \sum_i w_i (\mu_i - \bar\mu)(\mu_i - \bar\mu)^T\]</div>
+<p>where <span class="math notranslate nohighlight">\(\bar\mu = \sum_i w_i \mu_i\)</span>.</p>
 </dd></dl>
 
 </section>
