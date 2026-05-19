@@ -387,7 +387,7 @@ def test_both_estimators_converge_on_gaussian():
     """On an isotropic Gaussian, both estimators produce similar IMMs (rtol=0.5).
 
     This test uses generous tolerance because empirical covariance with only
-    200 samples can have substantial Monte Carlo noise, and lbfgs_psis_mixture
+    100 samples can have substantial Monte Carlo noise, and lbfgs_psis_mixture
     is the analytic estimator. We just verify they're in the same ballpark.
     """
     n_paths = 4
