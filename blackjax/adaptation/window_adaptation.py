@@ -46,6 +46,7 @@ class WindowAdaptationState(NamedTuple):
 def base(
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.80,
+    initial_inverse_mass_matrix: Array | None = None,
 ) -> tuple[Callable, Callable, Callable]:
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -88,6 +89,10 @@ def base(
         otherwise.
     target_acceptance_rate:
         The target acceptance rate for the step size adaptation.
+    initial_inverse_mass_matrix
+        Optional seed value for the inverse mass matrix passed through to
+        ``mass_matrix_adaptation``.  ``None`` (default) uses the standard
+        identity initialisation.
 
     Returns
     -------
@@ -114,7 +119,7 @@ def base(
 
         """
         num_dimensions = pytree_size(position)
-        imm_state = mm_init(num_dimensions)
+        imm_state = mm_init(num_dimensions, initial_inverse_mass_matrix)
 
         ss_state = da_init(initial_step_size)
 
@@ -247,6 +252,7 @@ def window_adaptation(
     algorithm,
     logdensity_fn: Callable,
     is_mass_matrix_diagonal: bool = True,
+    initial_inverse_mass_matrix: Array | None = None,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
@@ -276,6 +282,23 @@ def window_adaptation(
         sample.
     is_mass_matrix_diagonal
         Whether we should adapt a diagonal mass matrix.
+    initial_inverse_mass_matrix
+        Optional seed value for the inverse mass matrix used at the start of
+        warmup.  When ``None`` (default) the standard identity initialisation
+        is used (``ones(d)`` for diagonal, ``identity(d)`` for dense).  When
+        provided the array seeds the first window's step-size adaptation with a
+        better geometric hint; the Welford algorithm still starts from scratch
+        so the seed is gradually overwritten by the empirical covariance.
+
+        Shape must be consistent with ``is_mass_matrix_diagonal``:
+
+        * diagonal (``is_mass_matrix_diagonal=True``): 1-D array of shape
+          ``(d,)`` where ``d`` is the number of model parameters.
+        * dense (``is_mass_matrix_diagonal=False``): 2-D square array of shape
+          ``(d, d)``.
+
+        A ``ValueError`` is raised at construction time (before any JIT
+        tracing) if the shape is inconsistent.
     initial_step_size
         The initial step size used in the algorithm.
     target_acceptance_rate
@@ -296,6 +319,23 @@ def window_adaptation(
     A function that runs the adaptation and returns an `AdaptationResult` object.
 
     """
+    # Validate initial_inverse_mass_matrix shape against is_mass_matrix_diagonal.
+    # Do this BEFORE any JIT-traced path so the user gets a clear Python error.
+    if initial_inverse_mass_matrix is not None:
+        imm = jnp.asarray(initial_inverse_mass_matrix)
+        if is_mass_matrix_diagonal:
+            if imm.ndim != 1:
+                raise ValueError(
+                    f"is_mass_matrix_diagonal=True requires "
+                    f"initial_inverse_mass_matrix.ndim == 1, got ndim={imm.ndim}"
+                )
+        else:
+            if imm.ndim != 2 or imm.shape[0] != imm.shape[1]:
+                raise ValueError(
+                    f"is_mass_matrix_diagonal=False requires "
+                    f"initial_inverse_mass_matrix to be a 2-D square array, "
+                    f"got shape={imm.shape}"
+                )
 
     if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
         mcmc_kernel = algorithm.build_kernel(integrator)
@@ -305,6 +345,7 @@ def window_adaptation(
     adapt_init, adapt_step, adapt_final = base(
         is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
+        initial_inverse_mass_matrix=initial_inverse_mass_matrix,
     )
 
     def one_step(carry, xs):

@@ -91,20 +91,36 @@ def mass_matrix_adaptation(
     """
     wc_init, wc_update, wc_final = welford_algorithm(is_diagonal_matrix)
 
-    def init(n_dims: int) -> MassMatrixAdaptationState:
+    def init(
+        n_dims: int,
+        initial_inverse_mass_matrix: Array | None = None,
+    ) -> MassMatrixAdaptationState:
         """Initialize the matrix adaptation.
 
         Parameters
         ----------
-        ndims
+        n_dims
             The number of dimensions of the mass matrix, which corresponds to
             the number of dimensions of the chain position.
+        initial_inverse_mass_matrix
+            Optional seed value for the inverse mass matrix.  When ``None``
+            (default) the standard identity initialisation is used: ``ones(d)``
+            for diagonal matrices and ``identity(d)`` for dense matrices.
+            When provided the array is used directly as the initial IMM; the
+            Welford state is still started fresh so the seed is gradually
+            overwritten by the empirical covariance as warmup windows proceed.
+            Shape must match ``is_diagonal_matrix``: 1-D ``(d,)`` for diagonal,
+            2-D ``(d, d)`` for dense.  Validation is the caller's
+            responsibility (``window_adaptation`` checks before the JIT path).
 
         """
-        if is_diagonal_matrix:
-            inverse_mass_matrix = jnp.ones(n_dims)
+        if initial_inverse_mass_matrix is None:
+            if is_diagonal_matrix:
+                inverse_mass_matrix = jnp.ones(n_dims)
+            else:
+                inverse_mass_matrix = jnp.identity(n_dims)
         else:
-            inverse_mass_matrix = jnp.identity(n_dims)
+            inverse_mass_matrix = jnp.asarray(initial_inverse_mass_matrix)
 
         wc_state = wc_init(n_dims)
 
