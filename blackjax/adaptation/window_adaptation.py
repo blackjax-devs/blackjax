@@ -47,6 +47,7 @@ def base(
     is_mass_matrix_diagonal: bool,
     target_acceptance_rate: float = 0.80,
     initial_inverse_mass_matrix: Array | None = None,
+    imm_shrinkage_to_previous: float = 0.0,
 ) -> tuple[Callable, Callable, Callable]:
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -93,6 +94,10 @@ def base(
         Optional seed value for the inverse mass matrix passed through to
         ``mass_matrix_adaptation``.  ``None`` (default) uses the standard
         identity initialisation.
+    imm_shrinkage_to_previous
+        Pseudo-count controlling shrinkage of the IMM toward the previous
+        window's IMM. Default 0.0 gives the current Stan behavior. Passed
+        through to ``mass_matrix_adaptation``.
 
     Returns
     -------
@@ -105,7 +110,9 @@ def base(
         state.
 
     """
-    mm_init, mm_update, mm_final = mass_matrix_adaptation(is_mass_matrix_diagonal)
+    mm_init, mm_update, mm_final = mass_matrix_adaptation(
+        is_mass_matrix_diagonal, imm_shrinkage_to_previous
+    )
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
     def init(
@@ -253,6 +260,7 @@ def window_adaptation(
     logdensity_fn: Callable,
     is_mass_matrix_diagonal: bool = True,
     initial_inverse_mass_matrix: Array | None = None,
+    imm_shrinkage_to_previous: float = 0.0,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
@@ -299,6 +307,13 @@ def window_adaptation(
 
         A ``ValueError`` is raised at construction time (before any JIT
         tracing) if the shape is inconsistent.
+    imm_shrinkage_to_previous
+        Pseudo-count controlling shrinkage of the IMM toward the previous
+        window's IMM. Default 0.0 gives the current Stan behavior (shrink only
+        toward identity). Use a positive value (e.g., 20.0) to make the IMM
+        adaptation sticky across windows, preserving the influence of
+        ``initial_inverse_mass_matrix`` longer. A ``ValueError`` is raised at
+        construction time if this value is negative.
     initial_step_size
         The initial step size used in the algorithm.
     target_acceptance_rate
@@ -337,6 +352,13 @@ def window_adaptation(
                     f"got shape={imm.shape}"
                 )
 
+    # Validate imm_shrinkage_to_previous before any JIT-traced path.
+    if imm_shrinkage_to_previous < 0.0:
+        raise ValueError(
+            f"imm_shrinkage_to_previous must be >= 0.0, "
+            f"got {imm_shrinkage_to_previous}"
+        )
+
     if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
         mcmc_kernel = algorithm.build_kernel(integrator)
     else:
@@ -346,6 +368,7 @@ def window_adaptation(
         is_mass_matrix_diagonal,
         target_acceptance_rate=target_acceptance_rate,
         initial_inverse_mass_matrix=initial_inverse_mass_matrix,
+        imm_shrinkage_to_previous=imm_shrinkage_to_previous,
     )
 
     def one_step(carry, xs):
