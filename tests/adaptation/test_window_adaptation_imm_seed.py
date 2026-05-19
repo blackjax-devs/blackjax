@@ -18,18 +18,12 @@ import numpy as np
 import pytest
 
 import blackjax
-
-# ---------------------------------------------------------------------------
-# Shared fixture: 3-D isotropic Gaussian
-# ---------------------------------------------------------------------------
-
-DIM = 3
-TARGET_MEAN = jnp.zeros(DIM)
-TARGET_STD = jnp.array([0.1, 1.0, 10.0])  # deliberately anisotropic
-
-
-def logdensity_fn(x):
-    return jax.scipy.stats.norm.logpdf(x, loc=TARGET_MEAN, scale=TARGET_STD).sum()
+from tests.adaptation._fixtures import (  # noqa: F401
+    DIM,
+    TARGET_MEAN,
+    TARGET_STD,
+    logdensity_fn,
+)
 
 
 def _run_warmup(rng_key, imm=None, dense=False, num_steps=200):
