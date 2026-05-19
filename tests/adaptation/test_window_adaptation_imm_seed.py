@@ -18,12 +18,16 @@ import numpy as np
 import pytest
 
 import blackjax
-from tests.adaptation._fixtures import (  # noqa: F401
-    DIM,
-    TARGET_MEAN,
-    TARGET_STD,
-    logdensity_fn,
-)
+from tests.fixtures import std_normal_logdensity
+
+# Anisotropic 3-D Gaussian target — wide per-dim variance range makes the
+# IMM-seed effect on early-warmup step-size adaptation measurable.
+DIM = 3
+TARGET_STD = jnp.array([0.1, 1.0, 10.0])
+
+
+def logdensity_fn(x):
+    return std_normal_logdensity(x, scale=TARGET_STD)
 
 
 def _run_warmup(rng_key, imm=None, dense=False, num_steps=200):

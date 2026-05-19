@@ -17,6 +17,7 @@ import datetime
 import chex
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 
 class BlackJAXTest(chex.TestCase):
@@ -55,10 +56,22 @@ class BlackJAXTest(chex.TestCase):
         return subkey
 
 
-def std_normal_logdensity(x):
-    """Log density of a standard isotropic Gaussian: -0.5 * sum(x**2).
+def std_normal_logdensity(x, scale=1.0):
+    """Log density (unnormalised) of a zero-mean Gaussian.
 
-    Works with both array and PyTree positions (sums over all leaves).
+    Default ``scale=1.0`` gives the standard isotropic normal — preserves the
+    original signature for callers passing no ``scale``.  Supply a scalar to
+    scale uniformly across all dimensions, or an array of shape matching
+    ``ravel_pytree(x)[0].shape`` for an anisotropic per-element scale (i.e.
+    the per-dim standard deviation of the target).
+
+    The normalisation constants (``-d/2 * log(2*pi)`` and ``-sum log scale``)
+    are dropped since they don't affect HMC sampling.
+
+    Works with both array and PyTree positions.
     """
-    leaves = jax.tree.leaves(x)
-    return -0.5 * sum(jnp.sum(leaf**2) for leaf in leaves)
+    if jnp.ndim(scale) == 0:
+        leaves = jax.tree.leaves(x)
+        return -0.5 / (scale**2) * sum(jnp.sum(leaf**2) for leaf in leaves)
+    flat_x, _ = ravel_pytree(x)
+    return -0.5 * jnp.sum((flat_x / scale) ** 2)
