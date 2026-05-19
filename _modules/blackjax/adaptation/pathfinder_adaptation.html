@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc46ac5677" />
+  <meta name="docsearch:version" content="0.1.dev1+ge324e92b3" />
   </head>
   
   
@@ -499,10 +499,19 @@
     <span class="p">)</span>
     <span class="n">w</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_path_weights_norm</span><span class="p">)</span>  <span class="c1"># (n_paths,)</span>
 
-    <span class="c1"># Per-path means: mu_i = path_states.position[i], shape (n_paths, d)</span>
-    <span class="c1"># (These are already flat arrays since PathfinderState.position is an Array</span>
-    <span class="c1"># after the ravel_pytree unravelling inside approximate().)</span>
-    <span class="n">mu_per_path</span> <span class="o">=</span> <span class="n">path_states</span><span class="o">.</span><span class="n">position</span>  <span class="c1"># (n_paths, d)</span>
+    <span class="c1"># Per-path means: mu_i = path_states.position[i], shape (n_paths, d).</span>
+    <span class="c1"># PathfinderState.position is stored in the user&#39;s *pytree* shape (e.g.</span>
+    <span class="c1"># ``{&#39;x&#39;: (n_paths, d_x), &#39;y&#39;: (n_paths, d_y)}`` for a dict-position</span>
+    <span class="c1"># model).  Ravel each path&#39;s pytree into a flat ``(d,)`` array via</span>
+    <span class="c1"># ``jax.vmap`` over the leading ``n_paths`` axis.  For models whose</span>
+    <span class="c1"># position is already a flat ``Array``, this is a no-op (a single leaf</span>
+    <span class="c1"># raveled to itself); for dict / tuple / nested pytrees it concatenates</span>
+    <span class="c1"># the flattened leaves in canonical leaf order.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_ravel_one_path</span><span class="p">(</span><span class="n">pos_pytree</span><span class="p">):</span>
+        <span class="n">flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">pos_pytree</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">flat</span>
+
+    <span class="n">mu_per_path</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_ravel_one_path</span><span class="p">)(</span><span class="n">path_states</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>  <span class="c1"># (n_paths, d)</span>
 
     <span class="c1"># Per-path covariance Sigma_i = lbfgs_inverse_hessian_formula_1(alpha_i, beta_i, gamma_i)</span>
     <span class="c1"># Returns (d, d) per path; vmap over paths gives (n_paths, d, d)</span>
