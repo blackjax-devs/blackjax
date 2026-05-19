@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb094083cc" />
+  <meta name="docsearch:version" content="0.1.dev1+g6a6ce2870" />
   </head>
   
   
@@ -498,20 +498,36 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">wc_init</span><span class="p">,</span> <span class="n">wc_update</span><span class="p">,</span> <span class="n">wc_final</span> <span class="o">=</span> <span class="n">welford_algorithm</span><span class="p">(</span><span class="n">is_diagonal_matrix</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MassMatrixAdaptationState</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span>
+        <span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">initial_inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MassMatrixAdaptationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the matrix adaptation.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ndims</span>
+<span class="sd">        n_dims</span>
 <span class="sd">            The number of dimensions of the mass matrix, which corresponds to</span>
 <span class="sd">            the number of dimensions of the chain position.</span>
+<span class="sd">        initial_inverse_mass_matrix</span>
+<span class="sd">            Optional seed value for the inverse mass matrix.  When ``None``</span>
+<span class="sd">            (default) the standard identity initialisation is used: ``ones(d)``</span>
+<span class="sd">            for diagonal matrices and ``identity(d)`` for dense matrices.</span>
+<span class="sd">            When provided the array is used directly as the initial IMM; the</span>
+<span class="sd">            Welford state is still started fresh so the seed is gradually</span>
+<span class="sd">            overwritten by the empirical covariance as warmup windows proceed.</span>
+<span class="sd">            Shape must match ``is_diagonal_matrix``: 1-D ``(d,)`` for diagonal,</span>
+<span class="sd">            2-D ``(d, d)`` for dense.  Validation is the caller&#39;s</span>
+<span class="sd">            responsibility (``window_adaptation`` checks before the JIT path).</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">is_diagonal_matrix</span><span class="p">:</span>
-            <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_dims</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">initial_inverse_mass_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">is_diagonal_matrix</span><span class="p">:</span>
+                <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_dims</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">n_dims</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">n_dims</span><span class="p">)</span>
+            <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">initial_inverse_mass_matrix</span><span class="p">)</span>
 
         <span class="n">wc_state</span> <span class="o">=</span> <span class="n">wc_init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">)</span>
 

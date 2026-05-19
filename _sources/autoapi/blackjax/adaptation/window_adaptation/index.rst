@@ -50,7 +50,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8) -> tuple[Callable, Callable, Callable]
+.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8, initial_inverse_mass_matrix: blackjax.types.Array | None = None) -> tuple[Callable, Callable, Callable]
 
    Warmup scheme for sampling procedures based on euclidean manifold HMC.
    The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -89,6 +89,9 @@ Module Contents
    :param is_mass_matrix_diagonal: Create and adapt a diagonal mass matrix if True, a dense matrix
                                    otherwise.
    :param target_acceptance_rate: The target acceptance rate for the step size adaptation.
+   :param initial_inverse_mass_matrix: Optional seed value for the inverse mass matrix passed through to
+                                       ``mass_matrix_adaptation``.  ``None`` (default) uses the standard
+                                       identity initialisation.
 
    :returns: * *init* -- Function that initializes the warmup.
              * *update* -- Function that moves the warmup one step.
@@ -96,7 +99,7 @@ Module Contents
                state.
 
 
-.. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, progress_bar: bool = False, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, progress_bar: bool = False, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the value of the inverse mass matrix and step size parameters of
    algorithms in the HMC fmaily. See Blackjax.hmc_family
@@ -115,6 +118,22 @@ Module Contents
    :param logdensity_fn: The log density probability density function from which we wish to
                          sample.
    :param is_mass_matrix_diagonal: Whether we should adapt a diagonal mass matrix.
+   :param initial_inverse_mass_matrix: Optional seed value for the inverse mass matrix used at the start of
+                                       warmup.  When ``None`` (default) the standard identity initialisation
+                                       is used (``ones(d)`` for diagonal, ``identity(d)`` for dense).  When
+                                       provided the array seeds the first window's step-size adaptation with a
+                                       better geometric hint; the Welford algorithm still starts from scratch
+                                       so the seed is gradually overwritten by the empirical covariance.
+
+                                       Shape must be consistent with ``is_mass_matrix_diagonal``:
+
+                                       * diagonal (``is_mass_matrix_diagonal=True``): 1-D array of shape
+                                         ``(d,)`` where ``d`` is the number of model parameters.
+                                       * dense (``is_mass_matrix_diagonal=False``): 2-D square array of shape
+                                         ``(d, d)``.
+
+                                       A ``ValueError`` is raised at construction time (before any JIT
+                                       tracing) if the shape is inconsistent.
    :param initial_step_size: The initial step size used in the algorithm.
    :param target_acceptance_rate: The acceptance rate that we target during step size adaptation.
    :param progress_bar: Whether we should display a progress bar.
