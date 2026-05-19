@@ -103,10 +103,19 @@ def _psis_weighted_mixture_covariance(
     )
     w = jnp.exp(log_path_weights_norm)  # (n_paths,)
 
-    # Per-path means: mu_i = path_states.position[i], shape (n_paths, d)
-    # (These are already flat arrays since PathfinderState.position is an Array
-    # after the ravel_pytree unravelling inside approximate().)
-    mu_per_path = path_states.position  # (n_paths, d)
+    # Per-path means: mu_i = path_states.position[i], shape (n_paths, d).
+    # PathfinderState.position is stored in the user's *pytree* shape (e.g.
+    # ``{'x': (n_paths, d_x), 'y': (n_paths, d_y)}`` for a dict-position
+    # model).  Ravel each path's pytree into a flat ``(d,)`` array via
+    # ``jax.vmap`` over the leading ``n_paths`` axis.  For models whose
+    # position is already a flat ``Array``, this is a no-op (a single leaf
+    # raveled to itself); for dict / tuple / nested pytrees it concatenates
+    # the flattened leaves in canonical leaf order.
+    def _ravel_one_path(pos_pytree):
+        flat, _ = ravel_pytree(pos_pytree)
+        return flat
+
+    mu_per_path = jax.vmap(_ravel_one_path)(path_states.position)  # (n_paths, d)
 
     # Per-path covariance Sigma_i = lbfgs_inverse_hessian_formula_1(alpha_i, beta_i, gamma_i)
     # Returns (d, d) per path; vmap over paths gives (n_paths, d, d)

@@ -503,3 +503,44 @@ def test_imm_estimator_warns_on_single_path():
             n_paths=1,
             imm_estimator="psis_empirical",
         )
+
+
+# ---------------------------------------------------------------------------
+# 13. Pytree position regression: dict-shaped position survives PATH C
+# ---------------------------------------------------------------------------
+
+
+def test_pytree_position_multipathfinder_dispatch():
+    """Multi-path dispatch handles dict-shaped pytree positions without shape leak.
+
+    Regression for the bug where ``_psis_weighted_mixture_covariance`` assumed
+    ``path_states.position`` was a flat ``(n_paths, d)`` array, but
+    ``PathfinderState.position`` actually stores the user's pytree shape.
+    For a dict-position model like ``{'x': array}`` the einsum
+    ``"i,id->d"`` chokes with a ``ValueError`` from ``opt_einsum`` since
+    a dict isn't array-like.
+
+    Surfaced 2026-05-19 during tuningfork's pathfinder shim consolidation
+    (PR #33).  The fix ravels each path's pytree position before the einsum.
+    """
+
+    def dict_logdensity(pos):
+        # 10-D isotropic Gaussian over a single named site.
+        return std_normal_logdensity(pos["x"])
+
+    rng_key = jax.random.key(20260519)
+    warmup = blackjax.pathfinder_adaptation(
+        blackjax.nuts,
+        dict_logdensity,
+        num_chains=4,
+        n_paths=4,
+        num_samples_per_path=30,
+        psis_imm_n_samples=100,
+    )
+    init_pos = {"x": jnp.zeros(10)}
+    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=30)
+
+    # Successful run is the regression check; just verify shape contract.
+    assert params["step_size"].shape == (4,)
+    assert params["inverse_mass_matrix"].shape == (10, 10)
+    assert "_pathfinder_psis_pareto_k" in params
