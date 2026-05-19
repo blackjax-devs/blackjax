@@ -68,6 +68,7 @@ class MassMatrixAdaptationState(NamedTuple):
 
 def mass_matrix_adaptation(
     is_diagonal_matrix: bool = True,
+    imm_shrinkage_to_previous: float = 0.0,
 ) -> tuple[Callable, Callable, Callable]:
     """Adapts the values in the mass matrix by computing the covariance
     between parameters.
@@ -77,6 +78,43 @@ def mass_matrix_adaptation(
     is_diagonal_matrix
         When True the algorithm adapts and returns a diagonal mass matrix
         (default), otherwise adaps and returns a dense mass matrix.
+    imm_shrinkage_to_previous
+        Bayesian pseudo-count controlling shrinkage of the per-window adapted
+        IMM toward the previous window's IMM. Interpretable as "the number of
+        imaginary additional samples in the current window's accumulator that
+        have already settled to ``IMM_prev``'s value". Combined with the
+        existing Stan-pseudo-count 5 (which targets ``1e-3·I``) and the
+        actual ``count`` samples in the window, the final IMM is the
+        precision-weighted average:
+
+        .. math::
+
+            \\text{IMM}_\\text{new} =
+            \\frac{\\text{count}}{\\text{denom}} \\cdot \\text{cov}_\\text{window} +
+            \\frac{k_\\text{prev}}{\\text{denom}} \\cdot \\text{IMM}_\\text{prev} +
+            \\frac{5}{\\text{denom}} \\cdot 10^{-3} \\cdot I
+
+        where :math:`\\text{denom} = \\text{count} + 5 + k_\\text{prev}` and
+        :math:`k_\\text{prev}` is this argument.
+
+        - ``0.0`` (default): Stan-vanilla behavior, no shrinkage to previous.
+        - ``5``: matches Stan's existing identity-shrinkage scale; mild,
+          barely-perceptible persistence across windows.
+        - ``≈ window_size / 4``: ~20% weight on the previous IMM; moderate
+          persistence.
+        - ``≈ window_size``: ~50% weight; previous IMM treated as equally
+          informative as the new window's data.
+        - ``>> window_size``: weight saturates near 100%; Welford effectively
+          disabled (anti-pattern unless the prior IMM is *much* better than
+          the chain can produce).
+
+        Stan-default window sizes range 25 → 500 across Phase II, so the
+        practical "moderate persistence" band is roughly
+        ``5 ≤ k_prev ≤ 50``. Use larger values only when the prior IMM
+        comes from a high-confidence source (e.g., a converged pre-warmup
+        Pathfinder/multipathfinder fit on the right model). No upper bound
+        is enforced — only ``k_prev >= 0.0`` is validated (raises
+        ``ValueError`` on negative).
 
     Returns
     -------
@@ -89,6 +127,12 @@ def mass_matrix_adaptation(
         state.
 
     """
+    if imm_shrinkage_to_previous < 0.0:
+        raise ValueError(
+            f"imm_shrinkage_to_previous must be >= 0.0, "
+            f"got {imm_shrinkage_to_previous}"
+        )
+
     wc_init, wc_update, wc_final = welford_algorithm(is_diagonal_matrix)
 
     def init(
@@ -150,18 +194,36 @@ def mass_matrix_adaptation(
         In this step we compute the mass matrix from the covariance matrix computed
         by the Welford algorithm, and re-initialize the later.
 
+        The IMM is regularized as a convex combination of three terms:
+        1. This window's empirical covariance (weight: count / denom)
+        2. The previous window's IMM (weight: imm_shrinkage_to_previous / denom)
+        3. A small identity matrix 1e-3·I (weight: 5 / denom)
+
+        where denom = count + 5 + imm_shrinkage_to_previous.
+
+        When imm_shrinkage_to_previous = 0.0 (default), this reduces to the
+        standard Stan formula with only the first and third terms.
+
         """
-        _, wc_state = mm_state
+        previous_imm, wc_state = mm_state
         covariance, count, mean = wc_final(wc_state)
 
-        # Regularize the covariance matrix, see Stan
-        scaled_covariance = (count / (count + 5)) * covariance
-        shrinkage = 1e-3 * (5 / (count + 5))
+        # Unified regularization formula with three shrinkage targets
+        denom = count + 5 + imm_shrinkage_to_previous
+        beta_data = count / denom
+        beta_prev = imm_shrinkage_to_previous / denom
+        beta_ident = 5 / denom
+
         if is_diagonal_matrix:
-            inverse_mass_matrix = scaled_covariance + shrinkage
+            inverse_mass_matrix = (
+                beta_data * covariance + beta_prev * previous_imm + beta_ident * 1e-3
+            )
         else:
-            inverse_mass_matrix = scaled_covariance + shrinkage * jnp.identity(
-                mean.shape[0]
+            d = mean.shape[0]
+            inverse_mass_matrix = (
+                beta_data * covariance
+                + beta_prev * previous_imm
+                + beta_ident * 1e-3 * jnp.identity(d)
             )
 
         ndims = jnp.shape(inverse_mass_matrix)[-1]
