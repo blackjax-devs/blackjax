@@ -62,3 +62,22 @@ def std_normal_logdensity(x):
     """
     leaves = jax.tree.leaves(x)
     return -0.5 * sum(jnp.sum(leaf**2) for leaf in leaves)
+
+
+# Anisotropic 3-D Gaussian fixture for tests where the IMM/preconditioner choice
+# is supposed to be detectable (deliberately heterogeneous per-dim variance).
+ANISOTROPIC_3D_DIM = 3
+ANISOTROPIC_3D_MEAN = jnp.zeros(ANISOTROPIC_3D_DIM)
+ANISOTROPIC_3D_STD = jnp.array([0.1, 1.0, 10.0])
+
+
+def anisotropic_3d_gaussian_logdensity(x):
+    """Log density of a 3-D anisotropic Gaussian with std [0.1, 1.0, 10.0].
+
+    The wide spread of per-dim variances (1e-2 to 1e2 on the covariance scale)
+    makes the choice of inverse-mass-matrix preconditioner detectable in
+    short-warmup tests. See `tests/adaptation/test_window_adaptation_imm_seed.py`.
+    """
+    return jax.scipy.stats.norm.logpdf(
+        x, loc=ANISOTROPIC_3D_MEAN, scale=ANISOTROPIC_3D_STD
+    ).sum()

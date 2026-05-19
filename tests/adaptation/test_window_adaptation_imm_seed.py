@@ -18,12 +18,10 @@ import numpy as np
 import pytest
 
 import blackjax
-from tests.adaptation._fixtures import (  # noqa: F401
-    DIM,
-    TARGET_MEAN,
-    TARGET_STD,
-    logdensity_fn,
-)
+from tests.fixtures import ANISOTROPIC_3D_DIM as DIM
+from tests.fixtures import ANISOTROPIC_3D_MEAN as TARGET_MEAN  # noqa: F401
+from tests.fixtures import ANISOTROPIC_3D_STD as TARGET_STD  # noqa: F401
+from tests.fixtures import anisotropic_3d_gaussian_logdensity as logdensity_fn
 
 
 def _run_warmup(rng_key, imm=None, dense=False, num_steps=200):
