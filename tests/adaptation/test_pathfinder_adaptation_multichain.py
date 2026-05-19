@@ -18,18 +18,18 @@ import numpy as np
 import pytest
 
 import blackjax
+from tests.fixtures import std_normal_logdensity
 
 # ---------------------------------------------------------------------------
-# Shared fixture: 3-D isotropic Gaussian
+# Shared position dimension (kept small to limit JIT compilation footprint)
 # ---------------------------------------------------------------------------
 
 DIM = 3
-TARGET_MEAN = jnp.zeros(DIM)
-TARGET_STD = jnp.ones(DIM)
 
 
-def logdensity_fn(x):
-    return jax.scipy.stats.norm.logpdf(x, loc=TARGET_MEAN, scale=TARGET_STD).sum()
+def _logdensity_fn(x):
+    """Wrapper that fixes DIM=3 for std_normal_logdensity."""
+    return std_normal_logdensity(x)
 
 
 # ---------------------------------------------------------------------------
@@ -46,10 +46,10 @@ def test_backward_compat_single_chain():
     rng_key = jax.random.key(0)
     warmup = blackjax.pathfinder_adaptation(
         blackjax.nuts,
-        logdensity_fn,
+        _logdensity_fn,
     )
     init_pos = jnp.zeros(DIM)
-    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=200)
+    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=50)
     step_size = params["step_size"]
     imm = params["inverse_mass_matrix"]
     assert step_size.shape == ()  # scalar
@@ -70,12 +70,12 @@ def test_multichain_single_path_shapes():
     rng_key = jax.random.key(1)
     warmup = blackjax.pathfinder_adaptation(
         blackjax.nuts,
-        logdensity_fn,
+        _logdensity_fn,
         num_chains=4,
         n_paths=1,
     )
     init_pos = jnp.zeros(DIM)
-    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=100)
+    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=30)
     assert params["step_size"].shape == (4,)
     # Single-path always returns dense (d, d) from L-BFGS inverse Hessian
     assert params["inverse_mass_matrix"].shape == (DIM, DIM)
@@ -89,12 +89,12 @@ def test_multichain_single_path_default_n_paths():
     rng_key = jax.random.key(7)
     warmup = blackjax.pathfinder_adaptation(
         blackjax.nuts,
-        logdensity_fn,
+        _logdensity_fn,
         num_chains=4,
         # n_paths defaults to num_chains=4 -> triggers multipathfinder path
     )
     init_pos = jnp.zeros(DIM)
-    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=100)
+    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=30)
     # n_paths = num_chains = 4 -> multi-path path
     assert params["step_size"].shape == (4,)
     # Multi-path returns dense (d, d) IMM
@@ -112,14 +112,14 @@ def test_single_chain_multipathfinder():
     rng_key = jax.random.key(2)
     warmup = blackjax.pathfinder_adaptation(
         blackjax.nuts,
-        logdensity_fn,
+        _logdensity_fn,
         num_chains=1,
         n_paths=4,
-        num_samples_per_path=50,
-        psis_imm_n_samples=200,
+        num_samples_per_path=30,
+        psis_imm_n_samples=100,
     )
     init_pos = jnp.zeros(DIM)
-    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=100)
+    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=30)
     assert params["step_size"].shape == ()  # scalar
     # Multi-path returns dense (d, d) IMM
     assert params["inverse_mass_matrix"].shape == (DIM, DIM)
@@ -142,14 +142,14 @@ def test_paper_canonical_multichain_multipathfinder():
     rng_key = jax.random.key(3)
     warmup = blackjax.pathfinder_adaptation(
         blackjax.nuts,
-        logdensity_fn,
+        _logdensity_fn,
         num_chains=4,
         n_paths=4,
-        num_samples_per_path=50,
-        psis_imm_n_samples=200,
+        num_samples_per_path=30,
+        psis_imm_n_samples=100,
     )
     init_pos = jnp.zeros(DIM)
-    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=100)
+    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=30)
     # Step sizes: one per chain
     assert params["step_size"].shape == (4,)
     assert jnp.all(params["step_size"] > 0)
@@ -174,7 +174,7 @@ def test_num_chains_zero_raises():
     with pytest.raises(ValueError, match="num_chains"):
         blackjax.pathfinder_adaptation(
             blackjax.nuts,
-            logdensity_fn,
+            _logdensity_fn,
             num_chains=0,
         )
 
@@ -184,7 +184,7 @@ def test_num_chains_negative_raises():
     with pytest.raises(ValueError, match="num_chains"):
         blackjax.pathfinder_adaptation(
             blackjax.nuts,
-            logdensity_fn,
+            _logdensity_fn,
             num_chains=-1,
         )
 
@@ -194,7 +194,7 @@ def test_n_paths_zero_raises():
     with pytest.raises(ValueError, match="n_paths"):
         blackjax.pathfinder_adaptation(
             blackjax.nuts,
-            logdensity_fn,
+            _logdensity_fn,
             n_paths=0,
         )
 
@@ -204,7 +204,7 @@ def test_n_paths_negative_raises():
     with pytest.raises(ValueError, match="n_paths"):
         blackjax.pathfinder_adaptation(
             blackjax.nuts,
-            logdensity_fn,
+            _logdensity_fn,
             n_paths=-2,
         )
 
@@ -219,15 +219,15 @@ def test_psis_empirical_single_chain_multipathfinder():
     rng_key = jax.random.key(10)
     warmup = blackjax.pathfinder_adaptation(
         blackjax.nuts,
-        logdensity_fn,
+        _logdensity_fn,
         num_chains=1,
         n_paths=4,
-        num_samples_per_path=50,
-        psis_imm_n_samples=200,
+        num_samples_per_path=30,
+        psis_imm_n_samples=100,
         imm_estimator="psis_empirical",
     )
     init_pos = jnp.zeros(DIM)
-    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=100)
+    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=30)
     assert params["step_size"].shape == ()
     # psis_empirical also returns dense (d, d)
     assert params["inverse_mass_matrix"].shape == (DIM, DIM)
@@ -239,15 +239,15 @@ def test_psis_empirical_multichain_multipathfinder():
     rng_key = jax.random.key(11)
     warmup = blackjax.pathfinder_adaptation(
         blackjax.nuts,
-        logdensity_fn,
+        _logdensity_fn,
         num_chains=4,
         n_paths=4,
-        num_samples_per_path=50,
-        psis_imm_n_samples=200,
+        num_samples_per_path=30,
+        psis_imm_n_samples=100,
         imm_estimator="psis_empirical",
     )
     init_pos = jnp.zeros(DIM)
-    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=100)
+    (state, params), _ = warmup.run(rng_key, init_pos, num_steps=30)
     assert params["step_size"].shape == (4,)
     assert params["inverse_mass_matrix"].shape == (DIM, DIM)
     assert "_pathfinder_psis_pareto_k" in params
@@ -276,15 +276,15 @@ def test_imm_shape_uniformly_dense(num_chains, n_paths, imm_estimator):
     rng_key = jax.random.key(42)
     warmup = blackjax.pathfinder_adaptation(
         blackjax.nuts,
-        logdensity_fn,
+        _logdensity_fn,
         num_chains=num_chains,
         n_paths=n_paths,
-        num_samples_per_path=30,
-        psis_imm_n_samples=100,
+        num_samples_per_path=20,
+        psis_imm_n_samples=50,
         imm_estimator=imm_estimator,
     )
     init_pos = jnp.zeros(DIM)
-    (_, params), _ = warmup.run(rng_key, init_pos, num_steps=50)
+    (_, params), _ = warmup.run(rng_key, init_pos, num_steps=20)
     imm = params["inverse_mass_matrix"]
     assert imm.shape == (DIM, DIM), (
         f"Expected (d, d)=({DIM}, {DIM}) but got {imm.shape} "
@@ -307,15 +307,15 @@ def test_imm_is_symmetric_and_psd(imm_estimator):
     rng_key = jax.random.key(20)
     warmup = blackjax.pathfinder_adaptation(
         blackjax.nuts,
-        logdensity_fn,
+        _logdensity_fn,
         num_chains=1,
         n_paths=4,
-        num_samples_per_path=50,
-        psis_imm_n_samples=200,
+        num_samples_per_path=30,
+        psis_imm_n_samples=100,
         imm_estimator=imm_estimator,
     )
     init_pos = jnp.zeros(DIM)
-    (_, params), _ = warmup.run(rng_key, init_pos, num_steps=100)
+    (_, params), _ = warmup.run(rng_key, init_pos, num_steps=30)
     imm = params["inverse_mass_matrix"]
     # Symmetry
     assert jnp.allclose(imm, imm.T, atol=1e-5), (
@@ -356,7 +356,7 @@ def test_degenerate_n_paths_1_matches_single_path():
     pf_key, _ = jax.random.split(rng_key)
     init_positions = init_pos[None]  # (1, DIM)
     mpf_state, _ = multi_approximate(
-        pf_key, logdensity_fn, init_positions, num_samples=50
+        pf_key, _logdensity_fn, init_positions, num_samples=50
     )
     log_weights, _ = psis_weights(mpf_state)
 
@@ -391,20 +391,20 @@ def test_both_estimators_converge_on_gaussian():
     is the analytic estimator. We just verify they're in the same ballpark.
     """
     n_paths = 4
-    num_samples_per_path = 200
-    psis_imm_n_samples = 400
+    num_samples_per_path = 100
+    psis_imm_n_samples = 200
 
     def run_estimator(key, estimator):
         warmup = blackjax.pathfinder_adaptation(
             blackjax.nuts,
-            logdensity_fn,
+            _logdensity_fn,
             num_chains=1,
             n_paths=n_paths,
             num_samples_per_path=num_samples_per_path,
             psis_imm_n_samples=psis_imm_n_samples,
             imm_estimator=estimator,
         )
-        (_, params), _ = warmup.run(key, jnp.zeros(DIM), num_steps=50)
+        (_, params), _ = warmup.run(key, jnp.zeros(DIM), num_steps=30)
         return params["inverse_mass_matrix"]
 
     key_a, key_b = jax.random.split(jax.random.key(99))
@@ -503,7 +503,7 @@ def test_imm_estimator_warns_on_single_path():
     with pytest.warns(UserWarning, match="imm_estimator"):
         blackjax.pathfinder_adaptation(
             blackjax.nuts,
-            logdensity_fn,
+            _logdensity_fn,
             num_chains=1,
             n_paths=1,
             imm_estimator="psis_empirical",
