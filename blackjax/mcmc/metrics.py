@@ -99,7 +99,7 @@ class LowRankInverseMassMatrix(NamedTuple):
     has orthonormal columns and :math:`\\Lambda = \\operatorname{diag}(\\lambda)`.
 
     This is the array-only payload produced by
-    :func:`~blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation`.
+    :func:`~blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank`.
     Unlike a fully-constructed :class:`Metric` (whose fields are Python closures
     that capture these arrays), this NamedTuple is a pure JAX pytree and can be
     safely transported across ``jax.vmap`` / ``jax.pmap`` boundaries.
@@ -136,7 +136,7 @@ def default_metric(metric: MetricTypes) -> Metric:
     - A ``LowRankInverseMassMatrix`` NamedTuple holding ``(sigma, U, lam)``,
       which is expanded to a full :class:`Metric` via
       :func:`gaussian_euclidean_low_rank`. This is the form returned by
-      :func:`~blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation`
+      :func:`~blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank`
       and is safe to transport across ``jax.vmap`` boundaries.
     - An ``Array`` which is assumed to specify the inverse mass matrix of a static
       metric

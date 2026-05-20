@@ -64,7 +64,7 @@ from blackjax.util import pytree_size
 __all__ = [
     "LowRankAdaptationState",
     "base",
-    "low_rank_window_adaptation",
+    "window_adaptation_low_rank",
 ]
 
 
@@ -436,7 +436,7 @@ def base(
 # ---------------------------------------------------------------------------
 
 
-def low_rank_window_adaptation(
+def window_adaptation_low_rank(
     algorithm,
     logdensity_fn: Callable,
     max_rank: int = 10,

@@ -159,12 +159,12 @@ class ComputeLowRankMetricTest(BlackJAXTest):
 
 
 class LowRankWindowAdaptationTest(BlackJAXTest):
-    """Integration tests for low_rank_window_adaptation."""
+    """Integration tests for window_adaptation_low_rank."""
 
     def test_runs_on_standard_normal(self):
         """Adaptation runs without error on a standard normal target."""
         logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
-        warmup = blackjax.low_rank_window_adaptation(
+        warmup = blackjax.window_adaptation_low_rank(
             blackjax.nuts, logdensity_fn, max_rank=3
         )
         (state, params), _ = warmup.run(self.next_key(), jnp.ones(5), num_steps=200)
@@ -178,7 +178,7 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
         d = 6
         true_mean = jnp.array([2.0, -1.0, 0.5, -0.5, 1.5, -2.0])
         logdensity_fn = lambda x: -0.5 * jnp.sum((x - true_mean) ** 2)
-        warmup = blackjax.low_rank_window_adaptation(
+        warmup = blackjax.window_adaptation_low_rank(
             blackjax.nuts, logdensity_fn, max_rank=3
         )
         (state, _), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=500)
@@ -187,7 +187,7 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
     def test_step_size_positive(self):
         """Adapted step size is strictly positive."""
         logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
-        warmup = blackjax.low_rank_window_adaptation(
+        warmup = blackjax.window_adaptation_low_rank(
             blackjax.nuts, logdensity_fn, max_rank=2
         )
         (_, params), _ = warmup.run(self.next_key(), jnp.zeros(4), num_steps=200)
@@ -196,7 +196,7 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
     def test_works_with_hmc(self):
         """Adaptation works with HMC (not just NUTS)."""
         logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
-        warmup = blackjax.low_rank_window_adaptation(
+        warmup = blackjax.window_adaptation_low_rank(
             blackjax.hmc,
             logdensity_fn,
             max_rank=2,
@@ -210,7 +210,7 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
         d = 8
         logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
         for max_rank in [1, 5, 10]:
-            warmup = blackjax.low_rank_window_adaptation(
+            warmup = blackjax.window_adaptation_low_rank(
                 blackjax.nuts, logdensity_fn, max_rank=max_rank
             )
             (state, params), _ = warmup.run(
@@ -227,7 +227,7 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
         """
         d = 5
         logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
-        warmup = blackjax.low_rank_window_adaptation(
+        warmup = blackjax.window_adaptation_low_rank(
             blackjax.nuts, logdensity_fn, max_rank=3
         )
         (_, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=200)
@@ -253,7 +253,7 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
         num_chains = 3
         logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
 
-        warmup = blackjax.low_rank_window_adaptation(
+        warmup = blackjax.window_adaptation_low_rank(
             blackjax.hmc,
             logdensity_fn,
             num_integration_steps=5,
