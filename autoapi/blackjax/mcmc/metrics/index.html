@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.mclmc" href="../mclmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ge324e92b3" />
+  <meta name="docsearch:version" content="0.1.dev1+ga8998469a" />
   </head>
   
   
@@ -467,7 +467,7 @@ dynamic is independent of the position and only depends on the momentum
 <p>where <span class="math notranslate nohighlight">\(\sigma \in \mathbb{R}^d_{&gt;0}\)</span>, <span class="math notranslate nohighlight">\(U \in \mathbb{R}^{d \times k}\)</span>
 has orthonormal columns and <span class="math notranslate nohighlight">\(\Lambda = \operatorname{diag}(\lambda)\)</span>.</p>
 <p>This is the array-only payload produced by
-<a class="reference internal" href="../../adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation" title="blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">low_rank_window_adaptation()</span></code></a>.
+<a class="reference internal" href="../../adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a>.
 Unlike a fully-constructed <code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code> (whose fields are Python closures
 that capture these arrays), this NamedTuple is a pure JAX pytree and can be
 safely transported across <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> / <code class="docutils literal notranslate"><span class="pre">jax.pmap</span></code> boundaries.</p>
@@ -518,7 +518,7 @@ call site via <a class="reference internal" href="#blackjax.mcmc.metrics.gaussia
 <li><p>A <code class="docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code> NamedTuple holding <code class="docutils literal notranslate"><span class="pre">(sigma,</span> <span class="pre">U,</span> <span class="pre">lam)</span></code>,
 which is expanded to a full <code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code> via
 <a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a>. This is the form returned by
-<a class="reference internal" href="../../adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation" title="blackjax.adaptation.low_rank_adaptation.low_rank_window_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">low_rank_window_adaptation()</span></code></a>
+<a class="reference internal" href="../../adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a>
 and is safe to transport across <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> boundaries.</p></li>
 <li><p>An <code class="docutils literal notranslate"><span class="pre">Array</span></code> which is assumed to specify the inverse mass matrix of a static
 metric</p></li>
