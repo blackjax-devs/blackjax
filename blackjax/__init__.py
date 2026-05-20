@@ -6,10 +6,7 @@ from blackjax._version import __version__
 
 from .adaptation.adjusted_mclmc_adaptation import adjusted_mclmc_find_L_and_step_size
 from .adaptation.chees_adaptation import chees_adaptation
-from .adaptation.low_rank_adaptation import (
-    low_rank_window_adaptation,
-    window_adaptation_low_rank,
-)
+from .adaptation.low_rank_adaptation import window_adaptation_low_rank
 from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.meads_adaptation import meads_adaptation
 from .adaptation.pathfinder_adaptation import pathfinder_adaptation
@@ -261,7 +258,6 @@ __all__ = [
     "barker_proposal",  # backward-compatible alias for barker
     "window_adaptation",  # mcmc adaptation
     "window_adaptation_low_rank",
-    "low_rank_window_adaptation",  # deprecated alias
     "meads_adaptation",
     "chees_adaptation",
     "pathfinder_adaptation",

@@ -293,46 +293,5 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
         self.assertEqual(new_state.position.shape, (d,))
 
 
-class DeprecationAliasTest(BlackJAXTest):
-    """Test backward-compatibility alias low_rank_window_adaptation."""
-
-    def test_low_rank_window_adaptation_alias_deprecated(self):
-        """The deprecated alias still works but emits DeprecationWarning."""
-        import warnings
-
-        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            # Call the deprecated alias via the module to trigger the warning
-            warmup = blackjax.low_rank_window_adaptation(
-                blackjax.nuts, logdensity_fn, max_rank=2
-            )
-            (state, params), _ = warmup.run(
-                self.next_key(), jnp.zeros(4), num_steps=100
-            )
-
-            # Verify a deprecation warning was raised
-            deprecation_warnings = [
-                warning
-                for warning in w
-                if issubclass(warning.category, DeprecationWarning)
-            ]
-            self.assertGreater(len(deprecation_warnings), 0)
-
-            # Check that the warning message references the new function name
-            warning_messages = [
-                str(warning.message) for warning in deprecation_warnings
-            ]
-            self.assertTrue(
-                any("window_adaptation_low_rank" in msg for msg in warning_messages)
-            )
-
-            # Verify that the function still works correctly
-            self.assertIn("step_size", params)
-            self.assertIn("inverse_mass_matrix", params)
-            self.assertEqual(state.position.shape, (4,))
-
-
 if __name__ == "__main__":
     absltest.main()

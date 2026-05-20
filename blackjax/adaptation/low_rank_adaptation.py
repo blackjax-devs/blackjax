@@ -65,7 +65,6 @@ __all__ = [
     "LowRankAdaptationState",
     "base",
     "window_adaptation_low_rank",
-    "low_rank_window_adaptation",  # deprecated alias
 ]
 
 
@@ -595,22 +594,3 @@ def window_adaptation_low_rank(
         return AdaptationResults(mu_star_state, parameters), info
 
     return AdaptationAlgorithm(run)
-
-
-# Backward-compatibility alias (added 2026-05-20 alongside the rename to
-# window_adaptation_low_rank). Will be removed in a future release.
-def low_rank_window_adaptation(*args, **kwargs):
-    """Deprecated alias for window_adaptation_low_rank.
-
-    .. deprecated::
-        Use :func:`window_adaptation_low_rank` instead.
-    """
-    import warnings
-
-    warnings.warn(
-        "low_rank_window_adaptation is deprecated, use "
-        "window_adaptation_low_rank instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    return window_adaptation_low_rank(*args, **kwargs)
