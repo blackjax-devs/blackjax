@@ -55,11 +55,16 @@ import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.dynamic_hmc import DynamicHMCState
-from blackjax.mcmc.laplace_marginal import LaplaceMarginal, laplace_marginal_factory
+from blackjax.mcmc.laplace_marginal import (
+    LaplaceHMCInfo,
+    LaplaceMarginal,
+    laplace_marginal_factory,
+)
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "LaplaceDynamicHMCState",
+    "LaplaceHMCInfo",
     "init",
     "build_kernel",
     "as_top_level_api",
@@ -146,7 +151,7 @@ def build_kernel(
     Returns
     -------
     A kernel
-    ``(rng_key, state, laplace, step_size, inverse_mass_matrix) -> (LaplaceDynamicHMCState, HMCInfo)``.
+    ``(rng_key, state, laplace, step_size, inverse_mass_matrix) -> (LaplaceDynamicHMCState, LaplaceHMCInfo)``.
     """
     dynamic_kernel = dynamic_hmc.build_kernel(
         integrator,
@@ -163,8 +168,12 @@ def build_kernel(
         step_size: float,
         inverse_mass_matrix: metrics.MetricTypes,
         integration_steps_params: tuple = (),
-    ) -> tuple[LaplaceDynamicHMCState, hmc.HMCInfo]:
-        """One Laplace dynamic-HMC transition."""
+    ) -> tuple[LaplaceDynamicHMCState, LaplaceHMCInfo]:
+        """One Laplace dynamic-HMC transition.
+
+        L-BFGS diagnostics from the post-accept ``theta*`` refresh are
+        surfaced in the returned :class:`~blackjax.mcmc.laplace_marginal.LaplaceHMCInfo`.
+        """
         theta_prev = state.theta_star
 
         def logdensity_fn(phi):
@@ -177,7 +186,7 @@ def build_kernel(
             state.logdensity_grad,
             state.random_generator_arg,
         )
-        new_dynamic_state, info = dynamic_kernel(
+        new_dynamic_state, hmc_info = dynamic_kernel(
             rng_key,
             dynamic_state,
             logdensity_fn,
@@ -186,7 +195,9 @@ def build_kernel(
             integration_steps_params,
         )
 
-        new_theta_star = laplace.solve_theta(new_dynamic_state.position, theta_prev)
+        new_theta_star, lbfgs_diag = laplace.solve_theta_with_info(
+            new_dynamic_state.position, theta_prev
+        )
 
         new_state = LaplaceDynamicHMCState(
             new_dynamic_state.position,
@@ -195,7 +206,20 @@ def build_kernel(
             new_theta_star,
             new_dynamic_state.random_generator_arg,
         )
-        return new_state, info
+        new_info = LaplaceHMCInfo(
+            momentum=hmc_info.momentum,
+            acceptance_rate=hmc_info.acceptance_rate,
+            is_accepted=hmc_info.is_accepted,
+            is_divergent=hmc_info.is_divergent,
+            energy=hmc_info.energy,
+            proposal=hmc_info.proposal,
+            num_integration_steps=hmc_info.num_integration_steps,
+            lbfgs_iter_num=lbfgs_diag.iter_num,
+            lbfgs_error=lbfgs_diag.error,
+            lbfgs_converged=lbfgs_diag.converged,
+            lbfgs_hit_maxiter=lbfgs_diag.hit_maxiter,
+        )
+        return new_state, new_info
 
     return kernel
 
@@ -256,7 +280,9 @@ def as_top_level_api(
     Returns
     -------
     A :class:`~blackjax.base.SamplingAlgorithm` whose ``step`` returns a
-    :class:`LaplaceDynamicHMCState` and :class:`~blackjax.mcmc.hmc.HMCInfo`.
+    :class:`LaplaceDynamicHMCState` and
+    :class:`~blackjax.mcmc.laplace_marginal.LaplaceHMCInfo` (all standard
+    HMCInfo fields plus L-BFGS diagnostics ``lbfgs_hit_maxiter``, etc.).
 
     Examples
     --------
