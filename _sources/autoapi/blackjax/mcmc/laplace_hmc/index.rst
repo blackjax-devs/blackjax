@@ -120,7 +120,7 @@ Module Contents
                           (endpoint + M-H).  Pass :func:`~blackjax.mcmc.hmc.multinomial_hmc_proposal`
                           for multinomial trajectory sampling (``blackjax.laplace_mhmc``).
 
-   :rtype: A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -> (LaplaceHMCState, HMCInfo)``.
+   :rtype: A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -> (LaplaceHMCState, LaplaceHMCInfo)``.
 
 
 .. py:function:: as_top_level_api(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, num_integration_steps: int, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, build_proposal: Callable = hmc.hmc_proposal, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
@@ -154,7 +154,10 @@ Module Contents
 
    :returns: * A :class:`~blackjax.base.SamplingAlgorithm` whose ``step`` returns a
              * :class:`LaplaceHMCState` (with ``theta_star`` field) and
-             * :class:`~blackjax.mcmc.hmc.HMCInfo`.
+             * :class:`~blackjax.mcmc.laplace_marginal.LaplaceHMCInfo` (includes all
+             * standard :class:`~blackjax.mcmc.hmc.HMCInfo` fields plus L-BFGS
+             * diagnostics ``lbfgs_iter_num``, ``lbfgs_error``, ``lbfgs_converged``,
+             * ``lbfgs_hit_maxiter``).
 
    .. rubric:: Examples
 

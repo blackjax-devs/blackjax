@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g007a9ded7" />
+  <meta name="docsearch:version" content="0.1.dev1+gf150b9e77" />
   </head>
   
   
@@ -421,16 +421,110 @@
 <span class="sd">arXiv:2306.14976.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">ravel_pytree</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.optimizers.lbfgs</span><span class="w"> </span><span class="kn">import</span> <span class="n">minimize_lbfgs</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.optimizers.lbfgs</span><span class="w"> </span><span class="kn">import</span> <span class="n">LBFGSDiagnostics</span><span class="p">,</span> <span class="n">minimize_lbfgs</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;LaplaceMarginal&quot;</span><span class="p">,</span> <span class="s2">&quot;laplace_marginal_factory&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;LaplaceHMCInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;LaplaceMarginal&quot;</span><span class="p">,</span> <span class="s2">&quot;laplace_marginal_factory&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="LaplaceHMCInfo">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">LaplaceHMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Info returned by any ``laplace_*hmc`` kernel step.</span>
+
+<span class="sd">    Contains all standard :class:`~blackjax.mcmc.hmc.HMCInfo` fields for</span>
+<span class="sd">    backward compatibility, plus L-BFGS convergence diagnostics from the</span>
+<span class="sd">    ``theta*`` refresh that occurs after each accept/reject step.</span>
+
+<span class="sd">    The L-BFGS diagnostics reflect the **post-accept-reject warm-started solve**</span>
+<span class="sd">    — i.e., the single explicit :meth:`~LaplaceMarginal.solve_theta_with_info`</span>
+<span class="sd">    call at the end of each kernel step, not the leapfrog-interior solves (those</span>
+<span class="sd">    happen inside ``jax.lax.custom_root`` and are not directly accessible).</span>
+
+<span class="sd">    momentum</span>
+<span class="sd">        Momentum sampled at the start of the trajectory.</span>
+<span class="sd">    acceptance_rate</span>
+<span class="sd">        Metropolis acceptance probability for this transition.</span>
+<span class="sd">    is_accepted</span>
+<span class="sd">        Whether the proposed position was accepted.</span>
+<span class="sd">    is_divergent</span>
+<span class="sd">        Whether the energy difference exceeded the divergence threshold.</span>
+<span class="sd">    energy</span>
+<span class="sd">        Total energy (kinetic + potential) of the transition.</span>
+<span class="sd">    proposal</span>
+<span class="sd">        The proposed integrator state (position + momentum at trajectory end).</span>
+<span class="sd">    num_integration_steps</span>
+<span class="sd">        Number of leapfrog steps taken.</span>
+<span class="sd">    lbfgs_iter_num</span>
+<span class="sd">        Number of L-BFGS iterations at the post-accept ``theta*`` refresh.</span>
+<span class="sd">    lbfgs_error</span>
+<span class="sd">        Final gradient norm ``||∇f(theta*)||₂`` at the post-accept refresh.</span>
+<span class="sd">        Large values (&gt;&gt; ``gtol``) indicate a non-converged inner solve.</span>
+<span class="sd">    lbfgs_converged</span>
+<span class="sd">        ``True`` iff ``lbfgs_error &lt;= gtol``.  May be ``False`` for well-behaved</span>
+<span class="sd">        warm-started solves that land near (but not below) ``gtol``; prefer</span>
+<span class="sd">        ``lbfgs_hit_maxiter`` as the primary non-convergence alarm.</span>
+<span class="sd">    lbfgs_hit_maxiter</span>
+<span class="sd">        ``True`` iff the L-BFGS solver exhausted its iteration budget</span>
+<span class="sd">        (``iter_num &gt;= maxiter``).  **This is the direct signal for the</span>
+<span class="sd">        silent-non-convergence bug diagnosed in blackjax issue #925.**</span>
+<span class="sd">        When ``True``, ``theta*`` may be a poor MAP estimate and the Laplace</span>
+<span class="sd">        log-marginal (and its gradient) is unreliable for this step.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># ---- HMCInfo fields (field names and order preserved for compat) ----</span>
+<div class="viewcode-block" id="LaplaceHMCInfo.momentum">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.momentum">[docs]</a>
+    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="LaplaceHMCInfo.acceptance_rate">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.acceptance_rate">[docs]</a>
+    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="LaplaceHMCInfo.is_accepted">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_accepted">[docs]</a>
+    <span class="n">is_accepted</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+<div class="viewcode-block" id="LaplaceHMCInfo.is_divergent">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_divergent">[docs]</a>
+    <span class="n">is_divergent</span><span class="p">:</span> <span class="nb">bool</span></div>
+
+<div class="viewcode-block" id="LaplaceHMCInfo.energy">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.energy">[docs]</a>
+    <span class="n">energy</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="LaplaceHMCInfo.proposal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.proposal">[docs]</a>
+    <span class="n">proposal</span><span class="p">:</span> <span class="n">Any</span>  <span class="c1"># integrators.IntegratorState</span></div>
+
+<div class="viewcode-block" id="LaplaceHMCInfo.num_integration_steps">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.num_integration_steps">[docs]</a>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span></div>
+
+    <span class="c1"># ---- L-BFGS diagnostics (new in #925) ----</span>
+<div class="viewcode-block" id="LaplaceHMCInfo.lbfgs_iter_num">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_iter_num">[docs]</a>
+    <span class="n">lbfgs_iter_num</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="LaplaceHMCInfo.lbfgs_error">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_error">[docs]</a>
+    <span class="n">lbfgs_error</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="LaplaceHMCInfo.lbfgs_converged">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_converged">[docs]</a>
+    <span class="n">lbfgs_converged</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="LaplaceHMCInfo.lbfgs_hit_maxiter">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_hit_maxiter">[docs]</a>
+    <span class="n">lbfgs_hit_maxiter</span><span class="p">:</span> <span class="n">Array</span></div>
+</div>
+
 
 
 <span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -442,10 +536,14 @@
 <span class="sd">    Each attribute is a plain callable, testable and reusable independently.</span>
 <span class="sd">    The dataclass is a named container — there is no mutable state.</span>
 
-<span class="sd">    The four callables are:</span>
+<span class="sd">    The five callables are:</span>
 
 <span class="sd">    - ``solve_theta(phi, theta_prev=None) -&gt; theta_star``: finds the mode of</span>
 <span class="sd">      ``p(theta | phi, y)`` via L-BFGS.  No custom VJP; useful for warm-starting.</span>
+<span class="sd">    - ``solve_theta_with_info(phi, theta_prev=None) -&gt; (theta_star, LBFGSDiagnostics)``:</span>
+<span class="sd">      same as ``solve_theta`` but also returns per-call L-BFGS diagnostics</span>
+<span class="sd">      (``iter_num``, ``error``, ``converged``, ``hit_maxiter``).  Used inside</span>
+<span class="sd">      the laplace kernel to populate :class:`LaplaceHMCInfo`.</span>
 <span class="sd">    - ``get_theta_star(phi, theta_prev=None) -&gt; theta_star``: same as</span>
 <span class="sd">      ``solve_theta`` but wrapped in ``jax.lax.custom_root`` for IFT gradients.</span>
 <span class="sd">    - ``log_marginal(phi, theta_prev=None) -&gt; (lp, theta_star)``: evaluates the</span>
@@ -458,6 +556,10 @@
 <div class="viewcode-block" id="LaplaceMarginal.solve_theta">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta">[docs]</a>
     <span class="n">solve_theta</span><span class="p">:</span> <span class="n">Callable</span></div>
+
+<div class="viewcode-block" id="LaplaceMarginal.solve_theta_with_info">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info">[docs]</a>
+    <span class="n">solve_theta_with_info</span><span class="p">:</span> <span class="n">Callable</span></div>
 
 <div class="viewcode-block" id="LaplaceMarginal.get_theta_star">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceMarginal.get_theta_star">[docs]</a>
@@ -558,20 +660,67 @@
     <span class="n">theta_flat_init</span><span class="p">,</span> <span class="n">unravel_theta</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">theta_init</span><span class="p">)</span>
     <span class="n">d</span> <span class="o">=</span> <span class="n">theta_flat_init</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
+    <span class="c1"># Extract optimizer settings used to compute diagnostics.</span>
+    <span class="n">_maxiter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">optimizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;maxiter&quot;</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
+    <span class="n">_gtol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">optimizer_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;gtol&quot;</span><span class="p">,</span> <span class="mf">1e-8</span><span class="p">)</span>
+
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="c1"># solve_theta: pure L-BFGS mode-finding, no custom VJP</span>
+    <span class="c1"># solve_theta_with_info: sole minimize_lbfgs call site</span>
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">solve_theta</span><span class="p">(</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve_theta_with_info</span><span class="p">(</span>
         <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given.&quot;&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">ArrayTree</span><span class="p">,</span> <span class="n">LBFGSDiagnostics</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find theta*(phi) and return L-BFGS convergence diagnostics.</span>
+
+<span class="sd">        This is the single ``minimize_lbfgs`` call site.  All other</span>
+<span class="sd">        solve functions delegate here.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        phi</span>
+<span class="sd">            Hyperparameter value at which to find the MAP of theta.</span>
+<span class="sd">        theta_prev</span>
+<span class="sd">            Warm-start hint (previous theta*).  ``None`` → cold start from</span>
+<span class="sd">            ``theta_init``.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        theta_star</span>
+<span class="sd">            MAP estimate of theta at ``phi``.</span>
+<span class="sd">        diagnostics</span>
+<span class="sd">            :class:`~blackjax.optimizers.lbfgs.LBFGSDiagnostics` with fields</span>
+<span class="sd">            ``iter_num``, ``error``, ``converged``, and ``hit_maxiter``.</span>
+<span class="sd">            ``hit_maxiter=True`` is the primary non-convergence alarm: it fires</span>
+<span class="sd">            when the optimizer exhausted its ``maxiter`` budget, indicating that</span>
+<span class="sd">            ``theta_star`` may be a poor MAP estimate.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">initial</span> <span class="o">=</span> <span class="n">theta_prev</span> <span class="k">if</span> <span class="n">theta_prev</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">theta_init</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">objective</span><span class="p">(</span><span class="n">theta</span><span class="p">):</span>
             <span class="k">return</span> <span class="o">-</span><span class="n">log_joint_fn</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">phi</span><span class="p">)</span>
 
         <span class="n">result</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">minimize_lbfgs</span><span class="p">(</span><span class="n">objective</span><span class="p">,</span> <span class="n">initial</span><span class="p">,</span> <span class="o">**</span><span class="n">optimizer_kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span>
+        <span class="n">diagnostics</span> <span class="o">=</span> <span class="n">LBFGSDiagnostics</span><span class="p">(</span>
+            <span class="n">iter_num</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">iter_num</span><span class="p">,</span>
+            <span class="n">error</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">error</span><span class="p">,</span>
+            <span class="n">converged</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">error</span> <span class="o">&lt;=</span> <span class="n">_gtol</span><span class="p">,</span>
+            <span class="n">hit_maxiter</span><span class="o">=</span><span class="n">result</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">iter_num</span> <span class="o">&gt;=</span> <span class="n">_maxiter</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="o">.</span><span class="n">params</span><span class="p">,</span> <span class="n">diagnostics</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># solve_theta: thin delegating wrapper — backward-compat API</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">solve_theta</span><span class="p">(</span>
+        <span class="n">phi</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">:</span> <span class="n">ArrayTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given.</span>
+
+<span class="sd">        Delegates to :func:`solve_theta_with_info` and discards the</span>
+<span class="sd">        diagnostics.  Exists as a backward-compatible API for callers</span>
+<span class="sd">        (e.g. ``init()``) that only need ``theta_star``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">solve_theta_with_info</span><span class="p">(</span><span class="n">phi</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># get_theta_star: same solve, wrapped in custom_root for IFT gradient</span>
@@ -673,6 +822,7 @@
 
     <span class="k">return</span> <span class="n">LaplaceMarginal</span><span class="p">(</span>
         <span class="n">solve_theta</span><span class="o">=</span><span class="n">solve_theta</span><span class="p">,</span>
+        <span class="n">solve_theta_with_info</span><span class="o">=</span><span class="n">solve_theta_with_info</span><span class="p">,</span>
         <span class="n">get_theta_star</span><span class="o">=</span><span class="n">get_theta_star</span><span class="p">,</span>
         <span class="n">log_marginal</span><span class="o">=</span><span class="n">log_marginal</span><span class="p">,</span>
         <span class="n">sample_theta</span><span class="o">=</span><span class="n">sample_theta</span><span class="p">,</span>

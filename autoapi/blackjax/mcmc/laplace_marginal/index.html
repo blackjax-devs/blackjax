@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.laplace_hmc" href="../laplace_hmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g007a9ded7" />
+  <meta name="docsearch:version" content="0.1.dev1+gf150b9e77" />
   </head>
   
   
@@ -383,8 +383,23 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.momentum"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.momentum</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.acceptance_rate"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.acceptance_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_accepted"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.is_accepted</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_divergent"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.is_divergent</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.energy"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.energy</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.proposal"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.proposal</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.num_integration_steps"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.num_integration_steps</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_iter_num"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_iter_num</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_error"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_error</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_converged"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_converged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_hit_maxiter"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_hit_maxiter</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta_with_info</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.get_theta_star"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.get_theta_star</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.log_marginal"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.log_marginal</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.sample_theta"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.sample_theta</span></code></a></li>
@@ -429,7 +444,10 @@ arXiv:2306.14976.</p>
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal" title="blackjax.mcmc.laplace_marginal.LaplaceMarginal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LaplaceMarginal</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo" title="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LaplaceHMCInfo</span></code></a></p></td>
+<td><p>Info returned by any <code class="docutils literal notranslate"><span class="pre">laplace_*hmc</span></code> kernel step.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal" title="blackjax.mcmc.laplace_marginal.LaplaceMarginal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LaplaceMarginal</span></code></a></p></td>
 <td><p>Bundle of pure functions for the Laplace-approximated marginal density.</p></td>
 </tr>
 </tbody>
@@ -450,15 +468,118 @@ arXiv:2306.14976.</p>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
 <dl class="py class">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">LaplaceHMCInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo" title="Link to this definition">#</a></dt>
+<dd><p>Info returned by any <code class="docutils literal notranslate"><span class="pre">laplace_*hmc</span></code> kernel step.</p>
+<p>Contains all standard <a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCInfo" title="blackjax.mcmc.hmc.HMCInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">HMCInfo</span></code></a> fields for
+backward compatibility, plus L-BFGS convergence diagnostics from the
+<code class="docutils literal notranslate"><span class="pre">theta*</span></code> refresh that occurs after each accept/reject step.</p>
+<p>The L-BFGS diagnostics reflect the <strong>post-accept-reject warm-started solve</strong>
+— i.e., the single explicit <a class="reference internal" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info" title="blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info"><code class="xref py py-meth docutils literal notranslate"><span class="pre">solve_theta_with_info()</span></code></a>
+call at the end of each kernel step, not the leapfrog-interior solves (those
+happen inside <code class="docutils literal notranslate"><span class="pre">jax.lax.custom_root</span></code> and are not directly accessible).</p>
+<dl class="simple">
+<dt>momentum</dt><dd><p>Momentum sampled at the start of the trajectory.</p>
+</dd>
+<dt>acceptance_rate</dt><dd><p>Metropolis acceptance probability for this transition.</p>
+</dd>
+<dt>is_accepted</dt><dd><p>Whether the proposed position was accepted.</p>
+</dd>
+<dt>is_divergent</dt><dd><p>Whether the energy difference exceeded the divergence threshold.</p>
+</dd>
+<dt>energy</dt><dd><p>Total energy (kinetic + potential) of the transition.</p>
+</dd>
+<dt>proposal</dt><dd><p>The proposed integrator state (position + momentum at trajectory end).</p>
+</dd>
+<dt>num_integration_steps</dt><dd><p>Number of leapfrog steps taken.</p>
+</dd>
+<dt>lbfgs_iter_num</dt><dd><p>Number of L-BFGS iterations at the post-accept <code class="docutils literal notranslate"><span class="pre">theta*</span></code> refresh.</p>
+</dd>
+<dt>lbfgs_error</dt><dd><p>Final gradient norm <code class="docutils literal notranslate"><span class="pre">||∇f(theta*)||₂</span></code> at the post-accept refresh.
+Large values (&gt;&gt; <code class="docutils literal notranslate"><span class="pre">gtol</span></code>) indicate a non-converged inner solve.</p>
+</dd>
+<dt>lbfgs_converged</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> iff <code class="docutils literal notranslate"><span class="pre">lbfgs_error</span> <span class="pre">&lt;=</span> <span class="pre">gtol</span></code>.  May be <code class="docutils literal notranslate"><span class="pre">False</span></code> for well-behaved
+warm-started solves that land near (but not below) <code class="docutils literal notranslate"><span class="pre">gtol</span></code>; prefer
+<code class="docutils literal notranslate"><span class="pre">lbfgs_hit_maxiter</span></code> as the primary non-convergence alarm.</p>
+</dd>
+<dt>lbfgs_hit_maxiter</dt><dd><p><code class="docutils literal notranslate"><span class="pre">True</span></code> iff the L-BFGS solver exhausted its iteration budget
+(<code class="docutils literal notranslate"><span class="pre">iter_num</span> <span class="pre">&gt;=</span> <span class="pre">maxiter</span></code>).  <strong>This is the direct signal for the
+silent-non-convergence bug diagnosed in blackjax issue #925.</strong>
+When <code class="docutils literal notranslate"><span class="pre">True</span></code>, <code class="docutils literal notranslate"><span class="pre">theta*</span></code> may be a poor MAP estimate and the Laplace
+log-marginal (and its gradient) is unreliable for this step.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.momentum">
+<span class="sig-name descname"><span class="pre">momentum</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.momentum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.momentum" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.acceptance_rate">
+<span class="sig-name descname"><span class="pre">acceptance_rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.acceptance_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.acceptance_rate" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_accepted">
+<span class="sig-name descname"><span class="pre">is_accepted</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.is_accepted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_accepted" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_divergent">
+<span class="sig-name descname"><span class="pre">is_divergent</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.is_divergent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_divergent" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.energy">
+<span class="sig-name descname"><span class="pre">energy</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.energy" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.proposal">
+<span class="sig-name descname"><span class="pre">proposal</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Any</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.proposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.proposal" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.num_integration_steps">
+<span class="sig-name descname"><span class="pre">num_integration_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.num_integration_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.num_integration_steps" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_iter_num">
+<span class="sig-name descname"><span class="pre">lbfgs_iter_num</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.lbfgs_iter_num"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_iter_num" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_error">
+<span class="sig-name descname"><span class="pre">lbfgs_error</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.lbfgs_error"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_error" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_converged">
+<span class="sig-name descname"><span class="pre">lbfgs_converged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.lbfgs_converged"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_converged" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_hit_maxiter">
+<span class="sig-name descname"><span class="pre">lbfgs_hit_maxiter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.lbfgs_hit_maxiter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_hit_maxiter" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceMarginal">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">LaplaceMarginal</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal" title="Link to this definition">#</a></dt>
 <dd><p>Bundle of pure functions for the Laplace-approximated marginal density.</p>
 <p>Each attribute is a plain callable, testable and reusable independently.
 The dataclass is a named container — there is no mutable state.</p>
-<p>The four callables are:</p>
+<p>The five callables are:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">solve_theta(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">theta_star</span></code>: finds the mode of
 <code class="docutils literal notranslate"><span class="pre">p(theta</span> <span class="pre">|</span> <span class="pre">phi,</span> <span class="pre">y)</span></code> via L-BFGS.  No custom VJP; useful for warm-starting.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">solve_theta_with_info(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">(theta_star,</span> <span class="pre">LBFGSDiagnostics)</span></code>:
+same as <code class="docutils literal notranslate"><span class="pre">solve_theta</span></code> but also returns per-call L-BFGS diagnostics
+(<code class="docutils literal notranslate"><span class="pre">iter_num</span></code>, <code class="docutils literal notranslate"><span class="pre">error</span></code>, <code class="docutils literal notranslate"><span class="pre">converged</span></code>, <code class="docutils literal notranslate"><span class="pre">hit_maxiter</span></code>).  Used inside
+the laplace kernel to populate <a class="reference internal" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo" title="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">LaplaceHMCInfo</span></code></a>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">get_theta_star(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">theta_star</span></code>: same as
 <code class="docutils literal notranslate"><span class="pre">solve_theta</span></code> but wrapped in <code class="docutils literal notranslate"><span class="pre">jax.lax.custom_root</span></code> for IFT gradients.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">log_marginal(phi,</span> <span class="pre">theta_prev=None)</span> <span class="pre">-&gt;</span> <span class="pre">(lp,</span> <span class="pre">theta_star)</span></code>: evaluates the
@@ -470,6 +591,11 @@ sample from <code class="docutils literal notranslate"><span class="pre">p(theta
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta">
 <span class="sig-name descname"><span class="pre">solve_theta</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.solve_theta"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info">
+<span class="sig-name descname"><span class="pre">solve_theta_with_info</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceMarginal.solve_theta_with_info"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -605,8 +731,23 @@ approximately Gaussian (unimodal, log-concave near the mode).</p></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.momentum"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.momentum</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.acceptance_rate"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.acceptance_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_accepted"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.is_accepted</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.is_divergent"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.is_divergent</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.energy"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.energy</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.proposal"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.proposal</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.num_integration_steps"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.num_integration_steps</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_iter_num"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_iter_num</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_error"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_error</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_converged"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_converged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_hit_maxiter"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_hit_maxiter</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta_with_info</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.get_theta_star"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.get_theta_star</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.log_marginal"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.log_marginal</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.sample_theta"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.sample_theta</span></code></a></li>

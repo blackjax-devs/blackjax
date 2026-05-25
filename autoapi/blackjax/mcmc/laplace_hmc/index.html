@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.laplace_dynamic_hmc" href="../laplace_dynamic_hmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g007a9ded7" />
+  <meta name="docsearch:version" content="0.1.dev1+gf150b9e77" />
   </head>
   
   
@@ -552,7 +552,7 @@ for multinomial trajectory sampling (<code class="docutils literal notranslate">
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>A kernel <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">state,</span> <span class="pre">laplace,</span> <span class="pre">step_size,</span> <span class="pre">inverse_mass_matrix,</span> <span class="pre">num_integration_steps)</span> <span class="pre">-&gt;</span> <span class="pre">(LaplaceHMCState,</span> <span class="pre">HMCInfo)</span></code>.</p>
+<dd class="field-even"><p>A kernel <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">state,</span> <span class="pre">laplace,</span> <span class="pre">step_size,</span> <span class="pre">inverse_mass_matrix,</span> <span class="pre">num_integration_steps)</span> <span class="pre">-&gt;</span> <span class="pre">(LaplaceHMCState,</span> <span class="pre">LaplaceHMCInfo)</span></code>.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -592,7 +592,10 @@ Useful keys: <code class="docutils literal notranslate"><span class="pre">maxite
 <dd class="field-even"><p><ul class="simple">
 <li><p>A <code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> whose <code class="docutils literal notranslate"><span class="pre">step</span></code> returns a</p></li>
 <li><p><a class="reference internal" href="#blackjax.mcmc.laplace_hmc.LaplaceHMCState" title="blackjax.mcmc.laplace_hmc.LaplaceHMCState"><code class="xref py py-class docutils literal notranslate"><span class="pre">LaplaceHMCState</span></code></a> (with <code class="docutils literal notranslate"><span class="pre">theta_star</span></code> field) and</p></li>
-<li><p><a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCInfo" title="blackjax.mcmc.hmc.HMCInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">HMCInfo</span></code></a>.</p></li>
+<li><p><a class="reference internal" href="../laplace_marginal/index.html#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo" title="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">LaplaceHMCInfo</span></code></a> (includes all</p></li>
+<li><p>standard <a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCInfo" title="blackjax.mcmc.hmc.HMCInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">HMCInfo</span></code></a> fields plus L-BFGS</p></li>
+<li><p>diagnostics <code class="docutils literal notranslate"><span class="pre">lbfgs_iter_num</span></code>, <code class="docutils literal notranslate"><span class="pre">lbfgs_error</span></code>, <code class="docutils literal notranslate"><span class="pre">lbfgs_converged</span></code>,</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lbfgs_hit_maxiter</span></code>).</p></li>
 </ul>
 </p>
 </dd>

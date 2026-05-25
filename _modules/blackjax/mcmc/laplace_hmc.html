@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g007a9ded7" />
+  <meta name="docsearch:version" content="0.1.dev1+gf150b9e77" />
   </head>
   
   
@@ -438,11 +438,16 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.integrators</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">integrators</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">metrics</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingAlgorithm</span><span class="p">,</span> <span class="n">build_sampling_algorithm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.laplace_marginal</span><span class="w"> </span><span class="kn">import</span> <span class="n">LaplaceMarginal</span><span class="p">,</span> <span class="n">laplace_marginal_factory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.laplace_marginal</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LaplaceHMCInfo</span><span class="p">,</span>
+    <span class="n">LaplaceMarginal</span><span class="p">,</span>
+    <span class="n">laplace_marginal_factory</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;LaplaceHMCState&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;LaplaceHMCInfo&quot;</span><span class="p">,</span>
     <span class="s2">&quot;init&quot;</span><span class="p">,</span>
     <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
     <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
@@ -534,7 +539,7 @@
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -&gt; (LaplaceHMCState, HMCInfo)``.</span>
+<span class="sd">    A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -&gt; (LaplaceHMCState, LaplaceHMCInfo)``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">hmc_kernel</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">build_proposal</span><span class="p">)</span>
 
@@ -545,13 +550,14 @@
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
         <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">LaplaceHMCState</span><span class="p">,</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCInfo</span><span class="p">]:</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">LaplaceHMCState</span><span class="p">,</span> <span class="n">LaplaceHMCInfo</span><span class="p">]:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;One Laplace-HMC transition.</span>
 
 <span class="sd">        All log-density evaluations during the HMC trajectory warm-start</span>
 <span class="sd">        L-BFGS from ``state.theta_star``.  After accept/reject, L-BFGS is</span>
 <span class="sd">        called once more at the accepted position to refresh ``theta_star``</span>
-<span class="sd">        for the next step.</span>
+<span class="sd">        for the next step.  The L-BFGS diagnostics from that post-accept</span>
+<span class="sd">        solve are surfaced in the returned :class:`LaplaceHMCInfo`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">theta_prev</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">theta_star</span>
 
@@ -563,7 +569,7 @@
         <span class="n">hmc_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">(</span>
             <span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity_grad</span>
         <span class="p">)</span>
-        <span class="n">new_hmc_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">hmc_kernel</span><span class="p">(</span>
+        <span class="n">new_hmc_state</span><span class="p">,</span> <span class="n">hmc_info</span> <span class="o">=</span> <span class="n">hmc_kernel</span><span class="p">(</span>
             <span class="n">rng_key</span><span class="p">,</span>
             <span class="n">hmc_state</span><span class="p">,</span>
             <span class="n">logdensity_fn</span><span class="p">,</span>
@@ -574,7 +580,10 @@
 
         <span class="c1"># Refresh theta_star at the accepted position.  Use theta_prev as warm</span>
         <span class="c1"># start — cheap when phi moved only slightly (typical HMC behaviour).</span>
-        <span class="n">new_theta_star</span> <span class="o">=</span> <span class="n">laplace</span><span class="o">.</span><span class="n">solve_theta</span><span class="p">(</span><span class="n">new_hmc_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">theta_prev</span><span class="p">)</span>
+        <span class="c1"># solve_theta_with_info surfaces L-BFGS diagnostics for this solve.</span>
+        <span class="n">new_theta_star</span><span class="p">,</span> <span class="n">lbfgs_diag</span> <span class="o">=</span> <span class="n">laplace</span><span class="o">.</span><span class="n">solve_theta_with_info</span><span class="p">(</span>
+            <span class="n">new_hmc_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">theta_prev</span>
+        <span class="p">)</span>
 
         <span class="n">new_state</span> <span class="o">=</span> <span class="n">LaplaceHMCState</span><span class="p">(</span>
             <span class="n">new_hmc_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
@@ -582,7 +591,20 @@
             <span class="n">new_hmc_state</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
             <span class="n">new_theta_star</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
+        <span class="n">new_info</span> <span class="o">=</span> <span class="n">LaplaceHMCInfo</span><span class="p">(</span>
+            <span class="n">momentum</span><span class="o">=</span><span class="n">hmc_info</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+            <span class="n">acceptance_rate</span><span class="o">=</span><span class="n">hmc_info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
+            <span class="n">is_accepted</span><span class="o">=</span><span class="n">hmc_info</span><span class="o">.</span><span class="n">is_accepted</span><span class="p">,</span>
+            <span class="n">is_divergent</span><span class="o">=</span><span class="n">hmc_info</span><span class="o">.</span><span class="n">is_divergent</span><span class="p">,</span>
+            <span class="n">energy</span><span class="o">=</span><span class="n">hmc_info</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span>
+            <span class="n">proposal</span><span class="o">=</span><span class="n">hmc_info</span><span class="o">.</span><span class="n">proposal</span><span class="p">,</span>
+            <span class="n">num_integration_steps</span><span class="o">=</span><span class="n">hmc_info</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="p">,</span>
+            <span class="n">lbfgs_iter_num</span><span class="o">=</span><span class="n">lbfgs_diag</span><span class="o">.</span><span class="n">iter_num</span><span class="p">,</span>
+            <span class="n">lbfgs_error</span><span class="o">=</span><span class="n">lbfgs_diag</span><span class="o">.</span><span class="n">error</span><span class="p">,</span>
+            <span class="n">lbfgs_converged</span><span class="o">=</span><span class="n">lbfgs_diag</span><span class="o">.</span><span class="n">converged</span><span class="p">,</span>
+            <span class="n">lbfgs_hit_maxiter</span><span class="o">=</span><span class="n">lbfgs_diag</span><span class="o">.</span><span class="n">hit_maxiter</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">new_info</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
 
@@ -644,7 +666,10 @@
 <span class="sd">    -------</span>
 <span class="sd">    A :class:`~blackjax.base.SamplingAlgorithm` whose ``step`` returns a</span>
 <span class="sd">    :class:`LaplaceHMCState` (with ``theta_star`` field) and</span>
-<span class="sd">    :class:`~blackjax.mcmc.hmc.HMCInfo`.</span>
+<span class="sd">    :class:`~blackjax.mcmc.laplace_marginal.LaplaceHMCInfo` (includes all</span>
+<span class="sd">    standard :class:`~blackjax.mcmc.hmc.HMCInfo` fields plus L-BFGS</span>
+<span class="sd">    diagnostics ``lbfgs_iter_num``, ``lbfgs_error``, ``lbfgs_converged``,</span>
+<span class="sd">    ``lbfgs_hit_maxiter``).</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>

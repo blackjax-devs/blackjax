@@ -37,6 +37,7 @@ Classes
 
 .. autoapisummary::
 
+   blackjax.mcmc.laplace_marginal.LaplaceHMCInfo
    blackjax.mcmc.laplace_marginal.LaplaceMarginal
 
 
@@ -51,6 +52,96 @@ Functions
 Module Contents
 ---------------
 
+.. py:class:: LaplaceHMCInfo
+
+
+
+   Info returned by any ``laplace_*hmc`` kernel step.
+
+   Contains all standard :class:`~blackjax.mcmc.hmc.HMCInfo` fields for
+   backward compatibility, plus L-BFGS convergence diagnostics from the
+   ``theta*`` refresh that occurs after each accept/reject step.
+
+   The L-BFGS diagnostics reflect the **post-accept-reject warm-started solve**
+   — i.e., the single explicit :meth:`~LaplaceMarginal.solve_theta_with_info`
+   call at the end of each kernel step, not the leapfrog-interior solves (those
+   happen inside ``jax.lax.custom_root`` and are not directly accessible).
+
+   momentum
+       Momentum sampled at the start of the trajectory.
+   acceptance_rate
+       Metropolis acceptance probability for this transition.
+   is_accepted
+       Whether the proposed position was accepted.
+   is_divergent
+       Whether the energy difference exceeded the divergence threshold.
+   energy
+       Total energy (kinetic + potential) of the transition.
+   proposal
+       The proposed integrator state (position + momentum at trajectory end).
+   num_integration_steps
+       Number of leapfrog steps taken.
+   lbfgs_iter_num
+       Number of L-BFGS iterations at the post-accept ``theta*`` refresh.
+   lbfgs_error
+       Final gradient norm ``||∇f(theta*)||₂`` at the post-accept refresh.
+       Large values (>> ``gtol``) indicate a non-converged inner solve.
+   lbfgs_converged
+       ``True`` iff ``lbfgs_error <= gtol``.  May be ``False`` for well-behaved
+       warm-started solves that land near (but not below) ``gtol``; prefer
+       ``lbfgs_hit_maxiter`` as the primary non-convergence alarm.
+   lbfgs_hit_maxiter
+       ``True`` iff the L-BFGS solver exhausted its iteration budget
+       (``iter_num >= maxiter``).  **This is the direct signal for the
+       silent-non-convergence bug diagnosed in blackjax issue #925.**
+       When ``True``, ``theta*`` may be a poor MAP estimate and the Laplace
+       log-marginal (and its gradient) is unreliable for this step.
+
+
+   .. py:attribute:: momentum
+      :type:  blackjax.types.ArrayTree
+
+
+   .. py:attribute:: acceptance_rate
+      :type:  float
+
+
+   .. py:attribute:: is_accepted
+      :type:  bool
+
+
+   .. py:attribute:: is_divergent
+      :type:  bool
+
+
+   .. py:attribute:: energy
+      :type:  float
+
+
+   .. py:attribute:: proposal
+      :type:  Any
+
+
+   .. py:attribute:: num_integration_steps
+      :type:  int
+
+
+   .. py:attribute:: lbfgs_iter_num
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: lbfgs_error
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: lbfgs_converged
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: lbfgs_hit_maxiter
+      :type:  blackjax.types.Array
+
+
 .. py:class:: LaplaceMarginal
 
    Bundle of pure functions for the Laplace-approximated marginal density.
@@ -58,10 +149,14 @@ Module Contents
    Each attribute is a plain callable, testable and reusable independently.
    The dataclass is a named container — there is no mutable state.
 
-   The four callables are:
+   The five callables are:
 
    - ``solve_theta(phi, theta_prev=None) -> theta_star``: finds the mode of
      ``p(theta | phi, y)`` via L-BFGS.  No custom VJP; useful for warm-starting.
+   - ``solve_theta_with_info(phi, theta_prev=None) -> (theta_star, LBFGSDiagnostics)``:
+     same as ``solve_theta`` but also returns per-call L-BFGS diagnostics
+     (``iter_num``, ``error``, ``converged``, ``hit_maxiter``).  Used inside
+     the laplace kernel to populate :class:`LaplaceHMCInfo`.
    - ``get_theta_star(phi, theta_prev=None) -> theta_star``: same as
      ``solve_theta`` but wrapped in ``jax.lax.custom_root`` for IFT gradients.
    - ``log_marginal(phi, theta_prev=None) -> (lp, theta_star)``: evaluates the
@@ -72,6 +167,10 @@ Module Contents
 
 
    .. py:attribute:: solve_theta
+      :type:  Callable
+
+
+   .. py:attribute:: solve_theta_with_info
       :type:  Callable
 
 

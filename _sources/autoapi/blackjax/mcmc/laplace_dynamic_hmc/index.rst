@@ -129,7 +129,7 @@ Module Contents
                           for multinomial trajectory sampling (``blackjax.laplace_dmhmc``).
 
    :returns: * *A kernel*
-             * ``(rng_key, state, laplace, step_size, inverse_mass_matrix) -> (LaplaceDynamicHMCState, HMCInfo)``.
+             * ``(rng_key, state, laplace, step_size, inverse_mass_matrix) -> (LaplaceDynamicHMCState, LaplaceHMCInfo)``.
 
 
 .. py:function:: as_top_level_api(log_joint_fn: Callable, theta_init: blackjax.types.ArrayLikeTree, step_size: float, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, *, divergence_threshold: int = 1000, integrator: Callable = integrators.velocity_verlet, next_random_arg_fn: Callable = lambda key: jax.random.split(key)[1], integration_steps_fn: Callable = lambda key: jax.random.randint(key, (), 1, 10), integration_steps_params: tuple = (), build_proposal: Callable = hmc.hmc_proposal, **optimizer_kwargs) -> blackjax.base.SamplingAlgorithm
@@ -161,7 +161,9 @@ Module Contents
                                 Useful keys: ``maxiter`` (default 30), ``gtol``, ``ftol``.
 
    :returns: * A :class:`~blackjax.base.SamplingAlgorithm` whose ``step`` returns a
-             * :class:`LaplaceDynamicHMCState` and :class:`~blackjax.mcmc.hmc.HMCInfo`.
+             * :class:`LaplaceDynamicHMCState` and
+             * :class:`~blackjax.mcmc.laplace_marginal.LaplaceHMCInfo` (all standard
+             * HMCInfo fields plus L-BFGS diagnostics ``lbfgs_hit_maxiter``, etc.).
 
    .. rubric:: Examples
 
