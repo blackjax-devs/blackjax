@@ -225,27 +225,15 @@ def laplace_marginal_factory(
     _gtol: float = optimizer_kwargs.get("gtol", 1e-8)
 
     # ------------------------------------------------------------------
-    # solve_theta: pure L-BFGS mode-finding, no custom VJP
-    # ------------------------------------------------------------------
-    def solve_theta(
-        phi: ArrayLikeTree, theta_prev: ArrayTree | None = None
-    ) -> ArrayTree:
-        """Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given."""
-        initial = theta_prev if theta_prev is not None else theta_init
-
-        def objective(theta):
-            return -log_joint_fn(theta, phi)
-
-        result, _ = minimize_lbfgs(objective, initial, **optimizer_kwargs)
-        return result.params
-
-    # ------------------------------------------------------------------
-    # solve_theta_with_info: same solve, also returns LBFGSDiagnostics
+    # solve_theta_with_info: sole minimize_lbfgs call site
     # ------------------------------------------------------------------
     def solve_theta_with_info(
         phi: ArrayLikeTree, theta_prev: ArrayTree | None = None
     ) -> tuple[ArrayTree, LBFGSDiagnostics]:
         """Find theta*(phi) and return L-BFGS convergence diagnostics.
+
+        This is the single ``minimize_lbfgs`` call site.  All other
+        solve functions delegate here.
 
         Parameters
         ----------
@@ -279,6 +267,20 @@ def laplace_marginal_factory(
             hit_maxiter=result.state.iter_num >= _maxiter,
         )
         return result.params, diagnostics
+
+    # ------------------------------------------------------------------
+    # solve_theta: thin delegating wrapper — backward-compat API
+    # ------------------------------------------------------------------
+    def solve_theta(
+        phi: ArrayLikeTree, theta_prev: ArrayTree | None = None
+    ) -> ArrayTree:
+        """Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given.
+
+        Delegates to :func:`solve_theta_with_info` and discards the
+        diagnostics.  Exists as a backward-compatible API for callers
+        (e.g. ``init()``) that only need ``theta_star``.
+        """
+        return solve_theta_with_info(phi, theta_prev)[0]
 
     # ------------------------------------------------------------------
     # get_theta_star: same solve, wrapped in custom_root for IFT gradient
