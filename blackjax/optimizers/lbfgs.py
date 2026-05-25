@@ -24,6 +24,7 @@ from blackjax.types import Array, ArrayLikeTree
 
 __all__ = [
     "LBFGSHistory",
+    "LBFGSDiagnostics",
     "LbfgsState",
     "OptStep",
     "minimize_lbfgs",
@@ -32,6 +33,38 @@ __all__ = [
     "lbfgs_inverse_hessian_formula_2",
     "bfgs_sample",
 ]
+
+
+class LBFGSDiagnostics(NamedTuple):
+    """Per-call convergence diagnostics from a single :func:`minimize_lbfgs` run.
+
+    These fields are surfaced through the kernel ``Info`` NamedTuple of
+    Laplace-marginal samplers (:class:`~blackjax.mcmc.laplace_marginal.LaplaceHMCInfo`)
+    so that callers can detect non-convergence of the inner L-BFGS solve at
+    every MCMC step without resorting to callbacks or host-side introspection.
+
+    iter_num
+        Number of L-BFGS iterations actually taken (scalar int).  Equal to
+        ``maxiter`` when the iteration budget is exhausted — see ``hit_maxiter``.
+    error
+        Final gradient norm ``||∇f(x*)||₂`` (scalar float).  Small values
+        indicate convergence to a stationary point.  A value substantially
+        above ``gtol`` signals a non-converged solve.
+    converged
+        ``True`` iff ``error <= gtol``.  Note: warm-started solves can land at
+        ``error ~ 1e-6`` (fine in practice) and still return ``converged=False``
+        if ``gtol=1e-8``.  Prefer ``hit_maxiter`` as the primary bug-signature.
+    hit_maxiter
+        ``True`` iff ``iter_num >= maxiter``.  **This is the actionable
+        non-convergence signal**: it fires exactly when the optimizer exhausted
+        the budget without stopping early.  This is the direct descendant of the
+        ``maxiter=30`` silent-failure diagnosed in blackjax issue #925.
+    """
+
+    iter_num: Array
+    error: Array
+    converged: Array
+    hit_maxiter: Array
 
 
 class LBFGSHistory(NamedTuple):

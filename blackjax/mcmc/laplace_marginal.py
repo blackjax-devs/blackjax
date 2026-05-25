@@ -37,16 +37,74 @@ Margossian, "General adjoint-differentiated Laplace approximation", 2023.
 arXiv:2306.14976.
 """
 import dataclasses
-from typing import Callable
+from typing import Any, Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
-from blackjax.optimizers.lbfgs import minimize_lbfgs
-from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.optimizers.lbfgs import LBFGSDiagnostics, minimize_lbfgs
+from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
-__all__ = ["LaplaceMarginal", "laplace_marginal_factory"]
+__all__ = ["LaplaceHMCInfo", "LaplaceMarginal", "laplace_marginal_factory"]
+
+
+class LaplaceHMCInfo(NamedTuple):
+    """Info returned by any ``laplace_*hmc`` kernel step.
+
+    Contains all standard :class:`~blackjax.mcmc.hmc.HMCInfo` fields for
+    backward compatibility, plus L-BFGS convergence diagnostics from the
+    ``theta*`` refresh that occurs after each accept/reject step.
+
+    The L-BFGS diagnostics reflect the **post-accept-reject warm-started solve**
+    — i.e., the single explicit :meth:`~LaplaceMarginal.solve_theta_with_info`
+    call at the end of each kernel step, not the leapfrog-interior solves (those
+    happen inside ``jax.lax.custom_root`` and are not directly accessible).
+
+    momentum
+        Momentum sampled at the start of the trajectory.
+    acceptance_rate
+        Metropolis acceptance probability for this transition.
+    is_accepted
+        Whether the proposed position was accepted.
+    is_divergent
+        Whether the energy difference exceeded the divergence threshold.
+    energy
+        Total energy (kinetic + potential) of the transition.
+    proposal
+        The proposed integrator state (position + momentum at trajectory end).
+    num_integration_steps
+        Number of leapfrog steps taken.
+    lbfgs_iter_num
+        Number of L-BFGS iterations at the post-accept ``theta*`` refresh.
+    lbfgs_error
+        Final gradient norm ``||∇f(theta*)||₂`` at the post-accept refresh.
+        Large values (>> ``gtol``) indicate a non-converged inner solve.
+    lbfgs_converged
+        ``True`` iff ``lbfgs_error <= gtol``.  May be ``False`` for well-behaved
+        warm-started solves that land near (but not below) ``gtol``; prefer
+        ``lbfgs_hit_maxiter`` as the primary non-convergence alarm.
+    lbfgs_hit_maxiter
+        ``True`` iff the L-BFGS solver exhausted its iteration budget
+        (``iter_num >= maxiter``).  **This is the direct signal for the
+        silent-non-convergence bug diagnosed in blackjax issue #925.**
+        When ``True``, ``theta*`` may be a poor MAP estimate and the Laplace
+        log-marginal (and its gradient) is unreliable for this step.
+    """
+
+    # ---- HMCInfo fields (field names and order preserved for compat) ----
+    momentum: ArrayTree
+    acceptance_rate: float
+    is_accepted: bool
+    is_divergent: bool
+    energy: float
+    proposal: Any  # integrators.IntegratorState
+    num_integration_steps: int
+    # ---- L-BFGS diagnostics (new in #925) ----
+    lbfgs_iter_num: Array
+    lbfgs_error: Array
+    lbfgs_converged: Array
+    lbfgs_hit_maxiter: Array
 
 
 @dataclasses.dataclass(frozen=True)
@@ -56,10 +114,14 @@ class LaplaceMarginal:
     Each attribute is a plain callable, testable and reusable independently.
     The dataclass is a named container — there is no mutable state.
 
-    The four callables are:
+    The five callables are:
 
     - ``solve_theta(phi, theta_prev=None) -> theta_star``: finds the mode of
       ``p(theta | phi, y)`` via L-BFGS.  No custom VJP; useful for warm-starting.
+    - ``solve_theta_with_info(phi, theta_prev=None) -> (theta_star, LBFGSDiagnostics)``:
+      same as ``solve_theta`` but also returns per-call L-BFGS diagnostics
+      (``iter_num``, ``error``, ``converged``, ``hit_maxiter``).  Used inside
+      the laplace kernel to populate :class:`LaplaceHMCInfo`.
     - ``get_theta_star(phi, theta_prev=None) -> theta_star``: same as
       ``solve_theta`` but wrapped in ``jax.lax.custom_root`` for IFT gradients.
     - ``log_marginal(phi, theta_prev=None) -> (lp, theta_star)``: evaluates the
@@ -70,6 +132,7 @@ class LaplaceMarginal:
     """
 
     solve_theta: Callable
+    solve_theta_with_info: Callable
     get_theta_star: Callable
     log_marginal: Callable
     sample_theta: Callable
@@ -157,20 +220,67 @@ def laplace_marginal_factory(
     theta_flat_init, unravel_theta = ravel_pytree(theta_init)
     d = theta_flat_init.shape[0]
 
+    # Extract optimizer settings used to compute diagnostics.
+    _maxiter: int = optimizer_kwargs.get("maxiter", 30)
+    _gtol: float = optimizer_kwargs.get("gtol", 1e-8)
+
     # ------------------------------------------------------------------
-    # solve_theta: pure L-BFGS mode-finding, no custom VJP
+    # solve_theta_with_info: sole minimize_lbfgs call site
     # ------------------------------------------------------------------
-    def solve_theta(
+    def solve_theta_with_info(
         phi: ArrayLikeTree, theta_prev: ArrayTree | None = None
-    ) -> ArrayTree:
-        """Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given."""
+    ) -> tuple[ArrayTree, LBFGSDiagnostics]:
+        """Find theta*(phi) and return L-BFGS convergence diagnostics.
+
+        This is the single ``minimize_lbfgs`` call site.  All other
+        solve functions delegate here.
+
+        Parameters
+        ----------
+        phi
+            Hyperparameter value at which to find the MAP of theta.
+        theta_prev
+            Warm-start hint (previous theta*).  ``None`` → cold start from
+            ``theta_init``.
+
+        Returns
+        -------
+        theta_star
+            MAP estimate of theta at ``phi``.
+        diagnostics
+            :class:`~blackjax.optimizers.lbfgs.LBFGSDiagnostics` with fields
+            ``iter_num``, ``error``, ``converged``, and ``hit_maxiter``.
+            ``hit_maxiter=True`` is the primary non-convergence alarm: it fires
+            when the optimizer exhausted its ``maxiter`` budget, indicating that
+            ``theta_star`` may be a poor MAP estimate.
+        """
         initial = theta_prev if theta_prev is not None else theta_init
 
         def objective(theta):
             return -log_joint_fn(theta, phi)
 
         result, _ = minimize_lbfgs(objective, initial, **optimizer_kwargs)
-        return result.params
+        diagnostics = LBFGSDiagnostics(
+            iter_num=result.state.iter_num,
+            error=result.state.error,
+            converged=result.state.error <= _gtol,
+            hit_maxiter=result.state.iter_num >= _maxiter,
+        )
+        return result.params, diagnostics
+
+    # ------------------------------------------------------------------
+    # solve_theta: thin delegating wrapper — backward-compat API
+    # ------------------------------------------------------------------
+    def solve_theta(
+        phi: ArrayLikeTree, theta_prev: ArrayTree | None = None
+    ) -> ArrayTree:
+        """Find theta*(phi) via L-BFGS.  Warm-starts from theta_prev if given.
+
+        Delegates to :func:`solve_theta_with_info` and discards the
+        diagnostics.  Exists as a backward-compatible API for callers
+        (e.g. ``init()``) that only need ``theta_star``.
+        """
+        return solve_theta_with_info(phi, theta_prev)[0]
 
     # ------------------------------------------------------------------
     # get_theta_star: same solve, wrapped in custom_root for IFT gradient
@@ -272,6 +382,7 @@ def laplace_marginal_factory(
 
     return LaplaceMarginal(
         solve_theta=solve_theta,
+        solve_theta_with_info=solve_theta_with_info,
         get_theta_star=get_theta_star,
         log_marginal=log_marginal,
         sample_theta=sample_theta,
