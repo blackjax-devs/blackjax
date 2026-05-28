@@ -226,6 +226,7 @@ pathfinder = GeneratePathfinderAPI(
 
 multipathfinder = _multipathfinder.as_top_level_api
 
+from blackjax.slingshot import slingshot as slingshot
 
 __all__ = [
     "__version__",
@@ -284,4 +285,5 @@ __all__ = [
     "rhat",
     "SamplingAlgorithm",  # base
     "VIAlgorithm",
+    "slingshot",
 ]
