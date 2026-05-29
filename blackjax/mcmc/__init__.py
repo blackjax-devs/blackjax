@@ -35,3 +35,7 @@ __all__ = [
     "adjusted_mclmc_dynamic",
     "adjusted_mclmc",
 ]
+
+from blackjax.mcmc.pymc_bridge import sample_slingshot
+
+__all__ += ["sample_slingshot"]
