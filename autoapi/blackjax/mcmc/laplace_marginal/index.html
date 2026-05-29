@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.laplace_hmc" href="../laplace_hmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gf150b9e77" />
+  <meta name="docsearch:version" content="0.1.dev1+g0ef2f578a" />
   </head>
   
   
@@ -397,6 +397,7 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_hit_maxiter"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_hit_maxiter</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals"><code class="docutils literal notranslate"><span class="pre">laplace_lbfgs_grad_evals()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta_with_info</span></code></a></li>
@@ -458,7 +459,10 @@ arXiv:2306.14976.</p>
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.laplace_marginal.laplace_marginal_factory" title="blackjax.mcmc.laplace_marginal.laplace_marginal_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_marginal_factory</span></code></a>(→ LaplaceMarginal)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals" title="blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_lbfgs_grad_evals</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Estimated total inner L-BFGS gradient evaluations for one kernel step.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.laplace_marginal.laplace_marginal_factory" title="blackjax.mcmc.laplace_marginal.laplace_marginal_factory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_marginal_factory</span></code></a>(→ LaplaceMarginal)</p></td>
 <td><p>Build a Laplace-approximated marginal log-density over hyperparameters.</p></td>
 </tr>
 </tbody>
@@ -478,7 +482,7 @@ backward compatibility, plus L-BFGS convergence diagnostics from the
 — i.e., the single explicit <a class="reference internal" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info" title="blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info"><code class="xref py py-meth docutils literal notranslate"><span class="pre">solve_theta_with_info()</span></code></a>
 call at the end of each kernel step, not the leapfrog-interior solves (those
 happen inside <code class="docutils literal notranslate"><span class="pre">jax.lax.custom_root</span></code> and are not directly accessible).</p>
-<dl class="simple">
+<dl>
 <dt>momentum</dt><dd><p>Momentum sampled at the start of the trajectory.</p>
 </dd>
 <dt>acceptance_rate</dt><dd><p>Metropolis acceptance probability for this transition.</p>
@@ -494,6 +498,23 @@ happen inside <code class="docutils literal notranslate"><span class="pre">jax.l
 <dt>num_integration_steps</dt><dd><p>Number of leapfrog steps taken.</p>
 </dd>
 <dt>lbfgs_iter_num</dt><dd><p>Number of L-BFGS iterations at the post-accept <code class="docutils literal notranslate"><span class="pre">theta*</span></code> refresh.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Using this field for gradient-evaluation accounting</strong></p>
+<p>The leapfrog-interior L-BFGS solves happen inside
+<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.custom_root.html#jax.lax.custom_root" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.lax.custom_root()</span></code></a> and are not directly observable.
+<code class="docutils literal notranslate"><span class="pre">lbfgs_iter_num</span></code> (the post-accept refresh) is the <strong>best
+available proxy</strong> for the per-leapfrog inner iteration count,
+because warm-started solves from nearby <code class="docutils literal notranslate"><span class="pre">phi</span></code> values converge
+in a similar number of iterations.</p>
+<p>To estimate total inner gradient evaluations per kernel step
+(for a grad-count denominator), use <a class="reference internal" href="#blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals" title="blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals"><code class="xref py py-func docutils literal notranslate"><span class="pre">laplace_lbfgs_grad_evals()</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">total_inner_grads</span> <span class="o">=</span> <span class="n">laplace_lbfgs_grad_evals</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+<span class="c1"># ≈ (num_integration_steps + 1) × lbfgs_iter_num</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">+1</span></code> accounts for the post-accept refresh itself.</p>
+</div>
 </dd>
 <dt>lbfgs_error</dt><dd><p>Final gradient norm <code class="docutils literal notranslate"><span class="pre">||∇f(theta*)||₂</span></code> at the post-accept refresh.
 Large values (&gt;&gt; <code class="docutils literal notranslate"><span class="pre">gtol</span></code>) indicate a non-converged inner solve.</p>
@@ -564,6 +585,42 @@ log-marginal (and its gradient) is unreliable for this step.</p>
 <span class="sig-name descname"><span class="pre">lbfgs_hit_maxiter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#LaplaceHMCInfo.lbfgs_hit_maxiter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_hit_maxiter" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals">
+<span class="sig-name descname"><span class="pre">laplace_lbfgs_grad_evals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo" title="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo"><span class="pre">LaplaceHMCInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/laplace_marginal.html#laplace_lbfgs_grad_evals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals" title="Link to this definition">#</a></dt>
+<dd><p>Estimated total inner L-BFGS gradient evaluations for one kernel step.</p>
+<p>The Laplace-HMC family requires an inner L-BFGS solve at each leapfrog step
+to find <code class="docutils literal notranslate"><span class="pre">theta*(phi)</span></code> and at the post-accept <code class="docutils literal notranslate"><span class="pre">theta*</span></code> refresh.
+The leapfrog-interior solves run inside <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.custom_root.html#jax.lax.custom_root" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.lax.custom_root()</span></code></a> and
+are not directly observable; <code class="docutils literal notranslate"><span class="pre">info.lbfgs_iter_num</span></code> (the post-accept
+refresh) is used as a proxy because warm-started solves from nearby <code class="docutils literal notranslate"><span class="pre">phi</span></code>
+values converge in a similar number of iterations.</p>
+<p>The formula is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>total_inner_grads ≈ (num_integration_steps + 1) × lbfgs_iter_num
+</pre></div>
+</div>
+<p>where the <code class="docutils literal notranslate"><span class="pre">+1</span></code> accounts for the post-accept refresh itself.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>info</strong> – <a class="reference internal" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo" title="blackjax.mcmc.laplace_marginal.LaplaceHMCInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">LaplaceHMCInfo</span></code></a> returned by any <code class="docutils literal notranslate"><span class="pre">laplace_*hmc</span></code> kernel step.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Scalar JAX array with the estimated inner gradient evaluation count
+for this step.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Use this as the <code class="docutils literal notranslate"><span class="pre">grad_count_per_step</span></code> callable in benchmark harnesses
+to replace the heuristic <code class="docutils literal notranslate"><span class="pre">num_integration_steps</span> <span class="pre">×</span> <span class="pre">5</span></code>.  The measured
+<code class="docutils literal notranslate"><span class="pre">lbfgs_iter_num</span></code> will differ per recipe depending on <code class="docutils literal notranslate"><span class="pre">maxiter</span></code>,
+<code class="docutils literal notranslate"><span class="pre">gtol</span></code>, model curvature, and step size.  Mean values across a chain
+can be extracted from <code class="docutils literal notranslate"><span class="pre">chain_stats[&quot;lbfgs_iter_num&quot;]</span></code> when the harness
+captures that field.</p>
 </dd></dl>
 
 <dl class="py class">
@@ -745,6 +802,7 @@ approximately Gaussian (unimodal, log-concave near the mode).</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceHMCInfo.lbfgs_hit_maxiter"><code class="docutils literal notranslate"><span class="pre">LaplaceHMCInfo.lbfgs_hit_maxiter</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals"><code class="docutils literal notranslate"><span class="pre">laplace_lbfgs_grad_evals()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.laplace_marginal.LaplaceMarginal.solve_theta_with_info"><code class="docutils literal notranslate"><span class="pre">LaplaceMarginal.solve_theta_with_info</span></code></a></li>

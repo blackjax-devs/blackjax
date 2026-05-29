@@ -46,6 +46,7 @@ Functions
 
 .. autoapisummary::
 
+   blackjax.mcmc.laplace_marginal.laplace_lbfgs_grad_evals
    blackjax.mcmc.laplace_marginal.laplace_marginal_factory
 
 
@@ -83,6 +84,26 @@ Module Contents
        Number of leapfrog steps taken.
    lbfgs_iter_num
        Number of L-BFGS iterations at the post-accept ``theta*`` refresh.
+
+       .. note:: **Using this field for gradient-evaluation accounting**
+
+           The leapfrog-interior L-BFGS solves happen inside
+           :func:`jax.lax.custom_root` and are not directly observable.
+           ``lbfgs_iter_num`` (the post-accept refresh) is the **best
+           available proxy** for the per-leapfrog inner iteration count,
+           because warm-started solves from nearby ``phi`` values converge
+           in a similar number of iterations.
+
+           To estimate total inner gradient evaluations per kernel step
+           (for a grad-count denominator), use :func:`laplace_lbfgs_grad_evals`:
+
+           .. code:: python
+
+               total_inner_grads = laplace_lbfgs_grad_evals(info)
+               # ≈ (num_integration_steps + 1) × lbfgs_iter_num
+
+           The ``+1`` accounts for the post-accept refresh itself.
+
    lbfgs_error
        Final gradient norm ``||∇f(theta*)||₂`` at the post-accept refresh.
        Large values (>> ``gtol``) indicate a non-converged inner solve.
@@ -140,6 +161,39 @@ Module Contents
 
    .. py:attribute:: lbfgs_hit_maxiter
       :type:  blackjax.types.Array
+
+
+.. py:function:: laplace_lbfgs_grad_evals(info: LaplaceHMCInfo) -> blackjax.types.Array
+
+   Estimated total inner L-BFGS gradient evaluations for one kernel step.
+
+   The Laplace-HMC family requires an inner L-BFGS solve at each leapfrog step
+   to find ``theta*(phi)`` and at the post-accept ``theta*`` refresh.
+   The leapfrog-interior solves run inside :func:`jax.lax.custom_root` and
+   are not directly observable; ``info.lbfgs_iter_num`` (the post-accept
+   refresh) is used as a proxy because warm-started solves from nearby ``phi``
+   values converge in a similar number of iterations.
+
+   The formula is::
+
+       total_inner_grads ≈ (num_integration_steps + 1) × lbfgs_iter_num
+
+   where the ``+1`` accounts for the post-accept refresh itself.
+
+   :param info: :class:`LaplaceHMCInfo` returned by any ``laplace_*hmc`` kernel step.
+
+   :returns: Scalar JAX array with the estimated inner gradient evaluation count
+             for this step.
+   :rtype: Array
+
+   .. rubric:: Notes
+
+   Use this as the ``grad_count_per_step`` callable in benchmark harnesses
+   to replace the heuristic ``num_integration_steps × 5``.  The measured
+   ``lbfgs_iter_num`` will differ per recipe depending on ``maxiter``,
+   ``gtol``, model curvature, and step size.  Mean values across a chain
+   can be extracted from ``chain_stats["lbfgs_iter_num"]`` when the harness
+   captures that field.
 
 
 .. py:class:: LaplaceMarginal
