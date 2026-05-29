@@ -168,8 +168,6 @@ def laplace_lbfgs_grad_evals(info: "LaplaceHMCInfo") -> "Array":
     can be extracted from ``chain_stats["lbfgs_iter_num"]`` when the harness
     captures that field.
     """
-    import jax.numpy as jnp
-
     return jnp.asarray(
         (info.num_integration_steps + 1) * info.lbfgs_iter_num, dtype=jnp.int32
     )
