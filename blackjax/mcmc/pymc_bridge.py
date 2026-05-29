@@ -19,7 +19,7 @@ def sample_slingshot(
     High-level user API to sample a PyMC model using the parallel Slingshot engine.
     Returns a dictionary of posterior samples mapped to variable names.
     """
-    dim = pymc_model.ndim
+    dim = len(pymc_model.value_vars)
     var_names = [v.name for v in pymc_model.value_vars]
     
     # 1. Internal Graph Compilation
