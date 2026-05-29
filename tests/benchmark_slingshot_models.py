@@ -1,5 +1,7 @@
 import jax
 import jax.numpy as jnp
+import numpy as np
+import scipy.optimize
 import blackjax
 from blackjax.mcmc.slingshot import init_adaptation, dual_averaging_step
 
@@ -112,27 +114,53 @@ def make_correlated_gaussian():
 def run_benchmark(name, logdensity_fn, initial_positions, true_params):
     num_chains = 16
     num_proposals = 1000
-    num_warmup = 200
-    num_steps = 500
+    num_warmup = 1000
+    num_steps = 1000
     target_rate = 0.65
     dim = initial_positions.shape[-1]
     
-    print(f"\\n{'='*50}")
+    print(f"\n{'='*50}")
     print(f"Benchmarking: {name}")
     print(f"{'='*50}")
     
     def init_chain(pos):
-        # We dummy-init slingshot to get the init state
         algo = blackjax.slingshot(logdensity_fn, step_size=1.0, num_proposals=num_proposals)
         return algo.init(pos)
     
-    # 1. Initialize chains and DA vectors
-    states = jax.vmap(init_chain)(initial_positions)
+    # --- CONDITIONAL MAP INITIALIZATION ---
+    jitter_key = jax.random.PRNGKey(999)
+    jitter = jax.random.normal(jitter_key, initial_positions.shape) * 0.1
+
+    # Bypass the optimizer for models with infinite degenerate spikes
+    if "Funnel" in name or "Horseshoe" in name:
+        print("Pathological geometry detected. Bypassing MAP and using standard jitter...")
+        warm_start_positions = initial_positions + jitter
+    else:
+        print("Finding MAP estimate for initialization...")
+        def neg_log_density(theta):
+            return -logdensity_fn(theta)
+            
+        val_and_grad_fn = jax.jit(jax.value_and_grad(neg_log_density))
+        
+        def scipy_objective(theta_np):
+            val, grad = val_and_grad_fn(jnp.array(theta_np))
+            return np.array(val).astype(np.float64), np.array(grad).astype(np.float64)
+            
+        opt_result = scipy.optimize.minimize(
+            scipy_objective, 
+            np.array(initial_positions[0]), 
+            method="BFGS",
+            jac=True
+        )
+        map_estimate = jnp.array(opt_result.x)
+        warm_start_positions = map_estimate + jnp.where(map_estimate == 0, jitter, map_estimate * 0.01)
+    # -----------------------------------------------
+    
+    states = jax.vmap(init_chain)(warm_start_positions)
     
     init_adapt_vmap = jax.vmap(lambda ss: init_adaptation(ss, dim))
-    da_states = init_adapt_vmap(jnp.ones(num_chains) * 0.1) # init step size 0.1
+    da_states = init_adapt_vmap(jnp.ones(num_chains) * 0.1) 
     
-    # 2. Warmup Adaptation Loop
     @jax.jit
     def warmup_step(carry, step_key):
         states, da_states = carry
@@ -155,6 +183,14 @@ def run_benchmark(name, logdensity_fn, initial_positions, true_params):
                 next_state.position,
                 target_rate=target_rate
             )
+            
+            # Step-size floor block to prevent MALA momentum collapse
+            min_log_step = jnp.log(0.05)
+            next_da_state = next_da_state._replace(
+                log_step_size=jnp.maximum(next_da_state.log_step_size, min_log_step),
+                log_step_size_bar=jnp.maximum(next_da_state.log_step_size_bar, min_log_step)
+            )
+            
             return next_state, next_da_state
             
         next_states, next_da_states = jax.vmap(single_chain_warmup)(keys, states, da_states)
@@ -168,7 +204,6 @@ def run_benchmark(name, logdensity_fn, initial_positions, true_params):
     print(f"Adapted step sizes (mean across chains): {jnp.mean(final_step_sizes):.4f}")
     final_choleskys = da_states.cholesky
     
-    # 3. Production Sampling Loop
     @jax.jit
     def sample_step(carry_states, step_key):
         keys = jax.random.split(step_key, num_chains)
@@ -189,7 +224,6 @@ def run_benchmark(name, logdensity_fn, initial_positions, true_params):
     sample_keys = jax.random.split(jax.random.PRNGKey(11), num_steps)
     _, positions = jax.lax.scan(sample_step, states, sample_keys)
     
-    # 4. Diagnostics
     print(f"Sampling completed. Output shape: {positions.shape}")
     mean_recovered = jnp.mean(positions, axis=(0, 1))
     
