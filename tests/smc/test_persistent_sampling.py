@@ -1073,7 +1073,7 @@ class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
             }
         )
 
-        def run(batch_size: int) -> object:
+        def run(batch_size):
             ps = persistent_sampling_smc(
                 logprior_fn=logprior_fn,
                 loglikelihood_fn=loglikelihood_fn,
