@@ -155,11 +155,11 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
 
 
 class BatchedTemperedSMCTest(SMCLinearRegressionTestCase):
-    """Verify particle_batch_size > 0 paths run without error."""
+    """Verify batch_size > 0 paths run without error."""
 
     @chex.variants(with_jit=True)
     def test_tempered_smc_batched(self):
-        """tempered_smc with particle_batch_size > 0 should reach tempering_param == 1."""
+        """tempered_smc with batch_size > 0 should reach tempering_param == 1."""
         (
             init_particles,
             logprior_fn,
@@ -186,7 +186,7 @@ class BatchedTemperedSMCTest(SMCLinearRegressionTestCase):
             hmc_parameters,
             resampling.systematic,
             5,
-            particle_batch_size=10,
+            batch_size=10,
         )
         init_state = tempering.init(init_particles)
         smc_kernel = self.variant(tempering.step)
@@ -203,7 +203,7 @@ class BatchedTemperedSMCTest(SMCLinearRegressionTestCase):
 
     @chex.variants(with_jit=True)
     def test_adaptive_tempered_smc_batched(self):
-        """adaptive_tempered_smc with particle_batch_size > 0 should converge."""
+        """adaptive_tempered_smc with batch_size > 0 should converge."""
         (
             init_particles,
             logprior_fn,
@@ -230,7 +230,7 @@ class BatchedTemperedSMCTest(SMCLinearRegressionTestCase):
             0.5,
             solver.dichotomy,
             5,
-            particle_batch_size=10,
+            batch_size=10,
         )
         init_state = tempering.init(init_particles)
         _n_iter, result, _ = self.variant(

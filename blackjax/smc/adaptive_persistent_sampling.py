@@ -33,7 +33,7 @@ def build_kernel(
     target_ess: float | Array,
     update_strategy: Callable = update_and_take_last,
     root_solver: Callable = solver.dichotomy,
-    particle_batch_size: int = 0,
+    batch_size: int = 0,
 ) -> Callable:
     """Build an adaptive Persistent Sampling kernel, with signature
     (rng_key,
@@ -78,9 +78,9 @@ def build_kernel(
     root_solver
         The solver used to adaptively compute the temperature given a target number
         of effective samples. By default, blackjax.smc.solver.dichotomy.
-    particle_batch_size: int, optional
+    batch_size: int, optional
         Number of particles processed per sequential batch when
-        ``particle_batch_size > 0``. Passed to the underlying
+        ``batch_size > 0``. Passed to the underlying
         ``persistent_sampling.build_kernel`` call to enable
         ``jax.lax.map``-based batching, reducing peak GPU memory. ``0``
         (default) keeps the original ``jax.vmap`` behaviour.
@@ -137,7 +137,7 @@ def build_kernel(
         mcmc_init_fn=mcmc_init_fn,
         resampling_fn=resampling_fn,
         update_strategy=update_strategy,
-        particle_batch_size=particle_batch_size,
+        batch_size=batch_size,
     )
 
     def kernel(
@@ -170,7 +170,7 @@ def as_top_level_api(
     num_mcmc_steps: int = 10,
     update_strategy: Callable = update_and_take_last,
     root_solver: Callable = solver.dichotomy,
-    particle_batch_size: int = 0,
+    batch_size: int = 0,
 ) -> SamplingAlgorithm:
     """
     Implements the user interface for the adaptive Persistent Sampling
@@ -223,9 +223,9 @@ def as_top_level_api(
     root_solver : Callable, optional
         The solver used to adaptively compute the temperature given a target
         number of effective samples. By default, blackjax.smc.solver.dichotomy.
-    particle_batch_size : int, optional
+    batch_size : int, optional
         Number of particles processed per sequential batch when
-        ``particle_batch_size > 0``. Uses ``jax.lax.map`` for the MCMC update
+        ``batch_size > 0``. Uses ``jax.lax.map`` for the MCMC update
         step, reducing peak GPU memory relative to a full ``jax.vmap``. ``0``
         (default) keeps the original ``jax.vmap`` behaviour.
 
@@ -254,13 +254,11 @@ def as_top_level_api(
         target_ess,
         update_strategy,
         root_solver,
-        particle_batch_size=particle_batch_size,
+        batch_size=batch_size,
     )
 
     def init_fn(position: ArrayLikeTree) -> persistent_sampling.PersistentSMCState:
-        return init(
-            position, loglikelihood_fn, max_iterations, batch_size=particle_batch_size
-        )
+        return init(position, loglikelihood_fn, max_iterations, batch_size=batch_size)
 
     def step_fn(
         rng_key: PRNGKey,

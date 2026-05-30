@@ -172,7 +172,7 @@ class BatchedWasteFreeSMCTest(SMCLinearRegressionTestCase):
             0.5,
             update_strategy=waste_free_smc(100, 4),
             num_mcmc_steps=None,
-            particle_batch_size=5,
+            batch_size=5,
         )
         init_state = tempering.init(init_particles)
 

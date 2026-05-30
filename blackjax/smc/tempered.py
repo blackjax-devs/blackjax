@@ -72,7 +72,7 @@ def build_kernel(
     resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
     update_particles_fn: Callable | None = None,
-    particle_batch_size: int = 0,
+    batch_size: int = 0,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -105,9 +105,9 @@ def build_kernel(
     update_particles_fn: Callable, optional
         Optional custom function to update particles. If None, uses
         smc_from_mcmc.build_kernel.
-    particle_batch_size: int, optional
+    batch_size: int, optional
         Number of particles processed per sequential batch when
-        ``particle_batch_size > 0``. Passed to the underlying
+        ``batch_size > 0``. Passed to the underlying
         ``smc_from_mcmc.build_kernel`` call to enable ``jax.lax.map``-based
         batching, reducing peak GPU memory. ``0`` (default) keeps the
         original ``jax.vmap`` behaviour.
@@ -126,7 +126,7 @@ def build_kernel(
             mcmc_init_fn,
             resampling_fn,
             update_strategy,
-            batch_size=particle_batch_size,
+            batch_size=batch_size,
         )
         if update_particles_fn is None
         else update_particles_fn
@@ -203,7 +203,7 @@ def as_top_level_api(
     num_mcmc_steps: int | None = 10,
     update_strategy: Callable = update_and_take_last,
     update_particles_fn: Callable | None = None,
-    particle_batch_size: int = 0,
+    batch_size: int = 0,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the Tempered SMC kernel.
 
@@ -231,9 +231,9 @@ def as_top_level_api(
     update_particles_fn: Callable, optional
         Optional custom function to update particles. If None, uses
         smc_from_mcmc.build_kernel.
-    particle_batch_size: int, optional
+    batch_size: int, optional
         Number of particles processed per sequential batch when
-        ``particle_batch_size > 0``. Reduces peak GPU memory by using
+        ``batch_size > 0``. Reduces peak GPU memory by using
         ``jax.lax.map`` instead of a full ``jax.vmap``. ``0`` (default) keeps
         the original ``jax.vmap`` behaviour.
 
@@ -252,7 +252,7 @@ def as_top_level_api(
         resampling_fn,
         update_strategy,
         update_particles_fn,
-        particle_batch_size=particle_batch_size,
+        batch_size=batch_size,
     )
 
     def init_fn(
