@@ -1083,10 +1083,10 @@ class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
         result_full = run(batch_size=0)
         result_batched = run(batch_size=10)
 
-        np.testing.assert_allclose(
+        jax.tree.map(
+            lambda a, b: np.testing.assert_allclose(a, b, rtol=1e-5),
             result_full.particles,
             result_batched.particles,
-            rtol=1e-5,
         )
 
     @chex.variants(with_jit=True)
