@@ -107,6 +107,93 @@ class SMCTest(BlackJAXTest):
         np.testing.assert_allclose(std, 1.0, atol=1e-1)
 
 
+class BatchedSMCTest(BlackJAXTest):
+    """Verify that batch_size > 0 paths produce the same output as full vmap."""
+
+    @chex.variants(with_jit=True)
+    def test_update_and_take_last_batched(self):
+        """batch_size > 0 in update_and_take_last should match full vmap."""
+        num_mcmc_steps = 5
+        num_particles = 20
+
+        same_for_all_params = dict(
+            step_size=1e-2, inverse_mass_matrix=jnp.eye(1), num_integration_steps=5
+        )
+        hmc_kernel = functools.partial(
+            blackjax.hmc.build_kernel(), **same_for_all_params
+        )
+        hmc_init = blackjax.hmc.init
+
+        init_key, sample_key = jax.random.split(self.next_key())
+        init_particles = jax.random.normal(init_key, shape=(num_particles,))
+
+        update_fn_full, _ = update_and_take_last(
+            hmc_init,
+            logdensity_fn,
+            hmc_kernel,
+            num_mcmc_steps,
+            num_particles,
+            batch_size=0,
+        )
+        update_fn_batched, _ = update_and_take_last(
+            hmc_init,
+            logdensity_fn,
+            hmc_kernel,
+            num_mcmc_steps,
+            num_particles,
+            batch_size=5,
+        )
+
+        keys = jax.random.split(sample_key, num_particles)
+        pos_full, _ = self.variant(update_fn_full)(keys, init_particles, {})
+        pos_batched, _ = self.variant(update_fn_batched)(keys, init_particles, {})
+
+        np.testing.assert_allclose(pos_full, pos_batched, rtol=1e-5)
+
+    @chex.variants(with_jit=True)
+    def test_smc_waste_free_batched(self):
+        """batch_size > 0 in update_waste_free should match full vmap."""
+        p = 4
+        num_particles = 20
+        num_resampled = num_particles // p
+        init_key, sample_key = jax.random.split(self.next_key())
+
+        init_particles = jax.random.normal(init_key, shape=(num_particles,))
+        same_for_all_params = dict(
+            step_size=1e-2, inverse_mass_matrix=jnp.eye(1), num_integration_steps=5
+        )
+        hmc_kernel = functools.partial(
+            blackjax.hmc.build_kernel(), **same_for_all_params
+        )
+        hmc_init = blackjax.hmc.init
+
+        waste_free_fn_full, _ = update_waste_free(
+            hmc_init,
+            logdensity_fn,
+            hmc_kernel,
+            num_particles,
+            p=p,
+            num_resampled=num_resampled,
+            batch_size=0,
+        )
+        waste_free_fn_batched, _ = update_waste_free(
+            hmc_init,
+            logdensity_fn,
+            hmc_kernel,
+            num_particles,
+            p=p,
+            num_resampled=num_resampled,
+            batch_size=2,
+        )
+
+        keys = jax.random.split(sample_key, num_resampled)
+        resampled = init_particles[:num_resampled]
+        pos_full, _ = self.variant(waste_free_fn_full)(keys, resampled, {})
+        pos_batched, _ = self.variant(waste_free_fn_batched)(keys, resampled, {})
+
+        np.testing.assert_allclose(pos_full, pos_batched, rtol=1e-5)
+
+
 class ExtendParamsTest(BlackJAXTest):
     def test_extend_params(self):
         extended = extend_params(

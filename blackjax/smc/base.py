@@ -203,6 +203,7 @@ def update_and_take_last(
     shared_mcmc_step_fn: Callable,
     num_mcmc_steps: int,
     n_particles: int | Array,
+    batch_size: int = 0,
 ) -> tuple[Callable, int | Array]:
     """Create an MCMC update strategy that runs multiple steps and keeps the last.
 
@@ -221,11 +222,16 @@ def update_and_take_last(
         Number of MCMC steps to run for each particle.
     n_particles: int | Array
         Number of particles.
+    batch_size: int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Uses ``jax.lax.map`` internally, which reduces
+        peak GPU memory relative to a full ``jax.vmap`` over all particles.
+        ``0`` (default) keeps the original ``jax.vmap`` behaviour.
 
     Returns
     -------
     mcmc_kernel: Callable
-        A vectorized MCMC kernel function.
+        A vectorized (or sequentially batched) MCMC kernel function.
     n_particles: int | Array
         Number of particles (returned unchanged).
     """
@@ -257,4 +263,14 @@ def update_and_take_last(
         last_state, info = jax.lax.scan(body_fn, state, keys)
         return last_state.position, info
 
+    if batch_size > 0:
+
+        def batched_kernel(keys, positions, step_parameters):
+            return jax.lax.map(
+                lambda args: mcmc_kernel(args[0], args[1], args[2]),
+                (keys, positions, step_parameters),
+                batch_size=batch_size,
+            )
+
+        return batched_kernel, n_particles
     return jax.vmap(mcmc_kernel), n_particles

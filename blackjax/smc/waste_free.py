@@ -13,6 +13,7 @@ def update_waste_free(
     p: int,
     num_resampled,
     num_mcmc_steps=None,
+    batch_size: int = 0,
 ):
     """
     Given M particles, mutates them using p-1 steps. Returns M*P-1 particles,
@@ -47,7 +48,14 @@ def update_waste_free(
         The combines the initial particles with all the particles generated
         at each step of each chain.
         """
-        states, infos = jax.vmap(mcmc_kernel)(rng_key, position, step_parameters)
+        if batch_size > 0:
+            states, infos = jax.lax.map(
+                lambda args: mcmc_kernel(args[0], args[1], args[2]),
+                (rng_key, position, step_parameters),
+                batch_size=batch_size,
+            )
+        else:
+            states, infos = jax.vmap(mcmc_kernel)(rng_key, position, step_parameters)
 
         # step particles is num_resmapled, num_mcmc_steps, dimension_of_variable
         # want to transformed into num_resampled * num_mcmc_steps, dimension of variable

@@ -986,5 +986,108 @@ class NormalizingConstantTest(chex.TestCase):
         np.testing.assert_allclose(result.log_Z, expected, rtol=1e-1)
 
 
+########################################################################################
+# Batching Tests
+########################################################################################
+
+
+class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
+    """Verify batch_size > 0 paths produce the same outputs as full vmap."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.key = jax.random.key(77)
+
+    @chex.variants(with_jit=True)
+    def test_fixed_schedule_persistent_sampling_batched(self) -> None:
+        """persistent_sampling_smc with batch_size > 0 should give same result as batch_size=0."""
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        num_tempering_steps = 5
+        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 10,
+            }
+        )
+
+        ps = persistent_sampling_smc(
+            logprior_fn=logprior_fn,
+            loglikelihood_fn=loglikelihood_fn,
+            n_schedule=num_tempering_steps,
+            mcmc_step_fn=hmc_kernel,
+            mcmc_init_fn=hmc_init,
+            mcmc_parameters=hmc_parameters,
+            resampling_fn=resampling.systematic,
+            num_mcmc_steps=5,
+            batch_size=10,
+        )
+        init_state = ps.init(init_particles)  # type: ignore
+
+        _key, sample_key = jax.random.split(self.key)
+        result = self.variant(partial(inference_loop_fixed, kernel=ps.step))(
+            rng_key=sample_key,
+            initial_state=init_state,
+            tempering_schedule=lambda_schedule,
+        )
+        self.assert_linear_regression_test_case(result)
+
+    @chex.variants(with_jit=True)
+    def test_adaptive_persistent_sampling_batched(self) -> None:
+        """adaptive_persistent_sampling_smc with particle_batch_size > 0 should converge."""
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        max_iterations = 100
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_init = blackjax.hmc.init
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 10,
+            }
+        )
+
+        ps = adaptive_persistent_sampling_smc(
+            logprior_fn=logprior_fn,
+            loglikelihood_fn=loglikelihood_fn,
+            max_iterations=max_iterations,
+            mcmc_step_fn=hmc_kernel,
+            mcmc_init_fn=hmc_init,
+            mcmc_parameters=hmc_parameters,
+            resampling_fn=resampling.systematic,
+            target_ess=1,
+            num_mcmc_steps=5,
+            particle_batch_size=10,
+        )
+        init_state = ps.init(init_particles)  # type: ignore
+
+        _key, sample_key = jax.random.split(self.key)
+        loop_fn = self.variant(
+            partial(
+                inference_loop_adaptive,
+                kernel=ps.step,
+                target_ess=1,
+                max_iterations=max_iterations,
+            )
+        )
+        result = loop_fn(rng_key=sample_key, initial_state=init_state)
+
+        assert result.iteration < max_iterations
+        self.assert_linear_regression_test_case(result)
+
+
 if __name__ == "__main__":
     absltest.main()
