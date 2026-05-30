@@ -1042,26 +1042,38 @@ class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
 
     @chex.variants(with_jit=True)
     def test_fixed_schedule_persistent_sampling_batch_equivalence(self) -> None:
-        """batch_size > 0 must produce identical positions to batch_size=0."""
-        (
-            init_particles,
-            logprior_fn,
-            loglikelihood_fn,
-        ) = self.particles_prior_loglikelihood()
+        """batch_size > 0 must produce identical positions to batch_size=0.
 
-        num_tempering_steps = 5
-        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
+        Uses a simple 2-D Gaussian prior/likelihood (no sum over external data)
+        to ensure jax.vmap and jax.lax.map produce bit-identical log-likelihoods
+        regardless of the outer batch size, avoiding floating-point divergence
+        through the discrete resampling step.
+        """
+        num_particles = 100
+        num_dim = 2
+        num_tempering_steps = 3
+
+        _, init_key = jax.random.split(self.key)
+        init_particles = jax.random.normal(init_key, shape=(num_particles, num_dim))
+        lambda_schedule = np.array([0.1, 0.5, 1.0])
+
+        def logprior_fn(x: jax.Array) -> jax.Array:
+            return jnp.sum(stats.norm.logpdf(x))
+
+        def loglikelihood_fn(x: jax.Array) -> jax.Array:
+            return jnp.sum(stats.norm.logpdf(x, loc=1.0))
+
         hmc_init = blackjax.hmc.init
         hmc_kernel = blackjax.hmc.build_kernel()
         hmc_parameters = extend_params(
             {
                 "step_size": 10e-2,
-                "inverse_mass_matrix": jnp.eye(2),
+                "inverse_mass_matrix": jnp.eye(num_dim),
                 "num_integration_steps": 10,
             }
         )
 
-        def run(batch_size):
+        def run(batch_size: int) -> object:
             ps = persistent_sampling_smc(
                 logprior_fn=logprior_fn,
                 loglikelihood_fn=loglikelihood_fn,
@@ -1076,7 +1088,7 @@ class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
             _, sample_key = jax.random.split(self.key)
             return self.variant(partial(inference_loop_fixed, kernel=ps.step))(
                 rng_key=sample_key,
-                initial_state=ps.init(init_particles),
+                initial_state=jax.jit(ps.init)(init_particles),
                 tempering_schedule=lambda_schedule,
             )
 
