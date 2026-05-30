@@ -137,7 +137,7 @@ def build_kernel(
         mcmc_init_fn=mcmc_init_fn,
         resampling_fn=resampling_fn,
         update_strategy=update_strategy,
-        batch_size=particle_batch_size,
+        particle_batch_size=particle_batch_size,
     )
 
     def kernel(

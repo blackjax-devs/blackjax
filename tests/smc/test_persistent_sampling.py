@@ -992,7 +992,7 @@ class NormalizingConstantTest(chex.TestCase):
 
 
 class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
-    """Verify batch_size > 0 paths produce the same outputs as full vmap."""
+    """Verify particle_batch_size > 0 paths produce the same outputs as full vmap."""
 
     def setUp(self) -> None:
         super().setUp()
@@ -1000,7 +1000,7 @@ class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
 
     @chex.variants(with_jit=True)
     def test_fixed_schedule_persistent_sampling_batched(self) -> None:
-        """persistent_sampling_smc with batch_size > 0 should give same result as batch_size=0."""
+        """persistent_sampling_smc with particle_batch_size > 0 should converge."""
         (
             init_particles,
             logprior_fn,
@@ -1028,7 +1028,7 @@ class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
             mcmc_parameters=hmc_parameters,
             resampling_fn=resampling.systematic,
             num_mcmc_steps=5,
-            batch_size=10,
+            particle_batch_size=10,
         )
         init_state = ps.init(init_particles)  # type: ignore
 
@@ -1039,6 +1039,55 @@ class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
             tempering_schedule=lambda_schedule,
         )
         self.assert_linear_regression_test_case(result)
+
+    @chex.variants(with_jit=True)
+    def test_fixed_schedule_persistent_sampling_batch_equivalence(self) -> None:
+        """particle_batch_size > 0 must produce identical positions to particle_batch_size=0."""
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        num_tempering_steps = 5
+        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 10,
+            }
+        )
+
+        def run(particle_batch_size):
+            ps = persistent_sampling_smc(
+                logprior_fn=logprior_fn,
+                loglikelihood_fn=loglikelihood_fn,
+                n_schedule=num_tempering_steps,
+                mcmc_step_fn=hmc_kernel,
+                mcmc_init_fn=hmc_init,
+                mcmc_parameters=hmc_parameters,
+                resampling_fn=resampling.systematic,
+                num_mcmc_steps=5,
+                particle_batch_size=particle_batch_size,
+            )
+            _, sample_key = jax.random.split(self.key)
+            return self.variant(partial(inference_loop_fixed, kernel=ps.step))(
+                rng_key=sample_key,
+                initial_state=ps.init(init_particles),
+                tempering_schedule=lambda_schedule,
+            )
+
+        result_full = run(particle_batch_size=0)
+        result_batched = run(particle_batch_size=10)
+
+        np.testing.assert_allclose(
+            result_full.particles,
+            result_batched.particles,
+            rtol=1e-5,
+        )
 
     @chex.variants(with_jit=True)
     def test_adaptive_persistent_sampling_batched(self) -> None:

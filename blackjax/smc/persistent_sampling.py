@@ -566,7 +566,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
-    batch_size: int = 0,
+    particle_batch_size: int = 0,
 ) -> Callable:
     """Build a Persistent Sampling kernel, with signature
     (rng_key,
@@ -604,15 +604,16 @@ def build_kernel(
         loggerposterior_fn,
         mcmc_step_fn,
         num_mcmc_steps,
-        n_particles,) -> (mcmc_kernel, n_particles), like 'update_and_take_last'.
+        n_particles,
+        batch_size,) -> (mcmc_kernel, n_particles), like 'update_and_take_last'.
         The mcmc_kernel must have signature
         (rng_key, position, mcmc_parameters) -> (new_position, info).
-    batch_size: int, optional
+    particle_batch_size: int, optional
         Number of particles processed per sequential batch when
-        ``batch_size > 0``. Passed to ``update_strategy`` (and to ``init`` for
-        the log-likelihood pre-computation) to enable ``jax.lax.map``-based
-        batching, reducing peak GPU memory. ``0`` (default) keeps the original
-        ``jax.vmap`` behaviour.
+        ``particle_batch_size > 0``. Passed to ``update_strategy`` for the
+        MCMC update and to ``step`` for the log-likelihood evaluation,
+        enabling ``jax.lax.map``-based batching to reduce peak GPU memory.
+        ``0`` (default) keeps the original ``jax.vmap`` behaviour.
 
     Returns
     -------
@@ -641,6 +642,7 @@ def build_kernel(
             shared_mcmc_step_fn,
             num_mcmc_steps=num_mcmc_steps,
             n_particles=n_particles,
+            batch_size=particle_batch_size,
         )
 
         return mcmc_kernel(rng_key, current_particles, unshared_mcmc_parameters)
@@ -695,7 +697,7 @@ def build_kernel(
             loglikelihood_fn,
             update_fn_wrapper,
             resampling_fn,
-            batch_size=batch_size,
+            batch_size=particle_batch_size,
         )
 
     return kernel
@@ -711,7 +713,7 @@ def as_top_level_api(
     resampling_fn: Callable,
     num_mcmc_steps: int = 10,
     update_strategy: Callable = update_and_take_last,
-    batch_size: int = 0,
+    particle_batch_size: int = 0,
 ) -> SamplingAlgorithm:
     """
     Implements the user interface for the Persistent Sampling
@@ -759,11 +761,12 @@ def as_top_level_api(
         The strategy to update particles using MCMC kernels, by default
         'update_and_take_last' from blackjax.smc.base. See build_kernel for
         details.
-    batch_size : int, optional
+    particle_batch_size : int, optional
         Number of particles processed per sequential batch when
-        ``batch_size > 0``. Uses ``jax.lax.map`` for both the MCMC update and
-        the initial log-likelihood computation in ``init``, reducing peak GPU
-        memory. ``0`` (default) keeps the original ``jax.vmap`` behaviour.
+        ``particle_batch_size > 0``. Uses ``jax.lax.map`` for both the MCMC
+        update and the initial log-likelihood computation in ``init``,
+        reducing peak GPU memory. ``0`` (default) keeps the original
+        ``jax.vmap`` behaviour.
 
     Returns
     -------
@@ -784,11 +787,11 @@ def as_top_level_api(
         mcmc_init_fn,
         resampling_fn,
         update_strategy,
-        batch_size=batch_size,
+        particle_batch_size=particle_batch_size,
     )
 
     def init_fn(position: ArrayLikeTree) -> PersistentSMCState:
-        return init(position, loglikelihood_fn, n_schedule, batch_size=batch_size)
+        return init(position, loglikelihood_fn, n_schedule, batch_size=particle_batch_size)
 
     def step_fn(
         rng_key: PRNGKey,
