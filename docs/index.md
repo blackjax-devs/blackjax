@@ -164,7 +164,7 @@ marked *Sampling Book* are covered in depth at
 | `chees_adaptation` | CHEES (chain-ensemble adaptation) | — | [API](autoapi/blackjax/adaptation/chees_adaptation/index) |
 | `meads_adaptation` | MEADS (mass-matrix via ensemble) | — | [API](autoapi/blackjax/adaptation/meads_adaptation/index) |
 | `pathfinder_adaptation` | Pathfinder-based warmup | — | [API](autoapi/blackjax/adaptation/pathfinder_adaptation/index) |
-| `low_rank_window_adaptation` | Window adaptation with low-rank mass matrix | — | [API](autoapi/blackjax/adaptation/low_rank_adaptation/index) |
+| `window_adaptation_low_rank` | Window adaptation with low-rank mass matrix | — | [API](autoapi/blackjax/adaptation/low_rank_adaptation/index) |
 
 ## Diagnostics & Utilities
 

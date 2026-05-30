@@ -21,7 +21,7 @@ from absl.testing import absltest
 
 import blackjax
 from blackjax.mcmc.laplace_hmc import LaplaceHMCState, as_top_level_api, init
-from blackjax.mcmc.laplace_marginal import laplace_marginal_factory
+from blackjax.mcmc.laplace_marginal import LaplaceHMCInfo, laplace_marginal_factory
 from blackjax.util import run_inference_algorithm
 from tests.fixtures import BlackJAXTest
 
@@ -458,6 +458,152 @@ class TestLaplaceMHMC(BlackJAXTest):
         self.assertEqual(
             float(info_alias.acceptance_rate), float(info_explicit.acceptance_rate)
         )
+
+
+class TestLaplaceHMCDiagnostics(BlackJAXTest):
+    """Tests for LaplaceHMCInfo L-BFGS diagnostics (blackjax issue #925).
+
+    The primary regression check: ``lbfgs_hit_maxiter`` must fire when the
+    optimizer exhausts its budget.  This reproduces the gp_regression
+    silent-non-convergence bug in miniature (maxiter=30 → iter_num=30 →
+    hit_maxiter=True, but the chain silently continued with a poor theta*).
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.n = 4
+        self.y = jax.random.normal(self.next_key(), (self.n,))
+        self.theta_init = jnp.zeros(self.n)
+        self.log_joint, _ = make_gaussian_model(self.y)
+
+    def _make_sampler(self, maxiter, phi_init=0.0, step_size=0.05):
+        sampler = as_top_level_api(
+            self.log_joint,
+            self.theta_init,
+            step_size=step_size,
+            inverse_mass_matrix=jnp.ones(1),
+            num_integration_steps=2,
+            maxiter=maxiter,
+        )
+        state = sampler.init(jnp.array(phi_init))
+        return sampler, state
+
+    # ------------------------------------------------------------------
+    # 1. Field existence and type sanity
+    # ------------------------------------------------------------------
+
+    def test_info_is_laplace_hmc_info(self):
+        """step() must return LaplaceHMCInfo, not plain HMCInfo."""
+        sampler, state = self._make_sampler(maxiter=200)
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertIsInstance(info, LaplaceHMCInfo)
+
+    def test_lbfgs_fields_present_and_finite(self):
+        """All four lbfgs_* fields must be present and finite."""
+        sampler, state = self._make_sampler(maxiter=200)
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertTrue(jnp.isfinite(info.lbfgs_iter_num))
+        self.assertTrue(jnp.isfinite(info.lbfgs_error))
+        # lbfgs_error is a gradient norm — must be non-negative
+        self.assertGreaterEqual(float(info.lbfgs_error), 0.0)
+        # iter_num > 0 (at least one L-BFGS step was taken)
+        self.assertGreater(int(info.lbfgs_iter_num), 0)
+
+    def test_backward_compat_hmc_fields(self):
+        """Existing HMCInfo field names must remain accessible on LaplaceHMCInfo."""
+        sampler, state = self._make_sampler(maxiter=200)
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertTrue(jnp.isfinite(info.acceptance_rate))
+        self.assertIn(bool(info.is_accepted), (True, False))
+        self.assertIn(bool(info.is_divergent), (True, False))
+        self.assertTrue(jnp.isfinite(info.energy))
+
+    # ------------------------------------------------------------------
+    # 2. hit_maxiter — the bug-signature test (reproduces #925 in miniature)
+    # ------------------------------------------------------------------
+
+    def test_hit_maxiter_fires_with_maxiter_1(self):
+        """maxiter=1: solver always exhausts its budget → hit_maxiter=True.
+
+        This is the miniature version of the gp_regression expG diagnosis:
+        with maxiter=30 the L-BFGS ceiling was hit silently.  Here we use
+        maxiter=1 to make it deterministic.
+        """
+        # Use phi_init=3.0 so theta*(phi) is far from theta_init=zeros,
+        # making the warm-start poor and the gradient large after 1 step.
+        sampler, state = self._make_sampler(maxiter=1, phi_init=3.0, step_size=0.01)
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertTrue(
+            bool(info.lbfgs_hit_maxiter),
+            "Expected lbfgs_hit_maxiter=True with maxiter=1, "
+            f"got iter_num={int(info.lbfgs_iter_num)}",
+        )
+
+    def test_hit_maxiter_false_with_sufficient_budget(self):
+        """maxiter=200: solver converges well before the budget → hit_maxiter=False.
+
+        The Gaussian-Gaussian model has a smooth, well-conditioned inner
+        objective.  With adequate maxiter, the warm-started solve finishes
+        in a handful of steps.
+        """
+        sampler, state = self._make_sampler(maxiter=200)
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertFalse(
+            bool(info.lbfgs_hit_maxiter),
+            "Expected lbfgs_hit_maxiter=False with maxiter=200, "
+            f"got iter_num={int(info.lbfgs_iter_num)}",
+        )
+
+    def test_error_above_gtol_when_hit_maxiter(self):
+        """When hit_maxiter=True, lbfgs_error should be above the default gtol.
+
+        Note: for the simple Gaussian model the inner problem is nearly
+        quadratic and L-BFGS can make a very effective step even in 1
+        iteration, so the error may be small in absolute terms.  The primary
+        bug-detection signal is ``hit_maxiter`` (budget exhausted), not the
+        magnitude of the error.  We assert error > gtol=1e-8 as a sanity
+        check that the field is physically meaningful.
+        """
+        sampler, state = self._make_sampler(maxiter=1, phi_init=5.0, step_size=0.01)
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertTrue(
+            bool(info.lbfgs_hit_maxiter),
+            "Precondition: hit_maxiter must be True with maxiter=1",
+        )
+        # Error must be non-negative; for a non-trivially-converged solve it
+        # should sit above the default gtol (1e-8).
+        self.assertGreater(
+            float(info.lbfgs_error),
+            1e-8,
+            "lbfgs_error should be above gtol when hit_maxiter=True, "
+            "got " + str(float(info.lbfgs_error)),
+        )
+
+    def test_error_small_when_converged(self):
+        """With adequate maxiter, lbfgs_error should be near machine precision."""
+        sampler, state = self._make_sampler(maxiter=200)
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        # The well-conditioned Gaussian model should converge to << 1e-3.
+        self.assertLess(float(info.lbfgs_error), 1e-3)
+
+    # ------------------------------------------------------------------
+    # 3. laplace_mhmc also returns LaplaceHMCInfo
+    # ------------------------------------------------------------------
+
+    def test_laplace_mhmc_also_returns_laplace_hmc_info(self):
+        """The multinomial variant (laplace_mhmc) shares the same Info type."""
+        sampler = blackjax.laplace_mhmc(
+            self.log_joint,
+            self.theta_init,
+            step_size=0.05,
+            inverse_mass_matrix=jnp.ones(1),
+            num_integration_steps=2,
+            maxiter=200,
+        )
+        state = sampler.init(jnp.array(0.0))
+        _, info = jax.jit(sampler.step)(self.next_key(), state)
+        self.assertIsInstance(info, LaplaceHMCInfo)
+        self.assertFalse(bool(info.lbfgs_hit_maxiter))
 
 
 if __name__ == "__main__":

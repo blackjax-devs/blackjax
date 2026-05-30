@@ -19,9 +19,9 @@ import jax.scipy.stats as stats
 from absl.testing import absltest
 
 import blackjax
-from blackjax.mcmc.hmc import HMCInfo, multinomial_hmc_proposal
+from blackjax.mcmc.hmc import multinomial_hmc_proposal
 from blackjax.mcmc.laplace_dynamic_hmc import LaplaceDynamicHMCState
-from blackjax.mcmc.laplace_marginal import laplace_marginal_factory
+from blackjax.mcmc.laplace_marginal import LaplaceHMCInfo, laplace_marginal_factory
 from tests.fixtures import BlackJAXTest
 
 
@@ -102,9 +102,16 @@ class TestLaplaceDHMCKernel(BlackJAXTest):
         new_state, _ = self.sampler.step(self.next_key(), self.state)
         self.assertIsInstance(new_state, LaplaceDynamicHMCState)
 
-    def test_step_returns_hmc_info(self):
+    def test_step_returns_laplace_hmc_info(self):
+        """laplace_dhmc kernel returns LaplaceHMCInfo (superset of HMCInfo)."""
         _, info = self.sampler.step(self.next_key(), self.state)
-        self.assertIsInstance(info, HMCInfo)
+        self.assertIsInstance(info, LaplaceHMCInfo)
+        # Backward-compat: all HMCInfo fields are accessible directly.
+        self.assertTrue(jnp.isfinite(info.acceptance_rate))
+        self.assertIn(bool(info.is_divergent), (True, False))
+        # New L-BFGS diagnostic fields.
+        self.assertIn(bool(info.lbfgs_hit_maxiter), (True, False))
+        self.assertGreaterEqual(float(info.lbfgs_error), 0.0)
 
     def test_step_all_fields_finite(self):
         new_state, _ = self.sampler.step(self.next_key(), self.state)
