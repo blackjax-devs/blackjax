@@ -98,7 +98,7 @@ def build_kernel(
             shared_mcmc_step_fn,
             n_particles=state.weights.shape[0],
             num_mcmc_steps=num_mcmc_steps,
-            **({'batch_size': batch_size} if batch_size else {}),
+            **({"batch_size": batch_size} if batch_size else {}),
         )
 
         weight_fn = map_fn(log_weights_fn, batch_size)
