@@ -1042,12 +1042,12 @@ class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
 
     @chex.variants(with_jit=True)
     def test_fixed_schedule_persistent_sampling_batch_equivalence(self) -> None:
-        """batch_size > 0 must produce identical positions to batch_size=0.
+        """batch_size > 0 must produce results matching batch_size=0 to rtol=1e-5.
 
         Uses a simple 2-D Gaussian prior/likelihood (no sum over external data)
-        to ensure jax.vmap and jax.lax.map produce bit-identical log-likelihoods
-        regardless of the outer batch size, avoiding floating-point divergence
-        through the discrete resampling step.
+        to ensure jax.vmap and jax.lax.map produce numerically equivalent
+        log-likelihoods regardless of the outer batch size, avoiding
+        floating-point divergence through the discrete resampling step.
         """
         num_particles = 100
         num_dim = 2
@@ -1099,6 +1099,65 @@ class BatchedPersistentSamplingTest(SMCLinearRegressionTestCase):
             lambda a, b: np.testing.assert_allclose(a, b, rtol=1e-5),
             result_full.particles,
             result_batched.particles,
+        )
+
+    @chex.variants(with_jit=True)
+    def test_fixed_schedule_persistent_sampling_non_divisor_batch_size(self) -> None:
+        """batch_size that does not divide num_particles must match batch_size=0.
+
+        Verifies that jax.lax.map handles non-divisor batch sizes correctly
+        (e.g. batch_size=7 over 20 particles).
+        """
+        num_particles = 20
+        num_dim = 2
+        num_tempering_steps = 3
+
+        _, init_key = jax.random.split(self.key)
+        init_particles = jax.random.normal(init_key, shape=(num_particles, num_dim))
+        lambda_schedule = np.array([0.1, 0.5, 1.0])
+
+        def logprior_fn(x: jax.Array) -> jax.Array:
+            return jnp.sum(stats.norm.logpdf(x))
+
+        def loglikelihood_fn(x: jax.Array) -> jax.Array:
+            return jnp.sum(stats.norm.logpdf(x, loc=1.0))
+
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(num_dim),
+                "num_integration_steps": 10,
+            }
+        )
+
+        def run(batch_size):
+            ps = persistent_sampling_smc(
+                logprior_fn=logprior_fn,
+                loglikelihood_fn=loglikelihood_fn,
+                n_schedule=num_tempering_steps,
+                mcmc_step_fn=hmc_kernel,
+                mcmc_init_fn=hmc_init,
+                mcmc_parameters=hmc_parameters,
+                resampling_fn=resampling.systematic,
+                num_mcmc_steps=5,
+                batch_size=batch_size,
+            )
+            _, sample_key = jax.random.split(self.key)
+            return self.variant(partial(inference_loop_fixed, kernel=ps.step))(
+                rng_key=sample_key,
+                initial_state=jax.jit(ps.init)(init_particles),
+                tempering_schedule=lambda_schedule,
+            )
+
+        result_full = run(batch_size=0)
+        result_non_divisor = run(batch_size=7)
+
+        jax.tree.map(
+            lambda a, b: np.testing.assert_allclose(a, b, rtol=1e-5),
+            result_full.particles,
+            result_non_divisor.particles,
         )
 
     @chex.variants(with_jit=True)
