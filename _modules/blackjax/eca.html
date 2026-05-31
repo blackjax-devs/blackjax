@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0ef2f578a" />
+  <meta name="docsearch:version" content="0.1.dev1+g559e8bb49" />
   </head>
   
   
@@ -601,9 +601,14 @@
         <span class="c1"># run sampling</span>
         <span class="n">xs</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span>
-            <span class="n">keys_sampling</span><span class="o">.</span><span class="n">T</span><span class="p">,</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="n">keys_sampling</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
             <span class="n">keys_adaptation</span><span class="p">,</span>
         <span class="p">)</span>  <span class="c1"># keys for all steps that will be performed. keys_sampling.shape = (num_steps, chains_per_device), keys_adaptation.shape = (num_steps, )</span>
+        <span class="c1"># Note: jnp.swapaxes(keys_sampling, 0, 1) is used instead of keys_sampling.T</span>
+        <span class="c1"># because .T reverses ALL axes, which corrupts old-style PRNGKey arrays that</span>
+        <span class="c1"># have a trailing uint32[2] dimension: .T on shape (chains, steps, 2) gives</span>
+        <span class="c1"># (2, steps, chains) instead of (steps, chains, 2). jnp.swapaxes only swaps</span>
+        <span class="c1"># the first two axes, leaving any trailing key-representation dims intact.</span>
 
         <span class="k">if</span> <span class="n">early_stop</span><span class="p">:</span>
             <span class="n">final_state_all</span><span class="p">,</span> <span class="n">info_history</span><span class="p">,</span> <span class="n">counter</span> <span class="o">=</span> <span class="n">while_with_info</span><span class="p">(</span>
