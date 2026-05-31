@@ -154,6 +154,92 @@ class TemperedSMCTest(SMCLinearRegressionTestCase):
         self.assert_linear_regression_test_case(result)
 
 
+class BatchedTemperedSMCTest(SMCLinearRegressionTestCase):
+    """Verify batch_size > 0 paths run without error."""
+
+    @chex.variants(with_jit=True)
+    def test_tempered_smc_batched(self):
+        """tempered_smc with batch_size > 0 should reach tempering_param == 1."""
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        num_tempering_steps = 5
+        lambda_schedule = np.logspace(-5, 0, num_tempering_steps)
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 5,
+            }
+        )
+
+        tempering = tempered_smc(
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
+            hmc_parameters,
+            resampling.systematic,
+            5,
+            batch_size=10,
+        )
+        init_state = tempering.init(init_particles)
+        smc_kernel = self.variant(tempering.step)
+
+        def body_fn(carry, tempering_param):
+            i, state = carry
+            subkey = jax.random.fold_in(self.next_key(), i)
+            new_state, info = smc_kernel(subkey, state, tempering_param)
+            return (i + 1, new_state), (new_state, info)
+
+        (_, result), _ = jax.lax.scan(body_fn, (0, init_state), lambda_schedule)
+        # Just check it ran and final tempering_param is correct
+        np.testing.assert_allclose(result.tempering_param, 1.0, rtol=1e-5)
+
+    @chex.variants(with_jit=True)
+    def test_adaptive_tempered_smc_batched(self):
+        """adaptive_tempered_smc with batch_size > 0 should converge."""
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 5,
+            }
+        )
+
+        tempering = adaptive_tempered_smc(
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
+            hmc_parameters,
+            resampling.systematic,
+            0.5,
+            solver.dichotomy,
+            5,
+            batch_size=10,
+        )
+        init_state = tempering.init(init_particles)
+        _n_iter, result, _ = self.variant(
+            functools.partial(inference_loop, tempering.step)
+        )(self.next_key(), init_state)
+        # Sampler should have converged (tempering_param reached 1)
+        np.testing.assert_allclose(result.tempering_param, 1.0, rtol=1e-5)
+
+
 def normal_logdensity_fn(x, chol_cov):
     """minus log-density of a centered multivariate normal distribution"""
     dim = chol_cov.shape[0]
