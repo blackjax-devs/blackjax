@@ -203,9 +203,14 @@ def run_eca(
         # run sampling
         xs = (
             jnp.arange(num_steps),
-            keys_sampling.T,
+            jnp.swapaxes(keys_sampling, 0, 1),
             keys_adaptation,
         )  # keys for all steps that will be performed. keys_sampling.shape = (num_steps, chains_per_device), keys_adaptation.shape = (num_steps, )
+        # Note: jnp.swapaxes(keys_sampling, 0, 1) is used instead of keys_sampling.T
+        # because .T reverses ALL axes, which corrupts old-style PRNGKey arrays that
+        # have a trailing uint32[2] dimension: .T on shape (chains, steps, 2) gives
+        # (2, steps, chains) instead of (steps, chains, 2). jnp.swapaxes only swaps
+        # the first two axes, leaving any trailing key-representation dims intact.
 
         if early_stop:
             final_state_all, info_history, counter = while_with_info(
