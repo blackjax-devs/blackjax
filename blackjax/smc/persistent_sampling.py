@@ -642,7 +642,7 @@ def build_kernel(
             shared_mcmc_step_fn,
             num_mcmc_steps=num_mcmc_steps,
             n_particles=n_particles,
-            batch_size=batch_size,
+            **({'batch_size': batch_size} if batch_size else {}),
         )
 
         return mcmc_kernel(rng_key, current_particles, unshared_mcmc_parameters)
