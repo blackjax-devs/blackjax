@@ -21,6 +21,8 @@ Functions
    blackjax.smc.base.init
    blackjax.smc.base.step
    blackjax.smc.base.extend_params
+   blackjax.smc.base.map_fn
+   blackjax.smc.base.map_kernel
    blackjax.smc.base.update_and_take_last
 
 
@@ -170,7 +172,17 @@ Module Contents
    :rtype: Array
 
 
-.. py:function:: update_and_take_last(mcmc_init_fn: Callable, tempered_logposterior_fn: Callable, shared_mcmc_step_fn: Callable, num_mcmc_steps: int, n_particles: int | blackjax.types.Array) -> tuple[Callable, int | blackjax.types.Array]
+.. py:function:: map_fn(fn: Callable, batch_size: int) -> Callable
+
+   Return a batched or vmap'd version of fn applied over a pytree axis.
+
+
+.. py:function:: map_kernel(kernel: Callable, batch_size: int) -> Callable
+
+   Return a batched or vmap'd n-ary kernel applied over the leading axis.
+
+
+.. py:function:: update_and_take_last(mcmc_init_fn: Callable, tempered_logposterior_fn: Callable, shared_mcmc_step_fn: Callable, num_mcmc_steps: int, n_particles: int | blackjax.types.Array, batch_size: int = 0) -> tuple[Callable, int | blackjax.types.Array]
 
    Create an MCMC update strategy that runs multiple steps and keeps the last.
 
@@ -187,8 +199,13 @@ Module Contents
    :type num_mcmc_steps: int
    :param n_particles: Number of particles.
    :type n_particles: int | Array
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Uses ``jax.lax.map`` internally, which reduces
+                      peak GPU memory relative to a full ``jax.vmap`` over all particles.
+                      ``0`` (default) keeps the original ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
 
-   :returns: * **mcmc_kernel** (*Callable*) -- A vectorized MCMC kernel function.
+   :returns: * **mcmc_kernel** (*Callable*) -- A vectorized (or sequentially batched) MCMC kernel function.
              * **n_particles** (*int | Array*) -- Number of particles (returned unchanged).
 
 

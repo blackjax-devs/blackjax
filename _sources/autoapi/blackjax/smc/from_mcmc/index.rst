@@ -34,7 +34,7 @@ Module Contents
              * **shared_mcmc_step_fn** (*Callable*) -- MCMC step function with shared parameters bound.
 
 
-.. py:function:: build_kernel(mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last) -> Callable
+.. py:function:: build_kernel(mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last, batch_size: int = 0) -> Callable
 
    Build an SMC step function from MCMC kernels.
 
@@ -52,6 +52,11 @@ Module Contents
    :param update_strategy: Strategy to update particles using MCMC kernels, by default
                            'update_and_take_last' from blackjax.smc.base.
    :type update_strategy: Callable
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Uses ``jax.lax.map`` for both the MCMC update and
+                      the weight computation, reducing peak GPU memory relative to a full
+                      ``jax.vmap``. ``0`` (default) keeps the original ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
 
    :returns: **step** -- A callable that takes a rng_key and a state with .particles and .weights
              and returns a base.SMCState and base.SMCInfo pair.

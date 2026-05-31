@@ -24,7 +24,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, target_ess: float | blackjax.types.Array, update_strategy: Callable = update_and_take_last, root_solver: Callable = solver.dichotomy) -> Callable
+.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, target_ess: float | blackjax.types.Array, update_strategy: Callable = update_and_take_last, root_solver: Callable = solver.dichotomy, batch_size: int = 0) -> Callable
 
    Build an adaptive Persistent Sampling kernel, with signature
    (rng_key,
@@ -66,6 +66,12 @@ Module Contents
    :type update_strategy: Callable
    :param root_solver: The solver used to adaptively compute the temperature given a target number
                        of effective samples. By default, blackjax.smc.solver.dichotomy.
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Passed to the underlying
+                      ``persistent_sampling.build_kernel`` call to enable
+                      ``jax.lax.map``-based batching, reducing peak GPU memory. ``0``
+                      (default) keeps the original ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
 
    :returns: **kernel** -- A callable that takes a rng_key, a PersistentSMCState, and a dictionary of
              mcmc_parameters, and that returns a the PersistentSMCState after
@@ -75,7 +81,7 @@ Module Contents
 
 .. py:data:: init
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, max_iterations: int | blackjax.types.Array, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, target_ess: float | blackjax.types.Array = 3, num_mcmc_steps: int = 10, update_strategy: Callable = update_and_take_last, root_solver: Callable = solver.dichotomy) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, max_iterations: int | blackjax.types.Array, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, target_ess: float | blackjax.types.Array = 3, num_mcmc_steps: int = 10, update_strategy: Callable = update_and_take_last, root_solver: Callable = solver.dichotomy, batch_size: int = 0) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the adaptive Persistent Sampling
    kernel from Karamanis et al. 2025. See build_kernel and
@@ -125,6 +131,11 @@ Module Contents
    :param root_solver: The solver used to adaptively compute the temperature given a target
                        number of effective samples. By default, blackjax.smc.solver.dichotomy.
    :type root_solver: Callable, optional
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Uses ``jax.lax.map`` for the MCMC update
+                      step, reducing peak GPU memory relative to a full ``jax.vmap``. ``0``
+                      (default) keeps the original ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
 
    :returns: A ``SamplingAlgorithm`` instance with init and step methods. See
              blackjax.base.SamplingAlgorithm for details.

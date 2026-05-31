@@ -159,7 +159,7 @@ Module Contents
       :type:  NamedTuple
 
 
-.. py:function:: init(particles: blackjax.types.ArrayLikeTree, loglikelihood_fn: Callable, n_schedule: int | blackjax.types.Array) -> PersistentSMCState
+.. py:function:: init(particles: blackjax.types.ArrayLikeTree, loglikelihood_fn: Callable, n_schedule: int | blackjax.types.Array, batch_size: int = 0) -> PersistentSMCState
 
    Initialize the Persistent Sampling state.
 
@@ -290,7 +290,7 @@ Module Contents
    :rtype: float | Array
 
 
-.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: PersistentSMCState, lmbda: float | blackjax.types.Array, loglikelihood_fn: Callable, update_fn: Callable, resample_fn: Callable, weight_fn: Callable = compute_log_persistent_weights) -> tuple[PersistentSMCState, PersistentStateInfo]
+.. py:function:: step(rng_key: blackjax.types.PRNGKey, state: PersistentSMCState, lmbda: float | blackjax.types.Array, loglikelihood_fn: Callable, update_fn: Callable, resample_fn: Callable, weight_fn: Callable = compute_log_persistent_weights, batch_size: int = 0) -> tuple[PersistentSMCState, PersistentStateInfo]
 
    One step of the Persistent Sampling algorithm, as
    described in algorithm 2 of Karamanis et al. (2025).
@@ -320,7 +320,7 @@ Module Contents
                ess (effective sample size), and update_info from the MCMC update step.
 
 
-.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last) -> Callable
+.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last, batch_size: int = 0) -> Callable
 
    Build a Persistent Sampling kernel, with signature
    (rng_key,
@@ -355,10 +355,17 @@ Module Contents
                            loggerposterior_fn,
                            mcmc_step_fn,
                            num_mcmc_steps,
-                           n_particles,) -> (mcmc_kernel, n_particles), like 'update_and_take_last'.
+                           n_particles,
+                           batch_size,) -> (mcmc_kernel, n_particles), like 'update_and_take_last'.
                            The mcmc_kernel must have signature
                            (rng_key, position, mcmc_parameters) -> (new_position, info).
    :type update_strategy: Callable
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Passed to ``update_strategy`` for the
+                      MCMC update and to ``step`` for the log-likelihood evaluation,
+                      enabling ``jax.lax.map``-based batching to reduce peak GPU memory.
+                      ``0`` (default) keeps the original ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
 
    :returns: **kernel** -- A callable that takes a rng_key, a PersistentSMCState, a tempering parameter
              lmbda, and a dictionary of mcmc_parameters, and that returns a the
@@ -366,7 +373,7 @@ Module Contents
    :rtype: Callable
 
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, n_schedule: int | blackjax.types.Array, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: int = 10, update_strategy: Callable = update_and_take_last) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, n_schedule: int | blackjax.types.Array, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: int = 10, update_strategy: Callable = update_and_take_last, batch_size: int = 0) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the Persistent Sampling
    kernel. See build_kernel for details.
@@ -411,6 +418,12 @@ Module Contents
                            'update_and_take_last' from blackjax.smc.base. See build_kernel for
                            details.
    :type update_strategy: Callable, optional
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Uses ``jax.lax.map`` for both the MCMC
+                      update and the initial log-likelihood computation in ``init``,
+                      reducing peak GPU memory. ``0`` (default) keeps the original
+                      ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
 
    :returns: A ``SamplingAlgorithm`` instance with init and step methods. See
              blackjax.base.SamplingAlgorithm for details.

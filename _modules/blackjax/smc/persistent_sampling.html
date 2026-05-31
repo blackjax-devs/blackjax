@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g559e8bb49" />
+  <meta name="docsearch:version" content="0.1.dev1+g78ae6e52d" />
   </head>
   
   
@@ -405,7 +405,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">logsumexp</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.smc.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">update_and_take_last</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.smc.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">map_fn</span><span class="p">,</span> <span class="n">update_and_take_last</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.smc.from_mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">unshared_parameters_and_step_fn</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 
@@ -579,6 +579,7 @@
     <span class="n">particles</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
     <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">n_schedule</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PersistentSMCState</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize the Persistent Sampling state.</span>
 
@@ -610,10 +611,9 @@
 
     <span class="c1"># Allocate arrays to store persistent particles and log-likelihoods, and</span>
     <span class="c1"># fill in the first entry with the initial values.</span>
+    <span class="n">_eval_all</span> <span class="o">=</span> <span class="n">map_fn</span><span class="p">(</span><span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)(</span><span class="n">particles</span><span class="p">)</span>
     <span class="n">padded_log_likelihoods</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_schedule</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_particles</span><span class="p">))</span>
-        <span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">loglikelihood_fn</span><span class="p">)(</span><span class="n">particles</span><span class="p">))</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_schedule</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_particles</span><span class="p">))</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">_eval_all</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="n">padded_particles</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
         <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_schedule</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">particles</span>
@@ -896,6 +896,7 @@
     <span class="n">update_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">resample_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">weight_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">compute_log_persistent_weights</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PersistentSMCState</span><span class="p">,</span> <span class="n">PersistentStateInfo</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;One step of the Persistent Sampling algorithm, as</span>
 <span class="sd">    described in algorithm 2 of Karamanis et al. (2025).</span>
@@ -970,7 +971,9 @@
     <span class="p">)</span>
 
     <span class="c1"># calculate log likelihoods for new particles</span>
-    <span class="n">iteration_log_likelihoods</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">loglikelihood_fn</span><span class="p">)(</span><span class="n">iteration_particles</span><span class="p">)</span>
+    <span class="n">iteration_log_likelihoods</span> <span class="o">=</span> <span class="n">map_fn</span><span class="p">(</span><span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)(</span>
+        <span class="n">iteration_particles</span>
+    <span class="p">)</span>
 
     <span class="c1"># update state</span>
     <span class="n">persistent_particles</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
@@ -1006,6 +1009,7 @@
     <span class="n">mcmc_init_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">update_strategy</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">update_and_take_last</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Persistent Sampling kernel, with signature</span>
 <span class="sd">    (rng_key,</span>
@@ -1043,9 +1047,16 @@
 <span class="sd">        loggerposterior_fn,</span>
 <span class="sd">        mcmc_step_fn,</span>
 <span class="sd">        num_mcmc_steps,</span>
-<span class="sd">        n_particles,) -&gt; (mcmc_kernel, n_particles), like &#39;update_and_take_last&#39;.</span>
+<span class="sd">        n_particles,</span>
+<span class="sd">        batch_size,) -&gt; (mcmc_kernel, n_particles), like &#39;update_and_take_last&#39;.</span>
 <span class="sd">        The mcmc_kernel must have signature</span>
 <span class="sd">        (rng_key, position, mcmc_parameters) -&gt; (new_position, info).</span>
+<span class="sd">    batch_size: int, optional</span>
+<span class="sd">        Number of particles processed per sequential batch when</span>
+<span class="sd">        ``batch_size &gt; 0``. Passed to ``update_strategy`` for the</span>
+<span class="sd">        MCMC update and to ``step`` for the log-likelihood evaluation,</span>
+<span class="sd">        enabling ``jax.lax.map``-based batching to reduce peak GPU memory.</span>
+<span class="sd">        ``0`` (default) keeps the original ``jax.vmap`` behaviour.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1074,6 +1085,7 @@
             <span class="n">shared_mcmc_step_fn</span><span class="p">,</span>
             <span class="n">num_mcmc_steps</span><span class="o">=</span><span class="n">num_mcmc_steps</span><span class="p">,</span>
             <span class="n">n_particles</span><span class="o">=</span><span class="n">n_particles</span><span class="p">,</span>
+            <span class="o">**</span><span class="p">({</span><span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="n">batch_size</span><span class="p">}</span> <span class="k">if</span> <span class="n">batch_size</span> <span class="k">else</span> <span class="p">{}),</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">mcmc_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">current_particles</span><span class="p">,</span> <span class="n">unshared_mcmc_parameters</span><span class="p">)</span>
@@ -1128,6 +1140,7 @@
             <span class="n">loglikelihood_fn</span><span class="p">,</span>
             <span class="n">update_fn_wrapper</span><span class="p">,</span>
             <span class="n">resampling_fn</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
@@ -1146,6 +1159,7 @@
     <span class="n">resampling_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">num_mcmc_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">update_strategy</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">update_and_take_last</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Implements the user interface for the Persistent Sampling</span>
@@ -1193,6 +1207,12 @@
 <span class="sd">        The strategy to update particles using MCMC kernels, by default</span>
 <span class="sd">        &#39;update_and_take_last&#39; from blackjax.smc.base. See build_kernel for</span>
 <span class="sd">        details.</span>
+<span class="sd">    batch_size : int, optional</span>
+<span class="sd">        Number of particles processed per sequential batch when</span>
+<span class="sd">        ``batch_size &gt; 0``. Uses ``jax.lax.map`` for both the MCMC</span>
+<span class="sd">        update and the initial log-likelihood computation in ``init``,</span>
+<span class="sd">        reducing peak GPU memory. ``0`` (default) keeps the original</span>
+<span class="sd">        ``jax.vmap`` behaviour.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1213,10 +1233,11 @@
         <span class="n">mcmc_init_fn</span><span class="p">,</span>
         <span class="n">resampling_fn</span><span class="p">,</span>
         <span class="n">update_strategy</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PersistentSMCState</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">n_schedule</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">loglikelihood_fn</span><span class="p">,</span> <span class="n">n_schedule</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">step_fn</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>

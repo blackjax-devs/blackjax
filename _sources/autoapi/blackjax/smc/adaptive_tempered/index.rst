@@ -24,7 +24,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy, **extra_parameters: dict[str, Any]) -> Callable
+.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy, batch_size: int = 0, **extra_parameters: dict[str, Any]) -> Callable
 
    Build a Tempered SMC step using an adaptive schedule.
 
@@ -45,6 +45,12 @@ Module Contents
    :param root_solver: The solver used to adaptively compute the temperature given a target number
                        of effective samples. By default, blackjax.smc.solver.dichotomy.
    :type root_solver: Callable, optional
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Uses ``jax.lax.map`` for both the ESS
+                      log-likelihood evaluation (in ``compute_delta``) and the underlying
+                      tempered SMC update, reducing peak GPU memory. ``0`` (default) keeps
+                      the original ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
    :param \*\*extra_parameters: Additional parameters to pass to tempered.build_kernel.
    :type \*\*extra_parameters: dict[str, Any]
 
@@ -56,7 +62,7 @@ Module Contents
 
 .. py:data:: init
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy, num_mcmc_steps: int = 10, **extra_parameters: dict[str, Any]) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, target_ess: float, root_solver: Callable = solver.dichotomy, num_mcmc_steps: int = 10, batch_size: int = 0, **extra_parameters: dict[str, Any]) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the Adaptive Tempered SMC kernel.
 
@@ -82,6 +88,12 @@ Module Contents
    :param num_mcmc_steps: The number of times the MCMC kernel is applied to the particles per step,
                           by default 10.
    :type num_mcmc_steps: int, optional
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Uses ``jax.lax.map`` for both the ESS
+                      log-likelihood evaluation and the underlying tempered SMC update,
+                      reducing peak GPU memory. ``0`` (default) keeps the original
+                      ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
    :param \*\*extra_parameters: Additional parameters to pass to the kernel.
    :type \*\*extra_parameters: dict [str, Any]
 

@@ -62,7 +62,7 @@ Module Contents
    :rtype: TemperedSMCState
 
 
-.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last, update_particles_fn: Callable | None = None) -> Callable
+.. py:function:: build_kernel(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, resampling_fn: Callable, update_strategy: Callable = update_and_take_last, update_particles_fn: Callable | None = None, batch_size: int = 0) -> Callable
 
    Build the base Tempered SMC kernel.
 
@@ -93,6 +93,12 @@ Module Contents
    :param update_particles_fn: Optional custom function to update particles. If None, uses
                                smc_from_mcmc.build_kernel.
    :type update_particles_fn: Callable, optional
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Passed to the underlying
+                      ``smc_from_mcmc.build_kernel`` call to enable ``jax.lax.map``-based
+                      batching, reducing peak GPU memory. ``0`` (default) keeps the
+                      original ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
 
    :returns: **kernel** -- A callable that takes a rng_key, a TemperedSMCState, num_mcmc_steps,
              tempering_param, and mcmc_parameters, and returns a new
@@ -100,7 +106,7 @@ Module Contents
    :rtype: Callable
 
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: int | None = 10, update_strategy: Callable = update_and_take_last, update_particles_fn: Callable | None = None) -> blackjax.base.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, mcmc_step_fn: Callable, mcmc_init_fn: Callable, mcmc_parameters: dict, resampling_fn: Callable, num_mcmc_steps: int | None = 10, update_strategy: Callable = update_and_take_last, update_particles_fn: Callable | None = None, batch_size: int = 0) -> blackjax.base.SamplingAlgorithm
 
    Implements the user interface for the Tempered SMC kernel.
 
@@ -126,6 +132,11 @@ Module Contents
    :param update_particles_fn: Optional custom function to update particles. If None, uses
                                smc_from_mcmc.build_kernel.
    :type update_particles_fn: Callable, optional
+   :param batch_size: Number of particles processed per sequential batch when
+                      ``batch_size > 0``. Reduces peak GPU memory by using
+                      ``jax.lax.map`` instead of a full ``jax.vmap``. ``0`` (default) keeps
+                      the original ``jax.vmap`` behaviour.
+   :type batch_size: int, optional
 
    :returns: A ``SamplingAlgorithm`` instance with init and step methods.
    :rtype: SamplingAlgorithm

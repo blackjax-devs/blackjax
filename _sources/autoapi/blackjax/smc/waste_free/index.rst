@@ -16,7 +16,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: update_waste_free(mcmc_init_fn, logposterior_fn, mcmc_step_fn, n_particles: int, p: int, num_resampled, num_mcmc_steps=None)
+.. py:function:: update_waste_free(mcmc_init_fn, logposterior_fn, mcmc_step_fn, n_particles: int, p: int, num_resampled, num_mcmc_steps=None, batch_size: int = 0)
 
    Given M particles, mutates them using p-1 steps. Returns M*P-1 particles,
    consistent of the initial plus all the intermediate steps, thus implementing a
