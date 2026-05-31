@@ -1,10 +1,8 @@
 from functools import partial
 from typing import Callable
 
-import jax
-
 from blackjax import smc
-from blackjax.smc.base import SMCState, update_and_take_last
+from blackjax.smc.base import SMCState, map_fn, update_and_take_last
 from blackjax.types import Array, PRNGKey
 
 
@@ -103,11 +101,7 @@ def build_kernel(
             **({'batch_size': batch_size} if batch_size else {}),
         )
 
-        weight_fn = (
-            (lambda ps: jax.lax.map(log_weights_fn, ps, batch_size=batch_size))
-            if batch_size > 0
-            else jax.vmap(log_weights_fn)
-        )
+        weight_fn = map_fn(log_weights_fn, batch_size)
 
         return smc.base.step(
             rng_key,

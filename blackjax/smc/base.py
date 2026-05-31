@@ -197,6 +197,22 @@ def extend_params(params: Array) -> Array:
     return jax.tree.map(lambda x: jnp.asarray(x)[None, ...], params)
 
 
+def map_fn(fn: Callable, batch_size: int) -> Callable:
+    """Return a batched or vmap'd version of fn applied over a pytree axis."""
+    if batch_size > 0:
+        return lambda xs: jax.lax.map(fn, xs, batch_size=batch_size)
+    return jax.vmap(fn)
+
+
+def map_kernel(kernel: Callable, batch_size: int) -> Callable:
+    """Return a batched or vmap'd n-ary kernel applied over the leading axis."""
+    if batch_size > 0:
+        return lambda *args: jax.lax.map(
+            lambda t: kernel(*t), args, batch_size=batch_size
+        )
+    return jax.vmap(kernel)
+
+
 def update_and_take_last(
     mcmc_init_fn: Callable,
     tempered_logposterior_fn: Callable,
@@ -263,14 +279,4 @@ def update_and_take_last(
         last_state, info = jax.lax.scan(body_fn, state, keys)
         return last_state.position, info
 
-    if batch_size > 0:
-
-        def batched_kernel(keys, positions, step_parameters):
-            return jax.lax.map(
-                lambda args: mcmc_kernel(args[0], args[1], args[2]),
-                (keys, positions, step_parameters),
-                batch_size=batch_size,
-            )
-
-        return batched_kernel, n_particles
-    return jax.vmap(mcmc_kernel), n_particles
+    return map_kernel(mcmc_kernel, batch_size), n_particles

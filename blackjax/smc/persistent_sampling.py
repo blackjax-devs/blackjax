@@ -21,7 +21,7 @@ import jax.numpy as jnp
 from jax.scipy.special import logsumexp
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.smc.base import update_and_take_last
+from blackjax.smc.base import map_fn, update_and_take_last
 from blackjax.smc.from_mcmc import unshared_parameters_and_step_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -183,11 +183,7 @@ def init(
 
     # Allocate arrays to store persistent particles and log-likelihoods, and
     # fill in the first entry with the initial values.
-    _eval_all = (
-        jax.lax.map(loglikelihood_fn, particles, batch_size=batch_size)
-        if batch_size > 0
-        else jax.vmap(loglikelihood_fn)(particles)
-    )
+    _eval_all = map_fn(loglikelihood_fn, batch_size)(particles)
     padded_log_likelihoods = (
         jnp.zeros((n_schedule + 1, num_particles)).at[0].set(_eval_all)
     )
@@ -529,10 +525,8 @@ def step(
     )
 
     # calculate log likelihoods for new particles
-    iteration_log_likelihoods = (
-        jax.lax.map(loglikelihood_fn, iteration_particles, batch_size=batch_size)
-        if batch_size > 0
-        else jax.vmap(loglikelihood_fn)(iteration_particles)
+    iteration_log_likelihoods = map_fn(loglikelihood_fn, batch_size)(
+        iteration_particles
     )
 
     # update state

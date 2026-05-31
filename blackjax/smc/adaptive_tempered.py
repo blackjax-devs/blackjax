@@ -13,7 +13,6 @@
 # limitations under the License.
 from typing import Any, Callable
 
-import jax
 import jax.numpy as jnp
 
 import blackjax.smc.base as base
@@ -76,11 +75,7 @@ def build_kernel(
 
     """
 
-    batched_loglikelihood_fn = (
-        (lambda ps: jax.lax.map(loglikelihood_fn, ps, batch_size=batch_size))
-        if batch_size > 0
-        else jax.vmap(loglikelihood_fn)
-    )
+    batched_loglikelihood_fn = base.map_fn(loglikelihood_fn, batch_size)
 
     def compute_delta(state: tempered.TemperedSMCState) -> float | Array:
         tempering_param = state.tempering_param
