@@ -10,7 +10,7 @@ from absl.testing import absltest
 
 import blackjax
 import blackjax.smc.resampling as resampling
-from blackjax.smc.base import extend_params, init, step
+from blackjax.smc.base import extend_params, init, map_fn, map_kernel, step
 from blackjax.smc.tempered import update_and_take_last
 from blackjax.smc.waste_free import update_waste_free
 from tests.fixtures import BlackJAXTest
@@ -192,6 +192,36 @@ class BatchedSMCTest(BlackJAXTest):
         pos_batched, _ = self.variant(waste_free_fn_batched)(keys, resampled, {})
 
         np.testing.assert_allclose(pos_full, pos_batched, rtol=1e-5)
+
+    @chex.variants(with_jit=True)
+    def test_map_fn_non_divisor_batch_size(self):
+        """base.map_fn with a batch_size that doesn't divide N matches vmap."""
+        xs = jax.random.normal(self.next_key(), shape=(20, 3))
+
+        def fn(x):
+            return jnp.sum(x**2)
+
+        out_full = self.variant(map_fn(fn, batch_size=0))(xs)
+        out_batched = self.variant(map_fn(fn, batch_size=7))(xs)
+        np.testing.assert_allclose(out_full, out_batched, rtol=1e-6)
+
+    @chex.variants(with_jit=True)
+    def test_map_kernel_non_divisor_batch_size(self):
+        """base.map_kernel with a batch_size that doesn't divide N matches vmap."""
+        n = 20
+        a = jax.random.normal(self.next_key(), shape=(n, 3))
+        b = jax.random.normal(self.next_key(), shape=(n,))
+
+        def kernel(x, y):
+            return jnp.sum(x) + y, y * 2.0
+
+        out_full = self.variant(lambda a, b: map_kernel(kernel, 0)(a, b))(a, b)
+        out_batched = self.variant(lambda a, b: map_kernel(kernel, 7)(a, b))(a, b)
+        jax.tree.map(
+            lambda u, v: np.testing.assert_allclose(u, v, rtol=1e-6),
+            out_full,
+            out_batched,
+        )
 
 
 class ExtendParamsTest(BlackJAXTest):
