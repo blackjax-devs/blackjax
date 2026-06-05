@@ -146,9 +146,7 @@ def run_benchmark(name, logdensity_fn, initial_positions, true_params):
     target_rate = 0.65
     dim = initial_positions.shape[-1]
 
-    print(f"\n{'='*50}")
-    print(f"Benchmarking: {name}")
-    print(f"{'='*50}")
+   
 
     def init_chain(pos):
         algo = blackjax.slingshot(
