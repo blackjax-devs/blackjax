@@ -58,38 +58,38 @@ def kernel() -> Callable:
         step_size: float,
         num_proposals: int,
     ) -> tuple[SlingshotState, SlingshotInfo]:
-        
+
         key_cloud, key_select = jax.random.split(rng_key)
         dim = state.position.shape[0]
-        
+
         # 1. Generate parallel proposal cloud around the current state
         # Shape: (num_proposals, dim)
         noise = jax.random.normal(key_cloud, shape=(num_proposals, dim))
         proposal_cloud = state.position + noise * step_size
-        
+
         # 2. Evaluate target log-density across the entire cloud via vmap
         vmapped_logdensity = jax.vmap(logdensity_fn)
         cloud_log_densities = vmapped_logdensity(proposal_cloud)
-        
+
         # 3. Distance-biasing weights to preserve exact detailed balance
         # Measures the Euclidean distance of each proposal from the current state
         distances = jnp.linalg.norm(proposal_cloud - state.position, axis=-1)
-        
+
         # Combine target mass with the distance-biasing kernel
         # Epsilon (1e-8) prevents log(0) calculation errors at the center
         log_weights = cloud_log_densities + jnp.log(distances + 1e-8)
-        
+
         # 4. Compute stable selection probabilities via max-subtraction softmax
         max_log_weight = jnp.max(log_weights)
         stabilized_weights = jnp.exp(log_weights - max_log_weight)
         probabilities = stabilized_weights / jnp.sum(stabilized_weights)
-        
+
         # 5. Perform categorical sampling to extract the next state
         chosen_index = jax.random.choice(key_select, num_proposals, p=probabilities)
-        
+
         next_position = proposal_cloud[chosen_index]
         next_log_density = cloud_log_densities[chosen_index]
-        
+
         # Pack the next state and diagnostics back into BlackJAX PyTrees
         next_state = SlingshotState(position=next_position, log_density=next_log_density)
         info = SlingshotInfo(
@@ -97,9 +97,9 @@ def kernel() -> Callable:
             weights=probabilities,
             chosen_index=chosen_index,
         )
-        
+
         return next_state, info
-        
+
     return one_step
 ```
 
@@ -186,25 +186,25 @@ def test_slingshot_parameter_recovery():
 
     rng_key = jax.random.PRNGKey(42)
     initial_position = jnp.array([2.0, -2.0])
-    
+
     # Instantiate the algorithm via top-level API
     algo = blackjax.slingshot(logdensity_fn, step_size=0.5, num_proposals=1000)
     state = algo.init(initial_position)
-    
+
     # Compile the transition step using lax.scan
     @jax.jit
     def run_chain(key, initial_state, num_steps=100):
         def body_fn(carry_state, step_key):
             next_state, info = algo.step(step_key, carry_state)
             return next_state, next_state.position
-            
+
         keys = jax.random.split(key, num_steps)
         _, positions = jax.lax.scan(body_fn, initial_state, keys)
         return positions
 
     # Execute chain execution loop
     positions = run_chain(rng_key, state, num_steps=200)
-    
+
     # Assert output shapes and check for numerical execution integrity
     assert positions.shape == (200, 2)
     assert not jnp.any(jnp.isnan(positions))
