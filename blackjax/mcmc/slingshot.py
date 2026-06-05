@@ -3,6 +3,10 @@ import jax.numpy as jnp
 import jax.scipy.linalg
 from typing import Callable, NamedTuple
 
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
+
+__all__ = ["as_top_level_api", "init", "build_kernel", "SlingshotState", "SlingshotInfo"]
+
 class SlingshotState(NamedTuple):
     """State of the Slingshot MP-MCMC sampler."""
     position: jnp.ndarray
@@ -26,7 +30,7 @@ class SlingshotAdaptState(NamedTuple):
     m2: jnp.ndarray         # Running sum of directed outer products (shape: (dim, dim))
     cholesky: jnp.ndarray   # Cholesky factor L of the covariance matrix (shape: (dim, dim))
 
-def init(position: jnp.ndarray, logdensity_fn: Callable) -> SlingshotState:
+def init(position: jnp.ndarray, logdensity_fn: Callable, *, rng_key=None, **kwargs) -> SlingshotState:
     """Initialize the Slingshot sampler state from a starting position."""
     return SlingshotState(position=position, log_density=logdensity_fn(position))
 
@@ -98,15 +102,8 @@ def dual_averaging_step(
         h_bar=h_bar,
         t=t,
     )
-    
-    return next_adapt_state._replace(
-        log_step_size=log_step_size,
-        log_step_size_bar=log_step_size_bar,
-        h_bar=h_bar,
-        t=t,
-    )
 
-def kernel() -> Callable:
+def build_kernel() -> Callable:
     """Build the functional transition kernel for a Gradient-Guided Slingshot sampler (MALA Cloud)."""
     def one_step(
         rng_key: jax.random.PRNGKey,
@@ -129,7 +126,6 @@ def kernel() -> Callable:
             
         covariance = cholesky @ cholesky.T
         
-        # --- Helper Functions for Langevin Dynamics ---
         # --- Helper Functions for Langevin Dynamics ---
         def get_drift(pos, grad):
             """Shift the mean of the proposal cloud along the preconditioned gradient."""
@@ -232,3 +228,20 @@ def kernel() -> Callable:
         return next_state, info
         
     return one_step
+
+def as_top_level_api(
+    logdensity_fn: Callable,
+    step_size: float,
+    num_proposals: int,
+    cholesky: jnp.ndarray = None,
+) -> SamplingAlgorithm:
+    """User-facing interface factory for the exact Slingshot MP-MCMC sampler."""
+    kernel = build_kernel()
+    
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        init_args=(),
+        kernel_args=(step_size, num_proposals, cholesky),
+    )
