@@ -287,4 +287,3 @@ __all__ = [
     "VIAlgorithm",
     "slingshot",
 ]
-
