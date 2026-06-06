@@ -27,7 +27,6 @@ def make_linear_regression():
     true_params = jnp.concatenate([true_beta, jnp.array([jnp.log(true_sigma)])])
     return "1. Linear Regression", logdensity, initial_positions, true_params
 
-# ... (Include other make_* functions here) ...
 
 def run_benchmark_logic(logdensity_fn, initial_positions, dim):
     # Initialize states using the standalone init function
@@ -42,6 +41,7 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
     da_states = init_adapt_vmap(jnp.ones(16) * 0.1)
 
     return states, da_states
+
 
 @pytest.mark.benchmark
 @pytest.mark.parametrize("model_name, logdensity_fn, initial_positions, true_params", [
