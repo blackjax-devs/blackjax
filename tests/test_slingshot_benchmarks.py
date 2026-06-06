@@ -20,8 +20,7 @@ def make_linear_regression():
         sigma = jnp.exp(log_sigma)
         mu = X @ beta
         log_lik = jnp.sum(
-            -0.5 * jnp.log(2 * jnp.pi * sigma**2)
-            - 0.5 * ((y - mu) / sigma) ** 2
+            -0.5 * jnp.log(2 * jnp.pi * sigma**2) - 0.5 * ((y - mu) / sigma) ** 2
         )
         log_prior_beta = jnp.sum(-0.5 * beta**2)
         log_prior_sigma = -0.5 * log_sigma**2
@@ -104,5 +103,5 @@ def test_slingshot_performance(
 
     def run():
         return run_benchmark_logic(logdensity_fn, initial_positions, dim)
-        
+
     benchmark(run)
