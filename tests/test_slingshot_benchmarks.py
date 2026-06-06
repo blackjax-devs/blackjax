@@ -1,6 +1,5 @@
 import jax
 import jax.numpy as jnp
-import numpy as np
 import scipy.optimize
 import pytest
 
@@ -45,7 +44,7 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
     jitter = jax.random.normal(jax.random.PRNGKey(999), initial_positions.shape) * 0.1
     warm_start_positions = initial_positions + jitter
     states = jax.vmap(init_chain)(warm_start_positions)
-    
+
     init_adapt_vmap = jax.vmap(lambda ss: init_adaptation(ss, dim))
     da_states = init_adapt_vmap(jnp.ones(16) * 0.1)
 
@@ -59,10 +58,10 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
 def test_slingshot_performance(benchmark, model_name, logdensity_fn, initial_positions, true_params):
     """Benchmark performance using pytest-benchmark fixture."""
     dim = initial_positions.shape[-1]
-    
+
     def run():
         states, da_states = run_benchmark_logic(logdensity_fn, initial_positions, dim)
         # Execute a minimal sampling run for the benchmark
         return states
-        
+
     benchmark(run)
