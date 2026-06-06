@@ -1,6 +1,5 @@
 import jax
 import jax.numpy as jnp
-import scipy.optimize
 import pytest
 
 import blackjax
