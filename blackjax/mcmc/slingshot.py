@@ -32,97 +32,11 @@ class SlingshotInfo(NamedTuple):
     is_accepted: bool
 
 
-class SlingshotAdaptState(NamedTuple):
-    """State parameters for Nesterov dual-averaging step-size tuning."""
-
-    log_step_size: float
-    log_step_size_bar: float
-    h_bar: float
-    t: int
-    mean: jnp.ndarray  # Running mean of accepted positions (shape: (dim,))
-    m2: jnp.ndarray  # Running sum of directed outer products (shape: (dim, dim))
-    cholesky: jnp.ndarray  # Cholesky factor L of the covariance matrix (shape: (dim, dim))
-
-
 def init(
     position: jnp.ndarray, logdensity_fn: Callable, *, rng_key=None, **kwargs
 ) -> SlingshotState:
     """Initialize the Slingshot sampler state from a starting position."""
     return SlingshotState(position=position, log_density=logdensity_fn(position))
-
-
-def init_adaptation(initial_step_size: float, dim: int) -> SlingshotAdaptState:
-    """Initialize dual-averaging and Welford covariance state parameters."""
-    log_ss = jnp.log(initial_step_size)
-    return SlingshotAdaptState(
-        log_step_size=log_ss,
-        log_step_size_bar=log_ss,
-        h_bar=0.0,
-        t=0,
-        mean=jnp.zeros(dim),
-        m2=jnp.zeros((dim, dim)),
-        cholesky=jnp.eye(dim),
-    )
-
-
-def welford_covariance_update(
-    state: SlingshotAdaptState, position: jnp.ndarray, t_global: int
-) -> SlingshotAdaptState:
-    # Window is 150 to 850 (700 steps)
-    window_t = t_global - 150 + 1
-
-    delta = position - state.mean
-    new_mean = state.mean + delta / window_t
-    delta2 = position - new_mean
-    new_m2 = state.m2 + jnp.outer(delta, delta2)
-
-    def compute_cholesky():
-        covariance = new_m2 / jnp.maximum(window_t - 1, 1)
-        stable_covariance = covariance + 1e-5 * jnp.eye(position.shape[0])
-        return jnp.linalg.cholesky(stable_covariance)
-
-    new_cholesky = jax.lax.cond(
-        t_global == 850, compute_cholesky, lambda: state.cholesky
-    )
-
-    return state._replace(mean=new_mean, m2=new_m2, cholesky=new_cholesky)
-
-
-def dual_averaging_step(
-    adapt_state: SlingshotAdaptState,
-    acceptance_rate: float,
-    position: jnp.ndarray,
-    target_rate: float = 0.65,
-    gamma: float = 0.05,
-    t0: int = 10,
-    kappa: float = 0.75,
-) -> SlingshotAdaptState:
-    t = adapt_state.t + 1
-    alpha = target_rate - acceptance_rate
-    h_bar = (1.0 - 1.0 / (t + t0)) * adapt_state.h_bar + (1.0 / (t + t0)) * alpha
-
-    log_step_size = -(jnp.sqrt(t) / gamma) * h_bar
-    eta = t ** (-kappa)
-    log_step_size_bar = (
-        1.0 - eta
-    ) * adapt_state.log_step_size_bar + eta * log_step_size
-
-    # Expanded adaptation window matches the 1000-step warmup
-    in_window = (t >= 150) & (t <= 850)
-
-    next_adapt_state = jax.lax.cond(
-        in_window,
-        lambda s: welford_covariance_update(s, position, t),
-        lambda s: s,
-        adapt_state,
-    )
-
-    return next_adapt_state._replace(
-        log_step_size=log_step_size,
-        log_step_size_bar=log_step_size_bar,
-        h_bar=h_bar,
-        t=t,
-    )
 
 
 def build_kernel(
@@ -137,10 +51,11 @@ def build_kernel(
         state: SlingshotState,
         logdensity_fn: Callable,
     ) -> tuple[SlingshotState, SlingshotInfo]:
-        
         # Pull cholesky from the outer closure if none was explicitly given
-        local_cholesky = jnp.eye(state.position.shape[0]) if cholesky is None else cholesky
-        
+        local_cholesky = (
+            jnp.eye(state.position.shape[0]) if cholesky is None else cholesky
+        )
+
         key_cloud, key_select, key_accept, key_reverse = jax.random.split(rng_key, 4)
         dim = state.position.shape[0]
 
@@ -168,7 +83,9 @@ def build_kernel(
             """Calculate exact asymmetric transition probability log q(end | start)."""
             diff = end_pos - start_drift
             # Efficient Mahalanobis distance calculation using the lower Cholesky factor L
-            inv_L_diff = jax.scipy.linalg.solve_triangular(local_cholesky, diff, lower=True)
+            inv_L_diff = jax.scipy.linalg.solve_triangular(
+                local_cholesky, diff, lower=True
+            )
             mahalanobis_sq = jnp.sum(inv_L_diff**2, axis=-1)
             return -0.5 * mahalanobis_sq / (step_size**2)
 
@@ -271,7 +188,7 @@ def as_top_level_api(
     cholesky: jnp.ndarray = None,
 ) -> SamplingAlgorithm:
     """User-facing interface factory for the exact Slingshot MP-MCMC sampler."""
-    
+
     return build_sampling_algorithm(
         build_kernel,
         init,

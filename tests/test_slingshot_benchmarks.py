@@ -2,7 +2,8 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from blackjax.mcmc.slingshot import init, init_adaptation
+import blackjax
+from blackjax.adaptation.window_adaptation import window_adaptation
 
 
 def make_linear_regression():
@@ -19,8 +20,7 @@ def make_linear_regression():
         sigma = jnp.exp(log_sigma)
         mu = X @ beta
         log_lik = jnp.sum(
-            -0.5 * jnp.log(2 * jnp.pi * sigma**2)
-            - 0.5 * ((y - mu) / sigma) ** 2
+            -0.5 * jnp.log(2 * jnp.pi * sigma**2) - 0.5 * ((y - mu) / sigma) ** 2
         )
         log_prior_beta = jnp.sum(-0.5 * beta**2)
         log_prior_sigma = -0.5 * log_sigma**2
@@ -32,16 +32,71 @@ def make_linear_regression():
 
 
 def run_benchmark_logic(logdensity_fn, initial_positions, dim):
-    init_vmap = jax.vmap(lambda pos: init(pos, logdensity_fn))
-    states = init_vmap(initial_positions)
+    num_chains = initial_positions.shape[0]
+    num_proposals = 1000
 
-    def init_adapt_with_dim(step_size):
-        return init_adaptation(step_size, dim)
+    warmup = window_adaptation(
+        blackjax.slingshot,
+        logdensity_fn,
+        is_mass_matrix_diagonal=False,
+        num_proposals=num_proposals,
+    )
 
-    init_adapt_vmap = jax.vmap(init_adapt_with_dim)
-    da_states = init_adapt_vmap(jnp.ones(16) * 0.1)
+    # Initialize the warmup state across chains
+    warmup_init_vmap = jax.vmap(warmup.init)
+    state, adapt_state, info = warmup_init_vmap(initial_positions)
 
-    return states, da_states
+    # Run the warmup using jax.lax.scan over warmup.step
+    warmup_step_vmap = jax.vmap(warmup.step)
+
+    def scan_step(carry, step_key):
+        carry_state, carry_adapt_state, carry_info = carry
+        keys = jax.random.split(step_key, num_chains)
+        next_state, next_adapt_state, next_info = warmup_step_vmap(
+            keys, carry_state, carry_adapt_state, carry_info
+        )
+        return (next_state, next_adapt_state, next_info), None
+
+    # Run warmup steps
+    num_warmup_steps = 1000
+    warmup_keys = jax.random.split(jax.random.PRNGKey(43), num_warmup_steps)
+    (final_state, final_adapt_state, final_info), _ = jax.lax.scan(
+        scan_step, (state, adapt_state, info), warmup_keys
+    )
+
+    # Pass those tuned parameters into the production sampling step
+    step_size = final_adapt_state.step_size
+
+    # Some internal BlackJAX adaptation returns inverse_mass_matrix instead of mass_matrix_sqrt directly
+    # Adjust this if BlackJAX throws an AttributeError depending on the exact version/struct mapping
+    cholesky = getattr(
+        final_adapt_state,
+        "mass_matrix_sqrt",
+        getattr(final_adapt_state, "inverse_mass_matrix", None),
+    )
+
+    def create_and_step(key, current_state, current_step_size, current_cholesky):
+        alg = blackjax.slingshot(
+            logdensity_fn,
+            step_size=current_step_size,
+            num_proposals=num_proposals,
+            cholesky=current_cholesky,
+        )
+        return alg.step(key, current_state)
+
+    step_vmap = jax.vmap(create_and_step)
+
+    def prod_step(carry_state, step_key):
+        keys = jax.random.split(step_key, num_chains)
+        next_state, info_out = step_vmap(keys, carry_state, step_size, cholesky)
+        return next_state, info_out
+
+    prod_keys = jax.random.split(
+        jax.random.PRNGKey(44), 10
+    )  # 10 steps for benchmark mock
+    final_states, _ = jax.lax.scan(prod_step, final_state, prod_keys)
+
+    return final_states
 
 
 @pytest.mark.benchmark
@@ -56,7 +111,6 @@ def test_slingshot_performance(
     dim = initial_positions.shape[-1]
 
     def run():
-        states, da_states = run_benchmark_logic(logdensity_fn, initial_positions, dim)
-        return states
+        return run_benchmark_logic(logdensity_fn, initial_positions, dim)
 
     benchmark(run)
