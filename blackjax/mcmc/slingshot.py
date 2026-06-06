@@ -125,17 +125,22 @@ def dual_averaging_step(
     )
 
 
-def build_kernel() -> Callable:
+def build_kernel(
+    step_size: float,
+    num_proposals: int,
+    cholesky: jnp.ndarray = None,
+) -> Callable:
     """Build the functional transition kernel for a Gradient-Guided Slingshot sampler (MALA Cloud)."""
 
     def one_step(
         rng_key: jax.random.PRNGKey,
         state: SlingshotState,
         logdensity_fn: Callable,
-        step_size: float,
-        num_proposals: int,
-        cholesky: jnp.ndarray = None,
     ) -> tuple[SlingshotState, SlingshotInfo]:
+        
+        # Pull cholesky from the outer closure if none was explicitly given
+        local_cholesky = jnp.eye(state.position.shape[0]) if cholesky is None else cholesky
+        
         key_cloud, key_select, key_accept, key_reverse = jax.random.split(rng_key, 4)
         dim = state.position.shape[0]
 
@@ -143,10 +148,7 @@ def build_kernel() -> Callable:
         val_and_grad_fn = jax.value_and_grad(logdensity_fn)
         vmap_val_and_grad = jax.vmap(val_and_grad_fn)
 
-        if cholesky is None:
-            cholesky = jnp.eye(dim)
-
-        covariance = cholesky @ cholesky.T
+        covariance = local_cholesky @ local_cholesky.T
 
         # --- Helper Functions for Langevin Dynamics ---
         def get_drift(pos, grad):
@@ -166,7 +168,7 @@ def build_kernel() -> Callable:
             """Calculate exact asymmetric transition probability log q(end | start)."""
             diff = end_pos - start_drift
             # Efficient Mahalanobis distance calculation using the lower Cholesky factor L
-            inv_L_diff = jax.scipy.linalg.solve_triangular(cholesky, diff, lower=True)
+            inv_L_diff = jax.scipy.linalg.solve_triangular(local_cholesky, diff, lower=True)
             mahalanobis_sq = jnp.sum(inv_L_diff**2, axis=-1)
             return -0.5 * mahalanobis_sq / (step_size**2)
 
@@ -176,7 +178,7 @@ def build_kernel() -> Callable:
 
         # 3. Forward Pass: Gradient-Guided Cloud
         raw_noise = jax.random.normal(key_cloud, shape=(num_proposals, dim))
-        noise = jnp.dot(raw_noise, cholesky.T)
+        noise = jnp.dot(raw_noise, local_cholesky.T)
         proposal_cloud = current_drift + noise * step_size
 
         cloud_log_densities, cloud_grads = vmap_val_and_grad(proposal_cloud)
@@ -204,7 +206,7 @@ def build_kernel() -> Callable:
         raw_reverse_noise = jax.random.normal(
             key_reverse, shape=(num_proposals - 1, dim)
         )
-        reverse_noise = jnp.dot(raw_reverse_noise, cholesky.T)
+        reverse_noise = jnp.dot(raw_reverse_noise, local_cholesky.T)
         reverse_cloud_minus_one = candidate_drift + reverse_noise * step_size
 
         # Append the original state to complete the exact reverse cloud
@@ -269,10 +271,9 @@ def as_top_level_api(
     cholesky: jnp.ndarray = None,
 ) -> SamplingAlgorithm:
     """User-facing interface factory for the exact Slingshot MP-MCMC sampler."""
-    kernel = build_kernel()
-
+    
     return build_sampling_algorithm(
-        kernel,
+        build_kernel,
         init,
         logdensity_fn,
         init_args=(),
