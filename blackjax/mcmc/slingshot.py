@@ -42,7 +42,7 @@ def init(
 def build_kernel(
     step_size: float,
     num_proposals: int,
-    cholesky: jnp.ndarray = None,
+    inverse_mass_matrix: jnp.ndarray = None,
 ) -> Callable:
     """Build the functional transition kernel for a Gradient-Guided Slingshot sampler (MALA Cloud)."""
 
@@ -51,10 +51,10 @@ def build_kernel(
         state: SlingshotState,
         logdensity_fn: Callable,
     ) -> tuple[SlingshotState, SlingshotInfo]:
-        # Pull cholesky from the outer closure if none was explicitly given
-        local_cholesky = (
-            jnp.eye(state.position.shape[0]) if cholesky is None else cholesky
-        )
+        if inverse_mass_matrix is None:
+            local_cholesky = jnp.eye(state.position.shape[0])
+        else:
+            local_cholesky = jnp.linalg.cholesky(inverse_mass_matrix)
 
         key_cloud, key_select, key_accept, key_reverse = jax.random.split(rng_key, 4)
         dim = state.position.shape[0]
@@ -181,18 +181,24 @@ def build_kernel(
     return one_step
 
 
-def as_top_level_api(
-    logdensity_fn: Callable,
-    step_size: float,
-    num_proposals: int,
-    cholesky: jnp.ndarray = None,
-) -> SamplingAlgorithm:
+class slingshot:
     """User-facing interface factory for the exact Slingshot MP-MCMC sampler."""
+    init = staticmethod(init)
+    build_kernel = staticmethod(build_kernel)
 
-    return build_sampling_algorithm(
-        build_kernel,
-        init,
+    def __new__(
+        cls,
         logdensity_fn,
-        init_args=(),
-        kernel_args=(step_size, num_proposals, cholesky),
-    )
+        step_size: float,
+        num_proposals: int,
+        inverse_mass_matrix: jnp.ndarray = None,
+    ):
+        return build_sampling_algorithm(
+            build_kernel,
+            init,
+            logdensity_fn,
+            init_args=(),
+            kernel_args=(step_size, num_proposals, inverse_mass_matrix),
+        )
+
+as_top_level_api = slingshot

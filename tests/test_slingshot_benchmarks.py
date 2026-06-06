@@ -66,21 +66,14 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
 
     # Pass those tuned parameters into the production sampling step
     step_size = final_adapt_state.step_size
+    inverse_mass_matrix = final_adapt_state.inverse_mass_matrix
 
-    # Some internal BlackJAX adaptation returns inverse_mass_matrix instead of mass_matrix_sqrt directly
-    # Adjust this if BlackJAX throws an AttributeError depending on the exact version/struct mapping
-    cholesky = getattr(
-        final_adapt_state,
-        "mass_matrix_sqrt",
-        getattr(final_adapt_state, "inverse_mass_matrix", None),
-    )
-
-    def create_and_step(key, current_state, current_step_size, current_cholesky):
+    def create_and_step(key, current_state, current_step_size, current_imm):
         alg = blackjax.slingshot(
             logdensity_fn,
             step_size=current_step_size,
             num_proposals=num_proposals,
-            cholesky=current_cholesky,
+            inverse_mass_matrix=current_imm,
         )
         return alg.step(key, current_state)
 
@@ -88,7 +81,7 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
 
     def prod_step(carry_state, step_key):
         keys = jax.random.split(step_key, num_chains)
-        next_state, info_out = step_vmap(keys, carry_state, step_size, cholesky)
+        next_state, info_out = step_vmap(keys, carry_state, step_size, inverse_mass_matrix)
         return next_state, info_out
 
     prod_keys = jax.random.split(
