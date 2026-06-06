@@ -30,16 +30,17 @@ def make_linear_regression():
 # ... (Include other make_* functions here) ...
 
 def run_benchmark_logic(logdensity_fn, initial_positions, dim):
-    num_chains = 16
     num_proposals = 1000
-    target_rate = 0.65
 
     # Initialize states using the standalone init function
     init_vmap = jax.vmap(lambda pos: init(pos, logdensity_fn))
     states = init_vmap(initial_positions)
 
-    # Initialize adaptation states
-    init_adapt_vmap = jax.vmap(lambda ss: init_adaptation(ss, dim))
+    # Initialize adaptation states - pass both step_size and dim to each call
+    def init_adapt_with_dim(step_size):
+        return init_adaptation(step_size, dim)
+
+    init_adapt_vmap = jax.vmap(init_adapt_with_dim)
     da_states = init_adapt_vmap(jnp.ones(16) * 0.1)
 
     return states, da_states
