@@ -42,53 +42,37 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
         num_proposals=num_proposals,
     )
 
-    # Initialize the warmup state across chains
-    warmup_init_vmap = jax.vmap(warmup.init)
-    state, adapt_state, info = warmup_init_vmap(initial_positions)
+    # 1. Use the native .run() method and vmap it across our chains
+    def do_warmup(key, pos):
+        # .run() natively handles the 1000 step loop
+        # It returns ((state, parameters), info)
+        return warmup.run(key, pos, num_steps=1000)
 
-    # Run the warmup using jax.lax.scan over warmup.step
-    warmup_step_vmap = jax.vmap(warmup.step)
+    warmup_keys = jax.random.split(jax.random.PRNGKey(43), num_chains)
+    (final_state, tuned_params), _ = jax.vmap(do_warmup)(warmup_keys, initial_positions)
 
-    def scan_step(carry, step_key):
-        carry_state, carry_adapt_state, carry_info = carry
-        keys = jax.random.split(step_key, num_chains)
-        next_state, next_adapt_state, next_info = warmup_step_vmap(
-            keys, carry_state, carry_adapt_state, carry_info
-        )
-        return (next_state, next_adapt_state, next_info), None
+    # 2. Safely extract tuned parameters (handling both NamedTuple and Dict returns)
+    step_size = tuned_params.step_size if hasattr(tuned_params, 'step_size') else tuned_params['step_size']
+    inverse_mass_matrix = tuned_params.inverse_mass_matrix if hasattr(tuned_params, 'inverse_mass_matrix') else tuned_params['inverse_mass_matrix']
 
-    # Run warmup steps
-    num_warmup_steps = 1000
-    warmup_keys = jax.random.split(jax.random.PRNGKey(43), num_warmup_steps)
-    (final_state, final_adapt_state, final_info), _ = jax.lax.scan(
-        scan_step, (state, adapt_state, info), warmup_keys
-    )
-
-    # Pass those tuned parameters into the production sampling step
-    step_size = final_adapt_state.step_size
-    inverse_mass_matrix = final_adapt_state.inverse_mass_matrix
-
+    # 3. Production Sampling
     def create_and_step(key, current_state, current_step_size, current_imm):
         alg = blackjax.slingshot(
-            logdensity_fn,
-            step_size=current_step_size,
-            num_proposals=num_proposals,
+            logdensity_fn, 
+            step_size=current_step_size, 
             inverse_mass_matrix=current_imm,
+            num_proposals=num_proposals 
         )
         return alg.step(key, current_state)
-
+        
     step_vmap = jax.vmap(create_and_step)
-
+    
     def prod_step(carry_state, step_key):
         keys = jax.random.split(step_key, num_chains)
-        next_state, info_out = step_vmap(
-            keys, carry_state, step_size, inverse_mass_matrix
-        )
+        next_state, info_out = step_vmap(keys, carry_state, step_size, inverse_mass_matrix)
         return next_state, info_out
 
-    prod_keys = jax.random.split(
-        jax.random.PRNGKey(44), 10
-    )  # 10 steps for benchmark mock
+    prod_keys = jax.random.split(jax.random.PRNGKey(44), 10) # 10 steps for benchmark mock
     final_states, _ = jax.lax.scan(prod_step, final_state, prod_keys)
 
     return final_states
