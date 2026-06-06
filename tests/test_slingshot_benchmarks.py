@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from blackjax.mcmc.slingshot import build_kernel, init, init_adaptation
+from blackjax.mcmc.slingshot import init, init_adaptation
 
 # --- Model Definitions (Linear Regression, Logit, etc., kept as provided) ---
 def make_linear_regression():
