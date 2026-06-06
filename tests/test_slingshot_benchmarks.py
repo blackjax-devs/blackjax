@@ -20,7 +20,8 @@ def make_linear_regression():
         sigma = jnp.exp(log_sigma)
         mu = X @ beta
         log_lik = jnp.sum(
-            -0.5 * jnp.log(2 * jnp.pi * sigma**2) - 0.5 * ((y - mu) / sigma) ** 2
+            -0.5 * jnp.log(2 * jnp.pi * sigma**2)
+            - 0.5 * ((y - mu) / sigma) ** 2
         )
         log_prior_beta = jnp.sum(-0.5 * beta**2)
         log_prior_sigma = -0.5 * log_sigma**2
@@ -52,27 +53,39 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
     (final_state, tuned_params), _ = jax.vmap(do_warmup)(warmup_keys, initial_positions)
 
     # 2. Safely extract tuned parameters (handling both NamedTuple and Dict returns)
-    step_size = tuned_params.step_size if hasattr(tuned_params, 'step_size') else tuned_params['step_size']
-    inverse_mass_matrix = tuned_params.inverse_mass_matrix if hasattr(tuned_params, 'inverse_mass_matrix') else tuned_params['inverse_mass_matrix']
+    step_size = (
+        tuned_params.step_size
+        if hasattr(tuned_params, "step_size")
+        else tuned_params["step_size"]
+    )
+    inverse_mass_matrix = (
+        tuned_params.inverse_mass_matrix
+        if hasattr(tuned_params, "inverse_mass_matrix")
+        else tuned_params["inverse_mass_matrix"]
+    )
 
     # 3. Production Sampling
     def create_and_step(key, current_state, current_step_size, current_imm):
         alg = blackjax.slingshot(
-            logdensity_fn, 
-            step_size=current_step_size, 
+            logdensity_fn,
+            step_size=current_step_size,
             inverse_mass_matrix=current_imm,
-            num_proposals=num_proposals 
+            num_proposals=num_proposals,
         )
         return alg.step(key, current_state)
-        
+
     step_vmap = jax.vmap(create_and_step)
-    
+
     def prod_step(carry_state, step_key):
         keys = jax.random.split(step_key, num_chains)
-        next_state, info_out = step_vmap(keys, carry_state, step_size, inverse_mass_matrix)
+        next_state, info_out = step_vmap(
+            keys, carry_state, step_size, inverse_mass_matrix
+        )
         return next_state, info_out
 
-    prod_keys = jax.random.split(jax.random.PRNGKey(44), 10) # 10 steps for benchmark mock
+    prod_keys = jax.random.split(
+        jax.random.PRNGKey(44), 10
+    )  # 10 steps for benchmark mock
     final_states, _ = jax.lax.scan(prod_step, final_state, prod_keys)
 
     return final_states
@@ -91,5 +104,5 @@ def test_slingshot_performance(
 
     def run():
         return run_benchmark_logic(logdensity_fn, initial_positions, dim)
-
+        
     benchmark(run)
