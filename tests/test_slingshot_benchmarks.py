@@ -30,8 +30,6 @@ def make_linear_regression():
 # ... (Include other make_* functions here) ...
 
 def run_benchmark_logic(logdensity_fn, initial_positions, dim):
-    num_proposals = 1000
-
     # Initialize states using the standalone init function
     init_vmap = jax.vmap(lambda pos: init(pos, logdensity_fn))
     states = init_vmap(initial_positions)
