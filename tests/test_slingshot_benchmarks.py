@@ -2,7 +2,6 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-import blackjax
 from blackjax.mcmc.slingshot import build_kernel, init_adaptation, dual_averaging_step
 
 # --- Model Definitions (Linear Regression, Logit, etc., kept as provided) ---
