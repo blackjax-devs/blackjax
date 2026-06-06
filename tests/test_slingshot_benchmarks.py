@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from blackjax.mcmc.slingshot import build_kernel, init_adaptation, dual_averaging_step
+from blackjax.mcmc.slingshot import build_kernel, init, init_adaptation
 
 # --- Model Definitions (Linear Regression, Logit, etc., kept as provided) ---
 def make_linear_regression():
@@ -34,15 +34,11 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
     num_proposals = 1000
     target_rate = 0.65
 
-    def init_chain(pos):
-        algo = build_kernel(logdensity_fn, step_size=1.0, num_proposals=num_proposals)
-        return algo.init(pos)
+    # Initialize states using the standalone init function
+    init_vmap = jax.vmap(lambda pos: init(pos, logdensity_fn))
+    states = init_vmap(initial_positions)
 
-    # Simplified MAP/Initialization Logic for Benchmarking
-    jitter = jax.random.normal(jax.random.PRNGKey(999), initial_positions.shape) * 0.1
-    warm_start_positions = initial_positions + jitter
-    states = jax.vmap(init_chain)(warm_start_positions)
-
+    # Initialize adaptation states
     init_adapt_vmap = jax.vmap(lambda ss: init_adaptation(ss, dim))
     da_states = init_adapt_vmap(jnp.ones(16) * 0.1)
 
