@@ -81,7 +81,9 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
 
     def prod_step(carry_state, step_key):
         keys = jax.random.split(step_key, num_chains)
-        next_state, info_out = step_vmap(keys, carry_state, step_size, inverse_mass_matrix)
+        next_state, info_out = step_vmap(
+            keys, carry_state, step_size, inverse_mass_matrix
+        )
         return next_state, info_out
 
     prod_keys = jax.random.split(

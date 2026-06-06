@@ -4,7 +4,7 @@ import jax
 import jax.numpy as jnp
 import jax.scipy.linalg
 
-from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
+from blackjax.base import build_sampling_algorithm
 
 __all__ = [
     "as_top_level_api",
@@ -183,6 +183,7 @@ def build_kernel(
 
 class slingshot:
     """User-facing interface factory for the exact Slingshot MP-MCMC sampler."""
+
     init = staticmethod(init)
     build_kernel = staticmethod(build_kernel)
 
@@ -200,5 +201,6 @@ class slingshot:
             init_args=(),
             kernel_args=(step_size, num_proposals, inverse_mass_matrix),
         )
+
 
 as_top_level_api = slingshot
