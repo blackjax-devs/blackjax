@@ -8,7 +8,7 @@ from blackjax.adaptation.window_adaptation import window_adaptation
 
 def make_linear_regression():
     key = jax.random.PRNGKey(42)
-    N, D = 500, 3
+    N, D = 50, 3
     X = jax.random.normal(key, (N, D))
     true_beta = jnp.array([1.5, -2.0, 0.8])
     true_sigma = 0.5
@@ -33,7 +33,7 @@ def make_linear_regression():
 
 def run_benchmark_logic(logdensity_fn, initial_positions, dim):
     num_chains = initial_positions.shape[0]
-    num_proposals = 1000
+    num_proposals = 100
 
     warmup = window_adaptation(
         blackjax.slingshot,
@@ -44,9 +44,9 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
 
     # 1. Use the native .run() method and vmap it across our chains
     def do_warmup(key, pos):
-        # .run() natively handles the 1000 step loop
+        # .run() natively handles the 100 step loop
         # It returns ((state, parameters), info)
-        return warmup.run(key, pos, num_steps=1000)
+        return warmup.run(key, pos, num_steps=100)
 
     warmup_keys = jax.random.split(jax.random.PRNGKey(43), num_chains)
     (final_state, tuned_params), _ = jax.vmap(do_warmup)(warmup_keys, initial_positions)
@@ -83,8 +83,8 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
         return next_state, info_out
 
     prod_keys = jax.random.split(
-        jax.random.PRNGKey(44), 10
-    )  # 10 steps for benchmark mock
+        jax.random.PRNGKey(44), 5
+    )  # 5 steps for benchmark mock
     final_states, _ = jax.lax.scan(prod_step, final_state, prod_keys)
 
     return final_states

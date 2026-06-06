@@ -40,21 +40,31 @@ def init(
 
 
 def build_kernel(
-    step_size: float,
+    logdensity_fn: Callable,
+    step_size: float = 1.0,
     inverse_mass_matrix: jnp.ndarray = None,
     num_proposals: int = 1000,
 ) -> Callable:
     """Build the functional transition kernel for a Gradient-Guided Slingshot sampler (MALA Cloud)."""
 
-    def one_step(
-        rng_key: jax.random.PRNGKey,
-        state: SlingshotState,
-        logdensity_fn: Callable,
-    ) -> tuple[SlingshotState, SlingshotInfo]:
+    # 1. Compute local_cholesky here as a constant for the closure
+    if callable(step_size):
+        closure_step_size = 1.0
+        local_cholesky = None
+    else:
+        closure_step_size = step_size
         if inverse_mass_matrix is None:
-            local_cholesky = jnp.eye(state.position.shape[0])
+            local_cholesky = None
         else:
             local_cholesky = jnp.linalg.cholesky(inverse_mass_matrix)
+
+    def one_step(state: SlingshotState, rng_key: jax.random.PRNGKey) -> tuple[SlingshotState, SlingshotInfo]:
+        current_step_size = closure_step_size
+        
+        current_cholesky = local_cholesky
+
+        if current_cholesky is None:
+            current_cholesky = jnp.eye(state.position.shape[0])
 
         key_cloud, key_select, key_accept, key_reverse = jax.random.split(rng_key, 4)
         dim = state.position.shape[0]
@@ -63,7 +73,7 @@ def build_kernel(
         val_and_grad_fn = jax.value_and_grad(logdensity_fn)
         vmap_val_and_grad = jax.vmap(val_and_grad_fn)
 
-        covariance = local_cholesky @ local_cholesky.T
+        covariance = current_cholesky @ current_cholesky.T
 
         # --- Helper Functions for Langevin Dynamics ---
         def get_drift(pos, grad):
@@ -77,17 +87,17 @@ def build_kernel(
             safe_grad = jnp.where(grad_norm > 5.0, grad * (5.0 / grad_norm), grad)
 
             # 3. Calculate drift using the stabilized gradient
-            return pos + (step_size**2 / 2.0) * jnp.dot(covariance, safe_grad)
+            return pos + (current_step_size**2 / 2.0) * jnp.dot(covariance, safe_grad)
 
         def log_q(start_pos, end_pos, start_drift):
             """Calculate exact asymmetric transition probability log q(end | start)."""
             diff = end_pos - start_drift
             # Efficient Mahalanobis distance calculation using the lower Cholesky factor L
             inv_L_diff = jax.scipy.linalg.solve_triangular(
-                local_cholesky, diff, lower=True
+                current_cholesky, diff, lower=True
             )
             mahalanobis_sq = jnp.sum(inv_L_diff**2, axis=-1)
-            return -0.5 * mahalanobis_sq / (step_size**2)
+            return -0.5 * mahalanobis_sq / (current_step_size**2)
 
         # 2. Current State Kinematics
         current_log_dens, current_grad = val_and_grad_fn(state.position)
@@ -95,8 +105,8 @@ def build_kernel(
 
         # 3. Forward Pass: Gradient-Guided Cloud
         raw_noise = jax.random.normal(key_cloud, shape=(num_proposals, dim))
-        noise = jnp.dot(raw_noise, local_cholesky.T)
-        proposal_cloud = current_drift + noise * step_size
+        noise = jnp.dot(raw_noise, current_cholesky.T)
+        proposal_cloud = current_drift + noise * current_step_size
 
         cloud_log_densities, cloud_grads = vmap_val_and_grad(proposal_cloud)
         cloud_drifts = jax.vmap(get_drift)(proposal_cloud, cloud_grads)
@@ -123,8 +133,8 @@ def build_kernel(
         raw_reverse_noise = jax.random.normal(
             key_reverse, shape=(num_proposals - 1, dim)
         )
-        reverse_noise = jnp.dot(raw_reverse_noise, local_cholesky.T)
-        reverse_cloud_minus_one = candidate_drift + reverse_noise * step_size
+        reverse_noise = jnp.dot(raw_reverse_noise, current_cholesky.T)
+        reverse_cloud_minus_one = candidate_drift + reverse_noise * current_step_size
 
         # Append the original state to complete the exact reverse cloud
         reverse_cloud = jnp.vstack([reverse_cloud_minus_one, state.position])
@@ -185,7 +195,21 @@ class slingshot:
     """User-facing interface factory for the exact Slingshot MP-MCMC sampler."""
 
     init = staticmethod(init)
-    build_kernel = staticmethod(build_kernel)
+    
+    @staticmethod
+    def build_kernel():
+        def kernel(
+            rng_key: jax.random.PRNGKey,
+            state: SlingshotState,
+            logdensity_fn: Callable,
+            step_size: float,
+            inverse_mass_matrix: jnp.ndarray,
+            **kwargs,
+        ):
+            _num_proposals = kwargs.get("num_proposals", 1000)
+            step_fn = build_kernel(logdensity_fn, step_size, inverse_mass_matrix, _num_proposals)
+            return step_fn(state, rng_key)
+        return kernel
 
     def __new__(
         cls,
@@ -194,12 +218,16 @@ class slingshot:
         inverse_mass_matrix: jnp.ndarray = None,
         num_proposals: int = 1000,
     ):
+        def kernel(rng_key, state, logdensity_fn):
+            step_fn = build_kernel(logdensity_fn, step_size, inverse_mass_matrix, num_proposals)
+            return step_fn(state, rng_key)
+
         return build_sampling_algorithm(
-            build_kernel,
+            kernel,
             init,
             logdensity_fn,
             init_args=(),
-            kernel_args=(step_size, inverse_mass_matrix, num_proposals),
+            kernel_args=(),
         )
 
 
