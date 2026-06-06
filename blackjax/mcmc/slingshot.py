@@ -58,9 +58,11 @@ def build_kernel(
         else:
             local_cholesky = jnp.linalg.cholesky(inverse_mass_matrix)
 
-    def one_step(state: SlingshotState, rng_key: jax.random.PRNGKey) -> tuple[SlingshotState, SlingshotInfo]:
+    def one_step(
+        state: SlingshotState, rng_key: jax.random.PRNGKey
+    ) -> tuple[SlingshotState, SlingshotInfo]:
         current_step_size = closure_step_size
-        
+
         current_cholesky = local_cholesky
 
         if current_cholesky is None:
@@ -195,7 +197,7 @@ class slingshot:
     """User-facing interface factory for the exact Slingshot MP-MCMC sampler."""
 
     init = staticmethod(init)
-    
+
     @staticmethod
     def build_kernel():
         def kernel(
@@ -207,8 +209,11 @@ class slingshot:
             **kwargs,
         ):
             _num_proposals = kwargs.get("num_proposals", 1000)
-            step_fn = build_kernel(logdensity_fn, step_size, inverse_mass_matrix, _num_proposals)
+            step_fn = build_kernel(
+                logdensity_fn, step_size, inverse_mass_matrix, _num_proposals
+            )
             return step_fn(state, rng_key)
+
         return kernel
 
     def __new__(
@@ -219,7 +224,9 @@ class slingshot:
         num_proposals: int = 1000,
     ):
         def kernel(rng_key, state, logdensity_fn):
-            step_fn = build_kernel(logdensity_fn, step_size, inverse_mass_matrix, num_proposals)
+            step_fn = build_kernel(
+                logdensity_fn, step_size, inverse_mass_matrix, num_proposals
+            )
             return step_fn(state, rng_key)
 
         return build_sampling_algorithm(
