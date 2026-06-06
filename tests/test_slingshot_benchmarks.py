@@ -4,7 +4,7 @@ import pytest
 
 from blackjax.mcmc.slingshot import init, init_adaptation
 
-# --- Model Definitions (Linear Regression, Logit, etc., kept as provided) ---
+
 def make_linear_regression():
     key = jax.random.PRNGKey(42)
     N, D = 500, 3
@@ -18,7 +18,10 @@ def make_linear_regression():
         log_sigma = theta[3]
         sigma = jnp.exp(log_sigma)
         mu = X @ beta
-        log_lik = jnp.sum(-0.5 * jnp.log(2 * jnp.pi * sigma**2) - 0.5 * ((y - mu) / sigma) ** 2)
+        log_lik = jnp.sum(
+            -0.5 * jnp.log(2 * jnp.pi * sigma**2)
+            - 0.5 * ((y - mu) / sigma) ** 2
+        )
         log_prior_beta = jnp.sum(-0.5 * beta**2)
         log_prior_sigma = -0.5 * log_sigma**2
         return log_lik + log_prior_beta + log_prior_sigma
@@ -29,11 +32,9 @@ def make_linear_regression():
 
 
 def run_benchmark_logic(logdensity_fn, initial_positions, dim):
-    # Initialize states using the standalone init function
     init_vmap = jax.vmap(lambda pos: init(pos, logdensity_fn))
     states = init_vmap(initial_positions)
 
-    # Initialize adaptation states - pass both step_size and dim to each call
     def init_adapt_with_dim(step_size):
         return init_adaptation(step_size, dim)
 
@@ -44,17 +45,18 @@ def run_benchmark_logic(logdensity_fn, initial_positions, dim):
 
 
 @pytest.mark.benchmark
-@pytest.mark.parametrize("model_name, logdensity_fn, initial_positions, true_params", [
-    make_linear_regression(),
-    # ... Add other model calls ...
-])
-def test_slingshot_performance(benchmark, model_name, logdensity_fn, initial_positions, true_params):
+@pytest.mark.parametrize(
+    "model_name, logdensity_fn, initial_positions, true_params",
+    [make_linear_regression()],
+)
+def test_slingshot_performance(
+    benchmark, model_name, logdensity_fn, initial_positions, true_params
+):
     """Benchmark performance using pytest-benchmark fixture."""
     dim = initial_positions.shape[-1]
 
     def run():
         states, da_states = run_benchmark_logic(logdensity_fn, initial_positions, dim)
-        # Execute a minimal sampling run for the benchmark
         return states
 
     benchmark(run)
