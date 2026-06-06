@@ -41,8 +41,8 @@ def init(
 
 def build_kernel(
     step_size: float,
-    num_proposals: int,
     inverse_mass_matrix: jnp.ndarray = None,
+    num_proposals: int = 1000,
 ) -> Callable:
     """Build the functional transition kernel for a Gradient-Guided Slingshot sampler (MALA Cloud)."""
 
@@ -191,15 +191,15 @@ class slingshot:
         cls,
         logdensity_fn,
         step_size: float,
-        num_proposals: int,
         inverse_mass_matrix: jnp.ndarray = None,
+        num_proposals: int = 1000,
     ):
         return build_sampling_algorithm(
             build_kernel,
             init,
             logdensity_fn,
             init_args=(),
-            kernel_args=(step_size, num_proposals, inverse_mass_matrix),
+            kernel_args=(step_size, inverse_mass_matrix, num_proposals),
         )
 
 
