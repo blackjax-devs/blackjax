@@ -140,6 +140,49 @@ class Update_waste_free_multivariate_particles(BlackJAXTest):
         assert updated_particles.shape == (n_particles, 3)
 
 
+class BatchedWasteFreeSMCTest(SMCLinearRegressionTestCase):
+    """Verify batch_size > 0 paths run correctly in waste-free SMC."""
+
+    @chex.variants(with_jit=True)
+    def test_adaptive_tempered_smc_waste_free_batched(self):
+        """adaptive_tempered_smc + waste_free_smc with batch_size > 0 should converge."""
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        hmc_init = blackjax.hmc.init
+        hmc_kernel = blackjax.hmc.build_kernel()
+        hmc_parameters = extend_params(
+            {
+                "step_size": 10e-2,
+                "inverse_mass_matrix": jnp.eye(2),
+                "num_integration_steps": 5,
+            }
+        )
+
+        tempering = adaptive_tempered_smc(
+            logprior_fn,
+            loglikelihood_fn,
+            hmc_kernel,
+            hmc_init,
+            hmc_parameters,
+            resampling.systematic,
+            0.5,
+            update_strategy=waste_free_smc(100, 4),
+            num_mcmc_steps=None,
+            batch_size=5,
+        )
+        init_state = tempering.init(init_particles)
+
+        _n_iter, result, _ = self.variant(
+            functools.partial(inference_loop, tempering.step)
+        )(self.next_key(), init_state)
+
+        self.assert_linear_regression_test_case(result)
+
+
 def test_waste_free_set_num_mcmc_steps():
     with pytest.raises(ValueError) as exc_info:
         update_waste_free(

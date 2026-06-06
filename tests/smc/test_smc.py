@@ -10,7 +10,7 @@ from absl.testing import absltest
 
 import blackjax
 import blackjax.smc.resampling as resampling
-from blackjax.smc.base import extend_params, init, step
+from blackjax.smc.base import extend_params, init, map_fn, map_kernel, step
 from blackjax.smc.tempered import update_and_take_last
 from blackjax.smc.waste_free import update_waste_free
 from tests.fixtures import BlackJAXTest
@@ -105,6 +105,123 @@ class SMCTest(BlackJAXTest):
         mean, std = _weighted_avg_and_std(new_state.particles, state.weights)
         np.testing.assert_allclose(mean, 0.0, atol=1e-1)
         np.testing.assert_allclose(std, 1.0, atol=1e-1)
+
+
+class BatchedSMCTest(BlackJAXTest):
+    """Verify that batch_size > 0 paths produce the same output as full vmap."""
+
+    @chex.variants(with_jit=True)
+    def test_update_and_take_last_batched(self):
+        """batch_size > 0 in update_and_take_last should match full vmap."""
+        num_mcmc_steps = 5
+        num_particles = 20
+
+        same_for_all_params = dict(
+            step_size=1e-2, inverse_mass_matrix=jnp.eye(1), num_integration_steps=5
+        )
+        hmc_kernel = functools.partial(
+            blackjax.hmc.build_kernel(), **same_for_all_params
+        )
+        hmc_init = blackjax.hmc.init
+
+        init_key, sample_key = jax.random.split(self.next_key())
+        init_particles = jax.random.normal(init_key, shape=(num_particles,))
+
+        update_fn_full, _ = update_and_take_last(
+            hmc_init,
+            logdensity_fn,
+            hmc_kernel,
+            num_mcmc_steps,
+            num_particles,
+            batch_size=0,
+        )
+        update_fn_batched, _ = update_and_take_last(
+            hmc_init,
+            logdensity_fn,
+            hmc_kernel,
+            num_mcmc_steps,
+            num_particles,
+            batch_size=5,
+        )
+
+        keys = jax.random.split(sample_key, num_particles)
+        pos_full, _ = self.variant(update_fn_full)(keys, init_particles, {})
+        pos_batched, _ = self.variant(update_fn_batched)(keys, init_particles, {})
+
+        np.testing.assert_allclose(pos_full, pos_batched, rtol=1e-5)
+
+    @chex.variants(with_jit=True)
+    def test_smc_waste_free_batched(self):
+        """batch_size > 0 in update_waste_free should match full vmap."""
+        p = 4
+        num_particles = 20
+        num_resampled = num_particles // p
+        init_key, sample_key = jax.random.split(self.next_key())
+
+        init_particles = jax.random.normal(init_key, shape=(num_particles,))
+        same_for_all_params = dict(
+            step_size=1e-2, inverse_mass_matrix=jnp.eye(1), num_integration_steps=5
+        )
+        hmc_kernel = functools.partial(
+            blackjax.hmc.build_kernel(), **same_for_all_params
+        )
+        hmc_init = blackjax.hmc.init
+
+        waste_free_fn_full, _ = update_waste_free(
+            hmc_init,
+            logdensity_fn,
+            hmc_kernel,
+            num_particles,
+            p=p,
+            num_resampled=num_resampled,
+            batch_size=0,
+        )
+        waste_free_fn_batched, _ = update_waste_free(
+            hmc_init,
+            logdensity_fn,
+            hmc_kernel,
+            num_particles,
+            p=p,
+            num_resampled=num_resampled,
+            batch_size=2,
+        )
+
+        keys = jax.random.split(sample_key, num_resampled)
+        resampled = init_particles[:num_resampled]
+        pos_full, _ = self.variant(waste_free_fn_full)(keys, resampled, {})
+        pos_batched, _ = self.variant(waste_free_fn_batched)(keys, resampled, {})
+
+        np.testing.assert_allclose(pos_full, pos_batched, rtol=1e-5)
+
+    @chex.variants(with_jit=True)
+    def test_map_fn_non_divisor_batch_size(self):
+        """base.map_fn with a batch_size that doesn't divide N matches vmap."""
+        xs = jax.random.normal(self.next_key(), shape=(20, 3))
+
+        def fn(x):
+            return jnp.sum(x**2)
+
+        out_full = self.variant(map_fn(fn, batch_size=0))(xs)
+        out_batched = self.variant(map_fn(fn, batch_size=7))(xs)
+        np.testing.assert_allclose(out_full, out_batched, rtol=1e-6)
+
+    @chex.variants(with_jit=True)
+    def test_map_kernel_non_divisor_batch_size(self):
+        """base.map_kernel with a batch_size that doesn't divide N matches vmap."""
+        n = 20
+        a = jax.random.normal(self.next_key(), shape=(n, 3))
+        b = jax.random.normal(self.next_key(), shape=(n,))
+
+        def kernel(x, y):
+            return jnp.sum(x) + y, y * 2.0
+
+        out_full = self.variant(lambda a, b: map_kernel(kernel, 0)(a, b))(a, b)
+        out_batched = self.variant(lambda a, b: map_kernel(kernel, 7)(a, b))(a, b)
+        jax.tree.map(
+            lambda u, v: np.testing.assert_allclose(u, v, rtol=1e-6),
+            out_full,
+            out_batched,
+        )
 
 
 class ExtendParamsTest(BlackJAXTest):

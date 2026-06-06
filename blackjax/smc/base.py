@@ -197,12 +197,29 @@ def extend_params(params: Array) -> Array:
     return jax.tree.map(lambda x: jnp.asarray(x)[None, ...], params)
 
 
+def map_fn(fn: Callable, batch_size: int) -> Callable:
+    """Return a batched or vmap'd version of fn applied over a pytree axis."""
+    if batch_size > 0:
+        return lambda xs: jax.lax.map(fn, xs, batch_size=batch_size)
+    return jax.vmap(fn)
+
+
+def map_kernel(kernel: Callable, batch_size: int) -> Callable:
+    """Return a batched or vmap'd n-ary kernel applied over the leading axis."""
+    if batch_size > 0:
+        return lambda *args: jax.lax.map(
+            lambda t: kernel(*t), args, batch_size=batch_size
+        )
+    return jax.vmap(kernel)
+
+
 def update_and_take_last(
     mcmc_init_fn: Callable,
     tempered_logposterior_fn: Callable,
     shared_mcmc_step_fn: Callable,
     num_mcmc_steps: int,
     n_particles: int | Array,
+    batch_size: int = 0,
 ) -> tuple[Callable, int | Array]:
     """Create an MCMC update strategy that runs multiple steps and keeps the last.
 
@@ -221,11 +238,16 @@ def update_and_take_last(
         Number of MCMC steps to run for each particle.
     n_particles: int | Array
         Number of particles.
+    batch_size: int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Uses ``jax.lax.map`` internally, which reduces
+        peak GPU memory relative to a full ``jax.vmap`` over all particles.
+        ``0`` (default) keeps the original ``jax.vmap`` behaviour.
 
     Returns
     -------
     mcmc_kernel: Callable
-        A vectorized MCMC kernel function.
+        A vectorized (or sequentially batched) MCMC kernel function.
     n_particles: int | Array
         Number of particles (returned unchanged).
     """
@@ -257,4 +279,4 @@ def update_and_take_last(
         last_state, info = jax.lax.scan(body_fn, state, keys)
         return last_state.position, info
 
-    return jax.vmap(mcmc_kernel), n_particles
+    return map_kernel(mcmc_kernel, batch_size), n_particles

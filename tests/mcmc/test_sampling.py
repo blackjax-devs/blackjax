@@ -778,6 +778,58 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
         np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
 
+    @parameterized.named_parameters(
+        {"testcase_name": "typed_key", "use_typed_key": True},
+        {"testcase_name": "legacy_prngkey", "use_typed_key": False},
+    )
+    def test_laps_key_style(self, use_typed_key):
+        """Regression test: LAPS/ECA must work with both typed and legacy PRNGKey styles.
+
+        ``eca.py`` previously used ``keys_sampling.T`` which reverses ALL axes.
+        For old-style PRNGKey arrays, the shape is (num_chains, num_steps, 2)
+        and ``.T`` produced (2, num_steps, num_chains) — corrupting the key data.
+        The fix uses ``jnp.swapaxes(keys_sampling, 0, 1)`` which only swaps the
+        first two axes, leaving any trailing key-representation dims intact.
+        """
+        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(200, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(log_scale=x[0], coefs=x[1])
+
+        # Convert inference_key to the requested style
+        if not use_typed_key:
+            # Force legacy uint32[2] representation
+            inference_key = jax.random.PRNGKey(int(jax.random.bits(inference_key)))
+
+        # A short run (few steps) is sufficient to exercise the transpose path;
+        # we only check that the call completes and returns plausible shapes.
+        info, grads_per_step, _acc_prob, final_state = run_laps(
+            logdensity_fn=logposterior_fn,
+            sample_init=lambda key: jax.random.normal(key, shape=(2,)),
+            ndims=2,
+            num_steps1=50,
+            num_steps2=50,
+            num_chains=10,
+            mesh=jax.sharding.Mesh(jax.devices()[:1], "chains"),
+            rng_key=inference_key,
+            early_stop=False,
+            diagonal_preconditioning=True,
+            integrator_coefficients=None,
+            steps_per_sample=5,
+            r_end=0.5,
+            diagnostics=False,
+            superchain_size=1,
+        )
+        # Verify shapes are sane — the key-corruption bug produced wrong shapes.
+        assert final_state.position.shape == (10, 2), (
+            f"Unexpected shape {final_state.position.shape} with "
+            f"{'typed' if use_typed_key else 'legacy'} key"
+        )
+
     def test_barker(self):
         """Test the Barker kernel."""
         init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
