@@ -2,7 +2,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 
-from blackjax.mcmc.slingshot import build_kernel, init, SlingshotState, SlingshotInfo
+from blackjax.mcmc.slingshot import SlingshotInfo, SlingshotState, build_kernel, init
 
 
 def test_callable_step_size_initialization():
@@ -31,4 +31,9 @@ def test_callable_step_size_initialization():
     assert isinstance(next_state, SlingshotState)
     assert isinstance(info, SlingshotInfo)
     assert next_state.position.shape == position.shape
-    assert info.proposal_cloud.shape == (1000, position.shape[0]) # Default num_proposals is 1000
+    assert info.proposal_cloud.shape == (
+        1000,
+        position.shape[0],
+    )  # Default num_proposals is 1000
+
+    
