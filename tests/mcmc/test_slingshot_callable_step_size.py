@@ -35,5 +35,3 @@ def test_callable_step_size_initialization():
         1000,
         position.shape[0],
     )  # Default num_proposals is 1000
-
-    
