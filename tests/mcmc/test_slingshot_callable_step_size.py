@@ -34,4 +34,5 @@ def test_callable_step_size_initialization():
     assert info.proposal_cloud.shape == (
         1000,
         position.shape[0],
-    )  # Default num_proposals is 1000
+    )
+    
