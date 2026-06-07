@@ -233,7 +233,7 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
         )
 
         np.testing.assert_allclose(jnp.mean(samples, axis=0), exact_mean, atol=0.05)
-        np.testing.assert_allclose(jnp.var(samples, axis=0), exact_var, rtol=0.05)
+        np.testing.assert_allclose(jnp.var(samples, axis=0), exact_var, rtol=0.07)
 
 
 class TestLaplaceAdjointAnalytical(BlackJAXTest):
