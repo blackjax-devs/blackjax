@@ -32,7 +32,6 @@ __all__ = [
     "init",
     "build_kernel",
     "as_top_level_api",
-    "isokinetic_mclachlan",
 ]
 
 
