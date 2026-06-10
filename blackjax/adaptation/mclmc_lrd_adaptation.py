@@ -39,7 +39,10 @@ adjusted inner kernels; only Phase 4 switches:
    az-bulk ESS).  A safe rank bound ``k_safe = floor(n_eff / 2)`` is
    computed, and the requested ``k`` is hard-clamped to ``k_safe`` when it
    would exceed it.  Without this guard, under-mixed pilots produce
-   rank-deficient SVDs and the LRD metric degrades sampling quality.
+   rank-deficient SVDs and the LRD metric degrades sampling quality.  In the
+   extreme under-mix regime (n_eff < 5), the Geyer estimator may exceed
+   az-bulk ESS on the minimum-ESS dimension; ``k_safe`` is still floored to
+   0 → ``k_used=1``, so practical rank clamping is unaffected.
 
 3. **Multi-chain unadjusted LRD tuning** —
    :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`
@@ -658,7 +661,9 @@ def mclmc_lrd_warmup(
         # N_sample = effective number of leapfrog steps per trajectory at the
         # final adapted params — the floor-guard inputs that tuningfork cert
         # integration uses to verify trajectory-length bookkeeping.
-        diagnostics["N_sample"] = round(float(final_L) / max(float(final_step_size), 1e-10))
+        diagnostics["N_sample"] = round(
+            float(final_L) / max(float(final_step_size), 1e-10)
+        )
 
     return MCLMCLRDAdaptationState(
         L=final_L,
