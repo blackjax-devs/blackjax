@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for mclmc_lrd_adaptation (Scheme A, pilot-free LRD warmup)."""
+"""Tests for mclmc_lrd_warmup (Scheme A, pilot-free LRD warmup)."""
 
 import warnings
 
@@ -22,8 +22,9 @@ import pytest
 import blackjax
 from blackjax.adaptation.mclmc_lrd_adaptation import (
     MCLMCLRDAdaptationState,
+    _check_da_ceiling_warning,
     _extract_lrd_from_samples,
-    mclmc_lrd_adaptation,
+    mclmc_lrd_warmup,
 )
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 
@@ -107,7 +108,7 @@ class TestRankGuard:
 
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            result = mclmc_lrd_adaptation(
+            result = mclmc_lrd_warmup(
                 logdensity_fn,
                 pos,
                 rng,
@@ -115,6 +116,7 @@ class TestRankGuard:
                 pilot_num_warmup=50,
                 pilot_num_samples=10,  # very few draws → low ESS
                 lrd_num_steps=50,
+                num_chains=2,
             )
 
         assert isinstance(result, MCLMCLRDAdaptationState)
@@ -135,7 +137,7 @@ class TestRankGuard:
 
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            result = mclmc_lrd_adaptation(
+            result = mclmc_lrd_warmup(
                 logdensity_fn,
                 pos,
                 rng,
@@ -143,6 +145,7 @@ class TestRankGuard:
                 pilot_num_warmup=100,
                 pilot_num_samples=500,
                 lrd_num_steps=50,
+                num_chains=2,
             )
 
         clamp_warnings = [
@@ -157,13 +160,13 @@ class TestRankGuard:
         assert result.diagnostics["k_used"] == 1
 
     def test_k_safe_at_least_one(self):
-        """k_used must be at least 1 even when the pilot is tiny and n_eff rounds to 0."""
+        """k_used must be at least 1 even when the pilot is tiny."""
         rng = jax.random.key(7)
         pos = jnp.zeros(D)
         # Very small pilot (2 draws) → n_eff ≤ 2 → k_safe likely 0 or 1 → clamped to ≥1
         with warnings.catch_warnings(record=True):
             warnings.simplefilter("always")
-            result = mclmc_lrd_adaptation(
+            result = mclmc_lrd_warmup(
                 logdensity_fn,
                 pos,
                 rng,
@@ -171,16 +174,17 @@ class TestRankGuard:
                 pilot_num_warmup=30,
                 pilot_num_samples=2,
                 lrd_num_steps=30,
+                num_chains=2,
             )
         assert result.diagnostics["k_used"] >= 1
 
 
 # ---------------------------------------------------------------------------
-# Integration smoke test: isotropic Gaussian (CI-friendly, no heavy compute)
+# Integration smoke tests: isotropic Gaussian (CI-friendly, no heavy compute)
 # ---------------------------------------------------------------------------
 
 
-class TestMCLMCLRDAdaptationSmoke:
+class TestMCLMCLRDWarmupSmoke:
     """End-to-end shape + contract checks on a cheap Gaussian target."""
 
     def test_return_type_and_shapes(self):
@@ -188,7 +192,7 @@ class TestMCLMCLRDAdaptationSmoke:
         rng = jax.random.key(42)
         pos = jnp.zeros(D)
 
-        result = mclmc_lrd_adaptation(
+        result = mclmc_lrd_warmup(
             logdensity_fn,
             pos,
             rng,
@@ -196,6 +200,7 @@ class TestMCLMCLRDAdaptationSmoke:
             pilot_num_warmup=200,
             pilot_num_samples=400,
             lrd_num_steps=200,
+            num_chains=2,
         )
 
         assert isinstance(result, MCLMCLRDAdaptationState)
@@ -211,12 +216,12 @@ class TestMCLMCLRDAdaptationSmoke:
         assert jnp.all(jnp.isfinite(imm.U))
         assert jnp.all(jnp.isfinite(imm.lam))
 
-    def test_diagnostics_keys_and_types(self):
-        """diagnostics dict must contain n_eff, k_safe, k_used, pilot_num_grad_evals."""
-        rng = jax.random.key(43)
+    def test_L_and_step_size_are_scalars(self):
+        """Phase-3 multi-chain averaging must produce scalar L and step_size."""
+        rng = jax.random.key(48)
         pos = jnp.zeros(D)
 
-        result = mclmc_lrd_adaptation(
+        result = mclmc_lrd_warmup(
             logdensity_fn,
             pos,
             rng,
@@ -224,6 +229,30 @@ class TestMCLMCLRDAdaptationSmoke:
             pilot_num_warmup=100,
             pilot_num_samples=200,
             lrd_num_steps=100,
+            num_chains=4,
+        )
+
+        assert (
+            jnp.ndim(result.L) == 0
+        ), f"Expected scalar L after multi-chain mean, got shape {jnp.shape(result.L)}"
+        assert (
+            jnp.ndim(result.step_size) == 0
+        ), f"Expected scalar step_size, got shape {jnp.shape(result.step_size)}"
+
+    def test_diagnostics_keys_and_types(self):
+        """diagnostics dict must contain n_eff, k_safe, k_used, pilot_num_grad_evals."""
+        rng = jax.random.key(43)
+        pos = jnp.zeros(D)
+
+        result = mclmc_lrd_warmup(
+            logdensity_fn,
+            pos,
+            rng,
+            k=K,
+            pilot_num_warmup=100,
+            pilot_num_samples=200,
+            lrd_num_steps=100,
+            num_chains=2,
         )
         diag = result.diagnostics
         for key in ("n_eff", "k_safe", "k_used", "pilot_num_grad_evals"):
@@ -235,9 +264,32 @@ class TestMCLMCLRDAdaptationSmoke:
         assert diag["n_eff"] > 0
         assert diag["pilot_num_grad_evals"] == (100 + 200) * 2
 
+    def test_diagnostics_provenance_keys(self):
+        """diagnostics must contain pilot_L, pilot_step_size, lrd_L, lrd_step_size."""
+        rng = jax.random.key(47)
+        pos = jnp.zeros(D)
+
+        result = mclmc_lrd_warmup(
+            logdensity_fn,
+            pos,
+            rng,
+            k=K,
+            pilot_num_warmup=100,
+            pilot_num_samples=200,
+            lrd_num_steps=100,
+            num_chains=2,
+        )
+        diag = result.diagnostics
+        for key in ("pilot_L", "pilot_step_size", "lrd_L", "lrd_step_size"):
+            assert key in diag, f"Missing diagnostics provenance key: {key}"
+        assert diag["pilot_L"] > 0
+        assert diag["pilot_step_size"] > 0
+        assert diag["lrd_L"] > 0
+        assert diag["lrd_step_size"] > 0
+
     def test_top_level_api_exposed(self):
-        """blackjax.mclmc_lrd_adaptation must resolve to the correct function."""
-        assert blackjax.mclmc_lrd_adaptation is mclmc_lrd_adaptation
+        """blackjax.mclmc_lrd_warmup must resolve to the correct function."""
+        assert blackjax.mclmc_lrd_warmup is mclmc_lrd_warmup
 
     def test_lrd_imm_usable_with_mclmc_kernel(self):
         """The returned LRD IMM must plug into the mclmc base kernel without error."""
@@ -246,7 +298,7 @@ class TestMCLMCLRDAdaptationSmoke:
         rng = jax.random.key(44)
         pos = jnp.zeros(D)
 
-        result = mclmc_lrd_adaptation(
+        result = mclmc_lrd_warmup(
             logdensity_fn,
             pos,
             rng,
@@ -254,6 +306,7 @@ class TestMCLMCLRDAdaptationSmoke:
             pilot_num_warmup=100,
             pilot_num_samples=200,
             lrd_num_steps=100,
+            num_chains=2,
         )
 
         lrd_imm = result.inverse_mass_matrix
@@ -273,14 +326,14 @@ class TestMCLMCLRDAdaptationSmoke:
         )
 
     def test_pytree_position(self):
-        """mclmc_lrd_adaptation must work when position is a dict pytree."""
+        """mclmc_lrd_warmup must work when position is a dict pytree."""
         rng = jax.random.key(45)
         pos = {"a": jnp.zeros(3), "b": jnp.zeros(2)}
 
         def logp_dict(x):
             return -0.5 * (jnp.sum(x["a"] ** 2) + jnp.sum(x["b"] ** 2))
 
-        result = mclmc_lrd_adaptation(
+        result = mclmc_lrd_warmup(
             logp_dict,
             pos,
             rng,
@@ -288,6 +341,7 @@ class TestMCLMCLRDAdaptationSmoke:
             pilot_num_warmup=100,
             pilot_num_samples=200,
             lrd_num_steps=100,
+            num_chains=2,
         )
 
         assert isinstance(result, MCLMCLRDAdaptationState)
@@ -299,7 +353,7 @@ class TestMCLMCLRDAdaptationSmoke:
         """diagnostics must include inner_kernel field matching the argument."""
         rng = jax.random.key(46)
         pos = jnp.zeros(D)
-        result = mclmc_lrd_adaptation(
+        result = mclmc_lrd_warmup(
             logdensity_fn,
             pos,
             rng,
@@ -307,6 +361,7 @@ class TestMCLMCLRDAdaptationSmoke:
             pilot_num_warmup=100,
             pilot_num_samples=200,
             lrd_num_steps=100,
+            num_chains=2,
             inner_kernel="mclmc",
         )
         assert result.diagnostics["inner_kernel"] == "mclmc"
@@ -314,12 +369,87 @@ class TestMCLMCLRDAdaptationSmoke:
     def test_invalid_inner_kernel_raises(self):
         """Passing an unknown inner_kernel must raise ValueError immediately."""
         with pytest.raises(ValueError, match="inner_kernel"):
-            mclmc_lrd_adaptation(
+            mclmc_lrd_warmup(
                 logdensity_fn,
                 jnp.zeros(D),
                 jax.random.key(0),
                 inner_kernel="nuts",
             )
+
+
+# ---------------------------------------------------------------------------
+# Unit test: DA-ceiling warning helper
+# ---------------------------------------------------------------------------
+
+
+class TestDACeilingWarning:
+    """Tests for the DA-ceiling warning logic in _check_da_ceiling_warning."""
+
+    def test_warning_fires_when_at_ceiling(self):
+        """Warning must fire when step_size / (L_init/1.1) >= 0.999."""
+        L_init = 10.0
+        da_clamp = L_init / 1.1  # 9.0909...
+        # Set step_size to exactly the clamp (ratio = 1.0)
+        step_size = da_clamp
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            _check_da_ceiling_warning(step_size, L_init, floor_factor=1.15)
+
+        ceiling_warnings = [w for w in caught if issubclass(w.category, UserWarning)]
+        assert (
+            len(ceiling_warnings) > 0
+        ), "Expected DA-ceiling UserWarning but none was emitted"
+        assert "ceiling" in str(ceiling_warnings[0].message).lower()
+
+    def test_warning_fires_near_ceiling(self):
+        """Warning must fire when ratio >= 0.999 (just below ceiling)."""
+        L_init = 10.0
+        da_clamp = L_init / 1.1
+        step_size = da_clamp * 0.9995  # ratio = 0.9995 >= 0.999
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            _check_da_ceiling_warning(step_size, L_init, floor_factor=1.15)
+
+        assert any(
+            issubclass(w.category, UserWarning) for w in caught
+        ), "Expected warning at ratio=0.9995 but none fired"
+
+    def test_no_warning_when_well_below_ceiling(self):
+        """No warning when step_size is well below DA ceiling."""
+        L_init = 10.0
+        da_clamp = L_init / 1.1
+        step_size = da_clamp * 0.8  # ratio = 0.8 << 0.999
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            _check_da_ceiling_warning(step_size, L_init, floor_factor=1.15)
+
+        ceiling_warnings = [w for w in caught if issubclass(w.category, UserWarning)]
+        assert (
+            len(ceiling_warnings) == 0
+        ), f"Unexpected DA-ceiling warning at ratio=0.8: {ceiling_warnings}"
+
+    def test_warning_mentions_floor_factor(self):
+        """Warning message must reference floor_factor for actionable guidance."""
+        L_init = 5.0
+        step_size = L_init / 1.1  # at ceiling
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            _check_da_ceiling_warning(step_size, L_init, floor_factor=1.15)
+
+        assert len(caught) > 0
+        msg = str(caught[0].message).lower()
+        assert (
+            "floor_factor" in msg
+        ), "Warning message should mention floor_factor for actionable guidance"
+
+
+# ---------------------------------------------------------------------------
+# Smoke tests for adjusted path
+# ---------------------------------------------------------------------------
 
 
 class TestMCLMCLRDAdjustedSmoke:
@@ -330,16 +460,22 @@ class TestMCLMCLRDAdjustedSmoke:
         rng = jax.random.key(50)
         pos = jnp.zeros(D)
 
-        result = mclmc_lrd_adaptation(
-            logdensity_fn,
-            pos,
-            rng,
-            k=K,
-            pilot_num_warmup=200,
-            pilot_num_samples=400,
-            lrd_num_steps=200,
-            inner_kernel="adjusted_mclmc",
-        )
+        # DA-ceiling warning may fire for this cheap isotropic Gaussian (where
+        # floor_factor * step_mclmc ≈ L_mclmc, so L_init/1.1 ≈ step_size).
+        # That is expected/correct behaviour — suppress it for this smoke test.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            result = mclmc_lrd_warmup(
+                logdensity_fn,
+                pos,
+                rng,
+                k=K,
+                pilot_num_warmup=200,
+                pilot_num_samples=400,
+                lrd_num_steps=200,
+                num_chains=2,
+                inner_kernel="adjusted_mclmc",
+            )
 
         assert isinstance(result, MCLMCLRDAdaptationState)
         assert jnp.isfinite(result.L) and result.L > 0
@@ -357,16 +493,19 @@ class TestMCLMCLRDAdjustedSmoke:
         rng = jax.random.key(51)
         pos = jnp.zeros(D)
 
-        result = mclmc_lrd_adaptation(
-            logdensity_fn,
-            pos,
-            rng,
-            k=K,
-            pilot_num_warmup=100,
-            pilot_num_samples=200,
-            lrd_num_steps=100,
-            inner_kernel="adjusted_mclmc",
-        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            result = mclmc_lrd_warmup(
+                logdensity_fn,
+                pos,
+                rng,
+                k=K,
+                pilot_num_warmup=100,
+                pilot_num_samples=200,
+                lrd_num_steps=100,
+                num_chains=2,
+                inner_kernel="adjusted_mclmc",
+            )
 
         lrd_imm = result.inverse_mass_matrix
         adj_kernel = adj_mod.build_kernel()
@@ -382,3 +521,26 @@ class TestMCLMCLRDAdjustedSmoke:
         assert jnp.all(
             jnp.isfinite(jax.flatten_util.ravel_pytree(next_state.position)[0])
         )
+
+    def test_adjusted_path_provenance_keys_present(self):
+        """Adjusted path must also populate pilot_L/step_size and lrd_L/step_size."""
+        rng = jax.random.key(52)
+        pos = jnp.zeros(D)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            result = mclmc_lrd_warmup(
+                logdensity_fn,
+                pos,
+                rng,
+                k=K,
+                pilot_num_warmup=100,
+                pilot_num_samples=200,
+                lrd_num_steps=100,
+                num_chains=2,
+                inner_kernel="adjusted_mclmc",
+            )
+        for key in ("pilot_L", "pilot_step_size", "lrd_L", "lrd_step_size"):
+            assert (
+                key in result.diagnostics
+            ), f"Missing provenance key {key!r} in adjusted path diagnostics"
