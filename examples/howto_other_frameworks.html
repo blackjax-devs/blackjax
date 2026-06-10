@@ -55,7 +55,7 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g838634723" />
+  <meta name="docsearch:version" content="0.1.dev1+g359205da8" />
   </head>
   
   
@@ -187,6 +187,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
@@ -570,7 +571,7 @@ that calls the Numba-compiled gradient via a second <code class="docutils litera
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.48455036, dtype=float32, weak_type=True), logdensity=Array(-1.744383, dtype=float32), logdensity_grad=Array(0.1901867, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-1.0853109, dtype=float32, weak_type=True), logdensity=Array(-1.9188712, dtype=float32), logdensity_grad=Array(0.360562, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -587,8 +588,8 @@ Python (and Numba) on every call. Let’s see the overhead:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 638 ms, sys: 0 ns, total: 638 ms
-Wall time: 638 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 572 ms, sys: 0 ns, total: 572 ms
+Wall time: 572 ms
 </pre></div>
 </div>
 </div>
@@ -602,8 +603,8 @@ Wall time: 638 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.8 s, sys: 735 ms, total: 11.6 s
-Wall time: 11.5 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.1 s, sys: 911 ms, total: 12 s
+Wall time: 11.9 s
 </pre></div>
 </div>
 </div>

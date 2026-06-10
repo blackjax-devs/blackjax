@@ -55,7 +55,7 @@
     <link rel="prev" title="How to build a Metropolis-Within-Gibbs sampler?" href="howto_metropolis_within_gibbs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g838634723" />
+  <meta name="docsearch:version" content="0.1.dev1+g359205da8" />
   </head>
   
   
@@ -187,6 +187,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
@@ -531,9 +532,9 @@ for the L-BFGS solver.</p></li>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate:  0.84
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate:  0.73
 Divergences:      0
-phi posterior mean:  0.501  (true log_sigma=0.693)
+phi posterior mean:  0.797  (true log_sigma=0.693)
 </pre></div>
 </div>
 </div>
@@ -567,7 +568,7 @@ against the true marginal log-density:</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/23fc24820b057bb050a367a521f1cc40d206ddf1fc177ee0db0b56628d8eb04e.png" src="../_images/23fc24820b057bb050a367a521f1cc40d206ddf1fc177ee0db0b56628d8eb04e.png" />
+<img alt="../_images/660b0a2c0cee8b9b94fd923673f36e6e786d17b95126abdd80549ce0229a6647.png" src="../_images/660b0a2c0cee8b9b94fd923673f36e6e786d17b95126abdd80549ce0229a6647.png" />
 </div>
 </div>
 </section>
@@ -593,7 +594,7 @@ use <code class="docutils literal notranslate"><span class="pre">laplace.sample_
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>theta posterior mean (first 5): [ 0.8541974   0.8299371   1.315848   -0.01157541  1.4792122 ]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>theta posterior mean (first 5): [-1.7182988   2.3096423  -0.11471264  0.1261321   3.4388254 ]
 </pre></div>
 </div>
 </div>
@@ -633,8 +634,8 @@ accepting (no rejection):</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ESS laplace_hmc:  1328.6
-ESS laplace_mhmc: 785.9
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ESS laplace_hmc:  341.0
+ESS laplace_mhmc: 914.5
 </pre></div>
 </div>
 </div>

@@ -18,6 +18,7 @@ Submodules
    /autoapi/blackjax/adaptation/low_rank_adaptation/index
    /autoapi/blackjax/adaptation/mass_matrix/index
    /autoapi/blackjax/adaptation/mclmc_adaptation/index
+   /autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index
    /autoapi/blackjax/adaptation/meads_adaptation/index
    /autoapi/blackjax/adaptation/pathfinder_adaptation/index
    /autoapi/blackjax/adaptation/step_size/index

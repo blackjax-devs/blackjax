@@ -1,0 +1,1145 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.adaptation.mclmc_lrd_adaptation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/mclmc_lrd_adaptation';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g359205da8" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blackjax.adaptation.mclmc_lrd_adaptation</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;Pilot-free (Scheme A) MCLMC warmup with Low-Rank Diagonal preconditioning.</span>
+
+<span class="sd">Overview</span>
+<span class="sd">--------</span>
+<span class="sd">This module implements the **Scheme A** warmup for MCLMC via</span>
+<span class="sd">:func:`mclmc_lrd_warmup`.  Phases 1–3 are shared between the unadjusted and</span>
+<span class="sd">adjusted inner kernels; only Phase 4 switches:</span>
+
+<span class="sd">1. **Pilot phase** — a single unadjusted MCLMC chain with diagonal</span>
+<span class="sd">   preconditioning (via</span>
+<span class="sd">   :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`)</span>
+<span class="sd">   runs for ``pilot_num_warmup + pilot_num_samples`` steps to reach the</span>
+<span class="sd">   typical set and collect geometry samples.</span>
+
+<span class="sd">2. **LRD extraction** — the pilot draws are standardised and a thin SVD</span>
+<span class="sd">   extracts the top-*k* principal directions of the correlation structure.</span>
+<span class="sd">   The result is a</span>
+<span class="sd">   :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` ``(sigma, U,</span>
+<span class="sd">   lam)``.</span>
+
+<span class="sd">   **Rank guard (non-negotiable):** before extraction, the effective sample</span>
+<span class="sd">   size of the pilot chain is estimated via</span>
+<span class="sd">   :func:`~blackjax.diagnostics.effective_sample_size` (the Geyer</span>
+<span class="sd">   monotone-sequence estimator, operating on the ravelled flat-parameter</span>
+<span class="sd">   vector; one chain, ``pilot_num_samples`` draws; basis is *not* the</span>
+<span class="sd">   az-bulk ESS).  A safe rank bound ``k_safe = floor(n_eff / 2)`` is</span>
+<span class="sd">   computed, and the requested ``k`` is hard-clamped to ``k_safe`` when it</span>
+<span class="sd">   would exceed it.  Without this guard, under-mixed pilots produce</span>
+<span class="sd">   rank-deficient SVDs and the LRD metric degrades sampling quality.  In the</span>
+<span class="sd">   extreme under-mix regime (n_eff &lt; 5), the Geyer estimator may exceed</span>
+<span class="sd">   az-bulk ESS on the minimum-ESS dimension; ``k_safe`` is still floored to</span>
+<span class="sd">   0 → ``k_used=1``, so practical rank clamping is unaffected.</span>
+
+<span class="sd">3. **Multi-chain unadjusted LRD tuning** —</span>
+<span class="sd">   :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`</span>
+<span class="sd">   is run in parallel over ``num_chains`` independent chains (all starting</span>
+<span class="sd">   from the pilot&#39;s final position, with per-chain PRNG keys) with the LRD</span>
+<span class="sd">   metric kernel (``diagonal_preconditioning=False``).  The per-chain</span>
+<span class="sd">   ``(L, step_size)`` values are averaged to give stable estimates of the</span>
+<span class="sd">   trajectory length and step size in LRD geometry.</span>
+
+<span class="sd">4. **Inner-kernel dispatch** (controlled by ``inner_kernel``):</span>
+
+<span class="sd">   * ``&quot;mclmc&quot;`` *(default)*: returns the Phase-3 mean</span>
+<span class="sd">     ``(L, step_size)`` directly.</span>
+
+<span class="sd">   * ``&quot;adjusted_mclmc&quot;`` *(experimental)*: warm-starts</span>
+<span class="sd">     :func:`~blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size`</span>
+<span class="sd">     across ``num_chains`` parallel chains from the Phase-3 mean parameters.</span>
+<span class="sd">     **Two hard constraints are enforced automatically** to avoid known</span>
+<span class="sd">     failure modes:</span>
+
+<span class="sd">     - ``params`` is set to</span>
+<span class="sd">       ``MCLMCAdaptationState(L=L_init, step_size=..., inverse_mass_matrix=lrd_imm)``</span>
+<span class="sd">       so that the ``sqrt(dim)`` default L initialisation (which ignores the</span>
+<span class="sd">       baked-in LRD metric) is never used.</span>
+<span class="sd">     - ``frac_tune2=0.0`` disables the variance-based *L* estimator, which</span>
+<span class="sd">       computes original-space ``trace(Σ)`` and is incompatible with an</span>
+<span class="sd">       externally-baked LRD IMM.</span>
+
+<span class="sd">     ``L_init`` is floored at ``floor_factor * step_unadj`` (default</span>
+<span class="sd">     ``floor_factor=1.15``) to prevent the Dual-Averaging ceiling</span>
+<span class="sd">     ``(L / 1.1)`` from binding below the oracle step size.  For geometry</span>
+<span class="sd">     where the oracle step size exceeds the oracle L (stiff</span>
+<span class="sd">     high-condition-number targets), the default 1.15 may leave the DA</span>
+<span class="sd">     ceiling binding; raise to approximately 1.5 and set</span>
+<span class="sd">     ``adjusted_num_steps`` to at least 5000 for those targets.</span>
+
+<span class="sd">Stan-window analogy</span>
+<span class="sd">-------------------</span>
+<span class="sd">The staging mirrors Stan&#39;s two-phase warmup: a cheap diagonal (fast) phase</span>
+<span class="sd">reaches the typical set first; the LRD (slow) phase then builds the metric</span>
+<span class="sd">from draws that are already in the right region.  The key difference is that</span>
+<span class="sd">Scheme A uses MCLMC (unadjusted, leapfrog-free) for the pilot, eliminating</span>
+<span class="sd">the NUTS pilot cost that dominated total gradient expenditure in our</span>
+<span class="sd">benchmarks:</span>
+
+<span class="sd">* ill_cond_50 (d=50, κ=1000): k=40, n_pilot=10k → 101.1 % oracle step-size</span>
+<span class="sd">  recovery, 2.42× ESS/total-grad vs NUTS-pilot, 72.5 % grad savings.</span>
+<span class="sd">* german_credit (d=26): k=8, n_pilot=5k.</span>
+<span class="sd">* mvn_10 (d=10): k=4, n_pilot=2k.</span>
+
+<span class="sd">Limitations</span>
+<span class="sd">-----------</span>
+<span class="sd">* **Single-chain pilot.** The pilot is single-chain; overdispersed</span>
+<span class="sd">  multi-chain initialisation would give stronger geometry coverage and</span>
+<span class="sd">  tighter n_eff estimates.  This is a known limitation for the rank guard&#39;s</span>
+<span class="sd">  tightness.</span>
+<span class="sd">* **NUTS-pilot fallback.** When the target has funnel-class geometry (e.g.</span>
+<span class="sd">  hierarchical models near unit-root), the MCLMC pilot may under-mix even</span>
+<span class="sd">  with n_eff/2 clamping.  A NUTS-pilot fallback (replacing Phase 1 with</span>
+<span class="sd">  :func:`~blackjax.adaptation.window_adaptation.window_adaptation`) is the</span>
+<span class="sd">  recommended escape hatch but is out of scope here.</span>
+<span class="sd">* **Adjusted path experimental.** ``inner_kernel=&quot;adjusted_mclmc&quot;`` is</span>
+<span class="sd">  certified 3/3 on german_credit at the default recipe (4-chain phase 3,</span>
+<span class="sd">  ``frac_tune2=0``, ``floor_factor=1.15``, ``adjusted_num_steps=3000``).</span>
+<span class="sd">  ill_cond_50 (stiff, κ=1000) is geometrically compatible (clamp-free at</span>
+<span class="sd">  ``floor_factor=1.5``, step size 104–114% of oracle, zero DA divergences)</span>
+<span class="sd">  but was NOT certified at ``adjusted_num_steps=3000`` (marginal R-hat</span>
+<span class="sd">  1.010–1.011; DA not converged).  For stiff geometry, raise</span>
+<span class="sd">  ``floor_factor`` to ~1.5 and ``adjusted_num_steps`` to ≥5000.</span>
+<span class="sd">  The unadjusted default remains the stable, broadly validated path.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NamedTuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">ravel_pytree</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.adjusted_mclmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_adj_mclmc_mod</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.mclmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_mclmc_mod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.adjusted_mclmc_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">adjusted_mclmc_find_L_and_step_size</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.mclmc_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MCLMCAdaptationState</span><span class="p">,</span>
+    <span class="n">mclmc_find_L_and_step_size</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.diagnostics</span><span class="w"> </span><span class="kn">import</span> <span class="n">effective_sample_size</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LowRankInverseMassMatrix</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MCLMCLRDAdaptationState&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;mclmc_lrd_warmup&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">_VALID_INNER_KERNELS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;mclmc&quot;</span><span class="p">,</span> <span class="s2">&quot;adjusted_mclmc&quot;</span><span class="p">})</span>
+
+
+<div class="viewcode-block" id="MCLMCLRDAdaptationState">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MCLMCLRDAdaptationState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result of :func:`mclmc_lrd_warmup`.</span>
+
+<span class="sd">    L</span>
+<span class="sd">        Adapted momentum decoherence length from the final tuning phase.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        Adapted step size from the final tuning phase.</span>
+<span class="sd">    inverse_mass_matrix</span>
+<span class="sd">        The adapted LRD inverse mass matrix as a</span>
+<span class="sd">        :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` NamedTuple</span>
+<span class="sd">        ``(sigma, U, lam)``.</span>
+<span class="sd">    diagnostics</span>
+<span class="sd">        A plain dict with provenance fields:</span>
+
+<span class="sd">        ``inner_kernel``</span>
+<span class="sd">            Which inner kernel was used (``&quot;mclmc&quot;`` or</span>
+<span class="sd">            ``&quot;adjusted_mclmc&quot;``).</span>
+<span class="sd">        ``n_eff``</span>
+<span class="sd">            Effective sample size of the pilot chain (Geyer monotone-sequence</span>
+<span class="sd">            estimator, blackjax basis, ravelled flat vector).</span>
+<span class="sd">        ``k_safe``</span>
+<span class="sd">            Floor of ``n_eff / 2`` — the maximum rank that is statistically</span>
+<span class="sd">            supported by the pilot.</span>
+<span class="sd">        ``k_used``</span>
+<span class="sd">            The rank actually passed to SVD after clamping (``min(k, k_safe)``).</span>
+<span class="sd">        ``pilot_num_grad_evals``</span>
+<span class="sd">            Total gradient evaluations consumed by the pilot phase</span>
+<span class="sd">            (warmup + samples; unadjusted MCLMC costs 2 grads/step).</span>
+<span class="sd">        ``pilot_L``</span>
+<span class="sd">            Trajectory length L adapted during the diagonal pilot warmup.</span>
+<span class="sd">        ``pilot_step_size``</span>
+<span class="sd">            Step size adapted during the diagonal pilot warmup.</span>
+<span class="sd">        ``lrd_L``</span>
+<span class="sd">            Mean trajectory length L across ``num_chains`` chains after</span>
+<span class="sd">            Phase-3 unadjusted LRD tuning.</span>
+<span class="sd">        ``lrd_step_size``</span>
+<span class="sd">            Mean step size across ``num_chains`` chains after Phase-3</span>
+<span class="sd">            unadjusted LRD tuning.</span>
+<span class="sd">        ``L_init``</span>
+<span class="sd">            *(adjusted path only)* The floor-guarded L initialisation value</span>
+<span class="sd">            passed to the adjusted warm-start: ``max(lrd_L, floor_factor *</span>
+<span class="sd">            lrd_step_size)``.  This is the value whose ``/ 1.1`` sets the DA</span>
+<span class="sd">            ceiling for step-size tuning.</span>
+<span class="sd">        ``floor_active``</span>
+<span class="sd">            *(adjusted path only)* ``True`` when the floor guard was</span>
+<span class="sd">            triggered (``floor_factor * lrd_step_size &gt; lrd_L``), i.e. when</span>
+<span class="sd">            ``L_init`` was raised above the unadjusted mean.</span>
+<span class="sd">        ``N_sample``</span>
+<span class="sd">            *(adjusted path only)* Effective number of leapfrog steps per</span>
+<span class="sd">            trajectory at the final adapted parameters:</span>
+<span class="sd">            ``round(L_init / final_step_size)``.  Provided as a bookkeeping</span>
+<span class="sd">            aid for cert integration.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MCLMCLRDAdaptationState.L">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.L">[docs]</a>
+    <span class="n">L</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="MCLMCLRDAdaptationState.step_size">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.step_size">[docs]</a>
+    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="MCLMCLRDAdaptationState.inverse_mass_matrix">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.inverse_mass_matrix">[docs]</a>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">LowRankInverseMassMatrix</span></div>
+
+<div class="viewcode-block" id="MCLMCLRDAdaptationState.diagnostics">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.diagnostics">[docs]</a>
+    <span class="n">diagnostics</span><span class="p">:</span> <span class="nb">dict</span></div>
+</div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_lrd_from_samples</span><span class="p">(</span>
+    <span class="n">flat_positions</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract LRD parameters from a ``(n_samples, d)`` array of pilot draws.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    flat_positions</span>
+<span class="sd">        Shape ``(n_samples, d)``.  Already ravelled to a 2-D float array.</span>
+<span class="sd">    k</span>
+<span class="sd">        Rank of the LRD approximation (after clamping by the caller).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    sigma : shape ``(d,)``</span>
+<span class="sd">    U     : shape ``(d, k)``</span>
+<span class="sd">    lam   : shape ``(k,)``</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">flat_positions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">flat_positions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sigma</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>  <span class="c1"># avoid div-by-zero in zero-var dims</span>
+
+    <span class="n">standardised</span> <span class="o">=</span> <span class="p">(</span><span class="n">flat_positions</span> <span class="o">-</span> <span class="n">mean</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># (n, d)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">flat_positions</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Thin SVD: columns of V are the principal directions of standardised draws.</span>
+    <span class="c1"># Eigenvalues of the sample correlation matrix: lam_i = s_i^2 / n.</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">standardised</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="n">Vt</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (d, min(n,d))</span>
+    <span class="n">lam</span> <span class="o">=</span> <span class="p">(</span><span class="n">S</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># (min(n,d),)</span>
+
+    <span class="c1"># Select top-k by |λ - 1| (directions that deviate most from isotropic).</span>
+    <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">top_idx</span> <span class="o">=</span> <span class="n">sort_idx</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
+
+    <span class="n">lam_k</span> <span class="o">=</span> <span class="n">lam</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span>  <span class="c1"># (k,)</span>
+    <span class="n">U_k</span> <span class="o">=</span> <span class="n">V</span><span class="p">[:,</span> <span class="n">top_idx</span><span class="p">]</span>  <span class="c1"># (d, k)</span>
+    <span class="k">return</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">U_k</span><span class="p">,</span> <span class="n">lam_k</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_da_ceiling_warning</span><span class="p">(</span>
+    <span class="n">final_step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">L_init</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">floor_factor</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Emit a UserWarning when the adapted step_size is at or near L_init/1.1.</span>
+
+<span class="sd">    This is the Dual-Averaging (DA) ceiling signature: when</span>
+<span class="sd">    ``step_size &gt;= L_init / 1.1 * 0.999``, the step-size tuner may have been</span>
+<span class="sd">    constrained by the ceiling rather than converged to the optimal value.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    final_step_size</span>
+<span class="sd">        Mean adapted step size across chains from the adjusted Phase-4 tuning.</span>
+<span class="sd">    L_init</span>
+<span class="sd">        The floor-guarded L_init value used for the adjusted warm-start.</span>
+<span class="sd">    floor_factor</span>
+<span class="sd">        Current ``floor_factor`` value; included in the warning message.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">da_clamp</span> <span class="o">=</span> <span class="n">L_init</span> <span class="o">/</span> <span class="mf">1.1</span>
+    <span class="n">step_ratio</span> <span class="o">=</span> <span class="n">final_step_size</span> <span class="o">/</span> <span class="n">da_clamp</span>
+    <span class="k">if</span> <span class="n">step_ratio</span> <span class="o">&gt;=</span> <span class="mf">0.999</span><span class="p">:</span>
+        <span class="n">step_s</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">final_step_size</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">clamp_s</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">da_clamp</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">ratio_s</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">step_ratio</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;mclmc_lrd_warmup (adjusted_mclmc path): adapted step_size &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">step_s</span><span class="si">}</span><span class="s2">) is at or near the DA ceiling &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;L_init/1.1=</span><span class="si">{</span><span class="n">clamp_s</span><span class="si">}</span><span class="s2"> (ratio=</span><span class="si">{</span><span class="n">ratio_s</span><span class="si">}</span><span class="s2">). &quot;</span>
+            <span class="s2">&quot;The step-size tuner may have been constrained rather than &quot;</span>
+            <span class="s2">&quot;converged. Consider raising `floor_factor` &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(current value: </span><span class="si">{</span><span class="n">floor_factor</span><span class="si">}</span><span class="s2">) — e.g. to 1.5 for &quot;</span>
+            <span class="s2">&quot;high-condition-number targets.&quot;</span><span class="p">,</span>
+            <span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>  <span class="c1"># points to caller of mclmc_lrd_warmup</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="mclmc_lrd_warmup">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">mclmc_lrd_warmup</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">,</span>
+    <span class="n">position</span><span class="p">,</span>
+    <span class="n">rng_key</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">pilot_num_warmup</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">pilot_num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5000</span><span class="p">,</span>
+    <span class="n">lrd_num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">num_chains</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="n">inner_kernel</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mclmc&quot;</span><span class="p">,</span>
+    <span class="n">floor_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.15</span><span class="p">,</span>
+    <span class="n">adjusted_num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3000</span><span class="p">,</span>
+    <span class="n">adjusted_target</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scheme A (pilot-free) MCLMC warmup with Low-Rank Diagonal preconditioning.</span>
+
+<span class="sd">    Runs a cheap diagonal unadjusted MCLMC pilot to reach the typical set and</span>
+<span class="sd">    collect geometry samples, extracts a low-rank diagonal (LRD) inverse mass</span>
+<span class="sd">    matrix via thin SVD, then calibrates step size and trajectory length L</span>
+<span class="sd">    across ``num_chains`` parallel chains with the LRD metric kernel.  The</span>
+<span class="sd">    inner kernel for the final tuning phase is controlled by ``inner_kernel``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        Log-density of the target distribution.</span>
+<span class="sd">    position</span>
+<span class="sd">        Initial position (any pytree).</span>
+<span class="sd">    rng_key</span>
+<span class="sd">        JAX PRNG key.</span>
+<span class="sd">    k</span>
+<span class="sd">        Requested LRD rank.  Hard-clamped to ``floor(n_eff / 2)`` if the</span>
+<span class="sd">        pilot chain is under-mixed; see the rank-guard note in the module</span>
+<span class="sd">        docstring.</span>
+<span class="sd">    pilot_num_warmup</span>
+<span class="sd">        Number of steps for the diagonal pilot warmup phase (used by</span>
+<span class="sd">        :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`</span>
+<span class="sd">        to adapt step size and L with a diagonal mass matrix).</span>
+<span class="sd">    pilot_num_samples</span>
+<span class="sd">        Number of unadjusted MCLMC draws collected *after* the pilot warmup,</span>
+<span class="sd">        used for the SVD geometry estimate.</span>
+<span class="sd">    lrd_num_steps</span>
+<span class="sd">        Number of steps passed to the LRD tuning call(s) in Phase 3 (and</span>
+<span class="sd">        Phase 4 for the adjusted path).</span>
+<span class="sd">    num_chains</span>
+<span class="sd">        Number of parallel chains for Phase 3 (unadjusted LRD tuning) and</span>
+<span class="sd">        Phase 4 (adjusted tuning when ``inner_kernel=&quot;adjusted_mclmc&quot;``).</span>
+<span class="sd">        All chains start from the pilot&#39;s final position; per-chain PRNG keys</span>
+<span class="sd">        give independent trajectories.  Per-chain L and step_size are averaged</span>
+<span class="sd">        for a stable multi-chain estimate.  Default ``4``.</span>
+<span class="sd">    inner_kernel</span>
+<span class="sd">        Which inner kernel to use for the final tuning phase.  One of:</span>
+
+<span class="sd">        * ``&quot;mclmc&quot;`` *(default, stable)*: unadjusted MCLMC.  Phase-3</span>
+<span class="sd">          mean ``(L, step_size)`` is returned directly.</span>
+<span class="sd">        * ``&quot;adjusted_mclmc&quot;`` *(experimental)*: after Phase-3 unadjusted</span>
+<span class="sd">          LRD tuning, warm-starts</span>
+<span class="sd">          :func:`~blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size`</span>
+<span class="sd">          across ``num_chains`` chains with ``frac_tune2=0.0``</span>
+<span class="sd">          (variance-based *L* estimator disabled) and</span>
+<span class="sd">          ``diagonal_preconditioning=False``.</span>
+
+<span class="sd">    floor_factor</span>
+<span class="sd">        For ``inner_kernel=&quot;adjusted_mclmc&quot;`` only: the L initialisation</span>
+<span class="sd">        floor is ``max(L_unadj, floor_factor * step_unadj)``.  Default</span>
+<span class="sd">        ``1.15``; certified on german_credit.  For stiff geometry where the</span>
+<span class="sd">        oracle step size exceeds the oracle L, raise to approximately 1.5</span>
+<span class="sd">        (the default leaves the DA ceiling ``L / 1.1`` binding for those</span>
+<span class="sd">        targets).  Ignored when ``inner_kernel=&quot;mclmc&quot;``.</span>
+<span class="sd">    adjusted_num_steps</span>
+<span class="sd">        Number of DA tuning steps for the adjusted Phase-4 path.  Default</span>
+<span class="sd">        ``3000`` with ``frac_tune1=0.5`` → 1500 DA steps; the certified</span>
+<span class="sd">        recipe for german_credit.  For stiff high-κ geometry, increase to</span>
+<span class="sd">        at least 5000.  Ignored when ``inner_kernel=&quot;mclmc&quot;``.</span>
+<span class="sd">    adjusted_target</span>
+<span class="sd">        Target acceptance rate for the adjusted MCLMC tuning phase.</span>
+<span class="sd">        Default ``0.9``.  Ignored when ``inner_kernel=&quot;mclmc&quot;``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    MCLMCLRDAdaptationState</span>
+<span class="sd">        A :class:`MCLMCLRDAdaptationState` NamedTuple with fields ``L``,</span>
+<span class="sd">        ``step_size``, ``inverse_mass_matrix`` (a</span>
+<span class="sd">        :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`), and</span>
+<span class="sd">        ``diagnostics`` (see :class:`MCLMCLRDAdaptationState` for keys).</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``inner_kernel`` is not one of ``&quot;mclmc&quot;`` or</span>
+<span class="sd">        ``&quot;adjusted_mclmc&quot;``.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    .. code-block:: python</span>
+
+<span class="sd">        import jax</span>
+<span class="sd">        import jax.numpy as jnp</span>
+<span class="sd">        import blackjax</span>
+
+<span class="sd">        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)</span>
+<span class="sd">        position = jnp.zeros(10)</span>
+<span class="sd">        rng_key = jax.random.key(42)</span>
+
+<span class="sd">        # Unadjusted (stable default):</span>
+<span class="sd">        result = blackjax.mclmc_lrd_warmup(</span>
+<span class="sd">            logdensity_fn, position, rng_key,</span>
+<span class="sd">            k=4, pilot_num_warmup=500, pilot_num_samples=2000,</span>
+<span class="sd">            lrd_num_steps=1000, num_chains=4,</span>
+<span class="sd">        )</span>
+
+<span class="sd">        # Adjusted (experimental):</span>
+<span class="sd">        result_adj = blackjax.mclmc_lrd_warmup(</span>
+<span class="sd">            logdensity_fn, position, rng_key,</span>
+<span class="sd">            k=4, pilot_num_warmup=500, pilot_num_samples=2000,</span>
+<span class="sd">            lrd_num_steps=1000, num_chains=4,</span>
+<span class="sd">            inner_kernel=&quot;adjusted_mclmc&quot;,</span>
+<span class="sd">        )</span>
+
+<span class="sd">        # Build the production kernel from the unadjusted result:</span>
+<span class="sd">        import blackjax.mcmc.mclmc as mclmc_mod</span>
+<span class="sd">        lrd_imm = result.inverse_mass_matrix</span>
+<span class="sd">        kernel = mclmc_mod.build_kernel()</span>
+<span class="sd">        init_state = mclmc_mod.init(position, logdensity_fn, jax.random.key(0))</span>
+<span class="sd">        next_state, info = kernel(</span>
+<span class="sd">            jax.random.key(1), init_state, logdensity_fn,</span>
+<span class="sd">            lrd_imm, result.L, result.step_size,</span>
+<span class="sd">        )</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">inner_kernel</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_VALID_INNER_KERNELS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;inner_kernel must be one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_VALID_INNER_KERNELS</span><span class="p">)</span><span class="si">!r}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">inner_kernel</span><span class="si">!r}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Five independent keys — no reuse across init / pilot warmup / pilot</span>
+    <span class="c1"># sampling / LRD tuning / adjusted tuning.</span>
+    <span class="n">init_key</span><span class="p">,</span> <span class="n">warmup_key</span><span class="p">,</span> <span class="n">sample_key</span><span class="p">,</span> <span class="n">lrd_subkey</span><span class="p">,</span> <span class="n">adj_subkey</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">,</span> <span class="mi">5</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Phase 1: diagonal pilot — reach typical set + collect geometry samples</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="n">base_kernel</span> <span class="o">=</span> <span class="n">_mclmc_mod</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
+    <span class="n">init_state</span> <span class="o">=</span> <span class="n">_mclmc_mod</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">init_key</span><span class="p">)</span>
+
+    <span class="n">state_after_warmup</span><span class="p">,</span> <span class="n">pilot_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mclmc_find_L_and_step_size</span><span class="p">(</span>
+        <span class="n">mclmc_kernel</span><span class="o">=</span><span class="n">base_kernel</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="o">=</span><span class="n">pilot_num_warmup</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">=</span><span class="n">init_state</span><span class="p">,</span>
+        <span class="n">rng_key</span><span class="o">=</span><span class="n">warmup_key</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
+        <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">pilot_L</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
+    <span class="n">pilot_step_size_val</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">step_size</span><span class="p">)</span>
+
+    <span class="c1"># Collect pilot_num_samples draws with the adapted diagonal kernel.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_pilot_step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="n">next_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">base_kernel</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="n">L</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">L</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">next_state</span><span class="o">.</span><span class="n">position</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">pilot_positions</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+        <span class="n">_pilot_step</span><span class="p">,</span>
+        <span class="n">state_after_warmup</span><span class="p">,</span>
+        <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sample_key</span><span class="p">,</span> <span class="n">pilot_num_samples</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Rank guard: n_eff via blackjax Geyer ESS on ravelled flat vector.</span>
+    <span class="c1"># ESS basis: Geyer monotone-sequence estimator (blackjax.diagnostics.</span>
+    <span class="c1"># effective_sample_size), single chain, pilot_num_samples draws.</span>
+    <span class="c1"># Shape expected: (chains, draws, d) — we add the chains axis here.</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="n">flat_pilot</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">])(</span><span class="n">pilot_positions</span><span class="p">)</span>  <span class="c1"># (n, d)</span>
+
+    <span class="c1"># effective_sample_size expects (chains, draws, d); add singleton chain axis.</span>
+    <span class="c1"># Requires ≥2 draws; guard for degenerate pilots.</span>
+    <span class="k">if</span> <span class="n">pilot_num_samples</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">ess_per_dim</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">flat_pilot</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:])</span>  <span class="c1"># (d,)</span>
+        <span class="n">n_eff</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">ess_per_dim</span><span class="p">))</span>  <span class="c1"># conservative: use min over dims</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">n_eff</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># degenerate: force k_safe=0 → k_used=1</span>
+
+    <span class="n">k_safe</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_eff</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># floor(n_eff / 2)</span>
+    <span class="n">k_used</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">k_safe</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>  <span class="c1"># clamp; always use at least rank 1</span>
+
+    <span class="k">if</span> <span class="n">k_used</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">:</span>
+        <span class="n">n_eff_rounded</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">n_eff</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;mclmc_lrd_warmup: requested k=</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2"> exceeds the rank-safety &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;bound k_safe=floor(n_eff/2)=</span><span class="si">{</span><span class="n">k_safe</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(n_eff=</span><span class="si">{</span><span class="n">n_eff_rounded</span><span class="si">}</span><span class="s2"> from </span><span class="si">{</span><span class="n">pilot_num_samples</span><span class="si">}</span><span class="s2"> pilot draws). &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Clamping to k_used=</span><span class="si">{</span><span class="n">k_used</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="s2">&quot;Increase pilot_num_samples to raise n_eff, or reduce k.&quot;</span><span class="p">,</span>
+            <span class="ne">UserWarning</span><span class="p">,</span>
+            <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Phase 2: SVD extraction → LowRankInverseMassMatrix</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="n">sigma</span><span class="p">,</span> <span class="n">U_k</span><span class="p">,</span> <span class="n">lam_k</span> <span class="o">=</span> <span class="n">_extract_lrd_from_samples</span><span class="p">(</span><span class="n">flat_pilot</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k_used</span><span class="p">)</span>
+    <span class="n">lrd_imm</span> <span class="o">=</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U_k</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam_k</span><span class="p">)</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Phase 3: multi-chain unadjusted LRD tuning</span>
+    <span class="c1"># num_chains independent chains, all starting from pilot&#39;s final position</span>
+    <span class="c1"># with per-chain PRNG keys for independent trajectories.  L and step_size</span>
+    <span class="c1"># are averaged across chains for a stable multi-chain estimate.</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">lrd_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">L</span><span class="p">,</span> <span class="n">step_size</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">base_kernel</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">lrd_imm</span><span class="p">,</span>  <span class="c1"># always route through LRD</span>
+            <span class="n">L</span><span class="o">=</span><span class="n">L</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Warm-start from pilot L/step_size to skip unnecessary exploration.</span>
+    <span class="n">lrd_init_params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
+        <span class="n">L</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">L</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>  <span class="c1"># placeholder; overridden</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Split into 2*num_chains keys: first half for chain init, second for tuning.</span>
+    <span class="n">lrd_all_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">lrd_subkey</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_chains</span><span class="p">)</span>
+    <span class="n">lrd_init_keys</span> <span class="o">=</span> <span class="n">lrd_all_keys</span><span class="p">[:</span><span class="n">num_chains</span><span class="p">]</span>
+    <span class="n">lrd_tune_keys</span> <span class="o">=</span> <span class="n">lrd_all_keys</span><span class="p">[</span><span class="n">num_chains</span><span class="p">:]</span>
+
+    <span class="c1"># Replicate position for all chains (same start, different momenta via keys).</span>
+    <span class="n">chain_positions</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">x</span><span class="p">]</span> <span class="o">*</span> <span class="n">num_chains</span><span class="p">),</span>
+        <span class="n">state_after_warmup</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="nd">@jax</span><span class="o">.</span><span class="n">vmap</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_lrd_init_one</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">x0</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_mclmc_mod</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+
+    <span class="n">lrd_init_states</span> <span class="o">=</span> <span class="n">_lrd_init_one</span><span class="p">(</span><span class="n">lrd_init_keys</span><span class="p">,</span> <span class="n">chain_positions</span><span class="p">)</span>
+
+    <span class="nd">@jax</span><span class="o">.</span><span class="n">vmap</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_lrd_tune_one</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mclmc_find_L_and_step_size</span><span class="p">(</span>
+            <span class="n">mclmc_kernel</span><span class="o">=</span><span class="n">lrd_kernel</span><span class="p">,</span>
+            <span class="n">num_steps</span><span class="o">=</span><span class="n">lrd_num_steps</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+            <span class="n">rng_key</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">lrd_init_params</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">params</span>
+
+    <span class="n">lrd_params_all</span> <span class="o">=</span> <span class="n">_lrd_tune_one</span><span class="p">(</span><span class="n">lrd_tune_keys</span><span class="p">,</span> <span class="n">lrd_init_states</span><span class="p">)</span>
+
+    <span class="c1"># Multi-chain mean for stable L and step_size estimates.</span>
+    <span class="n">lrd_L</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">lrd_params_all</span><span class="o">.</span><span class="n">L</span><span class="p">))</span>
+    <span class="n">lrd_step_size</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">lrd_params_all</span><span class="o">.</span><span class="n">step_size</span><span class="p">))</span>
+
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="c1"># Phase 4: inner-kernel dispatch</span>
+    <span class="c1"># ------------------------------------------------------------------</span>
+    <span class="k">if</span> <span class="n">inner_kernel</span> <span class="o">==</span> <span class="s2">&quot;mclmc&quot;</span><span class="p">:</span>
+        <span class="n">final_L</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lrd_L</span><span class="p">)</span>
+        <span class="n">final_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lrd_step_size</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># inner_kernel == &quot;adjusted_mclmc&quot;</span>
+        <span class="c1"># Build the adjusted kernel wrapper — routes inverse_mass_matrix</span>
+        <span class="c1"># through lrd_imm (same override pattern as Phase 3).</span>
+        <span class="n">adj_base_kernel</span> <span class="o">=</span> <span class="n">_adj_mclmc_mod</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">adj_lrd_kernel</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="p">,</span>
+            <span class="n">integration_steps_params</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="n">adj_base_kernel</span><span class="p">(</span>
+                <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span>
+                <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">,</span>
+                <span class="n">integration_steps_params</span><span class="o">=</span><span class="n">integration_steps_params</span><span class="p">,</span>
+                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">lrd_imm</span><span class="p">,</span>  <span class="c1"># always route through LRD</span>
+            <span class="p">)</span>
+
+        <span class="c1"># L_init floor guard: prevents DA ceiling from binding below oracle.</span>
+        <span class="c1"># Hard constraints enforced here (see module docstring):</span>
+        <span class="c1">#   C1) params != None  →  no sqrt(dim) default L init</span>
+        <span class="c1">#   C2) frac_tune2=0.0  →  variance-based L estimator disabled</span>
+        <span class="n">L_floor</span> <span class="o">=</span> <span class="n">floor_factor</span> <span class="o">*</span> <span class="n">lrd_step_size</span>
+        <span class="n">floor_active</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">L_floor</span> <span class="o">&gt;</span> <span class="n">lrd_L</span><span class="p">)</span>
+        <span class="n">L_init</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">lrd_L</span><span class="p">,</span> <span class="n">L_floor</span><span class="p">))</span>
+
+        <span class="c1"># Note: inverse_mass_matrix is a placeholder in adj_init_params —</span>
+        <span class="c1"># adj_lrd_kernel always routes through lrd_imm; using the diagonal</span>
+        <span class="c1"># pilot IMM keeps the field consistent with MCLMCAdaptationState&#39;s</span>
+        <span class="c1"># existing dtype contract (jnp array).</span>
+        <span class="n">adj_init_params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
+            <span class="n">L</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">L_init</span><span class="p">),</span>
+            <span class="n">step_size</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lrd_step_size</span><span class="p">),</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Multi-chain adjusted tuning — same num_chains chains, starting</span>
+        <span class="c1"># from the pilot&#39;s final position.</span>
+        <span class="n">adj_tune_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">adj_subkey</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
+
+        <span class="nd">@jax</span><span class="o">.</span><span class="n">vmap</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_adj_init_one</span><span class="p">(</span><span class="n">x0</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">_adj_mclmc_mod</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+
+        <span class="n">adj_init_states</span> <span class="o">=</span> <span class="n">_adj_init_one</span><span class="p">(</span><span class="n">chain_positions</span><span class="p">)</span>
+
+        <span class="nd">@jax</span><span class="o">.</span><span class="n">vmap</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_adj_tune_one</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">adjusted_mclmc_find_L_and_step_size</span><span class="p">(</span>
+                <span class="n">mclmc_kernel</span><span class="o">=</span><span class="n">adj_lrd_kernel</span><span class="p">,</span>
+                <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
+                <span class="n">num_steps</span><span class="o">=</span><span class="n">adjusted_num_steps</span><span class="p">,</span>
+                <span class="n">state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+                <span class="n">rng_key</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+                <span class="n">target</span><span class="o">=</span><span class="n">adjusted_target</span><span class="p">,</span>
+                <span class="n">frac_tune1</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># certified recipe: 0.5 × adjusted_num_steps DA steps</span>
+                <span class="n">frac_tune2</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># REQUIRED: variance-based L estimator incompatible with LRD IMM</span>
+                <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># don&#39;t overwrite LRD IMM</span>
+                <span class="n">params</span><span class="o">=</span><span class="n">adj_init_params</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">params</span>
+
+        <span class="n">adj_params_all</span> <span class="o">=</span> <span class="n">_adj_tune_one</span><span class="p">(</span><span class="n">adj_tune_keys</span><span class="p">,</span> <span class="n">adj_init_states</span><span class="p">)</span>
+
+        <span class="c1"># frac_tune2=0.0 → L is fixed at L_init across all chains.</span>
+        <span class="c1"># Average step_size across chains for a stable multi-chain estimate.</span>
+        <span class="n">final_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">adj_params_all</span><span class="o">.</span><span class="n">step_size</span><span class="p">)</span>
+        <span class="n">final_L</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">L_init</span><span class="p">)</span>  <span class="c1"># L is fixed by construction</span>
+
+        <span class="c1"># DA-ceiling diagnostic: warn if step_size is at or near L_init/1.1.</span>
+        <span class="n">_check_da_ceiling_warning</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">final_step_size</span><span class="p">),</span> <span class="n">L_init</span><span class="p">,</span> <span class="n">floor_factor</span><span class="p">)</span>
+
+    <span class="c1"># Gradient accounting: unadjusted MCLMC costs 2 grads/step.</span>
+    <span class="n">pilot_num_grad_evals</span> <span class="o">=</span> <span class="p">(</span><span class="n">pilot_num_warmup</span> <span class="o">+</span> <span class="n">pilot_num_samples</span><span class="p">)</span> <span class="o">*</span> <span class="mi">2</span>
+
+    <span class="n">diagnostics</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;inner_kernel&quot;</span><span class="p">:</span> <span class="n">inner_kernel</span><span class="p">,</span>
+        <span class="s2">&quot;n_eff&quot;</span><span class="p">:</span> <span class="n">n_eff</span><span class="p">,</span>
+        <span class="s2">&quot;k_safe&quot;</span><span class="p">:</span> <span class="n">k_safe</span><span class="p">,</span>
+        <span class="s2">&quot;k_used&quot;</span><span class="p">:</span> <span class="n">k_used</span><span class="p">,</span>
+        <span class="s2">&quot;pilot_num_grad_evals&quot;</span><span class="p">:</span> <span class="n">pilot_num_grad_evals</span><span class="p">,</span>
+        <span class="s2">&quot;pilot_L&quot;</span><span class="p">:</span> <span class="n">pilot_L</span><span class="p">,</span>
+        <span class="s2">&quot;pilot_step_size&quot;</span><span class="p">:</span> <span class="n">pilot_step_size_val</span><span class="p">,</span>
+        <span class="s2">&quot;lrd_L&quot;</span><span class="p">:</span> <span class="n">lrd_L</span><span class="p">,</span>
+        <span class="s2">&quot;lrd_step_size&quot;</span><span class="p">:</span> <span class="n">lrd_step_size</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="c1"># Adjusted-path-only provenance keys (available in scope only for that branch).</span>
+    <span class="k">if</span> <span class="n">inner_kernel</span> <span class="o">==</span> <span class="s2">&quot;adjusted_mclmc&quot;</span><span class="p">:</span>
+        <span class="n">diagnostics</span><span class="p">[</span><span class="s2">&quot;L_init&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">L_init</span>
+        <span class="n">diagnostics</span><span class="p">[</span><span class="s2">&quot;floor_active&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">floor_active</span>
+        <span class="c1"># N_sample = effective number of leapfrog steps per trajectory at the</span>
+        <span class="c1"># final adapted params — the floor-guard inputs that tuningfork cert</span>
+        <span class="c1"># integration uses to verify trajectory-length bookkeeping.</span>
+        <span class="n">diagnostics</span><span class="p">[</span><span class="s2">&quot;N_sample&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">final_L</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">final_step_size</span><span class="p">),</span> <span class="mf">1e-10</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">MCLMCLRDAdaptationState</span><span class="p">(</span>
+        <span class="n">L</span><span class="o">=</span><span class="n">final_L</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="o">=</span><span class="n">final_step_size</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">lrd_imm</span><span class="p">,</span>
+        <span class="n">diagnostics</span><span class="o">=</span><span class="n">diagnostics</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

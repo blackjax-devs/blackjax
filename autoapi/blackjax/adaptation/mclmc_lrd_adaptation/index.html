@@ -1,0 +1,847 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>blackjax.adaptation.mclmc_lrd_adaptation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.adaptation.meads_adaptation" href="../meads_adaptation/index.html" />
+    <link rel="prev" title="blackjax.adaptation.mclmc_adaptation" href="../mclmc_adaptation/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g359205da8" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">blackjax.adaptation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>blackjax.adaptation.mclmc_lrd_adaptation</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stan-window-analogy">Stan-window analogy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#limitations">Limitations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.L"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState.L</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.step_size"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState.step_size</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState.inverse_mass_matrix</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.diagnostics"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState.diagnostics</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup"><code class="docutils literal notranslate"><span class="pre">mclmc_lrd_warmup()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-blackjax.adaptation.mclmc_lrd_adaptation">
+<span id="blackjax-adaptation-mclmc-lrd-adaptation"></span><h1>blackjax.adaptation.mclmc_lrd_adaptation<a class="headerlink" href="#module-blackjax.adaptation.mclmc_lrd_adaptation" title="Link to this heading">#</a></h1>
+<p>Pilot-free (Scheme A) MCLMC warmup with Low-Rank Diagonal preconditioning.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading">#</a></h2>
+<p>This module implements the <strong>Scheme A</strong> warmup for MCLMC via
+<a class="reference internal" href="#blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup" title="blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup"><code class="xref py py-func docutils literal notranslate"><span class="pre">mclmc_lrd_warmup()</span></code></a>.  Phases 1–3 are shared between the unadjusted and
+adjusted inner kernels; only Phase 4 switches:</p>
+<ol class="arabic">
+<li><p><strong>Pilot phase</strong> — a single unadjusted MCLMC chain with diagonal
+preconditioning (via
+<a class="reference internal" href="../mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size" title="blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">mclmc_find_L_and_step_size()</span></code></a>)
+runs for <code class="docutils literal notranslate"><span class="pre">pilot_num_warmup</span> <span class="pre">+</span> <span class="pre">pilot_num_samples</span></code> steps to reach the
+typical set and collect geometry samples.</p></li>
+<li><p><strong>LRD extraction</strong> — the pilot draws are standardised and a thin SVD
+extracts the top-<em>k</em> principal directions of the correlation structure.
+The result is a
+<a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a> <code class="docutils literal notranslate"><span class="pre">(sigma,</span> <span class="pre">U,</span>
+<span class="pre">lam)</span></code>.</p>
+<p><strong>Rank guard (non-negotiable):</strong> before extraction, the effective sample
+size of the pilot chain is estimated via
+<a class="reference internal" href="../../diagnostics/index.html#blackjax.diagnostics.effective_sample_size" title="blackjax.diagnostics.effective_sample_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">effective_sample_size()</span></code></a> (the Geyer
+monotone-sequence estimator, operating on the ravelled flat-parameter
+vector; one chain, <code class="docutils literal notranslate"><span class="pre">pilot_num_samples</span></code> draws; basis is <em>not</em> the
+az-bulk ESS).  A safe rank bound <code class="docutils literal notranslate"><span class="pre">k_safe</span> <span class="pre">=</span> <span class="pre">floor(n_eff</span> <span class="pre">/</span> <span class="pre">2)</span></code> is
+computed, and the requested <code class="docutils literal notranslate"><span class="pre">k</span></code> is hard-clamped to <code class="docutils literal notranslate"><span class="pre">k_safe</span></code> when it
+would exceed it.  Without this guard, under-mixed pilots produce
+rank-deficient SVDs and the LRD metric degrades sampling quality.  In the
+extreme under-mix regime (n_eff &lt; 5), the Geyer estimator may exceed
+az-bulk ESS on the minimum-ESS dimension; <code class="docutils literal notranslate"><span class="pre">k_safe</span></code> is still floored to
+0 → <code class="docutils literal notranslate"><span class="pre">k_used=1</span></code>, so practical rank clamping is unaffected.</p>
+</li>
+<li><p><strong>Multi-chain unadjusted LRD tuning</strong> —
+<a class="reference internal" href="../mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size" title="blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">mclmc_find_L_and_step_size()</span></code></a>
+is run in parallel over <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> independent chains (all starting
+from the pilot’s final position, with per-chain PRNG keys) with the LRD
+metric kernel (<code class="docutils literal notranslate"><span class="pre">diagonal_preconditioning=False</span></code>).  The per-chain
+<code class="docutils literal notranslate"><span class="pre">(L,</span> <span class="pre">step_size)</span></code> values are averaged to give stable estimates of the
+trajectory length and step size in LRD geometry.</p></li>
+<li><p><strong>Inner-kernel dispatch</strong> (controlled by <code class="docutils literal notranslate"><span class="pre">inner_kernel</span></code>):</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;mclmc&quot;</span></code> <em>(default)</em>: returns the Phase-3 mean
+<code class="docutils literal notranslate"><span class="pre">(L,</span> <span class="pre">step_size)</span></code> directly.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;adjusted_mclmc&quot;</span></code> <em>(experimental)</em>: warm-starts
+<a class="reference internal" href="../adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size" title="blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">adjusted_mclmc_find_L_and_step_size()</span></code></a>
+across <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> parallel chains from the Phase-3 mean parameters.
+<strong>Two hard constraints are enforced automatically</strong> to avoid known
+failure modes:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">params</span></code> is set to
+<code class="docutils literal notranslate"><span class="pre">MCLMCAdaptationState(L=L_init,</span> <span class="pre">step_size=...,</span> <span class="pre">inverse_mass_matrix=lrd_imm)</span></code>
+so that the <code class="docutils literal notranslate"><span class="pre">sqrt(dim)</span></code> default L initialisation (which ignores the
+baked-in LRD metric) is never used.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">frac_tune2=0.0</span></code> disables the variance-based <em>L</em> estimator, which
+computes original-space <code class="docutils literal notranslate"><span class="pre">trace(Σ)</span></code> and is incompatible with an
+externally-baked LRD IMM.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">L_init</span></code> is floored at <code class="docutils literal notranslate"><span class="pre">floor_factor</span> <span class="pre">*</span> <span class="pre">step_unadj</span></code> (default
+<code class="docutils literal notranslate"><span class="pre">floor_factor=1.15</span></code>) to prevent the Dual-Averaging ceiling
+<code class="docutils literal notranslate"><span class="pre">(L</span> <span class="pre">/</span> <span class="pre">1.1)</span></code> from binding below the oracle step size.  For geometry
+where the oracle step size exceeds the oracle L (stiff
+high-condition-number targets), the default 1.15 may leave the DA
+ceiling binding; raise to approximately 1.5 and set
+<code class="docutils literal notranslate"><span class="pre">adjusted_num_steps</span></code> to at least 5000 for those targets.</p>
+</li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="stan-window-analogy">
+<h2>Stan-window analogy<a class="headerlink" href="#stan-window-analogy" title="Link to this heading">#</a></h2>
+<p>The staging mirrors Stan’s two-phase warmup: a cheap diagonal (fast) phase
+reaches the typical set first; the LRD (slow) phase then builds the metric
+from draws that are already in the right region.  The key difference is that
+Scheme A uses MCLMC (unadjusted, leapfrog-free) for the pilot, eliminating
+the NUTS pilot cost that dominated total gradient expenditure in our
+benchmarks:</p>
+<ul class="simple">
+<li><p>ill_cond_50 (d=50, κ=1000): k=40, n_pilot=10k → 101.1 % oracle step-size
+recovery, 2.42× ESS/total-grad vs NUTS-pilot, 72.5 % grad savings.</p></li>
+<li><p>german_credit (d=26): k=8, n_pilot=5k.</p></li>
+<li><p>mvn_10 (d=10): k=4, n_pilot=2k.</p></li>
+</ul>
+</section>
+<section id="limitations">
+<h2>Limitations<a class="headerlink" href="#limitations" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p><strong>Single-chain pilot.</strong> The pilot is single-chain; overdispersed
+multi-chain initialisation would give stronger geometry coverage and
+tighter n_eff estimates.  This is a known limitation for the rank guard’s
+tightness.</p></li>
+<li><p><strong>NUTS-pilot fallback.</strong> When the target has funnel-class geometry (e.g.
+hierarchical models near unit-root), the MCLMC pilot may under-mix even
+with n_eff/2 clamping.  A NUTS-pilot fallback (replacing Phase 1 with
+<a class="reference internal" href="../window_adaptation/index.html#blackjax.adaptation.window_adaptation.window_adaptation" title="blackjax.adaptation.window_adaptation.window_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation()</span></code></a>) is the
+recommended escape hatch but is out of scope here.</p></li>
+<li><p><strong>Adjusted path experimental.</strong> <code class="docutils literal notranslate"><span class="pre">inner_kernel=&quot;adjusted_mclmc&quot;</span></code> is
+certified 3/3 on german_credit at the default recipe (4-chain phase 3,
+<code class="docutils literal notranslate"><span class="pre">frac_tune2=0</span></code>, <code class="docutils literal notranslate"><span class="pre">floor_factor=1.15</span></code>, <code class="docutils literal notranslate"><span class="pre">adjusted_num_steps=3000</span></code>).
+ill_cond_50 (stiff, κ=1000) is geometrically compatible (clamp-free at
+<code class="docutils literal notranslate"><span class="pre">floor_factor=1.5</span></code>, step size 104–114% of oracle, zero DA divergences)
+but was NOT certified at <code class="docutils literal notranslate"><span class="pre">adjusted_num_steps=3000</span></code> (marginal R-hat
+1.010–1.011; DA not converged).  For stiff geometry, raise
+<code class="docutils literal notranslate"><span class="pre">floor_factor</span></code> to ~1.5 and <code class="docutils literal notranslate"><span class="pre">adjusted_num_steps</span></code> to ≥5000.
+The unadjusted default remains the stable, broadly validated path.</p></li>
+</ul>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState" title="blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState</span></code></a></p></td>
+<td><p>Result of <a class="reference internal" href="#blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup" title="blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup"><code class="xref py py-func docutils literal notranslate"><span class="pre">mclmc_lrd_warmup()</span></code></a>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup" title="blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mclmc_lrd_warmup</span></code></a>(logdensity_fn, position, rng_key, *)</p></td>
+<td><p>Scheme A (pilot-free) MCLMC warmup with Low-Rank Diagonal preconditioning.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MCLMCLRDAdaptationState</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_lrd_adaptation.html#MCLMCLRDAdaptationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState" title="Link to this definition">#</a></dt>
+<dd><p>Result of <a class="reference internal" href="#blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup" title="blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup"><code class="xref py py-func docutils literal notranslate"><span class="pre">mclmc_lrd_warmup()</span></code></a>.</p>
+<dl>
+<dt>L</dt><dd><p>Adapted momentum decoherence length from the final tuning phase.</p>
+</dd>
+<dt>step_size</dt><dd><p>Adapted step size from the final tuning phase.</p>
+</dd>
+<dt>inverse_mass_matrix</dt><dd><p>The adapted LRD inverse mass matrix as a
+<a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a> NamedTuple
+<code class="docutils literal notranslate"><span class="pre">(sigma,</span> <span class="pre">U,</span> <span class="pre">lam)</span></code>.</p>
+</dd>
+<dt>diagnostics</dt><dd><p>A plain dict with provenance fields:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">inner_kernel</span></code></dt><dd><p>Which inner kernel was used (<code class="docutils literal notranslate"><span class="pre">&quot;mclmc&quot;</span></code> or
+<code class="docutils literal notranslate"><span class="pre">&quot;adjusted_mclmc&quot;</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">n_eff</span></code></dt><dd><p>Effective sample size of the pilot chain (Geyer monotone-sequence
+estimator, blackjax basis, ravelled flat vector).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">k_safe</span></code></dt><dd><p>Floor of <code class="docutils literal notranslate"><span class="pre">n_eff</span> <span class="pre">/</span> <span class="pre">2</span></code> — the maximum rank that is statistically
+supported by the pilot.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">k_used</span></code></dt><dd><p>The rank actually passed to SVD after clamping (<code class="docutils literal notranslate"><span class="pre">min(k,</span> <span class="pre">k_safe)</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pilot_num_grad_evals</span></code></dt><dd><p>Total gradient evaluations consumed by the pilot phase
+(warmup + samples; unadjusted MCLMC costs 2 grads/step).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pilot_L</span></code></dt><dd><p>Trajectory length L adapted during the diagonal pilot warmup.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">pilot_step_size</span></code></dt><dd><p>Step size adapted during the diagonal pilot warmup.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lrd_L</span></code></dt><dd><p>Mean trajectory length L across <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> chains after
+Phase-3 unadjusted LRD tuning.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lrd_step_size</span></code></dt><dd><p>Mean step size across <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> chains after Phase-3
+unadjusted LRD tuning.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">L_init</span></code></dt><dd><p><em>(adjusted path only)</em> The floor-guarded L initialisation value
+passed to the adjusted warm-start: <code class="docutils literal notranslate"><span class="pre">max(lrd_L,</span> <span class="pre">floor_factor</span> <span class="pre">*</span>
+<span class="pre">lrd_step_size)</span></code>.  This is the value whose <code class="docutils literal notranslate"><span class="pre">/</span> <span class="pre">1.1</span></code> sets the DA
+ceiling for step-size tuning.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">floor_active</span></code></dt><dd><p><em>(adjusted path only)</em> <code class="docutils literal notranslate"><span class="pre">True</span></code> when the floor guard was
+triggered (<code class="docutils literal notranslate"><span class="pre">floor_factor</span> <span class="pre">*</span> <span class="pre">lrd_step_size</span> <span class="pre">&gt;</span> <span class="pre">lrd_L</span></code>), i.e. when
+<code class="docutils literal notranslate"><span class="pre">L_init</span></code> was raised above the unadjusted mean.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">N_sample</span></code></dt><dd><p><em>(adjusted path only)</em> Effective number of leapfrog steps per
+trajectory at the final adapted parameters:
+<code class="docutils literal notranslate"><span class="pre">round(L_init</span> <span class="pre">/</span> <span class="pre">final_step_size)</span></code>.  Provided as a bookkeeping
+aid for cert integration.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.L">
+<span class="sig-name descname"><span class="pre">L</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_lrd_adaptation.html#MCLMCLRDAdaptationState.L"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.L" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.step_size">
+<span class="sig-name descname"><span class="pre">step_size</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_lrd_adaptation.html#MCLMCLRDAdaptationState.step_size"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.step_size" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.inverse_mass_matrix">
+<span class="sig-name descname"><span class="pre">inverse_mass_matrix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><span class="pre">blackjax.mcmc.metrics.LowRankInverseMassMatrix</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_lrd_adaptation.html#MCLMCLRDAdaptationState.inverse_mass_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.inverse_mass_matrix" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.diagnostics">
+<span class="sig-name descname"><span class="pre">diagnostics</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_lrd_adaptation.html#MCLMCLRDAdaptationState.diagnostics"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.diagnostics" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup">
+<span class="sig-name descname"><span class="pre">mclmc_lrd_warmup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rng_key</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pilot_num_warmup</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pilot_num_samples</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">5000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lrd_num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inner_kernel</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mclmc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">floor_factor</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjusted_num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">3000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjusted_target</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.9</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_lrd_adaptation.html#mclmc_lrd_warmup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup" title="Link to this definition">#</a></dt>
+<dd><p>Scheme A (pilot-free) MCLMC warmup with Low-Rank Diagonal preconditioning.</p>
+<p>Runs a cheap diagonal unadjusted MCLMC pilot to reach the typical set and
+collect geometry samples, extracts a low-rank diagonal (LRD) inverse mass
+matrix via thin SVD, then calibrates step size and trajectory length L
+across <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> parallel chains with the LRD metric kernel.  The
+inner kernel for the final tuning phase is controlled by <code class="docutils literal notranslate"><span class="pre">inner_kernel</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – Log-density of the target distribution.</p></li>
+<li><p><strong>position</strong> – Initial position (any pytree).</p></li>
+<li><p><strong>rng_key</strong> – JAX PRNG key.</p></li>
+<li><p><strong>k</strong> – Requested LRD rank.  Hard-clamped to <code class="docutils literal notranslate"><span class="pre">floor(n_eff</span> <span class="pre">/</span> <span class="pre">2)</span></code> if the
+pilot chain is under-mixed; see the rank-guard note in the module
+docstring.</p></li>
+<li><p><strong>pilot_num_warmup</strong> – Number of steps for the diagonal pilot warmup phase (used by
+<a class="reference internal" href="../mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size" title="blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">mclmc_find_L_and_step_size()</span></code></a>
+to adapt step size and L with a diagonal mass matrix).</p></li>
+<li><p><strong>pilot_num_samples</strong> – Number of unadjusted MCLMC draws collected <em>after</em> the pilot warmup,
+used for the SVD geometry estimate.</p></li>
+<li><p><strong>lrd_num_steps</strong> – Number of steps passed to the LRD tuning call(s) in Phase 3 (and
+Phase 4 for the adjusted path).</p></li>
+<li><p><strong>num_chains</strong> – Number of parallel chains for Phase 3 (unadjusted LRD tuning) and
+Phase 4 (adjusted tuning when <code class="docutils literal notranslate"><span class="pre">inner_kernel=&quot;adjusted_mclmc&quot;</span></code>).
+All chains start from the pilot’s final position; per-chain PRNG keys
+give independent trajectories.  Per-chain L and step_size are averaged
+for a stable multi-chain estimate.  Default <code class="docutils literal notranslate"><span class="pre">4</span></code>.</p></li>
+<li><p><strong>inner_kernel</strong> – <p>Which inner kernel to use for the final tuning phase.  One of:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;mclmc&quot;</span></code> <em>(default, stable)</em>: unadjusted MCLMC.  Phase-3
+mean <code class="docutils literal notranslate"><span class="pre">(L,</span> <span class="pre">step_size)</span></code> is returned directly.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;adjusted_mclmc&quot;</span></code> <em>(experimental)</em>: after Phase-3 unadjusted
+LRD tuning, warm-starts
+<a class="reference internal" href="../adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size" title="blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">adjusted_mclmc_find_L_and_step_size()</span></code></a>
+across <code class="docutils literal notranslate"><span class="pre">num_chains</span></code> chains with <code class="docutils literal notranslate"><span class="pre">frac_tune2=0.0</span></code>
+(variance-based <em>L</em> estimator disabled) and
+<code class="docutils literal notranslate"><span class="pre">diagonal_preconditioning=False</span></code>.</p></li>
+</ul>
+</p></li>
+<li><p><strong>floor_factor</strong> – For <code class="docutils literal notranslate"><span class="pre">inner_kernel=&quot;adjusted_mclmc&quot;</span></code> only: the L initialisation
+floor is <code class="docutils literal notranslate"><span class="pre">max(L_unadj,</span> <span class="pre">floor_factor</span> <span class="pre">*</span> <span class="pre">step_unadj)</span></code>.  Default
+<code class="docutils literal notranslate"><span class="pre">1.15</span></code>; certified on german_credit.  For stiff geometry where the
+oracle step size exceeds the oracle L, raise to approximately 1.5
+(the default leaves the DA ceiling <code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">/</span> <span class="pre">1.1</span></code> binding for those
+targets).  Ignored when <code class="docutils literal notranslate"><span class="pre">inner_kernel=&quot;mclmc&quot;</span></code>.</p></li>
+<li><p><strong>adjusted_num_steps</strong> – Number of DA tuning steps for the adjusted Phase-4 path.  Default
+<code class="docutils literal notranslate"><span class="pre">3000</span></code> with <code class="docutils literal notranslate"><span class="pre">frac_tune1=0.5</span></code> → 1500 DA steps; the certified
+recipe for german_credit.  For stiff high-κ geometry, increase to
+at least 5000.  Ignored when <code class="docutils literal notranslate"><span class="pre">inner_kernel=&quot;mclmc&quot;</span></code>.</p></li>
+<li><p><strong>adjusted_target</strong> – Target acceptance rate for the adjusted MCLMC tuning phase.
+Default <code class="docutils literal notranslate"><span class="pre">0.9</span></code>.  Ignored when <code class="docutils literal notranslate"><span class="pre">inner_kernel=&quot;mclmc&quot;</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <a class="reference internal" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState" title="blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState</span></code></a> NamedTuple with fields <code class="docutils literal notranslate"><span class="pre">L</span></code>,
+<code class="docutils literal notranslate"><span class="pre">step_size</span></code>, <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> (a
+<a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a>), and
+<code class="docutils literal notranslate"><span class="pre">diagnostics</span></code> (see <a class="reference internal" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState" title="blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState"><code class="xref py py-class docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState</span></code></a> for keys).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState" title="blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState">MCLMCLRDAdaptationState</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">inner_kernel</span></code> is not one of <code class="docutils literal notranslate"><span class="pre">&quot;mclmc&quot;</span></code> or
+<code class="docutils literal notranslate"><span class="pre">&quot;adjusted_mclmc&quot;</span></code>.</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax</span>
+
+<span class="n">logdensity_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">position</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+<span class="n">rng_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span>
+
+<span class="c1"># Unadjusted (stable default):</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mclmc_lrd_warmup</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span>
+    <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">pilot_num_warmup</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">pilot_num_samples</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+    <span class="n">lrd_num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Adjusted (experimental):</span>
+<span class="n">result_adj</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mclmc_lrd_warmup</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">,</span>
+    <span class="n">k</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">pilot_num_warmup</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">pilot_num_samples</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+    <span class="n">lrd_num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">num_chains</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+    <span class="n">inner_kernel</span><span class="o">=</span><span class="s2">&quot;adjusted_mclmc&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Build the production kernel from the unadjusted result:</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.mclmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mclmc_mod</span>
+<span class="n">lrd_imm</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">mclmc_mod</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
+<span class="n">init_state</span> <span class="o">=</span> <span class="n">mclmc_mod</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">))</span>
+<span class="n">next_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">kernel</span><span class="p">(</span>
+    <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">init_state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span>
+    <span class="n">lrd_imm</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">L</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../mclmc_adaptation/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">blackjax.adaptation.mclmc_adaptation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../meads_adaptation/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">blackjax.adaptation.meads_adaptation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stan-window-analogy">Stan-window analogy</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#limitations">Limitations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.L"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState.L</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.step_size"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState.step_size</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState.inverse_mass_matrix</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.diagnostics"><code class="docutils literal notranslate"><span class="pre">MCLMCLRDAdaptationState.diagnostics</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup"><code class="docutils literal notranslate"><span class="pre">mclmc_lrd_warmup()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

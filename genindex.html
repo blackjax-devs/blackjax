@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g838634723" />
+  <meta name="docsearch:version" content="0.1.dev1+g359205da8" />
   </head>
   
   
@@ -186,6 +186,7 @@
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
@@ -658,6 +659,13 @@
 </li>
       </ul></li>
       <li>
+    blackjax.adaptation.mclmc_lrd_adaptation
+
+      <ul>
+        <li><a href="autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#module-blackjax.adaptation.mclmc_lrd_adaptation">module</a>
+</li>
+      </ul></li>
+      <li>
     blackjax.adaptation.meads_adaptation
 
       <ul>
@@ -874,6 +882,8 @@
         <li><a href="autoapi/blackjax/sgmcmc/index.html#module-blackjax.sgmcmc">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.csgld
 
@@ -881,8 +891,6 @@
         <li><a href="autoapi/blackjax/sgmcmc/csgld/index.html#module-blackjax.sgmcmc.csgld">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     blackjax.sgmcmc.diffusions
 
@@ -1214,6 +1222,8 @@
 </li>
       <li><a href="autoapi/blackjax/index.html#blackjax.dhmc">dhmc (in module blackjax)</a>
 </li>
+      <li><a href="autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.diagnostics">diagnostics (MCLMCLRDAdaptationState attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/smc/solver/index.html#blackjax.smc.solver.dichotomy">dichotomy() (in module blackjax.smc.solver)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/periodic_orbital/index.html#blackjax.mcmc.periodic_orbital.PeriodicOrbitalState.directions">directions (PeriodicOrbitalState attribute)</a>
@@ -1481,6 +1491,8 @@
 </li>
         <li><a href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.inverse_mass_matrix">(MCLMCAdaptationState attribute)</a>
 </li>
+        <li><a href="autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.inverse_mass_matrix">(MCLMCLRDAdaptationState attribute)</a>
+</li>
         <li><a href="autoapi/blackjax/adaptation/pathfinder_adaptation/index.html#blackjax.adaptation.pathfinder_adaptation.PathfinderAdaptationState.inverse_mass_matrix">(PathfinderAdaptationState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/adaptation/window_adaptation/index.html#blackjax.adaptation.window_adaptation.WindowAdaptationState.inverse_mass_matrix">(WindowAdaptationState attribute)</a>
@@ -1552,6 +1564,8 @@
 
       <ul>
         <li><a href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.L">(MCLMCAdaptationState attribute)</a>
+</li>
+        <li><a href="autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.L">(MCLMCLRDAdaptationState attribute)</a>
 </li>
       </ul></li>
       <li><a href="autoapi/blackjax/adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.LowRankAdaptationState.lam">lam (LowRankAdaptationState attribute)</a>
@@ -1710,9 +1724,13 @@
 </li>
       <li><a href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size">mclmc_find_L_and_step_size() (in module blackjax.adaptation.mclmc_adaptation)</a>
 </li>
+      <li><a href="autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.mclmc_lrd_warmup">mclmc_lrd_warmup() (in module blackjax.adaptation.mclmc_lrd_adaptation)</a>
+</li>
       <li><a href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState">MCLMCAdaptationState (class in blackjax.adaptation.mclmc_adaptation)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/mclmc/index.html#blackjax.mcmc.mclmc.MCLMCInfo">MCLMCInfo (class in blackjax.mcmc.mclmc)</a>
+</li>
+      <li><a href="autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState">MCLMCLRDAdaptationState (class in blackjax.adaptation.mclmc_lrd_adaptation)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.meads_adaptation">meads_adaptation() (in module blackjax.adaptation.meads_adaptation)</a>
 </li>
@@ -1755,6 +1773,8 @@
         <li><a href="autoapi/blackjax/adaptation/mass_matrix/index.html#module-blackjax.adaptation.mass_matrix">blackjax.adaptation.mass_matrix</a>
 </li>
         <li><a href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html#module-blackjax.adaptation.mclmc_adaptation">blackjax.adaptation.mclmc_adaptation</a>
+</li>
+        <li><a href="autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#module-blackjax.adaptation.mclmc_lrd_adaptation">blackjax.adaptation.mclmc_lrd_adaptation</a>
 </li>
         <li><a href="autoapi/blackjax/adaptation/meads_adaptation/index.html#module-blackjax.adaptation.meads_adaptation">blackjax.adaptation.meads_adaptation</a>
 </li>
@@ -2305,6 +2325,8 @@
         <li><a href="autoapi/blackjax/adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.LowRankAdaptationState.step_size">(LowRankAdaptationState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.MCLMCAdaptationState.step_size">(MCLMCAdaptationState attribute)</a>
+</li>
+        <li><a href="autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html#blackjax.adaptation.mclmc_lrd_adaptation.MCLMCLRDAdaptationState.step_size">(MCLMCLRDAdaptationState attribute)</a>
 </li>
         <li><a href="autoapi/blackjax/adaptation/meads_adaptation/index.html#blackjax.adaptation.meads_adaptation.MEADSAdaptationState.step_size">(MEADSAdaptationState attribute)</a>
 </li>
