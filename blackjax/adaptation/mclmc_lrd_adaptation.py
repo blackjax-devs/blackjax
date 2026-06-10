@@ -15,40 +15,66 @@
 
 Overview
 --------
-This module implements the **Scheme A** warmup for unadjusted MCLMC:
+This module implements the **Scheme A** warmup for MCLMC.  Phases 1–3 are
+shared between the unadjusted and adjusted inner kernels; only Phase 4
+switches:
 
-1. **Pilot phase** — a single unadjusted MCLMC chain with diagonal preconditioning
-   (via :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`)
-   runs for ``pilot_num_warmup + pilot_num_samples`` steps to reach the typical
-   set and collect geometry samples.
+1. **Pilot phase** — a single unadjusted MCLMC chain with diagonal
+   preconditioning (via
+   :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`)
+   runs for ``pilot_num_warmup + pilot_num_samples`` steps to reach the
+   typical set and collect geometry samples.
 
-2. **LRD extraction** — the pilot draws are standardised and a thin SVD extracts
-   the top-*k* principal directions of the correlation structure.  The result is a
-   :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` ``(sigma, U, lam)``.
+2. **LRD extraction** — the pilot draws are standardised and a thin SVD
+   extracts the top-*k* principal directions of the correlation structure.
+   The result is a
+   :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` ``(sigma, U,
+   lam)``.
 
-   **Rank guard (non-negotiable):** before extraction, the effective sample size
-   of the pilot chain is estimated via :func:`~blackjax.diagnostics.effective_sample_size`
-   (the Geyer monotone-sequence estimator, operating on the ravelled flat-parameter
-   vector; one chain, ``n_pilot_samples`` draws; basis is *not* the az-bulk ESS).
-   A safe rank bound ``k_safe = floor(n_eff / 2)`` is computed, and the requested
-   ``k`` is hard-clamped to ``k_safe`` when it would exceed it.  Without this
-   guard, under-mixed pilots produce rank-deficient SVDs and the LRD metric
-   degrades sampling quality (observed failure mode: ill_cond_50 attempts 1–2 at
-   k=40, n_pilot=1000, n_eff≈30 → k_safe=15; cert passed only once n_pilot≥10k
-   kept k≤n_eff/2).
+   **Rank guard (non-negotiable):** before extraction, the effective sample
+   size of the pilot chain is estimated via
+   :func:`~blackjax.diagnostics.effective_sample_size` (the Geyer
+   monotone-sequence estimator, operating on the ravelled flat-parameter
+   vector; one chain, ``pilot_num_samples`` draws; basis is *not* the
+   az-bulk ESS).  A safe rank bound ``k_safe = floor(n_eff / 2)`` is
+   computed, and the requested ``k`` is hard-clamped to ``k_safe`` when it
+   would exceed it.  Without this guard, under-mixed pilots produce
+   rank-deficient SVDs and the LRD metric degrades sampling quality.
 
-3. **LRD tuning phase** — :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`
-   is re-run with the LRD metric kernel (``diagonal_preconditioning=False``), so
-   the step size and trajectory length L are calibrated to the true posterior
-   geometry.
+3. **Unadjusted LRD tuning** —
+   :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`
+   is re-run with the LRD metric kernel
+   (``diagonal_preconditioning=False``), so step size and trajectory length
+   *L* are calibrated to the true posterior geometry.
+
+4. **Inner-kernel dispatch** (controlled by ``inner_kernel``):
+
+   * ``"mclmc"`` *(default)*: returns Phase-3 ``(L, step_size)`` directly.
+
+   * ``"adjusted_mclmc"`` *(experimental)*: warm-starts
+     :func:`~blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size`
+     from the unadjusted LRD-tuned parameters.  **Two hard constraints are
+     enforced automatically** to avoid known failure modes:
+
+     - ``params`` is set to ``MCLMCAdaptationState(L=L_init, step_size=...,
+       inverse_mass_matrix=lrd_imm)`` so that the sqrt(dim) default L
+       initialisation (which ignores the baked-in LRD metric) is never
+       used.
+     - ``frac_tune2=0.0`` disables the variance-based *L* estimator, which
+       computes original-space ``trace(Σ)`` and is incompatible with an
+       externally-baked LRD IMM.
+
+     ``L_init`` is floored at ``floor_factor * step_unadj`` (default
+     ``floor_factor=1.15``) to prevent degenerate one-step trajectories.
 
 Stan-window analogy
 -------------------
 The staging mirrors Stan's two-phase warmup: a cheap diagonal (fast) phase
-reaches the typical set first; the LRD (slow) phase then builds the metric from
-draws that are already in the right region.  The key difference is that Scheme A
-uses MCLMC (unadjusted, leapfrog-free) for both phases, eliminating the NUTS
-pilot cost that dominated total gradient expenditure in our benchmarks:
+reaches the typical set first; the LRD (slow) phase then builds the metric
+from draws that are already in the right region.  The key difference is that
+Scheme A uses MCLMC (unadjusted, leapfrog-free) for the pilot, eliminating
+the NUTS pilot cost that dominated total gradient expenditure in our
+benchmarks:
 
 * ill_cond_50 (d=50, κ=1000): k=40, n_pilot=10k → 101.1 % oracle step-size
   recovery, 2.42× ESS/total-grad vs NUTS-pilot, 72.5 % grad savings.
@@ -57,17 +83,19 @@ pilot cost that dominated total gradient expenditure in our benchmarks:
 
 Limitations
 -----------
-* **Unadjusted only.** Adjusted MCLMC (MCMC-correct) research is still in
-  flight; the LRD metric has not yet been validated with the adjusted kernel.
-  A future ``mclmc_lrd_adaptation_adjusted`` variant is the intended hook.
-* **Single-chain pilot.** The pilot is single-chain; overdispersed multi-chain
-  initialisation would give stronger geometry coverage and tighter n_eff
-  estimates.  This is a known limitation for the rank guard's tightness.
+* **Single-chain pilot.** The pilot is single-chain; overdispersed
+  multi-chain initialisation would give stronger geometry coverage and
+  tighter n_eff estimates.  This is a known limitation for the rank guard's
+  tightness.
 * **NUTS-pilot fallback.** When the target has funnel-class geometry (e.g.
-  stoch_vol), the MCLMC pilot may under-mix even with n_eff/2 clamping.  A
-  NUTS-pilot fallback (replacing Phase 1 with
+  hierarchical models near unit-root), the MCLMC pilot may under-mix even
+  with n_eff/2 clamping.  A NUTS-pilot fallback (replacing Phase 1 with
   :func:`~blackjax.adaptation.window_adaptation.window_adaptation`) is the
   recommended escape hatch but is out of scope here.
+* **Adjusted path experimental.** The ``inner_kernel="adjusted_mclmc"``
+  branch is certified on german_credit but has not yet been validated across
+  a broad benchmark suite.  ill_cond_50 evidence is ongoing.  Treat as
+  experimental; the unadjusted default is the stable path.
 """
 
 import warnings
@@ -77,7 +105,11 @@ import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
+import blackjax.mcmc.adjusted_mclmc as _adj_mclmc_mod
 import blackjax.mcmc.mclmc as _mclmc_mod
+from blackjax.adaptation.adjusted_mclmc_adaptation import (
+    adjusted_mclmc_find_L_and_step_size,
+)
 from blackjax.adaptation.mclmc_adaptation import (
     MCLMCAdaptationState,
     mclmc_find_L_and_step_size,
@@ -90,14 +122,16 @@ __all__ = [
     "mclmc_lrd_adaptation",
 ]
 
+_VALID_INNER_KERNELS = frozenset({"mclmc", "adjusted_mclmc"})
+
 
 class MCLMCLRDAdaptationState(NamedTuple):
     """Result of :func:`mclmc_lrd_adaptation`.
 
     L
-        Adapted momentum decoherence length from the LRD tuning phase.
+        Adapted momentum decoherence length from the final tuning phase.
     step_size
-        Adapted step size from the LRD tuning phase.
+        Adapted step size from the final tuning phase.
     inverse_mass_matrix
         The adapted LRD inverse mass matrix as a
         :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` NamedTuple
@@ -105,6 +139,9 @@ class MCLMCLRDAdaptationState(NamedTuple):
     diagnostics
         A plain dict with provenance fields:
 
+        ``inner_kernel``
+            Which inner kernel was used (``"mclmc"`` or
+            ``"adjusted_mclmc"``).
         ``n_eff``
             Effective sample size of the pilot chain (Geyer monotone-sequence
             estimator, blackjax basis, ravelled flat vector).
@@ -174,13 +211,17 @@ def mclmc_lrd_adaptation(
     pilot_num_warmup: int = 1000,
     pilot_num_samples: int = 5000,
     lrd_num_steps: int = 1000,
+    inner_kernel: str = "mclmc",
+    floor_factor: float = 1.15,
+    adjusted_target: float = 0.9,
 ):
     """Scheme A (pilot-free) MCLMC adaptation with Low-Rank Diagonal preconditioning.
 
     Runs a cheap diagonal unadjusted MCLMC pilot to reach the typical set and
     collect geometry samples, extracts a low-rank diagonal (LRD) inverse mass
     matrix via thin SVD, then tunes step size and trajectory length L against
-    the LRD metric kernel.
+    the LRD metric kernel.  The inner kernel for the final tuning phase is
+    controlled by ``inner_kernel``.
 
     Parameters
     ----------
@@ -191,8 +232,9 @@ def mclmc_lrd_adaptation(
     rng_key
         JAX PRNG key.
     k
-        Requested LRD rank.  Hard-clamped to ``floor(n_eff / 2)`` if the pilot
-        chain is under-mixed; see the rank-guard note in the module docstring.
+        Requested LRD rank.  Hard-clamped to ``floor(n_eff / 2)`` if the
+        pilot chain is under-mixed; see the rank-guard note in the module
+        docstring.
     pilot_num_warmup
         Number of steps for the diagonal pilot warmup phase (used by
         :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`
@@ -201,9 +243,28 @@ def mclmc_lrd_adaptation(
         Number of unadjusted MCLMC draws collected *after* the pilot warmup,
         used for the SVD geometry estimate.
     lrd_num_steps
-        Number of steps passed as ``num_steps`` to the second call of
-        :func:`~blackjax.adaptation.mclmc_adaptation.mclmc_find_L_and_step_size`
-        (LRD tuning phase).
+        Number of steps passed to the LRD tuning call(s) in Phase 3 (and
+        Phase 4 for the adjusted path).
+    inner_kernel
+        Which inner kernel to use for the final tuning phase.  One of:
+
+        * ``"mclmc"`` *(default, stable)*: unadjusted MCLMC.  Phase 3
+          output ``(L, step_size)`` is returned directly.
+        * ``"adjusted_mclmc"`` *(experimental)*: after Phase 3 unadjusted
+          LRD tuning, warms-start
+          :func:`~blackjax.adaptation.adjusted_mclmc_adaptation.adjusted_mclmc_find_L_and_step_size`
+          with ``frac_tune2=0.0`` (variance-based *L* estimator disabled)
+          and ``diagonal_preconditioning=False``.
+
+    floor_factor
+        For ``inner_kernel="adjusted_mclmc"`` only: the L initialisation
+        floor is ``max(L_unadj, floor_factor * step_unadj)``.  Default
+        ``1.15``; increase (e.g. to ``1.5``) for high-condition-number
+        targets where the unadjusted trajectory length may be too short for
+        the adjusted integrator.  Ignored when ``inner_kernel="mclmc"``.
+    adjusted_target
+        Target acceptance rate for the adjusted MCLMC tuning phase.
+        Default ``0.9``.  Ignored when ``inner_kernel="mclmc"``.
 
     Returns
     -------
@@ -211,14 +272,21 @@ def mclmc_lrd_adaptation(
         A :class:`MCLMCLRDAdaptationState` NamedTuple with fields ``L``,
         ``step_size``, ``inverse_mass_matrix`` (a
         :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`), and
-        ``diagnostics`` (``n_eff``, ``k_safe``, ``k_used``,
-        ``pilot_num_grad_evals``).
+        ``diagnostics`` (``inner_kernel``, ``n_eff``, ``k_safe``,
+        ``k_used``, ``pilot_num_grad_evals``).
+
+    Raises
+    ------
+    ValueError
+        If ``inner_kernel`` is not one of ``"mclmc"`` or
+        ``"adjusted_mclmc"``.
 
     Examples
     --------
     .. code-block:: python
 
         import jax
+        import jax.numpy as jnp
         import blackjax
         from blackjax.adaptation.mclmc_lrd_adaptation import mclmc_lrd_adaptation
 
@@ -226,41 +294,51 @@ def mclmc_lrd_adaptation(
         position = jnp.zeros(10)
         rng_key = jax.random.key(42)
 
+        # Unadjusted (stable default):
         result = mclmc_lrd_adaptation(
             logdensity_fn, position, rng_key,
-            k=4, pilot_num_warmup=500, pilot_num_samples=2000, lrd_num_steps=1000,
+            k=4, pilot_num_warmup=500, pilot_num_samples=2000,
+            lrd_num_steps=1000,
         )
-        # result.L, result.step_size, result.inverse_mass_matrix (LowRankInverseMassMatrix)
-        # result.diagnostics["k_used"], result.diagnostics["n_eff"]
 
-        # Build the LRD kernel and run production sampling:
+        # Adjusted (experimental):
+        result_adj = mclmc_lrd_adaptation(
+            logdensity_fn, position, rng_key,
+            k=4, pilot_num_warmup=500, pilot_num_samples=2000,
+            lrd_num_steps=1000, inner_kernel="adjusted_mclmc",
+        )
+
+        # Build the production kernel from the unadjusted result:
         import blackjax.mcmc.mclmc as mclmc_mod
         lrd_imm = result.inverse_mass_matrix
-        base_kernel = mclmc_mod.build_kernel()
-
-        def lrd_kernel(rng_key, state, logdensity_fn, inverse_mass_matrix, L, step_size):
-            return base_kernel(rng_key, state, logdensity_fn, lrd_imm, L, step_size)
-
+        kernel = mclmc_mod.build_kernel()
         init_state = mclmc_mod.init(position, logdensity_fn, jax.random.key(0))
-        next_state, info = lrd_kernel(
+        next_state, info = kernel(
             jax.random.key(1), init_state, logdensity_fn,
             lrd_imm, result.L, result.step_size,
         )
     """
-    pilot_key, lrd_key = jax.random.split(rng_key, 2)
+    if inner_kernel not in _VALID_INNER_KERNELS:
+        raise ValueError(
+            f"inner_kernel must be one of {sorted(_VALID_INNER_KERNELS)!r}, "
+            f"got {inner_kernel!r}."
+        )
+
+    # Five independent keys — no reuse across init / pilot warmup / pilot
+    # sampling / LRD tuning / adjusted tuning.
+    init_key, warmup_key, sample_key, lrd_key, adj_key = jax.random.split(rng_key, 5)
 
     # ------------------------------------------------------------------
     # Phase 1: diagonal pilot — reach typical set + collect geometry samples
     # ------------------------------------------------------------------
     base_kernel = _mclmc_mod.build_kernel()
-    init_state = _mclmc_mod.init(position, logdensity_fn, pilot_key)
+    init_state = _mclmc_mod.init(position, logdensity_fn, init_key)
 
-    pilot_warmup_key, pilot_sample_key = jax.random.split(pilot_key, 2)
     state_after_warmup, pilot_params, _ = mclmc_find_L_and_step_size(
         mclmc_kernel=base_kernel,
         num_steps=pilot_num_warmup,
         state=init_state,
-        rng_key=pilot_warmup_key,
+        rng_key=warmup_key,
         logdensity_fn=logdensity_fn,
         diagonal_preconditioning=True,
     )
@@ -280,16 +358,15 @@ def mclmc_lrd_adaptation(
     _, pilot_positions = jax.lax.scan(
         _pilot_step,
         state_after_warmup,
-        jax.random.split(pilot_sample_key, pilot_num_samples),
+        jax.random.split(sample_key, pilot_num_samples),
     )
 
     # ------------------------------------------------------------------
     # Rank guard: n_eff via blackjax Geyer ESS on ravelled flat vector.
     # ESS basis: Geyer monotone-sequence estimator (blackjax.diagnostics.
-    # effective_sample_size), single chain, n_pilot_samples draws.
+    # effective_sample_size), single chain, pilot_num_samples draws.
     # Shape expected: (chains, draws, d) — we add the chains axis here.
     # ------------------------------------------------------------------
-    _, unravel_fn = ravel_pytree(jax.tree.map(lambda x: x[0], pilot_positions))
     flat_pilot = jax.vmap(lambda p: ravel_pytree(p)[0])(pilot_positions)  # (n, d)
 
     # effective_sample_size expects (chains, draws, d); add singleton chain axis.
@@ -322,11 +399,10 @@ def mclmc_lrd_adaptation(
     lrd_imm = LowRankInverseMassMatrix(sigma=sigma, U=U_k, lam=lam_k)
 
     # ------------------------------------------------------------------
-    # Phase 3: LRD tuning — re-tune L and step_size with LRD metric.
-    # The LRD kernel intercepts the inverse_mass_matrix argument passed
-    # by mclmc_find_L_and_step_size and routes it through lrd_imm instead,
-    # so diagonal_preconditioning=False prevents the diagonal IMM from
-    # overwriting lrd_imm inside the tuner.
+    # Phase 3: unadjusted LRD tuning — calibrate L and step_size with LRD
+    # metric.  The kernel wrapper routes the inverse_mass_matrix argument
+    # through lrd_imm so diagonal_preconditioning=False does not overwrite
+    # it inside the tuner.
     # ------------------------------------------------------------------
     def lrd_kernel(rng_key, state, logdensity_fn, inverse_mass_matrix, L, step_size):
         return base_kernel(
@@ -338,8 +414,7 @@ def mclmc_lrd_adaptation(
             step_size=step_size,
         )
 
-    # Initialise LRD tuning from the pilot's terminal state; pass pilot L/step_size
-    # as a warm start to avoid unnecessary exploration in the tuning phase.
+    # Warm-start from pilot L/step_size to skip unnecessary exploration.
     lrd_init_params = MCLMCAdaptationState(
         L=pilot_params.L,
         step_size=pilot_params.step_size,
@@ -355,10 +430,74 @@ def mclmc_lrd_adaptation(
         params=lrd_init_params,
     )
 
+    # ------------------------------------------------------------------
+    # Phase 4: inner-kernel dispatch
+    # ------------------------------------------------------------------
+    if inner_kernel == "mclmc":
+        final_L = lrd_params.L
+        final_step_size = lrd_params.step_size
+
+    else:  # inner_kernel == "adjusted_mclmc"
+        # Build the adjusted kernel wrapper — routes inverse_mass_matrix
+        # through lrd_imm (same override pattern as Phase 3).
+        adj_base_kernel = _adj_mclmc_mod.build_kernel()
+
+        def adj_lrd_kernel(
+            rng_key,
+            state,
+            logdensity_fn,
+            step_size,
+            integration_steps_params,
+            inverse_mass_matrix,
+        ):
+            return adj_base_kernel(
+                rng_key=rng_key,
+                state=state,
+                logdensity_fn=logdensity_fn,
+                step_size=step_size,
+                integration_steps_params=integration_steps_params,
+                inverse_mass_matrix=lrd_imm,  # always route through LRD
+            )
+
+        # L_init floor: prevents degenerate one-step trajectories.
+        # Hard constraints enforced here (see module docstring):
+        #   1) params != None  →  no sqrt(dim) default L init
+        #   2) frac_tune2=0.0  →  variance-based L estimator disabled
+        L_init = max(float(lrd_params.L), floor_factor * float(lrd_params.step_size))
+        # Note: inverse_mass_matrix is a placeholder — adj_lrd_kernel always
+        # routes through lrd_imm; using the diagonal pilot IMM keeps the field
+        # consistent with MCLMCAdaptationState's existing usage (jnp array).
+        adj_init_params = MCLMCAdaptationState(
+            L=L_init,
+            step_size=float(lrd_params.step_size),
+            inverse_mass_matrix=pilot_params.inverse_mass_matrix,
+        )
+
+        # adjusted_mclmc.init takes (position, logdensity_fn) — no rng_key.
+        adj_init_state = _adj_mclmc_mod.init(
+            position=state_after_warmup.position,
+            logdensity_fn=logdensity_fn,
+        )
+
+        _, adj_params, _ = adjusted_mclmc_find_L_and_step_size(
+            mclmc_kernel=adj_lrd_kernel,
+            logdensity_fn=logdensity_fn,
+            num_steps=lrd_num_steps,
+            state=adj_init_state,
+            rng_key=adj_key,
+            target=adjusted_target,
+            frac_tune2=0.0,  # variance-based L estimator incompatible with baked-in LRD IMM
+            diagonal_preconditioning=False,  # don't overwrite LRD IMM
+            params=adj_init_params,
+        )
+        final_L = adj_params.L
+        final_step_size = adj_params.step_size
+
     # Gradient accounting: unadjusted MCLMC costs 2 grads/step.
     pilot_num_grad_evals = (pilot_num_warmup + pilot_num_samples) * 2
 
     diagnostics = {
+        "inner_kernel": inner_kernel,
         "n_eff": n_eff,
         "k_safe": k_safe,
         "k_used": k_used,
@@ -366,8 +505,8 @@ def mclmc_lrd_adaptation(
     }
 
     return MCLMCLRDAdaptationState(
-        L=lrd_params.L,
-        step_size=lrd_params.step_size,
+        L=final_L,
+        step_size=final_step_size,
         inverse_mass_matrix=lrd_imm,
         diagnostics=diagnostics,
     )

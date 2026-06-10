@@ -294,3 +294,91 @@ class TestMCLMCLRDAdaptationSmoke:
         # d = 3 + 2 = 5
         assert result.inverse_mass_matrix.sigma.shape == (5,)
         assert result.inverse_mass_matrix.U.shape == (5, 2)
+
+    def test_diagnostics_inner_kernel_field(self):
+        """diagnostics must include inner_kernel field matching the argument."""
+        rng = jax.random.key(46)
+        pos = jnp.zeros(D)
+        result = mclmc_lrd_adaptation(
+            logdensity_fn,
+            pos,
+            rng,
+            k=K,
+            pilot_num_warmup=100,
+            pilot_num_samples=200,
+            lrd_num_steps=100,
+            inner_kernel="mclmc",
+        )
+        assert result.diagnostics["inner_kernel"] == "mclmc"
+
+    def test_invalid_inner_kernel_raises(self):
+        """Passing an unknown inner_kernel must raise ValueError immediately."""
+        with pytest.raises(ValueError, match="inner_kernel"):
+            mclmc_lrd_adaptation(
+                logdensity_fn,
+                jnp.zeros(D),
+                jax.random.key(0),
+                inner_kernel="nuts",
+            )
+
+
+class TestMCLMCLRDAdjustedSmoke:
+    """Smoke tests for the adjusted_mclmc inner-kernel path (experimental)."""
+
+    def test_adjusted_path_returns_valid_state(self):
+        """inner_kernel='adjusted_mclmc' must return a valid MCLMCLRDAdaptationState."""
+        rng = jax.random.key(50)
+        pos = jnp.zeros(D)
+
+        result = mclmc_lrd_adaptation(
+            logdensity_fn,
+            pos,
+            rng,
+            k=K,
+            pilot_num_warmup=200,
+            pilot_num_samples=400,
+            lrd_num_steps=200,
+            inner_kernel="adjusted_mclmc",
+        )
+
+        assert isinstance(result, MCLMCLRDAdaptationState)
+        assert jnp.isfinite(result.L) and result.L > 0
+        assert jnp.isfinite(result.step_size) and result.step_size > 0
+        assert isinstance(result.inverse_mass_matrix, LowRankInverseMassMatrix)
+        assert result.diagnostics["inner_kernel"] == "adjusted_mclmc"
+        assert result.inverse_mass_matrix.sigma.shape == (D,)
+        assert result.inverse_mass_matrix.U.shape == (D, K)
+        assert result.inverse_mass_matrix.lam.shape == (K,)
+
+    def test_adjusted_path_lrd_imm_usable_with_adjusted_kernel(self):
+        """LRD IMM from adjusted path must plug into adjusted_mclmc kernel."""
+        import blackjax.mcmc.adjusted_mclmc as adj_mod
+
+        rng = jax.random.key(51)
+        pos = jnp.zeros(D)
+
+        result = mclmc_lrd_adaptation(
+            logdensity_fn,
+            pos,
+            rng,
+            k=K,
+            pilot_num_warmup=100,
+            pilot_num_samples=200,
+            lrd_num_steps=100,
+            inner_kernel="adjusted_mclmc",
+        )
+
+        lrd_imm = result.inverse_mass_matrix
+        adj_kernel = adj_mod.build_kernel()
+        init_state = adj_mod.init(pos, logdensity_fn)
+
+        next_state, info = adj_kernel(
+            rng_key=jax.random.key(99),
+            state=init_state,
+            logdensity_fn=logdensity_fn,
+            step_size=result.step_size,
+            inverse_mass_matrix=lrd_imm,
+        )
+        assert jnp.all(
+            jnp.isfinite(jax.flatten_util.ravel_pytree(next_state.position)[0])
+        )
