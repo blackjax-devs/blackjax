@@ -544,3 +544,176 @@ class TestMCLMCLRDAdjustedSmoke:
             assert (
                 key in result.diagnostics
             ), f"Missing provenance key {key!r} in adjusted path diagnostics"
+
+    def test_adjusted_path_l_init_and_floor_active_in_diagnostics(self):
+        """Adjusted path must expose L_init and floor_active in diagnostics."""
+        rng = jax.random.key(53)
+        pos = jnp.zeros(D)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            result = mclmc_lrd_warmup(
+                logdensity_fn,
+                pos,
+                rng,
+                k=K,
+                pilot_num_warmup=100,
+                pilot_num_samples=200,
+                lrd_num_steps=100,
+                num_chains=2,
+                inner_kernel="adjusted_mclmc",
+            )
+        diag = result.diagnostics
+        assert "L_init" in diag, "Missing L_init in adjusted diagnostics"
+        assert "floor_active" in diag, "Missing floor_active in adjusted diagnostics"
+        assert isinstance(diag["floor_active"], bool)
+        assert diag["L_init"] > 0
+
+        # L_init must be >= lrd_L (floor invariant)
+        assert diag["L_init"] >= diag["lrd_L"] - 1e-9
+
+    def test_adjusted_path_n_sample_in_diagnostics(self):
+        """Adjusted path must expose N_sample = round(L_init / final_step_size)."""
+        rng = jax.random.key(57)
+        pos = jnp.zeros(D)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            result = mclmc_lrd_warmup(
+                logdensity_fn,
+                pos,
+                rng,
+                k=K,
+                pilot_num_warmup=100,
+                pilot_num_samples=200,
+                lrd_num_steps=100,
+                num_chains=2,
+                inner_kernel="adjusted_mclmc",
+            )
+        diag = result.diagnostics
+        assert "N_sample" in diag, "Missing N_sample in adjusted diagnostics"
+        assert isinstance(diag["N_sample"], (int, float)), "N_sample must be numeric"
+        assert diag["N_sample"] > 0, "N_sample must be positive"
+        # Verify the value matches round(L_init / final_step_size) within rounding.
+        expected = float(diag["L_init"]) / float(result.step_size)
+        assert abs(diag["N_sample"] - expected) < 1.0  # within one step
+
+    def test_unadjusted_path_has_no_l_init_floor_active(self):
+        """Unadjusted path must NOT have L_init or floor_active in diagnostics."""
+        rng = jax.random.key(54)
+        pos = jnp.zeros(D)
+        result = mclmc_lrd_warmup(
+            logdensity_fn,
+            pos,
+            rng,
+            k=K,
+            pilot_num_warmup=100,
+            pilot_num_samples=200,
+            lrd_num_steps=100,
+            num_chains=2,
+            inner_kernel="mclmc",
+        )
+        assert "L_init" not in result.diagnostics
+        assert "floor_active" not in result.diagnostics
+
+    def test_floor_active_true_when_step_dominates(self):
+        """floor_active must be True when floor_factor*step_size > lrd_L."""
+        # Use a very large floor_factor to force the floor to activate.
+        rng = jax.random.key(55)
+        pos = jnp.zeros(D)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            result = mclmc_lrd_warmup(
+                logdensity_fn,
+                pos,
+                rng,
+                k=K,
+                pilot_num_warmup=100,
+                pilot_num_samples=200,
+                lrd_num_steps=100,
+                num_chains=2,
+                inner_kernel="adjusted_mclmc",
+                floor_factor=1000.0,  # guarantee floor triggers
+            )
+        diag = result.diagnostics
+        assert (
+            diag["floor_active"] is True
+        ), "Expected floor_active=True with factor=1000"
+        # L_init should equal floor_factor * lrd_step_size (within float precision)
+        expected = 1000.0 * diag["lrd_step_size"]
+        assert abs(diag["L_init"] - expected) < 1e-5 * expected
+
+    def test_floor_inactive_when_l_already_large(self):
+        """floor_active must be False when lrd_L > floor_factor*lrd_step_size."""
+        # floor_factor=0.0 ensures L_init = lrd_L (floor never active).
+        rng = jax.random.key(56)
+        pos = jnp.zeros(D)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            result = mclmc_lrd_warmup(
+                logdensity_fn,
+                pos,
+                rng,
+                k=K,
+                pilot_num_warmup=100,
+                pilot_num_samples=200,
+                lrd_num_steps=100,
+                num_chains=2,
+                inner_kernel="adjusted_mclmc",
+                floor_factor=0.0,  # floor never triggers
+            )
+        diag = result.diagnostics
+        assert (
+            diag["floor_active"] is False
+        ), "Expected floor_active=False with factor=0"
+        # L_init should equal lrd_L exactly (no floor applied)
+        assert abs(diag["L_init"] - diag["lrd_L"]) < 1e-9
+
+
+# ---------------------------------------------------------------------------
+# frac_tune2=0 invariant test via monkeypatch
+# ---------------------------------------------------------------------------
+
+
+class TestAdjustedFracTune2Invariant:
+    """Verify that frac_tune2 is always 0.0 in the adjusted tuning call."""
+
+    def test_frac_tune2_is_zero_in_adjusted_call(self, monkeypatch):
+        """Monkeypatch adjusted_mclmc_find_L_and_step_size to capture kwargs."""
+        import blackjax.adaptation.mclmc_lrd_adaptation as _mod
+
+        captured_kwargs = {}
+        original_fn = _mod.adjusted_mclmc_find_L_and_step_size
+
+        def capturing_fn(*args, **kwargs):  # noqa: F841 (original_fn used in body)
+            captured_kwargs.update(kwargs)
+            return original_fn(*args, **kwargs)
+
+        monkeypatch.setattr(_mod, "adjusted_mclmc_find_L_and_step_size", capturing_fn)
+
+        rng = jax.random.key(60)
+        pos = jnp.zeros(D)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            mclmc_lrd_warmup(
+                logdensity_fn,
+                pos,
+                rng,
+                k=K,
+                pilot_num_warmup=100,
+                pilot_num_samples=200,
+                lrd_num_steps=100,
+                num_chains=2,
+                inner_kernel="adjusted_mclmc",
+            )
+
+        assert "frac_tune2" in captured_kwargs, "frac_tune2 not passed as kwarg"
+        assert (
+            captured_kwargs["frac_tune2"] == 0.0
+        ), f"Expected frac_tune2=0.0, got {captured_kwargs['frac_tune2']}"
+        assert (
+            captured_kwargs.get("diagonal_preconditioning") is False
+        ), "diagonal_preconditioning must be False to preserve LRD IMM"

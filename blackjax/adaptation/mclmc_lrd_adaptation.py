@@ -70,7 +70,11 @@ adjusted inner kernels; only Phase 4 switches:
 
      ``L_init`` is floored at ``floor_factor * step_unadj`` (default
      ``floor_factor=1.15``) to prevent the Dual-Averaging ceiling
-     ``(L / 1.1)`` from binding below the oracle step size.
+     ``(L / 1.1)`` from binding below the oracle step size.  For geometry
+     where the oracle step size exceeds the oracle L (stiff
+     high-condition-number targets), the default 1.15 may leave the DA
+     ceiling binding; raise to approximately 1.5 and set
+     ``adjusted_num_steps`` to at least 5000 for those targets.
 
 Stan-window analogy
 -------------------
@@ -97,10 +101,15 @@ Limitations
   with n_eff/2 clamping.  A NUTS-pilot fallback (replacing Phase 1 with
   :func:`~blackjax.adaptation.window_adaptation.window_adaptation`) is the
   recommended escape hatch but is out of scope here.
-* **Adjusted path experimental.** The ``inner_kernel="adjusted_mclmc"``
-  branch is certified on german_credit but has not yet been validated across
-  a broad benchmark suite.  Treat as experimental; the unadjusted default is
-  the stable path.
+* **Adjusted path experimental.** ``inner_kernel="adjusted_mclmc"`` is
+  certified 3/3 on german_credit at the default recipe (4-chain phase 3,
+  ``frac_tune2=0``, ``floor_factor=1.15``, ``adjusted_num_steps=3000``).
+  ill_cond_50 (stiff, κ=1000) is geometrically compatible (clamp-free at
+  ``floor_factor=1.5``, step size 104–114% of oracle, zero DA divergences)
+  but was NOT certified at ``adjusted_num_steps=3000`` (marginal R-hat
+  1.010–1.011; DA not converged).  For stiff geometry, raise
+  ``floor_factor`` to ~1.5 and ``adjusted_num_steps`` to ≥5000.
+  The unadjusted default remains the stable, broadly validated path.
 """
 
 import warnings
@@ -168,6 +177,20 @@ class MCLMCLRDAdaptationState(NamedTuple):
         ``lrd_step_size``
             Mean step size across ``num_chains`` chains after Phase-3
             unadjusted LRD tuning.
+        ``L_init``
+            *(adjusted path only)* The floor-guarded L initialisation value
+            passed to the adjusted warm-start: ``max(lrd_L, floor_factor *
+            lrd_step_size)``.  This is the value whose ``/ 1.1`` sets the DA
+            ceiling for step-size tuning.
+        ``floor_active``
+            *(adjusted path only)* ``True`` when the floor guard was
+            triggered (``floor_factor * lrd_step_size > lrd_L``), i.e. when
+            ``L_init`` was raised above the unadjusted mean.
+        ``N_sample``
+            *(adjusted path only)* Effective number of leapfrog steps per
+            trajectory at the final adapted parameters:
+            ``round(L_init / final_step_size)``.  Provided as a bookkeeping
+            aid for cert integration.
     """
 
     L: float
@@ -268,6 +291,7 @@ def mclmc_lrd_warmup(
     num_chains: int = 4,
     inner_kernel: str = "mclmc",
     floor_factor: float = 1.15,
+    adjusted_num_steps: int = 3000,
     adjusted_target: float = 0.9,
 ):
     """Scheme A (pilot-free) MCLMC warmup with Low-Rank Diagonal preconditioning.
@@ -321,9 +345,15 @@ def mclmc_lrd_warmup(
     floor_factor
         For ``inner_kernel="adjusted_mclmc"`` only: the L initialisation
         floor is ``max(L_unadj, floor_factor * step_unadj)``.  Default
-        ``1.15``; the guard ensures the Dual-Averaging ceiling ``L / 1.1``
-        cannot bind below the oracle step size.  Ignored when
-        ``inner_kernel="mclmc"``.
+        ``1.15``; certified on german_credit.  For stiff geometry where the
+        oracle step size exceeds the oracle L, raise to approximately 1.5
+        (the default leaves the DA ceiling ``L / 1.1`` binding for those
+        targets).  Ignored when ``inner_kernel="mclmc"``.
+    adjusted_num_steps
+        Number of DA tuning steps for the adjusted Phase-4 path.  Default
+        ``3000`` with ``frac_tune1=0.5`` → 1500 DA steps; the certified
+        recipe for german_credit.  For stiff high-κ geometry, increase to
+        at least 5000.  Ignored when ``inner_kernel="mclmc"``.
     adjusted_target
         Target acceptance rate for the adjusted MCLMC tuning phase.
         Default ``0.9``.  Ignored when ``inner_kernel="mclmc"``.
@@ -556,7 +586,9 @@ def mclmc_lrd_warmup(
         # Hard constraints enforced here (see module docstring):
         #   C1) params != None  →  no sqrt(dim) default L init
         #   C2) frac_tune2=0.0  →  variance-based L estimator disabled
-        L_init = max(lrd_L, floor_factor * lrd_step_size)
+        L_floor = floor_factor * lrd_step_size
+        floor_active = bool(L_floor > lrd_L)
+        L_init = float(max(lrd_L, L_floor))
 
         # Note: inverse_mass_matrix is a placeholder in adj_init_params —
         # adj_lrd_kernel always routes through lrd_imm; using the diagonal
@@ -583,11 +615,12 @@ def mclmc_lrd_warmup(
             _, params, _ = adjusted_mclmc_find_L_and_step_size(
                 mclmc_kernel=adj_lrd_kernel,
                 logdensity_fn=logdensity_fn,
-                num_steps=lrd_num_steps,
+                num_steps=adjusted_num_steps,
                 state=state,
                 rng_key=k,
                 target=adjusted_target,
-                frac_tune2=0.0,  # variance-based L estimator incompatible with LRD IMM
+                frac_tune1=0.5,  # certified recipe: 0.5 × adjusted_num_steps DA steps
+                frac_tune2=0.0,  # REQUIRED: variance-based L estimator incompatible with LRD IMM
                 diagonal_preconditioning=False,  # don't overwrite LRD IMM
                 params=adj_init_params,
             )
@@ -617,6 +650,15 @@ def mclmc_lrd_warmup(
         "lrd_L": lrd_L,
         "lrd_step_size": lrd_step_size,
     }
+
+    # Adjusted-path-only provenance keys (available in scope only for that branch).
+    if inner_kernel == "adjusted_mclmc":
+        diagnostics["L_init"] = L_init
+        diagnostics["floor_active"] = floor_active
+        # N_sample = effective number of leapfrog steps per trajectory at the
+        # final adapted params — the floor-guard inputs that tuningfork cert
+        # integration uses to verify trajectory-length bookkeeping.
+        diagnostics["N_sample"] = round(float(final_L) / max(float(final_step_size), 1e-10))
 
     return MCLMCLRDAdaptationState(
         L=final_L,
