@@ -140,6 +140,22 @@ __all__ = [
 ]
 
 _VALID_INNER_KERNELS = frozenset({"mclmc", "adjusted_mclmc"})
+_VALID_WARMUP_STEP_INITS = frozenset({"law", "default"})
+
+# √d scaling-law constants from the MCLMC scaling-laws study (S3).
+# At good preconditioning (κ_eff ≲ 5), the optimal step and trajectory length
+# scale as constant × √d with dimension-independent constants:
+#   step ≈ 1.22 × √d,  L ≈ 0.85 × √d.
+# Source: tuningfork/experiments/mclmc_scaling/ Q0 sweep (2026-06).
+_SQRT_D_STEP_CONST = 1.22
+_SQRT_D_L_CONST = 0.85
+
+# κ_eff gate for the √d warm-start (E1).  When the pilot-derived LRD IMM
+# achieves κ_eff ≤ this threshold, the geometry is sufficiently whitened for
+# the scaling-law warm-start to be accurate.  κ_eff > 5 indicates the IMM is
+# not yet whitening the target; falling back to the pilot's own (step, L)
+# avoids overshooting the tuning region.
+_KAPPA_EFF_GATE = 5.0
 
 
 class MCLMCLRDAdaptationState(NamedTuple):
@@ -194,6 +210,17 @@ class MCLMCLRDAdaptationState(NamedTuple):
             trajectory at the final adapted parameters:
             ``round(L_init / final_step_size)``.  Provided as a bookkeeping
             aid for cert integration.
+        ``e1_fired``
+            ``True`` when the √d warm-start (E1) was applied to Phase-3 DA
+            initialisation; ``False`` when the fallback (pilot step/L) was
+            used instead.  Always ``False`` when ``warmup_step_init="default"``.
+        ``kappa_eff_pilot``
+            Effective condition number κ(M⁻¹ Σ⁻¹) of the pilot-derived LRD
+            IMM against the pilot sample covariance.  Computed from the Phase-2
+            SVD eigenspectrum.  Values near 1 indicate good whitening; values
+            above 5 indicate the IMM is under-preconditioned (E1 falls back to
+            pilot step/L).  Present whenever ``warmup_step_init`` is set (both
+            ``"law"`` and ``"default"`` paths compute it for observability).
     """
 
     L: float
@@ -220,6 +247,12 @@ def _extract_lrd_from_samples(
     sigma : shape ``(d,)``
     U     : shape ``(d, k)``
     lam   : shape ``(k,)``
+    lam_all : shape ``(min(n, d),)``
+        **Full** eigenspectrum of the sample correlation matrix (all singular
+        values, not just the top-k).  Returned for :func:`_kappa_eff_pilot`
+        so it can compute the residual contribution to κ_eff without a second
+        SVD.  The ordering here is by descending ``|λ - 1|``, matching the
+        selection order used for ``lam`` (i.e. ``lam == lam_all[:k]``).
     """
     mean = jnp.mean(flat_positions, axis=0)  # (d,)
     sigma = jnp.std(flat_positions, axis=0)  # (d,)
@@ -240,7 +273,91 @@ def _extract_lrd_from_samples(
 
     lam_k = lam[top_idx]  # (k,)
     U_k = V[:, top_idx]  # (d, k)
-    return sigma, U_k, lam_k
+    lam_all_sorted = lam[sort_idx]  # full spectrum, ordered by |λ-1| desc
+    return sigma, U_k, lam_k, lam_all_sorted
+
+
+def _kappa_eff_pilot(
+    lam_all_sorted: Any,
+    k: int,
+) -> float:
+    """Effective condition number of the pilot LRD IMM against the pilot Sigma.
+
+    Computes κ_eff = κ(M⁻¹ Σ⁻¹) from the full SVD eigenspectrum produced
+    in Phase 2, using the correct accounting of whitened vs. residual directions.
+
+    **Correct formula** (the LRD preconditioning theory):
+
+    The LRD IMM M⁻¹ captures the top-k principal directions of the sample
+    correlation matrix (those with ``|λ - 1|`` largest).  In the M⁻¹Σ⁻¹
+    product:
+
+    * The **k captured** directions are whitened to eigenvalue **1** — M⁻¹
+      exactly inverts Σ along those directions.
+    * The **residual** (d − k) directions, with correlation eigenvalues
+      ``μ_i`` (the *k+1*, *k+2*, … entries of ``lam_all_sorted``), are left
+      as *diagonal*-only (M⁻¹ = D² along those directions).  In the
+      correlation-normalised space, the diagonal correction gives eigenvalue
+      ``1/μ_i`` for each residual direction.
+
+    Hence the spectrum of M⁻¹Σ⁻¹ is:
+
+        {1} × k  ∪  {1/μ_i : i ∈ residual}
+
+    and κ_eff = max / min of this combined set.
+
+    **Why the na‌ive {lam_k ∪ {1}} formula is wrong:** it uses the captured
+    eigenvalues (those with ``|λ - 1|`` largest) in the numerator/denominator,
+    which are exactly the directions that *are* whitened.  The actual spread
+    comes from the *residual* directions, whose ``μ_i`` are closest to 1 and
+    therefore ``1/μ_i`` can still be far from 1 when some residuals are very
+    small (under-corrected).
+
+    Parameters
+    ----------
+    lam_all_sorted : array, shape ``(min(n, d),)``
+        Full eigenspectrum of the sample correlation matrix, ordered by
+        descending ``|λ - 1|`` (as returned by
+        :func:`_extract_lrd_from_samples`).  The first ``k`` entries are
+        the selected top-k; the remaining entries are the residuals.
+    k : int
+        Rank of the LRD approximation (same ``k_used`` passed to
+        :func:`_extract_lrd_from_samples`).
+
+    Returns
+    -------
+    float
+        κ_eff = max / min of {1} × k ∪ {1/μ_i : i ≥ k}.
+        Returns the correlation κ (all residual, no whitening) when k = 0.
+        Returns 1.0 when k ≥ len(lam_all_sorted) (all directions whitened).
+    """
+    lam_np = jnp.array(lam_all_sorted)
+    n_svd = lam_np.size  # min(n_pilot, d)
+
+    if n_svd == 0:
+        return 1.0
+
+    # Residual eigenvalues: entries at positions k, k+1, … in lam_all_sorted.
+    # These are the (d-k) directions NOT captured by the top-k selection.
+    if k >= n_svd:
+        # All SVD-supported directions are whitened → κ_eff = 1.
+        return 1.0
+
+    residual_mu = lam_np[k:]  # shape (n_svd - k,)
+
+    # Guard against near-zero residuals (degenerate pilots with very few draws)
+    residual_mu = jnp.where(
+        residual_mu < 1e-12, jnp.ones_like(residual_mu), residual_mu
+    )
+    residual_eigs = 1.0 / residual_mu  # (n_svd - k,)
+
+    # The k whitened directions each contribute eigenvalue 1.
+    # Combine: max and min over {1} ∪ {1/μ_i}.
+    max_eig = float(jnp.maximum(jnp.max(residual_eigs), 1.0))
+    min_eig = float(jnp.minimum(jnp.min(residual_eigs), 1.0))
+    if min_eig <= 0.0:
+        return float("inf")
+    return max_eig / min_eig
 
 
 def _check_da_ceiling_warning(
@@ -296,6 +413,7 @@ def mclmc_lrd_warmup(
     floor_factor: float = 1.15,
     adjusted_num_steps: int = 3000,
     adjusted_target: float = 0.9,
+    warmup_step_init: str = "law",
 ):
     """Scheme A (pilot-free) MCLMC warmup with Low-Rank Diagonal preconditioning.
 
@@ -360,6 +478,39 @@ def mclmc_lrd_warmup(
     adjusted_target
         Target acceptance rate for the adjusted MCLMC tuning phase.
         Default ``0.9``.  Ignored when ``inner_kernel="mclmc"``.
+    warmup_step_init : str
+        Initialisation strategy for the Phase-3 Dual-Averaging (DA) step-size
+        tuner.  One of:
+
+        * ``"law"`` *(default)*: **√d warm-start (E1)**, gated on κ_eff.
+
+          When the pilot-derived LRD IMM achieves κ_eff ≤ 5 (the geometry is
+          sufficiently whitened), Phase-3 DA is initialised at the scaling-law
+          values ``step_size = 1.22 × √d``, ``L = 0.85 × √d``.  These
+          constants were derived from the MCLMC scaling-laws study (S3, 2026):
+          at good preconditioning, MCLMC's optimal step and trajectory length
+          are dimension-independent multiples of √d.
+
+          When κ_eff > 5 (under-preconditioned, e.g. rank-1 LRD on a κ=1000
+          target), E1 is **not applied** and Phase-3 DA falls back to the
+          pilot's own ``(step_size, L)`` — the same behaviour as
+          ``"default"``.  This gate prevents overshoot: at low rank the
+          geometry is not yet whitened and the scaling-law values would place
+          the DA starting point far from the actual optimum.
+
+          The warm-start only affects DA *convergence speed*, not the final
+          converged value.  At sufficient ``lrd_num_steps`` budget,
+          ``"law"`` and ``"default"`` produce statistically identical
+          ``(step_size, L)`` outputs.  The gain is in sample quality at
+          *low-budget* warmup (measured via ESS/grad):
+          ~20–30% improvement through n_warmup ≈ 1000 at d = 500 in the
+          Q0 sweep (2026-06), scaling with dimension because the default
+          DA init at 0.25 √d falls further below the optimum at larger d.
+
+        * ``"default"``: Phase-3 DA is initialised by warm-starting from the
+          pilot's own ``(step_size, L)`` (the pre-existing behaviour prior to
+          this parameter).  Use this to reproduce results from the previous
+          code path or to suppress E1 entirely.
 
     Returns
     -------
@@ -416,6 +567,11 @@ def mclmc_lrd_warmup(
         raise ValueError(
             f"inner_kernel must be one of {sorted(_VALID_INNER_KERNELS)!r}, "
             f"got {inner_kernel!r}."
+        )
+    if warmup_step_init not in _VALID_WARMUP_STEP_INITS:
+        raise ValueError(
+            f"warmup_step_init must be one of {sorted(_VALID_WARMUP_STEP_INITS)!r}, "
+            f"got {warmup_step_init!r}."
         )
 
     # Five independent keys — no reuse across init / pilot warmup / pilot
@@ -494,7 +650,7 @@ def mclmc_lrd_warmup(
     # ------------------------------------------------------------------
     # Phase 2: SVD extraction → LowRankInverseMassMatrix
     # ------------------------------------------------------------------
-    sigma, U_k, lam_k = _extract_lrd_from_samples(flat_pilot, k=k_used)
+    sigma, U_k, lam_k, lam_all_sorted = _extract_lrd_from_samples(flat_pilot, k=k_used)
     lrd_imm = LowRankInverseMassMatrix(sigma=sigma, U=U_k, lam=lam_k)
 
     # ------------------------------------------------------------------
@@ -513,12 +669,41 @@ def mclmc_lrd_warmup(
             step_size=step_size,
         )
 
-    # Warm-start from pilot L/step_size to skip unnecessary exploration.
-    lrd_init_params = MCLMCAdaptationState(
-        L=pilot_params.L,
-        step_size=pilot_params.step_size,
-        inverse_mass_matrix=pilot_params.inverse_mass_matrix,  # placeholder; overridden
-    )
+    # Compute κ_eff of the pilot-derived LRD IMM.  Uses the full Phase-2 SVD
+    # eigenspectrum (lam_all_sorted) and the selected rank k_used to correctly
+    # account for whitened vs. residual directions in the M⁻¹Σ⁻¹ product.
+    kappa_eff_pilot_val = _kappa_eff_pilot(lam_all_sorted=lam_all_sorted, k=k_used)
+
+    # Phase-3 DA initialisation (warmup_step_init controls E1).
+    if warmup_step_init == "law":
+        # E1: √d warm-start, gated on κ_eff ≤ 5.
+        # Gate condition: the pilot LRD IMM must sufficiently whiten the
+        # geometry (κ_eff ≤ 5) before the scaling-law init is accurate.
+        e1_fired = kappa_eff_pilot_val <= _KAPPA_EFF_GATE
+        if e1_fired:
+            # Scaling-law warm-start: step ≈ 1.22√d, L ≈ 0.85√d.
+            d = flat_pilot.shape[1]
+            sqrt_d = jnp.sqrt(float(d))
+            lrd_init_params = MCLMCAdaptationState(
+                L=jnp.array(_SQRT_D_L_CONST * sqrt_d),
+                step_size=jnp.array(_SQRT_D_STEP_CONST * sqrt_d),
+                inverse_mass_matrix=pilot_params.inverse_mass_matrix,  # placeholder; overridden
+            )
+        else:
+            # Fallback: pilot's own (step, L) — same as "default".
+            lrd_init_params = MCLMCAdaptationState(
+                L=pilot_params.L,
+                step_size=pilot_params.step_size,
+                inverse_mass_matrix=pilot_params.inverse_mass_matrix,  # placeholder; overridden
+            )
+    else:
+        # "default": warm-start from pilot L/step_size to skip unnecessary exploration.
+        e1_fired = False
+        lrd_init_params = MCLMCAdaptationState(
+            L=pilot_params.L,
+            step_size=pilot_params.step_size,
+            inverse_mass_matrix=pilot_params.inverse_mass_matrix,  # placeholder; overridden
+        )
 
     # Split into 2*num_chains keys: first half for chain init, second for tuning.
     lrd_all_keys = jax.random.split(lrd_subkey, 2 * num_chains)
@@ -652,6 +837,8 @@ def mclmc_lrd_warmup(
         "pilot_step_size": pilot_step_size_val,
         "lrd_L": lrd_L,
         "lrd_step_size": lrd_step_size,
+        "e1_fired": e1_fired,
+        "kappa_eff_pilot": kappa_eff_pilot_val,
     }
 
     # Adjusted-path-only provenance keys (available in scope only for that branch).
