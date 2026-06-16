@@ -184,6 +184,17 @@ Module Contents
            trajectory at the final adapted parameters:
            ``round(L_init / final_step_size)``.  Provided as a bookkeeping
            aid for cert integration.
+       ``e1_fired``
+           ``True`` when the √d warm-start (E1) was applied to Phase-3 DA
+           initialisation; ``False`` when the fallback (pilot step/L) was
+           used instead.  Always ``False`` when ``warmup_step_init="default"``.
+       ``kappa_eff_pilot``
+           Effective condition number κ(M⁻¹ Σ⁻¹) of the pilot-derived LRD
+           IMM against the pilot sample covariance.  Computed from the Phase-2
+           SVD eigenspectrum.  Values near 1 indicate good whitening; values
+           above 5 indicate the IMM is under-preconditioned (E1 falls back to
+           pilot step/L).  Present whenever ``warmup_step_init`` is set (both
+           ``"law"`` and ``"default"`` paths compute it for observability).
 
 
    .. py:attribute:: L
@@ -202,7 +213,7 @@ Module Contents
       :type:  dict
 
 
-.. py:function:: mclmc_lrd_warmup(logdensity_fn, position, rng_key, *, k: int = 10, pilot_num_warmup: int = 1000, pilot_num_samples: int = 5000, lrd_num_steps: int = 1000, num_chains: int = 4, inner_kernel: str = 'mclmc', floor_factor: float = 1.15, adjusted_num_steps: int = 3000, adjusted_target: float = 0.9)
+.. py:function:: mclmc_lrd_warmup(logdensity_fn, position, rng_key, *, k: int = 10, pilot_num_warmup: int = 1000, pilot_num_samples: int = 5000, lrd_num_steps: int = 1000, num_chains: int = 4, inner_kernel: str = 'mclmc', floor_factor: float = 1.15, adjusted_num_steps: int = 3000, adjusted_target: float = 0.9, warmup_step_init: str = 'law')
 
    Scheme A (pilot-free) MCLMC warmup with Low-Rank Diagonal preconditioning.
 
@@ -252,6 +263,39 @@ Module Contents
                               at least 5000.  Ignored when ``inner_kernel="mclmc"``.
    :param adjusted_target: Target acceptance rate for the adjusted MCLMC tuning phase.
                            Default ``0.9``.  Ignored when ``inner_kernel="mclmc"``.
+   :param warmup_step_init: Initialisation strategy for the Phase-3 Dual-Averaging (DA) step-size
+                            tuner.  One of:
+
+                            * ``"law"`` *(default)*: **√d warm-start (E1)**, gated on κ_eff.
+
+                              When the pilot-derived LRD IMM achieves κ_eff ≤ 5 (the geometry is
+                              sufficiently whitened), Phase-3 DA is initialised at the scaling-law
+                              values ``step_size = 1.22 × √d``, ``L = 0.85 × √d``.  These
+                              constants were derived from the MCLMC scaling-laws study (S3, 2026):
+                              at good preconditioning, MCLMC's optimal step and trajectory length
+                              are dimension-independent multiples of √d.
+
+                              When κ_eff > 5 (under-preconditioned, e.g. rank-1 LRD on a κ=1000
+                              target), E1 is **not applied** and Phase-3 DA falls back to the
+                              pilot's own ``(step_size, L)`` — the same behaviour as
+                              ``"default"``.  This gate prevents overshoot: at low rank the
+                              geometry is not yet whitened and the scaling-law values would place
+                              the DA starting point far from the actual optimum.
+
+                              The warm-start only affects DA *convergence speed*, not the final
+                              converged value.  At sufficient ``lrd_num_steps`` budget,
+                              ``"law"`` and ``"default"`` produce statistically identical
+                              ``(step_size, L)`` outputs.  The gain is in sample quality at
+                              *low-budget* warmup (measured via ESS/grad):
+                              ~20–30% improvement through n_warmup ≈ 1000 at d = 500 in the
+                              Q0 sweep (2026-06), scaling with dimension because the default
+                              DA init at 0.25 √d falls further below the optimum at larger d.
+
+                            * ``"default"``: Phase-3 DA is initialised by warm-starting from the
+                              pilot's own ``(step_size, L)`` (the pre-existing behaviour prior to
+                              this parameter).  Use this to reproduce results from the previous
+                              code path or to suppress E1 entirely.
+   :type warmup_step_init: str
 
    :returns: A :class:`MCLMCLRDAdaptationState` NamedTuple with fields ``L``,
              ``step_size``, ``inverse_mass_matrix`` (a

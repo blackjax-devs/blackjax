@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g359205da8" />
+  <meta name="docsearch:version" content="0.1.dev1+gddfd272ed" />
   </head>
   
   
@@ -525,6 +525,22 @@
 <span class="p">]</span>
 
 <span class="n">_VALID_INNER_KERNELS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;mclmc&quot;</span><span class="p">,</span> <span class="s2">&quot;adjusted_mclmc&quot;</span><span class="p">})</span>
+<span class="n">_VALID_WARMUP_STEP_INITS</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;law&quot;</span><span class="p">,</span> <span class="s2">&quot;default&quot;</span><span class="p">})</span>
+
+<span class="c1"># √d scaling-law constants from the MCLMC scaling-laws study (S3).</span>
+<span class="c1"># At good preconditioning (κ_eff ≲ 5), the optimal step and trajectory length</span>
+<span class="c1"># scale as constant × √d with dimension-independent constants:</span>
+<span class="c1">#   step ≈ 1.22 × √d,  L ≈ 0.85 × √d.</span>
+<span class="c1"># Source: tuningfork/experiments/mclmc_scaling/ Q0 sweep (2026-06).</span>
+<span class="n">_SQRT_D_STEP_CONST</span> <span class="o">=</span> <span class="mf">1.22</span>
+<span class="n">_SQRT_D_L_CONST</span> <span class="o">=</span> <span class="mf">0.85</span>
+
+<span class="c1"># κ_eff gate for the √d warm-start (E1).  When the pilot-derived LRD IMM</span>
+<span class="c1"># achieves κ_eff ≤ this threshold, the geometry is sufficiently whitened for</span>
+<span class="c1"># the scaling-law warm-start to be accurate.  κ_eff &gt; 5 indicates the IMM is</span>
+<span class="c1"># not yet whitening the target; falling back to the pilot&#39;s own (step, L)</span>
+<span class="c1"># avoids overshooting the tuning region.</span>
+<span class="n">_KAPPA_EFF_GATE</span> <span class="o">=</span> <span class="mf">5.0</span>
 
 
 <div class="viewcode-block" id="MCLMCLRDAdaptationState">
@@ -581,6 +597,17 @@
 <span class="sd">            trajectory at the final adapted parameters:</span>
 <span class="sd">            ``round(L_init / final_step_size)``.  Provided as a bookkeeping</span>
 <span class="sd">            aid for cert integration.</span>
+<span class="sd">        ``e1_fired``</span>
+<span class="sd">            ``True`` when the √d warm-start (E1) was applied to Phase-3 DA</span>
+<span class="sd">            initialisation; ``False`` when the fallback (pilot step/L) was</span>
+<span class="sd">            used instead.  Always ``False`` when ``warmup_step_init=&quot;default&quot;``.</span>
+<span class="sd">        ``kappa_eff_pilot``</span>
+<span class="sd">            Effective condition number κ(M⁻¹ Σ⁻¹) of the pilot-derived LRD</span>
+<span class="sd">            IMM against the pilot sample covariance.  Computed from the Phase-2</span>
+<span class="sd">            SVD eigenspectrum.  Values near 1 indicate good whitening; values</span>
+<span class="sd">            above 5 indicate the IMM is under-preconditioned (E1 falls back to</span>
+<span class="sd">            pilot step/L).  Present whenever ``warmup_step_init`` is set (both</span>
+<span class="sd">            ``&quot;law&quot;`` and ``&quot;default&quot;`` paths compute it for observability).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="MCLMCLRDAdaptationState.L">
@@ -620,6 +647,12 @@
 <span class="sd">    sigma : shape ``(d,)``</span>
 <span class="sd">    U     : shape ``(d, k)``</span>
 <span class="sd">    lam   : shape ``(k,)``</span>
+<span class="sd">    lam_all : shape ``(min(n, d),)``</span>
+<span class="sd">        **Full** eigenspectrum of the sample correlation matrix (all singular</span>
+<span class="sd">        values, not just the top-k).  Returned for :func:`_kappa_eff_pilot`</span>
+<span class="sd">        so it can compute the residual contribution to κ_eff without a second</span>
+<span class="sd">        SVD.  The ordering here is by descending ``|λ - 1|``, matching the</span>
+<span class="sd">        selection order used for ``lam`` (i.e. ``lam == lam_all[:k]``).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">flat_positions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
     <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">flat_positions</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
@@ -640,7 +673,91 @@
 
     <span class="n">lam_k</span> <span class="o">=</span> <span class="n">lam</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span>  <span class="c1"># (k,)</span>
     <span class="n">U_k</span> <span class="o">=</span> <span class="n">V</span><span class="p">[:,</span> <span class="n">top_idx</span><span class="p">]</span>  <span class="c1"># (d, k)</span>
-    <span class="k">return</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">U_k</span><span class="p">,</span> <span class="n">lam_k</span>
+    <span class="n">lam_all_sorted</span> <span class="o">=</span> <span class="n">lam</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">]</span>  <span class="c1"># full spectrum, ordered by |λ-1| desc</span>
+    <span class="k">return</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">U_k</span><span class="p">,</span> <span class="n">lam_k</span><span class="p">,</span> <span class="n">lam_all_sorted</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_kappa_eff_pilot</span><span class="p">(</span>
+    <span class="n">lam_all_sorted</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Effective condition number of the pilot LRD IMM against the pilot Sigma.</span>
+
+<span class="sd">    Computes κ_eff = κ(M⁻¹ Σ⁻¹) from the full SVD eigenspectrum produced</span>
+<span class="sd">    in Phase 2, using the correct accounting of whitened vs. residual directions.</span>
+
+<span class="sd">    **Correct formula** (the LRD preconditioning theory):</span>
+
+<span class="sd">    The LRD IMM M⁻¹ captures the top-k principal directions of the sample</span>
+<span class="sd">    correlation matrix (those with ``|λ - 1|`` largest).  In the M⁻¹Σ⁻¹</span>
+<span class="sd">    product:</span>
+
+<span class="sd">    * The **k captured** directions are whitened to eigenvalue **1** — M⁻¹</span>
+<span class="sd">      exactly inverts Σ along those directions.</span>
+<span class="sd">    * The **residual** (d − k) directions, with correlation eigenvalues</span>
+<span class="sd">      ``μ_i`` (the *k+1*, *k+2*, … entries of ``lam_all_sorted``), are left</span>
+<span class="sd">      as *diagonal*-only (M⁻¹ = D² along those directions).  In the</span>
+<span class="sd">      correlation-normalised space, the diagonal correction gives eigenvalue</span>
+<span class="sd">      ``1/μ_i`` for each residual direction.</span>
+
+<span class="sd">    Hence the spectrum of M⁻¹Σ⁻¹ is:</span>
+
+<span class="sd">        {1} × k  ∪  {1/μ_i : i ∈ residual}</span>
+
+<span class="sd">    and κ_eff = max / min of this combined set.</span>
+
+<span class="sd">    **Why the na‌ive {lam_k ∪ {1}} formula is wrong:** it uses the captured</span>
+<span class="sd">    eigenvalues (those with ``|λ - 1|`` largest) in the numerator/denominator,</span>
+<span class="sd">    which are exactly the directions that *are* whitened.  The actual spread</span>
+<span class="sd">    comes from the *residual* directions, whose ``μ_i`` are closest to 1 and</span>
+<span class="sd">    therefore ``1/μ_i`` can still be far from 1 when some residuals are very</span>
+<span class="sd">    small (under-corrected).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    lam_all_sorted : array, shape ``(min(n, d),)``</span>
+<span class="sd">        Full eigenspectrum of the sample correlation matrix, ordered by</span>
+<span class="sd">        descending ``|λ - 1|`` (as returned by</span>
+<span class="sd">        :func:`_extract_lrd_from_samples`).  The first ``k`` entries are</span>
+<span class="sd">        the selected top-k; the remaining entries are the residuals.</span>
+<span class="sd">    k : int</span>
+<span class="sd">        Rank of the LRD approximation (same ``k_used`` passed to</span>
+<span class="sd">        :func:`_extract_lrd_from_samples`).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    float</span>
+<span class="sd">        κ_eff = max / min of {1} × k ∪ {1/μ_i : i ≥ k}.</span>
+<span class="sd">        Returns the correlation κ (all residual, no whitening) when k = 0.</span>
+<span class="sd">        Returns 1.0 when k ≥ len(lam_all_sorted) (all directions whitened).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">lam_np</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lam_all_sorted</span><span class="p">)</span>
+    <span class="n">n_svd</span> <span class="o">=</span> <span class="n">lam_np</span><span class="o">.</span><span class="n">size</span>  <span class="c1"># min(n_pilot, d)</span>
+
+    <span class="k">if</span> <span class="n">n_svd</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="mf">1.0</span>
+
+    <span class="c1"># Residual eigenvalues: entries at positions k, k+1, … in lam_all_sorted.</span>
+    <span class="c1"># These are the (d-k) directions NOT captured by the top-k selection.</span>
+    <span class="k">if</span> <span class="n">k</span> <span class="o">&gt;=</span> <span class="n">n_svd</span><span class="p">:</span>
+        <span class="c1"># All SVD-supported directions are whitened → κ_eff = 1.</span>
+        <span class="k">return</span> <span class="mf">1.0</span>
+
+    <span class="n">residual_mu</span> <span class="o">=</span> <span class="n">lam_np</span><span class="p">[</span><span class="n">k</span><span class="p">:]</span>  <span class="c1"># shape (n_svd - k,)</span>
+
+    <span class="c1"># Guard against near-zero residuals (degenerate pilots with very few draws)</span>
+    <span class="n">residual_mu</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">residual_mu</span> <span class="o">&lt;</span> <span class="mf">1e-12</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">residual_mu</span><span class="p">),</span> <span class="n">residual_mu</span>
+    <span class="p">)</span>
+    <span class="n">residual_eigs</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">residual_mu</span>  <span class="c1"># (n_svd - k,)</span>
+
+    <span class="c1"># The k whitened directions each contribute eigenvalue 1.</span>
+    <span class="c1"># Combine: max and min over {1} ∪ {1/μ_i}.</span>
+    <span class="n">max_eig</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">residual_eigs</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">))</span>
+    <span class="n">min_eig</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">residual_eigs</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">min_eig</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">max_eig</span> <span class="o">/</span> <span class="n">min_eig</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_da_ceiling_warning</span><span class="p">(</span>
@@ -698,6 +815,7 @@
     <span class="n">floor_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.15</span><span class="p">,</span>
     <span class="n">adjusted_num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3000</span><span class="p">,</span>
     <span class="n">adjusted_target</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span>
+    <span class="n">warmup_step_init</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;law&quot;</span><span class="p">,</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Scheme A (pilot-free) MCLMC warmup with Low-Rank Diagonal preconditioning.</span>
 
@@ -762,6 +880,39 @@
 <span class="sd">    adjusted_target</span>
 <span class="sd">        Target acceptance rate for the adjusted MCLMC tuning phase.</span>
 <span class="sd">        Default ``0.9``.  Ignored when ``inner_kernel=&quot;mclmc&quot;``.</span>
+<span class="sd">    warmup_step_init : str</span>
+<span class="sd">        Initialisation strategy for the Phase-3 Dual-Averaging (DA) step-size</span>
+<span class="sd">        tuner.  One of:</span>
+
+<span class="sd">        * ``&quot;law&quot;`` *(default)*: **√d warm-start (E1)**, gated on κ_eff.</span>
+
+<span class="sd">          When the pilot-derived LRD IMM achieves κ_eff ≤ 5 (the geometry is</span>
+<span class="sd">          sufficiently whitened), Phase-3 DA is initialised at the scaling-law</span>
+<span class="sd">          values ``step_size = 1.22 × √d``, ``L = 0.85 × √d``.  These</span>
+<span class="sd">          constants were derived from the MCLMC scaling-laws study (S3, 2026):</span>
+<span class="sd">          at good preconditioning, MCLMC&#39;s optimal step and trajectory length</span>
+<span class="sd">          are dimension-independent multiples of √d.</span>
+
+<span class="sd">          When κ_eff &gt; 5 (under-preconditioned, e.g. rank-1 LRD on a κ=1000</span>
+<span class="sd">          target), E1 is **not applied** and Phase-3 DA falls back to the</span>
+<span class="sd">          pilot&#39;s own ``(step_size, L)`` — the same behaviour as</span>
+<span class="sd">          ``&quot;default&quot;``.  This gate prevents overshoot: at low rank the</span>
+<span class="sd">          geometry is not yet whitened and the scaling-law values would place</span>
+<span class="sd">          the DA starting point far from the actual optimum.</span>
+
+<span class="sd">          The warm-start only affects DA *convergence speed*, not the final</span>
+<span class="sd">          converged value.  At sufficient ``lrd_num_steps`` budget,</span>
+<span class="sd">          ``&quot;law&quot;`` and ``&quot;default&quot;`` produce statistically identical</span>
+<span class="sd">          ``(step_size, L)`` outputs.  The gain is in sample quality at</span>
+<span class="sd">          *low-budget* warmup (measured via ESS/grad):</span>
+<span class="sd">          ~20–30% improvement through n_warmup ≈ 1000 at d = 500 in the</span>
+<span class="sd">          Q0 sweep (2026-06), scaling with dimension because the default</span>
+<span class="sd">          DA init at 0.25 √d falls further below the optimum at larger d.</span>
+
+<span class="sd">        * ``&quot;default&quot;``: Phase-3 DA is initialised by warm-starting from the</span>
+<span class="sd">          pilot&#39;s own ``(step_size, L)`` (the pre-existing behaviour prior to</span>
+<span class="sd">          this parameter).  Use this to reproduce results from the previous</span>
+<span class="sd">          code path or to suppress E1 entirely.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -818,6 +969,11 @@
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;inner_kernel must be one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_VALID_INNER_KERNELS</span><span class="p">)</span><span class="si">!r}</span><span class="s2">, &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">inner_kernel</span><span class="si">!r}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">warmup_step_init</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_VALID_WARMUP_STEP_INITS</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;warmup_step_init must be one of </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="n">_VALID_WARMUP_STEP_INITS</span><span class="p">)</span><span class="si">!r}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">warmup_step_init</span><span class="si">!r}</span><span class="s2">.&quot;</span>
         <span class="p">)</span>
 
     <span class="c1"># Five independent keys — no reuse across init / pilot warmup / pilot</span>
@@ -896,7 +1052,7 @@
     <span class="c1"># ------------------------------------------------------------------</span>
     <span class="c1"># Phase 2: SVD extraction → LowRankInverseMassMatrix</span>
     <span class="c1"># ------------------------------------------------------------------</span>
-    <span class="n">sigma</span><span class="p">,</span> <span class="n">U_k</span><span class="p">,</span> <span class="n">lam_k</span> <span class="o">=</span> <span class="n">_extract_lrd_from_samples</span><span class="p">(</span><span class="n">flat_pilot</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k_used</span><span class="p">)</span>
+    <span class="n">sigma</span><span class="p">,</span> <span class="n">U_k</span><span class="p">,</span> <span class="n">lam_k</span><span class="p">,</span> <span class="n">lam_all_sorted</span> <span class="o">=</span> <span class="n">_extract_lrd_from_samples</span><span class="p">(</span><span class="n">flat_pilot</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k_used</span><span class="p">)</span>
     <span class="n">lrd_imm</span> <span class="o">=</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U_k</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam_k</span><span class="p">)</span>
 
     <span class="c1"># ------------------------------------------------------------------</span>
@@ -915,12 +1071,41 @@
             <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="c1"># Warm-start from pilot L/step_size to skip unnecessary exploration.</span>
-    <span class="n">lrd_init_params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
-        <span class="n">L</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">L</span><span class="p">,</span>
-        <span class="n">step_size</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-        <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>  <span class="c1"># placeholder; overridden</span>
-    <span class="p">)</span>
+    <span class="c1"># Compute κ_eff of the pilot-derived LRD IMM.  Uses the full Phase-2 SVD</span>
+    <span class="c1"># eigenspectrum (lam_all_sorted) and the selected rank k_used to correctly</span>
+    <span class="c1"># account for whitened vs. residual directions in the M⁻¹Σ⁻¹ product.</span>
+    <span class="n">kappa_eff_pilot_val</span> <span class="o">=</span> <span class="n">_kappa_eff_pilot</span><span class="p">(</span><span class="n">lam_all_sorted</span><span class="o">=</span><span class="n">lam_all_sorted</span><span class="p">,</span> <span class="n">k</span><span class="o">=</span><span class="n">k_used</span><span class="p">)</span>
+
+    <span class="c1"># Phase-3 DA initialisation (warmup_step_init controls E1).</span>
+    <span class="k">if</span> <span class="n">warmup_step_init</span> <span class="o">==</span> <span class="s2">&quot;law&quot;</span><span class="p">:</span>
+        <span class="c1"># E1: √d warm-start, gated on κ_eff ≤ 5.</span>
+        <span class="c1"># Gate condition: the pilot LRD IMM must sufficiently whiten the</span>
+        <span class="c1"># geometry (κ_eff ≤ 5) before the scaling-law init is accurate.</span>
+        <span class="n">e1_fired</span> <span class="o">=</span> <span class="n">kappa_eff_pilot_val</span> <span class="o">&lt;=</span> <span class="n">_KAPPA_EFF_GATE</span>
+        <span class="k">if</span> <span class="n">e1_fired</span><span class="p">:</span>
+            <span class="c1"># Scaling-law warm-start: step ≈ 1.22√d, L ≈ 0.85√d.</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">flat_pilot</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">sqrt_d</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">d</span><span class="p">))</span>
+            <span class="n">lrd_init_params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
+                <span class="n">L</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_SQRT_D_L_CONST</span> <span class="o">*</span> <span class="n">sqrt_d</span><span class="p">),</span>
+                <span class="n">step_size</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_SQRT_D_STEP_CONST</span> <span class="o">*</span> <span class="n">sqrt_d</span><span class="p">),</span>
+                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>  <span class="c1"># placeholder; overridden</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Fallback: pilot&#39;s own (step, L) — same as &quot;default&quot;.</span>
+            <span class="n">lrd_init_params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
+                <span class="n">L</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">L</span><span class="p">,</span>
+                <span class="n">step_size</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>  <span class="c1"># placeholder; overridden</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># &quot;default&quot;: warm-start from pilot L/step_size to skip unnecessary exploration.</span>
+        <span class="n">e1_fired</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">lrd_init_params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
+            <span class="n">L</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">L</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">pilot_params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>  <span class="c1"># placeholder; overridden</span>
+        <span class="p">)</span>
 
     <span class="c1"># Split into 2*num_chains keys: first half for chain init, second for tuning.</span>
     <span class="n">lrd_all_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">lrd_subkey</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">num_chains</span><span class="p">)</span>
@@ -1054,6 +1239,8 @@
         <span class="s2">&quot;pilot_step_size&quot;</span><span class="p">:</span> <span class="n">pilot_step_size_val</span><span class="p">,</span>
         <span class="s2">&quot;lrd_L&quot;</span><span class="p">:</span> <span class="n">lrd_L</span><span class="p">,</span>
         <span class="s2">&quot;lrd_step_size&quot;</span><span class="p">:</span> <span class="n">lrd_step_size</span><span class="p">,</span>
+        <span class="s2">&quot;e1_fired&quot;</span><span class="p">:</span> <span class="n">e1_fired</span><span class="p">,</span>
+        <span class="s2">&quot;kappa_eff_pilot&quot;</span><span class="p">:</span> <span class="n">kappa_eff_pilot_val</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="c1"># Adjusted-path-only provenance keys (available in scope only for that branch).</span>
