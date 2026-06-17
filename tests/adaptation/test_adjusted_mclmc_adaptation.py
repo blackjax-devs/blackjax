@@ -204,11 +204,11 @@ class TestAdjustedMclmcTargetIntegrationSteps(BlackJAXTest):
         num_sampling_steps = 2000
         info = _run_chain(run_key, state, logdensity_fn, params, num_sampling_steps)
         median_steps = jnp.median(info.num_integration_steps.astype(jnp.float32))
-        # avg=2 ⟹ steps ~ Ceil(Uniform * rescale(2)) ≈ Uniform[1,3], median ≈ 2.
-        # We assert ≥ 1.5 to be conservative.
+        # avg=2 => steps ~ ceil(Uniform * rescale(2)) ~ Uniform[1, 3], median ~ 2.
+        # We assert >= 1.5 to be conservative.
         assert median_steps >= 1.5, (
-            f"Median integration steps = {float(median_steps):.2f} is too low; "
-            "expected ≥ 1.5 (regression: MALA collapse gives median ≈ 1)."
+            f"Median integration steps {float(median_steps)} too low, "
+            "expected >= 1.5 (regression: MALA collapse gives median ~ 1)."
         )
 
     def test_avg_2_ess_geq_avg_1_on_gaussian(self):
@@ -251,8 +251,8 @@ class TestAdjustedMclmcTargetIntegrationSteps(BlackJAXTest):
         # avg=2 should be strictly better than avg=1; allow 20% tolerance
         # for Monte Carlo noise on small runs.
         assert ess_avg2 >= 0.8 * ess_avg1, (
-            f"ESS with avg=2 ({ess_avg2:.1f}) is worse than 80% of ESS with avg=1 "
-            f"({ess_avg1:.1f}); expected avg=2 to be substantially better."
+            f"ESS with avg=2 ({ess_avg2}) is worse than 80% of ESS with avg=1 "
+            f"({ess_avg1}), expected avg=2 to be substantially better."
         )
 
     def test_backward_compat_existing_signature(self):
