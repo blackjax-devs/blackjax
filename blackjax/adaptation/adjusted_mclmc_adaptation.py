@@ -78,17 +78,21 @@ def adjusted_mclmc_find_L_and_step_size(
         multiplicative factor for L
     target_num_integration_steps
         The average number of leapfrog integration steps per MH proposal.
-        After all step-size and L adaptation is complete, the returned ``L``
-        is overridden to ``target_num_integration_steps * step_size``, so that
-        the dynamic kernel (``adjusted_mclmc_dynamic``) draws on average
-        ``target_num_integration_steps`` leapfrog steps per proposal.
+        The step-size DA is calibrated AT this trajectory length (avg-preserving):
+        ``L`` is pinned to ``target_num_integration_steps * step_size`` at entry
+        and tracked throughout adaptation, so the step is calibrated against the
+        same ``avg`` that the dynamic kernel will use at sampling time.  The final
+        ``L`` is enforced to ``target_num_integration_steps * step_size`` as an
+        invariant (a near-NO-OP on the main path; it also fixes any final_da
+        step/L bookkeeping desync and covers the frac_tune3 > 0 edge path).
 
-        **Why this matters:** ``adjusted_mclmc_dynamic`` computes
-        ``avg = L / step_size`` and draws a random number of steps around
-        ``avg``.  The existing L-estimators keep ``L ≈ step_size`` (i.e.
-        ``avg ≈ 1``), silently collapsing the dynamic kernel to MALA (one
-        step per proposal), which costs roughly 2× in ESS at equal compute
-        versus a short multi-step trajectory.
+        **Why this matters at high d:** without avg-preserving calibration, the
+        step is calibrated against ``avg ≈ 1`` (the √dim reset collapses
+        ``L/step`` to 1 before pass-2 DA).  Running the dynamic kernel at
+        ``avg = 2`` with a step sized for ``avg = 1`` doubles the energy error
+        → acceptance collapses at high dimensionality (d=300: ≈0.22; d=500:
+        ≈0.21 vs target 0.65).  With avg-preserving calibration, the step is
+        correctly sized for the operating trajectory length across all d.
 
         **Robustness evidence:** across 7 models × 2 IMM regimes × 3 seeds,
         ``avg = 2`` has zero silent failures (inadequate cases fail loudly via
@@ -113,6 +117,10 @@ def adjusted_mclmc_find_L_and_step_size(
         params = MCLMCAdaptationState(
             jnp.sqrt(dim), jnp.sqrt(dim) * 0.2, inverse_mass_matrix=jnp.ones((dim,))
         )
+    # Entry pin: set avg = L/step = target_num_integration_steps at the start
+    # so the DA calibrates the step AT this trajectory length (avg-preserving).
+    # This applies whether params=None (fresh) or params-passed (e.g. mclmc_lrd).
+    params = params._replace(L=target_num_integration_steps * params.step_size)
 
     part1_key, part2_key = jax.random.split(rng_key, 2)
 
@@ -183,9 +191,11 @@ def adjusted_mclmc_find_L_and_step_size(
 
             total_num_tuning_integrator_steps += num_tuning_integrator_steps
 
-    # Override L so that the dynamic kernel's avg = L/step_size equals
-    # target_num_integration_steps.  The existing L-estimators produce
-    # L ≈ step_size (avg ≈ 1), collapsing the dynamic kernel to MALA.
+    # Invariant enforcer: after the avg-preserving calibration path, this is a
+    # near-NO-OP (L/step is already ≈ target_num_integration_steps throughout the
+    # DA).  It is kept to (a) fix any final_da step/L bookkeeping desync from the
+    # last DA update, and (b) guarantee the invariant for the frac_tune3 > 0 edge
+    # path, which may reset L independently.
     params = params._replace(L=target_num_integration_steps * params.step_size)
 
     return state, params, total_num_tuning_integrator_steps
@@ -358,7 +368,11 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 L=params.L * change, step_size=params.step_size * change
             )
             if diagonal_preconditioning:
-                params = params._replace(inverse_mass_matrix=variances, L=jnp.sqrt(dim))
+                # Keep the IMM update; drop the √dim L-reset. The √dim heuristic is
+                # the unadjusted MCLMC decoherence length and was the direct cause of
+                # avg ≈ 1 (MALA) calibration in pass-2. The preceding (L, step)
+                # change-scaling already preserves avg = target_num_integration_steps.
+                params = params._replace(inverse_mass_matrix=variances)
 
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
             (
@@ -369,7 +383,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 state,
                 params,
                 L_step_size_adaptation_keys_pass2,
-                fix_L=True,
+                fix_L=False,  # avg-preserving: L tracks step, keeping avg=target
                 update_da=update_da,
                 initial_da=initial_da,
             )
