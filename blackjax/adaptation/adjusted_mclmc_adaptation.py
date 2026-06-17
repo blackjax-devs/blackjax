@@ -100,8 +100,11 @@ def adjusted_mclmc_find_L_and_step_size(
         (MALA), and ties a per-model ESS/grad search.  Longer trajectories
         (``avg = 8``) silently under-sample variance at equal budget.
 
-        Default ``2.0`` is the robust sweet spot.  Set to ``1.0`` to recover
-        the previous MALA-equivalent behaviour (not recommended).
+        Default ``2.0`` is the robust sweet spot.  Values below ``1.1`` (the
+        ``_AVG_FLOOR``) are not reachable with avg-preserving calibration — the
+        clamp forces ``step ≤ L / 1.1`` and the step converges to zero.  To
+        recover near-MALA behaviour, use a value like ``1.2`` (just above the
+        floor); ``1.0`` is not a valid choice with the avg-preserving tuner.
 
     Returns
     -------
@@ -142,6 +145,7 @@ def adjusted_mclmc_find_L_and_step_size(
             diagonal_preconditioning=diagonal_preconditioning,
             max=max,
             tuning_factor=tuning_factor,
+            target_num_integration_steps=target_num_integration_steps,
         )(
             state, params, num_steps, window_key
         )
@@ -212,8 +216,19 @@ def adjusted_mclmc_make_L_step_size_adaptation(
     fix_L_first_da=False,
     max="avg",
     tuning_factor=1.0,
+    target_num_integration_steps=None,
 ):
-    """Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC"""
+    """Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC
+
+    Parameters
+    ----------
+    target_num_integration_steps
+        When provided, pass-1 uses ``fix_L=True`` (stable: L anchored at the
+        entry-pinned value so step cannot diverge) and pass-2 starts with a
+        re-pin ``L = target_num_integration_steps * step`` to guarantee avg =
+        target at the start of the avg-preserving DA.  When ``None`` the
+        pre-2c behaviour is preserved (``fix_L_first_da`` controls pass-1).
+    """
 
     def dual_avg_step(fix_L, update_da):
         """does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize"""
@@ -327,6 +342,15 @@ def adjusted_mclmc_make_L_step_size_adaptation(
 
         initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
 
+        # Pass-1: when target_num_integration_steps is set, use fix_L=True to keep
+        # L anchored at the entry-pinned value (target_k * step_initial).  This
+        # prevents the step from diverging when acceptance is high: with fix_L=False
+        # and avg=2 the per-step clamp step ≤ L/1.1 = 2*step/1.1 allows 1.82× growth
+        # per iteration, which can cause catastrophic divergence at small d and
+        # unlucky keys.  fix_L=True caps step at target_k * step_initial / 1.1.
+        pass1_fix_L = (
+            True if target_num_integration_steps is not None else fix_L_first_da
+        )
         (
             (state, params, (dual_avg_state, step_size_max), (_, average)),
             (info, position_samples),
@@ -335,7 +359,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             state,
             params,
             L_step_size_adaptation_keys_pass1,
-            fix_L=fix_L_first_da,
+            fix_L=pass1_fix_L,
             initial_da=initial_da,
             update_da=update_da,
         )
@@ -373,6 +397,16 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 # avg ≈ 1 (MALA) calibration in pass-2. The preceding (L, step)
                 # change-scaling already preserves avg = target_num_integration_steps.
                 params = params._replace(inverse_mass_matrix=variances)
+
+            if target_num_integration_steps is not None:
+                # Re-pin avg = target_num_integration_steps before pass-2 DA.
+                # Pass-1 ran with fix_L=True (L anchored), so after rescaling the
+                # L/step ratio may differ from target_k.  Re-pinning here ensures
+                # pass-2's avg-preserving DA (fix_L=False) starts and stays at the
+                # intended trajectory length.
+                params = params._replace(
+                    L=target_num_integration_steps * params.step_size
+                )
 
             initial_da, update_da, final_da = dual_averaging_adaptation(target=target)
             (
