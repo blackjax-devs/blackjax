@@ -55,7 +55,7 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gddfd272ed" />
+  <meta name="docsearch:version" content="0.1.dev1+g88370d5ea" />
   </head>
   
   
@@ -571,7 +571,7 @@ that calls the Numba-compiled gradient via a second <code class="docutils litera
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.00155024, dtype=float32, weak_type=True), logdensity=Array(-1.7090639, dtype=float32), logdensity_grad=Array(-0.05435566, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.05127101, dtype=float32, weak_type=True), logdensity=Array(-1.707048, dtype=float32), logdensity_grad=Array(-0.02677694, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -588,7 +588,7 @@ Python (and Numba) on every call. Let’s see the overhead:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 585 ms, sys: 0 ns, total: 585 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 584 ms, sys: 0 ns, total: 584 ms
 Wall time: 584 ms
 </pre></div>
 </div>
@@ -603,8 +603,8 @@ Wall time: 584 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 11.6 s, sys: 1.01 s, total: 12.6 s
-Wall time: 12.5 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.4 s, sys: 868 ms, total: 11.2 s
+Wall time: 11.2 s
 </pre></div>
 </div>
 </div>
