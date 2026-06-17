@@ -21,6 +21,10 @@ import numpy as np
 
 import blackjax
 import blackjax.diagnostics as diagnostics
+from blackjax.adaptation.adjusted_mclmc_adaptation import (
+    adjusted_mclmc_make_L_step_size_adaptation,
+)
+from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState
 from blackjax.mcmc.adjusted_mclmc import rescale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
@@ -280,3 +284,53 @@ class TestAdjustedMclmcTargetIntegrationSteps(BlackJAXTest):
         assert num_steps >= 0
         # L/step = 2.0 (the new default).
         np.testing.assert_allclose(params.L / params.step_size, 2.0, rtol=1e-5)
+
+
+class TestAdjustedMclmcLUpdateOrderBugRegression(BlackJAXTest):
+    """Regression test proving fix_L=False now updates L (the bug froze it)."""
+
+    def test_inner_fn_fix_L_false_updates_L(self):
+        """With fix_L=False, L should move when step_size changes.
+
+        This tests the inner function adjusted_mclmc_make_L_step_size_adaptation
+        directly, bypassing the post-override that masks the bug in the public API.
+
+        Before the fix: the order-of-operations bug made L *= step_new/step_old
+        effectively a no-op because step_old was already updated to step_new.
+        With the fix, L should change as step_size adapts.
+        """
+        logdensity_fn = lambda x: std_normal_logdensity(x)
+        state = _make_initial_state(self.next_key(), logdensity_fn, _DIM)
+
+        # Use adjusted_mclmc_make_L_step_size_adaptation directly (the inner fn).
+        # frac_tune2=0.0 means only pass-1 runs (no variance block).
+        # fix_L_first_da=False means pass-1 runs with fix_L=False.
+        adaptation = adjusted_mclmc_make_L_step_size_adaptation(
+            kernel=_make_kernel(),
+            logdensity_fn=logdensity_fn,
+            dim=_DIM,
+            frac_tune1=0.2,
+            frac_tune2=0.0,
+            target=_TUNE_TARGET,
+            fix_L_first_da=False,
+            diagonal_preconditioning=False,
+        )
+
+        # Initialize params with well-separated L and step_size.
+        params_in = MCLMCAdaptationState(
+            L=jnp.array(1.0),
+            step_size=jnp.array(0.1),
+            inverse_mass_matrix=jnp.ones(_DIM),
+        )
+
+        # Run the adaptation for a fraction of the total steps.
+        num_adapt_steps = int(_NUM_STEPS * 0.2)  # matches frac_tune1
+        state_out, params_out, _, _ = adaptation(
+            state, params_in, num_adapt_steps, self.next_key()
+        )
+
+        # Regression: with the bug, params_out.L == params_in.L (L-update dead).
+        # With the fix, params_out.L should move (L tracks step under fix_L=False).
+        assert not jnp.allclose(
+            params_out.L, params_in.L, rtol=1e-3
+        ), f"L did not update: in={float(params_in.L)}, out={float(params_out.L)} (ORDER BUG)"
