@@ -242,14 +242,10 @@ class TestAdjustedMclmcTargetIntegrationSteps(BlackJAXTest):
 
         # ESS per dimension, then average
         ess_avg2 = float(
-            jnp.mean(
-                diagnostics.effective_sample_size(positions_avg2[None, ...])
-            )
+            jnp.mean(diagnostics.effective_sample_size(positions_avg2[None, ...]))
         )
         ess_avg1 = float(
-            jnp.mean(
-                diagnostics.effective_sample_size(positions_avg1[None, ...])
-            )
+            jnp.mean(diagnostics.effective_sample_size(positions_avg1[None, ...]))
         )
 
         # avg=2 should be strictly better than avg=1; allow 20% tolerance
