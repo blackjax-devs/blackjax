@@ -12,6 +12,15 @@ from blackjax.util import incremental_value_update, pytree_size
 
 Lratio_lowerbound = 0.0
 Lratio_upperbound = 2.0
+_AVG_FLOOR = (
+    1.1  # min avg = L/step enforced during DA; keeps the kernel above MALA (avg=1)
+)
+
+
+def _replace_step_L(params, new_step, new_L):
+    """Replace step_size and L atomically to avoid ordering bugs (the
+    fix_L=False L-update must use the *old* step in its ratio)."""
+    return params._replace(step_size=new_step, L=new_L)
 
 
 def adjusted_mclmc_find_L_and_step_size(
@@ -243,7 +252,7 @@ def adjusted_mclmc_make_L_step_size_adaptation(
             )
 
             step_size = jax.lax.clamp(
-                1e-5, jnp.exp(adaptive_state.log_step_size), params.L / 1.1
+                1e-5, jnp.exp(adaptive_state.log_step_size), params.L / _AVG_FLOOR
             )
             adaptive_state = adaptive_state._replace(log_step_size=jnp.log(step_size))
 
@@ -257,11 +266,12 @@ def adjusted_mclmc_make_L_step_size_adaptation(
                 zero_prevention=mask,
             )
 
-            params = params._replace(step_size=with_mask(step_size, params.step_size))
+            old_step_size = params.step_size
+            new_step_size = with_mask(step_size, old_step_size)
+            new_L = params.L
             if not fix_L:
-                params = params._replace(
-                    L=with_mask(params.L * (step_size / params.step_size), params.L),
-                )
+                new_L = with_mask(params.L * (step_size / old_step_size), params.L)
+            params = _replace_step_L(params, new_step_size, new_L)
 
             state_position = state.position
 
