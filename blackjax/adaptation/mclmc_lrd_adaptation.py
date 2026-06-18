@@ -816,13 +816,16 @@ def mclmc_lrd_warmup(
 
         adj_params_all = _adj_tune_one(adj_tune_keys, adj_init_states)
 
-        # frac_tune2=0.0 → L is fixed at L_init across all chains.
-        # Average step_size across chains for a stable multi-chain estimate.
+        # target_num_integration_steps=2.0 (default) → avg-preserving calibration:
+        # the tuner enforces L = 2·step per chain throughout DA.  Average both
+        # across chains for a stable multi-chain estimate; by the avg-preserving
+        # invariant final_L ≈ 2·final_step_size.
         final_step_size = jnp.mean(adj_params_all.step_size)
-        final_L = jnp.array(L_init)  # L is fixed by construction
+        final_L = jnp.mean(adj_params_all.L)  # L = 2·step by avg-preserving invariant
 
-        # DA-ceiling diagnostic: warn if step_size is at or near L_init/1.1.
-        _check_da_ceiling_warning(float(final_step_size), L_init, floor_factor)
+        # DA-ceiling diagnostic: non-binding at avg=2 (step ≈ L/2 ≪ L/1.1),
+        # but kept correct: use final_L (not L_init) as the calibration anchor.
+        _check_da_ceiling_warning(float(final_step_size), float(final_L), floor_factor)
 
     # Gradient accounting: unadjusted MCLMC costs 2 grads/step.
     pilot_num_grad_evals = (pilot_num_warmup + pilot_num_samples) * 2

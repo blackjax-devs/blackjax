@@ -578,7 +578,12 @@ class TestMCLMCLRDAdjustedSmoke:
         assert diag["L_init"] >= diag["lrd_L"] - 1e-9
 
     def test_adjusted_path_n_sample_in_diagnostics(self):
-        """Adjusted path must expose N_sample = round(L_init / final_step_size)."""
+        """Adjusted path must expose N_sample = round(final_L / final_step_size) ≈ 2.
+
+        After option-(ii): N_sample tracks final_L (the avg-preserving tuner's
+        calibrated L), NOT L_init.  By the avg=2 invariant, final_L ≈ 2·step
+        so N_sample ≈ 2.  Asserting against result.L / step_size (not L_init).
+        """
         rng = jax.random.key(57)
         pos = jnp.zeros(D)
 
@@ -599,8 +604,9 @@ class TestMCLMCLRDAdjustedSmoke:
         assert "N_sample" in diag, "Missing N_sample in adjusted diagnostics"
         assert isinstance(diag["N_sample"], (int, float)), "N_sample must be numeric"
         assert diag["N_sample"] > 0, "N_sample must be positive"
-        # Verify the value matches round(L_init / final_step_size) within rounding.
-        expected = float(diag["L_init"]) / float(result.step_size)
+        # N_sample = round(final_L / step_size); final_L ≈ 2·step → N_sample ≈ 2.
+        # Assert against result.L (not L_init) since we no longer pin L=L_init.
+        expected = float(result.L) / float(result.step_size)
         assert abs(diag["N_sample"] - expected) < 1.0  # within one step
 
     def test_unadjusted_path_has_no_l_init_floor_active(self):
