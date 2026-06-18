@@ -57,17 +57,21 @@ Module Contents
    :param num_windows: how many iterations of the tuning are carried out
    :param tuning_factor: multiplicative factor for L
    :param target_num_integration_steps: The average number of leapfrog integration steps per MH proposal.
-                                        After all step-size and L adaptation is complete, the returned ``L``
-                                        is overridden to ``target_num_integration_steps * step_size``, so that
-                                        the dynamic kernel (``adjusted_mclmc_dynamic``) draws on average
-                                        ``target_num_integration_steps`` leapfrog steps per proposal.
+                                        The step-size DA is calibrated AT this trajectory length (avg-preserving):
+                                        ``L`` is pinned to ``target_num_integration_steps * step_size`` at entry
+                                        and tracked throughout adaptation, so the step is calibrated against the
+                                        same ``avg`` that the dynamic kernel will use at sampling time.  The final
+                                        ``L`` is enforced to ``target_num_integration_steps * step_size`` as an
+                                        invariant (a near-NO-OP on the main path; it also fixes any final_da
+                                        step/L bookkeeping desync and covers the frac_tune3 > 0 edge path).
 
-                                        **Why this matters:** ``adjusted_mclmc_dynamic`` computes
-                                        ``avg = L / step_size`` and draws a random number of steps around
-                                        ``avg``.  The existing L-estimators keep ``L ≈ step_size`` (i.e.
-                                        ``avg ≈ 1``), silently collapsing the dynamic kernel to MALA (one
-                                        step per proposal), which costs roughly 2× in ESS at equal compute
-                                        versus a short multi-step trajectory.
+                                        **Why this matters at high d:** without avg-preserving calibration, the
+                                        step is calibrated against ``avg ≈ 1`` (the √dim reset collapses
+                                        ``L/step`` to 1 before pass-2 DA).  Running the dynamic kernel at
+                                        ``avg = 2`` with a step sized for ``avg = 1`` doubles the energy error
+                                        → acceptance collapses at high dimensionality (d=300: ≈0.22; d=500:
+                                        ≈0.21 vs target 0.65).  With avg-preserving calibration, the step is
+                                        correctly sized for the operating trajectory length across all d.
 
                                         **Robustness evidence:** across 7 models × 2 IMM regimes × 3 seeds,
                                         ``avg = 2`` has zero silent failures (inadequate cases fail loudly via
@@ -75,15 +79,24 @@ Module Contents
                                         (MALA), and ties a per-model ESS/grad search.  Longer trajectories
                                         (``avg = 8``) silently under-sample variance at equal budget.
 
-                                        Default ``2.0`` is the robust sweet spot.  Set to ``1.0`` to recover
-                                        the previous MALA-equivalent behaviour (not recommended).
+                                        Default ``2.0`` is the robust sweet spot.  Values below ``1.1`` (the
+                                        ``_AVG_FLOOR``) are not reachable with avg-preserving calibration — the
+                                        clamp forces ``step ≤ L / 1.1`` and the step converges to zero.  To
+                                        recover near-MALA behaviour, use a value like ``1.2`` (just above the
+                                        floor); ``1.0`` is not a valid choice with the avg-preserving tuner.
 
    :rtype: A tuple containing the final state of the MCMC algorithm and the final hyperparameters.
 
 
-.. py:function:: adjusted_mclmc_make_L_step_size_adaptation(kernel, logdensity_fn, dim, frac_tune1, frac_tune2, target, diagonal_preconditioning, fix_L_first_da=False, max='avg', tuning_factor=1.0)
+.. py:function:: adjusted_mclmc_make_L_step_size_adaptation(kernel, logdensity_fn, dim, frac_tune1, frac_tune2, target, diagonal_preconditioning, fix_L_first_da=False, max='avg', tuning_factor=1.0, target_num_integration_steps=None)
 
    Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC
+
+   :param target_num_integration_steps: When provided, pass-1 uses ``fix_L=True`` (stable: L anchored at the
+                                        entry-pinned value so step cannot diverge) and pass-2 starts with a
+                                        re-pin ``L = target_num_integration_steps * step`` to guarantee avg =
+                                        target at the start of the avg-preserving DA.  When ``None`` the
+                                        pre-2c behaviour is preserved (``fix_L_first_da`` controls pass-1).
 
 
 .. py:function:: adjusted_mclmc_make_adaptation_L(kernel, logdensity_fn, frac, l_factor, max='avg', eigenvector=None)

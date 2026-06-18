@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g88370d5ea" />
+  <meta name="docsearch:version" content="0.1.dev1+gb8e9894e0" />
   </head>
   
   
@@ -403,6 +403,15 @@
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html#blackjax.adaptation.adjusted_mclmc_adaptation.Lratio_upperbound">[docs]</a>
 <span class="n">Lratio_upperbound</span> <span class="o">=</span> <span class="mf">2.0</span></div>
 
+<span class="n">_AVG_FLOOR</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="mf">1.1</span>  <span class="c1"># min avg = L/step enforced during DA; keeps the kernel above MALA (avg=1)</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_replace_step_L</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">new_step</span><span class="p">,</span> <span class="n">new_L</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Replace step_size and L atomically to avoid ordering bugs (the</span>
+<span class="sd">    fix_L=False L-update must use the *old* step in its ratio).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">step_size</span><span class="o">=</span><span class="n">new_step</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">new_L</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="adjusted_mclmc_find_L_and_step_size">
@@ -462,17 +471,21 @@
 <span class="sd">        multiplicative factor for L</span>
 <span class="sd">    target_num_integration_steps</span>
 <span class="sd">        The average number of leapfrog integration steps per MH proposal.</span>
-<span class="sd">        After all step-size and L adaptation is complete, the returned ``L``</span>
-<span class="sd">        is overridden to ``target_num_integration_steps * step_size``, so that</span>
-<span class="sd">        the dynamic kernel (``adjusted_mclmc_dynamic``) draws on average</span>
-<span class="sd">        ``target_num_integration_steps`` leapfrog steps per proposal.</span>
+<span class="sd">        The step-size DA is calibrated AT this trajectory length (avg-preserving):</span>
+<span class="sd">        ``L`` is pinned to ``target_num_integration_steps * step_size`` at entry</span>
+<span class="sd">        and tracked throughout adaptation, so the step is calibrated against the</span>
+<span class="sd">        same ``avg`` that the dynamic kernel will use at sampling time.  The final</span>
+<span class="sd">        ``L`` is enforced to ``target_num_integration_steps * step_size`` as an</span>
+<span class="sd">        invariant (a near-NO-OP on the main path; it also fixes any final_da</span>
+<span class="sd">        step/L bookkeeping desync and covers the frac_tune3 &gt; 0 edge path).</span>
 
-<span class="sd">        **Why this matters:** ``adjusted_mclmc_dynamic`` computes</span>
-<span class="sd">        ``avg = L / step_size`` and draws a random number of steps around</span>
-<span class="sd">        ``avg``.  The existing L-estimators keep ``L ≈ step_size`` (i.e.</span>
-<span class="sd">        ``avg ≈ 1``), silently collapsing the dynamic kernel to MALA (one</span>
-<span class="sd">        step per proposal), which costs roughly 2× in ESS at equal compute</span>
-<span class="sd">        versus a short multi-step trajectory.</span>
+<span class="sd">        **Why this matters at high d:** without avg-preserving calibration, the</span>
+<span class="sd">        step is calibrated against ``avg ≈ 1`` (the √dim reset collapses</span>
+<span class="sd">        ``L/step`` to 1 before pass-2 DA).  Running the dynamic kernel at</span>
+<span class="sd">        ``avg = 2`` with a step sized for ``avg = 1`` doubles the energy error</span>
+<span class="sd">        → acceptance collapses at high dimensionality (d=300: ≈0.22; d=500:</span>
+<span class="sd">        ≈0.21 vs target 0.65).  With avg-preserving calibration, the step is</span>
+<span class="sd">        correctly sized for the operating trajectory length across all d.</span>
 
 <span class="sd">        **Robustness evidence:** across 7 models × 2 IMM regimes × 3 seeds,</span>
 <span class="sd">        ``avg = 2`` has zero silent failures (inadequate cases fail loudly via</span>
@@ -480,8 +493,11 @@
 <span class="sd">        (MALA), and ties a per-model ESS/grad search.  Longer trajectories</span>
 <span class="sd">        (``avg = 8``) silently under-sample variance at equal budget.</span>
 
-<span class="sd">        Default ``2.0`` is the robust sweet spot.  Set to ``1.0`` to recover</span>
-<span class="sd">        the previous MALA-equivalent behaviour (not recommended).</span>
+<span class="sd">        Default ``2.0`` is the robust sweet spot.  Values below ``1.1`` (the</span>
+<span class="sd">        ``_AVG_FLOOR``) are not reachable with avg-preserving calibration — the</span>
+<span class="sd">        clamp forces ``step ≤ L / 1.1`` and the step converges to zero.  To</span>
+<span class="sd">        recover near-MALA behaviour, use a value like ``1.2`` (just above the</span>
+<span class="sd">        floor); ``1.0`` is not a valid choice with the avg-preserving tuner.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -497,6 +513,10 @@
         <span class="n">params</span> <span class="o">=</span> <span class="n">MCLMCAdaptationState</span><span class="p">(</span>
             <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">dim</span><span class="p">,))</span>
         <span class="p">)</span>
+    <span class="c1"># Entry pin: set avg = L/step = target_num_integration_steps at the start</span>
+    <span class="c1"># so the DA calibrates the step AT this trajectory length (avg-preserving).</span>
+    <span class="c1"># This applies whether params=None (fresh) or params-passed (e.g. mclmc_lrd).</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">L</span><span class="o">=</span><span class="n">target_num_integration_steps</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">)</span>
 
     <span class="n">part1_key</span><span class="p">,</span> <span class="n">part2_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 
@@ -518,6 +538,7 @@
             <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="n">diagonal_preconditioning</span><span class="p">,</span>
             <span class="nb">max</span><span class="o">=</span><span class="nb">max</span><span class="p">,</span>
             <span class="n">tuning_factor</span><span class="o">=</span><span class="n">tuning_factor</span><span class="p">,</span>
+            <span class="n">target_num_integration_steps</span><span class="o">=</span><span class="n">target_num_integration_steps</span><span class="p">,</span>
         <span class="p">)(</span>
             <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">,</span> <span class="n">window_key</span>
         <span class="p">)</span>
@@ -567,9 +588,11 @@
 
             <span class="n">total_num_tuning_integrator_steps</span> <span class="o">+=</span> <span class="n">num_tuning_integrator_steps</span>
 
-    <span class="c1"># Override L so that the dynamic kernel&#39;s avg = L/step_size equals</span>
-    <span class="c1"># target_num_integration_steps.  The existing L-estimators produce</span>
-    <span class="c1"># L ≈ step_size (avg ≈ 1), collapsing the dynamic kernel to MALA.</span>
+    <span class="c1"># Invariant enforcer: after the avg-preserving calibration path, this is a</span>
+    <span class="c1"># near-NO-OP (L/step is already ≈ target_num_integration_steps throughout the</span>
+    <span class="c1"># DA).  It is kept to (a) fix any final_da step/L bookkeeping desync from the</span>
+    <span class="c1"># last DA update, and (b) guarantee the invariant for the frac_tune3 &gt; 0 edge</span>
+    <span class="c1"># path, which may reset L independently.</span>
     <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">L</span><span class="o">=</span><span class="n">target_num_integration_steps</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="n">total_num_tuning_integrator_steps</span></div>
@@ -589,8 +612,19 @@
     <span class="n">fix_L_first_da</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="nb">max</span><span class="o">=</span><span class="s2">&quot;avg&quot;</span><span class="p">,</span>
     <span class="n">tuning_factor</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">target_num_integration_steps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapts the stepsize and L of the MCLMC kernel. Designed for adjusted MCLMC</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    target_num_integration_steps</span>
+<span class="sd">        When provided, pass-1 uses ``fix_L=True`` (stable: L anchored at the</span>
+<span class="sd">        entry-pinned value so step cannot diverge) and pass-2 starts with a</span>
+<span class="sd">        re-pin ``L = target_num_integration_steps * step`` to guarantee avg =</span>
+<span class="sd">        target at the start of the avg-preserving DA.  When ``None`` the</span>
+<span class="sd">        pre-2c behaviour is preserved (``fix_L_first_da`` controls pass-1).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">dual_avg_step</span><span class="p">(</span><span class="n">fix_L</span><span class="p">,</span> <span class="n">update_da</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;does one step of the dynamics and updates the estimate of the posterior size and optimal stepsize&quot;&quot;&quot;</span>
@@ -639,7 +673,7 @@
             <span class="p">)</span>
 
             <span class="n">step_size</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span>
-                <span class="mf">1e-5</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">adaptive_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">),</span> <span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">/</span> <span class="mf">1.1</span>
+                <span class="mf">1e-5</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">adaptive_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">),</span> <span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">/</span> <span class="n">_AVG_FLOOR</span>
             <span class="p">)</span>
             <span class="n">adaptive_state</span> <span class="o">=</span> <span class="n">adaptive_state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">log_step_size</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">step_size</span><span class="p">))</span>
 
@@ -653,11 +687,12 @@
                 <span class="n">zero_prevention</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">step_size</span><span class="o">=</span><span class="n">with_mask</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">))</span>
+            <span class="n">old_step_size</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span>
+            <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">with_mask</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">old_step_size</span><span class="p">)</span>
+            <span class="n">new_L</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">L</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">fix_L</span><span class="p">:</span>
-                <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
-                    <span class="n">L</span><span class="o">=</span><span class="n">with_mask</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="p">(</span><span class="n">step_size</span> <span class="o">/</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">),</span> <span class="n">params</span><span class="o">.</span><span class="n">L</span><span class="p">),</span>
-                <span class="p">)</span>
+                <span class="n">new_L</span> <span class="o">=</span> <span class="n">with_mask</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="p">(</span><span class="n">step_size</span> <span class="o">/</span> <span class="n">old_step_size</span><span class="p">),</span> <span class="n">params</span><span class="o">.</span><span class="n">L</span><span class="p">)</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">_replace_step_L</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="n">new_step_size</span><span class="p">,</span> <span class="n">new_L</span><span class="p">)</span>
 
             <span class="n">state_position</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">position</span>
 
@@ -703,6 +738,15 @@
 
         <span class="n">initial_da</span><span class="p">,</span> <span class="n">update_da</span><span class="p">,</span> <span class="n">final_da</span> <span class="o">=</span> <span class="n">dual_averaging_adaptation</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
 
+        <span class="c1"># Pass-1: when target_num_integration_steps is set, use fix_L=True to keep</span>
+        <span class="c1"># L anchored at the entry-pinned value (target_k * step_initial).  This</span>
+        <span class="c1"># prevents the step from diverging when acceptance is high: with fix_L=False</span>
+        <span class="c1"># and avg=2 the per-step clamp step ≤ L/1.1 = 2*step/1.1 allows 1.82× growth</span>
+        <span class="c1"># per iteration, which can cause catastrophic divergence at small d and</span>
+        <span class="c1"># unlucky keys.  fix_L=True caps step at target_k * step_initial / 1.1.</span>
+        <span class="n">pass1_fix_L</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="kc">True</span> <span class="k">if</span> <span class="n">target_num_integration_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">fix_L_first_da</span>
+        <span class="p">)</span>
         <span class="p">(</span>
             <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">,</span> <span class="p">(</span><span class="n">dual_avg_state</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">),</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">average</span><span class="p">)),</span>
             <span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">position_samples</span><span class="p">),</span>
@@ -711,7 +755,7 @@
             <span class="n">state</span><span class="p">,</span>
             <span class="n">params</span><span class="p">,</span>
             <span class="n">L_step_size_adaptation_keys_pass1</span><span class="p">,</span>
-            <span class="n">fix_L</span><span class="o">=</span><span class="n">fix_L_first_da</span><span class="p">,</span>
+            <span class="n">fix_L</span><span class="o">=</span><span class="n">pass1_fix_L</span><span class="p">,</span>
             <span class="n">initial_da</span><span class="o">=</span><span class="n">initial_da</span><span class="p">,</span>
             <span class="n">update_da</span><span class="o">=</span><span class="n">update_da</span><span class="p">,</span>
         <span class="p">)</span>
@@ -744,7 +788,21 @@
                 <span class="n">L</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">L</span> <span class="o">*</span> <span class="n">change</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">step_size</span> <span class="o">*</span> <span class="n">change</span>
             <span class="p">)</span>
             <span class="k">if</span> <span class="n">diagonal_preconditioning</span><span class="p">:</span>
-                <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">variances</span><span class="p">,</span> <span class="n">L</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
+                <span class="c1"># Keep the IMM update; drop the √dim L-reset. The √dim heuristic is</span>
+                <span class="c1"># the unadjusted MCLMC decoherence length and was the direct cause of</span>
+                <span class="c1"># avg ≈ 1 (MALA) calibration in pass-2. The preceding (L, step)</span>
+                <span class="c1"># change-scaling already preserves avg = target_num_integration_steps.</span>
+                <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">variances</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">target_num_integration_steps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Re-pin avg = target_num_integration_steps before pass-2 DA.</span>
+                <span class="c1"># Pass-1 ran with fix_L=True (L anchored), so after rescaling the</span>
+                <span class="c1"># L/step ratio may differ from target_k.  Re-pinning here ensures</span>
+                <span class="c1"># pass-2&#39;s avg-preserving DA (fix_L=False) starts and stays at the</span>
+                <span class="c1"># intended trajectory length.</span>
+                <span class="n">params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
+                    <span class="n">L</span><span class="o">=</span><span class="n">target_num_integration_steps</span> <span class="o">*</span> <span class="n">params</span><span class="o">.</span><span class="n">step_size</span>
+                <span class="p">)</span>
 
             <span class="n">initial_da</span><span class="p">,</span> <span class="n">update_da</span><span class="p">,</span> <span class="n">final_da</span> <span class="o">=</span> <span class="n">dual_averaging_adaptation</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span>
             <span class="p">(</span>
@@ -755,7 +813,7 @@
                 <span class="n">state</span><span class="p">,</span>
                 <span class="n">params</span><span class="p">,</span>
                 <span class="n">L_step_size_adaptation_keys_pass2</span><span class="p">,</span>
-                <span class="n">fix_L</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">fix_L</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># avg-preserving: L tracks step, keeping avg=target</span>
                 <span class="n">update_da</span><span class="o">=</span><span class="n">update_da</span><span class="p">,</span>
                 <span class="n">initial_da</span><span class="o">=</span><span class="n">initial_da</span><span class="p">,</span>
             <span class="p">)</span>
