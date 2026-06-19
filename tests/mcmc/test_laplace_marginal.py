@@ -227,7 +227,7 @@ class TestLaplaceMarginalFactory(BlackJAXTest):
         exact_var = sigma**2 / (sigma**2 + 1.0)
 
         theta_star = self.laplace.solve_theta(phi)
-        keys = jax.random.split(self.next_key(), 5000)
+        keys = jax.random.split(self.next_key(), 30000)
         samples = jax.vmap(lambda k: self.laplace.sample_theta(k, phi, theta_star))(
             keys
         )

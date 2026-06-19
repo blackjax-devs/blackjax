@@ -253,7 +253,7 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         key_obs = self.next_key()
         self.y = theta_true + jax.random.normal(key_obs, (self.n,))
 
-    def _run_laplace_hmc(self, n_warmup=500, n_samples=5000):
+    def _run_laplace_hmc(self, n_warmup=1000, n_samples=10000):
         y = self.y
         n = self.n
 
@@ -293,7 +293,7 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         )
         return phi_samples, theta_samples  # (n_samples,), (n_samples, n)
 
-    def _run_ncp_nuts(self, n_warmup=500, n_samples=5000):
+    def _run_ncp_nuts(self, n_warmup=1000, n_samples=10000):
         """Window-adapted NUTS on the NCP — the reference posterior for phi and theta."""
         y = self.y
         n = self.n
@@ -338,6 +338,13 @@ class TestLaplaceHMCFunnel(BlackJAXTest):
         """
         phi_laplace, theta_laplace = self._run_laplace_hmc()
         phi_ncp, theta_ncp = self._run_ncp_nuts()
+
+        # NOTE: compares laplace_hmc against a LIVE NCP-NUTS baseline — both arms are
+        # stochastic, so Δ carries ~2x the MC error of a single sampler. At n_samples=10000
+        # the worst-case daily seed sits only ~2σ inside atol=0.15, so an occasional flake
+        # is expected/acceptable for this MCMC comparison. For a bulletproof low-N version,
+        # replace the live baseline with an offline high-ESS (or exact φ-marginal) reference
+        # and/or pin the sampler seed. Tracked as a follow-up.
 
         # --- phi ---
         mean_phi_laplace, mean_phi_ncp = float(jnp.mean(phi_laplace)), float(
@@ -554,30 +561,13 @@ class TestLaplaceHMCDiagnostics(BlackJAXTest):
             f"got iter_num={int(info.lbfgs_iter_num)}",
         )
 
-    def test_error_above_gtol_when_hit_maxiter(self):
-        """When hit_maxiter=True, lbfgs_error should be above the default gtol.
-
-        Note: for the simple Gaussian model the inner problem is nearly
-        quadratic and L-BFGS can make a very effective step even in 1
-        iteration, so the error may be small in absolute terms.  The primary
-        bug-detection signal is ``hit_maxiter`` (budget exhausted), not the
-        magnitude of the error.  We assert error > gtol=1e-8 as a sanity
-        check that the field is physically meaningful.
-        """
-        sampler, state = self._make_sampler(maxiter=1, phi_init=5.0, step_size=0.01)
-        _, info = jax.jit(sampler.step)(self.next_key(), state)
-        self.assertTrue(
-            bool(info.lbfgs_hit_maxiter),
-            "Precondition: hit_maxiter must be True with maxiter=1",
-        )
-        # Error must be non-negative; for a non-trivially-converged solve it
-        # should sit above the default gtol (1e-8).
-        self.assertGreater(
-            float(info.lbfgs_error),
-            1e-8,
-            "lbfgs_error should be above gtol when hit_maxiter=True, "
-            "got " + str(float(info.lbfgs_error)),
-        )
+    # NOTE: a magnitude assertion (lbfgs_error > gtol when hit_maxiter) was removed:
+    # for this near-quadratic Gaussian model L-BFGS effectively converges in one
+    # step, so the residual is line-search noise (~1e-8) that straddles gtol — the
+    # premise "hit_maxiter implies error>gtol" is false here. The real signals are
+    # covered by test_hit_maxiter_fires_with_maxiter_1 (budget exhausted),
+    # test_lbfgs_fields_present_and_finite (finite & >=0), and
+    # test_error_small_when_converged (small when converged).
 
     def test_error_small_when_converged(self):
         """With adequate maxiter, lbfgs_error should be near machine precision."""
