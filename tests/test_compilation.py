@@ -189,6 +189,33 @@ class CompilationTest(chex.TestCase):
             sample_key = jax.random.fold_in(rng_key, i)
             state, _ = step(sample_key, state)
 
+    def test_reparameterized_slice(self):
+        """Count the number of traces for the reparameterized slice kernel.
+
+        The differentiable slice step evaluates the logdensity at the proposed
+        point and at both slice endpoints inside the custom-VJP rule, so its
+        trace budget is slightly larger than the simpler fixed-step kernels.
+        """
+
+        @chex.assert_max_traces(n=16)
+        def logdensity_fn(x, params):
+            mu = params[:1]
+            log_var = params[1:]
+            var = jnp.exp(log_var)
+            return -0.5 * jnp.sum((x - mu) ** 2 / var + log_var)
+
+        chex.clear_trace_counter()
+
+        rng_key = jax.random.key(0)
+        params = jnp.array([0.0, 0.0])
+        algo = blackjax.reparameterized_slice(logdensity_fn)
+        state = algo.init(jnp.array([1.0]), params)
+        step = jax.jit(algo.step)
+
+        for i in range(10):
+            sample_key = jax.random.fold_in(rng_key, i)
+            state, _ = step(sample_key, state, params)
+
 
 if __name__ == "__main__":
     absltest.main()

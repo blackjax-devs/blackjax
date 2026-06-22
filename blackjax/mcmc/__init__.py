@@ -14,6 +14,7 @@ from . import (
     nuts,
     periodic_orbital,
     random_walk,
+    reparameterized_slice,
     rmhmc,
 )
 
@@ -30,6 +31,7 @@ __all__ = [
     "nuts",
     "periodic_orbital",
     "marginal_latent_gaussian",
+    "reparameterized_slice",
     "random_walk",
     "mclmc",
     "adjusted_mclmc_dynamic",
