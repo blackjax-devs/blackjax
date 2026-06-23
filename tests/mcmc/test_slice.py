@@ -200,5 +200,76 @@ class SliceTopLevelAPITest(BlackJAXTest):
         self.assertIsInstance(new_state, SliceState)
 
 
+class SliceMomentsRecoveryTest(BlackJAXTest):
+    """Statistical moments-recovery tests: verify the sampler actually samples correctly.
+
+    These tests run the kernel for enough steps to measure empirical mean and
+    standard deviation and assert they match the target. Tolerances are
+    deliberately generous to avoid seed-specific flakiness — the point is to
+    catch gross sampling failures, not to test convergence speed.
+    """
+
+    def _run_chain(self, logdensity_fn, initial_position, n_steps, n_doublings=10):
+        """Run a slice-sampling chain and return an array of positions."""
+        state = init(initial_position, logdensity_fn)
+        kernel = build_kernel(n_doublings=n_doublings)
+
+        def step_fn(state, key):
+            new_state, _ = kernel(key, state, logdensity_fn)
+            return new_state, new_state.position
+
+        keys = jax.random.split(self.next_key(), n_steps)
+        _, positions = jax.lax.scan(step_fn, state, keys)
+        return positions
+
+    def test_recovers_mean_std_normal_1d(self):
+        """Slice sampler recovers the mean of a 1D standard normal.
+
+        Uses 2000 post-warmup steps and checks mean within 0.15 of 0.0
+        and std within [0.8, 1.2].  Tolerance is ~3 SE for ESS≈100, leaving
+        substantial room for the actual ESS, which is typically >> 100 here.
+        """
+        positions = self._run_chain(std_normal_logdensity, jnp.zeros(1), n_steps=2000)
+        mean = float(jnp.mean(positions))
+        std = float(jnp.std(positions))
+        self.assertAlmostEqual(mean, 0.0, delta=0.15)
+        self.assertGreater(std, 0.8)
+        self.assertLess(std, 1.2)
+
+    def test_recovers_std_normal_2d(self):
+        """Slice sampler recovers marginal means and stds of a 2D standard normal."""
+        positions = self._run_chain(std_normal_logdensity, jnp.zeros(2), n_steps=2000)
+        means = jnp.mean(positions, axis=0)
+        stds = jnp.std(positions, axis=0)
+        for i in range(2):
+            self.assertAlmostEqual(float(means[i]), 0.0, delta=0.15)
+            self.assertGreater(float(stds[i]), 0.8)
+            self.assertLess(float(stds[i]), 1.2)
+
+    def test_recovers_correlated_gaussian_2d(self):
+        """Slice sampler recovers the correlation of a 2D Gaussian with rho=0.9.
+
+        Coordinate-wise updates can mix slowly under high correlation, so this
+        test uses 3000 steps and only checks that the empirical correlation is
+        positive and at least 0.7 (true value is 0.9).
+        """
+        rho = jnp.asarray(0.9)
+        sigma2 = 1.0 - rho**2
+
+        def corr_gaussian_logdensity(x):
+            x0, x1 = x[0], x[1]
+            return -0.5 / sigma2 * (x0**2 - 2.0 * rho * x0 * x1 + x1**2)
+
+        positions = self._run_chain(
+            corr_gaussian_logdensity, jnp.zeros(2), n_steps=3000
+        )
+        x0 = np.array(positions[:, 0])
+        x1 = np.array(positions[:, 1])
+        corr = float(np.corrcoef(x0, x1)[0, 1])
+        self.assertGreater(corr, 0.7)
+        for i in range(2):
+            self.assertAlmostEqual(float(jnp.mean(positions[:, i])), 0.0, delta=0.2)
+
+
 if __name__ == "__main__":
     absltest.main()
