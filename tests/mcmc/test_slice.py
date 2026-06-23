@@ -19,6 +19,7 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
 
+import blackjax
 from blackjax.mcmc.slice import SliceInfo, SliceState, build_kernel, init
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
@@ -34,18 +35,6 @@ class SliceInitTest(BlackJAXTest):
         expected_ld = std_normal_logdensity(position)
         np.testing.assert_allclose(float(state.logdensity[0]), float(expected_ld))
 
-    def test_init_widths_are_positive(self):
-        """Initial step widths are all positive."""
-        position = jnp.ones(4)
-        state = init(position, std_normal_logdensity)
-        flat_widths, _ = jax.flatten_util.ravel_pytree(state.widths)
-        assert jnp.all(flat_widths > 0)
-
-    def test_init_n_is_zero(self):
-        """Iteration counter starts at zero."""
-        state = init(jnp.zeros(2), std_normal_logdensity)
-        np.testing.assert_equal(float(state.n[0]), 0.0)
-
     def test_init_pytree_position(self):
         """init works with PyTree (dict) positions."""
 
@@ -56,12 +45,18 @@ class SliceInitTest(BlackJAXTest):
         state = init(position, logdensity_fn)
         self.assertIsInstance(state, SliceState)
         assert jnp.isfinite(state.logdensity[0])
-        chex.assert_trees_all_equal_shapes(state.widths, position)
+
+    def test_init_state_has_two_fields(self):
+        """SliceState has exactly position and logdensity (pure Markov state)."""
+        state = init(jnp.zeros(2), std_normal_logdensity)
+        self.assertIsInstance(state, SliceState)
+        self.assertEqual(len(state), 2)
 
 
 class SliceKernelTest(BlackJAXTest):
     """Tests for the slice sampling kernel."""
 
+    @chex.assert_max_traces(n=2)
     def test_returns_state_and_info(self):
         """Kernel returns a (SliceState, SliceInfo) pair."""
         position = jnp.zeros(3)
@@ -71,6 +66,7 @@ class SliceKernelTest(BlackJAXTest):
         self.assertIsInstance(new_state, SliceState)
         self.assertIsInstance(info, SliceInfo)
 
+    @chex.assert_max_traces(n=2)
     def test_position_shape_preserved(self):
         """Output position has the same shape as input position."""
         ndim = 4
@@ -80,6 +76,7 @@ class SliceKernelTest(BlackJAXTest):
         new_state, _ = kernel(self.next_key(), state, std_normal_logdensity)
         self.assertEqual(new_state.position.shape, (ndim,))
 
+    @chex.assert_max_traces(n=2)
     def test_logdensity_consistent(self):
         """Stored logdensity matches the density evaluated at the new position."""
         position = jnp.zeros(3)
@@ -91,36 +88,18 @@ class SliceKernelTest(BlackJAXTest):
             float(new_state.logdensity[0]), float(expected), atol=1e-5
         )
 
-    def test_n_increments(self):
-        """Iteration counter increments by 1 per step."""
-        state = init(jnp.zeros(2), std_normal_logdensity)
-        kernel = build_kernel(n_doublings=5)
-        new_state, _ = kernel(self.next_key(), state, std_normal_logdensity)
-        np.testing.assert_equal(float(new_state.n[0]), 1.0)
-
-    def test_info_widths_match_state(self):
-        """SliceInfo.widths equals the widths stored in the new state."""
+    @chex.assert_max_traces(n=2)
+    def test_info_reports_bracket_widths(self):
+        """SliceInfo.bracket_widths is a finite positive diagnostic output."""
         position = jnp.zeros(3)
         state = init(position, std_normal_logdensity)
         kernel = build_kernel(n_doublings=5)
-        new_state, info = kernel(self.next_key(), state, std_normal_logdensity)
-        flat_state_widths, _ = jax.flatten_util.ravel_pytree(new_state.widths)
-        flat_info_widths, _ = jax.flatten_util.ravel_pytree(info.widths)
-        np.testing.assert_allclose(flat_state_widths, flat_info_widths)
+        _, info = kernel(self.next_key(), state, std_normal_logdensity)
+        flat_bw, _ = jax.flatten_util.ravel_pytree(info.bracket_widths)
+        assert jnp.all(jnp.isfinite(flat_bw)), "bracket_widths must be finite"
+        assert jnp.all(flat_bw > 0), "bracket_widths must be positive"
 
-    def test_widths_adapt(self):
-        """Step widths change from their initial values after several steps."""
-        position = jnp.zeros(3)
-        state = init(position, std_normal_logdensity)
-        kernel = build_kernel(n_doublings=5)
-        initial_widths, _ = jax.flatten_util.ravel_pytree(state.widths)
-
-        for _ in range(10):
-            state, _ = kernel(self.next_key(), state, std_normal_logdensity)
-
-        final_widths, _ = jax.flatten_util.ravel_pytree(state.widths)
-        assert not jnp.allclose(initial_widths, final_widths)
-
+    @chex.assert_max_traces(n=2)
     def test_pytree_position(self):
         """Kernel works with PyTree (dict) positions."""
 
@@ -132,7 +111,7 @@ class SliceKernelTest(BlackJAXTest):
         kernel = build_kernel(n_doublings=5)
         new_state, info = kernel(self.next_key(), state, logdensity_fn)
         chex.assert_trees_all_equal_shapes(new_state.position, position)
-        chex.assert_trees_all_equal_shapes(info.widths, position)
+        chex.assert_trees_all_equal_shapes(info.bracket_widths, position)
 
     def test_jit_compatible(self):
         """Kernel is JIT-compilable."""
@@ -158,14 +137,22 @@ class SliceKernelTest(BlackJAXTest):
             state, _ = kernel(self.next_key(), state, std_normal_logdensity)
             assert jnp.isfinite(state.logdensity[0])
 
+    def test_initial_widths_parameter(self):
+        """build_kernel accepts initial_widths and runs without error."""
+        position = jnp.zeros(3)
+        state = init(position, std_normal_logdensity)
+        kernel = build_kernel(n_doublings=5, initial_widths=2.0)
+        new_state, info = kernel(self.next_key(), state, std_normal_logdensity)
+        self.assertIsInstance(new_state, SliceState)
+        flat_bw, _ = jax.flatten_util.ravel_pytree(info.bracket_widths)
+        assert jnp.all(flat_bw > 0)
+
 
 class SliceTopLevelAPITest(BlackJAXTest):
     """Tests for the top-level blackjax.slice_sampling API."""
 
     def test_init_and_step(self):
         """Top-level API: init + step runs and returns SliceState."""
-        import blackjax
-
         algo = blackjax.slice_sampling(std_normal_logdensity, n_doublings=5)
         state = algo.init(jnp.zeros(3))
         new_state, info = algo.step(self.next_key(), state)
@@ -174,8 +161,6 @@ class SliceTopLevelAPITest(BlackJAXTest):
 
     def test_top_level_jit(self):
         """Top-level step is JIT-compilable."""
-        import blackjax
-
         algo = blackjax.slice_sampling(std_normal_logdensity, n_doublings=5)
         state = algo.init(jnp.zeros(3))
         new_state, _ = jax.jit(algo.step)(self.next_key(), state)
@@ -183,8 +168,6 @@ class SliceTopLevelAPITest(BlackJAXTest):
 
     def test_default_n_doublings(self):
         """as_top_level_api default n_doublings=10 works without explicit arg."""
-        import blackjax
-
         algo = blackjax.slice_sampling(std_normal_logdensity)
         state = algo.init(jnp.zeros(2))
         new_state, _ = algo.step(self.next_key(), state)
@@ -192,8 +175,6 @@ class SliceTopLevelAPITest(BlackJAXTest):
 
     def test_build_kernel_accessible(self):
         """build_kernel is accessible via blackjax.slice_sampling.build_kernel."""
-        import blackjax
-
         kernel = blackjax.slice_sampling.build_kernel(n_doublings=3)
         state = blackjax.slice_sampling.init(jnp.zeros(2), std_normal_logdensity)
         new_state, info = kernel(self.next_key(), state, std_normal_logdensity)

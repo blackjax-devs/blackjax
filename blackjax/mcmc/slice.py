@@ -32,30 +32,25 @@ class SliceState(NamedTuple):
         Current position of the chain.
     logdensity
         Current value of the log-density.
-    widths
-        Per-dimension step widths, adapted online via Welford averaging.
-    n
-        Number of completed transitions (used to compute the running average
-        of step widths).
 
     """
 
     position: ArrayTree
     logdensity: float
-    widths: ArrayTree
-    n: Array
 
 
 class SliceInfo(NamedTuple):
     """Additional information on the Slice sampling transition.
 
-    widths
-        Per-dimension step widths after this transition (matches the position
-        PyTree structure). Useful for monitoring adaptation.
+    bracket_widths
+        Per-dimension realized bracket widths produced by the doubling
+        procedure on this step.  Useful for diagnosing proposal efficiency
+        (very wide brackets relative to the posterior suggest the initial
+        width is too small; very narrow ones suggest it may be too large).
 
     """
 
-    widths: ArrayTree
+    bracket_widths: ArrayTree
 
 
 def init(position: ArrayLikeTree, logdensity_fn: Callable) -> SliceState:
@@ -73,11 +68,10 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable) -> SliceState:
     The initial state of the Slice sampling chain.
     """
     logdensity = logdensity_fn(position)
-    widths = jax.tree.map(lambda x: jnp.full(x.shape, 0.01), position)
-    return SliceState(position, jnp.atleast_1d(logdensity), widths, jnp.atleast_1d(0.0))
+    return SliceState(position, jnp.atleast_1d(logdensity))
 
 
-def build_kernel(n_doublings: int = 10) -> Callable:
+def build_kernel(n_doublings: int = 10, initial_widths: float = 1.0) -> Callable:
     """Build a Slice sampling kernel.
 
     Implementation according to [1]. Doubling implementation inspired
@@ -87,6 +81,14 @@ def build_kernel(n_doublings: int = 10) -> Callable:
     ----------
     n_doublings
         Maximum number of slice interval doublings.
+    initial_widths
+        Fixed per-dimension bracket width used as the starting interval for
+        the doubling procedure (default: 1.0).  The value 1.0 is a
+        reasonable default for posterior scales in the range 0.1–10: the
+        doubling procedure rapidly expands the bracket when the width is
+        too small, so correctness is insensitive to the exact value.  Pass
+        a smaller value for very narrow posteriors, or a larger one for very
+        diffuse ones, to improve efficiency.
 
     Returns
     -------
@@ -103,9 +105,9 @@ def build_kernel(n_doublings: int = 10) -> Callable:
     def kernel(
         rng_key: PRNGKey, state: SliceState, logdensity_fn: Callable
     ) -> tuple[SliceState, SliceInfo]:
-        proposal_generator = _slice_proposal(logdensity_fn, n_doublings)
-        new_state = proposal_generator(rng_key, state)
-        return new_state, SliceInfo(new_state.widths)
+        proposal_generator = _slice_proposal(logdensity_fn, n_doublings, initial_widths)
+        new_state, bracket_widths = proposal_generator(rng_key, state)
+        return new_state, SliceInfo(bracket_widths)
 
     return kernel
 
@@ -114,6 +116,7 @@ def as_top_level_api(
     logdensity_fn: Callable,
     *,
     n_doublings: int = 10,
+    initial_widths: float = 1.0,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the Slice sampling kernel.
 
@@ -142,32 +145,37 @@ def as_top_level_api(
         The log-density function of the distribution we wish to sample from.
     n_doublings
         Maximum number of slice interval doublings (default: 10).
+    initial_widths
+        Fixed per-dimension bracket width used as the starting interval for
+        the doubling procedure (default: 1.0).
 
     Returns
     -------
     A ``SamplingAlgorithm``.
     """
-    kernel = build_kernel(n_doublings)
+    kernel = build_kernel(n_doublings, initial_widths)
     return build_sampling_algorithm(kernel, init, logdensity_fn)
 
 
-def _slice_proposal(logdensity_fn: Callable, n_doublings: int) -> Callable:
-    def generate(rng_key: PRNGKey, state: SliceState) -> SliceState:
+def _slice_proposal(
+    logdensity_fn: Callable, n_doublings: int, initial_widths: float
+) -> Callable:
+    def generate(rng_key: PRNGKey, state: SliceState) -> tuple[SliceState, ArrayTree]:
         order_key, rng_key = random.split(rng_key)
-        n = state.n[0]
         positions, unravel_fn = jax.flatten_util.ravel_pytree(state.position)
-        widths, _ = jax.flatten_util.ravel_pytree(state.widths)
+        widths = jnp.full(positions.shape, initial_widths)
 
-        def body_fn(carry, rn):
+        def body_fn(
+            carry: tuple[Array, Array], rn: tuple[PRNGKey, Array]
+        ) -> tuple[tuple[Array, Array], tuple[Array, Array]]:
             seed, idx = rn
-            positions, widths = carry
-            xi, wi = _sample_conditionally(
+            positions, bracket_widths = carry
+            xi, bi = _sample_conditionally(
                 seed, logdensity_fn, unravel_fn, idx, positions, widths, n_doublings
             )
             positions = positions.at[idx].set(xi)
-            nw = widths[idx] + (wi - widths[idx]) / (n + 1)
-            widths = widths.at[idx].set(nw)
-            return (positions, widths), (positions, widths)
+            bracket_widths = bracket_widths.at[idx].set(bi)
+            return (positions, bracket_widths), (positions, bracket_widths)
 
         order = random.choice(
             order_key,
@@ -177,37 +185,57 @@ def _slice_proposal(logdensity_fn: Callable, n_doublings: int) -> Callable:
         )
 
         keys = random.split(rng_key, len(positions))
-        (new_positions, new_widths), _ = jax.lax.scan(
-            body_fn, (positions, widths), (keys, order)
+        bracket_widths_init = jnp.zeros_like(positions)
+        (new_positions, new_bracket_widths), _ = jax.lax.scan(
+            body_fn, (positions, bracket_widths_init), (keys, order)
         )
 
         new_positions = unravel_fn(new_positions)
-        new_widths = unravel_fn(new_widths)
-        return SliceState(
+        new_bracket_widths = unravel_fn(new_bracket_widths)
+        new_state = SliceState(
             new_positions,
             jnp.atleast_1d(logdensity_fn(new_positions)),
-            new_widths,
-            jnp.atleast_1d(n + 1.0),
         )
+        return new_state, new_bracket_widths
 
     return generate
 
 
 def _sample_conditionally(
-    seed, logdensity_fn, unravel_fn, idx, positions, widths, n_doublings
-):
-    def cond_lp_fn(xi_to_set):
+    seed: PRNGKey,
+    logdensity_fn: Callable,
+    unravel_fn: Callable,
+    idx: Array,
+    positions: Array,
+    widths: Array,
+    n_doublings: int,
+) -> tuple[Array, Array]:
+    def conditional_logdensity_fn(xi_to_set: Array) -> Array:
         return logdensity_fn(unravel_fn(positions.at[idx].set(xi_to_set)))
 
     key, seed1, seed2 = random.split(seed, 3)
     x0, w0 = positions[idx], widths[idx]
-    y = cond_lp_fn(x0) - random.exponential(key)
-    left, right, _ = _doubling_fn(seed1, y, x0, cond_lp_fn, w0, n_doublings)
-    x1 = _shrinkage_fn(seed2, y, x0, cond_lp_fn, left, right, w0)
+    logdensity = conditional_logdensity_fn(x0) - random.exponential(key)
+    left, right, _ = _doubling_fn(
+        seed1, logdensity, x0, conditional_logdensity_fn, w0, n_doublings
+    )
+    x1 = _shrinkage_fn(
+        seed2, logdensity, x0, conditional_logdensity_fn, left, right, w0
+    )
     return x1, right - left
 
 
-def _doubling_fn(rng, y, x0, cond_lp_fn, w, n_doublings):
+# --- Doubling ---
+
+
+def _doubling_fn(
+    rng: PRNGKey,
+    logdensity: Array,
+    x0: Array,
+    conditional_logdensity_fn: Callable,
+    w: Array,
+    n_doublings: int,
+) -> tuple[Array, Array, Array]:
     key1, key2 = random.split(rng, 2)
     initial_left = x0 - w * random.uniform(key1)
     initial_right = initial_left + w
@@ -228,10 +256,10 @@ def _doubling_fn(rng, y, x0, cond_lp_fn, w, n_doublings):
 
     lefts = initial_left - left_increments
     rights = initial_right + right_increments
-    left_lps = jax.vmap(cond_lp_fn)(lefts)
-    right_lps = jax.vmap(cond_lp_fn)(rights)
+    left_lps = jax.vmap(conditional_logdensity_fn)(lefts)
+    right_lps = jax.vmap(conditional_logdensity_fn)(rights)
 
-    both_ok = jnp.logical_and(left_lps < y, right_lps < y)
+    both_ok = jnp.logical_and(left_lps < logdensity, right_lps < logdensity)
     best_interval_idx = _best_interval(both_ok.astype(jnp.int32))
 
     return (
@@ -241,7 +269,7 @@ def _doubling_fn(rng, y, x0, cond_lp_fn, w, n_doublings):
     )
 
 
-def _best_interval(x):
+def _best_interval(x: Array) -> Array:
     k = x.shape[0]
     mults = jnp.arange(2 * k, k, -1, dtype=x.dtype)
     shifts = jnp.arange(k, dtype=x.dtype)
@@ -249,19 +277,31 @@ def _best_interval(x):
     return indices
 
 
-def _shrinkage_fn(seed, y, x0, cond_lp_fn, left, right, w):
-    def cond_fn(state):
+# --- Shrinkage ---
+
+
+def _shrinkage_fn(
+    seed: PRNGKey,
+    logdensity: Array,
+    x0: Array,
+    conditional_logdensity_fn: Callable,
+    left: Array,
+    right: Array,
+    w: Array,
+) -> Array:
+    def cond_fn(state: tuple) -> Array:
         *_, found = state
         return jnp.logical_not(found)
 
-    def body_fn(state):
+    def body_fn(state: tuple) -> tuple:
         x1, left, right, seed, _ = state
         key, seed = random.split(seed)
         v = random.uniform(key)
         x1 = left + v * (right - left)
 
         found = jnp.logical_and(
-            y < cond_lp_fn(x1), _accept_fn(y, x1, x0, cond_lp_fn, left, right, w)
+            logdensity < conditional_logdensity_fn(x1),
+            _accept_fn(logdensity, x1, x0, conditional_logdensity_fn, left, right, w),
         )
 
         left = jnp.where(x1 < x0, x1, left)
@@ -269,21 +309,32 @@ def _shrinkage_fn(seed, y, x0, cond_lp_fn, left, right, w):
 
         return x1, left, right, seed, found
 
-    key, seed = random.split(seed)
-    v = random.uniform(key)
-    x1 = left + v * (right - left)
     x1, left, right, seed, _ = jax.lax.while_loop(
-        cond_fn, body_fn, (x1, left, right, seed, False)
+        cond_fn, body_fn, (x0, left, right, seed, False)
     )
     return x1
 
 
-def _accept_fn(y, x1, x0, cond_lp_fn, left, right, w):
-    def cond_fn(state):
+# --- Acceptance test ---
+
+
+def _accept_fn(
+    logdensity: Array,
+    x1: Array,
+    x0: Array,
+    conditional_logdensity_fn: Callable,
+    left: Array,
+    right: Array,
+    w: Array,
+) -> Array:
+    # The 1.1 * w termination threshold is from Neal 2003 Fig. 6: the
+    # acceptance test bisects the interval until it is within 10% of the
+    # original width w, at which point no further refinement is needed.
+    def cond_fn(state: tuple) -> Array:
         _, _, left, right, w, _, is_acceptable = state
         return jnp.logical_and(right - left > 1.1 * w, is_acceptable)
 
-    def body_fn(state):
+    def body_fn(state: tuple) -> tuple:
         x1, x0, left, right, w, D, _ = state
         mid = (left + right) / 2
         D = jnp.logical_or(
@@ -296,8 +347,8 @@ def _accept_fn(y, x1, x0, cond_lp_fn, left, right, w):
         right = jnp.where(x1 < mid, mid, right)
         left = jnp.where(x1 >= mid, mid, left)
 
-        left_is_not_acceptable = y >= cond_lp_fn(left)
-        right_is_not_acceptable = y >= cond_lp_fn(right)
+        left_is_not_acceptable = logdensity >= conditional_logdensity_fn(left)
+        right_is_not_acceptable = logdensity >= conditional_logdensity_fn(right)
         interval_is_not_acceptable = jnp.logical_and(
             left_is_not_acceptable, right_is_not_acceptable
         )
