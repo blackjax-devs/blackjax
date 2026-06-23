@@ -31,6 +31,7 @@ Submodules
    /autoapi/blackjax/mcmc/proposal/index
    /autoapi/blackjax/mcmc/random_walk/index
    /autoapi/blackjax/mcmc/rmhmc/index
+   /autoapi/blackjax/mcmc/slice/index
    /autoapi/blackjax/mcmc/termination/index
    /autoapi/blackjax/mcmc/trajectory/index
 
