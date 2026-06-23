@@ -147,6 +147,7 @@ class SliceKernelTest(BlackJAXTest):
         flat_bw, _ = jax.flatten_util.ravel_pytree(info.bracket_widths)
         assert jnp.all(flat_bw > 0)
 
+    @chex.assert_max_traces(n=2)
     def test_per_dim_initial_widths(self):
         """build_kernel accepts a per-coordinate initial_widths array (D,).
 

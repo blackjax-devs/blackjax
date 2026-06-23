@@ -13,7 +13,7 @@
 # limitations under the License.
 """Public API for the Slice sampling kernel."""
 
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -72,7 +72,7 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable) -> SliceState:
 
 
 def build_kernel(
-    n_doublings: int = 10, initial_widths: Union[float, Array] = 1.0
+    n_doublings: int = 10, initial_widths: float | Array = 1.0
 ) -> Callable:
     """Build a Slice sampling kernel.
 
@@ -121,7 +121,7 @@ def as_top_level_api(
     logdensity_fn: Callable,
     *,
     n_doublings: int = 10,
-    initial_widths: Union[float, Array] = 1.0,
+    initial_widths: float | Array = 1.0,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the Slice sampling kernel.
 
@@ -165,7 +165,7 @@ def as_top_level_api(
 
 
 def _slice_proposal(
-    logdensity_fn: Callable, n_doublings: int, initial_widths: Union[float, Array]
+    logdensity_fn: Callable, n_doublings: int, initial_widths: float | Array
 ) -> Callable:
     def generate(rng_key: PRNGKey, state: SliceState) -> tuple[SliceState, ArrayTree]:
         order_key, rng_key = random.split(rng_key)
