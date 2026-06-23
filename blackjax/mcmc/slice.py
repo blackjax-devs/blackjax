@@ -157,15 +157,12 @@ def _slice_proposal(logdensity_fn: Callable, n_doublings: int) -> Callable:
         positions, unravel_fn = jax.flatten_util.ravel_pytree(state.position)
         widths, _ = jax.flatten_util.ravel_pytree(state.widths)
 
-        def conditional_proposal(rng_key, idx):
-            return _sample_conditionally(
-                rng_key, logdensity_fn, unravel_fn, idx, positions, widths, n_doublings
-            )
-
         def body_fn(carry, rn):
             seed, idx = rn
             positions, widths = carry
-            xi, wi = conditional_proposal(seed, idx)
+            xi, wi = _sample_conditionally(
+                seed, logdensity_fn, unravel_fn, idx, positions, widths, n_doublings
+            )
             positions = positions.at[idx].set(xi)
             nw = widths[idx] + (wi - widths[idx]) / (n + 1)
             widths = widths.at[idx].set(nw)
@@ -210,17 +207,26 @@ def _sample_conditionally(
 
 
 def _doubling_fn(rng, y, x0, cond_lp_fn, w, n_doublings):
-    key1, key2, key3, key4 = random.split(rng, 4)
-    left = x0 - w * random.uniform(key1)
+    key1, key2 = random.split(rng, 2)
+    initial_left = x0 - w * random.uniform(key1)
+    initial_right = initial_left + w
 
     K = n_doublings + 1
     left_expands = random.bernoulli(key2, 0.5, (K,))
-    width_multipliers = 2 ** jnp.arange(0, K, dtype=jnp.int32)
-    widths = width_multipliers * w
-    left_increments = jnp.cumsum(widths * left_expands)
+    right_expands = 1 - left_expands.astype(jnp.int32)
+    step_widths = w * (2 ** jnp.arange(0, K, dtype=jnp.float32))
 
-    lefts = left - left_increments
-    rights = left + widths
+    # Exclusive cumsum: increment at level k = sum of expansions at steps 0..k-1.
+    # rights[0] and lefts[0] are the initial interval (0 doublings).
+    left_increments = jnp.concatenate(
+        [jnp.zeros(1), jnp.cumsum(step_widths * left_expands)[:-1]]
+    )
+    right_increments = jnp.concatenate(
+        [jnp.zeros(1), jnp.cumsum(step_widths * right_expands)[:-1]]
+    )
+
+    lefts = initial_left - left_increments
+    rights = initial_right + right_increments
     left_lps = jax.vmap(cond_lp_fn)(lefts)
     right_lps = jax.vmap(cond_lp_fn)(rights)
 
