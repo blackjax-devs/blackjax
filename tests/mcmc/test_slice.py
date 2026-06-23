@@ -19,12 +19,7 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
 
-from blackjax.mcmc.slice import (
-    SliceInfo,
-    SliceState,
-    build_kernel,
-    init,
-)
+from blackjax.mcmc.slice import SliceInfo, SliceState, build_kernel, init
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 
@@ -62,7 +57,6 @@ class SliceInitTest(BlackJAXTest):
         self.assertIsInstance(state, SliceState)
         assert jnp.isfinite(state.logdensity[0])
         chex.assert_trees_all_equal_shapes(state.widths, position)
-
 
 
 class SliceKernelTest(BlackJAXTest):
@@ -163,7 +157,6 @@ class SliceKernelTest(BlackJAXTest):
         for _ in range(5):
             state, _ = kernel(self.next_key(), state, std_normal_logdensity)
             assert jnp.isfinite(state.logdensity[0])
-
 
 
 class SliceTopLevelAPITest(BlackJAXTest):
