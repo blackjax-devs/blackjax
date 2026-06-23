@@ -138,7 +138,7 @@ class SliceKernelTest(BlackJAXTest):
             assert jnp.isfinite(state.logdensity[0])
 
     def test_initial_widths_parameter(self):
-        """build_kernel accepts initial_widths and runs without error."""
+        """build_kernel accepts a scalar initial_widths and runs without error."""
         position = jnp.zeros(3)
         state = init(position, std_normal_logdensity)
         kernel = build_kernel(n_doublings=5, initial_widths=2.0)
@@ -146,6 +146,26 @@ class SliceKernelTest(BlackJAXTest):
         self.assertIsInstance(new_state, SliceState)
         flat_bw, _ = jax.flatten_util.ravel_pytree(info.bracket_widths)
         assert jnp.all(flat_bw > 0)
+
+    def test_per_dim_initial_widths(self):
+        """build_kernel accepts a per-coordinate initial_widths array (D,).
+
+        Verifies that distinct per-dimension widths are accepted and that the
+        kernel still runs, produces valid states, and returns finite positive
+        bracket widths.  Uses a 3D target with widths [0.5, 1.0, 2.0] to
+        exercise the non-uniform path end-to-end.
+        """
+        ndim = 3
+        per_dim_widths = jnp.array([0.5, 1.0, 2.0])
+        position = jnp.zeros(ndim)
+        state = init(position, std_normal_logdensity)
+        kernel = build_kernel(n_doublings=5, initial_widths=per_dim_widths)
+        new_state, info = kernel(self.next_key(), state, std_normal_logdensity)
+        self.assertIsInstance(new_state, SliceState)
+        self.assertEqual(new_state.position.shape, (ndim,))
+        flat_bw, _ = jax.flatten_util.ravel_pytree(info.bracket_widths)
+        assert jnp.all(jnp.isfinite(flat_bw)), "bracket_widths must be finite"
+        assert jnp.all(flat_bw > 0), "bracket_widths must be positive"
 
 
 class SliceTopLevelAPITest(BlackJAXTest):
@@ -226,6 +246,37 @@ class SliceMomentsRecoveryTest(BlackJAXTest):
             self.assertAlmostEqual(float(means[i]), 0.0, delta=0.15)
             self.assertGreater(float(stds[i]), 0.8)
             self.assertLess(float(stds[i]), 1.2)
+
+    def test_recovers_moments_with_per_dim_widths(self):
+        """Per-dimension initial_widths array produces correct samples.
+
+        Uses distinct widths [0.5, 1.5, 3.0] on a 3D standard normal.
+        Verifies that per-coordinate widths do not break correctness.
+        """
+        per_dim_widths = jnp.array([0.5, 1.5, 3.0])
+        positions = self._run_chain(
+            std_normal_logdensity,
+            jnp.zeros(3),
+            n_steps=2000,
+            n_doublings=10,
+        )
+        # Re-run with per-dim widths (override kernel inside _run_chain is not
+        # straightforward, so build and run inline here).
+        state = init(jnp.zeros(3), std_normal_logdensity)
+        kernel = build_kernel(n_doublings=10, initial_widths=per_dim_widths)
+
+        def step_fn(s, key):
+            new_s, _ = kernel(key, s, std_normal_logdensity)
+            return new_s, new_s.position
+
+        keys = jax.random.split(self.next_key(), 2000)
+        _, positions = jax.lax.scan(step_fn, state, keys)
+        means = jnp.mean(positions, axis=0)
+        stds = jnp.std(positions, axis=0)
+        for i in range(3):
+            self.assertAlmostEqual(float(means[i]), 0.0, delta=0.2)
+            self.assertGreater(float(stds[i]), 0.7)
+            self.assertLess(float(stds[i]), 1.3)
 
     def test_recovers_correlated_gaussian_2d(self):
         """Slice sampler recovers the correlation of a 2D Gaussian with rho=0.9.

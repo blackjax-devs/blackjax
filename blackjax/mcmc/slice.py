@@ -13,7 +13,7 @@
 # limitations under the License.
 """Public API for the Slice sampling kernel."""
 
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, Union
 
 import jax
 import jax.numpy as jnp
@@ -71,7 +71,9 @@ def init(position: ArrayLikeTree, logdensity_fn: Callable) -> SliceState:
     return SliceState(position, jnp.atleast_1d(logdensity))
 
 
-def build_kernel(n_doublings: int = 10, initial_widths: float = 1.0) -> Callable:
+def build_kernel(
+    n_doublings: int = 10, initial_widths: Union[float, Array] = 1.0
+) -> Callable:
     """Build a Slice sampling kernel.
 
     Implementation according to [1]. Doubling implementation inspired
@@ -82,13 +84,16 @@ def build_kernel(n_doublings: int = 10, initial_widths: float = 1.0) -> Callable
     n_doublings
         Maximum number of slice interval doublings.
     initial_widths
-        Fixed per-dimension bracket width used as the starting interval for
-        the doubling procedure (default: 1.0).  The value 1.0 is a
-        reasonable default for posterior scales in the range 0.1–10: the
-        doubling procedure rapidly expands the bracket when the width is
+        Fixed bracket width(s) used as the starting interval for the doubling
+        procedure.  Accepts either a scalar (applied uniformly to every
+        coordinate, default: 1.0) or a 1-D array of length equal to the
+        total flattened position dimension ``D``, giving a per-coordinate
+        width — mirroring TFP's per-dimension ``step_size``.  The value 1.0
+        is a reasonable default for posterior scales in the range 0.1–10:
+        the doubling procedure rapidly expands the bracket when the width is
         too small, so correctness is insensitive to the exact value.  Pass
-        a smaller value for very narrow posteriors, or a larger one for very
-        diffuse ones, to improve efficiency.
+        a smaller value (or per-dimension array) for very narrow posteriors,
+        or a larger one for very diffuse ones, to improve efficiency.
 
     Returns
     -------
@@ -116,7 +121,7 @@ def as_top_level_api(
     logdensity_fn: Callable,
     *,
     n_doublings: int = 10,
-    initial_widths: float = 1.0,
+    initial_widths: Union[float, Array] = 1.0,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the Slice sampling kernel.
 
@@ -146,8 +151,10 @@ def as_top_level_api(
     n_doublings
         Maximum number of slice interval doublings (default: 10).
     initial_widths
-        Fixed per-dimension bracket width used as the starting interval for
-        the doubling procedure (default: 1.0).
+        Fixed bracket width(s) used as the starting interval for the doubling
+        procedure.  A scalar applies to all coordinates; a 1-D array of
+        length ``D`` (total flattened position dimension) gives per-coordinate
+        widths, mirroring TFP's per-dimension ``step_size`` (default: 1.0).
 
     Returns
     -------
@@ -158,12 +165,16 @@ def as_top_level_api(
 
 
 def _slice_proposal(
-    logdensity_fn: Callable, n_doublings: int, initial_widths: float
+    logdensity_fn: Callable, n_doublings: int, initial_widths: Union[float, Array]
 ) -> Callable:
     def generate(rng_key: PRNGKey, state: SliceState) -> tuple[SliceState, ArrayTree]:
         order_key, rng_key = random.split(rng_key)
         positions, unravel_fn = jax.flatten_util.ravel_pytree(state.position)
-        widths = jnp.full(positions.shape, initial_widths)
+        # Scalar → uniform width; array → per-coordinate widths (length D).
+        # jnp.broadcast_to handles both: a scalar broadcasts to (D,) cleanly,
+        # and an array of shape (D,) is validated by broadcast semantics
+        # (a length mismatch raises an error at build time, before any JIT).
+        widths = jnp.broadcast_to(jnp.asarray(initial_widths).ravel(), positions.shape)
 
         def body_fn(
             carry: tuple[Array, Array], rn: tuple[PRNGKey, Array]
