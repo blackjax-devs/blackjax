@@ -120,6 +120,10 @@ def _make_algorithm(name):
             std_normal_logdensity,
             proposal_distribution=lambda key: jax.random.normal(key, (_DIM,)),
         ),
+        "slice_sampling": lambda: blackjax.slice_sampling(
+            std_normal_logdensity,
+            n_doublings=5,
+        ),
     }
 
     if name not in factories:
@@ -148,6 +152,7 @@ _MCMC_ALGORITHMS = [
     "additive_step_random_walk",
     "rmh",
     "irmh",
+    "slice_sampling",
 ]
 
 

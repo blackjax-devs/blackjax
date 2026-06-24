@@ -6,8 +6,9 @@ from blackjax._version import __version__
 
 from .adaptation.adjusted_mclmc_adaptation import adjusted_mclmc_find_L_and_step_size
 from .adaptation.chees_adaptation import chees_adaptation
-from .adaptation.low_rank_adaptation import low_rank_window_adaptation
+from .adaptation.low_rank_adaptation import window_adaptation_low_rank
 from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
+from .adaptation.mclmc_lrd_adaptation import mclmc_lrd_warmup
 from .adaptation.meads_adaptation import meads_adaptation
 from .adaptation.pathfinder_adaptation import pathfinder_adaptation
 from .adaptation.window_adaptation import window_adaptation
@@ -29,6 +30,7 @@ from .mcmc import mclmc as _mclmc
 from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk
 from .mcmc import rmhmc as _rmhmc
+from .mcmc import slice as _slice
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
     irmh_as_top_level_api,
@@ -125,6 +127,7 @@ mclmc = generate_top_level_api_from(_mclmc)
 adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
 adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
+slice_sampling = generate_top_level_api_from(_slice)
 ghmc = generate_top_level_api_from(_ghmc)
 barker = generate_top_level_api_from(_barker)
 barker_proposal = barker  # backwards-compatible alias
@@ -241,6 +244,7 @@ __all__ = [
     "ghmc",
     "barker",
     "elliptical_slice",
+    "slice_sampling",
     "mclmc",
     "adjusted_mclmc",
     "adjusted_mclmc_dynamic",
@@ -257,11 +261,12 @@ __all__ = [
     "dynamic_hmc",  # backward-compatible alias for dhmc
     "barker_proposal",  # backward-compatible alias for barker
     "window_adaptation",  # mcmc adaptation
-    "low_rank_window_adaptation",
+    "window_adaptation_low_rank",
     "meads_adaptation",
     "chees_adaptation",
     "pathfinder_adaptation",
     "mclmc_find_L_and_step_size",  # mclmc adaptation
+    "mclmc_lrd_warmup",  # mclmc LRD warmup (Scheme A, pilot-free)
     "adjusted_mclmc_find_L_and_step_size",  # adjusted mclmc adaptation
     "adaptive_tempered_smc",  # smc
     "tempered_smc",

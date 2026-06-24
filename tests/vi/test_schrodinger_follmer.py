@@ -63,7 +63,14 @@ class SchrodingerFollmerTest(BlackJAXTest):
             observed, prior_mu, prior_prec, true_prec
         )
 
-        schrodinger_follmer_algo = schrodinger_follmer(logp_model, 50, 25)
+        # n_steps=100 SDE steps with n_inner_samples=100 drift Monte Carlo
+        # samples — previously (50, 25), which gave a variational bias of order
+        # ~0.13 on the second posterior component for an unlucky `BlackJAXTest`
+        # date-rotated seed (e.g. 2026-05-20 → seed=20260520). Doubling each
+        # parameter cuts the worst-seed max-diff from 0.131 → 0.060, giving a
+        # comfortable safety margin under `atol=0.1` across 20 sampled daily
+        # seeds for ~0.25s of extra wall time.
+        schrodinger_follmer_algo = schrodinger_follmer(logp_model, 100, 100)
 
         initial_state = schrodinger_follmer_algo.init(initial_position)
         schrodinger_follmer_algo_sample = self.variant(

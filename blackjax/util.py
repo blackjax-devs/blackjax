@@ -3,11 +3,11 @@
 from functools import partial
 from typing import Callable, NamedTuple
 
+import jax
 import jax.numpy as jnp
 from jax import jit, lax
 from jax.flatten_util import ravel_pytree
 from jax.random import normal, split
-from jax.tree_util import tree_leaves, tree_map
 
 from blackjax.base import SamplingAlgorithm, VIAlgorithm
 from blackjax.diagnostics import psis_weights as psis_weights  # noqa: F401
@@ -116,7 +116,7 @@ def generate_unit_vector(
 
 def pytree_size(pytree: ArrayLikeTree) -> int:
     """Return the dimension of the flatten PyTree."""
-    return sum(jnp.size(value) for value in tree_leaves(pytree))
+    return sum(jnp.size(value) for value in jax.tree.leaves(pytree))
 
 
 def index_pytree(input_pytree: ArrayLikeTree) -> ArrayTree:
@@ -312,7 +312,7 @@ def incremental_value_update(
     """
 
     total, average = incremental_val
-    average = tree_map(
+    average = jax.tree.map(
         lambda exp, av: safediv(
             total * av + weight * exp, (total + weight + zero_prevention)
         ),

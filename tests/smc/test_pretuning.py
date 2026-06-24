@@ -283,6 +283,72 @@ class PretuningSMCTest(SMCLinearRegressionTestCase):
         assert all(result.parameter_override["step_size"] > 0)
         assert all(result.parameter_override["num_integration_steps"] > 0)
 
+    def test_natural_parameters_clamped_to_at_least_one(self):
+        """build_pretune must guarantee natural parameters stay >= 1 even when the
+        RW + rounding step would otherwise produce 0 (regression test).
+
+        This exercises the boundary case where num_integration_steps starts at 1
+        with high sigma (σ=2), so Gaussian RW perturbations can cross 0. Without
+        the clamp fix, some particles would end with 0 integration steps, which
+        is degenerate for HMC (no chain progress).
+        """
+        # Use deterministic seed independent of self.next_key() to ensure
+        # reproducibility across days and Python versions
+        key = jax.random.key(0)
+
+        (
+            init_particles,
+            logprior_fn,
+            loglikelihood_fn,
+        ) = self.particles_prior_loglikelihood()
+
+        num_particles = 100
+
+        # Start all particles at num_integration_steps=1 (the failure boundary)
+        initial_parameters = dict(
+            inverse_mass_matrix=extend_params(jnp.eye(2)),
+            step_size=jnp.ones(num_particles) * 0.05,
+            num_integration_steps=jnp.ones(num_particles, dtype=int),
+        )
+
+        # High sigma=2 makes RW perturbations frequently cross 0
+        pretune = build_pretune(
+            blackjax.hmc.init,
+            blackjax.hmc.build_kernel(),
+            alpha=1,
+            n_particles=num_particles,
+            sigma_parameters={"step_size": 0.01, "num_integration_steps": 2},
+            natural_parameters=["num_integration_steps"],
+            positive_parameters=["step_size"],
+        )
+
+        # Build the adaptive_tempered_smc kernel to run one adaptive step
+        kernel = blackjax.smc.pretuning.build_kernel(
+            blackjax.adaptive_tempered_smc,
+            logprior_fn,
+            loglikelihood_fn,
+            blackjax.hmc.build_kernel(),
+            blackjax.hmc.init,
+            resampling.systematic,
+            num_mcmc_steps=3,
+            pretune_fn=pretune,
+            target_ess=0.5,
+        )
+
+        initial_state = init(
+            blackjax.tempered_smc.init, init_particles, initial_parameters
+        )
+
+        # Run a single adaptive step to trigger pretuning
+        subkey = jax.random.fold_in(key, 0)
+        result_state, _ = kernel(subkey, initial_state)
+
+        # Verify all natural parameters remain >= 1 after pretuning
+        assert all(result_state.parameter_override["num_integration_steps"] >= 1), (
+            f"Expected all num_integration_steps >= 1, but got "
+            f"{result_state.parameter_override['num_integration_steps']}"
+        )
+
 
 if __name__ == "__main__":
     absltest.main()

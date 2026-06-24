@@ -4,6 +4,8 @@ import jax
 import jax.lax
 import jax.numpy as jnp
 
+from blackjax.smc.base import map_kernel
+
 
 def update_waste_free(
     mcmc_init_fn,
@@ -13,6 +15,7 @@ def update_waste_free(
     p: int,
     num_resampled,
     num_mcmc_steps=None,
+    batch_size: int = 0,
 ):
     """
     Given M particles, mutates them using p-1 steps. Returns M*P-1 particles,
@@ -47,7 +50,9 @@ def update_waste_free(
         The combines the initial particles with all the particles generated
         at each step of each chain.
         """
-        states, infos = jax.vmap(mcmc_kernel)(rng_key, position, step_parameters)
+        states, infos = map_kernel(mcmc_kernel, batch_size)(
+            rng_key, position, step_parameters
+        )
 
         # step particles is num_resmapled, num_mcmc_steps, dimension_of_variable
         # want to transformed into num_resampled * num_mcmc_steps, dimension of variable

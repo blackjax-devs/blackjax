@@ -19,7 +19,7 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 from jax.random import normal
 
-from blackjax.mcmc.metrics import KineticEnergy
+from blackjax.mcmc.metrics import KineticEnergy, LowRankInverseMassMatrix
 from blackjax.types import ArrayTree
 
 __all__ = [
@@ -374,10 +374,33 @@ def _normalized_flatten_array(x, tol=1e-13):
 def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
     """Build the ESH dynamics momentum update operator.
 
+    Supports both diagonal and Low-Rank + Diagonal (LRD) preconditioning.
+
     Parameters
     ----------
     inverse_mass_matrix
-        Inverse mass matrix. Scalar or array.
+        Inverse mass matrix.  Either a scalar / 1-D array for diagonal
+        preconditioning, or a :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`
+        NamedTuple for O(dk) low-rank + diagonal preconditioning.
+
+        When a ``LowRankInverseMassMatrix`` with fields ``(sigma, U, lam)`` is
+        supplied the preconditioner is
+
+        .. math::
+
+            M^{-1} = \\operatorname{diag}(\\sigma)
+                     \\bigl(I + U(\\Lambda - I)U^\\top\\bigr)
+                     \\operatorname{diag}(\\sigma)
+
+        and the two operators injected into the ESH closure are
+
+        .. math::
+
+            \\text{adjoint\\_L}(g) &= (I + U(\\sqrt{\\Lambda}-I)U^\\top)(\\sigma \\odot g) \\\\
+            \\text{forward\\_L}(u) &= \\sigma \\odot (u + U(\\sqrt{\\Lambda}-I)U^\\top u)
+
+        which satisfy :math:`\\text{forward\\_L} \\circ \\text{adjoint\\_L} = M^{-1}`
+        at O(dk) cost per call.
 
     Returns
     -------
@@ -387,7 +410,26 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
     previous_kinetic_energy_change, is_last_call) ->
     (new_momentum, kinetic_grad, kinetic_energy_change)``.
     """
-    sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
+    if isinstance(inverse_mass_matrix, LowRankInverseMassMatrix):
+        sigma = inverse_mass_matrix.sigma
+        U = inverse_mass_matrix.U
+        sqrt_lam = jnp.sqrt(inverse_mass_matrix.lam)
+
+        # forward_L(y) = σ ⊙ (y + U (√Λ − I) Uᵀ y)   — maps whitened momentum
+        #                                                   to position velocity
+        def forward_L(y):
+            return sigma * (y + U @ ((sqrt_lam - 1.0) * (U.T @ y)))
+
+        # adjoint_L(g) = (I + U (√Λ − I) Uᵀ)(σ ⊙ g)  — maps gradient to
+        #                                                   whitened-frame gradient
+        def adjoint_L(g):
+            g_scaled = sigma * g
+            return g_scaled + U @ ((sqrt_lam - 1.0) * (U.T @ g_scaled))
+
+    else:
+        sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
+        forward_L = lambda y: y * sqrt_inverse_mass_matrix
+        adjoint_L = lambda g: g * sqrt_inverse_mass_matrix
 
     def update(
         momentum: ArrayTree,
@@ -406,7 +448,8 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         del is_last_call
 
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
-        flatten_grads = flatten_grads * sqrt_inverse_mass_matrix
+        # Apply adjoint_L: O(dk) for LRD, O(d) for diagonal
+        flatten_grads = adjoint_L(flatten_grads)
         flatten_momentum, _ = ravel_pytree(momentum)
         dims = flatten_momentum.shape[0]
         normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
@@ -418,7 +461,8 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
             + 2 * zeta * flatten_momentum
         )
         new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
-        gr = unravel_fn(new_momentum_normalized * sqrt_inverse_mass_matrix)
+        # Apply forward_L: O(dk) for LRD, O(d) for diagonal
+        gr = unravel_fn(forward_L(new_momentum_normalized))
         next_momentum = unravel_fn(new_momentum_normalized)
         kinetic_energy_change = (
             delta

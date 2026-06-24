@@ -21,12 +21,12 @@ optimizer needs only a handful of iterations when ``phi`` moves by a small amoun
 
 The proposal strategy is swappable via ``build_proposal``, giving two usable variants:
 
-+---------------------------+------------------+------------------------------+
-| Alias                     | Proposal         | Notes                        |
-+===========================+==================+==============================+
-| ``blackjax.laplace_hmc``  | endpoint + M-H   | default, standard HMC        |
-| ``blackjax.laplace_mhmc`` | full trajectory | better ESS per gradient |
-+---------------------------+------------------+------------------------------+
++---------------------------+-------------------+--------------------------------+
+| Alias                     | Proposal          | Notes                          |
++===========================+===================+================================+
+| ``blackjax.laplace_hmc``  | endpoint + M-H    | default, standard HMC          |
+| ``blackjax.laplace_mhmc`` | full trajectory   | better ESS per gradient        |
++---------------------------+-------------------+--------------------------------+
 
 Typical usage::
 
@@ -54,11 +54,16 @@ import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
-from blackjax.mcmc.laplace_marginal import LaplaceMarginal, laplace_marginal_factory
+from blackjax.mcmc.laplace_marginal import (
+    LaplaceHMCInfo,
+    LaplaceMarginal,
+    laplace_marginal_factory,
+)
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = [
     "LaplaceHMCState",
+    "LaplaceHMCInfo",
     "init",
     "build_kernel",
     "as_top_level_api",
@@ -130,7 +135,7 @@ def build_kernel(
 
     Returns
     -------
-    A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -> (LaplaceHMCState, HMCInfo)``.
+    A kernel ``(rng_key, state, laplace, step_size, inverse_mass_matrix, num_integration_steps) -> (LaplaceHMCState, LaplaceHMCInfo)``.
     """
     hmc_kernel = hmc.build_kernel(integrator, divergence_threshold, build_proposal)
 
@@ -141,13 +146,14 @@ def build_kernel(
         step_size: float,
         inverse_mass_matrix: metrics.MetricTypes,
         num_integration_steps: int,
-    ) -> tuple[LaplaceHMCState, hmc.HMCInfo]:
+    ) -> tuple[LaplaceHMCState, LaplaceHMCInfo]:
         """One Laplace-HMC transition.
 
         All log-density evaluations during the HMC trajectory warm-start
         L-BFGS from ``state.theta_star``.  After accept/reject, L-BFGS is
         called once more at the accepted position to refresh ``theta_star``
-        for the next step.
+        for the next step.  The L-BFGS diagnostics from that post-accept
+        solve are surfaced in the returned :class:`LaplaceHMCInfo`.
         """
         theta_prev = state.theta_star
 
@@ -159,7 +165,7 @@ def build_kernel(
         hmc_state = hmc.HMCState(
             state.position, state.logdensity, state.logdensity_grad
         )
-        new_hmc_state, info = hmc_kernel(
+        new_hmc_state, hmc_info = hmc_kernel(
             rng_key,
             hmc_state,
             logdensity_fn,
@@ -170,7 +176,10 @@ def build_kernel(
 
         # Refresh theta_star at the accepted position.  Use theta_prev as warm
         # start — cheap when phi moved only slightly (typical HMC behaviour).
-        new_theta_star = laplace.solve_theta(new_hmc_state.position, theta_prev)
+        # solve_theta_with_info surfaces L-BFGS diagnostics for this solve.
+        new_theta_star, lbfgs_diag = laplace.solve_theta_with_info(
+            new_hmc_state.position, theta_prev
+        )
 
         new_state = LaplaceHMCState(
             new_hmc_state.position,
@@ -178,7 +187,20 @@ def build_kernel(
             new_hmc_state.logdensity_grad,
             new_theta_star,
         )
-        return new_state, info
+        new_info = LaplaceHMCInfo(
+            momentum=hmc_info.momentum,
+            acceptance_rate=hmc_info.acceptance_rate,
+            is_accepted=hmc_info.is_accepted,
+            is_divergent=hmc_info.is_divergent,
+            energy=hmc_info.energy,
+            proposal=hmc_info.proposal,
+            num_integration_steps=hmc_info.num_integration_steps,
+            lbfgs_iter_num=lbfgs_diag.iter_num,
+            lbfgs_error=lbfgs_diag.error,
+            lbfgs_converged=lbfgs_diag.converged,
+            lbfgs_hit_maxiter=lbfgs_diag.hit_maxiter,
+        )
+        return new_state, new_info
 
     return kernel
 
@@ -237,7 +259,10 @@ def as_top_level_api(
     -------
     A :class:`~blackjax.base.SamplingAlgorithm` whose ``step`` returns a
     :class:`LaplaceHMCState` (with ``theta_star`` field) and
-    :class:`~blackjax.mcmc.hmc.HMCInfo`.
+    :class:`~blackjax.mcmc.laplace_marginal.LaplaceHMCInfo` (includes all
+    standard :class:`~blackjax.mcmc.hmc.HMCInfo` fields plus L-BFGS
+    diagnostics ``lbfgs_iter_num``, ``lbfgs_error``, ``lbfgs_converged``,
+    ``lbfgs_hit_maxiter``).
 
     Examples
     --------
