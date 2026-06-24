@@ -55,7 +55,7 @@ def mclmc_find_L_and_step_size(
     diagonal_preconditioning=True,
     params=None,
     l_factor=0.4,
-    progress_bar=False,  # <-- NEW: Add progress bar toggle here
+    progress_bar=True,  # <-- NEW: Add progress bar toggle here
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -155,7 +155,7 @@ def mclmc_find_L_and_step_size(
         trust_in_estimate=trust_in_estimate,
         num_effective_samples=num_effective_samples,
         diagonal_preconditioning=diagonal_preconditioning,
-        progress_bar=progress_bar, # <-- NEW: Pass it down
+        progress_bar=progress_bar, 
     )(state, params, num_steps, part1_key)
     total_num_tuning_integrator_steps += num_steps1 + num_steps2
 
@@ -165,7 +165,7 @@ def mclmc_find_L_and_step_size(
             logdensity_fn,
             frac=frac_tune3, 
             l_factor=l_factor,
-            progress_bar=progress_bar, # <-- NEW: Pass it down
+            progress_bar=progress_bar,
         )(state, params, num_steps, part2_key)
         total_num_tuning_integrator_steps += num_steps3
 
@@ -182,7 +182,7 @@ def make_L_step_size_adaptation(
     desired_energy_var=1e-3,
     trust_in_estimate=1.5,
     num_effective_samples=150,
-    progress_bar=False, # <-- NEW: Accept the argument
+    progress_bar=False,
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for unadjusted MCLMC"""
 
