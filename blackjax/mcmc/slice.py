@@ -155,22 +155,22 @@ def stepping_out(
     k = (max_expansions - 1) - j
 
     def left_cond(carry):
-        l, n = carry
-        return in_slice(l) & (n > 0)
+        left, n = carry
+        return in_slice(left) & (n > 0)
 
     def left_body(carry):
-        l, n = carry
-        return l - width, n - 1
+        left, n = carry
+        return left - width, n - 1
 
     left, jl = jax.lax.while_loop(left_cond, left_body, (left, j))
 
     def right_cond(carry):
-        r, n = carry
-        return in_slice(r) & (n > 0)
+        right, n = carry
+        return in_slice(right) & (n > 0)
 
     def right_body(carry):
-        r, n = carry
-        return r + width, n - 1
+        right, n = carry
+        return right + width, n - 1
 
     right, kr = jax.lax.while_loop(right_cond, right_body, (right, k))
     num_expansions = (j - jl) + (k - kr)
@@ -246,18 +246,18 @@ def _doubling_accept(
     """
 
     def cond(carry):
-        l, r, _, ok = carry
-        return (r - l > 1.1 * width) & ok
+        left, right, _, ok = carry
+        return (right - left > 1.1 * width) & ok
 
     def body(carry):
-        l, r, d, _ = carry
-        mid = 0.5 * (l + r)
+        left, right, d, _ = carry
+        mid = 0.5 * (left + right)
         d = d | ((0.0 < mid) & (t >= mid)) | ((0.0 >= mid) & (t < mid))
-        r = jnp.where(t < mid, mid, r)
-        l = jnp.where(t >= mid, mid, l)
-        both_out = jnp.logical_not(in_slice(l)) & jnp.logical_not(in_slice(r))
+        right = jnp.where(t < mid, mid, right)
+        left = jnp.where(t >= mid, mid, left)
+        both_out = jnp.logical_not(in_slice(left)) & jnp.logical_not(in_slice(right))
         ok = jnp.logical_not(d & both_out)
-        return l, r, d, ok
+        return left, right, d, ok
 
     _, _, _, ok = jax.lax.while_loop(
         cond, body, (left, right, jnp.asarray(False), jnp.asarray(True))
@@ -288,17 +288,17 @@ def _shrink(
         return jnp.logical_not(found) & (n < max_shrinkage)
 
     def body(carry):
-        _, l, r, key, n, state, _ = carry
+        _, left, right, key, n, state, _ = carry
         key, subkey = random.split(key)
-        t = l + random.uniform(subkey) * (r - l)
+        t = left + random.uniform(subkey) * (right - left)
         candidate, is_valid = slice_fn(t)
         found = (candidate.logdensity >= level) & is_valid & accept_fn(t)
-        l = jnp.where(t < 0.0, t, l)
-        r = jnp.where(t >= 0.0, t, r)
+        left = jnp.where(t < 0.0, t, left)
+        right = jnp.where(t >= 0.0, t, right)
         state = jax.tree.map(
             lambda new, old: jnp.where(found, new, old), candidate, state
         )
-        return t, l, r, key, n + 1, state, found
+        return t, left, right, key, n + 1, state, found
 
     init = (
         0.0,
