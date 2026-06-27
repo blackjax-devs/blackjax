@@ -128,6 +128,9 @@ adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
 adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
 slice_sampling = generate_top_level_api_from(_slice)
+coordinate_slice = GenerateSamplingAPI(
+    _slice.coordinate_slice, _slice.init, _slice.build_coordinate_kernel
+)
 ghmc = generate_top_level_api_from(_ghmc)
 barker = generate_top_level_api_from(_barker)
 barker_proposal = barker  # backwards-compatible alias
@@ -245,6 +248,7 @@ __all__ = [
     "barker",
     "elliptical_slice",
     "slice_sampling",
+    "coordinate_slice",
     "mclmc",
     "adjusted_mclmc",
     "adjusted_mclmc_dynamic",

@@ -122,7 +122,10 @@ def _make_algorithm(name):
         ),
         "slice_sampling": lambda: blackjax.slice_sampling(
             std_normal_logdensity,
-            n_doublings=5,
+        ),
+        "coordinate_slice": lambda: blackjax.coordinate_slice(
+            std_normal_logdensity,
+            max_expansions=5,
         ),
     }
 
@@ -153,6 +156,7 @@ _MCMC_ALGORITHMS = [
     "rmh",
     "irmh",
     "slice_sampling",
+    "coordinate_slice",
 ]
 
 
