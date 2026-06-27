@@ -251,16 +251,8 @@ class TopLevelAPITest(chex.TestCase):
         state = algo.init(jnp.zeros(2))
         _, info = algo.step(jax.random.key(8), state)
         self.assertIsInstance(info, SliceInfo)
-        # One move along one direction: the bracket endpoints are position-shaped
-        # offset vectors (aligned with the 2-d position) and collinear (both lie
-        # along the single sampled direction), so the info reconstructs the move.
-        bl = np.asarray(info.bracket_left)
-        br = np.asarray(info.bracket_right)
-        self.assertEqual(bl.shape, (2,))
-        scale = max(np.linalg.norm(bl), np.linalg.norm(br), 1.0)
-        np.testing.assert_allclose(
-            (bl[0] * br[1] - bl[1] * br[0]) / scale**2, 0.0, atol=1e-5
-        )
+        # A single multivariate move: the bracket is a scalar t-offset.
+        self.assertEqual(np.asarray(info.bracket_left).ndim, 0)
 
     def test_default_is_isotropic_multivariate(self):
         # No cov -> isotropic multivariate slice; recovers a standard normal.

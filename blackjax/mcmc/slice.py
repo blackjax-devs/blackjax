@@ -106,15 +106,12 @@ class SliceInfo(NamedTuple):
         Number of shrinkage evaluations taken to find the new point.
         Summed over coordinates for the sweep.
     bracket_left, bracket_right
-        The realized slice bracket, as offsets from the current point (which
-        sits at 0) and position-shaped in both samplers, so the info carries
-        enough to reconstruct the move. For the multivariate slice they are the
-        proposal evaluated at the two bracket ends (``slice_fn`` defines how
-        ``t`` moves the point); with the default straight-line direction they
-        are ``t * direction``: collinear, encoding the direction and its extent.
-        For the coordinate sweep they are the per-axis offsets, aligned with
-        ``position``, giving the interval explored along each axis. The bracket
-        width is ``bracket_right - bracket_left``.
+        The realized slice bracket in the 1-D slice coordinate ``t``, where the
+        current point sits at ``t = 0`` (so typically
+        ``bracket_left <= 0 <= bracket_right``). For the multivariate slice these
+        are scalars; for the coordinate sweep they are per-axis ``t`` values, a
+        PyTree aligned with ``position``. The bracket width is
+        ``bracket_right - bracket_left``.
 
     """
 
@@ -376,17 +373,15 @@ def build_kernel(
     ``slice_fn(t) -> (state, is_valid)`` builds the candidate state at coordinate
     ``t`` and reports whether it is admissible. Because the candidate state is
     threaded straight out, the proposal can record extra quantities on it and
-    consume a constraint through ``is_valid``. This mirrors and generalizes
-    ``random_walk.build_rmh``: to sample under a constraint, override the
-    proposal generator rather than the kernel.
+    consume a constraint through ``is_valid``. To sample under a constraint,
+    override the proposal generator rather than the kernel.
 
     Parameters
     ----------
     interval
-        Interval-finding procedure, a callable passed directly the way NUTS
-        takes ``integrator=velocity_verlet``. Use :func:`doubling` (the default,
-        Neal Fig. 4 with the Fig. 6 acceptance test) or :func:`stepping_out`
-        (Neal Fig. 3).
+        Interval-finding procedure, passed directly as a callable. Use
+        :func:`doubling` (the default, Neal Fig. 4 with the Fig. 6 acceptance
+        test) or :func:`stepping_out` (Neal Fig. 3).
     max_expansions
         Cap on interval expansions (doublings or stepping-out steps).
     max_shrinkage
@@ -411,21 +406,6 @@ def build_kernel(
         slice_fn = proposal_generator(prop_key, state.position, logdensity_fn)
         new_state, info = _univariate_slice(
             slice_key, slice_fn, state, width, interval, max_expansions, max_shrinkage
-        )
-
-        # ``_univariate_slice`` reports the bracket in scalar t-space. ``slice_fn``
-        # defines how ``t`` moves the point, so map each endpoint back through it
-        # to a position-space offset vector; together with ``new_state`` they
-        # reconstruct the move (``t * direction`` for the default straight line).
-        # Costs two extra proposal evals at the bracket ends (XLA drops them if
-        # the bracket info is never consumed).
-        def offset(t):
-            end = slice_fn(t)[0].position
-            return jax.tree.map(lambda e, p: e - p, end, state.position)
-
-        info = info._replace(
-            bracket_left=offset(info.bracket_left),
-            bracket_right=offset(info.bracket_right),
         )
         return new_state, info
 
@@ -538,11 +518,10 @@ def sample_direction(
 ) -> ArrayTree:
     """A random slice direction shaped by ``scale`` and normalized to unit length.
 
-    ``scale`` is the analogue of ``sigma`` in
-    :func:`blackjax.mcmc.random_walk.normal`: a scalar (isotropic), a vector
-    (per-coordinate / diagonal) or a dense matrix (a full preconditioner, applied
-    as a linear map to standard-normal noise, so its covariance is
-    ``scale @ scale.T``). Defaults to ``1.0`` (uniformly random unit directions).
+    ``scale`` is a scalar (isotropic), a vector (per-coordinate / diagonal) or a
+    dense matrix (a full preconditioner, applied as a linear map to
+    standard-normal noise, so its covariance is ``scale @ scale.T``). Defaults
+    to ``1.0`` (uniformly random unit directions).
     """
     noise = generate_gaussian_noise(rng_key, position, sigma=scale)
     flat, unravel_fn = jax.flatten_util.ravel_pytree(noise)
@@ -554,8 +533,7 @@ def direction_proposal(scale: Union[float, Array] = 1.0) -> Callable:
 
     See :func:`sample_direction` for ``scale`` (scalar / vector / dense, unit by
     default). Pass as
-    ``slice_sampling(logp, proposal_generator=direction_proposal(scale))``
-    (cf. ``normal(sigma)`` for the random walk).
+    ``slice_sampling(logp, proposal_generator=direction_proposal(scale))``.
     """
 
     def proposal_generator(rng_key, position, logdensity_fn):
