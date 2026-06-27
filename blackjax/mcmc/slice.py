@@ -45,7 +45,7 @@ References
    Ann. Statist. 31(3), 705-767, (June 2003).
 """
 
-from typing import Callable, NamedTuple, Optional, TypeAlias, Union
+from typing import Callable, NamedTuple, TypeAlias
 
 import jax
 import jax.flatten_util
@@ -67,6 +67,7 @@ __all__ = [
     "as_top_level_api",
     "coordinate_slice",
     "direction_proposal",
+    "coordinate_proposal",
     "sample_direction",
     "stepping_out",
     "doubling",
@@ -95,8 +96,9 @@ class SliceInfo(NamedTuple):
     is_accepted
         Whether shrinkage found a valid point within ``max_shrinkage`` steps.
         Always ``True`` for an unconstrained target (the slice always contains
-        the current point); can be ``False`` when a ``constraint_fn`` is
-        supplied and the budget is exhausted, in which case the chain stays put.
+        the current point); can be ``False`` when the proposal gates a
+        constraint into ``is_valid`` and the budget is exhausted, leaving the
+        chain in place.
         For the coordinate sweep it is ``True`` only if every coordinate
         succeeded.
     num_expansions
@@ -423,11 +425,39 @@ def fixed_order(rng_key: PRNGKey, d: int) -> Array:
     return jnp.arange(d)
 
 
+def coordinate_proposal(
+    rng_key: PRNGKey,
+    position: ArrayLikeTree,
+    logdensity_fn: Callable,
+    i: int,
+) -> Callable:
+    """Default per-axis proposal for the coordinate sweep.
+
+    The coordinate analogue of :func:`direction_proposal`: a unit step along
+    flattened axis ``i`` (the one-hot direction ``e_i``), so ``x(t)`` is
+    ``position`` with ``flat[i] += t`` and the current point sits at ``t = 0``.
+    Shares the ``slice_fn(t) -> (state, is_valid)`` contract of the multivariate
+    proposals.
+
+    A constraint is added the same way as on the multivariate path -- by
+    overriding the proposal (``axis_proposal``) to gate ``is_valid``; there is no
+    built-in constraint argument.
+    """
+    del rng_key  # the coordinate move is deterministic given the axis
+    flat, unravel_fn = jax.flatten_util.ravel_pytree(position)
+
+    def slice_fn(t):
+        x = unravel_fn(flat.at[i].add(t))
+        return SliceState(x, logdensity_fn(x)), True
+
+    return slice_fn
+
+
 def build_coordinate_kernel(
     interval: Callable = doubling,
-    constraint_fn: Optional[Callable] = None,
+    axis_proposal: Callable = coordinate_proposal,
     coordinate_order: Callable = random_order,
-    initial_widths: Union[float, Array] = 1.0,
+    initial_widths: float | Array = 1.0,
     max_expansions: int = 10,
     max_shrinkage: int = 100,
 ) -> Callable:
@@ -436,7 +466,10 @@ def build_coordinate_kernel(
     One step updates each scalar coordinate's full conditional with a univariate
     slice, in the order given by ``coordinate_order``, the choice function
     ``(rng_key, d) -> indices`` (:func:`random_order`, the default, or
-    :func:`fixed_order`). ``initial_widths`` is a scalar (applied to every
+    :func:`fixed_order`). Each coordinate move is drawn by ``axis_proposal``, the
+    per-axis analogue of the multivariate ``proposal_generator``
+    (:func:`coordinate_proposal` by default); override it to gate a constraint
+    into ``is_valid``. ``initial_widths`` is a scalar (applied to every
     coordinate) or a length-``D`` array of per-coordinate bracket widths.
 
     Returns
@@ -459,30 +492,17 @@ def build_coordinate_kernel(
         order = coordinate_order(order_key, d)
         m = order.shape[0]
 
-        def flat_logdensity(flat):
-            return logdensity_fn(unravel_fn(flat))
-
-        flat_constraint = (
-            (lambda flat: constraint_fn(unravel_fn(flat)))
-            if constraint_fn is not None
-            else None
-        )
-
         def body(carry, inp):
-            flat, logdensity = carry
+            position, logdensity = carry
             key, i, w = inp
-
-            def slice_fn(t):  # proposal along axis i; consumes any constraint
-                new_flat = flat.at[i].add(t)
-                is_valid = (
-                    True if flat_constraint is None else flat_constraint(new_flat)
-                )
-                return SliceState(new_flat, flat_logdensity(new_flat)), is_valid
-
+            prop_key, slice_key = random.split(key)
+            # Same two steps as the multivariate kernel: build the proposal for
+            # this axis, then run the univariate slice along it.
+            slice_fn = axis_proposal(prop_key, position, logdensity_fn, i)
             new_state, info = _univariate_slice(
-                key,
+                slice_key,
                 slice_fn,
-                SliceState(flat, logdensity),
+                SliceState(position, logdensity),
                 w,
                 interval,
                 max_expansions,
@@ -491,8 +511,8 @@ def build_coordinate_kernel(
             return (new_state.position, new_state.logdensity), info
 
         keys = random.split(scan_key, m)
-        (flat_final, ld_final), swept = jax.lax.scan(
-            body, (flat0, state.logdensity), (keys, order, widths[order])
+        (pos_final, ld_final), swept = jax.lax.scan(
+            body, (state.position, state.logdensity), (keys, order, widths[order])
         )
         # The sweep does D univariate slices. Summarise the counters over the
         # sweep, and stitch the per-coordinate bracket endpoints back into the
@@ -508,13 +528,13 @@ def build_coordinate_kernel(
             bracket_left=stitch(swept.bracket_left),
             bracket_right=stitch(swept.bracket_right),
         )
-        return SliceState(unravel_fn(flat_final), ld_final), info
+        return SliceState(pos_final, ld_final), info
 
     return kernel
 
 
 def sample_direction(
-    rng_key: PRNGKey, position: ArrayLikeTree, scale: Union[float, Array] = 1.0
+    rng_key: PRNGKey, position: ArrayLikeTree, scale: float | Array = 1.0
 ) -> ArrayTree:
     """A random slice direction shaped by ``scale`` and normalized to unit length.
 
@@ -528,7 +548,7 @@ def sample_direction(
     return unravel_fn(flat / jnp.linalg.norm(flat))
 
 
-def direction_proposal(scale: Union[float, Array] = 1.0) -> Callable:
+def direction_proposal(scale: float | Array = 1.0) -> Callable:
     """Proposal-generator factory: slice along a random ``scale``-shaped direction.
 
     See :func:`sample_direction` for ``scale`` (scalar / vector / dense, unit by
@@ -609,10 +629,10 @@ def coordinate_slice(
     logdensity_fn: Callable,
     *,
     max_expansions: int = 10,
-    initial_widths: Union[float, Array] = 1.0,
+    initial_widths: float | Array = 1.0,
     interval: Callable = doubling,
     coordinate_order: Callable = random_order,
-    constraint_fn: Optional[Callable] = None,
+    axis_proposal: Callable = coordinate_proposal,
     max_shrinkage: int = 100,
 ) -> SamplingAlgorithm:
     """Coordinate-wise (slice-within-Gibbs) slice sampler.
@@ -635,8 +655,11 @@ def coordinate_slice(
     coordinate_order
         Choice function ``(rng_key, d) -> indices``, either :func:`random_order`
         (default) or :func:`fixed_order`.
-    constraint_fn
-        Optional ``position -> bool`` hard constraint.
+    axis_proposal
+        Per-axis proposal ``(rng_key, position, logdensity_fn, i) -> slice_fn``
+        (:func:`coordinate_proposal` by default). Override to gate a constraint
+        into ``is_valid``, as a custom ``proposal_generator`` does for
+        :func:`as_top_level_api`.
     max_shrinkage
         Cap on shrinkage evaluations per coordinate.
 
@@ -646,7 +669,7 @@ def coordinate_slice(
     """
     kernel = build_coordinate_kernel(
         interval=interval,
-        constraint_fn=constraint_fn,
+        axis_proposal=axis_proposal,
         coordinate_order=coordinate_order,
         initial_widths=initial_widths,
         max_expansions=max_expansions,
