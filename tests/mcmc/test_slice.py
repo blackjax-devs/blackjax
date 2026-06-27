@@ -25,6 +25,7 @@ from blackjax.mcmc.slice import (
     SliceState,
     build_coordinate_kernel,
     build_kernel,
+    coordinate_proposal,
     coordinate_slice,
     direction_proposal,
     doubling,
@@ -75,11 +76,15 @@ class IntervalProcedureTest(chex.TestCase):
     @parameterized.parameters(*INTERVALS)
     def test_brackets_contain_origin_and_slice(self, interval):
         in_slice = lambda t: jnp.abs(t) < 3.0  # x0 at t=0 is inside
-        left, right, _, _ = interval(
+        left, right, num_expansions, _ = interval(
             jax.random.key(0), in_slice, width=1.0, max_expansions=10
         )
         self.assertLessEqual(float(left), 0.0)
         self.assertGreaterEqual(float(right), 0.0)
+        self.assertGreater(int(num_expansions), 0)  # the bracket expanded
+        # At least one end exits the slice -- not necessarily both: doubling
+        # extends one random side per step and stepping-out splits its budget
+        # across the sides, so only their union is guaranteed to span the slice.
         self.assertTrue(float(left) < -3.0 or float(right) > 3.0)
 
 
@@ -137,6 +142,22 @@ class DirectionProposalTest(chex.TestCase):
         self.assertGreater(float(mean_abs[0]), float(mean_abs[1]))
 
 
+class CoordinateProposalTest(chex.TestCase):
+    """The default coordinate proposal is a unit step along a single axis."""
+
+    def test_axis_move(self):
+        pos = jnp.array([1.0, 2.0, 3.0])
+        slice_fn = coordinate_proposal(jax.random.key(0), pos, std_normal, 1)
+        at0, valid0 = slice_fn(0.0)
+        np.testing.assert_allclose(at0.position, pos)  # t=0 is the current point
+        self.assertTrue(bool(valid0))
+        moved, _ = slice_fn(0.5)
+        np.testing.assert_allclose(moved.position, jnp.array([1.0, 2.5, 3.0]))
+        np.testing.assert_allclose(
+            float(moved.logdensity), float(std_normal(moved.position)), atol=1e-6
+        )
+
+
 class MomentRecoveryTest(chex.TestCase):
     """Statistical correctness: every sampler/interval recovers known moments."""
 
@@ -178,9 +199,27 @@ class MomentRecoveryTest(chex.TestCase):
         pos, _ = run_chain(algo, jnp.full(2, 3.0), jax.random.key(3), 4000)
         np.testing.assert_allclose(np.asarray(pos[2000:]).mean(), 3.0, atol=0.12)
 
+    @parameterized.parameters(*INTERVALS)
+    def test_multivariate_skewed_exponential(self, interval):
+        # Asymmetric 2D target: independent Exp(1) per axis (support the
+        # positive quadrant, marginal skew +2). Unlike a 1D target, this drives
+        # shrinkage along *random* hit-and-run directions through a skewed
+        # density; a reversed direction mirrors it -- invisible on the symmetric
+        # Gaussians above, but it flips the sign of the recovered per-axis skew.
+        logp = lambda x: st.expon.logpdf(x).sum()
+        algo = blackjax.slice_sampling(logp, interval=interval)
+        pos, acc = run_chain(algo, jnp.ones(2), jax.random.key(7), 8000)
+        s = np.asarray(pos[4000:])
+        self.assertTrue((s > 0).all())
+        np.testing.assert_allclose(s.mean(axis=0), 1.0, atol=0.2)
+        np.testing.assert_allclose(s.std(axis=0), 1.0, rtol=0.2)
+        skew = np.mean(((s - s.mean(0)) / s.std(0)) ** 3, axis=0)
+        self.assertTrue((skew > 1.0).all())  # right-skewed per axis, not mirrored
+        self.assertGreater(acc.mean(), 0.99)
+
 
 class ConstraintTest(chex.TestCase):
-    """Constrained slice: a half-normal via constraint_fn, both samplers."""
+    """Constrained slice: a half-normal via a proposal override, both samplers."""
 
     def _check_halfnormal(self, algo):
         pos, acc = run_chain(algo, jnp.array([1.0]), jax.random.key(4), 5000)
@@ -206,9 +245,18 @@ class ConstraintTest(chex.TestCase):
         )
 
     def test_coordinate_constrained(self):
-        self._check_halfnormal(
-            coordinate_slice(std_normal, constraint_fn=lambda x: jnp.all(x > 0))
-        )
+        # Same mechanism as the multivariate case: override the per-axis proposal
+        # (axis_proposal) and gate is_valid -- no built-in constraint kwarg.
+        def proposal(rng_key, position, logdensity_fn, i):
+            base = coordinate_proposal(rng_key, position, logdensity_fn, i)
+
+            def slice_fn(t):
+                state, is_valid = base(t)
+                return state, is_valid & jnp.all(state.position > 0)
+
+            return slice_fn
+
+        self._check_halfnormal(coordinate_slice(std_normal, axis_proposal=proposal))
 
 
 class PyTreeTest(chex.TestCase):
