@@ -18,8 +18,7 @@ point. Multivariate behaviour is determined entirely by the proposal generator
 that produces the line, ``proposal_generator(rng_key, position, logdensity_fn)
 -> slice_fn`` with ``slice_fn(t) -> (state, is_valid)``. The candidate state is
 threaded straight through the kernel, so a proposal can record extra quantities
-on it (for example a nested-sampling log-likelihood) and consume a constraint
-through ``is_valid``.
+on it.
 
 Two samplers are built on this spine:
 
@@ -35,16 +34,10 @@ Two samplers are built on this spine:
 
 The one-dimensional interval is built by the stepping-out or doubling procedure
 of Neal (2003), passed as a callable (``interval=stepping_out`` or
-``interval=doubling``, the way NUTS takes ``integrator=velocity_verlet``), then
-narrowed by the shrinkage procedure. Doubling additionally applies the Fig. 6
-acceptance test. Constraints are not built in: they are added downstream by
+``interval=doubling``). Doubling additionally applies the Fig. 6 acceptance
+test. Additional constraints are not built in but added downstream by
 overriding the proposal, which gates on ``is_valid`` and may record extra
-quantities on the state (the pattern used by nested sampling). The coordinate
-sweep also accepts an optional ``constraint_fn``.
-
-This mirrors the layering of :mod:`blackjax.mcmc.random_walk`: a small core
-kernel parameterized by a proposal generator, with named convenience
-constructors on top.
+quantities on the state.
 
 References
 ----------
@@ -99,9 +92,6 @@ class SliceState(NamedTuple):
 class SliceInfo(NamedTuple):
     """Additional information on a Slice sampling transition.
 
-    This additional information can be used for debugging or computing
-    diagnostics.
-
     is_accepted
         Whether shrinkage found a valid point within ``max_shrinkage`` steps.
         Always ``True`` for an unconstrained target (the slice always contains
@@ -110,13 +100,11 @@ class SliceInfo(NamedTuple):
         For the coordinate sweep it is ``True`` only if every coordinate
         succeeded.
     num_expansions
-        Number of interval expansions (stepping-out steps or doublings), the
-        analogue of ``NUTSInfo.num_trajectory_expansions``. Summed over
-        coordinates for the sweep.
+        Number of interval expansions (stepping-out steps or doublings).
+        Summed over coordinates for the sweep.
     num_shrink
-        Number of shrinkage evaluations taken to find the new point, the
-        analogue of ``NUTSInfo.num_integration_steps``. Summed over coordinates
-        for the sweep.
+        Number of shrinkage evaluations taken to find the new point.
+        Summed over coordinates for the sweep.
     bracket_left, bracket_right
         The realized slice bracket, as offsets from the current point (which
         sits at 0) and position-shaped in both samplers, so the info carries
@@ -163,7 +151,7 @@ def stepping_out(
     right = left + width
 
     v = random.uniform(jk_key)
-    j = jnp.floor(max_expansions * v).astype(jnp.int32)
+    j = jnp.floor(max_expansions * v).astype(int)
     k = (max_expansions - 1) - j
 
     def left_cond(carry):
@@ -195,7 +183,7 @@ def _best_interval(x: Array) -> Array:
     k = x.shape[0]
     mults = jnp.arange(2 * k, k, -1, dtype=x.dtype)
     shifts = jnp.arange(k, dtype=x.dtype)
-    return jnp.argmax(mults * x + shifts).astype(jnp.int32)
+    return jnp.argmax(mults * x + shifts).astype(int)
 
 
 def doubling(
@@ -220,7 +208,7 @@ def doubling(
 
     k = max_expansions + 1
     left_expands = random.bernoulli(key2, 0.5, (k,))
-    right_expands = 1 - left_expands.astype(jnp.int32)
+    right_expands = 1 - left_expands.astype(int)
     step_widths = width * (2.0 ** jnp.arange(k))
 
     # Exclusive cumsum: level j reflects expansions at steps 0..j-1; index 0 is
@@ -238,7 +226,7 @@ def doubling(
         jnp.logical_not(jax.vmap(in_slice)(lefts)),
         jnp.logical_not(jax.vmap(in_slice)(rights)),
     )
-    idx = _best_interval(both_out.astype(jnp.int32))
+    idx = _best_interval(both_out.astype(int))
     left, right = lefts[idx], rights[idx]
     accept_fn = lambda t: _doubling_accept(
         in_slice, t, left, right, width
@@ -254,7 +242,7 @@ def _doubling_accept(
     Works on the original bracket ``(left, right)`` (not the shrunk one),
     bisecting toward ``t`` until the sub-interval is within ~``width`` (the
     1.1 factor guards round-off), rejecting if the doubling started from ``t``
-    would have stopped earlier.  ``x0`` is at ``t = 0``.
+    would have stopped earlier. ``x0`` is at ``t = 0``.
     """
 
     def cond(carry):
@@ -334,21 +322,18 @@ def _univariate_slice(
     max_expansions: int,
     max_shrinkage: int,
 ):
-    """One univariate slice through the current point, the spine of the family.
+    """One univariate slice through the current point.
 
     ``slice_fn(t) -> (state, is_valid)`` produces the candidate at coordinate
-    ``t``. The candidate state carries whatever the proposal records (its
-    ``.logdensity`` is the slice density; a nested-sampling state additionally
-    carries ``.loglikelihood``) and is threaded out rather than recomputed, so
-    this is generic over the state type.
+    ``t``.
     """
     level_key, interval_key, shrink_key = random.split(rng_key, 3)
     level = current_state.logdensity + jnp.log(random.uniform(level_key))
 
     # ``slice_fn(t) -> (state, is_valid)`` is the slice function: it builds the
     # candidate state at coordinate ``t`` (computing whatever it records) and
-    # whether it is admissible (where a constraint is consumed). A point is in
-    # the slice iff its density is above the level and it is valid.
+    # reports whether it is admissible (where a constraint is consumed). A point
+    # is in the slice iff its density is above the level and it is valid.
     def in_slice(t):
         candidate, is_valid = slice_fn(t)
         return (candidate.logdensity >= level) & is_valid
@@ -530,7 +515,7 @@ def build_coordinate_kernel(
         (flat_final, ld_final), swept = jax.lax.scan(
             body, (flat0, state.logdensity), (keys, order, widths[order])
         )
-        # The sweep does D univariate slices.  Summarise the counters over the
+        # The sweep does D univariate slices. Summarise the counters over the
         # sweep, and stitch the per-coordinate bracket endpoints back into the
         # position structure (scatter to natural order, then unravel) so that
         # ``info.bracket_left``/``bracket_right`` align with ``position``.
