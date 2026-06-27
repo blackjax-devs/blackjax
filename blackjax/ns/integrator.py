@@ -59,7 +59,7 @@ def init_integrator(particle_state: StateWithLogLikelihood) -> NSIntegrator:
     Parameters
     ----------
     particle_state
-        The initial NSState containing the live particles.
+        The initial state containing the live particles.
 
     Returns
     -------
@@ -86,15 +86,17 @@ def update_integrator(
     ----------
     integrator
         The current integrator state.
-    live_state
+    particle_state
         The updated live state after the NS step.
-    dead_info
-        Information about the particles that died in this step.
+    dead_particles
+        The particles that died in this step.
 
     Returns
     -------
     NSIntegrator
-        The updated integrator with new logX, logZ, and logZ_live.
+        The updated integrator. logX is the prior volume after all num_deleted
+        deletions, logZ is the accumulated log evidence, and logZ_live is the
+        log evidence contribution from the remaining live points.
     """
     loglikelihood = particle_state.loglikelihood
     dead_loglikelihood = dead_particles.loglikelihood

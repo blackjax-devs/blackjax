@@ -11,7 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-""""""
+"""Base components for Nested Sampling.
+
+Defines the particle state carrying loglikelihood information, a generic kernel
+builder that deletes the lowest-likelihood particles and replaces them with an
+inner kernel, and the default deletion strategy selecting the ``num_delete``
+particles with the lowest loglikelihoods.
+"""
 from typing import Callable, NamedTuple
 
 import jax
@@ -84,9 +90,9 @@ def init_state_strategy(
     position
         A PyTree of arrays representing the initial positions of the particles.
         Each leaf array has a leading dimension corresponding to the number of particles.
-    logprior
+    logprior_fn
         A function that computes the log-prior density for a single particle.
-    loglikelihood
+    loglikelihood_fn
         A function that computes the log-likelihood for a single particle.
     loglikelihood_birth
         The log-likelihood threshold that the particle must exceed. Defaults to NaN.
@@ -183,7 +189,7 @@ def build_kernel(
 
         # Update the particles
         state = state._replace(
-            particles=jax.tree_util.tree_map(
+            particles=jax.tree.map(
                 lambda p, n: p.at[target_update_idx].set(n),
                 state.particles,
                 new_particles,
@@ -215,11 +221,8 @@ def delete_fn(state: NSState, num_delete: int) -> tuple[Array, Array]:
 
     Returns
     -------
-    tuple[Array, Array]
-        A tuple containing:
-        - ``dead_idx``: Indices of particles marked for deletion.
-        - ``target_update_idx``: Indices of particles to be overwritten
-          (same as ``dead_idx`` in this implementation).
+    A tuple ``(dead_idx, target_update_idx)`` of indices marked for deletion
+    and of slots to overwrite (identical here).
     """
     loglikelihood = state.particles.loglikelihood
     _, dead_idx = jax.lax.top_k(-loglikelihood, num_delete)

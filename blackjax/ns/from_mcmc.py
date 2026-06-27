@@ -1,11 +1,34 @@
+# Copyright 2020- The Blackjax Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""NS particle-update strategies that wrap a generic MCMC kernel under the
+likelihood constraint."""
 from functools import partial
 from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax import random
 
 from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
 from blackjax.ns.base import delete_fn as default_delete_fn
+
+__all__ = [
+    "MCMCUpdateInfo",
+    "ConstrainedMCMCInfo",
+    "update_with_mcmc_take_last",
+    "build_kernel",
+]
 
 
 class MCMCUpdateInfo(NamedTuple):
@@ -23,7 +46,7 @@ class ConstrainedMCMCInfo(NamedTuple):
     info
         The underlying MCMC info (e.g., RWInfo for random walk).
     is_accepted
-        True if both the MCMC proposal was accepted AND the proposed
+        True if both the MCMC proposal was accepted and the proposed
         point is above the likelihood threshold.
     """
 
@@ -48,16 +71,22 @@ def update_with_mcmc_take_last(
         Number of MCMC proposals per particle.
     num_delete
         Number of particles to replace per step.
+
+    Returns
+    -------
+    An update function that proposes new particles by running the constrained
+    MCMC kernel from survivor start points and returns the final states and
+    infos.
     """
 
     def update_function(rng_key, state, loglikelihood_0, **step_parameters):
-        choice_key, sample_key = jax.random.split(rng_key)
+        choice_key, sample_key = random.split(rng_key)
         particles = state.particles
 
         # Select start particles from survivors
         weights = (particles.loglikelihood > loglikelihood_0).astype(jnp.float32)
         weights = jnp.where(weights.sum() > 0.0, weights, jnp.ones_like(weights))
-        start_idx = jax.random.choice(
+        start_idx = random.choice(
             choice_key,
             len(weights),
             shape=(num_delete,),
@@ -73,7 +102,7 @@ def update_with_mcmc_take_last(
         )
 
         def mcmc_kernel(rng_key, state):
-            keys = jax.random.split(rng_key, num_mcmc_steps)
+            keys = random.split(rng_key, num_mcmc_steps)
 
             def body_fn(state, rng_key):
                 new_state, info = shared_mcmc_step_fn(rng_key, state)
@@ -82,7 +111,7 @@ def update_with_mcmc_take_last(
             final_state, infos = jax.lax.scan(body_fn, state, keys)
             return final_state, infos
 
-        sample_keys = jax.random.split(sample_key, num_delete)
+        sample_keys = random.split(sample_key, num_delete)
         return jax.vmap(mcmc_kernel)(sample_keys, start_state)
 
     return update_function
@@ -118,13 +147,18 @@ def build_kernel(
         Number of particles to replace per NS iteration.
     delete_fn
         Function to select which particles to delete.
+
+    Returns
+    -------
+    A Nested Sampling kernel that deletes the lowest-likelihood particles and
+    replaces them with constrained MCMC moves.
     """
 
     def constrained_mcmc_step_fn(rng_key, state, loglikelihood_0, **params):
         """Single constrained MCMC step that respects the likelihood threshold.
 
         Proposes a move, accepts if both the MCMC acceptance criterion is
-        satisfied AND the proposed point is above the likelihood threshold.
+        satisfied and the proposed point is above the likelihood threshold.
         If rejected, stays at current position.
         """
         mcmc_state = mcmc_init_fn(state.position, logdensity_fn)
@@ -139,9 +173,8 @@ def build_kernel(
         is_accepted = proposal_accepted & within_contour
         new_state = jax.lax.cond(
             is_accepted,
-            lambda _: proposed_state,
-            lambda _: state,
-            operand=None,
+            lambda: proposed_state,
+            lambda: state,
         )
         info = ConstrainedMCMCInfo(mcmc_info, is_accepted)
         return new_state, info

@@ -248,28 +248,15 @@ class NestedSliceSamplingTest(chex.TestCase):
         self.key = jax.random.key(42)
 
     def test_nss_direction_functions(self):
-        """Test NSS direction generation functions"""
+        """NSS direction: covariance-shaped, scaled to Mahalanobis norm 2."""
         key = jax.random.key(456)
+        cov = jnp.array([[2.0, 0.5, 0.0], [0.5, 1.0, 0.0], [0.0, 0.0, 1.5]])
 
-        # Test covariance computation
-        positions = jax.random.normal(key, (50, 3))
+        direction = nss.sample_direction_from_covariance(key, jnp.zeros(3), cov)
 
-        def logprior_fn(x):
-            return stats.norm.logpdf(x).sum()
-
-        def loglikelihood_fn(x):
-            return stats.norm.logpdf(x).sum()
-
-        init_state_fn = jax.vmap(make_init_state_fn(logprior_fn, loglikelihood_fn))
-        state = base.init(positions, init_state_fn)
-
-        # Use update_inner_kernel_params instead of removed init_inner_kernel_params
-        params = nss.update_inner_kernel_params(key, state, None, {})
-
-        # Check that covariance is computed
-        self.assertIn("cov", params)
-        cov_pytree = params["cov"]
-        chex.assert_shape(cov_pytree, (3, 3))
+        chex.assert_shape(direction, (3,))
+        mahalanobis = jnp.sqrt(direction @ jnp.linalg.inv(cov) @ direction)
+        self.assertAlmostEqual(float(mahalanobis), 2.0, places=4)
 
     def test_nss_kernel_construction(self):
         """Test NSS kernel can be constructed"""

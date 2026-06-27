@@ -17,7 +17,7 @@ This combines the SMC equivalent of Adaptive Tempering and inner kernel tuning i
 """
 
 from functools import partial
-from typing import Callable, Dict, NamedTuple, Optional
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -32,35 +32,48 @@ __all__ = ["init", "build_kernel"]
 
 
 class AdaptiveNSState(NamedTuple):
-    """An extension of the base NSState to include inner kernel parameters.
+    """State of the adaptive Nested Sampling chain.
 
-    This state class extends the base Nested Sampling state by adding a
-    dictionary of parameters for the inner kernel and an integrator to track
-    relevant values for the evidence computation.
-
-    Attributes
-    ----------
     particles
-        The StateWithLogLikelihood of the current live particles.
+        The ``StateWithLogLikelihood`` of the current live particles.
     integrator
-        The NSIntegrator instance that tracks evidence-related statistics.
+        The ``NSIntegrator`` that tracks evidence-related statistics.
     inner_kernel_params
-        A dictionary of parameters for the inner kernel used to generate new
-        particles during the Nested Sampling process.
+        Parameters for the inner kernel used to generate new particles.
     """
 
     particles: StateWithLogLikelihood
     integrator: NSIntegrator
-    inner_kernel_params: Dict[str, ArrayTree]
+    inner_kernel_params: dict[str, ArrayTree]
 
 
 def init(
     positions: ArrayLikeTree,
     init_state_fn: Callable,
     loglikelihood_birth: float = jnp.nan,
-    update_inner_kernel_params_fn: Optional[Callable] = None,
-    rng_key: Optional[PRNGKey] = None,
+    update_inner_kernel_params_fn: Callable | None = None,
+    rng_key: PRNGKey | None = None,
 ) -> AdaptiveNSState:
+    """Initialize the adaptive Nested Sampling state from live positions.
+
+    Parameters
+    ----------
+    positions
+        Initial positions of the live particles.
+    init_state_fn
+        Maps positions to a ``StateWithLogLikelihood`` (typically vmapped).
+    loglikelihood_birth
+        Birth log-likelihood assigned to the initial particles.
+    update_inner_kernel_params_fn
+        Optional ``(rng_key, state, info, params) -> params`` used to seed the
+        inner kernel parameters; if ``None`` the parameters start empty.
+    rng_key
+        PRNG key passed to ``update_inner_kernel_params_fn``.
+
+    Returns
+    -------
+    The initial ``AdaptiveNSState``.
+    """
     base_state = base_init(
         positions, init_state_fn, loglikelihood_birth=loglikelihood_birth
     )
@@ -81,14 +94,28 @@ def build_kernel(
     delete_fn: Callable,
     inner_kernel: Callable,
     update_inner_kernel_params_fn: Callable[
-        [PRNGKey, NSState, NSInfo, Dict[str, ArrayTree]], Dict[str, ArrayTree]
+        [PRNGKey, NSState, NSInfo, dict[str, ArrayTree]], dict[str, ArrayTree]
     ],
 ) -> Callable:
     """Build an adaptive Nested Sampling kernel.
 
-    This function constructs a Nested Sampling kernel that incorporates
-    adaptive tuning of the inner kernel parameters based on the current state
-    of the sampler and the information from the previous update step.
+    The kernel tunes the inner kernel parameters each step from the current
+    state and the information from the previous update.
+
+    Parameters
+    ----------
+    delete_fn
+        Selects which live particles to delete and replace each step.
+    inner_kernel
+        Inner MCMC kernel used to generate replacement particles, called with
+        the current ``inner_kernel_params``.
+    update_inner_kernel_params_fn
+        ``(rng_key, state, info, params) -> params`` recomputing the inner
+        kernel parameters after each step.
+
+    Returns
+    -------
+    A kernel ``(rng_key, AdaptiveNSState) -> (AdaptiveNSState, NSInfo)``.
     """
 
     def kernel(

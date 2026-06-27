@@ -11,10 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Utility functions for Nested Sampling post-processing.
-"""
+"""Utility functions for Nested Sampling post-processing."""
 
-from typing import Callable, Dict, Tuple
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -36,7 +35,7 @@ def log1mexp(x: Array) -> Array:
 
 
 def compute_num_live(info: NSInfo) -> Array:
-    """Compute the effective number of live points at each death contour.
+    """Compute the effective number of live points at each death contour (Higson et al., 2018).
 
     When doing batch deletions, the jump in energy level can be smoothed by
     transforming 1 jump of size k into k jumps of size 1. This function computes
@@ -70,7 +69,7 @@ def compute_num_live(info: NSInfo) -> Array:
 
 
 def logX(rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100) -> tuple[Array, Array]:
-    """Simulate the stochastic evolution of log prior volumes.
+    """Simulate the stochastic evolution of log prior volumes (Skilling, 2006).
 
     Wraps the effective population size in `compute_num_live`, along with stochastic
     simulation of the log prior shrinkage associated with each deleted particle.
@@ -159,6 +158,9 @@ def finalise(live: NSState, dead: list[NSInfo], update_info: bool = True) -> NSI
     dead
         A list of `NSInfo` objects, where each object contains information
         about the particles that "died" at one step of the NS algorithm.
+    update_info
+        Whether to concatenate the `update_info` from each element of `dead`.
+        If False, the returned `update_info` is None. Default is True.
 
     Returns
     -------
@@ -171,16 +173,14 @@ def finalise(live: NSState, dead: list[NSInfo], update_info: bool = True) -> NSI
 
     if update_info:
         update_infos = [d.update_info for d in dead]
-        final_update_info = jax.tree_util.tree_map(
+        final_update_info = jax.tree.map(
             lambda *xs: jnp.concatenate(xs, axis=0), *update_infos
         )
     else:
         final_update_info = None
 
     particles = [d.particles for d in dead] + [live.particles]
-    final_particles = jax.tree_util.tree_map(
-        lambda *xs: jnp.concatenate(xs, axis=0), *particles
-    )
+    final_particles = jax.tree.map(lambda *xs: jnp.concatenate(xs, axis=0), *particles)
     return NSInfo(final_particles, final_update_info)
 
 
@@ -210,6 +210,16 @@ def ess(rng_key: PRNGKey, dead: NSInfo) -> Array:
 
 def sample(rng_key: PRNGKey, dead: NSInfo, shape: int = 1000) -> ArrayTree:
     """Resamples particles according to their importance weights.
+
+    Parameters
+    ----------
+    rng_key
+        A JAX PRNG key, used by `log_weights` and for resampling.
+    dead
+        An `NSInfo` object containing the full set of dead (and final live)
+        particles, typically the output of `finalise`.
+    shape
+        The number of resampled particles to draw. Default is 1000.
 
     Returns
     -------
@@ -249,14 +259,9 @@ def get_first_row(x: ArrayTree) -> ArrayTree:
 
 
 def uniform_prior(
-    rng_key: PRNGKey, num_live: int, bounds: Dict[str, Tuple[float, float]]
-) -> Tuple[ArrayTree, Callable]:
-    """Helper function to create a uniform prior for parameters.
-
-    This function generates a set of initial parameter samples uniformly
-    distributed within specified bounds. It also provides a log-prior
-    function that computes the log-prior probability for a given set of
-    parameters.
+    rng_key: PRNGKey, num_live: int, bounds: dict[str, tuple[float, float]]
+) -> tuple[ArrayTree, Callable]:
+    """Sample initial particles and build a log-prior for a box-uniform prior.
 
     Parameters
     ----------

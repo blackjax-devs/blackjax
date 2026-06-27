@@ -31,7 +31,6 @@ from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk
 from .mcmc import rmhmc as _rmhmc
 from .mcmc import slice as _slice
-from .mcmc import ss
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
     irmh_as_top_level_api,
@@ -124,8 +123,6 @@ additive_step_random_walk = GenerateSamplingAPI(
 )
 
 additive_step_random_walk.register_factory("normal_random_walk", normal_random_walk)
-
-hrss = GenerateSamplingAPI(ss.hrss_as_top_level_api, ss.init, ss.build_kernel)
 
 mclmc = generate_top_level_api_from(_mclmc)
 adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
