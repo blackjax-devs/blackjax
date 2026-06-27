@@ -34,10 +34,10 @@ Two samplers are built on this spine:
 
 The one-dimensional interval is built by the stepping-out or doubling procedure
 of Neal (2003), passed as a callable (``interval=stepping_out`` or
-``interval=doubling``). Doubling additionally applies the Fig. 6 acceptance
-test. Additional constraints are not built in but added downstream by
-overriding the proposal, which gates on ``is_valid`` and may record extra
-quantities on the state.
+``interval=doubling``), then narrowed by shrinkage to draw the new point.
+Doubling additionally applies the Fig. 6 acceptance test. Additional
+constraints are not built in but added downstream by overriding the proposal,
+which gates on ``is_valid`` and may record extra quantities on the state.
 
 References
 ----------
@@ -135,10 +135,10 @@ def stepping_out(
 ) -> tuple[Array, Array, Array, AcceptFn]:
     """Neal (2003) Fig. 3 stepping-out interval, in t-space (x0 at t=0).
 
-    An interval procedure is a pluggable callable, passed as
-    ``interval=stepping_out`` the way NUTS takes ``integrator=velocity_verlet``.
-    It returns its own acceptance test so the kernel never branches on a name;
-    stepping-out needs none, so ``accept_fn`` always returns ``True``.
+    An interval procedure is a pluggable callable (pass it as
+    ``interval=stepping_out``). It returns its own acceptance test so the kernel
+    never branches on a name; stepping-out needs none, so ``accept_fn`` always
+    returns ``True``.
 
     Returns
     -------
@@ -375,11 +375,10 @@ def build_kernel(
     callable ``(rng_key, position, logdensity_fn) -> slice_fn`` where
     ``slice_fn(t) -> (state, is_valid)`` builds the candidate state at coordinate
     ``t`` and reports whether it is admissible. Because the candidate state is
-    threaded straight out, the proposal can record extra quantities on it (for
-    example a nested-sampling log-likelihood) and consume a constraint through
-    ``is_valid``. This mirrors and generalizes ``random_walk.build_rmh``: to
-    sample under a constraint, override the proposal generator rather than the
-    kernel.
+    threaded straight out, the proposal can record extra quantities on it and
+    consume a constraint through ``is_valid``. This mirrors and generalizes
+    ``random_walk.build_rmh``: to sample under a constraint, override the
+    proposal generator rather than the kernel.
 
     Parameters
     ----------
@@ -553,10 +552,8 @@ def sample_direction(
 def direction_proposal(scale: Union[float, Array] = 1.0) -> Callable:
     """Proposal-generator factory: slice along a random ``scale``-shaped direction.
 
-    ``scale`` plays the role of ``sigma`` in
-    :func:`blackjax.mcmc.random_walk.normal`: scalar (isotropic), vector
-    (per-coordinate / diagonal) or dense matrix (full preconditioner). It
-    defaults to ``1.0`` (isotropic unit directions). Pass as
+    See :func:`sample_direction` for ``scale`` (scalar / vector / dense, unit by
+    default). Pass as
     ``slice_sampling(logp, proposal_generator=direction_proposal(scale))``
     (cf. ``normal(sigma)`` for the random walk).
     """
@@ -585,15 +582,11 @@ def as_top_level_api(
     """Multivariate slice sampler, ``blackjax.slice_sampling``.
 
     Each step takes one univariate slice along a random direction (chaining such
-    moves is the hit-and-run strategy), using ``proposal_generator``, a callable
-    ``(rng_key, position, logdensity_fn) -> slice_fn`` with
-    ``slice_fn(t) -> (state, is_valid)``. The default :func:`direction_proposal`
-    slices along a uniformly random direction; pass
-    ``direction_proposal(scale)`` to shape the direction with a scalar, vector
-    or dense ``scale`` (as ``normal(sigma)`` does for the random walk), or
-    override with a proposal of your own, for example to add a hard constraint
-    (gate ``is_valid``) or record extra quantities on the state as nested
-    sampling does. For coordinate-wise slice-within-Gibbs, use
+    moves is the hit-and-run strategy) drawn by ``proposal_generator``. The
+    default :func:`direction_proposal` draws a uniformly random direction; pass
+    ``direction_proposal(scale)`` to precondition, or override with your own
+    proposal to gate a constraint or record extra quantities on the state, as
+    nested sampling does. For coordinate-wise slice-within-Gibbs, use
     :func:`coordinate_slice`.
 
     Examples
