@@ -27,19 +27,19 @@ import jax.numpy as jnp
 from blackjax import SamplingAlgorithm
 from blackjax.mcmc.slice import build_kernel as build_slice_kernel
 from blackjax.mcmc.slice import stepping_out
-from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
 from blackjax.ns.adaptive import init
-from blackjax.ns.base import NSInfo, NSState
-from blackjax.ns.base import delete_fn as default_delete_fn
-from blackjax.ns.base import init_state_strategy
-from blackjax.ns.from_mcmc import update_with_mcmc_take_last
+from blackjax.ns.base import NSInfo, NSState, init_state_strategy
+from blackjax.ns.from_mcmc import build_kernel as build_from_mcmc_kernel
 from blackjax.smc.tuning.from_particles import particles_covariance_matrix
 from blackjax.types import Array, ArrayTree, PRNGKey
 
 __all__ = [
     "as_top_level_api",
     "build_kernel",
+    "covariance_proposal",
     "init",
+    "live_covariance",
+    "slice_constrained_step",
 ]
 
 
@@ -50,8 +50,8 @@ def sample_direction_from_covariance(
 
     Samples ``d ~ N(0, cov)`` and normalizes it with ``inv(cov)`` to a length of
     2 in the covariance metric (~2 std devs, a step size that mixes well). Uses
-    ``inv(cov)`` rather than an explicit Cholesky factor, which is less robust on
-    GPU.
+    ``inv(cov)`` rather than an explicit Cholesky factor, has encountered differing
+    behavior on GPU.
     """
     _, unravel_fn = jax.flatten_util.ravel_pytree(position)
     d = jax.random.multivariate_normal(rng_key, jnp.zeros(cov.shape[0]), cov)
@@ -59,18 +59,66 @@ def sample_direction_from_covariance(
     return unravel_fn(d)
 
 
-def _inner_kernel_params(
+def covariance_proposal(
+    init_state_fn: Callable, loglikelihood_0: Array, cov: Array
+) -> Callable:
+    """Proposal generator for nested slice sampling.
+
+    The nested-sampling analogue of
+    :func:`~blackjax.mcmc.slice.direction_proposal`: it steps along a
+    covariance-shaped direction and gates the hard likelihood constraint into
+    ``is_valid``. The returned ``slice_fn`` builds the candidate particle
+    (recording its log-likelihood, computed once) and reports it admissible only
+    when ``loglikelihood > loglikelihood_0``. Override it to write a custom
+    nested stepper.
+    """
+
+    def proposal_generator(rng_key, position, logdensity_fn):
+        del logdensity_fn  # NS gates on the recorded loglikelihood, not logdensity
+        direction = sample_direction_from_covariance(rng_key, position, cov)
+
+        def slice_fn(t):
+            x = jax.tree.map(lambda p, d: p + t * d, position, direction)
+            new_state = init_state_fn(x, loglikelihood_birth=loglikelihood_0)
+            return new_state, new_state.loglikelihood > loglikelihood_0
+
+        return slice_fn
+
+    return proposal_generator
+
+
+def live_covariance(
     rng_key: PRNGKey,
     state: NSState,
     info: NSInfo,
-    inner_kernel_params: dict[str, ArrayTree] | None = None,
+    params: dict[str, ArrayTree] | None = None,
 ) -> dict[str, ArrayTree]:
     """Live-point covariance, recomputed each step to shape the direction."""
-    # rng_key, info and inner_kernel_params are unused here but required by the
+    # rng_key, info and params are unused here but required by the
     # adaptive-kernel callback protocol (update_inner_kernel_params_fn).
     return {
         "cov": jnp.atleast_2d(particles_covariance_matrix(state.particles.position))
     }
+
+
+def slice_constrained_step(
+    init_state_fn: Callable, slice_kernel: Callable, proposal: Callable
+) -> Callable:
+    """The slice-family constrained inner step for nested sampling.
+
+    Runs ``slice_kernel`` with a constrained proposal generator built by
+    ``proposal(init_state_fn, loglikelihood_0, **params)``; the proposal's
+    ``slice_fn`` gates ``is_valid`` on the likelihood contour, so the slice
+    shrinks until it lands inside it (no wasted steps). The slice counterpart to
+    :func:`~blackjax.ns.from_mcmc.reject_constrained_step`, consumed by
+    :func:`~blackjax.ns.from_mcmc.build_kernel`.
+    """
+
+    def step(rng_key, state, loglikelihood_0, **params):
+        proposal_generator = proposal(init_state_fn, loglikelihood_0, **params)
+        return slice_kernel(rng_key, state, None, proposal_generator)
+
+    return step
 
 
 def build_kernel(
@@ -79,6 +127,8 @@ def build_kernel(
     num_delete: int = 1,
     max_steps: int = 10,
     max_shrinkage: int = 100,
+    proposal: Callable = covariance_proposal,
+    inner_kernel_params: Callable = live_covariance,
 ) -> Callable:
     """Build the Nested Slice Sampling kernel.
 
@@ -95,6 +145,14 @@ def build_kernel(
         Cap on stepping-out expansions per slice (default 10).
     max_shrinkage
         Cap on shrinkage evaluations per slice (default 100).
+    proposal
+        Proposal factory ``(init_state_fn, loglikelihood_0, cov) ->
+        proposal_generator`` (:func:`covariance_proposal` by default). Override
+        to write a custom nested stepper.
+    inner_kernel_params
+        Computes the inner-kernel parameters from the live points each step,
+        ``(rng_key, state, info, params) -> params`` (:func:`live_covariance`
+        by default, the live-point covariance).
 
     Returns
     -------
@@ -105,28 +163,12 @@ def build_kernel(
         max_expansions=max_steps,
         max_shrinkage=max_shrinkage,
     )
-
-    def constrained_mcmc_slice_fn(rng_key, state, loglikelihood_0, cov):
-        def proposal_generator(prop_key, position, _logdensity_fn):
-            direction = sample_direction_from_covariance(prop_key, position, cov)
-
-            def slice_fn(t):
-                x = jax.tree.map(lambda p, d: p + t * d, position, direction)
-                new_state = init_state_fn(x, loglikelihood_birth=loglikelihood_0)
-                return new_state, new_state.loglikelihood > loglikelihood_0
-
-            return slice_fn
-
-        return slice_kernel(rng_key, state, None, proposal_generator)
-
-    inner_kernel = update_with_mcmc_take_last(
-        constrained_mcmc_slice_fn, num_inner_steps, num_delete
-    )
-    delete_fn = partial(default_delete_fn, num_delete=num_delete)
-    return build_adaptive_kernel(
-        delete_fn,
-        inner_kernel,
-        update_inner_kernel_params_fn=_inner_kernel_params,
+    constrained_step_fn = slice_constrained_step(init_state_fn, slice_kernel, proposal)
+    return build_from_mcmc_kernel(
+        constrained_step_fn,
+        num_inner_steps,
+        inner_kernel_params,
+        num_delete,
     )
 
 
@@ -137,6 +179,8 @@ def as_top_level_api(
     num_delete: int = 1,
     max_steps: int = 10,
     max_shrinkage: int = 100,
+    proposal: Callable = covariance_proposal,
+    inner_kernel_params: Callable = live_covariance,
 ) -> SamplingAlgorithm:
     """Creates a Nested Slice Sampling (NSS) algorithm.
 
@@ -159,6 +203,14 @@ def as_top_level_api(
         Cap on stepping-out expansions per slice (default 10).
     max_shrinkage
         Cap on shrinkage evaluations per slice (default 100).
+    proposal
+        Proposal factory ``(init_state_fn, loglikelihood_0, cov) ->
+        proposal_generator`` (:func:`covariance_proposal` by default). Override
+        to write a custom nested stepper.
+    inner_kernel_params
+        Computes the inner-kernel parameters from the live points,
+        ``(rng_key, state, info, params) -> params`` (:func:`live_covariance`
+        by default). Used both to seed ``init`` and to update each step.
 
     Returns
     -------
@@ -176,13 +228,15 @@ def as_top_level_api(
         num_delete,
         max_steps=max_steps,
         max_shrinkage=max_shrinkage,
+        proposal=proposal,
+        inner_kernel_params=inner_kernel_params,
     )
 
     def init_fn(position, rng_key=None):
         return init(
             position,
             init_state_fn=jax.vmap(init_state_fn),
-            update_inner_kernel_params_fn=_inner_kernel_params,
+            update_inner_kernel_params_fn=inner_kernel_params,
             rng_key=rng_key,
         )
 

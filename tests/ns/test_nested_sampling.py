@@ -258,6 +258,24 @@ class NestedSliceSamplingTest(chex.TestCase):
         mahalanobis = jnp.sqrt(direction @ jnp.linalg.inv(cov) @ direction)
         self.assertAlmostEqual(float(mahalanobis), 2.0, places=4)
 
+    def test_covariance_proposal(self):
+        """The factored NSS proposal: covariance step, likelihood-gated is_valid."""
+        init_state_fn = make_init_state_fn(gaussian_logprior, gaussian_loglikelihood)
+        position = jnp.array([1.0, 0.0, 0.0])
+        loglik = gaussian_loglikelihood(position)
+
+        # Threshold below the current likelihood: the current point (t=0) passes.
+        gen = nss.covariance_proposal(init_state_fn, loglik - 1.0, jnp.eye(3))
+        state0, valid0 = gen(self.key, position, None)(0.0)
+        chex.assert_trees_all_close(state0.position, position)
+        self.assertAlmostEqual(float(state0.loglikelihood), float(loglik), places=5)
+        self.assertTrue(bool(valid0))
+
+        # Threshold above it: the same point is gated out (is_valid is False).
+        gen_high = nss.covariance_proposal(init_state_fn, loglik + 1.0, jnp.eye(3))
+        _, valid_high = gen_high(self.key, position, None)(0.0)
+        self.assertFalse(bool(valid_high))
+
     def test_nss_kernel_construction(self):
         """Test NSS kernel can be constructed"""
         init_state_fn = make_init_state_fn(gaussian_logprior, gaussian_loglikelihood)
@@ -265,6 +283,26 @@ class NestedSliceSamplingTest(chex.TestCase):
 
         # Test that kernel is callable
         self.assertTrue(callable(kernel))
+
+    def test_top_level_api_seams(self):
+        """proposal / inner_kernel_params are overridable on the top-level API."""
+
+        def my_params(rng_key, state, info, params=None):
+            return {"cov": 2.0 * jnp.eye(2)}
+
+        algo = nss.as_top_level_api(
+            gaussian_logprior,
+            gaussian_loglikelihood,
+            num_inner_steps=4,
+            proposal=nss.covariance_proposal,
+            inner_kernel_params=my_params,
+        )
+        state = algo.init(jnp.zeros((20, 2)))
+        # init seeds the params with the supplied function, not just the default
+        chex.assert_trees_all_close(state.inner_kernel_params["cov"], 2.0 * jnp.eye(2))
+        # and a full step runs end-to-end with the custom seams
+        new_state, _ = jax.jit(algo.step)(self.key, state)
+        chex.assert_shape(new_state.particles.position, (20, 2))
 
 
 class NestedSamplingStatisticalTest(chex.TestCase):
@@ -399,35 +437,76 @@ class NestedSamplingStatisticalTest(chex.TestCase):
         self.assertFalse(jnp.any(jnp.isnan(state.particles.loglikelihood)))
 
     def test_evidence_monotonicity(self):
-        """Test that we can initialize state and track integrator."""
+        """Real NS steps value-check the production integrator: prior volume
+        logX strictly decreases, evidence logZ accumulates, and every replaced
+        particle beats the death contour."""
+        num_live = 50
+        algo = nss.as_top_level_api(
+            gaussian_logprior, gaussian_loglikelihood, num_inner_steps=5
+        )
+        positions = jax.random.normal(jax.random.key(789), (num_live, 2))
+        state = algo.init(positions)
 
-        # Simple setup for testing monotonicity
-        def logprior_fn(x):
-            return stats.norm.logpdf(x)
+        # init_integrator contract: full prior volume, no evidence accumulated yet
+        self.assertAlmostEqual(float(state.integrator.logX), 0.0, places=6)
+        self.assertEqual(float(state.integrator.logZ), float("-inf"))
 
-        def loglikelihood_fn(x):
-            return -0.5 * x**2  # Simple quadratic
+        def step(state, key):
+            new_state, info = algo.step(key, state)
+            # contour post-condition: every live point beats the deleted contour
+            contour = info.particles.loglikelihood.max()
+            ok = jnp.all(new_state.particles.loglikelihood > contour)
+            integ = new_state.integrator
+            return new_state, (integ.logX, integ.logZ, ok)
 
-        num_live = 30
-        key = jax.random.key(789)
+        keys = jax.random.split(jax.random.key(0), 12)
+        _, (logX, logZ, ok) = jax.lax.scan(step, state, keys)
 
-        positions = jax.random.normal(key, (num_live,))
-        init_state_fn = jax.vmap(make_init_state_fn(logprior_fn, loglikelihood_fn))
-        initial_state = base.init(positions, init_state_fn)
+        self.assertTrue(bool(jnp.all(jnp.diff(logX) < 0)))  # prior volume shrinks
+        self.assertTrue(bool(jnp.all(jnp.diff(logZ) >= 0)))  # evidence accumulates
+        self.assertTrue(bool(jnp.all(jnp.isfinite(logZ))))  # finite after death
+        self.assertTrue(bool(ok.all()))  # likelihood constraint held
 
-        # Test that we can access particle likelihoods
-        self.assertIsNotNone(initial_state.particles.loglikelihood)
-        chex.assert_shape(initial_state.particles.loglikelihood, (num_live,))
+    def test_2d_gaussian_evidence(self):
+        """End-to-end: NS recovers the analytic evidence of a 2D Gaussian prior
+        x correlated-Gaussian likelihood, via the production integrator."""
+        prior_mean, prior_cov = jnp.zeros(2), jnp.eye(2)
+        like_mean = jnp.array([0.5, -0.5])
+        like_cov = jnp.array([[1.0, 0.3], [0.3, 0.6]])
 
-        # For integrator tests, use adaptive state instead
-        from blackjax.ns import adaptive as adaptive_module
+        def logprior(x):
+            return stats.multivariate_normal.logpdf(x, prior_mean, prior_cov)
 
-        adaptive_state = adaptive_module.init(positions, init_state_fn)
+        def loglikelihood(x):
+            return stats.multivariate_normal.logpdf(x, like_mean, like_cov)
 
-        # Check integrator exists and has expected fields
-        self.assertIsNotNone(adaptive_state.integrator)
-        self.assertIsNotNone(adaptive_state.integrator.logZ)
-        self.assertIsNotNone(adaptive_state.integrator.logX)
+        # Gaussian x Gaussian: Z = N(prior_mean; like_mean, prior_cov + like_cov)
+        analytic_logZ = float(
+            stats.multivariate_normal.logpdf(
+                prior_mean, like_mean, prior_cov + like_cov
+            )
+        )
+
+        n_live = 100
+        key = jax.random.key(0)
+        key, init_key = jax.random.split(key)
+        positions = jax.random.multivariate_normal(
+            init_key, prior_mean, prior_cov, (n_live,)
+        )
+        algo = nss.as_top_level_api(logprior, loglikelihood, num_inner_steps=6)
+        state = algo.init(positions)
+
+        step = jax.jit(algo.step)
+        for _ in range(5000):  # dynamic termination (logZ_live - logZ < -3), capped
+            if float(state.integrator.logZ_live - state.integrator.logZ) < -3.0:
+                break
+            key, sub = jax.random.split(key)
+            state, _ = step(sub, state)
+
+        total_logZ = float(
+            jnp.logaddexp(state.integrator.logZ, state.integrator.logZ_live)
+        )
+        self.assertAlmostEqual(total_logZ, analytic_logZ, delta=0.5)
 
     def test_nested_sampling_utils_statistical_properties(self):
         """Test statistical properties of nested sampling utility functions."""

@@ -27,6 +27,7 @@ __all__ = [
     "MCMCUpdateInfo",
     "ConstrainedMCMCInfo",
     "update_with_mcmc_take_last",
+    "reject_constrained_step",
     "build_kernel",
 ]
 
@@ -117,50 +118,21 @@ def update_with_mcmc_take_last(
     return update_function
 
 
-def build_kernel(
+def reject_constrained_step(
     init_state_fn: Callable,
     logdensity_fn: Callable,
     mcmc_init_fn: Callable,
     mcmc_step_fn: Callable,
-    num_inner_steps: int,
-    update_inner_kernel_params_fn: Callable,
-    num_delete: int = 1,
-    delete_fn: Callable = default_delete_fn,
 ) -> Callable:
-    """Builds a Nested Sampling kernel wrapping any MCMC algorithm.
+    """Constrained inner step wrapping a generic MCMC kernel (propose-then-reject).
 
-    Parameters
-    ----------
-    init_state_fn
-        Function to initialize a NS particle state from a position.
-    logdensity_fn
-        Log-density function (typically the prior log-probability).
-    mcmc_init_fn
-        Function to initialize MCMC state from position and logdensity_fn.
-    mcmc_step_fn
-        MCMC step function with signature (rng_key, state, logdensity_fn, **params).
-    num_inner_steps
-        Number of MCMC steps per particle replacement.
-    update_inner_kernel_params_fn
-        Function to update MCMC kernel parameters adaptively.
-    num_delete
-        Number of particles to replace per NS iteration.
-    delete_fn
-        Function to select which particles to delete.
-
-    Returns
-    -------
-    A Nested Sampling kernel that deletes the lowest-likelihood particles and
-    replaces them with constrained MCMC moves.
+    Proposes one ``mcmc_step_fn`` move and accepts it only if the MCMC step
+    accepted AND the proposed point is above the likelihood threshold; otherwise
+    the particle stays put. The complement to :func:`slice_constrained_step` for
+    kernels that cannot gate the constraint inside their own proposal.
     """
 
-    def constrained_mcmc_step_fn(rng_key, state, loglikelihood_0, **params):
-        """Single constrained MCMC step that respects the likelihood threshold.
-
-        Proposes a move, accepts if both the MCMC acceptance criterion is
-        satisfied and the proposed point is above the likelihood threshold.
-        If rejected, stays at current position.
-        """
+    def step(rng_key, state, loglikelihood_0, **params):
         mcmc_state = mcmc_init_fn(state.position, logdensity_fn)
         new_mcmc_state, mcmc_info = mcmc_step_fn(
             rng_key, mcmc_state, logdensity_fn, **params
@@ -176,18 +148,50 @@ def build_kernel(
             lambda: proposed_state,
             lambda: state,
         )
-        info = ConstrainedMCMCInfo(mcmc_info, is_accepted)
-        return new_state, info
+        return new_state, ConstrainedMCMCInfo(mcmc_info, is_accepted)
 
+    return step
+
+
+def build_kernel(
+    constrained_step_fn: Callable,
+    num_inner_steps: int,
+    update_inner_kernel_params_fn: Callable,
+    num_delete: int = 1,
+    delete_fn: Callable = default_delete_fn,
+) -> Callable:
+    """Build a Nested Sampling kernel from a constrained inner step.
+
+    The generic NS engine: run ``constrained_step_fn`` (a move that reports its
+    in-contour ``is_valid``) for ``num_inner_steps`` from survivor start points,
+    take the last, and accumulate the evidence via the adaptive kernel. Build the
+    step with :func:`reject_constrained_step` (generic MCMC) or, for the slice
+    family, :func:`~blackjax.ns.nss.slice_constrained_step`.
+
+    Parameters
+    ----------
+    constrained_step_fn
+        Constrained inner step ``(rng_key, state, loglikelihood_0, **params) ->
+        (new_state, info)``.
+    num_inner_steps
+        Number of inner steps per particle replacement.
+    update_inner_kernel_params_fn
+        Recomputes the inner-kernel parameters from the live points each step.
+    num_delete
+        Number of particles replaced per NS iteration.
+    delete_fn
+        Selects which particles to delete (default: the lowest-likelihood ones).
+
+    Returns
+    -------
+    A Nested Sampling kernel ``kernel(rng_key, state) -> (new_state, info)``.
+    """
     inner_kernel = update_with_mcmc_take_last(
-        constrained_mcmc_step_fn, num_inner_steps, num_delete
+        constrained_step_fn, num_inner_steps, num_delete
     )
-
     delete_fn = partial(delete_fn, num_delete=num_delete)
-
-    kernel = build_adaptive_kernel(
+    return build_adaptive_kernel(
         delete_fn,
         inner_kernel,
         update_inner_kernel_params_fn=update_inner_kernel_params_fn,
     )
-    return kernel
