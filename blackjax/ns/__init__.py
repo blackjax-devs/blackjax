@@ -18,11 +18,11 @@ evidence (marginal likelihood) estimation and posterior sampling.
 
 Available modules:
 
-- `base`: Core components for nested sampling.
-- `adaptive`: Adaptive nested sampling combining SMC tempering with nested
-  sampling.
-- `nss`: Nested slice sampling, using hit-and-run slice sampling as the inner
-  kernel with adaptive tuning of its proposal mechanism.
+- `base`: Core components for Nested Sampling.
+- `adaptive`: Adaptive nested sampling combining SMC-style adaptive tempering
+  with per-step inner-kernel parameter tuning and evidence tracking.
+- `nss`: Nested slice sampling, with hit-and-run (``build_kernel``) or
+  slice-within-Gibbs (``build_swig_kernel``) inner kernels.
 - `integrator`: NSIntegrator for tracking evidence integration.
 - `utils`: Utility functions for processing nested sampling results.
 - `from_mcmc`: Utilities to build nested sampling algorithms from MCMC kernels.

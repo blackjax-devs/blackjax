@@ -16,7 +16,7 @@
 This module provides utilities for tracking the evidence integral during
 a Nested Sampling run. The NSIntegrator accumulates statistics as the algorithm
 compresses the prior volume, computing the marginal likelihood (evidence),
-information gain (entropy), and related quantities.
+the running prior-volume estimate, and the live-point evidence contribution.
 """
 
 from typing import NamedTuple
@@ -25,6 +25,7 @@ import jax.numpy as jnp
 from jax.scipy.special import logsumexp
 
 from blackjax.ns.base import StateWithLogLikelihood
+from blackjax.ns.utils import log1mexp
 from blackjax.types import Array
 
 __all__ = ["NSIntegrator", "init_integrator", "update_integrator"]
@@ -106,8 +107,13 @@ def update_integrator(
     ll_dtype = loglikelihood.dtype
     num_live = jnp.arange(num_particles, num_particles - num_deleted, -1)
     delta_logX = -1.0 / num_live.astype(ll_dtype)
-    logX = integrator.logX + jnp.cumsum(delta_logX)
-    log_delta_X = logX + jnp.log(1 - jnp.exp(delta_logX))
+    logX = integrator.logX + jnp.cumsum(delta_logX)  # X_i, volume after deleting i
+    # Anchor each likelihood shell on the PRE-deletion volume X_{i-1}: shell i is
+    # X_{i-1} - X_i = X_{i-1}(1 - exp(delta_logX_i)). Anchoring on the post-deletion
+    # X_i instead underweights every shell by exp(delta_logX) and biases logZ low by
+    # ~1/n (a constant-likelihood sweep then integrates to e^{-1/n} instead of 1).
+    logX_prev = jnp.concatenate([integrator.logX[jnp.newaxis], logX[:-1]])  # X_{i-1}
+    log_delta_X = logX_prev + log1mexp(delta_logX)
     log_delta_Z = dead_loglikelihood + log_delta_X
 
     delta_logZ = logsumexp(log_delta_Z)

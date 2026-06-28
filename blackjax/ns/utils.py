@@ -11,7 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Utility functions for Nested Sampling post-processing."""
+"""Utility functions for setting up and post-processing Nested Sampling runs.
+
+References
+----------
+.. [1] Skilling, J. (2006). "Nested sampling for general Bayesian computation."
+       Bayesian Analysis, 1(4), 833-859. https://doi.org/10.1214/06-BA127
+.. [2] Fowlie, A., Handley, W., & Su, L. (2021). "Nested sampling with plateaus."
+       Monthly Notices of the Royal Astronomical Society, 503(1), 1199-1205.
+       https://doi.org/10.1093/mnras/stab590
+"""
 
 from typing import Callable
 
@@ -35,7 +44,7 @@ def log1mexp(x: Array) -> Array:
 
 
 def compute_num_live(info: NSInfo) -> Array:
-    """Compute the effective number of live points at each death contour (Higson et al., 2018).
+    """Compute the effective number of live points at each death contour (Fowlie, Handley & Su, 2021).
 
     When doing batch deletions, the jump in energy level can be smoothed by
     transforming 1 jump of size k into k jumps of size 1. This function computes
@@ -91,11 +100,11 @@ def logX(rng_key: PRNGKey, dead_info: NSInfo, shape: int = 100) -> tuple[Array, 
     Returns
     -------
     tuple[Array, Array]
-        - `logX_cumulative`: An array of shape `(num_dead_particles, *shape)`
+        - `logX_cumulative`: An array of shape `(num_dead_particles, shape)`
           containing `shape` simulated sequences of cumulative log prior volumes `log(X_i)`.
-        - `log_dX_elements`: An array of shape `(num_dead_particles, *shape)`
+        - `log_dX_elements`: An array of shape `(num_dead_particles, shape)`
           containing `shape` simulated sequences of log prior volume elements `log(dX_i)`.
-          `dX_i` is approximately `X_i - X_{i+1}`.
+          `dX_i` is the trapezoidal volume element `(X_{i-1} - X_{i+1}) / 2`.
     """
     rng_key, subkey = jax.random.split(rng_key)
     u = jax.random.uniform(
@@ -165,10 +174,12 @@ def finalise(live: NSState, dead: list[NSInfo], update_info: bool = True) -> NSI
     Returns
     -------
     NSInfo
-        A single `NSInfo` object where all fields are concatenations of the
-        corresponding fields from `dead` and the final live points.
-        The `update_info` from the last element of `dead` is used
-        for the final live points' `update_info` (as a placeholder).
+        A single `NSInfo` whose `particles` field concatenates all dead
+        particles with the final live particles. When ``update_info=True`` the
+        `update_info` field concatenates the `update_info` from each element of
+        `dead` only -- no entry is added for the final live points, so it is
+        shorter than `particles` by the number of live points. When
+        ``update_info=False`` the `update_info` field is None.
     """
 
     if update_info:

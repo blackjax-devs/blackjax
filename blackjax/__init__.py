@@ -202,8 +202,11 @@ smc_family = [
 
 # NS
 nss = generate_top_level_api_from(_nss)
+nsswig = GenerateSamplingAPI(
+    _nss.swig_as_top_level_api, _nss.init, _nss.build_swig_kernel
+)
 
-ns_family = [nss]
+ns_family = [nss, nsswig]
 
 # stochastic gradient mcmc
 sgld = generate_top_level_api_from(_sgld)

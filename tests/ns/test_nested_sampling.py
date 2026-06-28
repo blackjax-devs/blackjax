@@ -8,7 +8,9 @@ import jax.numpy as jnp
 import jax.scipy.stats as stats
 from absl.testing import absltest, parameterized
 
-from blackjax.ns import adaptive, base, nss, utils
+from blackjax.mcmc import random_walk
+from blackjax.mcmc.slice import fixed_order
+from blackjax.ns import adaptive, base, from_mcmc, integrator, nss, utils
 
 
 def gaussian_logprior(x):
@@ -51,6 +53,47 @@ def gaussian_mixture_loglikelihood(x):
     mixture1 = stats.norm.logpdf(x - jnp.array([2.0, 0.0])).sum()
     mixture2 = stats.norm.logpdf(x - jnp.array([-2.0, 0.0])).sum()
     return jnp.logaddexp(mixture1, mixture2)
+
+
+def build_rw_nested_sampler(
+    logprior_fn, loglikelihood_fn, num_inner_steps, num_delete=1, scale=0.3
+):
+    """Nested sampling with a generic random-walk inner kernel.
+
+    Wraps blackjax's additive random-walk kernel through
+    ``from_mcmc.reject_constrained_step`` (the propose-then-reject path for any
+    MCMC kernel): the RW proposal samples the prior and the likelihood contour is
+    enforced by the constrained step. The per-axis proposal std is adapted from
+    the live-point spread each NS step. Returns ``(init_fn, step_kernel)``.
+    """
+    init_state_fn = make_init_state_fn(logprior_fn, loglikelihood_fn)
+    rw_kernel = random_walk.build_additive_step()
+
+    def mcmc_init_fn(position, logdensity_fn):
+        return random_walk.init(position, logdensity_fn)
+
+    def mcmc_step_fn(rng_key, state, logdensity_fn, sigma):
+        return rw_kernel(rng_key, state, logdensity_fn, random_walk.normal(sigma))
+
+    constrained_step = from_mcmc.reject_constrained_step(
+        init_state_fn, logprior_fn, mcmc_init_fn, mcmc_step_fn
+    )
+
+    def live_sigma(rng_key, state, info, params=None):
+        return {"sigma": scale * jnp.std(state.particles.position, axis=0)}
+
+    kernel = from_mcmc.build_kernel(
+        constrained_step, num_inner_steps, live_sigma, num_delete
+    )
+
+    def init_fn(positions):
+        return adaptive.init(
+            positions,
+            init_state_fn=jax.vmap(init_state_fn),
+            update_inner_kernel_params_fn=live_sigma,
+        )
+
+    return init_fn, kernel
 
 
 class NestedSamplingTest(chex.TestCase):
@@ -304,6 +347,35 @@ class NestedSliceSamplingTest(chex.TestCase):
         new_state, _ = jax.jit(algo.step)(self.key, state)
         chex.assert_shape(new_state.particles.position, (20, 2))
 
+    def test_swig_kernel_construction(self):
+        """The SwiG kernel builds and the top-level API exposes the seam triplet."""
+        init_state_fn = make_init_state_fn(gaussian_logprior, gaussian_loglikelihood)
+        kernel = nss.build_swig_kernel(init_state_fn, num_inner_steps=4)
+        self.assertTrue(callable(kernel))
+
+    def test_swig_top_level_api_seams(self):
+        """coordinate_order / inner_kernel_params are overridable on the SwiG API,
+        and there is no bespoke init -- the shared generic init seeds the widths."""
+
+        def my_widths(rng_key, state, info, params=None):
+            return {"widths": jnp.array([0.5, 2.0])}
+
+        algo = nss.swig_as_top_level_api(
+            gaussian_logprior,
+            gaussian_loglikelihood,
+            num_inner_steps=4,
+            coordinate_order=fixed_order,
+            inner_kernel_params=my_widths,
+        )
+        state = algo.init(jnp.zeros((20, 2)))
+        # init seeds the per-axis widths with the supplied function
+        chex.assert_trees_all_close(
+            state.inner_kernel_params["widths"], jnp.array([0.5, 2.0])
+        )
+        # and a full SwiG sweep step runs end-to-end with the custom seams
+        new_state, _ = jax.jit(algo.step)(self.key, state)
+        chex.assert_shape(new_state.particles.position, (20, 2))
+
 
 class NestedSamplingStatisticalTest(chex.TestCase):
     """Statistical correctness tests for nested sampling algorithms."""
@@ -507,6 +579,181 @@ class NestedSamplingStatisticalTest(chex.TestCase):
             jnp.logaddexp(state.integrator.logZ, state.integrator.logZ_live)
         )
         self.assertAlmostEqual(total_logZ, analytic_logZ, delta=0.5)
+
+    def test_swig_2d_gaussian_evidence(self):
+        """End-to-end: the SwiG (slice-within-Gibbs) sampler recovers the analytic
+        evidence of a 2D Gaussian prior x axis-aligned-Gaussian likelihood."""
+        prior_mean, prior_cov = jnp.zeros(2), jnp.eye(2)
+        like_mean = jnp.array([0.5, -0.5])
+        like_cov = jnp.array([[1.0, 0.0], [0.0, 0.6]])  # axis-aligned: SwiG's regime
+
+        def logprior(x):
+            return stats.multivariate_normal.logpdf(x, prior_mean, prior_cov)
+
+        def loglikelihood(x):
+            return stats.multivariate_normal.logpdf(x, like_mean, like_cov)
+
+        analytic_logZ = float(
+            stats.multivariate_normal.logpdf(
+                prior_mean, like_mean, prior_cov + like_cov
+            )
+        )
+
+        n_live = 100
+        key = jax.random.key(0)
+        key, init_key = jax.random.split(key)
+        positions = jax.random.multivariate_normal(
+            init_key, prior_mean, prior_cov, (n_live,)
+        )
+        algo = nss.swig_as_top_level_api(logprior, loglikelihood, num_inner_steps=6)
+        state = algo.init(positions)
+
+        step = jax.jit(algo.step)
+        for _ in range(5000):  # dynamic termination (logZ_live - logZ < -3), capped
+            if float(state.integrator.logZ_live - state.integrator.logZ) < -3.0:
+                break
+            key, sub = jax.random.split(key)
+            state, _ = step(sub, state)
+
+        total_logZ = float(
+            jnp.logaddexp(state.integrator.logZ, state.integrator.logZ_live)
+        )
+        self.assertAlmostEqual(total_logZ, analytic_logZ, delta=0.5)
+
+    def test_evidence_integrator_constant_likelihood(self):
+        """Telescoping regression: a constant likelihood makes the shells sum to
+        the full prior volume, so the integrator must return Z = 1 (logZ_total = 0)
+        for any num_live and num_delete. Anchoring shells on the post-deletion
+        volume instead biases logZ low by ~1/n, which this catches."""
+
+        def constant_particles(n):
+            zeros = jnp.zeros(n)
+            return base.StateWithLogLikelihood(
+                position=jnp.zeros((n, 1)),
+                logdensity=zeros,
+                loglikelihood=zeros,  # logL = 0 everywhere
+                loglikelihood_birth=jnp.full(n, -jnp.inf),
+            )
+
+        for num_live, num_delete in [(20, 1), (20, 4), (50, 1), (50, 5)]:
+            live = constant_particles(num_live)
+            integ = integrator.init_integrator(live)
+            for _ in range((num_live * 8) // num_delete):
+                dead = constant_particles(num_delete)
+                integ = integrator.update_integrator(integ, live, dead)
+            # dead shells (logZ) + remaining live volume (logZ_live) = full prior
+            total_logZ = float(jnp.logaddexp(integ.logZ, integ.logZ_live))
+            self.assertAlmostEqual(
+                total_logZ,
+                0.0,
+                places=2,
+                msg=f"constant-L evidence off for "
+                f"num_live={num_live}, num_delete={num_delete}",
+            )
+
+    def test_reject_constrained_step_rw_evidence(self):
+        """End-to-end: NS with a generic random-walk inner kernel (wrapped via
+        from_mcmc.reject_constrained_step) recovers the analytic evidence of a 2D
+        Gaussian prior x axis-aligned-Gaussian likelihood. Exercises the
+        propose-then-reject path and ConstrainedMCMCInfo, which the slice
+        samplers bypass."""
+        prior_mean, prior_cov = jnp.zeros(2), jnp.eye(2)
+        like_mean = jnp.array([0.5, -0.5])
+        like_cov = jnp.array([[1.0, 0.0], [0.0, 0.6]])
+
+        def logprior(x):
+            return stats.multivariate_normal.logpdf(x, prior_mean, prior_cov)
+
+        def loglikelihood(x):
+            return stats.multivariate_normal.logpdf(x, like_mean, like_cov)
+
+        analytic_logZ = float(
+            stats.multivariate_normal.logpdf(
+                prior_mean, like_mean, prior_cov + like_cov
+            )
+        )
+
+        n_live = 200
+        key = jax.random.key(0)
+        key, init_key = jax.random.split(key)
+        positions = jax.random.multivariate_normal(
+            init_key, prior_mean, prior_cov, (n_live,)
+        )
+        init_fn, kernel = build_rw_nested_sampler(
+            logprior, loglikelihood, num_inner_steps=25, num_delete=1
+        )
+        state = init_fn(positions)
+
+        step = jax.jit(kernel)
+        info = None
+        for _ in range(8000):  # dynamic termination (logZ_live - logZ < -3), capped
+            if float(state.integrator.logZ_live - state.integrator.logZ) < -3.0:
+                break
+            key, sub = jax.random.split(key)
+            state, info = step(sub, state)
+
+        total_logZ = float(
+            jnp.logaddexp(state.integrator.logZ, state.integrator.logZ_live)
+        )
+        self.assertAlmostEqual(total_logZ, analytic_logZ, delta=0.75)
+        # the inner update info is the propose-then-reject info, not a SliceInfo
+        self.assertIsInstance(info.update_info, from_mcmc.ConstrainedMCMCInfo)
+
+    def test_finalise_combines_dead_and_live(self):
+        """finalise concatenates all dead particles with the final live set; per
+        its contract the update_info covers the dead steps only, so it is shorter
+        than particles by the number of live points (and is None when disabled)."""
+        num_live, num_delete, n_steps = 40, 2, 6
+        algo = nss.as_top_level_api(
+            gaussian_logprior,
+            gaussian_loglikelihood,
+            num_inner_steps=5,
+            num_delete=num_delete,
+        )
+        positions = jax.random.normal(jax.random.key(0), (num_live, 2))
+        state = algo.init(positions)
+        step = jax.jit(algo.step)
+        dead = []
+        for i in range(n_steps):
+            state, info = step(jax.random.key(i + 1), state)
+            dead.append(info)
+
+        final = utils.finalise(state, dead)
+        n_dead = n_steps * num_delete
+        self.assertEqual(final.particles.loglikelihood.shape[0], n_dead + num_live)
+        ui_len = jax.tree_util.tree_leaves(final.update_info)[0].shape[0]
+        self.assertEqual(ui_len, n_dead)  # dead steps only, no live entry
+
+        final_no_ui = utils.finalise(state, dead, update_info=False)
+        self.assertIsNone(final_no_ui.update_info)
+
+    def test_sample_resamples_from_finalised(self):
+        """sample draws (with replacement) from the finalised particle set by
+        weight: the output has the requested leading dimension and every drawn
+        point is one of the finalised particles."""
+        algo = nss.as_top_level_api(
+            gaussian_logprior, gaussian_loglikelihood, num_inner_steps=5
+        )
+        positions = jax.random.normal(jax.random.key(2), (50, 2))
+        state = algo.init(positions)
+        step = jax.jit(algo.step)
+        dead = []
+        for i in range(40):
+            state, info = step(jax.random.key(i + 1), state)
+            dead.append(info)
+        final = utils.finalise(state, dead)
+
+        n_samples = 500
+        samples = utils.sample(jax.random.key(99), final, shape=n_samples)
+        chex.assert_shape(samples.position, (n_samples, 2))
+        chex.assert_shape(samples.loglikelihood, (n_samples,))
+        self.assertFalse(bool(jnp.any(jnp.isnan(samples.position))))
+        # resampling, not generation: every drawn point is a finalised particle
+        self.assertTrue(
+            bool(
+                jnp.all(jnp.isin(samples.loglikelihood, final.particles.loglikelihood))
+            )
+        )
 
     def test_nested_sampling_utils_statistical_properties(self):
         """Test statistical properties of nested sampling utility functions."""

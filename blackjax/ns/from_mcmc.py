@@ -24,19 +24,11 @@ from blackjax.ns.adaptive import build_kernel as build_adaptive_kernel
 from blackjax.ns.base import delete_fn as default_delete_fn
 
 __all__ = [
-    "MCMCUpdateInfo",
     "ConstrainedMCMCInfo",
     "update_with_mcmc_take_last",
     "reject_constrained_step",
     "build_kernel",
 ]
-
-
-class MCMCUpdateInfo(NamedTuple):
-    """Thin layer to hold all the info pertaining to the update step."""
-
-    mcmc_states: NamedTuple
-    mcmc_infos: NamedTuple
 
 
 class ConstrainedMCMCInfo(NamedTuple):
@@ -128,8 +120,26 @@ def reject_constrained_step(
 
     Proposes one ``mcmc_step_fn`` move and accepts it only if the MCMC step
     accepted AND the proposed point is above the likelihood threshold; otherwise
-    the particle stays put. The complement to :func:`slice_constrained_step` for
-    kernels that cannot gate the constraint inside their own proposal.
+    the particle stays put. The complement to
+    :func:`slice_constrained_step` for kernels that cannot gate
+    the constraint inside their own proposal.
+
+    Parameters
+    ----------
+    init_state_fn
+        Builds a particle state from a position and birth log-likelihood.
+    logdensity_fn
+        Log-density of the (unconstrained) target passed to the MCMC kernel.
+    mcmc_init_fn
+        Initializes the wrapped MCMC state from a position and ``logdensity_fn``.
+    mcmc_step_fn
+        One step of the wrapped MCMC kernel,
+        ``(rng_key, mcmc_state, logdensity_fn, **params) -> (mcmc_state, info)``.
+
+    Returns
+    -------
+    A constrained inner step ``(rng_key, state, loglikelihood_0, **params) ->
+    (new_state, ConstrainedMCMCInfo)``.
     """
 
     def step(rng_key, state, loglikelihood_0, **params):
@@ -163,10 +173,10 @@ def build_kernel(
     """Build a Nested Sampling kernel from a constrained inner step.
 
     The generic NS engine: run ``constrained_step_fn`` (a move that reports its
-    in-contour ``is_valid``) for ``num_inner_steps`` from survivor start points,
+    in-contour ``is_accepted``) for ``num_inner_steps`` from survivor start points,
     take the last, and accumulate the evidence via the adaptive kernel. Build the
     step with :func:`reject_constrained_step` (generic MCMC) or, for the slice
-    family, :func:`~blackjax.ns.nss.slice_constrained_step`.
+    family, :func:`slice_constrained_step`.
 
     Parameters
     ----------

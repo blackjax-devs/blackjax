@@ -17,6 +17,11 @@ Defines the particle state carrying loglikelihood information, a generic kernel
 builder that deletes the lowest-likelihood particles and replaces them with an
 inner kernel, and the default deletion strategy selecting the ``num_delete``
 particles with the lowest loglikelihoods.
+
+References
+----------
+.. [1] Skilling, J. (2006). "Nested sampling for general Bayesian computation."
+       Bayesian Analysis, 1(4), 833-859. https://doi.org/10.1214/06-BA127
 """
 from typing import Callable, NamedTuple
 
@@ -54,8 +59,13 @@ class StateWithLogLikelihood(NamedTuple):
 class NSState(NamedTuple):
     """State of the Nested Sampler.
 
-    At the most basic level, this is just a wrapper around a StateWithLogLikelihood
-    however it is extended in other NS implementations.
+    At the most basic level, this is just a wrapper around a ``StateWithLogLikelihood``;
+    richer NS implementations (e.g. ``AdaptiveNSState``) carry extra fields.
+
+    Attributes
+    ----------
+    particles
+        The ``StateWithLogLikelihood`` of the current live particles.
     """
 
     particles: StateWithLogLikelihood
@@ -88,8 +98,8 @@ def init_state_strategy(
     Parameters
     ----------
     position
-        A PyTree of arrays representing the initial positions of the particles.
-        Each leaf array has a leading dimension corresponding to the number of particles.
+        A PyTree of arrays representing a single particle's position. The
+        default strategy operates per particle; callers vmap it over the live set.
     logprior_fn
         A function that computes the log-prior density for a single particle.
     loglikelihood_fn
@@ -127,7 +137,9 @@ def init(
         distribution. The leading dimension of each leaf array must be equal to
         the number of positions.
     init_state_fn
-        A function that initializes an NSState from positions.
+        A function that builds the particle state (``StateWithLogLikelihood``)
+        from positions; ``init`` wraps the result in an ``NSState``. Typically
+        vmapped over the live set.
     loglikelihood_birth
         The initial log-likelihood birth threshold. Defaults to NaN, which
         implies no initial likelihood constraint beyond the prior.

@@ -13,7 +13,9 @@
 # limitations under the License.
 """Adaptive Nested Sampling for BlackJAX.
 
-This combines the SMC equivalent of Adaptive Tempering and inner kernel tuning in one file.
+It combines the NS analogue of SMC's adaptive (tempering) schedule -- evidence
+integration via ``NSIntegrator`` -- with inner-kernel tuning, wrapping the live
+particles, the integrator, and the inner-kernel parameters into ``AdaptiveNSState``.
 """
 
 from functools import partial
@@ -34,6 +36,8 @@ __all__ = ["init", "build_kernel"]
 class AdaptiveNSState(NamedTuple):
     """State of the adaptive Nested Sampling chain.
 
+    Attributes
+    ----------
     particles
         The ``StateWithLogLikelihood`` of the current live particles.
     integrator
@@ -99,8 +103,10 @@ def build_kernel(
 ) -> Callable:
     """Build an adaptive Nested Sampling kernel.
 
-    The kernel tunes the inner kernel parameters each step from the current
-    state and the information from the previous update.
+    Each step runs the inner kernel with the parameters carried in the incoming
+    state (computed by the previous step's update), then recomputes those
+    parameters from the resulting state and this step's update ``info`` for use
+    on the next step, and advances the evidence integrator.
 
     Parameters
     ----------
