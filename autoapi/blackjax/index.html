@@ -55,7 +55,7 @@
     <link rel="prev" title="Reproducing the front page image of the repository" href="../../examples/howto_reproduce_the_blackjax_image.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb6b9587c7" />
+  <meta name="docsearch:version" content="0.1.dev1+g507819a24" />
   </head>
   
   
@@ -402,6 +402,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adjusted_mclmc"><code class="docutils literal notranslate"><span class="pre">adjusted_mclmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.elliptical_slice"><code class="docutils literal notranslate"><span class="pre">elliptical_slice</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.slice_sampling"><code class="docutils literal notranslate"><span class="pre">slice_sampling</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.coordinate_slice"><code class="docutils literal notranslate"><span class="pre">coordinate_slice</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ghmc"><code class="docutils literal notranslate"><span class="pre">ghmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.barker"><code class="docutils literal notranslate"><span class="pre">barker</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.barker_proposal"><code class="docutils literal notranslate"><span class="pre">barker_proposal</span></code></a></li>
@@ -512,82 +513,85 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.slice_sampling" title="blackjax.slice_sampling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice_sampling</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.ghmc" title="blackjax.ghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghmc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.coordinate_slice" title="blackjax.coordinate_slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coordinate_slice</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.barker" title="blackjax.barker"><code class="xref py py-obj docutils literal notranslate"><span class="pre">barker</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.ghmc" title="blackjax.ghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ghmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.barker_proposal" title="blackjax.barker_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">barker_proposal</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.barker" title="blackjax.barker"><code class="xref py py-obj docutils literal notranslate"><span class="pre">barker</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mhmc" title="blackjax.mhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mhmc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.barker_proposal" title="blackjax.barker_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">barker_proposal</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.multinomial_hmc" title="blackjax.multinomial_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multinomial_hmc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mhmc" title="blackjax.mhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mhmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.dmhmc" title="blackjax.dmhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dmhmc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.multinomial_hmc" title="blackjax.multinomial_hmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multinomial_hmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.laplace_mhmc" title="blackjax.laplace_mhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_mhmc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.dmhmc" title="blackjax.dmhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dmhmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.laplace_dhmc" title="blackjax.laplace_dhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_dhmc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.laplace_mhmc" title="blackjax.laplace_mhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_mhmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.laplace_dmhmc" title="blackjax.laplace_dmhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_dmhmc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.laplace_dhmc" title="blackjax.laplace_dhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_dhmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptive_persistent_sampling_smc" title="blackjax.adaptive_persistent_sampling_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_persistent_sampling_smc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.laplace_dmhmc" title="blackjax.laplace_dmhmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laplace_dmhmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptive_persistent_sampling_smc" title="blackjax.adaptive_persistent_sampling_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_persistent_sampling_smc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptive_tempered_smc" title="blackjax.adaptive_tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">adaptive_tempered_smc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.inner_kernel_tuning" title="blackjax.inner_kernel_tuning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inner_kernel_tuning</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.tempered_smc" title="blackjax.tempered_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tempered_smc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.partial_posteriors_smc" title="blackjax.partial_posteriors_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">partial_posteriors_smc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.inner_kernel_tuning" title="blackjax.inner_kernel_tuning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">inner_kernel_tuning</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.persistent_sampling_smc" title="blackjax.persistent_sampling_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">persistent_sampling_smc</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.partial_posteriors_smc" title="blackjax.partial_posteriors_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">partial_posteriors_smc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.pretuning" title="blackjax.pretuning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pretuning</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.persistent_sampling_smc" title="blackjax.persistent_sampling_smc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">persistent_sampling_smc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sgld" title="blackjax.sgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.pretuning" title="blackjax.pretuning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pretuning</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sghmc" title="blackjax.sghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgld" title="blackjax.sgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgld</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sgnht" title="blackjax.sgnht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgnht</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.sghmc" title="blackjax.sghmc"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sghmc</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.csgld" title="blackjax.csgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">csgld</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.sgnht" title="blackjax.sgnht"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sgnht</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.svgd" title="blackjax.svgd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">svgd</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.csgld" title="blackjax.csgld"><code class="xref py py-obj docutils literal notranslate"><span class="pre">csgld</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.fullrank_vi" title="blackjax.fullrank_vi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fullrank_vi</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.svgd" title="blackjax.svgd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">svgd</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.meanfield_vi" title="blackjax.meanfield_vi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">meanfield_vi</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.fullrank_vi" title="blackjax.fullrank_vi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fullrank_vi</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.schrodinger_follmer" title="blackjax.schrodinger_follmer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schrodinger_follmer</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.meanfield_vi" title="blackjax.meanfield_vi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">meanfield_vi</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.pathfinder" title="blackjax.pathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.schrodinger_follmer" title="blackjax.schrodinger_follmer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">schrodinger_follmer</span></code></a></p></td>
 <td><p></p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.multipathfinder" title="blackjax.multipathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multipathfinder</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.pathfinder" title="blackjax.pathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pathfinder</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.multipathfinder" title="blackjax.multipathfinder"><code class="xref py py-obj docutils literal notranslate"><span class="pre">multipathfinder</span></code></a></p></td>
 <td><p></p></td>
 </tr>
 </tbody>
@@ -679,6 +683,11 @@
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.slice_sampling">
 <span class="sig-name descname"><span class="pre">slice_sampling</span></span><a class="reference internal" href="../../_modules/blackjax.html#slice_sampling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.slice_sampling" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blackjax.coordinate_slice">
+<span class="sig-name descname"><span class="pre">coordinate_slice</span></span><a class="reference internal" href="../../_modules/blackjax.html#coordinate_slice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.coordinate_slice" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py data">
@@ -881,6 +890,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adjusted_mclmc"><code class="docutils literal notranslate"><span class="pre">adjusted_mclmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.elliptical_slice"><code class="docutils literal notranslate"><span class="pre">elliptical_slice</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.slice_sampling"><code class="docutils literal notranslate"><span class="pre">slice_sampling</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.coordinate_slice"><code class="docutils literal notranslate"><span class="pre">coordinate_slice</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ghmc"><code class="docutils literal notranslate"><span class="pre">ghmc</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.barker"><code class="docutils literal notranslate"><span class="pre">barker</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.barker_proposal"><code class="docutils literal notranslate"><span class="pre">barker_proposal</span></code></a></li>

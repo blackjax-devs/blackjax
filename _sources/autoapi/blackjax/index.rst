@@ -41,6 +41,7 @@ Attributes
    blackjax.adjusted_mclmc
    blackjax.elliptical_slice
    blackjax.slice_sampling
+   blackjax.coordinate_slice
    blackjax.ghmc
    blackjax.barker
    blackjax.barker_proposal
@@ -105,6 +106,8 @@ Package Contents
 .. py:data:: elliptical_slice
 
 .. py:data:: slice_sampling
+
+.. py:data:: coordinate_slice
 
 .. py:data:: ghmc
 

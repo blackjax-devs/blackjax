@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb6b9587c7" />
+  <meta name="docsearch:version" content="0.1.dev1+g507819a24" />
   </head>
   
   
@@ -565,6 +565,12 @@
 <a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.slice_sampling">[docs]</a>
 <span class="n">slice_sampling</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_slice</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="coordinate_slice">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.coordinate_slice">[docs]</a>
+<span class="n">coordinate_slice</span> <span class="o">=</span> <span class="n">GenerateSamplingAPI</span><span class="p">(</span>
+    <span class="n">_slice</span><span class="o">.</span><span class="n">coordinate_slice</span><span class="p">,</span> <span class="n">_slice</span><span class="o">.</span><span class="n">init</span><span class="p">,</span> <span class="n">_slice</span><span class="o">.</span><span class="n">build_coordinate_kernel</span>
+<span class="p">)</span></div>
+
 <div class="viewcode-block" id="ghmc">
 <a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.ghmc">[docs]</a>
 <span class="n">ghmc</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_ghmc</span><span class="p">)</span></div>
@@ -760,6 +766,7 @@
     <span class="s2">&quot;barker&quot;</span><span class="p">,</span>
     <span class="s2">&quot;elliptical_slice&quot;</span><span class="p">,</span>
     <span class="s2">&quot;slice_sampling&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;coordinate_slice&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mclmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;adjusted_mclmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;adjusted_mclmc_dynamic&quot;</span><span class="p">,</span>

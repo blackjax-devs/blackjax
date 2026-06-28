@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.rmhmc" href="../rmhmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb6b9587c7" />
+  <meta name="docsearch:version" content="0.1.dev1+g507819a24" />
   </head>
   
   
@@ -391,12 +391,25 @@
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo"><code class="docutils literal notranslate"><span class="pre">SliceInfo</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.bracket_widths"><code class="docutils literal notranslate"><span class="pre">SliceInfo.bracket_widths</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.is_accepted"><code class="docutils literal notranslate"><span class="pre">SliceInfo.is_accepted</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.num_expansions"><code class="docutils literal notranslate"><span class="pre">SliceInfo.num_expansions</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.num_shrink"><code class="docutils literal notranslate"><span class="pre">SliceInfo.num_shrink</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.bracket_left"><code class="docutils literal notranslate"><span class="pre">SliceInfo.bracket_left</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.bracket_right"><code class="docutils literal notranslate"><span class="pre">SliceInfo.bracket_right</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.stepping_out"><code class="docutils literal notranslate"><span class="pre">stepping_out()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.doubling"><code class="docutils literal notranslate"><span class="pre">doubling()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.random_order"><code class="docutils literal notranslate"><span class="pre">random_order()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.fixed_order"><code class="docutils literal notranslate"><span class="pre">fixed_order()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.coordinate_proposal"><code class="docutils literal notranslate"><span class="pre">coordinate_proposal()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.build_coordinate_kernel"><code class="docutils literal notranslate"><span class="pre">build_coordinate_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.sample_direction"><code class="docutils literal notranslate"><span class="pre">sample_direction()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.direction_proposal"><code class="docutils literal notranslate"><span class="pre">direction_proposal()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.coordinate_slice"><code class="docutils literal notranslate"><span class="pre">coordinate_slice()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -412,7 +425,38 @@
                   
   <section id="module-blackjax.mcmc.slice">
 <span id="blackjax-mcmc-slice"></span><h1>blackjax.mcmc.slice<a class="headerlink" href="#module-blackjax.mcmc.slice" title="Link to this heading">#</a></h1>
-<p>Public API for the Slice sampling kernel.</p>
+<p>Public API for the Slice sampling family.</p>
+<p>Every slice update is univariate: a one-dimensional slice through the current
+point. Multivariate behaviour is determined entirely by the proposal generator
+that produces the line, <code class="docutils literal notranslate"><span class="pre">proposal_generator(rng_key,</span> <span class="pre">position,</span> <span class="pre">logdensity_fn)</span>
+<span class="pre">-&gt;</span> <span class="pre">slice_fn</span></code> with <code class="docutils literal notranslate"><span class="pre">slice_fn(t)</span> <span class="pre">-&gt;</span> <span class="pre">(state,</span> <span class="pre">is_valid)</span></code>. The candidate state is
+threaded straight through the kernel, so a proposal can record extra quantities
+on it.</p>
+<p>Two samplers are built on this spine:</p>
+<ol class="arabic simple">
+<li><p>Multivariate slice: one univariate slice along a random direction. This is
+the top-level <code class="docutils literal notranslate"><span class="pre">blackjax.slice_sampling</span></code> (<a class="reference internal" href="#blackjax.mcmc.slice.as_top_level_api" title="blackjax.mcmc.slice.as_top_level_api"><code class="xref py py-func docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a>), with
+the direction drawn by <a class="reference internal" href="#blackjax.mcmc.slice.direction_proposal" title="blackjax.mcmc.slice.direction_proposal"><code class="xref py py-func docutils literal notranslate"><span class="pre">direction_proposal()</span></code></a> (a <code class="docutils literal notranslate"><span class="pre">scale</span></code>-shaped random
+direction, unit by default). Chaining such random-direction moves is the
+hit-and-run strategy.</p></li>
+<li><p>Coordinate-wise (slice-within-Gibbs, <a class="reference internal" href="#blackjax.mcmc.slice.coordinate_slice" title="blackjax.mcmc.slice.coordinate_slice"><code class="xref py py-func docutils literal notranslate"><span class="pre">coordinate_slice()</span></code></a>): sweep the
+coordinate axes in turn, updating each full conditional with a univariate
+slice.</p></li>
+</ol>
+<p>The one-dimensional interval is built by the stepping-out or doubling procedure
+of Neal (2003), passed as a callable (<code class="docutils literal notranslate"><span class="pre">interval=stepping_out</span></code> or
+<code class="docutils literal notranslate"><span class="pre">interval=doubling</span></code>), then narrowed by shrinkage to draw the new point.
+Doubling additionally applies the Fig. 6 acceptance test. Additional
+constraints are not built in but added downstream by overriding the proposal,
+which gates on <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> and may record extra quantities on the state.</p>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id1" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>Radford M. Neal, “Slice sampling”, The Annals of Statistics,
+Ann. Statist. 31(3), 705-767, (June 2003).</p>
+</aside>
+</aside>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
@@ -421,7 +465,7 @@
 <td><p>State of the Slice sampling chain.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.SliceInfo" title="blackjax.mcmc.slice.SliceInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SliceInfo</span></code></a></p></td>
-<td><p>Additional information on the Slice sampling transition.</p></td>
+<td><p>Additional information on a Slice sampling transition.</p></td>
 </tr>
 </tbody>
 </table>
@@ -434,11 +478,38 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.init" title="blackjax.mcmc.slice.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ SliceState)</p></td>
 <td><p>Create an initial state from a position and log-density function.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.build_kernel" title="blackjax.mcmc.slice.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
-<td><p>Build a Slice sampling kernel.</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.stepping_out" title="blackjax.mcmc.slice.stepping_out"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stepping_out</span></code></a>(→ tuple[blackjax.types.Array, ...)</p></td>
+<td><p>Neal (2003) Fig. 3 stepping-out interval, in t-space (x0 at t=0).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.as_top_level_api" title="blackjax.mcmc.slice.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
-<td><p>Implements the user interface for the Slice sampling kernel.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.doubling" title="blackjax.mcmc.slice.doubling"><code class="xref py py-obj docutils literal notranslate"><span class="pre">doubling</span></code></a>(→ tuple[blackjax.types.Array, ...)</p></td>
+<td><p>Neal (2003) Fig. 4 doubling interval, vectorized, in t-space.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.build_kernel" title="blackjax.mcmc.slice.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
+<td><p>Build a slice kernel driven by a proposal generator.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.random_order" title="blackjax.mcmc.slice.random_order"><code class="xref py py-obj docutils literal notranslate"><span class="pre">random_order</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>A fresh random permutation of the <code class="docutils literal notranslate"><span class="pre">d</span></code> coordinate indices (the default).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.fixed_order" title="blackjax.mcmc.slice.fixed_order"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fixed_order</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Sweep the coordinates in fixed natural order <code class="docutils literal notranslate"><span class="pre">0,</span> <span class="pre">1,</span> <span class="pre">...,</span> <span class="pre">d</span> <span class="pre">-</span> <span class="pre">1</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.coordinate_proposal" title="blackjax.mcmc.slice.coordinate_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coordinate_proposal</span></code></a>(→ Callable)</p></td>
+<td><p>Default per-axis proposal for the coordinate sweep.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.build_coordinate_kernel" title="blackjax.mcmc.slice.build_coordinate_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_coordinate_kernel</span></code></a>(→ Callable)</p></td>
+<td><p>Build a coordinate-wise (slice-within-Gibbs) kernel.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.sample_direction" title="blackjax.mcmc.slice.sample_direction"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_direction</span></code></a>(→ blackjax.types.ArrayTree)</p></td>
+<td><p>A random slice direction shaped by <code class="docutils literal notranslate"><span class="pre">scale</span></code> and normalized to unit length.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.direction_proposal" title="blackjax.mcmc.slice.direction_proposal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">direction_proposal</span></code></a>(→ Callable)</p></td>
+<td><p>Proposal-generator factory: slice along a random <code class="docutils literal notranslate"><span class="pre">scale</span></code>-shaped direction.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.as_top_level_api" title="blackjax.mcmc.slice.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(, width, interval, max_expansions, ...)</p></td>
+<td><p>Multivariate slice sampler, <code class="docutils literal notranslate"><span class="pre">blackjax.slice_sampling</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.slice.coordinate_slice" title="blackjax.mcmc.slice.coordinate_slice"><code class="xref py py-obj docutils literal notranslate"><span class="pre">coordinate_slice</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
+<td><p>Coordinate-wise (slice-within-Gibbs) slice sampler.</p></td>
 </tr>
 </tbody>
 </table>
@@ -453,7 +524,7 @@
 <dl class="simple">
 <dt>position</dt><dd><p>Current position of the chain.</p>
 </dd>
-<dt>logdensity</dt><dd><p>Current value of the log-density.</p>
+<dt>logdensity</dt><dd><p>Log-density of the target at <code class="docutils literal notranslate"><span class="pre">position</span></code>.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -471,17 +542,53 @@
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.slice.SliceInfo">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">SliceInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#SliceInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.SliceInfo" title="Link to this definition">#</a></dt>
-<dd><p>Additional information on the Slice sampling transition.</p>
+<dd><p>Additional information on a Slice sampling transition.</p>
 <dl class="simple">
-<dt>bracket_widths</dt><dd><p>Per-dimension realized bracket widths produced by the doubling
-procedure on this step.  Useful for diagnosing proposal efficiency
-(very wide brackets relative to the posterior suggest the initial
-width is too small; very narrow ones suggest it may be too large).</p>
+<dt>is_accepted</dt><dd><p>Whether shrinkage found a valid point within <code class="docutils literal notranslate"><span class="pre">max_shrinkage</span></code> steps.
+Always <code class="docutils literal notranslate"><span class="pre">True</span></code> for an unconstrained target (the slice always contains
+the current point); can be <code class="docutils literal notranslate"><span class="pre">False</span></code> when the proposal gates a
+constraint into <code class="docutils literal notranslate"><span class="pre">is_valid</span></code> and the budget is exhausted, leaving the
+chain in place.
+For the coordinate sweep it is <code class="docutils literal notranslate"><span class="pre">True</span></code> only if every coordinate
+succeeded.</p>
+</dd>
+<dt>num_expansions</dt><dd><p>Number of interval expansions (stepping-out steps or doublings).
+Summed over coordinates for the sweep.</p>
+</dd>
+<dt>num_shrink</dt><dd><p>Number of shrinkage evaluations taken to find the new point.
+Summed over coordinates for the sweep.</p>
+</dd>
+<dt>bracket_left, bracket_right</dt><dd><p>The realized slice bracket in the 1-D slice coordinate <code class="docutils literal notranslate"><span class="pre">t</span></code>, where the
+current point sits at <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">0</span></code> (so typically
+<code class="docutils literal notranslate"><span class="pre">bracket_left</span> <span class="pre">&lt;=</span> <span class="pre">0</span> <span class="pre">&lt;=</span> <span class="pre">bracket_right</span></code>). For the multivariate slice these
+are scalars; for the coordinate sweep they are per-axis <code class="docutils literal notranslate"><span class="pre">t</span></code> values, a
+PyTree aligned with <code class="docutils literal notranslate"><span class="pre">position</span></code>. The bracket width is
+<code class="docutils literal notranslate"><span class="pre">bracket_right</span> <span class="pre">-</span> <span class="pre">bracket_left</span></code>.</p>
 </dd>
 </dl>
 <dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.slice.SliceInfo.bracket_widths">
-<span class="sig-name descname"><span class="pre">bracket_widths</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#SliceInfo.bracket_widths"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.SliceInfo.bracket_widths" title="Link to this definition">#</a></dt>
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.SliceInfo.is_accepted">
+<span class="sig-name descname"><span class="pre">is_accepted</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#SliceInfo.is_accepted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.SliceInfo.is_accepted" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.SliceInfo.num_expansions">
+<span class="sig-name descname"><span class="pre">num_expansions</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#SliceInfo.num_expansions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.SliceInfo.num_expansions" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.SliceInfo.num_shrink">
+<span class="sig-name descname"><span class="pre">num_shrink</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#SliceInfo.num_shrink"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.SliceInfo.num_shrink" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.SliceInfo.bracket_left">
+<span class="sig-name descname"><span class="pre">bracket_left</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#SliceInfo.bracket_left"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.SliceInfo.bracket_left" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.SliceInfo.bracket_right">
+<span class="sig-name descname"><span class="pre">bracket_right</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.ArrayTree</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#SliceInfo.bracket_right"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.SliceInfo.bracket_right" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 </dd></dl>
@@ -490,86 +597,209 @@ width is too small; very narrow ones suggest it may be too large).</p>
 <dt class="sig sig-object py" id="blackjax.mcmc.slice.init">
 <span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.slice.SliceState" title="blackjax.mcmc.slice.SliceState"><span class="pre">SliceState</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.init" title="Link to this definition">#</a></dt>
 <dd><p>Create an initial state from a position and log-density function.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.stepping_out">
+<span class="sig-name descname"><span class="pre">stepping_out</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_slice</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_expansions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">AcceptFn</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#stepping_out"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.stepping_out" title="Link to this definition">#</a></dt>
+<dd><p>Neal (2003) Fig. 3 stepping-out interval, in t-space (x0 at t=0).</p>
+<p>An interval procedure is a pluggable callable (pass it as
+<code class="docutils literal notranslate"><span class="pre">interval=stepping_out</span></code>). It returns its own acceptance test so the kernel
+never branches on a name; stepping-out needs none, so <code class="docutils literal notranslate"><span class="pre">accept_fn</span></code> always
+returns <code class="docutils literal notranslate"><span class="pre">True</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>position</strong> – Initial position of the chain.</p></li>
-<li><p><strong>logdensity_fn</strong> – Log-probability density function of the target distribution.</p></li>
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>The tuple ``(left, right, num_expansions, accept_fn)``</strong> (<em>the bracket</em>)</p></li>
+<li><p><em>endpoints, the number of expansions, and the acceptance test.</em></p></li>
 </ul>
+</p>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>The initial state of the Slice sampling chain.</p>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.doubling">
+<span class="sig-name descname"><span class="pre">doubling</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">in_slice</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_expansions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">AcceptFn</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#doubling"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.doubling" title="Link to this definition">#</a></dt>
+<dd><p>Neal (2003) Fig. 4 doubling interval, vectorized, in t-space.</p>
+<p>Expands one (randomly chosen) side at a time, doubling the bracket each
+step, until both ends are outside the slice or <code class="docutils literal notranslate"><span class="pre">max_expansions</span></code> is hit. A
+pluggable interval callable, like <a class="reference internal" href="#blackjax.mcmc.slice.stepping_out" title="blackjax.mcmc.slice.stepping_out"><code class="xref py py-func docutils literal notranslate"><span class="pre">stepping_out()</span></code></a>. Its <code class="docutils literal notranslate"><span class="pre">accept_fn</span></code> is
+Neal’s Fig. 6 acceptance test bound to this (original) bracket, which is
+required for doubling’s reversibility.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><strong>The tuple ``(left, right, num_expansions, accept_fn)``</strong> (<em>the bracket</em>)</p></li>
+<li><p><em>endpoints, the number of expansions, and the acceptance test.</em></p></li>
+</ul>
+</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.slice.build_kernel">
-<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_doublings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_widths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.build_kernel" title="Link to this definition">#</a></dt>
-<dd><p>Build a Slice sampling kernel.</p>
-<p>Implementation according to [1]. Doubling implementation inspired
-by TensorFlow Probability’s implementation.</p>
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">doubling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_expansions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shrinkage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.build_kernel" title="Link to this definition">#</a></dt>
+<dd><p>Build a slice kernel driven by a proposal generator.</p>
+<p>The kernel performs one univariate slice using <code class="docutils literal notranslate"><span class="pre">proposal_generator</span></code>, a
+callable <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">position,</span> <span class="pre">logdensity_fn)</span> <span class="pre">-&gt;</span> <span class="pre">slice_fn</span></code> where
+<code class="docutils literal notranslate"><span class="pre">slice_fn(t)</span> <span class="pre">-&gt;</span> <span class="pre">(state,</span> <span class="pre">is_valid)</span></code> builds the candidate state at coordinate
+<code class="docutils literal notranslate"><span class="pre">t</span></code> and reports whether it is admissible. Because the candidate state is
+threaded straight out, the proposal can record extra quantities on it and
+consume a constraint through <code class="docutils literal notranslate"><span class="pre">is_valid</span></code>. To sample under a constraint,
+override the proposal generator rather than the kernel.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>n_doublings</strong> – Maximum number of slice interval doublings.</p></li>
-<li><p><strong>initial_widths</strong> – Fixed bracket width(s) used as the starting interval for the doubling
-procedure.  Accepts either a scalar (applied uniformly to every
-coordinate, default: 1.0) or a 1-D array of length equal to the
-total flattened position dimension <code class="docutils literal notranslate"><span class="pre">D</span></code>, giving a per-coordinate
-width — mirroring TFP’s per-dimension <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.  The value 1.0
-is a reasonable default for posterior scales in the range 0.1–10:
-the doubling procedure rapidly expands the bracket when the width is
-too small, so correctness is insensitive to the exact value.  Pass
-a smaller value (or per-dimension array) for very narrow posteriors,
-or a larger one for very diffuse ones, to improve efficiency.</p></li>
+<li><p><strong>interval</strong> – Interval-finding procedure, passed directly as a callable. Use
+<a class="reference internal" href="#blackjax.mcmc.slice.doubling" title="blackjax.mcmc.slice.doubling"><code class="xref py py-func docutils literal notranslate"><span class="pre">doubling()</span></code></a> (the default, Neal Fig. 4 with the Fig. 6 acceptance
+test) or <a class="reference internal" href="#blackjax.mcmc.slice.stepping_out" title="blackjax.mcmc.slice.stepping_out"><code class="xref py py-func docutils literal notranslate"><span class="pre">stepping_out()</span></code></a> (Neal Fig. 3).</p></li>
+<li><p><strong>max_expansions</strong> – Cap on interval expansions (doublings or stepping-out steps).</p></li>
+<li><p><strong>max_shrinkage</strong> – Cap on shrinkage evaluations. Bounds the loop; on exhaustion the chain
+stays put.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><em>A kernel that takes a rng_key and a Pytree that contains the current state</em></p></li>
-<li><p><em>of the chain and returns a new state of the chain along with information</em></p></li>
-<li><p><em>about the transition.</em></p></li>
+<li><p><em>A kernel that takes a rng_key, the current state, a log-density function, a</em></p></li>
+<li><p><em>proposal generator and a bracket width, and returns a new state along with</em></p></li>
+<li><p><em>information about the transition.</em></p></li>
 </ul>
 </p>
 </dd>
 </dl>
-<p class="rubric">References</p>
-<aside class="footnote-list brackets">
-<aside class="footnote brackets" id="id1" role="doc-footnote">
-<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
-<p>Radford M. Neal, “Slice sampling”, The Annals of Statistics,
-Ann. Statist. 31(3), 705-767, (June 2003).</p>
-</aside>
-</aside>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.random_order">
+<span class="sig-name descname"><span class="pre">random_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#random_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.random_order" title="Link to this definition">#</a></dt>
+<dd><p>A fresh random permutation of the <code class="docutils literal notranslate"><span class="pre">d</span></code> coordinate indices (the default).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.fixed_order">
+<span class="sig-name descname"><span class="pre">fixed_order</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#fixed_order"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.fixed_order" title="Link to this definition">#</a></dt>
+<dd><p>Sweep the coordinates in fixed natural order <code class="docutils literal notranslate"><span class="pre">0,</span> <span class="pre">1,</span> <span class="pre">...,</span> <span class="pre">d</span> <span class="pre">-</span> <span class="pre">1</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.coordinate_proposal">
+<span class="sig-name descname"><span class="pre">coordinate_proposal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">i</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#coordinate_proposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.coordinate_proposal" title="Link to this definition">#</a></dt>
+<dd><p>Default per-axis proposal for the coordinate sweep.</p>
+<p>The coordinate analogue of <a class="reference internal" href="#blackjax.mcmc.slice.direction_proposal" title="blackjax.mcmc.slice.direction_proposal"><code class="xref py py-func docutils literal notranslate"><span class="pre">direction_proposal()</span></code></a>: a unit step along
+flattened axis <code class="docutils literal notranslate"><span class="pre">i</span></code> (the one-hot direction <code class="docutils literal notranslate"><span class="pre">e_i</span></code>), so <code class="docutils literal notranslate"><span class="pre">x(t)</span></code> is
+<code class="docutils literal notranslate"><span class="pre">position</span></code> with <code class="docutils literal notranslate"><span class="pre">flat[i]</span> <span class="pre">+=</span> <span class="pre">t</span></code> and the current point sits at <code class="docutils literal notranslate"><span class="pre">t</span> <span class="pre">=</span> <span class="pre">0</span></code>.
+Shares the <code class="docutils literal notranslate"><span class="pre">slice_fn(t)</span> <span class="pre">-&gt;</span> <span class="pre">(state,</span> <span class="pre">is_valid)</span></code> contract of the multivariate
+proposals.</p>
+<p>A constraint is added the same way as on the multivariate path – by
+overriding the proposal (<code class="docutils literal notranslate"><span class="pre">axis_proposal</span></code>) to gate <code class="docutils literal notranslate"><span class="pre">is_valid</span></code>; there is no
+built-in constraint argument.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.build_coordinate_kernel">
+<span class="sig-name descname"><span class="pre">build_coordinate_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">doubling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">coordinate_proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinate_order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">random_order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_widths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_expansions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shrinkage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#build_coordinate_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.build_coordinate_kernel" title="Link to this definition">#</a></dt>
+<dd><p>Build a coordinate-wise (slice-within-Gibbs) kernel.</p>
+<p>One step updates each scalar coordinate’s full conditional with a univariate
+slice, in the order given by <code class="docutils literal notranslate"><span class="pre">coordinate_order</span></code>, the choice function
+<code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">d)</span> <span class="pre">-&gt;</span> <span class="pre">indices</span></code> (<a class="reference internal" href="#blackjax.mcmc.slice.random_order" title="blackjax.mcmc.slice.random_order"><code class="xref py py-func docutils literal notranslate"><span class="pre">random_order()</span></code></a>, the default, or
+<a class="reference internal" href="#blackjax.mcmc.slice.fixed_order" title="blackjax.mcmc.slice.fixed_order"><code class="xref py py-func docutils literal notranslate"><span class="pre">fixed_order()</span></code></a>). Each coordinate move is drawn by <code class="docutils literal notranslate"><span class="pre">axis_proposal</span></code>, the
+per-axis analogue of the multivariate <code class="docutils literal notranslate"><span class="pre">proposal_generator</span></code>
+(<a class="reference internal" href="#blackjax.mcmc.slice.coordinate_proposal" title="blackjax.mcmc.slice.coordinate_proposal"><code class="xref py py-func docutils literal notranslate"><span class="pre">coordinate_proposal()</span></code></a> by default); override it to gate a constraint
+into <code class="docutils literal notranslate"><span class="pre">is_valid</span></code>. <code class="docutils literal notranslate"><span class="pre">initial_widths</span></code> is a scalar (applied to every
+coordinate) or a length-<code class="docutils literal notranslate"><span class="pre">D</span></code> array of per-coordinate bracket widths.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><ul class="simple">
+<li><p><em>A kernel that takes a rng_key, the current state and a log-density function,</em></p></li>
+<li><p><em>and returns a new state along with information about the transition.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.sample_direction">
+<span class="sig-name descname"><span class="pre">sample_direction</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.ArrayTree</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#sample_direction"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.sample_direction" title="Link to this definition">#</a></dt>
+<dd><p>A random slice direction shaped by <code class="docutils literal notranslate"><span class="pre">scale</span></code> and normalized to unit length.</p>
+<p><code class="docutils literal notranslate"><span class="pre">scale</span></code> is a scalar (isotropic), a vector (per-coordinate / diagonal) or a
+dense matrix (a full preconditioner, applied as a linear map to
+standard-normal noise, so its covariance is <code class="docutils literal notranslate"><span class="pre">scale</span> <span class="pre">&#64;</span> <span class="pre">scale.T</span></code>). Defaults
+to <code class="docutils literal notranslate"><span class="pre">1.0</span></code> (uniformly random unit directions).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.direction_proposal">
+<span class="sig-name descname"><span class="pre">direction_proposal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">scale</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#direction_proposal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.direction_proposal" title="Link to this definition">#</a></dt>
+<dd><p>Proposal-generator factory: slice along a random <code class="docutils literal notranslate"><span class="pre">scale</span></code>-shaped direction.</p>
+<p>See <a class="reference internal" href="#blackjax.mcmc.slice.sample_direction" title="blackjax.mcmc.slice.sample_direction"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_direction()</span></code></a> for <code class="docutils literal notranslate"><span class="pre">scale</span></code> (scalar / vector / dense, unit by
+default). Pass as
+<code class="docutils literal notranslate"><span class="pre">slice_sampling(logp,</span> <span class="pre">proposal_generator=direction_proposal(scale))</span></code>.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.slice.as_top_level_api">
-<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_doublings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_widths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.as_top_level_api" title="Link to this definition">#</a></dt>
-<dd><p>Implements the user interface for the Slice sampling kernel.</p>
+<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">proposal_generator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">direction_proposal()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">width</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">doubling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_expansions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shrinkage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.as_top_level_api" title="Link to this definition">#</a></dt>
+<dd><p>Multivariate slice sampler, <code class="docutils literal notranslate"><span class="pre">blackjax.slice_sampling</span></code>.</p>
+<p>Each step takes one univariate slice along a random direction (chaining such
+moves is the hit-and-run strategy) drawn by <code class="docutils literal notranslate"><span class="pre">proposal_generator</span></code>. The
+default <a class="reference internal" href="#blackjax.mcmc.slice.direction_proposal" title="blackjax.mcmc.slice.direction_proposal"><code class="xref py py-func docutils literal notranslate"><span class="pre">direction_proposal()</span></code></a> draws a uniformly random direction; pass
+<code class="docutils literal notranslate"><span class="pre">direction_proposal(scale)</span></code> to precondition, or override with your own
+proposal to gate a constraint or record extra quantities on the state, as
+nested sampling does. For coordinate-wise slice-within-Gibbs, use
+<a class="reference internal" href="#blackjax.mcmc.slice.coordinate_slice" title="blackjax.mcmc.slice.coordinate_slice"><code class="xref py py-func docutils literal notranslate"><span class="pre">coordinate_slice()</span></code></a>.</p>
 <p class="rubric">Examples</p>
-<p>A new Slice sampling kernel can be initialized and used with the following
+<p>A new slice sampling kernel can be initialized and used with the following
 code:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">slice_sampling</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">slice_sampling</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">n_doublings</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">slice_sampling</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">slice_sampling</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">)</span>
 <span class="n">state</span> <span class="o">=</span> <span class="n">slice_sampling</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
 <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">slice_sampling</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>We can JIT-compile the step function for better performance:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span><span class="n">slice_sampling</span><span class="o">.</span><span class="n">step</span><span class="p">)</span>
-<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
 </pre></div>
 </div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>logdensity_fn</strong> – The log-density function of the distribution we wish to sample from.</p></li>
-<li><p><strong>n_doublings</strong> – Maximum number of slice interval doublings (default: 10).</p></li>
-<li><p><strong>initial_widths</strong> – Fixed bracket width(s) used as the starting interval for the doubling
-procedure.  A scalar applies to all coordinates; a 1-D array of
-length <code class="docutils literal notranslate"><span class="pre">D</span></code> (total flattened position dimension) gives per-coordinate
-widths, mirroring TFP’s per-dimension <code class="docutils literal notranslate"><span class="pre">step_size</span></code> (default: 1.0).</p></li>
+<li><p><strong>logdensity_fn</strong> – Log-density of the distribution to sample from.</p></li>
+<li><p><strong>proposal_generator</strong> – Proposal generator <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">position,</span> <span class="pre">logdensity_fn)</span> <span class="pre">-&gt;</span> <span class="pre">slice_fn</span></code>,
+where <code class="docutils literal notranslate"><span class="pre">slice_fn(t)</span> <span class="pre">-&gt;</span> <span class="pre">(state,</span> <span class="pre">is_valid)</span></code>. Defaults to
+<code class="docutils literal notranslate"><span class="pre">direction_proposal()</span></code> (isotropic unit directions).</p></li>
+<li><p><strong>width</strong> – Initial bracket width along the direction (default 1.0).</p></li>
+<li><p><strong>interval</strong> – Interval procedure <a class="reference internal" href="#blackjax.mcmc.slice.doubling" title="blackjax.mcmc.slice.doubling"><code class="xref py py-func docutils literal notranslate"><span class="pre">doubling()</span></code></a> (default) or <a class="reference internal" href="#blackjax.mcmc.slice.stepping_out" title="blackjax.mcmc.slice.stepping_out"><code class="xref py py-func docutils literal notranslate"><span class="pre">stepping_out()</span></code></a>,
+passed as a callable.</p></li>
+<li><p><strong>max_expansions</strong> – Caps on interval expansion and shrinkage.</p></li>
+<li><p><strong>max_shrinkage</strong> – Caps on interval expansion and shrinkage.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.slice.coordinate_slice">
+<span class="sig-name descname"><span class="pre">coordinate_slice</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_expansions</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_widths</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interval</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">doubling</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordinate_order</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">random_order</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis_proposal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">coordinate_proposal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shrinkage</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/slice.html#coordinate_slice"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.slice.coordinate_slice" title="Link to this definition">#</a></dt>
+<dd><p>Coordinate-wise (slice-within-Gibbs) slice sampler.</p>
+<p>Updates each scalar coordinate’s full conditional with a univariate slice,
+swept in the order given by <code class="docutils literal notranslate"><span class="pre">coordinate_order</span></code>. The single-variable
+counterpart to the multivariate <a class="reference internal" href="#blackjax.mcmc.slice.as_top_level_api" title="blackjax.mcmc.slice.as_top_level_api"><code class="xref py py-func docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – Log-density of the distribution to sample from.</p></li>
+<li><p><strong>max_expansions</strong> – Cap on interval expansions per coordinate (default 10).</p></li>
+<li><p><strong>initial_widths</strong> – Scalar or per-coordinate initial bracket width(s) (default 1.0).</p></li>
+<li><p><strong>interval</strong> – Interval procedure <a class="reference internal" href="#blackjax.mcmc.slice.doubling" title="blackjax.mcmc.slice.doubling"><code class="xref py py-func docutils literal notranslate"><span class="pre">doubling()</span></code></a> (default) or <a class="reference internal" href="#blackjax.mcmc.slice.stepping_out" title="blackjax.mcmc.slice.stepping_out"><code class="xref py py-func docutils literal notranslate"><span class="pre">stepping_out()</span></code></a>,
+passed as a callable.</p></li>
+<li><p><strong>coordinate_order</strong> – Choice function <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">d)</span> <span class="pre">-&gt;</span> <span class="pre">indices</span></code>, either <a class="reference internal" href="#blackjax.mcmc.slice.random_order" title="blackjax.mcmc.slice.random_order"><code class="xref py py-func docutils literal notranslate"><span class="pre">random_order()</span></code></a>
+(default) or <a class="reference internal" href="#blackjax.mcmc.slice.fixed_order" title="blackjax.mcmc.slice.fixed_order"><code class="xref py py-func docutils literal notranslate"><span class="pre">fixed_order()</span></code></a>.</p></li>
+<li><p><strong>axis_proposal</strong> – Per-axis proposal <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">position,</span> <span class="pre">logdensity_fn,</span> <span class="pre">i)</span> <span class="pre">-&gt;</span> <span class="pre">slice_fn</span></code>
+(<a class="reference internal" href="#blackjax.mcmc.slice.coordinate_proposal" title="blackjax.mcmc.slice.coordinate_proposal"><code class="xref py py-func docutils literal notranslate"><span class="pre">coordinate_proposal()</span></code></a> by default). Override to gate a constraint
+into <code class="docutils literal notranslate"><span class="pre">is_valid</span></code>, as a custom <code class="docutils literal notranslate"><span class="pre">proposal_generator</span></code> does for
+<a class="reference internal" href="#blackjax.mcmc.slice.as_top_level_api" title="blackjax.mcmc.slice.as_top_level_api"><code class="xref py py-func docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a>.</p></li>
+<li><p><strong>max_shrinkage</strong> – Cap on shrinkage evaluations per coordinate.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>
@@ -637,12 +867,25 @@ widths, mirroring TFP’s per-dimension <code class="docutils literal notranslat
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo"><code class="docutils literal notranslate"><span class="pre">SliceInfo</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.bracket_widths"><code class="docutils literal notranslate"><span class="pre">SliceInfo.bracket_widths</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.is_accepted"><code class="docutils literal notranslate"><span class="pre">SliceInfo.is_accepted</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.num_expansions"><code class="docutils literal notranslate"><span class="pre">SliceInfo.num_expansions</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.num_shrink"><code class="docutils literal notranslate"><span class="pre">SliceInfo.num_shrink</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.bracket_left"><code class="docutils literal notranslate"><span class="pre">SliceInfo.bracket_left</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.SliceInfo.bracket_right"><code class="docutils literal notranslate"><span class="pre">SliceInfo.bracket_right</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.stepping_out"><code class="docutils literal notranslate"><span class="pre">stepping_out()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.doubling"><code class="docutils literal notranslate"><span class="pre">doubling()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.random_order"><code class="docutils literal notranslate"><span class="pre">random_order()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.fixed_order"><code class="docutils literal notranslate"><span class="pre">fixed_order()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.coordinate_proposal"><code class="docutils literal notranslate"><span class="pre">coordinate_proposal()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.build_coordinate_kernel"><code class="docutils literal notranslate"><span class="pre">build_coordinate_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.sample_direction"><code class="docutils literal notranslate"><span class="pre">sample_direction()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.direction_proposal"><code class="docutils literal notranslate"><span class="pre">direction_proposal()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.slice.coordinate_slice"><code class="docutils literal notranslate"><span class="pre">coordinate_slice()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb6b9587c7" />
+  <meta name="docsearch:version" content="0.1.dev1+g507819a24" />
   </head>
   
   
@@ -397,18 +397,69 @@
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Public API for the Slice sampling kernel.&quot;&quot;&quot;</span>
+<span class="sd">&quot;&quot;&quot;Public API for the Slice sampling family.</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
+<span class="sd">Every slice update is univariate: a one-dimensional slice through the current</span>
+<span class="sd">point. Multivariate behaviour is determined entirely by the proposal generator</span>
+<span class="sd">that produces the line, ``proposal_generator(rng_key, position, logdensity_fn)</span>
+<span class="sd">-&gt; slice_fn`` with ``slice_fn(t) -&gt; (state, is_valid)``. The candidate state is</span>
+<span class="sd">threaded straight through the kernel, so a proposal can record extra quantities</span>
+<span class="sd">on it.</span>
+
+<span class="sd">Two samplers are built on this spine:</span>
+
+<span class="sd">1. Multivariate slice: one univariate slice along a random direction. This is</span>
+<span class="sd">   the top-level ``blackjax.slice_sampling`` (:func:`as_top_level_api`), with</span>
+<span class="sd">   the direction drawn by :func:`direction_proposal` (a ``scale``-shaped random</span>
+<span class="sd">   direction, unit by default). Chaining such random-direction moves is the</span>
+<span class="sd">   hit-and-run strategy.</span>
+
+<span class="sd">2. Coordinate-wise (slice-within-Gibbs, :func:`coordinate_slice`): sweep the</span>
+<span class="sd">   coordinate axes in turn, updating each full conditional with a univariate</span>
+<span class="sd">   slice.</span>
+
+<span class="sd">The one-dimensional interval is built by the stepping-out or doubling procedure</span>
+<span class="sd">of Neal (2003), passed as a callable (``interval=stepping_out`` or</span>
+<span class="sd">``interval=doubling``), then narrowed by shrinkage to draw the new point.</span>
+<span class="sd">Doubling additionally applies the Fig. 6 acceptance test. Additional</span>
+<span class="sd">constraints are not built in but added downstream by overriding the proposal,</span>
+<span class="sd">which gates on ``is_valid`` and may record extra quantities on the state.</span>
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+<span class="sd">.. [1] Radford M. Neal, &quot;Slice sampling&quot;, The Annals of Statistics,</span>
+<span class="sd">   Ann. Statist. 31(3), 705-767, (June 2003).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">TypeAlias</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.flatten_util</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">random</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingAlgorithm</span><span class="p">,</span> <span class="n">build_sampling_algorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">generate_gaussian_noise</span>
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SliceState&quot;</span><span class="p">,</span> <span class="s2">&quot;SliceInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">]</span>
+<span class="n">AcceptFn</span><span class="p">:</span> <span class="n">TypeAlias</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Array</span><span class="p">],</span> <span class="n">Array</span><span class="p">]</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;SliceState&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SliceInfo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;init&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_coordinate_kernel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;coordinate_slice&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;direction_proposal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;coordinate_proposal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sample_direction&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;stepping_out&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;doubling&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;random_order&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fixed_order&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <div class="viewcode-block" id="SliceState">
@@ -419,7 +470,7 @@
 <span class="sd">    position</span>
 <span class="sd">        Current position of the chain.</span>
 <span class="sd">    logdensity</span>
-<span class="sd">        Current value of the log-density.</span>
+<span class="sd">        Log-density of the target at ``position``.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -437,19 +488,51 @@
 <div class="viewcode-block" id="SliceInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">SliceInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on the Slice sampling transition.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on a Slice sampling transition.</span>
 
-<span class="sd">    bracket_widths</span>
-<span class="sd">        Per-dimension realized bracket widths produced by the doubling</span>
-<span class="sd">        procedure on this step.  Useful for diagnosing proposal efficiency</span>
-<span class="sd">        (very wide brackets relative to the posterior suggest the initial</span>
-<span class="sd">        width is too small; very narrow ones suggest it may be too large).</span>
+<span class="sd">    is_accepted</span>
+<span class="sd">        Whether shrinkage found a valid point within ``max_shrinkage`` steps.</span>
+<span class="sd">        Always ``True`` for an unconstrained target (the slice always contains</span>
+<span class="sd">        the current point); can be ``False`` when the proposal gates a</span>
+<span class="sd">        constraint into ``is_valid`` and the budget is exhausted, leaving the</span>
+<span class="sd">        chain in place.</span>
+<span class="sd">        For the coordinate sweep it is ``True`` only if every coordinate</span>
+<span class="sd">        succeeded.</span>
+<span class="sd">    num_expansions</span>
+<span class="sd">        Number of interval expansions (stepping-out steps or doublings).</span>
+<span class="sd">        Summed over coordinates for the sweep.</span>
+<span class="sd">    num_shrink</span>
+<span class="sd">        Number of shrinkage evaluations taken to find the new point.</span>
+<span class="sd">        Summed over coordinates for the sweep.</span>
+<span class="sd">    bracket_left, bracket_right</span>
+<span class="sd">        The realized slice bracket in the 1-D slice coordinate ``t``, where the</span>
+<span class="sd">        current point sits at ``t = 0`` (so typically</span>
+<span class="sd">        ``bracket_left &lt;= 0 &lt;= bracket_right``). For the multivariate slice these</span>
+<span class="sd">        are scalars; for the coordinate sweep they are per-axis ``t`` values, a</span>
+<span class="sd">        PyTree aligned with ``position``. The bracket width is</span>
+<span class="sd">        ``bracket_right - bracket_left``.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="SliceInfo.bracket_widths">
-<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceInfo.bracket_widths">[docs]</a>
-    <span class="n">bracket_widths</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+<div class="viewcode-block" id="SliceInfo.is_accepted">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceInfo.is_accepted">[docs]</a>
+    <span class="n">is_accepted</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="SliceInfo.num_expansions">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceInfo.num_expansions">[docs]</a>
+    <span class="n">num_expansions</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="SliceInfo.num_shrink">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceInfo.num_shrink">[docs]</a>
+    <span class="n">num_shrink</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="SliceInfo.bracket_left">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceInfo.bracket_left">[docs]</a>
+    <span class="n">bracket_left</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="SliceInfo.bracket_right">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.SliceInfo.bracket_right">[docs]</a>
+    <span class="n">bracket_right</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
 </div>
 
 
@@ -457,70 +540,474 @@
 <div class="viewcode-block" id="init">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.init">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SliceState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an initial state from a position and log-density function.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create an initial state from a position and log-density function.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">SliceState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">position</span><span class="p">))</span></div>
 
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    position</span>
-<span class="sd">        Initial position of the chain.</span>
-<span class="sd">    logdensity_fn</span>
-<span class="sd">        Log-probability density function of the target distribution.</span>
+
+
+<div class="viewcode-block" id="stepping_out">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.stepping_out">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">stepping_out</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">in_slice</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">AcceptFn</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neal (2003) Fig. 3 stepping-out interval, in t-space (x0 at t=0).</span>
+
+<span class="sd">    An interval procedure is a pluggable callable (pass it as</span>
+<span class="sd">    ``interval=stepping_out``). It returns its own acceptance test so the kernel</span>
+<span class="sd">    never branches on a name; stepping-out needs none, so ``accept_fn`` always</span>
+<span class="sd">    returns ``True``.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    The initial state of the Slice sampling chain.</span>
+<span class="sd">    The tuple ``(left, right, num_expansions, accept_fn)``: the bracket</span>
+<span class="sd">    endpoints, the number of expansions, and the acceptance test.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">logdensity</span> <span class="o">=</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">SliceState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">logdensity</span><span class="p">))</span></div>
+    <span class="n">u_key</span><span class="p">,</span> <span class="n">jk_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">u_key</span><span class="p">)</span>
+    <span class="n">left</span> <span class="o">=</span> <span class="o">-</span><span class="n">width</span> <span class="o">*</span> <span class="n">u</span>
+    <span class="n">right</span> <span class="o">=</span> <span class="n">left</span> <span class="o">+</span> <span class="n">width</span>
 
+    <span class="n">v</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">jk_key</span><span class="p">)</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">max_expansions</span> <span class="o">*</span> <span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_expansions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">j</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">left_cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">left</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="k">return</span> <span class="n">in_slice</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">left_body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">left</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="k">return</span> <span class="n">left</span> <span class="o">-</span> <span class="n">width</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">left</span><span class="p">,</span> <span class="n">jl</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span><span class="n">left_cond</span><span class="p">,</span> <span class="n">left_body</span><span class="p">,</span> <span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">right_cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">right</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="k">return</span> <span class="n">in_slice</span><span class="p">(</span><span class="n">right</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">right_body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">right</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="k">return</span> <span class="n">right</span> <span class="o">+</span> <span class="n">width</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+
+    <span class="n">right</span><span class="p">,</span> <span class="n">kr</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span><span class="n">right_cond</span><span class="p">,</span> <span class="n">right_body</span><span class="p">,</span> <span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+    <span class="n">num_expansions</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">jl</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="n">kr</span><span class="p">)</span>
+    <span class="n">accept_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># noqa: E731  (stepping-out: no test)</span>
+    <span class="k">return</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">num_expansions</span><span class="p">,</span> <span class="n">accept_fn</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_best_interval</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Index of the first ``True`` (else the last), for the doubling cap.&quot;&quot;&quot;</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">mults</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">shifts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">mults</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">shifts</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="doubling">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.doubling">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">doubling</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">in_slice</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">AcceptFn</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neal (2003) Fig. 4 doubling interval, vectorized, in t-space.</span>
+
+<span class="sd">    Expands one (randomly chosen) side at a time, doubling the bracket each</span>
+<span class="sd">    step, until both ends are outside the slice or ``max_expansions`` is hit. A</span>
+<span class="sd">    pluggable interval callable, like :func:`stepping_out`. Its ``accept_fn`` is</span>
+<span class="sd">    Neal&#39;s Fig. 6 acceptance test bound to this (original) bracket, which is</span>
+<span class="sd">    required for doubling&#39;s reversibility.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    The tuple ``(left, right, num_expansions, accept_fn)``: the bracket</span>
+<span class="sd">    endpoints, the number of expansions, and the acceptance test.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+    <span class="n">initial_left</span> <span class="o">=</span> <span class="o">-</span><span class="n">width</span> <span class="o">*</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
+    <span class="n">initial_right</span> <span class="o">=</span> <span class="n">initial_left</span> <span class="o">+</span> <span class="n">width</span>
+
+    <span class="n">k</span> <span class="o">=</span> <span class="n">max_expansions</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="n">left_expands</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="p">(</span><span class="n">k</span><span class="p">,))</span>
+    <span class="n">right_expands</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">left_expands</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+    <span class="n">step_widths</span> <span class="o">=</span> <span class="n">width</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.0</span> <span class="o">**</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+
+    <span class="c1"># Exclusive cumsum: level j reflects expansions at steps 0..j-1; index 0 is</span>
+    <span class="c1"># the initial (un-doubled) interval.</span>
+    <span class="n">left_inc</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">step_widths</span> <span class="o">*</span> <span class="n">left_expands</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="p">)</span>
+    <span class="n">right_inc</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">step_widths</span> <span class="o">*</span> <span class="n">right_expands</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="p">)</span>
+    <span class="n">lefts</span> <span class="o">=</span> <span class="n">initial_left</span> <span class="o">-</span> <span class="n">left_inc</span>
+    <span class="n">rights</span> <span class="o">=</span> <span class="n">initial_right</span> <span class="o">+</span> <span class="n">right_inc</span>
+
+    <span class="n">both_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">in_slice</span><span class="p">)(</span><span class="n">lefts</span><span class="p">)),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">in_slice</span><span class="p">)(</span><span class="n">rights</span><span class="p">)),</span>
+    <span class="p">)</span>
+    <span class="n">idx</span> <span class="o">=</span> <span class="n">_best_interval</span><span class="p">(</span><span class="n">both_out</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+    <span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">lefts</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">rights</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">accept_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">_doubling_accept</span><span class="p">(</span>
+        <span class="n">in_slice</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">width</span>
+    <span class="p">)</span>  <span class="c1"># noqa: E731</span>
+    <span class="k">return</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">accept_fn</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_doubling_accept</span><span class="p">(</span>
+    <span class="n">in_slice</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">left</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">right</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="nb">float</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neal (2003) Fig. 6 acceptance test for a doubling-found interval.</span>
+
+<span class="sd">    Works on the original bracket ``(left, right)`` (not the shrunk one),</span>
+<span class="sd">    bisecting toward ``t`` until the sub-interval is within ~``width`` (the</span>
+<span class="sd">    1.1 factor guards round-off), rejecting if the doubling started from ``t``</span>
+<span class="sd">    would have stopped earlier. ``x0`` is at ``t = 0``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="n">left</span> <span class="o">&gt;</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">width</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">ok</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">mid</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">d</span> <span class="o">|</span> <span class="p">((</span><span class="mf">0.0</span> <span class="o">&lt;</span> <span class="n">mid</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="n">mid</span><span class="p">))</span> <span class="o">|</span> <span class="p">((</span><span class="mf">0.0</span> <span class="o">&gt;=</span> <span class="n">mid</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">mid</span><span class="p">))</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="n">mid</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="n">mid</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">left</span><span class="p">)</span>
+        <span class="n">both_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">in_slice</span><span class="p">(</span><span class="n">left</span><span class="p">))</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">in_slice</span><span class="p">(</span><span class="n">right</span><span class="p">))</span>
+        <span class="n">ok</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">d</span> <span class="o">&amp;</span> <span class="n">both_out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">d</span><span class="p">,</span> <span class="n">ok</span>
+
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">ok</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
+        <span class="n">cond</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="kc">True</span><span class="p">))</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">ok</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_shrink</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">slice_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">level</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">accept_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">left</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">right</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">current_state</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Neal (2003) Fig. 5 shrinkage, in t-space (x0 at t=0).</span>
+
+<span class="sd">    Threads the accepted candidate state through the loop, so whatever the</span>
+<span class="sd">    proposal records on it (e.g. a nested-sampling ``loglikelihood``) is carried</span>
+<span class="sd">    out rather than recomputed. Budget-capped; on exhaustion the chain stays put</span>
+<span class="sd">    (``current_state`` is returned).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">found</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">found</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="n">max_shrinkage</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="n">key</span><span class="p">,</span> <span class="n">subkey</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">left</span> <span class="o">+</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">subkey</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="n">left</span><span class="p">)</span>
+        <span class="n">candidate</span><span class="p">,</span> <span class="n">is_valid</span> <span class="o">=</span> <span class="n">slice_fn</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">found</span> <span class="o">=</span> <span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">&gt;=</span> <span class="n">level</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">is_valid</span> <span class="o">&amp;</span> <span class="n">accept_fn</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">left</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">left</span><span class="p">)</span>
+        <span class="n">right</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">t</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+            <span class="k">lambda</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">found</span><span class="p">,</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">),</span> <span class="n">candidate</span><span class="p">,</span> <span class="n">state</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">t</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">found</span>
+
+    <span class="n">init</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">left</span><span class="p">,</span>
+        <span class="n">right</span><span class="p">,</span>
+        <span class="n">rng_key</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+        <span class="n">current_state</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">found</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">init</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">found</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_univariate_slice</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">slice_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">current_state</span><span class="p">,</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">interval</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One univariate slice through the current point.</span>
+
+<span class="sd">    ``slice_fn(t) -&gt; (state, is_valid)`` produces the candidate at coordinate</span>
+<span class="sd">    ``t``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">level_key</span><span class="p">,</span> <span class="n">interval_key</span><span class="p">,</span> <span class="n">shrink_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="n">current_state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">level_key</span><span class="p">))</span>
+
+    <span class="c1"># ``slice_fn(t) -&gt; (state, is_valid)`` is the slice function: it builds the</span>
+    <span class="c1"># candidate state at coordinate ``t`` (computing whatever it records) and</span>
+    <span class="c1"># reports whether it is admissible (where a constraint is consumed). A point</span>
+    <span class="c1"># is in the slice iff its density is above the level and it is valid.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">in_slice</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="n">candidate</span><span class="p">,</span> <span class="n">is_valid</span> <span class="o">=</span> <span class="n">slice_fn</span><span class="p">(</span><span class="n">t</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">&gt;=</span> <span class="n">level</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">is_valid</span>
+
+    <span class="c1"># ``interval`` is a pluggable procedure (doubling / stepping_out) that</span>
+    <span class="c1"># returns the bracket and its own acceptance test, so there is no name match.</span>
+    <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">num_expansions</span><span class="p">,</span> <span class="n">accept_fn</span> <span class="o">=</span> <span class="n">interval</span><span class="p">(</span>
+        <span class="n">interval_key</span><span class="p">,</span> <span class="n">in_slice</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">max_expansions</span>
+    <span class="p">)</span>
+
+    <span class="n">new_state</span><span class="p">,</span> <span class="n">num_shrink</span><span class="p">,</span> <span class="n">is_accepted</span> <span class="o">=</span> <span class="n">_shrink</span><span class="p">(</span>
+        <span class="n">shrink_key</span><span class="p">,</span>
+        <span class="n">slice_fn</span><span class="p">,</span>
+        <span class="n">level</span><span class="p">,</span>
+        <span class="n">accept_fn</span><span class="p">,</span>
+        <span class="n">left</span><span class="p">,</span>
+        <span class="n">right</span><span class="p">,</span>
+        <span class="n">current_state</span><span class="p">,</span>
+        <span class="n">max_shrinkage</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">SliceInfo</span><span class="p">(</span>
+        <span class="n">is_accepted</span><span class="o">=</span><span class="n">is_accepted</span><span class="p">,</span>
+        <span class="n">num_expansions</span><span class="o">=</span><span class="n">num_expansions</span><span class="p">,</span>
+        <span class="n">num_shrink</span><span class="o">=</span><span class="n">num_shrink</span><span class="p">,</span>
+        <span class="n">bracket_left</span><span class="o">=</span><span class="n">left</span><span class="p">,</span>
+        <span class="n">bracket_right</span><span class="o">=</span><span class="n">right</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
 
 
 <div class="viewcode-block" id="build_kernel">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.build_kernel">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
-    <span class="n">n_doublings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span> <span class="n">initial_widths</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">interval</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">doubling</span><span class="p">,</span>
+    <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a Slice sampling kernel.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a slice kernel driven by a proposal generator.</span>
 
-<span class="sd">    Implementation according to [1]. Doubling implementation inspired</span>
-<span class="sd">    by TensorFlow Probability&#39;s implementation.</span>
+<span class="sd">    The kernel performs one univariate slice using ``proposal_generator``, a</span>
+<span class="sd">    callable ``(rng_key, position, logdensity_fn) -&gt; slice_fn`` where</span>
+<span class="sd">    ``slice_fn(t) -&gt; (state, is_valid)`` builds the candidate state at coordinate</span>
+<span class="sd">    ``t`` and reports whether it is admissible. Because the candidate state is</span>
+<span class="sd">    threaded straight out, the proposal can record extra quantities on it and</span>
+<span class="sd">    consume a constraint through ``is_valid``. To sample under a constraint,</span>
+<span class="sd">    override the proposal generator rather than the kernel.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    n_doublings</span>
-<span class="sd">        Maximum number of slice interval doublings.</span>
-<span class="sd">    initial_widths</span>
-<span class="sd">        Fixed bracket width(s) used as the starting interval for the doubling</span>
-<span class="sd">        procedure.  Accepts either a scalar (applied uniformly to every</span>
-<span class="sd">        coordinate, default: 1.0) or a 1-D array of length equal to the</span>
-<span class="sd">        total flattened position dimension ``D``, giving a per-coordinate</span>
-<span class="sd">        width — mirroring TFP&#39;s per-dimension ``step_size``.  The value 1.0</span>
-<span class="sd">        is a reasonable default for posterior scales in the range 0.1–10:</span>
-<span class="sd">        the doubling procedure rapidly expands the bracket when the width is</span>
-<span class="sd">        too small, so correctness is insensitive to the exact value.  Pass</span>
-<span class="sd">        a smaller value (or per-dimension array) for very narrow posteriors,</span>
-<span class="sd">        or a larger one for very diffuse ones, to improve efficiency.</span>
+<span class="sd">    interval</span>
+<span class="sd">        Interval-finding procedure, passed directly as a callable. Use</span>
+<span class="sd">        :func:`doubling` (the default, Neal Fig. 4 with the Fig. 6 acceptance</span>
+<span class="sd">        test) or :func:`stepping_out` (Neal Fig. 3).</span>
+<span class="sd">    max_expansions</span>
+<span class="sd">        Cap on interval expansions (doublings or stepping-out steps).</span>
+<span class="sd">    max_shrinkage</span>
+<span class="sd">        Cap on shrinkage evaluations. Bounds the loop; on exhaustion the chain</span>
+<span class="sd">        stays put.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
-<span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current state</span>
-<span class="sd">    of the chain and returns a new state of the chain along with information</span>
-<span class="sd">    about the transition.</span>
+<span class="sd">    A kernel that takes a rng_key, the current state, a log-density function, a</span>
+<span class="sd">    proposal generator and a bracket width, and returns a new state along with</span>
+<span class="sd">    information about the transition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
 
-<span class="sd">    References</span>
-<span class="sd">    ----------</span>
-<span class="sd">    .. [1] Radford M. Neal, &quot;Slice sampling&quot;, The Annals of Statistics,</span>
-<span class="sd">       Ann. Statist. 31(3), 705-767, (June 2003).</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">SliceState</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">proposal_generator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SliceState</span><span class="p">,</span> <span class="n">SliceInfo</span><span class="p">]:</span>
+        <span class="n">prop_key</span><span class="p">,</span> <span class="n">slice_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+        <span class="n">slice_fn</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">prop_key</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">_univariate_slice</span><span class="p">(</span>
+            <span class="n">slice_key</span><span class="p">,</span> <span class="n">slice_fn</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">width</span><span class="p">,</span> <span class="n">interval</span><span class="p">,</span> <span class="n">max_expansions</span><span class="p">,</span> <span class="n">max_shrinkage</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+
+<div class="viewcode-block" id="random_order">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.random_order">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">random_order</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A fresh random permutation of the ``d`` coordinate indices (the default).&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="fixed_order">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.fixed_order">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fixed_order</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sweep the coordinates in fixed natural order ``0, 1, ..., d - 1``.&quot;&quot;&quot;</span>
+    <span class="k">del</span> <span class="n">rng_key</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">d</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="coordinate_proposal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.coordinate_proposal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">coordinate_proposal</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">i</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default per-axis proposal for the coordinate sweep.</span>
+
+<span class="sd">    The coordinate analogue of :func:`direction_proposal`: a unit step along</span>
+<span class="sd">    flattened axis ``i`` (the one-hot direction ``e_i``), so ``x(t)`` is</span>
+<span class="sd">    ``position`` with ``flat[i] += t`` and the current point sits at ``t = 0``.</span>
+<span class="sd">    Shares the ``slice_fn(t) -&gt; (state, is_valid)`` contract of the multivariate</span>
+<span class="sd">    proposals.</span>
+
+<span class="sd">    A constraint is added the same way as on the multivariate path -- by</span>
+<span class="sd">    overriding the proposal (``axis_proposal``) to gate ``is_valid``; there is no</span>
+<span class="sd">    built-in constraint argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">del</span> <span class="n">rng_key</span>  <span class="c1"># the coordinate move is deterministic given the axis</span>
+    <span class="n">flat</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">slice_fn</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">SliceState</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="n">slice_fn</span></div>
+
+
+
+<div class="viewcode-block" id="build_coordinate_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.build_coordinate_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_coordinate_kernel</span><span class="p">(</span>
+    <span class="n">interval</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">doubling</span><span class="p">,</span>
+    <span class="n">axis_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">coordinate_proposal</span><span class="p">,</span>
+    <span class="n">coordinate_order</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">random_order</span><span class="p">,</span>
+    <span class="n">initial_widths</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a coordinate-wise (slice-within-Gibbs) kernel.</span>
+
+<span class="sd">    One step updates each scalar coordinate&#39;s full conditional with a univariate</span>
+<span class="sd">    slice, in the order given by ``coordinate_order``, the choice function</span>
+<span class="sd">    ``(rng_key, d) -&gt; indices`` (:func:`random_order`, the default, or</span>
+<span class="sd">    :func:`fixed_order`). Each coordinate move is drawn by ``axis_proposal``, the</span>
+<span class="sd">    per-axis analogue of the multivariate ``proposal_generator``</span>
+<span class="sd">    (:func:`coordinate_proposal` by default); override it to gate a constraint</span>
+<span class="sd">    into ``is_valid``. ``initial_widths`` is a scalar (applied to every</span>
+<span class="sd">    coordinate) or a length-``D`` array of per-coordinate bracket widths.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel that takes a rng_key, the current state and a log-density function,</span>
+<span class="sd">    and returns a new state along with information about the transition.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">SliceState</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SliceState</span><span class="p">,</span> <span class="n">SliceInfo</span><span class="p">]:</span>
-        <span class="n">proposal_generator</span> <span class="o">=</span> <span class="n">_slice_proposal</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">n_doublings</span><span class="p">,</span> <span class="n">initial_widths</span><span class="p">)</span>
-        <span class="n">new_state</span><span class="p">,</span> <span class="n">bracket_widths</span> <span class="o">=</span> <span class="n">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">SliceInfo</span><span class="p">(</span><span class="n">bracket_widths</span><span class="p">)</span>
+        <span class="n">flat0</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">flat0</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">widths</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">initial_widths</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="p">(</span><span class="n">d</span><span class="p">,))</span>
+
+        <span class="n">order_key</span><span class="p">,</span> <span class="n">scan_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+        <span class="c1"># ``coordinate_order`` is the choice function ``(rng_key, d) -&gt; indices``</span>
+        <span class="c1"># (random_order by default, or fixed_order): which coordinates to update</span>
+        <span class="c1"># and in what order.</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">coordinate_order</span><span class="p">(</span><span class="n">order_key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">order</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">inp</span><span class="p">):</span>
+            <span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span> <span class="o">=</span> <span class="n">carry</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">w</span> <span class="o">=</span> <span class="n">inp</span>
+            <span class="n">prop_key</span><span class="p">,</span> <span class="n">slice_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="c1"># Same two steps as the multivariate kernel: build the proposal for</span>
+            <span class="c1"># this axis, then run the univariate slice along it.</span>
+            <span class="n">slice_fn</span> <span class="o">=</span> <span class="n">axis_proposal</span><span class="p">(</span><span class="n">prop_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">_univariate_slice</span><span class="p">(</span>
+                <span class="n">slice_key</span><span class="p">,</span>
+                <span class="n">slice_fn</span><span class="p">,</span>
+                <span class="n">SliceState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">),</span>
+                <span class="n">w</span><span class="p">,</span>
+                <span class="n">interval</span><span class="p">,</span>
+                <span class="n">max_expansions</span><span class="p">,</span>
+                <span class="n">max_shrinkage</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">(</span><span class="n">new_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">),</span> <span class="n">info</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">scan_key</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">pos_final</span><span class="p">,</span> <span class="n">ld_final</span><span class="p">),</span> <span class="n">swept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="n">body</span><span class="p">,</span> <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">),</span> <span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">widths</span><span class="p">[</span><span class="n">order</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="c1"># The sweep does D univariate slices. Summarise the counters over the</span>
+        <span class="c1"># sweep, and stitch the per-coordinate bracket endpoints back into the</span>
+        <span class="c1"># position structure (scatter to natural order, then unravel) so that</span>
+        <span class="c1"># ``info.bracket_left``/``bracket_right`` align with ``position``.</span>
+        <span class="n">stitch</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">v</span><span class="p">:</span> <span class="n">unravel_fn</span><span class="p">(</span>  <span class="c1"># noqa: E731</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">order</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">SliceInfo</span><span class="p">(</span>
+            <span class="n">is_accepted</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">is_accepted</span><span class="p">),</span>
+            <span class="n">num_expansions</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">num_expansions</span><span class="p">),</span>
+            <span class="n">num_shrink</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">num_shrink</span><span class="p">),</span>
+            <span class="n">bracket_left</span><span class="o">=</span><span class="n">stitch</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">bracket_left</span><span class="p">),</span>
+            <span class="n">bracket_right</span><span class="o">=</span><span class="n">stitch</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">bracket_right</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">SliceState</span><span class="p">(</span><span class="n">pos_final</span><span class="p">,</span> <span class="n">ld_final</span><span class="p">),</span> <span class="n">info</span>
 
     <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+
+<div class="viewcode-block" id="sample_direction">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.sample_direction">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_direction</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A random slice direction shaped by ``scale`` and normalized to unit length.</span>
+
+<span class="sd">    ``scale`` is a scalar (isotropic), a vector (per-coordinate / diagonal) or a</span>
+<span class="sd">    dense matrix (a full preconditioner, applied as a linear map to</span>
+<span class="sd">    standard-normal noise, so its covariance is ``scale @ scale.T``). Defaults</span>
+<span class="sd">    to ``1.0`` (uniformly random unit directions).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">noise</span> <span class="o">=</span> <span class="n">generate_gaussian_noise</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="n">scale</span><span class="p">)</span>
+    <span class="n">flat</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">noise</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">flat</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">flat</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="direction_proposal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.direction_proposal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">direction_proposal</span><span class="p">(</span><span class="n">scale</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Proposal-generator factory: slice along a random ``scale``-shaped direction.</span>
+
+<span class="sd">    See :func:`sample_direction` for ``scale`` (scalar / vector / dense, unit by</span>
+<span class="sd">    default). Pass as</span>
+<span class="sd">    ``slice_sampling(logp, proposal_generator=direction_proposal(scale))``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">):</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">sample_direction</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">scale</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">slice_fn</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">p</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">SliceState</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">x</span><span class="p">)),</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="n">slice_fn</span>
+
+    <span class="k">return</span> <span class="n">proposal_generator</span></div>
 
 
 
@@ -529,259 +1016,115 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">as_top_level_api</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
-    <span class="n">n_doublings</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="n">initial_widths</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">proposal_generator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">direction_proposal</span><span class="p">(),</span>
+    <span class="n">width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">interval</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">doubling</span><span class="p">,</span>
+    <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implements the user interface for the Slice sampling kernel.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multivariate slice sampler, ``blackjax.slice_sampling``.</span>
+
+<span class="sd">    Each step takes one univariate slice along a random direction (chaining such</span>
+<span class="sd">    moves is the hit-and-run strategy) drawn by ``proposal_generator``. The</span>
+<span class="sd">    default :func:`direction_proposal` draws a uniformly random direction; pass</span>
+<span class="sd">    ``direction_proposal(scale)`` to precondition, or override with your own</span>
+<span class="sd">    proposal to gate a constraint or record extra quantities on the state, as</span>
+<span class="sd">    nested sampling does. For coordinate-wise slice-within-Gibbs, use</span>
+<span class="sd">    :func:`coordinate_slice`.</span>
 
 <span class="sd">    Examples</span>
 <span class="sd">    --------</span>
 
-<span class="sd">    A new Slice sampling kernel can be initialized and used with the following</span>
+<span class="sd">    A new slice sampling kernel can be initialized and used with the following</span>
 <span class="sd">    code:</span>
 
 <span class="sd">    .. code::</span>
 
-<span class="sd">        slice_sampling = blackjax.slice_sampling(logdensity_fn, n_doublings=10)</span>
+<span class="sd">        slice_sampling = blackjax.slice_sampling(logdensity_fn)</span>
 <span class="sd">        state = slice_sampling.init(position)</span>
 <span class="sd">        new_state, info = slice_sampling.step(rng_key, state)</span>
-
-<span class="sd">    We can JIT-compile the step function for better performance:</span>
-
-<span class="sd">    .. code::</span>
-
-<span class="sd">        step = jax.jit(slice_sampling.step)</span>
-<span class="sd">        new_state, info = step(rng_key, state)</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    logdensity_fn</span>
-<span class="sd">        The log-density function of the distribution we wish to sample from.</span>
-<span class="sd">    n_doublings</span>
-<span class="sd">        Maximum number of slice interval doublings (default: 10).</span>
-<span class="sd">    initial_widths</span>
-<span class="sd">        Fixed bracket width(s) used as the starting interval for the doubling</span>
-<span class="sd">        procedure.  A scalar applies to all coordinates; a 1-D array of</span>
-<span class="sd">        length ``D`` (total flattened position dimension) gives per-coordinate</span>
-<span class="sd">        widths, mirroring TFP&#39;s per-dimension ``step_size`` (default: 1.0).</span>
+<span class="sd">        Log-density of the distribution to sample from.</span>
+<span class="sd">    proposal_generator</span>
+<span class="sd">        Proposal generator ``(rng_key, position, logdensity_fn) -&gt; slice_fn``,</span>
+<span class="sd">        where ``slice_fn(t) -&gt; (state, is_valid)``. Defaults to</span>
+<span class="sd">        ``direction_proposal()`` (isotropic unit directions).</span>
+<span class="sd">    width</span>
+<span class="sd">        Initial bracket width along the direction (default 1.0).</span>
+<span class="sd">    interval</span>
+<span class="sd">        Interval procedure :func:`doubling` (default) or :func:`stepping_out`,</span>
+<span class="sd">        passed as a callable.</span>
+<span class="sd">    max_expansions, max_shrinkage</span>
+<span class="sd">        Caps on interval expansion and shrinkage.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A ``SamplingAlgorithm``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">n_doublings</span><span class="p">,</span> <span class="n">initial_widths</span><span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">interval</span><span class="p">,</span> <span class="n">max_expansions</span><span class="p">,</span> <span class="n">max_shrinkage</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
+        <span class="n">kernel</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span><span class="n">proposal_generator</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="coordinate_slice">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.coordinate_slice">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">coordinate_slice</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">max_expansions</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">initial_widths</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">interval</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">doubling</span><span class="p">,</span>
+    <span class="n">coordinate_order</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">random_order</span><span class="p">,</span>
+    <span class="n">axis_proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">coordinate_proposal</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coordinate-wise (slice-within-Gibbs) slice sampler.</span>
+
+<span class="sd">    Updates each scalar coordinate&#39;s full conditional with a univariate slice,</span>
+<span class="sd">    swept in the order given by ``coordinate_order``. The single-variable</span>
+<span class="sd">    counterpart to the multivariate :func:`as_top_level_api`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        Log-density of the distribution to sample from.</span>
+<span class="sd">    max_expansions</span>
+<span class="sd">        Cap on interval expansions per coordinate (default 10).</span>
+<span class="sd">    initial_widths</span>
+<span class="sd">        Scalar or per-coordinate initial bracket width(s) (default 1.0).</span>
+<span class="sd">    interval</span>
+<span class="sd">        Interval procedure :func:`doubling` (default) or :func:`stepping_out`,</span>
+<span class="sd">        passed as a callable.</span>
+<span class="sd">    coordinate_order</span>
+<span class="sd">        Choice function ``(rng_key, d) -&gt; indices``, either :func:`random_order`</span>
+<span class="sd">        (default) or :func:`fixed_order`.</span>
+<span class="sd">    axis_proposal</span>
+<span class="sd">        Per-axis proposal ``(rng_key, position, logdensity_fn, i) -&gt; slice_fn``</span>
+<span class="sd">        (:func:`coordinate_proposal` by default). Override to gate a constraint</span>
+<span class="sd">        into ``is_valid``, as a custom ``proposal_generator`` does for</span>
+<span class="sd">        :func:`as_top_level_api`.</span>
+<span class="sd">    max_shrinkage</span>
+<span class="sd">        Cap on shrinkage evaluations per coordinate.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_coordinate_kernel</span><span class="p">(</span>
+        <span class="n">interval</span><span class="o">=</span><span class="n">interval</span><span class="p">,</span>
+        <span class="n">axis_proposal</span><span class="o">=</span><span class="n">axis_proposal</span><span class="p">,</span>
+        <span class="n">coordinate_order</span><span class="o">=</span><span class="n">coordinate_order</span><span class="p">,</span>
+        <span class="n">initial_widths</span><span class="o">=</span><span class="n">initial_widths</span><span class="p">,</span>
+        <span class="n">max_expansions</span><span class="o">=</span><span class="n">max_expansions</span><span class="p">,</span>
+        <span class="n">max_shrinkage</span><span class="o">=</span><span class="n">max_shrinkage</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span></div>
 
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_slice_proposal</span><span class="p">(</span>
-    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">n_doublings</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">initial_widths</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">Array</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">generate</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">SliceState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">SliceState</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
-        <span class="n">order_key</span><span class="p">,</span> <span class="n">rng_key</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
-        <span class="n">positions</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
-        <span class="c1"># Scalar → uniform width; array → per-coordinate widths (length D).</span>
-        <span class="c1"># jnp.broadcast_to handles both: a scalar broadcasts to (D,) cleanly,</span>
-        <span class="c1"># and an array of shape (D,) is validated by broadcast semantics</span>
-        <span class="c1"># (a length mismatch raises an error at build time, before any JIT).</span>
-        <span class="n">widths</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">initial_widths</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">(),</span> <span class="n">positions</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">body_fn</span><span class="p">(</span>
-            <span class="n">carry</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">],</span> <span class="n">rn</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PRNGKey</span><span class="p">,</span> <span class="n">Array</span><span class="p">]</span>
-        <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">],</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]]:</span>
-            <span class="n">seed</span><span class="p">,</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">rn</span>
-            <span class="n">positions</span><span class="p">,</span> <span class="n">bracket_widths</span> <span class="o">=</span> <span class="n">carry</span>
-            <span class="n">xi</span><span class="p">,</span> <span class="n">bi</span> <span class="o">=</span> <span class="n">_sample_conditionally</span><span class="p">(</span>
-                <span class="n">seed</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">unravel_fn</span><span class="p">,</span> <span class="n">idx</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">widths</span><span class="p">,</span> <span class="n">n_doublings</span>
-            <span class="p">)</span>
-            <span class="n">positions</span> <span class="o">=</span> <span class="n">positions</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xi</span><span class="p">)</span>
-            <span class="n">bracket_widths</span> <span class="o">=</span> <span class="n">bracket_widths</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">bi</span><span class="p">)</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">bracket_widths</span><span class="p">),</span> <span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">bracket_widths</span><span class="p">)</span>
-
-        <span class="n">order</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
-            <span class="n">order_key</span><span class="p">,</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">)),</span>
-            <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">),),</span>
-            <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">keys</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">positions</span><span class="p">))</span>
-        <span class="n">bracket_widths_init</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">new_positions</span><span class="p">,</span> <span class="n">new_bracket_widths</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-            <span class="n">body_fn</span><span class="p">,</span> <span class="p">(</span><span class="n">positions</span><span class="p">,</span> <span class="n">bracket_widths_init</span><span class="p">),</span> <span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">order</span><span class="p">)</span>
-        <span class="p">)</span>
-
-        <span class="n">new_positions</span> <span class="o">=</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">new_positions</span><span class="p">)</span>
-        <span class="n">new_bracket_widths</span> <span class="o">=</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">new_bracket_widths</span><span class="p">)</span>
-        <span class="n">new_state</span> <span class="o">=</span> <span class="n">SliceState</span><span class="p">(</span>
-            <span class="n">new_positions</span><span class="p">,</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">(</span><span class="n">new_positions</span><span class="p">)),</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">new_bracket_widths</span>
-
-    <span class="k">return</span> <span class="n">generate</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_sample_conditionally</span><span class="p">(</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
-    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">unravel_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">idx</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">positions</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">widths</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">n_doublings</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">conditional_logdensity_fn</span><span class="p">(</span><span class="n">xi_to_set</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">logdensity_fn</span><span class="p">(</span><span class="n">unravel_fn</span><span class="p">(</span><span class="n">positions</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xi_to_set</span><span class="p">)))</span>
-
-    <span class="n">key</span><span class="p">,</span> <span class="n">seed1</span><span class="p">,</span> <span class="n">seed2</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">seed</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
-    <span class="n">x0</span><span class="p">,</span> <span class="n">w0</span> <span class="o">=</span> <span class="n">positions</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">widths</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
-    <span class="n">logdensity</span> <span class="o">=</span> <span class="n">conditional_logdensity_fn</span><span class="p">(</span><span class="n">x0</span><span class="p">)</span> <span class="o">-</span> <span class="n">random</span><span class="o">.</span><span class="n">exponential</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-    <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_doubling_fn</span><span class="p">(</span>
-        <span class="n">seed1</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">conditional_logdensity_fn</span><span class="p">,</span> <span class="n">w0</span><span class="p">,</span> <span class="n">n_doublings</span>
-    <span class="p">)</span>
-    <span class="n">x1</span> <span class="o">=</span> <span class="n">_shrinkage_fn</span><span class="p">(</span>
-        <span class="n">seed2</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">conditional_logdensity_fn</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">w0</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">x1</span><span class="p">,</span> <span class="n">right</span> <span class="o">-</span> <span class="n">left</span>
-
-
-<span class="c1"># --- Doubling ---</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_doubling_fn</span><span class="p">(</span>
-    <span class="n">rng</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
-    <span class="n">logdensity</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">x0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">conditional_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">n_doublings</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
-    <span class="n">key1</span><span class="p">,</span> <span class="n">key2</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-    <span class="n">initial_left</span> <span class="o">=</span> <span class="n">x0</span> <span class="o">-</span> <span class="n">w</span> <span class="o">*</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span>
-    <span class="n">initial_right</span> <span class="o">=</span> <span class="n">initial_left</span> <span class="o">+</span> <span class="n">w</span>
-
-    <span class="n">K</span> <span class="o">=</span> <span class="n">n_doublings</span> <span class="o">+</span> <span class="mi">1</span>
-    <span class="n">left_expands</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">bernoulli</span><span class="p">(</span><span class="n">key2</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="p">(</span><span class="n">K</span><span class="p">,))</span>
-    <span class="n">right_expands</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">left_expands</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-    <span class="n">step_widths</span> <span class="o">=</span> <span class="n">w</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
-
-    <span class="c1"># Exclusive cumsum: increment at level k = sum of expansions at steps 0..k-1.</span>
-    <span class="c1"># rights[0] and lefts[0] are the initial interval (0 doublings).</span>
-    <span class="n">left_increments</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">step_widths</span> <span class="o">*</span> <span class="n">left_expands</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
-    <span class="p">)</span>
-    <span class="n">right_increments</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
-        <span class="p">[</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">cumsum</span><span class="p">(</span><span class="n">step_widths</span> <span class="o">*</span> <span class="n">right_expands</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
-    <span class="p">)</span>
-
-    <span class="n">lefts</span> <span class="o">=</span> <span class="n">initial_left</span> <span class="o">-</span> <span class="n">left_increments</span>
-    <span class="n">rights</span> <span class="o">=</span> <span class="n">initial_right</span> <span class="o">+</span> <span class="n">right_increments</span>
-    <span class="n">left_lps</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">conditional_logdensity_fn</span><span class="p">)(</span><span class="n">lefts</span><span class="p">)</span>
-    <span class="n">right_lps</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">conditional_logdensity_fn</span><span class="p">)(</span><span class="n">rights</span><span class="p">)</span>
-
-    <span class="n">both_ok</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">left_lps</span> <span class="o">&lt;</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">right_lps</span> <span class="o">&lt;</span> <span class="n">logdensity</span><span class="p">)</span>
-    <span class="n">best_interval_idx</span> <span class="o">=</span> <span class="n">_best_interval</span><span class="p">(</span><span class="n">both_ok</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
-
-    <span class="k">return</span> <span class="p">(</span>
-        <span class="n">lefts</span><span class="p">[</span><span class="n">best_interval_idx</span><span class="p">],</span>
-        <span class="n">rights</span><span class="p">[</span><span class="n">best_interval_idx</span><span class="p">],</span>
-        <span class="n">both_ok</span><span class="p">[</span><span class="n">best_interval_idx</span><span class="p">],</span>
-    <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_best_interval</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-    <span class="n">k</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">mults</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="n">shifts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="n">indices</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">mults</span> <span class="o">*</span> <span class="n">x</span> <span class="o">+</span> <span class="n">shifts</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">indices</span>
-
-
-<span class="c1"># --- Shrinkage ---</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_shrinkage_fn</span><span class="p">(</span>
-    <span class="n">seed</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
-    <span class="n">logdensity</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">x0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">conditional_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">left</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">right</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">cond_fn</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-        <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">found</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">found</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-        <span class="n">x1</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="n">key</span><span class="p">,</span> <span class="n">seed</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
-        <span class="n">v</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
-        <span class="n">x1</span> <span class="o">=</span> <span class="n">left</span> <span class="o">+</span> <span class="n">v</span> <span class="o">*</span> <span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="n">left</span><span class="p">)</span>
-
-        <span class="n">found</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
-            <span class="n">logdensity</span> <span class="o">&lt;</span> <span class="n">conditional_logdensity_fn</span><span class="p">(</span><span class="n">x1</span><span class="p">),</span>
-            <span class="n">_accept_fn</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">conditional_logdensity_fn</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">w</span><span class="p">),</span>
-        <span class="p">)</span>
-
-        <span class="n">left</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x1</span> <span class="o">&lt;</span> <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">left</span><span class="p">)</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x1</span> <span class="o">&gt;=</span> <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">x1</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">found</span>
-
-    <span class="n">x1</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
-        <span class="n">cond_fn</span><span class="p">,</span> <span class="n">body_fn</span><span class="p">,</span> <span class="p">(</span><span class="n">x0</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">seed</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">x1</span>
-
-
-<span class="c1"># --- Acceptance test ---</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_accept_fn</span><span class="p">(</span>
-    <span class="n">logdensity</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">x1</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">x0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">conditional_logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
-    <span class="n">left</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">right</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-    <span class="n">w</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-    <span class="c1"># The 1.1 * w termination threshold is from Neal 2003 Fig. 6: the</span>
-    <span class="c1"># acceptance test bisects the interval until it is within 10% of the</span>
-    <span class="c1"># original width w, at which point no further refinement is needed.</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">cond_fn</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">is_acceptable</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">right</span> <span class="o">-</span> <span class="n">left</span> <span class="o">&gt;</span> <span class="mf">1.1</span> <span class="o">*</span> <span class="n">w</span><span class="p">,</span> <span class="n">is_acceptable</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">body_fn</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-        <span class="n">x1</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">state</span>
-        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
-        <span class="n">D</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span>
-                <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">x0</span> <span class="o">&lt;</span> <span class="n">mid</span><span class="p">,</span> <span class="n">x1</span> <span class="o">&gt;=</span> <span class="n">mid</span><span class="p">),</span>
-                <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">x0</span> <span class="o">&gt;=</span> <span class="n">mid</span><span class="p">,</span> <span class="n">x1</span> <span class="o">&lt;</span> <span class="n">mid</span><span class="p">),</span>
-            <span class="p">),</span>
-            <span class="n">D</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="n">right</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x1</span> <span class="o">&lt;</span> <span class="n">mid</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">right</span><span class="p">)</span>
-        <span class="n">left</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x1</span> <span class="o">&gt;=</span> <span class="n">mid</span><span class="p">,</span> <span class="n">mid</span><span class="p">,</span> <span class="n">left</span><span class="p">)</span>
-
-        <span class="n">left_is_not_acceptable</span> <span class="o">=</span> <span class="n">logdensity</span> <span class="o">&gt;=</span> <span class="n">conditional_logdensity_fn</span><span class="p">(</span><span class="n">left</span><span class="p">)</span>
-        <span class="n">right_is_not_acceptable</span> <span class="o">=</span> <span class="n">logdensity</span> <span class="o">&gt;=</span> <span class="n">conditional_logdensity_fn</span><span class="p">(</span><span class="n">right</span><span class="p">)</span>
-        <span class="n">interval_is_not_acceptable</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
-            <span class="n">left_is_not_acceptable</span><span class="p">,</span> <span class="n">right_is_not_acceptable</span>
-        <span class="p">)</span>
-        <span class="n">is_still_acceptable</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">interval_is_not_acceptable</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">is_still_acceptable</span>
-
-    <span class="o">*</span><span class="n">_</span><span class="p">,</span> <span class="n">is_acceptable</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
-        <span class="n">cond_fn</span><span class="p">,</span> <span class="n">body_fn</span><span class="p">,</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
-    <span class="p">)</span>
-    <span class="k">return</span> <span class="n">is_acceptable</span>
 </pre></div>
 
                 </article>
