@@ -14,6 +14,7 @@ Submodules
    /autoapi/blackjax/diagnostics/index
    /autoapi/blackjax/eca/index
    /autoapi/blackjax/mcmc/index
+   /autoapi/blackjax/ns/index
    /autoapi/blackjax/sgmcmc/index
    /autoapi/blackjax/smc/index
    /autoapi/blackjax/vi/index

@@ -1,0 +1,799 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>blackjax.ns.utils</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/ns/utils/index';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.sgmcmc" href="../../sgmcmc/index.html" />
+    <link rel="prev" title="blackjax.ns.nss" href="../nss/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g7b01f0114" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">blackjax.ns</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>blackjax.ns.utils</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.log1mexp"><code class="docutils literal notranslate"><span class="pre">log1mexp()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.compute_num_live"><code class="docutils literal notranslate"><span class="pre">compute_num_live()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.logX"><code class="docutils literal notranslate"><span class="pre">logX()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.log_weights"><code class="docutils literal notranslate"><span class="pre">log_weights()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.finalise"><code class="docutils literal notranslate"><span class="pre">finalise()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.ess"><code class="docutils literal notranslate"><span class="pre">ess()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.sample"><code class="docutils literal notranslate"><span class="pre">sample()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.get_first_row"><code class="docutils literal notranslate"><span class="pre">get_first_row()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.uniform_prior"><code class="docutils literal notranslate"><span class="pre">uniform_prior()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-blackjax.ns.utils">
+<span id="blackjax-ns-utils"></span><h1>blackjax.ns.utils<a class="headerlink" href="#module-blackjax.ns.utils" title="Link to this heading">#</a></h1>
+<p>Utility functions for setting up and post-processing Nested Sampling runs.</p>
+<p class="rubric">References</p>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="id1" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
+<p>Skilling, J. (2006). “Nested sampling for general Bayesian computation.”
+Bayesian Analysis, 1(4), 833-859. <a class="reference external" href="https://doi.org/10.1214/06-BA127">https://doi.org/10.1214/06-BA127</a></p>
+</aside>
+<aside class="footnote brackets" id="id2" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></span>
+<p>Fowlie, A., Handley, W., &amp; Su, L. (2021). “Nested sampling with plateaus.”
+Monthly Notices of the Royal Astronomical Society, 503(1), 1199-1205.
+<a class="reference external" href="https://doi.org/10.1093/mnras/stab590">https://doi.org/10.1093/mnras/stab590</a></p>
+</aside>
+</aside>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.ns.utils.log1mexp" title="blackjax.ns.utils.log1mexp"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log1mexp</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Computes log(1 - exp(x)) in a numerically stable way.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.ns.utils.compute_num_live" title="blackjax.ns.utils.compute_num_live"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_num_live</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Compute the effective number of live points at each death contour (Fowlie, Handley &amp; Su, 2021).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.ns.utils.logX" title="blackjax.ns.utils.logX"><code class="xref py py-obj docutils literal notranslate"><span class="pre">logX</span></code></a>(→ tuple[blackjax.types.Array, blackjax.types.Array])</p></td>
+<td><p>Simulate the stochastic evolution of log prior volumes (Skilling, 2006).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.ns.utils.log_weights" title="blackjax.ns.utils.log_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">log_weights</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Calculate the log importance weights for Nested Sampling results.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.ns.utils.finalise" title="blackjax.ns.utils.finalise"><code class="xref py py-obj docutils literal notranslate"><span class="pre">finalise</span></code></a>(→ blackjax.ns.base.NSInfo)</p></td>
+<td><p>Combines the history of dead particle information with the final live points.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.ns.utils.ess" title="blackjax.ns.utils.ess"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ess</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Computes the Effective Sample Size (ESS) from log-weights.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.ns.utils.sample" title="blackjax.ns.utils.sample"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample</span></code></a>(→ blackjax.types.ArrayTree)</p></td>
+<td><p>Resamples particles according to their importance weights.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.ns.utils.get_first_row" title="blackjax.ns.utils.get_first_row"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_first_row</span></code></a>(→ blackjax.types.ArrayTree)</p></td>
+<td><p>Extracts the first &quot;row&quot; (element along the leading axis) of each leaf in a PyTree.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.ns.utils.uniform_prior" title="blackjax.ns.utils.uniform_prior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">uniform_prior</span></code></a>(→ tuple[blackjax.types.ArrayTree, Callable])</p></td>
+<td><p>Sample initial particles and build a log-prior for a box-uniform prior.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.ns.utils.log1mexp">
+<span class="sig-name descname"><span class="pre">log1mexp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/ns/utils.html#log1mexp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ns.utils.log1mexp" title="Link to this definition">#</a></dt>
+<dd><p>Computes log(1 - exp(x)) in a numerically stable way.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.ns.utils.compute_num_live">
+<span class="sig-name descname"><span class="pre">compute_num_live</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../base/index.html#blackjax.ns.base.NSInfo" title="blackjax.ns.base.NSInfo"><span class="pre">blackjax.ns.base.NSInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/ns/utils.html#compute_num_live"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ns.utils.compute_num_live" title="Link to this definition">#</a></dt>
+<dd><p>Compute the effective number of live points at each death contour (Fowlie, Handley &amp; Su, 2021).</p>
+<p>When doing batch deletions, the jump in energy level can be smoothed by
+transforming 1 jump of size k into k jumps of size 1. This function computes
+the effective population size associated with this transformation.</p>
+<p>Expects the <strong>complete finalised output</strong> – the dead points together with the
+final live particles (e.g. from <a class="reference internal" href="#blackjax.ns.utils.finalise" title="blackjax.ns.utils.finalise"><code class="xref py py-func docutils literal notranslate"><span class="pre">finalise()</span></code></a>): it relies on every
+particle’s birth event being present. Called on a dead-only subset that omits
+the initial live particles’ births, the live counts are wrong (1 instead of
+<code class="docutils literal notranslate"><span class="pre">N</span></code> for a standard run).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>An array where each element <cite>num_live[j]</cite> is the effective number of live
+points <cite>m*_i</cite> when the j-th particle (in the sorted list of dead particles)
+was considered “dead”.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.ns.utils.logX">
+<span class="sig-name descname"><span class="pre">logX</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dead_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../base/index.html#blackjax.ns.base.NSInfo" title="blackjax.ns.base.NSInfo"><span class="pre">blackjax.ns.base.NSInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/ns/utils.html#logX"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ns.utils.logX" title="Link to this definition">#</a></dt>
+<dd><p>Simulate the stochastic evolution of log prior volumes (Skilling, 2006).</p>
+<p>Wraps the effective population size in <cite>compute_num_live</cite>, along with stochastic
+simulation of the log prior shrinkage associated with each deleted particle.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> – A JAX PRNG key for generating uniform random variates.</p></li>
+<li><p><strong>dead_info</strong> – An <cite>NSInfo</cite> object (or compatible PyTree) containing <cite>loglikelihood_birth</cite>
+and <cite>loglikelihood</cite> for all dead particles accumulated during an NS run.
+It’s assumed these particles are already sorted by their death log-likelihood.</p></li>
+<li><p><strong>shape</strong> – The shape of Monte Carlo samples to generate for the stochastic
+log-volume sequence. Each sample represents one possible path of
+volume shrinkage. Default is 100.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><cite>logX_cumulative</cite>: An array of shape <cite>(num_dead_particles, shape)</cite>
+containing <cite>shape</cite> simulated sequences of cumulative log prior volumes <cite>log(X_i)</cite>.</p></li>
+<li><p><cite>log_dX_elements</cite>: An array of shape <cite>(num_dead_particles, shape)</cite>
+containing <cite>shape</cite> simulated sequences of log prior volume elements <cite>log(dX_i)</cite>.
+<cite>dX_i</cite> is the trapezoidal volume element <cite>(X_{i-1} - X_{i+1}) / 2</cite>.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a>[Array, Array]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.ns.utils.log_weights">
+<span class="sig-name descname"><span class="pre">log_weights</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dead_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../base/index.html#blackjax.ns.base.NSInfo" title="blackjax.ns.base.NSInfo"><span class="pre">blackjax.ns.base.NSInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/ns/utils.html#log_weights"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ns.utils.log_weights" title="Link to this definition">#</a></dt>
+<dd><p>Calculate the log importance weights for Nested Sampling results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> – A JAX PRNG key for simulating <cite>log(dX_i)</cite>.</p></li>
+<li><p><strong>dead_info</strong> – An <cite>NSInfo</cite> object (or compatible PyTree) containing <cite>loglikelihood_birth</cite>
+and <cite>loglikelihood</cite> for all dead particles.</p></li>
+<li><p><strong>shape</strong> – The shape of Monte Carlo samples to use for simulating <cite>log(dX_i)</cite>.
+Default is 100.</p></li>
+<li><p><strong>beta</strong> – The inverse temperature. Typically 1.0 for standard evidence calculation.
+Allows for reweighting to different temperatures.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An array of log importance weights, shape <cite>(num_dead_particles, *shape)</cite>.
+The original order of particles in <cite>dead_info</cite> is preserved.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.ns.utils.finalise">
+<span class="sig-name descname"><span class="pre">finalise</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">live</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../base/index.html#blackjax.ns.base.NSState" title="blackjax.ns.base.NSState"><span class="pre">blackjax.ns.base.NSState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dead</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.14)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="../base/index.html#blackjax.ns.base.NSInfo" title="blackjax.ns.base.NSInfo"><span class="pre">blackjax.ns.base.NSInfo</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../base/index.html#blackjax.ns.base.NSInfo" title="blackjax.ns.base.NSInfo"><span class="pre">blackjax.ns.base.NSInfo</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/ns/utils.html#finalise"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ns.utils.finalise" title="Link to this definition">#</a></dt>
+<dd><p>Combines the history of dead particle information with the final live points.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>live</strong> – The final <cite>NSState</cite> of the Nested Sampler, containing the live particles.</p></li>
+<li><p><strong>dead</strong> – A list of <cite>NSInfo</cite> objects, where each object contains information
+about the particles that “died” at one step of the NS algorithm.</p></li>
+<li><p><strong>update_info</strong> – Whether to concatenate the <cite>update_info</cite> from each element of <cite>dead</cite>.
+If False, the returned <cite>update_info</cite> is None. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A single <cite>NSInfo</cite> whose <cite>particles</cite> field concatenates all dead
+particles with the final live particles. When <code class="docutils literal notranslate"><span class="pre">update_info=True</span></code> the
+<cite>update_info</cite> field concatenates the <cite>update_info</cite> from each element of
+<cite>dead</cite> only – no entry is added for the final live points, so it is
+shorter than <cite>particles</cite> by the number of live points. When
+<code class="docutils literal notranslate"><span class="pre">update_info=False</span></code> the <cite>update_info</cite> field is None.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../base/index.html#blackjax.ns.base.NSInfo" title="blackjax.ns.base.NSInfo">NSInfo</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.ns.utils.ess">
+<span class="sig-name descname"><span class="pre">ess</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dead</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../base/index.html#blackjax.ns.base.NSInfo" title="blackjax.ns.base.NSInfo"><span class="pre">blackjax.ns.base.NSInfo</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/ns/utils.html#ess"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ns.utils.ess" title="Link to this definition">#</a></dt>
+<dd><p>Computes the Effective Sample Size (ESS) from log-weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> – A JAX PRNG key, used by <cite>log_weights</cite>.</p></li>
+<li><p><strong>dead</strong> – An <cite>NSInfo</cite> object containing the full set of dead (and final live)
+particles, typically the output of <cite>finalise</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The mean Effective Sample Size, a scalar float.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.ns.utils.sample">
+<span class="sig-name descname"><span class="pre">sample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dead</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../base/index.html#blackjax.ns.base.NSInfo" title="blackjax.ns.base.NSInfo"><span class="pre">blackjax.ns.base.NSInfo</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.ArrayTree</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/ns/utils.html#sample"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ns.utils.sample" title="Link to this definition">#</a></dt>
+<dd><p>Resamples particles according to their importance weights.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> – A JAX PRNG key, used by <cite>log_weights</cite> and for resampling.</p></li>
+<li><p><strong>dead</strong> – An <cite>NSInfo</cite> object containing the full set of dead (and final live)
+particles, typically the output of <cite>finalise</cite>.</p></li>
+<li><p><strong>shape</strong> – The number of resampled particles to draw. Default is 1000.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A PyTree of resampled particles, where each leaf has <cite>shape</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ArrayTree</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.ns.utils.get_first_row">
+<span class="sig-name descname"><span class="pre">get_first_row</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayTree</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.ArrayTree</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/ns/utils.html#get_first_row"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ns.utils.get_first_row" title="Link to this definition">#</a></dt>
+<dd><p>Extracts the first “row” (element along the leading axis) of each leaf in a PyTree.</p>
+<p>This is typically used to get a single particle’s structure or values from
+a PyTree representing a collection of particles, where the leading dimension
+of each leaf array corresponds to the particle index.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>x</strong> – A PyTree of arrays, where each leaf array has a leading dimension.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A PyTree with the same structure as <cite>x</cite>, but where each leaf is the
+first slice <cite>leaf[0]</cite> of the corresponding leaf in <cite>x</cite>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ArrayTree</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.ns.utils.uniform_prior">
+<span class="sig-name descname"><span class="pre">uniform_prior</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rng_key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.PRNGKey</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_live</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">bounds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.ArrayTree</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/ns/utils.html#uniform_prior"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.ns.utils.uniform_prior" title="Link to this definition">#</a></dt>
+<dd><p>Sample initial particles and build a log-prior for a box-uniform prior.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>rng_key</strong> – A JAX PRNG key for random number generation.</p></li>
+<li><p><strong>num_live</strong> – The number of live particles to sample.</p></li>
+<li><p><strong>bounds</strong> – A dictionary mapping parameter names to their bounds (tuples of min and max).
+Each parameter will be sampled uniformly within these bounds.
+Example: {‘param1’: (0.0, 1.0), ‘param2’: (-5.0, 5.0)}</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><cite>particles</cite>: A PyTree of sampled parameters, where each leaf has shape <cite>(num_live,)</cite>.</p></li>
+<li><p><cite>logprior_fn</cite>: A function that computes the log-prior probability
+for a given set of parameters.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)">tuple</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../nss/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">blackjax.ns.nss</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../../sgmcmc/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">blackjax.sgmcmc</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.log1mexp"><code class="docutils literal notranslate"><span class="pre">log1mexp()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.compute_num_live"><code class="docutils literal notranslate"><span class="pre">compute_num_live()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.logX"><code class="docutils literal notranslate"><span class="pre">logX()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.log_weights"><code class="docutils literal notranslate"><span class="pre">log_weights()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.finalise"><code class="docutils literal notranslate"><span class="pre">finalise()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.ess"><code class="docutils literal notranslate"><span class="pre">ess()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.sample"><code class="docutils literal notranslate"><span class="pre">sample()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.get_first_row"><code class="docutils literal notranslate"><span class="pre">get_first_row()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.ns.utils.uniform_prior"><code class="docutils literal notranslate"><span class="pre">uniform_prior()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

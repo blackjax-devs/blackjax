@@ -55,7 +55,7 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g507819a24" />
+  <meta name="docsearch:version" content="0.1.dev1+g7b01f0114" />
   </head>
   
   
@@ -221,6 +221,15 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
 </ul>
 </details></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -572,7 +581,7 @@ that calls the Numba-compiled gradient via a second <code class="docutils litera
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.12394101, dtype=float32, weak_type=True), logdensity=Array(-1.7065496, dtype=float32), logdensity_grad=Array(0.01292184, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(0.8653473, dtype=float32, weak_type=True), logdensity=Array(-1.9564109, dtype=float32), logdensity_grad=Array(-0.48230037, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -589,8 +598,8 @@ Python (and Numba) on every call. Let’s see the overhead:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 598 ms, sys: 0 ns, total: 598 ms
-Wall time: 598 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 656 ms, sys: 0 ns, total: 656 ms
+Wall time: 656 ms
 </pre></div>
 </div>
 </div>
@@ -604,8 +613,8 @@ Wall time: 598 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 9.91 s, sys: 697 ms, total: 10.6 s
-Wall time: 10.5 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 12.7 s, sys: 791 ms, total: 13.5 s
+Wall time: 13.4 s
 </pre></div>
 </div>
 </div>

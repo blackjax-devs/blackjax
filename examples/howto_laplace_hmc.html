@@ -55,7 +55,7 @@
     <link rel="prev" title="How to build a Metropolis-Within-Gibbs sampler?" href="howto_metropolis_within_gibbs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g507819a24" />
+  <meta name="docsearch:version" content="0.1.dev1+g7b01f0114" />
   </head>
   
   
@@ -221,6 +221,15 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
 </ul>
 </details></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -533,9 +542,9 @@ for the L-BFGS solver.</p></li>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate:  0.83
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate:  0.75
 Divergences:      0
-phi posterior mean:  0.619  (true log_sigma=0.693)
+phi posterior mean:  0.790  (true log_sigma=0.693)
 </pre></div>
 </div>
 </div>
@@ -569,7 +578,7 @@ against the true marginal log-density:</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/a1daf221ff36fbfbd8650766f8a9ace19f563170cd538edb3454c5307194e6dc.png" src="../_images/a1daf221ff36fbfbd8650766f8a9ace19f563170cd538edb3454c5307194e6dc.png" />
+<img alt="../_images/f65fdd6dc4c89cb00389c79a89cf39d04878de4d1ba32c2181145f7987f869f9.png" src="../_images/f65fdd6dc4c89cb00389c79a89cf39d04878de4d1ba32c2181145f7987f869f9.png" />
 </div>
 </div>
 </section>
@@ -595,7 +604,7 @@ use <code class="docutils literal notranslate"><span class="pre">laplace.sample_
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>theta posterior mean (first 5): [-3.6370795  -0.10161359 -0.8699965  -0.4304653   0.3471648 ]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>theta posterior mean (first 5): [-0.7714891   1.7973014  -0.07456054 -1.3935717   3.3929465 ]
 </pre></div>
 </div>
 </div>
@@ -635,8 +644,8 @@ accepting (no rejection):</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ESS laplace_hmc:  3000.0
-ESS laplace_mhmc: 862.6
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ESS laplace_hmc:  387.8
+ESS laplace_mhmc: 934.0
 </pre></div>
 </div>
 </div>

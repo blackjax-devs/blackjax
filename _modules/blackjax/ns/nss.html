@@ -1,0 +1,1038 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.ns.nss</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/ns/nss';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g7b01f0114" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blackjax.ns.nss</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;Nested Slice Sampling (NSS) algorithm.</span>
+
+<span class="sd">An example implementation of Nested Sampling with a slice sampler as the inner</span>
+<span class="sd">MCMC kernel (Yallup, Kroupa &amp; Handley, 2026, arXiv:2601.23252). The default</span>
+<span class="sd">:func:`build_kernel` uses hit-and-run moves shaped by the live-point covariance;</span>
+<span class="sd">:func:`build_swig_kernel` offers an axis-aligned slice-within-Gibbs alternative.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.flatten_util</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingAlgorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.slice</span><span class="w"> </span><span class="kn">import</span> <span class="n">SliceInfo</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.slice</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_kernel</span> <span class="k">as</span> <span class="n">build_slice_kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.slice</span><span class="w"> </span><span class="kn">import</span> <span class="n">random_order</span><span class="p">,</span> <span class="n">stepping_out</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.ns.adaptive</span><span class="w"> </span><span class="kn">import</span> <span class="n">init</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.ns.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">NSInfo</span><span class="p">,</span> <span class="n">NSState</span><span class="p">,</span> <span class="n">init_state_strategy</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.ns.from_mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_kernel</span> <span class="k">as</span> <span class="n">build_from_mcmc_kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.smc.tuning.from_particles</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">particles_covariance_matrix</span><span class="p">,</span>
+    <span class="n">particles_stds</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_swig_kernel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;coordinate_constrained_step&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;coordinate_proposal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;covariance_proposal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;init&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;live_covariance&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;live_widths&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;slice_constrained_step&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;swig_as_top_level_api&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_direction_from_covariance</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">Array</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A random direction shaped by ``cov``, scaled to Mahalanobis norm 2.</span>
+
+<span class="sd">    Samples ``d ~ N(0, cov)`` and normalizes it with ``inv(cov)`` to a length of</span>
+<span class="sd">    2 in the covariance metric (~2 std devs, a step size that mixes well). Uses</span>
+<span class="sd">    ``inv(cov)`` rather than an explicit Cholesky factor, has encountered differing</span>
+<span class="sd">    behavior on GPU.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">cov</span><span class="p">)</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">d</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">d</span> <span class="o">@</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span> <span class="o">@</span> <span class="n">d</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="covariance_proposal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.covariance_proposal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">covariance_proposal</span><span class="p">(</span>
+    <span class="n">init_state_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">loglikelihood_0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">Array</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Proposal generator for nested slice sampling.</span>
+
+<span class="sd">    The nested-sampling analogue of</span>
+<span class="sd">    :func:`~blackjax.mcmc.slice.direction_proposal`: it steps along a</span>
+<span class="sd">    covariance-shaped direction and gates the hard likelihood constraint into</span>
+<span class="sd">    ``is_valid``. The returned ``slice_fn`` builds the candidate particle</span>
+<span class="sd">    (recording its log-likelihood, computed once) and reports it admissible only</span>
+<span class="sd">    when ``loglikelihood &gt; loglikelihood_0``. Override it to write a custom</span>
+<span class="sd">    nested stepper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">):</span>
+        <span class="k">del</span> <span class="n">logdensity_fn</span>  <span class="c1"># NS gates on the recorded loglikelihood, not logdensity</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">sample_direction_from_covariance</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">slice_fn</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">p</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">init_state_fn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">loglikelihood_birth</span><span class="o">=</span><span class="n">loglikelihood_0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">loglikelihood</span> <span class="o">&gt;</span> <span class="n">loglikelihood_0</span>
+
+        <span class="k">return</span> <span class="n">slice_fn</span>
+
+    <span class="k">return</span> <span class="n">proposal_generator</span></div>
+
+
+
+<div class="viewcode-block" id="coordinate_proposal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.coordinate_proposal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">coordinate_proposal</span><span class="p">(</span>
+    <span class="n">init_state_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">loglikelihood_0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">i</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">width</span><span class="p">:</span> <span class="n">Array</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-axis proposal generator for nested slice-within-Gibbs (SwiG).</span>
+
+<span class="sd">    The coordinate counterpart of :func:`covariance_proposal`: it steps along</span>
+<span class="sd">    axis ``i`` scaled by ``width`` (the direction ``width * e_i``) and gates the</span>
+<span class="sd">    hard likelihood constraint into ``is_valid``. Like :func:`covariance_proposal`,</span>
+<span class="sd">    the move&#39;s scale lives in the direction, so the univariate slice always runs at</span>
+<span class="sd">    unit width. The returned ``slice_fn`` builds the candidate particle (recording</span>
+<span class="sd">    its log-likelihood) and reports it admissible only when</span>
+<span class="sd">    ``loglikelihood &gt; loglikelihood_0``; it threads the full particle, so the</span>
+<span class="sd">    recorded loglikelihood survives the sweep. Override it to write a custom</span>
+<span class="sd">    nested coordinate stepper.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">):</span>
+        <span class="k">del</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">logdensity_fn</span>  <span class="c1"># axis move is deterministic; gate on loglik</span>
+        <span class="n">flat</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">slice_fn</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">t</span> <span class="o">*</span> <span class="n">width</span><span class="p">))</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">init_state_fn</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">loglikelihood_birth</span><span class="o">=</span><span class="n">loglikelihood_0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">new_state</span><span class="o">.</span><span class="n">loglikelihood</span> <span class="o">&gt;</span> <span class="n">loglikelihood_0</span>
+
+        <span class="k">return</span> <span class="n">slice_fn</span>
+
+    <span class="k">return</span> <span class="n">proposal_generator</span></div>
+
+
+
+<div class="viewcode-block" id="live_covariance">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.live_covariance">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">live_covariance</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">NSState</span><span class="p">,</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">NSInfo</span><span class="p">,</span>
+    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Live-point covariance, recomputed each step to shape the direction.&quot;&quot;&quot;</span>
+    <span class="c1"># rng_key, info and params are unused here but required by the</span>
+    <span class="c1"># adaptive-kernel callback protocol (update_inner_kernel_params_fn).</span>
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;cov&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">particles_covariance_matrix</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">particles</span><span class="o">.</span><span class="n">position</span><span class="p">))</span>
+    <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="live_widths">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.live_widths">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">live_widths</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">NSState</span><span class="p">,</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">NSInfo</span><span class="p">,</span>
+    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-axis live-point spread (std): the per-coordinate slice widths for SwiG.</span>
+
+<span class="sd">    The coordinate counterpart of :func:`live_covariance`: only the marginal</span>
+<span class="sd">    per-axis spread is used, so axis correlations are deliberately ignored -- the</span>
+<span class="sd">    defining trait of a coordinate (slice-within-Gibbs) move. Overridable via the</span>
+<span class="sd">    ``inner_kernel_params`` seam of :func:`build_swig_kernel` and</span>
+<span class="sd">    :func:`swig_as_top_level_api`, mirroring :func:`live_covariance`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># rng_key, info and params are unused here but required by the</span>
+    <span class="c1"># adaptive-kernel callback protocol (update_inner_kernel_params_fn).</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;widths&quot;</span><span class="p">:</span> <span class="n">particles_stds</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">particles</span><span class="o">.</span><span class="n">position</span><span class="p">)}</span></div>
+
+
+
+<div class="viewcode-block" id="slice_constrained_step">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.slice_constrained_step">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">slice_constrained_step</span><span class="p">(</span>
+    <span class="n">init_state_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">slice_kernel</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The slice-family constrained inner step for nested sampling.</span>
+
+<span class="sd">    Runs ``slice_kernel`` with a constrained proposal generator built by</span>
+<span class="sd">    ``proposal(init_state_fn, loglikelihood_0, **params)``; the proposal&#39;s</span>
+<span class="sd">    ``slice_fn`` gates ``is_valid`` on the likelihood contour, so the slice</span>
+<span class="sd">    shrinks until it lands inside it (no wasted steps). The slice counterpart to</span>
+<span class="sd">    :func:`reject_constrained_step`, consumed by</span>
+<span class="sd">    :func:`~blackjax.ns.from_mcmc.build_kernel`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">loglikelihood_0</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">):</span>
+        <span class="n">proposal_generator</span> <span class="o">=</span> <span class="n">proposal</span><span class="p">(</span><span class="n">init_state_fn</span><span class="p">,</span> <span class="n">loglikelihood_0</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">slice_kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">proposal_generator</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">step</span></div>
+
+
+
+<div class="viewcode-block" id="build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.build_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
+    <span class="n">init_state_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_inner_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_delete</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">covariance_proposal</span><span class="p">,</span>
+    <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">live_covariance</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Nested Slice Sampling kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    init_state_fn</span>
+<span class="sd">        Builds a particle state from a position and birth log-likelihood.</span>
+<span class="sd">    num_inner_steps</span>
+<span class="sd">        Number of slice steps per new particle. Prefer</span>
+<span class="sd">        ``num_inner_steps &gt;= max(5, 2 * dim)`` for reliable mixing (bare ``dim`` is</span>
+<span class="sd">        the minimum; see :func:`as_top_level_api`).</span>
+<span class="sd">    num_delete</span>
+<span class="sd">        Number of particles deleted and replaced per step (default 1).</span>
+<span class="sd">    max_steps</span>
+<span class="sd">        Cap on stepping-out expansions per slice (default 10).</span>
+<span class="sd">    max_shrinkage</span>
+<span class="sd">        Cap on shrinkage evaluations per slice (default 100).</span>
+<span class="sd">    proposal</span>
+<span class="sd">        Proposal factory ``(init_state_fn, loglikelihood_0, cov) -&gt;</span>
+<span class="sd">        proposal_generator`` (:func:`covariance_proposal` by default). Override</span>
+<span class="sd">        to write a custom nested stepper.</span>
+<span class="sd">    inner_kernel_params</span>
+<span class="sd">        Computes the inner-kernel parameters from the live points each step,</span>
+<span class="sd">        ``(rng_key, state, info, params) -&gt; params`` (:func:`live_covariance`</span>
+<span class="sd">        by default, the live-point covariance).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">slice_kernel</span> <span class="o">=</span> <span class="n">build_slice_kernel</span><span class="p">(</span>
+        <span class="n">interval</span><span class="o">=</span><span class="n">stepping_out</span><span class="p">,</span>
+        <span class="n">max_expansions</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+        <span class="n">max_shrinkage</span><span class="o">=</span><span class="n">max_shrinkage</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">constrained_step_fn</span> <span class="o">=</span> <span class="n">slice_constrained_step</span><span class="p">(</span><span class="n">init_state_fn</span><span class="p">,</span> <span class="n">slice_kernel</span><span class="p">,</span> <span class="n">proposal</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">build_from_mcmc_kernel</span><span class="p">(</span>
+        <span class="n">constrained_step_fn</span><span class="p">,</span>
+        <span class="n">num_inner_steps</span><span class="p">,</span>
+        <span class="n">inner_kernel_params</span><span class="p">,</span>
+        <span class="n">num_delete</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="coordinate_constrained_step">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.coordinate_constrained_step">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">coordinate_constrained_step</span><span class="p">(</span>
+    <span class="n">init_state_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">slice_kernel</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">coordinate_proposal</span><span class="p">,</span>
+    <span class="n">coordinate_order</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">random_order</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The coordinate-sweep constrained inner step for nested sampling (SwiG).</span>
+
+<span class="sd">    The slice-within-Gibbs counterpart of :func:`slice_constrained_step`: one call</span>
+<span class="sd">    sweeps every axis once -- in the order set by ``coordinate_order`` -- updating</span>
+<span class="sd">    each by a univariate slice from the per-axis proposal generator</span>
+<span class="sd">    ``proposal(init_state_fn, loglikelihood_0, i, width)`` (:func:`coordinate_proposal`</span>
+<span class="sd">    by default, the axis analogue of :func:`covariance_proposal` passed to</span>
+<span class="sd">    :func:`slice_constrained_step`), which steps along ``width * e_i`` and gates the</span>
+<span class="sd">    likelihood contour into ``is_valid``. As with the hit-and-run path the scale</span>
+<span class="sd">    lives in the direction, so the univariate slice runs at unit width. Consumed by</span>
+<span class="sd">    :func:`~blackjax.ns.from_mcmc.build_kernel` exactly like the hit-and-run step.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">loglikelihood_0</span><span class="p">,</span> <span class="n">widths</span><span class="p">):</span>
+        <span class="n">order_key</span><span class="p">,</span> <span class="n">sweep_key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
+        <span class="n">flat</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">coordinate_order</span><span class="p">(</span><span class="n">order_key</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">carry_state</span><span class="p">,</span> <span class="n">inp</span><span class="p">):</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">width</span> <span class="o">=</span> <span class="n">inp</span>
+            <span class="c1"># Scale lives in the proposal&#39;s direction (width * e_i), so the slice</span>
+            <span class="c1"># runs at unit width -- symmetric with the hit-and-run path.</span>
+            <span class="n">proposal_generator</span> <span class="o">=</span> <span class="n">proposal</span><span class="p">(</span><span class="n">init_state_fn</span><span class="p">,</span> <span class="n">loglikelihood_0</span><span class="p">,</span> <span class="n">i</span><span class="p">,</span> <span class="n">width</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">slice_kernel</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">carry_state</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">proposal_generator</span><span class="p">)</span>
+
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sweep_key</span><span class="p">,</span> <span class="n">order</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">final_state</span><span class="p">,</span> <span class="n">swept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">body</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">widths</span><span class="p">[</span><span class="n">order</span><span class="p">]))</span>
+
+        <span class="c1"># Sum the per-axis counters and scatter the brackets back into the</span>
+        <span class="c1"># position structure, matching :func:`~blackjax.mcmc.slice.coordinate_slice`.</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">stitch</span><span class="p">(</span><span class="n">v</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">order</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+
+        <span class="n">info</span> <span class="o">=</span> <span class="n">SliceInfo</span><span class="p">(</span>
+            <span class="n">is_accepted</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">is_accepted</span><span class="p">),</span>
+            <span class="n">num_expansions</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">num_expansions</span><span class="p">),</span>
+            <span class="n">num_shrink</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">num_shrink</span><span class="p">),</span>
+            <span class="n">bracket_left</span><span class="o">=</span><span class="n">stitch</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">bracket_left</span><span class="p">),</span>
+            <span class="n">bracket_right</span><span class="o">=</span><span class="n">stitch</span><span class="p">(</span><span class="n">swept</span><span class="o">.</span><span class="n">bracket_right</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">final_state</span><span class="p">,</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">step</span></div>
+
+
+
+<div class="viewcode-block" id="build_swig_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.build_swig_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_swig_kernel</span><span class="p">(</span>
+    <span class="n">init_state_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_inner_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_delete</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">coordinate_proposal</span><span class="p">,</span>
+    <span class="n">coordinate_order</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">random_order</span><span class="p">,</span>
+    <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">live_widths</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Nested Slice-within-Gibbs (SwiG) kernel.</span>
+
+<span class="sd">    The coordinate counterpart of :func:`build_kernel`: each inner step is a full</span>
+<span class="sd">    coordinate *sweep* rather than a hit-and-run move. Axes are visited in the</span>
+<span class="sd">    order set by ``coordinate_order`` (:func:`~blackjax.mcmc.slice.random_order`</span>
+<span class="sd">    by default, or :func:`~blackjax.mcmc.slice.fixed_order`), and each is updated</span>
+<span class="sd">    by a univariate slice gated on the likelihood contour and scaled by that</span>
+<span class="sd">    axis&#39;s live width (the per-axis spread of the live points; correlations are</span>
+<span class="sd">    ignored). Prefer this when the target is close to axis-aligned, or when its</span>
+<span class="sd">    correlations are unreliable to estimate. Pair with</span>
+<span class="sd">    :func:`swig_as_top_level_api` for the bundled (init, step) algorithm.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    init_state_fn</span>
+<span class="sd">        Builds a particle state from a position and birth log-likelihood.</span>
+<span class="sd">    num_inner_steps</span>
+<span class="sd">        Number of coordinate sweeps per new particle. Prefer</span>
+<span class="sd">        ``num_inner_steps &gt;= max(5, 2 * dim)`` for reliable mixing (bare ``dim`` is</span>
+<span class="sd">        the minimum; see :func:`swig_as_top_level_api`).</span>
+<span class="sd">    num_delete</span>
+<span class="sd">        Number of particles deleted and replaced per step (default 1).</span>
+<span class="sd">    max_steps</span>
+<span class="sd">        Cap on stepping-out expansions per univariate slice (default 10).</span>
+<span class="sd">    max_shrinkage</span>
+<span class="sd">        Cap on shrinkage evaluations per univariate slice (default 100).</span>
+<span class="sd">    proposal</span>
+<span class="sd">        Per-axis proposal factory ``(init_state_fn, loglikelihood_0, i, width)</span>
+<span class="sd">        -&gt; proposal_generator`` (:func:`coordinate_proposal` by default). The</span>
+<span class="sd">        coordinate analogue of the ``proposal`` seam on :func:`build_kernel`.</span>
+<span class="sd">    coordinate_order</span>
+<span class="sd">        Sweep-order primitive ``(rng_key, d) -&gt; indices``</span>
+<span class="sd">        (:func:`~blackjax.mcmc.slice.random_order` by default).</span>
+<span class="sd">    inner_kernel_params</span>
+<span class="sd">        Computes the inner-kernel parameters from the live points each step,</span>
+<span class="sd">        ``(rng_key, state, info, params) -&gt; params`` (:func:`live_widths` by</span>
+<span class="sd">        default, the per-axis live-point spread).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">slice_kernel</span> <span class="o">=</span> <span class="n">build_slice_kernel</span><span class="p">(</span>
+        <span class="n">interval</span><span class="o">=</span><span class="n">stepping_out</span><span class="p">,</span>
+        <span class="n">max_expansions</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+        <span class="n">max_shrinkage</span><span class="o">=</span><span class="n">max_shrinkage</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">constrained_step_fn</span> <span class="o">=</span> <span class="n">coordinate_constrained_step</span><span class="p">(</span>
+        <span class="n">init_state_fn</span><span class="p">,</span>
+        <span class="n">slice_kernel</span><span class="p">,</span>
+        <span class="n">proposal</span><span class="o">=</span><span class="n">proposal</span><span class="p">,</span>
+        <span class="n">coordinate_order</span><span class="o">=</span><span class="n">coordinate_order</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">build_from_mcmc_kernel</span><span class="p">(</span>
+        <span class="n">constrained_step_fn</span><span class="p">,</span>
+        <span class="n">num_inner_steps</span><span class="p">,</span>
+        <span class="n">inner_kernel_params</span><span class="p">,</span>
+        <span class="n">num_delete</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="as_top_level_api">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.as_top_level_api">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">as_top_level_api</span><span class="p">(</span>
+    <span class="n">logprior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_inner_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_delete</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">covariance_proposal</span><span class="p">,</span>
+    <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">live_covariance</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a Nested Slice Sampling (NSS) algorithm, ``blackjax.nss``.</span>
+
+<span class="sd">    Nested Sampling with a hit-and-run slice inner kernel: each particle</span>
+<span class="sd">    replacement runs ``num_inner_steps`` constrained slice moves along</span>
+<span class="sd">    directions shaped by the live-point covariance.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprior_fn</span>
+<span class="sd">        Log-prior of a single particle.</span>
+<span class="sd">    loglikelihood_fn</span>
+<span class="sd">        Log-likelihood of a single particle.</span>
+<span class="sd">    num_inner_steps</span>
+<span class="sd">        Number of slice steps per new particle. Use</span>
+<span class="sd">        ``num_inner_steps &gt;= max(5, 2 * dim)`` for reliable mixing within the</span>
+<span class="sd">        likelihood contour; bare ``dim`` is the minimum and can bias the evidence</span>
+<span class="sd">        *upward* for ``dim &gt; 10`` (the inner chain must decorrelate the new particle</span>
+<span class="sd">        from the deleted one, not merely satisfy the constraint).</span>
+<span class="sd">    num_delete</span>
+<span class="sd">        Number of particles deleted and replaced per step (default 1).</span>
+<span class="sd">    max_steps</span>
+<span class="sd">        Cap on stepping-out expansions per slice (default 10).</span>
+<span class="sd">    max_shrinkage</span>
+<span class="sd">        Cap on shrinkage evaluations per slice (default 100).</span>
+<span class="sd">    proposal</span>
+<span class="sd">        Proposal factory ``(init_state_fn, loglikelihood_0, cov) -&gt;</span>
+<span class="sd">        proposal_generator`` (:func:`covariance_proposal` by default). Override</span>
+<span class="sd">        to write a custom nested stepper.</span>
+<span class="sd">    inner_kernel_params</span>
+<span class="sd">        Computes the inner-kernel parameters from the live points,</span>
+<span class="sd">        ``(rng_key, state, info, params) -&gt; params`` (:func:`live_covariance`</span>
+<span class="sd">        by default). Used both to seed ``init`` and to update each step.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm`` whose ``step(rng_key, state)`` returns</span>
+<span class="sd">    ``(new_state, info)``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The live particles in the run state (``state.particles``) are **not** posterior</span>
+<span class="sd">    samples: they are the current likelihood shell and at termination collapse to</span>
+<span class="sd">    the highest-likelihood mode. For correctly-weighted posterior draws, pass the</span>
+<span class="sd">    dead points through :func:`~blackjax.ns.utils.finalise` and resample with</span>
+<span class="sd">    :func:`~blackjax.ns.utils.sample`.</span>
+
+<span class="sd">    The covariance-shaped proposal bridges between modes only up to moderate</span>
+<span class="sd">    separation. For strongly multimodal targets, ensure the initial live points</span>
+<span class="sd">    span every mode (and consider a clustering inner kernel); minor modes are still</span>
+<span class="sd">    weighted correctly in the resampled posterior, but may be absent from the final</span>
+<span class="sd">    live set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">init_state_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">init_state_strategy</span><span class="p">,</span>
+        <span class="n">logprior_fn</span><span class="o">=</span><span class="n">logprior_fn</span><span class="p">,</span>
+        <span class="n">loglikelihood_fn</span><span class="o">=</span><span class="n">loglikelihood_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span>
+        <span class="n">init_state_fn</span><span class="p">,</span>
+        <span class="n">num_inner_steps</span><span class="p">,</span>
+        <span class="n">num_delete</span><span class="p">,</span>
+        <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+        <span class="n">max_shrinkage</span><span class="o">=</span><span class="n">max_shrinkage</span><span class="p">,</span>
+        <span class="n">proposal</span><span class="o">=</span><span class="n">proposal</span><span class="p">,</span>
+        <span class="n">inner_kernel_params</span><span class="o">=</span><span class="n">inner_kernel_params</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">init</span><span class="p">(</span>
+            <span class="n">position</span><span class="p">,</span>
+            <span class="n">init_state_fn</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">init_state_fn</span><span class="p">),</span>
+            <span class="n">update_inner_kernel_params_fn</span><span class="o">=</span><span class="n">inner_kernel_params</span><span class="p">,</span>
+            <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="swig_as_top_level_api">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.swig_as_top_level_api">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">swig_as_top_level_api</span><span class="p">(</span>
+    <span class="n">logprior_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">loglikelihood_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_inner_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_delete</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">coordinate_proposal</span><span class="p">,</span>
+    <span class="n">coordinate_order</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">random_order</span><span class="p">,</span>
+    <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">live_widths</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a Nested Slice-within-Gibbs (SwiG) sampling algorithm, ``blackjax.nsswig``.</span>
+
+<span class="sd">    Nested Sampling with an axis-aligned slice-within-Gibbs inner kernel: each</span>
+<span class="sd">    particle replacement runs ``num_inner_steps`` constrained coordinate sweeps,</span>
+<span class="sd">    each axis scaled by the live-point spread (correlations are ignored). The</span>
+<span class="sd">    coordinate counterpart of :func:`as_top_level_api`; prefer it when the target</span>
+<span class="sd">    is close to axis-aligned or its correlations are unreliable to estimate.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logprior_fn</span>
+<span class="sd">        Log-prior of a single particle.</span>
+<span class="sd">    loglikelihood_fn</span>
+<span class="sd">        Log-likelihood of a single particle.</span>
+<span class="sd">    num_inner_steps</span>
+<span class="sd">        Number of coordinate sweeps per new particle. Use</span>
+<span class="sd">        ``num_inner_steps &gt;= max(5, 2 * dim)`` for reliable mixing within the</span>
+<span class="sd">        likelihood contour; bare ``dim`` is the minimum and can bias the evidence</span>
+<span class="sd">        *upward* for ``dim &gt; 10`` (the inner chain must decorrelate the new particle</span>
+<span class="sd">        from the deleted one, not merely satisfy the constraint).</span>
+<span class="sd">    num_delete</span>
+<span class="sd">        Number of particles deleted and replaced per step (default 1).</span>
+<span class="sd">    max_steps</span>
+<span class="sd">        Cap on stepping-out expansions per univariate slice (default 10).</span>
+<span class="sd">    max_shrinkage</span>
+<span class="sd">        Cap on shrinkage evaluations per univariate slice (default 100).</span>
+<span class="sd">    proposal</span>
+<span class="sd">        Per-axis proposal factory ``(init_state_fn, loglikelihood_0, i, width)</span>
+<span class="sd">        -&gt; proposal_generator`` (:func:`coordinate_proposal` by default), the</span>
+<span class="sd">        coordinate analogue of the ``proposal`` seam on :func:`as_top_level_api`.</span>
+<span class="sd">    coordinate_order</span>
+<span class="sd">        Sweep-order primitive ``(rng_key, d) -&gt; indices``</span>
+<span class="sd">        (:func:`~blackjax.mcmc.slice.random_order` by default).</span>
+<span class="sd">    inner_kernel_params</span>
+<span class="sd">        Computes the inner-kernel parameters from the live points,</span>
+<span class="sd">        ``(rng_key, state, info, params) -&gt; params`` (:func:`live_widths` by</span>
+<span class="sd">        default). Used both to seed ``init`` and to update each step.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm`` whose ``step(rng_key, state)`` returns</span>
+<span class="sd">    ``(new_state, info)``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The live particles in the run state (``state.particles``) are **not** posterior</span>
+<span class="sd">    samples: they are the current likelihood shell and at termination collapse to</span>
+<span class="sd">    the highest-likelihood mode. For correctly-weighted posterior draws, pass the</span>
+<span class="sd">    dead points through :func:`~blackjax.ns.utils.finalise` and resample with</span>
+<span class="sd">    :func:`~blackjax.ns.utils.sample`.</span>
+
+<span class="sd">    For strongly multimodal targets, ensure the initial live points span every mode</span>
+<span class="sd">    (the axis-aligned per-particle proposal does not bridge well-separated modes);</span>
+<span class="sd">    minor modes are still weighted correctly in the resampled posterior, but may be</span>
+<span class="sd">    absent from the final live set.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">init_state_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
+        <span class="n">init_state_strategy</span><span class="p">,</span>
+        <span class="n">logprior_fn</span><span class="o">=</span><span class="n">logprior_fn</span><span class="p">,</span>
+        <span class="n">loglikelihood_fn</span><span class="o">=</span><span class="n">loglikelihood_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_swig_kernel</span><span class="p">(</span>
+        <span class="n">init_state_fn</span><span class="p">,</span>
+        <span class="n">num_inner_steps</span><span class="p">,</span>
+        <span class="n">num_delete</span><span class="p">,</span>
+        <span class="n">max_steps</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
+        <span class="n">max_shrinkage</span><span class="o">=</span><span class="n">max_shrinkage</span><span class="p">,</span>
+        <span class="n">proposal</span><span class="o">=</span><span class="n">proposal</span><span class="p">,</span>
+        <span class="n">coordinate_order</span><span class="o">=</span><span class="n">coordinate_order</span><span class="p">,</span>
+        <span class="n">inner_kernel_params</span><span class="o">=</span><span class="n">inner_kernel_params</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">init</span><span class="p">(</span>
+            <span class="n">position</span><span class="p">,</span>
+            <span class="n">init_state_fn</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">init_state_fn</span><span class="p">),</span>
+            <span class="n">update_inner_kernel_params_fn</span><span class="o">=</span><span class="n">inner_kernel_params</span><span class="p">,</span>
+            <span class="n">rng_key</span><span class="o">=</span><span class="n">rng_key</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

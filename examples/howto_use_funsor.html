@@ -55,7 +55,7 @@
     <link rel="prev" title="Use with Numpyro models" href="howto_use_numpyro.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g507819a24" />
+  <meta name="docsearch:version" content="0.1.dev1+g7b01f0114" />
   </head>
   
   
@@ -221,6 +221,15 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
 </ul>
 </details></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
@@ -605,8 +614,8 @@ for sampling.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.69 s, sys: 202 ms, total: 3.89 s
-Wall time: 1.73 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 4.01 s, sys: 208 ms, total: 4.21 s
+Wall time: 1.84 s
 </pre></div>
 </div>
 </div>
@@ -645,8 +654,8 @@ Wall time: 1.73 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.64 s, sys: 37.7 ms, total: 2.67 s
-Wall time: 1.08 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.74 s, sys: 40.9 ms, total: 2.79 s
+Wall time: 1.14 s
 </pre></div>
 </div>
 </div>
@@ -690,7 +699,7 @@ across runs with different random seeds.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/3c01e6290d873446a6ad330920f2def3de8714ef6fedfd3b03ef4aec623b32fc.png" src="../_images/3c01e6290d873446a6ad330920f2def3de8714ef6fedfd3b03ef4aec623b32fc.png" />
+<img alt="../_images/7f5e86d9e984288dcad5b3a25422b796075f02e5abb961c43ad95f058cb3bbf6.png" src="../_images/7f5e86d9e984288dcad5b3a25422b796075f02e5abb961c43ad95f058cb3bbf6.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -710,9 +719,9 @@ across runs with different random seeds.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Posterior E[μ]: [-3.9599998  0.04       4.0099998]   true: [-4.  0.  4.]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Posterior E[μ]: [-3.9599998  0.04       4.       ]   true: [-4.  0.  4.]
 Posterior E[π]: [0.32999998 0.38       0.29      ]   true: [0.3 0.4 0.3]
-Mean acceptance rate: 0.92
+Mean acceptance rate: 0.91
 </pre></div>
 </div>
 </div>
@@ -808,8 +817,8 @@ bijectively onto the K-simplex.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>log p(data | init): -1185.0624
-grad w.r.t. mu    : [  -4.760871 -213.31854   160.51898 ]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>log p(data | init): -1510.3019
+grad w.r.t. mu    : [ 232.26018 -103.0827  -163.28618]
 </pre></div>
 </div>
 </div>
@@ -830,8 +839,8 @@ grad w.r.t. mu    : [  -4.760871 -213.31854   160.51898 ]
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.33 s, sys: 97.3 ms, total: 3.42 s
-Wall time: 1.49 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.42 s, sys: 97.1 ms, total: 3.52 s
+Wall time: 1.53 s
 </pre></div>
 </div>
 </div>
@@ -848,8 +857,8 @@ Wall time: 1.49 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.96 s, sys: 38.1 ms, total: 3 s
-Wall time: 1.21 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.99 s, sys: 66.6 ms, total: 3.05 s
+Wall time: 1.24 s
 </pre></div>
 </div>
 </div>
@@ -881,7 +890,7 @@ unconstrained samples.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<img alt="../_images/e7e74637a923114870f1767a72460678ce311a98f8939cb3f84197f459c6eec7.png" src="../_images/e7e74637a923114870f1767a72460678ce311a98f8939cb3f84197f459c6eec7.png" />
+<img alt="../_images/e706b0c60930eecd62137254c5db37aa790270fd32a7837988c90b3932a7e5e1.png" src="../_images/e706b0c60930eecd62137254c5db37aa790270fd32a7837988c90b3932a7e5e1.png" />
 </div>
 </div>
 <div class="cell tag_hide-input docutils container">
@@ -899,9 +908,9 @@ unconstrained samples.</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Posterior E[μ]: [-3.9499998  0.05       4.0099998]   true: [-4.  0.  4.]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Posterior E[μ]: [-3.9499998  0.04       4.0099998]   true: [-4.  0.  4.]
 Posterior E[π]: [0.32999998 0.38       0.29      ]   true: [0.3 0.4 0.3]
-Mean acceptance rate: 0.90
+Mean acceptance rate: 0.88
 </pre></div>
 </div>
 </div>
