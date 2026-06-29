@@ -37,6 +37,7 @@ from .mcmc.random_walk import (
     normal_random_walk,
     rmh_as_top_level_api,
 )
+from .ns import nss as _nss
 from .optimizers import dual_averaging, lbfgs
 from .sgmcmc import csgld as _csgld
 from .sgmcmc import sghmc as _sghmc
@@ -198,6 +199,14 @@ smc_family = [
     adaptive_persistent_sampling_smc,
 ]
 "Step_fn returning state has a .particles attribute"
+
+# NS
+nss = generate_top_level_api_from(_nss)
+nsswig = GenerateSamplingAPI(
+    _nss.swig_as_top_level_api, _nss.init, _nss.build_swig_kernel
+)
+
+ns_family = [nss, nsswig]
 
 # stochastic gradient mcmc
 sgld = generate_top_level_api_from(_sgld)
