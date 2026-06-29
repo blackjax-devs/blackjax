@@ -50,6 +50,12 @@ def compute_num_live(info: NSInfo) -> Array:
     transforming 1 jump of size k into k jumps of size 1. This function computes
     the effective population size associated with this transformation.
 
+    Expects the **complete finalised output** -- the dead points together with the
+    final live particles (e.g. from :func:`finalise`): it relies on every
+    particle's birth event being present. Called on a dead-only subset that omits
+    the initial live particles' births, the live counts are wrong (1 instead of
+    ``N`` for a standard run).
+
     Returns
     -------
     Array

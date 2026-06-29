@@ -197,8 +197,9 @@ def build_kernel(
     init_state_fn
         Builds a particle state from a position and birth log-likelihood.
     num_inner_steps
-        Number of slice steps per new particle (typically a multiple of the
-        dimension).
+        Number of slice steps per new particle. Prefer
+        ``num_inner_steps >= max(5, 2 * dim)`` for reliable mixing (bare ``dim`` is
+        the minimum; see :func:`as_top_level_api`).
     num_delete
         Number of particles deleted and replaced per step (default 1).
     max_steps
@@ -311,7 +312,9 @@ def build_swig_kernel(
     init_state_fn
         Builds a particle state from a position and birth log-likelihood.
     num_inner_steps
-        Number of coordinate sweeps per new particle.
+        Number of coordinate sweeps per new particle. Prefer
+        ``num_inner_steps >= max(5, 2 * dim)`` for reliable mixing (bare ``dim`` is
+        the minimum; see :func:`swig_as_top_level_api`).
     num_delete
         Number of particles deleted and replaced per step (default 1).
     max_steps
@@ -376,8 +379,11 @@ def as_top_level_api(
     loglikelihood_fn
         Log-likelihood of a single particle.
     num_inner_steps
-        Number of slice steps per new particle (typically a multiple of the
-        dimension).
+        Number of slice steps per new particle. Use
+        ``num_inner_steps >= max(5, 2 * dim)`` for reliable mixing within the
+        likelihood contour; bare ``dim`` is the minimum and can bias the evidence
+        *upward* for ``dim > 10`` (the inner chain must decorrelate the new particle
+        from the deleted one, not merely satisfy the constraint).
     num_delete
         Number of particles deleted and replaced per step (default 1).
     max_steps
@@ -397,6 +403,20 @@ def as_top_level_api(
     -------
     A ``SamplingAlgorithm`` whose ``step(rng_key, state)`` returns
     ``(new_state, info)``.
+
+    Notes
+    -----
+    The live particles in the run state (``state.particles``) are **not** posterior
+    samples: they are the current likelihood shell and at termination collapse to
+    the highest-likelihood mode. For correctly-weighted posterior draws, pass the
+    dead points through :func:`~blackjax.ns.utils.finalise` and resample with
+    :func:`~blackjax.ns.utils.sample`.
+
+    The covariance-shaped proposal bridges between modes only up to moderate
+    separation. For strongly multimodal targets, ensure the initial live points
+    span every mode (and consider a clustering inner kernel); minor modes are still
+    weighted correctly in the resampled posterior, but may be absent from the final
+    live set.
     """
     init_state_fn = partial(
         init_state_strategy,
@@ -453,8 +473,11 @@ def swig_as_top_level_api(
     loglikelihood_fn
         Log-likelihood of a single particle.
     num_inner_steps
-        Number of coordinate sweeps per new particle (typically a multiple of the
-        dimension).
+        Number of coordinate sweeps per new particle. Use
+        ``num_inner_steps >= max(5, 2 * dim)`` for reliable mixing within the
+        likelihood contour; bare ``dim`` is the minimum and can bias the evidence
+        *upward* for ``dim > 10`` (the inner chain must decorrelate the new particle
+        from the deleted one, not merely satisfy the constraint).
     num_delete
         Number of particles deleted and replaced per step (default 1).
     max_steps
@@ -477,6 +500,19 @@ def swig_as_top_level_api(
     -------
     A ``SamplingAlgorithm`` whose ``step(rng_key, state)`` returns
     ``(new_state, info)``.
+
+    Notes
+    -----
+    The live particles in the run state (``state.particles``) are **not** posterior
+    samples: they are the current likelihood shell and at termination collapse to
+    the highest-likelihood mode. For correctly-weighted posterior draws, pass the
+    dead points through :func:`~blackjax.ns.utils.finalise` and resample with
+    :func:`~blackjax.ns.utils.sample`.
+
+    For strongly multimodal targets, ensure the initial live points span every mode
+    (the axis-aligned per-particle proposal does not bridge well-separated modes);
+    minor modes are still weighted correctly in the resampled posterior, but may be
+    absent from the final live set.
     """
     init_state_fn = partial(
         init_state_strategy,
