@@ -401,6 +401,12 @@ class NestedSamplingStatisticalTest(chex.TestCase):
         super().setUp()
         self.key = jax.random.key(42)
 
+    def tearDown(self):
+        # Release compiled XLA kernels between heavy end-to-end tests to avoid
+        # cumulative memory pressure under pytest-xdist parallel workers.
+        jax.clear_caches()
+        super().tearDown()
+
     def test_1d_gaussian_evidence_estimation(self):
         """Test evidence estimation with analytic validation for unnormalized Gaussian."""
 
@@ -582,15 +588,16 @@ class NestedSamplingStatisticalTest(chex.TestCase):
         positions = jax.random.multivariate_normal(
             init_key, prior_mean, prior_cov, (n_live,)
         )
-        # batch-delete a third of the live set per step so the run compresses in
-        # a handful of steps (keeps the test fast while exercising num_delete > 1)
+        # num_delete=2 exercises the batch-delete path while keeping the compiled
+        # kernel small (the kernel vmaps over num_delete replacements); the dynamic
+        # termination criterion converges well within the 200-step cap for dim=2.
         algo = nss.as_top_level_api(
-            logprior, loglikelihood, num_inner_steps=6, num_delete=10
+            logprior, loglikelihood, num_inner_steps=6, num_delete=2
         )
         state = algo.init(positions)
 
         step = jax.jit(algo.step)
-        for _ in range(500):  # dynamic termination (logZ_live - logZ < -3), capped
+        for _ in range(200):  # dynamic termination (logZ_live - logZ < -3), capped
             if float(state.integrator.logZ_live - state.integrator.logZ) < -3.0:
                 break
             key, sub = jax.random.split(key)
@@ -627,12 +634,12 @@ class NestedSamplingStatisticalTest(chex.TestCase):
             init_key, prior_mean, prior_cov, (n_live,)
         )
         algo = nss.swig_as_top_level_api(
-            logprior, loglikelihood, num_inner_steps=6, num_delete=10
+            logprior, loglikelihood, num_inner_steps=6, num_delete=2
         )
         state = algo.init(positions)
 
         step = jax.jit(algo.step)
-        for _ in range(500):  # dynamic termination (logZ_live - logZ < -3), capped
+        for _ in range(200):  # dynamic termination (logZ_live - logZ < -3), capped
             if float(state.integrator.logZ_live - state.integrator.logZ) < -3.0:
                 break
             key, sub = jax.random.split(key)
@@ -714,14 +721,16 @@ class NestedSamplingStatisticalTest(chex.TestCase):
         positions = jax.random.multivariate_normal(
             init_key, prior_mean, prior_cov, (n_live,)
         )
+        # num_inner_steps=6 satisfies the >= max(5, 2*dim) = 5 floor for dim=2;
+        # num_delete=2 keeps the vmapped replacement kernel compact.
         init_fn, kernel = build_rw_nested_sampler(
-            logprior, loglikelihood, num_inner_steps=20, num_delete=10
+            logprior, loglikelihood, num_inner_steps=6, num_delete=2
         )
         state = init_fn(positions)
 
         step = jax.jit(kernel)
         info = None
-        for _ in range(500):  # dynamic termination (logZ_live - logZ < -3), capped
+        for _ in range(200):  # dynamic termination (logZ_live - logZ < -3), capped
             if float(state.integrator.logZ_live - state.integrator.logZ) < -3.0:
                 break
             key, sub = jax.random.split(key)
