@@ -37,6 +37,7 @@ from .mcmc.random_walk import (
     normal_random_walk,
     rmh_as_top_level_api,
 )
+from .ns import nss as _nss
 from .optimizers import dual_averaging, lbfgs
 from .sgmcmc import csgld as _csgld
 from .sgmcmc import sghmc as _sghmc
@@ -128,6 +129,9 @@ adjusted_mclmc_dynamic = generate_top_level_api_from(_adjusted_mclmc_dynamic)
 adjusted_mclmc = generate_top_level_api_from(_adjusted_mclmc)
 elliptical_slice = generate_top_level_api_from(_elliptical_slice)
 slice_sampling = generate_top_level_api_from(_slice)
+coordinate_slice = GenerateSamplingAPI(
+    _slice.coordinate_slice, _slice.init, _slice.build_coordinate_kernel
+)
 ghmc = generate_top_level_api_from(_ghmc)
 barker = generate_top_level_api_from(_barker)
 barker_proposal = barker  # backwards-compatible alias
@@ -196,6 +200,14 @@ smc_family = [
 ]
 "Step_fn returning state has a .particles attribute"
 
+# NS
+nss = generate_top_level_api_from(_nss)
+nsswig = GenerateSamplingAPI(
+    _nss.swig_as_top_level_api, _nss.init, _nss.build_swig_kernel
+)
+
+ns_family = [nss, nsswig]
+
 # stochastic gradient mcmc
 sgld = generate_top_level_api_from(_sgld)
 sghmc = generate_top_level_api_from(_sghmc)
@@ -245,6 +257,7 @@ __all__ = [
     "barker",
     "elliptical_slice",
     "slice_sampling",
+    "coordinate_slice",
     "mclmc",
     "adjusted_mclmc",
     "adjusted_mclmc_dynamic",
