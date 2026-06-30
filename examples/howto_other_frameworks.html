@@ -55,7 +55,7 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g7b01f0114" />
+  <meta name="docsearch:version" content="0.1.dev1+gf73e12956" />
   </head>
   
   
@@ -581,7 +581,7 @@ that calls the Numba-compiled gradient via a second <code class="docutils litera
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(0.8653473, dtype=float32, weak_type=True), logdensity=Array(-1.9564109, dtype=float32), logdensity_grad=Array(-0.48230037, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(0.30763647, dtype=float32, weak_type=True), logdensity=Array(-1.752666, dtype=float32), logdensity_grad=Array(-0.22720389, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -598,8 +598,8 @@ Python (and Numba) on every call. Let’s see the overhead:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 656 ms, sys: 0 ns, total: 656 ms
-Wall time: 656 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 599 ms, sys: 0 ns, total: 599 ms
+Wall time: 598 ms
 </pre></div>
 </div>
 </div>
@@ -613,8 +613,8 @@ Wall time: 656 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 12.7 s, sys: 791 ms, total: 13.5 s
-Wall time: 13.4 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.3 s, sys: 796 ms, total: 11.1 s
+Wall time: 11 s
 </pre></div>
 </div>
 </div>
