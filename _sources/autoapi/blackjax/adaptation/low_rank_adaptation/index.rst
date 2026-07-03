@@ -24,10 +24,24 @@ blackjax.adaptation.low_rank_adaptation
    * **Population variance** (divide by *n*, not *n-1*) for diagonal scaling.
    * **σ clipping** to ``[1e-20, 1e20]`` to avoid premature saturation.
    * **Optimal translation** μ* = x̄ + σ²⊙ᾱ is computed and returned.
-   * **Regularisation**: projected covariance is ``P P^T / (n·γ) + I``
-     (nutpie's convention; default γ=1 gives ``P P^T / n + I``).
-   * **SPD mean** via eigendecomposition of the gradient covariance (not
-     Cholesky of the draw covariance).
+   * **Regularisation**: projected covariance is ``P P^T / γ + I`` (nutpie's
+     convention: the *unnormalised* sum-of-outer-products is divided by ``γ``
+     directly, with no ``n`` scaling; see ``nuts-rs``
+     ``src/transform/adapt/low_rank.rs::estimate_mass_matrix``). Default
+     ``γ=1e-5`` matches nutpie's ``LowRankSettings::default``. The
+     regularisation therefore only matters when the projected subspace is
+     rank-deficient (few draws relative to ``2·max_rank``); it fades away as
+     the number of draws grows, consistent with Theorem 2.4 of
+     :cite:p:`seyboldt2026preconditioning` (exact recovery once draws exceed
+     ``d+1``).
+   * **SPD mean of the draw covariance and the *inverse* score covariance**:
+     Theorem 2.3 / Eq. 9 of :cite:p:`seyboldt2026preconditioning` give the
+     (regularised) optimal inverse mass matrix as
+     ``M_γ⁻¹ = (cov(x)+γI) # (cov(∇log p)+γI)⁻¹`` — the AIRM geometric mean of
+     the draw covariance with the *inverse* of the score/gradient covariance.
+     Cross-validated against nutpie's own Rust ``spd_mean`` (``nuts-rs``
+     ``src/transform/adapt/low_rank.rs``), whose own unit test confirms
+     ``spd_mean(cov_draws, cov_grads) == cov_draws # cov_grads⁻¹``.
    * **Eigenvalue masking**: components with λ ∈ [1/cutoff, cutoff] are set
      to λ=1 rather than clipped (default cutoff=2, matching nutpie's ``c=2``).
 
@@ -122,7 +136,7 @@ Module Contents
       :type:  int
 
 
-.. py:function:: base(max_rank: int = 10, target_acceptance_rate: float = 0.8, gamma: float = 1.0, cutoff: float = 2.0) -> tuple[Callable, Callable, Callable]
+.. py:function:: base(max_rank: int = 10, target_acceptance_rate: float = 0.8, gamma: float = 1e-05, cutoff: float = 2.0) -> tuple[Callable, Callable, Callable]
 
    Warmup scheme using the low-rank mass matrix adaptation.
 
@@ -132,9 +146,9 @@ Module Contents
 
    :param max_rank: Maximum number of eigenvectors retained in the low-rank correction.
    :param target_acceptance_rate: Target acceptance rate for dual-averaging step-size adaptation.
-   :param gamma: Regularisation scale.  The projected covariance is divided by
-                 ``n * gamma`` before adding identity (nutpie convention).  Default
-                 ``1.0`` gives ``C = P P^T / n + I``.
+   :param gamma: Regularisation scale.  The projected covariance is divided by ``gamma``
+                 (nutpie convention -- no ``n`` scaling).  Default ``1e-5`` matches
+                 nutpie's ``LowRankSettings::default``.
    :param cutoff: Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked
                   (eigenvalue set to 1).  Default ``2.0`` matches nutpie's ``c=2``.
 
@@ -142,7 +156,7 @@ Module Contents
    :rtype: ``(init, update, final)``
 
 
-.. py:function:: window_adaptation_low_rank(algorithm, logdensity_fn: Callable, max_rank: int = 10, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, gamma: float = 1.0, cutoff: float = 2.0, progress_bar: bool = False, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: window_adaptation_low_rank(algorithm, logdensity_fn: Callable, max_rank: int = 10, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, gamma: float = 1e-05, cutoff: float = 2.0, progress_bar: bool = False, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt step size and a low-rank mass matrix for HMC-family samplers.
 
@@ -160,8 +174,9 @@ Module Contents
    :param max_rank: Maximum number of eigenvectors in the low-rank correction.
    :param initial_step_size: Starting step size (adapted automatically).
    :param target_acceptance_rate: Target acceptance rate for dual averaging.
-   :param gamma: Regularisation scale; projected covariance is divided by ``n * gamma``
-                 before adding identity (nutpie convention).
+   :param gamma: Regularisation scale; projected covariance is divided by ``gamma``
+                 before adding identity (nutpie convention -- no ``n`` scaling).
+                 Default ``1e-5`` matches nutpie's ``LowRankSettings::default``.
    :param cutoff: Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked.
                   Default ``2.0`` matches nutpie's ``c=2``.
    :param progress_bar: Show a progress bar during warmup.
