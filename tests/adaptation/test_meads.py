@@ -7,6 +7,7 @@ import pytest
 
 import blackjax
 from blackjax.adaptation.meads_adaptation import MEADSAdaptationState, base
+from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.fixtures import BlackJAXTest
 
 
@@ -246,3 +247,130 @@ class TestMEADSAdaptation(BlackJAXTest):
         self.assertEqual(new_states.position.shape, (num_chains, dim))
         # Acceptance rates should be finite
         self.assertTrue(jnp.all(jnp.isfinite(new_states.logdensity)))
+
+
+def make_correlated_pair_logdensity(dim, rho=0.9):
+    """Target with a genuine rank-2 correlation structure: dims 0-1 have
+    correlation ``rho`` (a valid, unit-diagonal correlation matrix), the rest
+    are independent -- exactly the structure a low-rank momentum metric is
+    meant to capture.
+    """
+    C = jnp.eye(dim)
+    C = C.at[0, 1].set(rho)
+    C = C.at[1, 0].set(rho)
+    precision = jnp.linalg.inv(C)
+
+    def logdensity(x):
+        return -0.5 * x @ precision @ x
+
+    return logdensity
+
+
+class TestMEADSLowRank(BlackJAXTest):
+    """Tests for the MEADS-LRD low-rank momentum-metric extension
+    (``low_rank_rank``)."""
+
+    def _make_correlated_problem(self, num_chains=32, dim=6, rho=0.9):
+        logdensity = make_correlated_pair_logdensity(dim, rho)
+        positions = jax.random.normal(self.next_key(), (num_chains, dim))
+        return logdensity, positions
+
+    def test_low_rank_rank_none_matches_diagonal_bit_for_bit(self):
+        """low_rank_rank=None must be numerically identical to omitting it."""
+        num_chains, dim = 16, 3
+        logdensity = make_logdensity(dim)
+        positions = jax.random.normal(self.next_key(), (num_chains, dim))
+        key = self.next_key()
+
+        warmup_default = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=4
+        )
+        warmup_explicit_none = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=4, low_rank_rank=None
+        )
+        (states1, params1), _ = warmup_default.run(key, positions, num_steps=10)
+        (states2, params2), _ = warmup_explicit_none.run(key, positions, num_steps=10)
+
+        np.testing.assert_array_equal(states1.position, states2.position)
+        np.testing.assert_array_equal(
+            params1["momentum_inverse_scale"], params2["momentum_inverse_scale"]
+        )
+        self.assertEqual(params1["step_size"], params2["step_size"])
+
+    def test_low_rank_produces_valid_metric(self):
+        """low_rank_rank=k should return a well-formed LowRankInverseMassMatrix."""
+        num_chains, num_folds, dim = 32, 4, 6
+        logdensity, positions = self._make_correlated_problem(num_chains, dim)
+
+        warmup = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=num_folds, low_rank_rank=3
+        )
+        (last_states, params), _ = warmup.run(self.next_key(), positions, num_steps=20)
+
+        mis = params["momentum_inverse_scale"]
+        self.assertIsInstance(mis, LowRankInverseMassMatrix)
+        self.assertEqual(mis.sigma.shape, (dim,))
+        # The FINAL metric is re-estimated from the full num_chains population
+        # (clamp num_chains - 1), richer than the num_folds - 1 clamp used
+        # for the internal per-fold warmup heuristic -- see meads_adaptation's
+        # docstring.
+        expected_k = min(3, num_chains - 1)
+        self.assertEqual(mis.U.shape, (dim, expected_k))
+        self.assertEqual(mis.lam.shape, (expected_k,))
+        self.assertTrue(jnp.all(jnp.isfinite(mis.sigma)))
+        self.assertTrue(jnp.all(jnp.isfinite(mis.U)))
+        self.assertTrue(jnp.all(jnp.isfinite(mis.lam)))
+        self.assertTrue(jnp.all(jnp.isfinite(last_states.position)))
+
+        # U should have (numerically) orthonormal columns.
+        gram = mis.U.T @ mis.U
+        np.testing.assert_allclose(gram, jnp.eye(expected_k), atol=1e-4)
+
+    def test_low_rank_end_to_end_sampling_no_nan(self):
+        """Sampling with the returned low-rank metric should produce finite draws."""
+        num_chains, num_folds, dim = 32, 4, 6
+        logdensity, positions = self._make_correlated_problem(num_chains, dim)
+
+        warmup = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=num_folds, low_rank_rank=3
+        )
+        (last_states, params), _ = warmup.run(self.next_key(), positions, num_steps=20)
+
+        ghmc = blackjax.ghmc(logdensity, **params)
+        step = jax.jit(jax.vmap(ghmc.step))
+        keys = jax.random.split(self.next_key(), num_chains)
+        new_states, info = step(keys, last_states)
+
+        self.assertEqual(new_states.position.shape, (num_chains, dim))
+        self.assertTrue(jnp.all(jnp.isfinite(new_states.position)))
+        self.assertTrue(jnp.all(jnp.isfinite(new_states.logdensity)))
+
+    def test_low_rank_rank_clamped_to_n_per_fold_minus_one(self):
+        """n_per_fold - 1 == 1 here; low_rank_rank=1 is exactly reachable and
+        should run without error."""
+        num_chains, num_folds, dim = 8, 4, 3  # n_per_fold = 2
+        logdensity, positions = self._make_correlated_problem(num_chains, dim)
+
+        warmup = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=num_folds, low_rank_rank=1
+        )
+        (last_states, params), _ = warmup.run(self.next_key(), positions, num_steps=5)
+        self.assertTrue(jnp.all(jnp.isfinite(last_states.position)))
+
+    def test_low_rank_rank_unreachable_for_folds_raises(self):
+        """n_per_fold=1 (num_chains == num_folds) can't support any per-fold
+        low-rank estimate (n_per_fold - 1 == 0): must raise ValueError."""
+        with pytest.raises(ValueError, match="low_rank_rank"):
+            blackjax.meads_adaptation(
+                make_logdensity(dim=3),
+                num_chains=4,
+                num_folds=4,
+                low_rank_rank=1,
+            )
+
+    def test_low_rank_requires_ghmc_dense_metric_support(self):
+        """Sanity: the module used here does carry blackjax#950's helper (the
+        prerequisite this extension is built on)."""
+        self.assertTrue(
+            hasattr(blackjax.mcmc.ghmc, "_metric_from_momentum_inverse_scale")
+        )

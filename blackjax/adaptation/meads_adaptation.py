@@ -15,10 +15,13 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
+from blackjax.adaptation.mclmc_lrd_adaptation import _extract_lrd_from_samples
 from blackjax.base import AdaptationAlgorithm
+from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["MEADSAdaptationState", "base", "maximum_eigenvalue", "meads_adaptation"]
@@ -208,6 +211,47 @@ def base(
     return init, update
 
 
+def _low_rank_apply(element: Array, U: Array, lam_pow: Array) -> Array:
+    """Batched ``element + U @ ((lam_pow - 1) * (U.T @ element))``.
+
+    ``element`` has shape ``(n, d)`` (a batch of ``n`` flat vectors), ``U``
+    has shape ``(d, k)``, ``lam_pow`` has shape ``(k,)``. Shared building
+    block for the two low-rank whitening transforms below -- it mirrors the
+    ``B`` / ``A*`` matrices inside
+    :func:`~blackjax.mcmc.metrics.gaussian_euclidean_low_rank`'s ``scale``
+    closure, specialized to a batch of vectors so it composes with MEADS's
+    per-fold ``jax.vmap``.
+    """
+    Ue = element @ U  # (n, k)
+    return element + (Ue * (lam_pow - 1.0)) @ U.T
+
+
+def _low_rank_precondition_grad(
+    grad: Array, sigma: Array, U: Array, lam: Array
+) -> Array:
+    """Low-rank generalization of the legacy ``grad * sigma`` preconditioning.
+
+    Mirrors ``M^{-1/2} grad`` (i.e. ``metric.scale(_, grad, inv=True,
+    trans=False)`` for
+    :func:`~blackjax.mcmc.metrics.gaussian_euclidean_low_rank`); reduces to
+    ``grad * sigma`` when ``lam == 1`` (the diagonal limit), matching the
+    legacy preconditioning bit-for-bit.
+    """
+    return _low_rank_apply(grad, U, jnp.sqrt(lam)) * sigma
+
+
+def _low_rank_precondition_pos(pos: Array, sigma: Array, U: Array, lam: Array) -> Array:
+    """Low-rank generalization of the legacy ``pos / sigma`` preconditioning.
+
+    Mirrors ``M^{1/2} pos`` (i.e. ``metric.scale(_, pos, inv=False,
+    trans=False)`` for
+    :func:`~blackjax.mcmc.metrics.gaussian_euclidean_low_rank`); reduces to
+    ``pos / sigma`` when ``lam == 1`` (the diagonal limit), matching the
+    legacy preconditioning bit-for-bit.
+    """
+    return _low_rank_apply(pos, U, 1.0 / jnp.sqrt(lam)) / sigma
+
+
 def meads_adaptation(
     logdensity_fn: Callable,
     num_chains: int,
@@ -215,6 +259,7 @@ def meads_adaptation(
     step_size_multiplier: float = 0.5,
     damping_slowdown: float = 1.0,
     adaptation_info_fn: Callable = return_all_adapt_info,
+    low_rank_rank: int | None = None,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of the Generalized HMC algorithm.
 
@@ -247,6 +292,25 @@ def meads_adaptation(
         and get_filter_adapt_info_fn in blackjax.adaptation.base. By default all
         information is saved - this can result in excessive memory usage if the
         information is unused.
+    low_rank_rank
+        MEADS-LRD extension (opt-in, default ``None``). ``None`` adapts a
+        *diagonal* momentum metric from the fold ensemble -- exactly the
+        original behavior, bit-for-bit. An ``int`` instead adapts a
+        rank-``low_rank_rank`` :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`
+        from the fold ensemble (requires :func:`blackjax.mcmc.ghmc`'s
+        dense/low-rank momentum-metric support, blackjax#950), generalizing
+        MEADS the way MCLMC-LRD generalized MCLMC. Each fold only has
+        ``num_chains // num_folds`` chains, so the *internal* per-fold
+        estimate that drives the step-size/damping heuristics during warmup
+        is clamped to rank ``num_chains // num_folds - 1`` (a fold's ensemble
+        cannot span a higher rank than that -- raises ``ValueError`` if this
+        would be < 1). The metric ultimately *returned* by ``run()`` is
+        instead re-estimated once from the full final population of all
+        ``num_chains`` chains (clamped to ``num_chains - 1``): a richer,
+        less noisy estimate than any single fold's, and one that sidesteps
+        averaging per-fold eigenbases together -- unlike a diagonal scale,
+        per-fold eigenvectors have no canonical cross-fold alignment, so an
+        elementwise average across folds would not be meaningful.
 
     Returns
     -------
@@ -262,6 +326,24 @@ def meads_adaptation(
             f"num_chains ({num_chains}) must be divisible by num_folds ({num_folds})."
         )
     n_per_fold = num_chains // num_folds
+
+    low_rank_k: int | None = None
+    if low_rank_rank is not None:
+        if not hasattr(mcmc.ghmc, "_metric_from_momentum_inverse_scale"):
+            raise RuntimeError(
+                "low_rank_rank requires blackjax.mcmc.ghmc's dense/low-rank "
+                "momentum-metric support (blackjax#950); the installed ghmc "
+                "module predates it."
+            )
+        low_rank_k = min(low_rank_rank, n_per_fold - 1)
+        if low_rank_k < 1:
+            raise ValueError(
+                f"low_rank_rank={low_rank_rank} cannot be honored: each fold "
+                f"only has n_per_fold = num_chains // num_folds = {n_per_fold} "
+                "chains, and the per-fold low-rank estimate needs "
+                "n_per_fold - 1 >= 1. Increase num_chains or decrease "
+                "num_folds."
+            )
 
     ghmc_kernel = mcmc.ghmc.build_kernel()
     adapt_init, _ = base(num_folds, step_size_multiplier, damping_slowdown)
@@ -295,6 +377,30 @@ def meads_adaptation(
             folded_scales,
         )
 
+        # MEADS-LRD: each fold additionally estimates its own rank-`low_rank_k`
+        # correlation eigenbasis (sigma, U, lam) from its own n_per_fold
+        # position snapshot, via the same sample-based extractor MCLMC-LRD
+        # uses (`_extract_lrd_from_samples`). This low-rank metric -- not
+        # just its diagonal sigma -- then preconditions the step-size and
+        # damping heuristics below (via `_low_rank_precondition_{grad,pos}`),
+        # so alpha/delta/step_size stay consistent with the metric actually
+        # handed to ghmc for sampling this step.
+        if low_rank_rank is not None:
+            flat_folded_pos = jax.vmap(jax.vmap(lambda p: ravel_pytree(p)[0]))(
+                folded_pos
+            )
+            flat_folded_grads = jax.vmap(jax.vmap(lambda g: ravel_pytree(g)[0]))(
+                folded_grads
+            )
+            fold_sigma, fold_U, fold_lam, _ = jax.vmap(
+                lambda flat: _extract_lrd_from_samples(flat, k=low_rank_k)
+            )(flat_folded_pos)
+            precond_grads_for_step_size = jax.vmap(_low_rank_precondition_grad)(
+                flat_folded_grads, fold_sigma, fold_U, fold_lam
+            )
+        else:
+            precond_grads_for_step_size = precond_grads
+
         # Per-fold step size from each fold's own preconditioned grads.
         # Then roll by 1 so fold k gets the step size from fold k-1.
         # (Algorithm 3, line 8 + cross-fold roll)
@@ -304,7 +410,9 @@ def meads_adaptation(
                 1.0,
             )
 
-        step_size_own = jax.vmap(fold_step_size)(precond_grads)  # [num_folds]
+        step_size_own = jax.vmap(fold_step_size)(
+            precond_grads_for_step_size
+        )  # [num_folds]
         # fold k uses step_size from fold k-1
         step_size_rolled = jnp.roll(step_size_own, 1)  # [num_folds]
         # fold k uses the momentum scale (std) from fold k-1
@@ -334,7 +442,20 @@ def meads_adaptation(
             folded_pos,
             folded_scales,
         )
-        alphas, deltas = jax.vmap(fold_damping)(precond_pos, step_size_rolled)
+        if low_rank_rank is not None:
+            precond_pos_for_damping = jax.vmap(_low_rank_precondition_pos)(
+                flat_folded_pos, fold_sigma, fold_U, fold_lam
+            )
+            # fold k's momentum metric is fold (k-1)'s low-rank estimate,
+            # mirroring scales_rolled above.
+            low_rank_sigma_rolled = jnp.roll(fold_sigma, 1, axis=0)
+            low_rank_U_rolled = jnp.roll(fold_U, 1, axis=0)
+            low_rank_lam_rolled = jnp.roll(fold_lam, 1, axis=0)
+        else:
+            precond_pos_for_damping = precond_pos
+        alphas, deltas = jax.vmap(fold_damping)(
+            precond_pos_for_damping, step_size_rolled
+        )
 
         # Broadcast per-fold parameters to per-chain arrays
         chain_step_sizes = jnp.repeat(step_size_rolled, n_per_fold)
@@ -344,13 +465,26 @@ def meads_adaptation(
         chain_alphas = jnp.repeat(alphas, n_per_fold)
         chain_deltas = jnp.repeat(deltas, n_per_fold)
 
+        if low_rank_rank is not None:
+            # Feed ghmc a per-chain LowRankInverseMassMatrix instead of the
+            # diagonal chain_scales; blackjax#950 lets ghmc's
+            # momentum_inverse_scale accept this directly (no elementwise
+            # squaring, unlike the legacy diagonal path).
+            chain_momentum_inverse_scale = LowRankInverseMassMatrix(
+                sigma=jnp.repeat(low_rank_sigma_rolled, n_per_fold, axis=0),
+                U=jnp.repeat(low_rank_U_rolled, n_per_fold, axis=0),
+                lam=jnp.repeat(low_rank_lam_rolled, n_per_fold, axis=0),
+            )
+        else:
+            chain_momentum_inverse_scale = chain_scales
+
         # Step all chains with their fold's parameters
         new_states, info = jax.vmap(ghmc_kernel, in_axes=(0, 0, None, 0, 0, 0, 0))(
             chain_keys,
             states,
             logdensity_fn,
             chain_step_sizes,
-            chain_scales,
+            chain_momentum_inverse_scale,
             chain_alphas,
             chain_deltas,
         )
@@ -406,12 +540,35 @@ def meads_adaptation(
             one_step, (init_states, init_adaptation_state), keys
         )
 
+        if low_rank_rank is not None:
+            # Re-estimate the metric returned to the caller from the full
+            # final population (num_chains chains), rather than averaging the
+            # per-fold eigenbases used internally during warmup: unlike a
+            # diagonal sigma, per-fold (U, lam) eigenpairs have no canonical
+            # cross-fold alignment, so an elementwise average across folds
+            # would not be meaningful. Using the full population also gives a
+            # richer, less noisy estimate (num_chains samples instead of
+            # n_per_fold), hence the looser clamp (num_chains - 1) than the
+            # per-fold one (n_per_fold - 1) used above during warmup.
+            flat_final_pos = jax.vmap(lambda p: ravel_pytree(p)[0])(
+                last_states.position
+            )
+            final_k = min(low_rank_rank, num_chains - 1)
+            final_sigma, final_U, final_lam, _ = _extract_lrd_from_samples(
+                flat_final_pos, k=final_k
+            )
+            momentum_inverse_scale = LowRankInverseMassMatrix(
+                sigma=final_sigma, U=final_U, lam=final_lam
+            )
+        else:
+            momentum_inverse_scale = jax.tree.map(
+                lambda s: s.mean(axis=0), last_adaptation_state.position_sigma
+            )
+
         # Return mean parameters across folds for use with a single ghmc kernel
         parameters = {
             "step_size": last_adaptation_state.step_size.mean(),
-            "momentum_inverse_scale": jax.tree.map(
-                lambda s: s.mean(axis=0), last_adaptation_state.position_sigma
-            ),
+            "momentum_inverse_scale": momentum_inverse_scale,
             "alpha": last_adaptation_state.alpha.mean(),
             "delta": last_adaptation_state.delta.mean(),
         }
