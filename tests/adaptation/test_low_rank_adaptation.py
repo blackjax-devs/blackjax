@@ -325,8 +325,23 @@ class LowRankCorrelationRecoveryTest(BlackJAXTest):
     for the full diagnosis, including the exact controls reused below.
     """
 
-    def _pairwise_mvn(self, rho, key, n=200_000):
-        """2-D correlated Gaussian: var 4/1, correlation rho (case study control)."""
+    def tearDown(self):
+        # Release compiled XLA kernels between heavy tests to avoid
+        # cumulative memory pressure under pytest-xdist parallel workers
+        # (the #948 CI-OOM fix pattern).
+        jax.clear_caches()
+        super().tearDown()
+
+    def _pairwise_mvn(self, rho, key, n=20_000):
+        """2-D correlated Gaussian: var 4/1, correlation rho (case study control).
+
+        n=20_000 (down from the original 200_000): verified empirically
+        before shrinking that the same atol=0.05 assertion still holds with
+        wide margin at this n (err ~1e-4, not marginal) -- this is exact
+        recovery in the noise-free-limit regime (Theorem 2.4), not a
+        Monte-Carlo-noise-limited statistic, so n reduction doesn't trade
+        away real power.
+        """
         cov = jnp.array([[4.0, rho * 2.0], [rho * 2.0, 1.0]])
         draws = jax.random.multivariate_normal(key, jnp.zeros(2), cov, shape=(n,))
         grads = -draws @ jnp.linalg.inv(cov).T
@@ -356,7 +371,7 @@ class LowRankCorrelationRecoveryTest(BlackJAXTest):
         rho = 0.3
         cov = jnp.eye(d).at[0, 1:].set(rho).at[1:, 0].set(rho)
         draws = jax.random.multivariate_normal(
-            self.next_key(), jnp.zeros(d), cov, shape=(200_000,)
+            self.next_key(), jnp.zeros(d), cov, shape=(20_000,)
         )
         grads = -draws @ jnp.linalg.inv(cov).T
         for max_rank in (3, 6):
@@ -372,17 +387,24 @@ class LowRankCorrelationRecoveryTest(BlackJAXTest):
 class LowRankGaussianLimitTest(BlackJAXTest):
     """Gaussian-limit exact-recovery test (Theorem 2.4)."""
 
+    def tearDown(self):
+        jax.clear_caches()
+        super().tearDown()
+
     def test_recovers_known_covariance(self):
         """Exact iid draws + exact scores from a known Sigma recover
         M^{-1} == Sigma, matching Theorem 2.4's exact-recovery guarantee once
         the number of draws exceeds d+1. ``cutoff=1.0`` disables eigenvalue
         masking (masks only exactly-unity eigenvalues) so the full-rank
-        correction is retained."""
+        correction is retained. n=20_000 (down from 50_000): verified
+        empirically before shrinking -- still exact recovery (max abs/rel
+        error ~0, not marginal) since this is Theorem 2.4's noise-free
+        exact-recovery regime, not a Monte-Carlo-limited statistic."""
         d = 5
         key1, key2 = jax.random.split(self.next_key())
         A = jax.random.normal(key1, (d, d))
         cov = A @ A.T + d * jnp.eye(d)
-        draws = jax.random.multivariate_normal(key2, jnp.zeros(d), cov, shape=(50_000,))
+        draws = jax.random.multivariate_normal(key2, jnp.zeros(d), cov, shape=(20_000,))
         grads = -draws @ jnp.linalg.inv(cov).T
         sigma, _, U, lam = _compute_low_rank_metric(
             draws, grads, draws.shape[0], d, 1e-5, 1.0
@@ -405,14 +427,21 @@ class LowRankSeedStabilityTest(BlackJAXTest):
     correlation must be stable (consistent sign, low seed-to-seed variance).
     """
 
+    def tearDown(self):
+        jax.clear_caches()
+        super().tearDown()
+
     def test_top_eigenvector_direction_stable_across_seeds(self):
+        """n=20_000 (down from 200_000): verified empirically before
+        shrinking -- 6-seed std stays ~1e-3 to 3e-3 (well under the 0.05
+        threshold, not marginal) at this n."""
         rho = 0.7
         cov = jnp.array([[4.0, rho * 2.0], [rho * 2.0, 1.0]])
         corrs = []
         for _ in range(6):
             key = self.next_key()
             draws = jax.random.multivariate_normal(
-                key, jnp.zeros(2), cov, shape=(200_000,)
+                key, jnp.zeros(2), cov, shape=(20_000,)
             )
             grads = -draws @ jnp.linalg.inv(cov).T
             sigma, _, U, lam = _compute_low_rank_metric(
@@ -436,6 +465,10 @@ class LowRankDiagonalConsistencyTest(BlackJAXTest):
     contradicting the Step-1 diagonal's own ``sqrt(var_x / var_g)`` formula
     three lines above it in the source.
     """
+
+    def tearDown(self):
+        jax.clear_caches()
+        super().tearDown()
 
     def test_low_rank_path_agrees_with_diagonal_in_1d(self):
         for var_x, var_g in [(4.0, 1.0), (0.1, 9.0), (25.0, 0.5)]:
@@ -465,6 +498,10 @@ class LowRankSmallNRobustnessTest(BlackJAXTest):
     the side-by-side numbers). This locks in that the gamma-scale fix is
     *more* robust in the small-n regime, not just asymptotically correct.
     """
+
+    def tearDown(self):
+        jax.clear_caches()
+        super().tearDown()
 
     def test_no_nan_inf_and_correct_sign_across_small_n(self):
         rho = 0.7
@@ -589,6 +626,10 @@ class BuildGrowingWindowScheduleTest(BlackJAXTest):
 class LowRankGradientBasedInitTest(BlackJAXTest):
     """Tests for the gradient_based_init option (queue #9)."""
 
+    def tearDown(self):
+        jax.clear_caches()
+        super().tearDown()
+
     def test_default_reproduces_identity_init(self):
         """gradient_based_init=False (default) must reproduce the original
         sigma=ones(d) initialisation exactly -- no default-behavior change."""
@@ -625,7 +666,10 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
 
     def test_end_to_end_new_options_run_finite(self):
         """window_adaptation_low_rank with both new options (gradient_based
-        init + build_growing_window_schedule) runs to a finite result."""
+        init + build_growing_window_schedule) runs to a finite result.
+        num_steps=150 (down from 300): a smoke test proves wiring (does it
+        run, is the output finite), not statistical convergence, so a
+        shorter warmup exercises the same code paths at lower cost."""
         d = 5
         logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
         warmup = blackjax.window_adaptation_low_rank(
@@ -635,7 +679,7 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
             gradient_based_init=True,
             schedule_fn=build_growing_window_schedule,
         )
-        (state, params), _ = warmup.run(self.next_key(), jnp.ones(d), num_steps=300)
+        (state, params), _ = warmup.run(self.next_key(), jnp.ones(d), num_steps=150)
         self.assertTrue(bool(jnp.all(jnp.isfinite(state.position))))
         self.assertTrue(
             bool(jnp.all(jnp.isfinite(params["inverse_mass_matrix"].sigma)))
@@ -644,13 +688,14 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
 
     def test_default_schedule_fn_unchanged(self):
         """window_adaptation_low_rank without schedule_fn/gradient_based_init
-        must still use Stan's default build_schedule (no behavior change)."""
+        must still use Stan's default build_schedule (no behavior change).
+        num_steps=100 (down from 200): smoke test, same rationale as above."""
         d = 4
         logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
         warmup = blackjax.window_adaptation_low_rank(
             blackjax.nuts, logdensity_fn, max_rank=2
         )
-        (state, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=200)
+        (state, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=100)
         self.assertEqual(state.position.shape, (d,))
         self.assertGreater(float(params["step_size"]), 0.0)
 
