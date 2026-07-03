@@ -511,6 +511,25 @@ class BuildScheduleNutpieMVPTest(BlackJAXTest):
             schedule = build_schedule_nutpie_mvp(num_steps)
             self.assertEqual(schedule.shape, (num_steps, 2))
 
+    def test_golden_default_window_sequence_at_5000(self):
+        """Pin the exact window-size sequence for the DEFAULT constants at
+        num_steps=5000, so a silent default-constant drift (e.g. growth
+        1.5 -> something else) is caught rather than passing silently
+        through the looser structural checks below. Verified independently
+        against nuts-rs's own schedule constants (statistician parity
+        review, 2026-07-03): 150 early windows of size 10 (early_end=1500),
+        then main-phase windows growing 80->120->180->270->405->608->912
+        (1.5x, round-half-to-even) truncated to 175 to exactly fill the
+        remaining budget before the final buffer, then 750 fast
+        (step-size-only) steps."""
+        schedule = build_schedule_nutpie_mvp(5000)
+        window_end_indices = np.where(np.asarray(schedule[:, 1]) == 1)[0]
+        window_sizes = np.diff(np.concatenate([[-1], window_end_indices])).tolist()
+        expected = [10] * 150 + [80, 120, 180, 270, 405, 608, 912, 175]
+        self.assertEqual(window_sizes, expected)
+        n_fast = int((np.asarray(schedule[:, 0]) == 0).sum())
+        self.assertEqual(n_fast, 750)
+
     def test_final_phase_is_fast_no_window_ends(self):
         """The final step_size_window fraction must be pure fast (stage 0)
         with no window-end recomputes, matching Stan's final-buffer

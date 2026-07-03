@@ -604,11 +604,11 @@ def window_adaptation_low_rank(
     target_acceptance_rate: float = 0.80,
     gamma: float = 1e-5,
     cutoff: float = 2.0,
-    gradient_based_init: bool = False,
-    schedule_fn: Callable[[int], Array] = build_schedule,
     progress_bar: bool = False,
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
+    gradient_based_init: bool = False,
+    schedule_fn: Callable[[int], Array] = build_schedule,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt step size and a low-rank mass matrix for HMC-family samplers.
@@ -641,6 +641,13 @@ def window_adaptation_low_rank(
     cutoff
         Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked.
         Default ``2.0`` matches nutpie's ``c=2``.
+    progress_bar
+        Show a progress bar during warmup.
+    adaptation_info_fn
+        Controls what adaptation info is retained; see
+        ``blackjax.adaptation.base``.
+    integrator
+        Integrator to pass to ``algorithm.build_kernel``.
     gradient_based_init
         Seed the diagonal scale from the initial gradient instead of the
         identity, matching nutpie's own initialisation (see :func:`base`).
@@ -653,13 +660,6 @@ def window_adaptation_low_rank(
         :func:`build_schedule_nutpie_mvp` for nutpie's proportional-to-tune,
         1.5x-growing-window schedule (MVP proxy -- see that function's
         docstring for what it does and does not capture).
-    progress_bar
-        Show a progress bar during warmup.
-    adaptation_info_fn
-        Controls what adaptation info is retained; see
-        ``blackjax.adaptation.base``.
-    integrator
-        Integrator to pass to ``algorithm.build_kernel``.
     **extra_parameters
         Additional keyword arguments forwarded to the kernel at every step
         (e.g. ``num_integration_steps`` for HMC).
