@@ -164,9 +164,7 @@ def _step(
 
     position, logdensity, logdensity_grad = state
     momentum = metric.sample_momentum(key_momentum, position)  # GIBBS: rho
-    integrator_state = IntegratorState(
-        position, momentum, logdensity, logdensity_grad
-    )
+    integrator_state = IntegratorState(position, momentum, logdensity, logdensity_grad)
 
     # GIBBS: alpha ~ p(. | theta, rho)
     alpha, aux = tuning_parameter_fn(

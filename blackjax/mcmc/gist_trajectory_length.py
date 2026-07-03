@@ -32,7 +32,7 @@ References
    Algorithm 2 (p.21), eq. 33 (the no-U-turn condition), eq. 34-35 (the step
    distributions).
 """
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, cast
 
 import jax
 import jax.numpy as jnp
@@ -275,7 +275,7 @@ def build_kernel(
         )
         apply_fn = _apply_fn(integrator, step_size, max_num_steps, path_fraction)
 
-        new_state, info, extra_info = gist._step(
+        new_state, info, raw_extra_info = gist._step(
             rng_key,
             state,
             logdensity_fn,
@@ -284,6 +284,10 @@ def build_kernel(
             inverse_mass_matrix,
             divergence_threshold,
         )
+        # `raw_extra_info` is declared as the generic `ArrayTree` in the
+        # general spine (opaque to it by design); cast back to the concrete
+        # type this kernel actually produces.
+        extra_info = cast(_TrajectoryLengthExtra, raw_extra_info)
         trajectory_length_info = GISTTrajectoryLengthInfo(
             info.momentum,
             info.tuning_parameter,
@@ -359,7 +363,9 @@ def as_top_level_api(
     -------
     A ``SamplingAlgorithm``.
     """
-    kernel = build_kernel(integrator, divergence_threshold, path_fraction, max_num_steps)
+    kernel = build_kernel(
+        integrator, divergence_threshold, path_fraction, max_num_steps
+    )
     return build_sampling_algorithm(
         kernel,
         init,

@@ -42,7 +42,7 @@ References
    "asymmetric"``, provided for cross-validation against the original paper
    only -- can get stuck near the mode/in the tails).
 """
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, cast
 
 import jax
 import jax.numpy as jnp
@@ -177,8 +177,7 @@ def step_size_selector(
     """
     if criterion not in ("symmetric", "asymmetric"):
         raise ValueError(
-            "criterion must be 'symmetric' or 'asymmetric', got "
-            f"{criterion!r}"
+            "criterion must be 'symmetric' or 'asymmetric', got " f"{criterion!r}"
         )
     is_symmetric = criterion == "symmetric"
 
@@ -230,9 +229,7 @@ def step_size_selector(
             jnp.asarray(0, dtype=jnp.int32),
             v == 0,
         )
-        j_final, _, terminated_final = jax.lax.while_loop(
-            cond_fn, body_fn, init_carry
-        )
+        j_final, _, terminated_final = jax.lax.while_loop(cond_fn, body_fn, init_carry)
         search_exhausted = jnp.logical_not(terminated_final) & (v != 0)
         # "Final halving": on a successful *expansion*, report one step back
         # (section 2.1.2) -- necessary for the reversibility check to ever
@@ -321,8 +318,7 @@ def build_kernel(
     """
     if criterion not in ("symmetric", "asymmetric"):
         raise ValueError(
-            "criterion must be 'symmetric' or 'asymmetric', got "
-            f"{criterion!r}"
+            "criterion must be 'symmetric' or 'asymmetric', got " f"{criterion!r}"
         )
     gist_step = gist._step
 
@@ -347,7 +343,7 @@ def build_kernel(
             integrator, num_integration_steps, initial_step_size, selector
         )
 
-        new_state, info, extra_info = gist_step(
+        new_state, info, raw_extra_info = gist_step(
             rng_key,
             state,
             logdensity_fn,
@@ -356,15 +352,20 @@ def build_kernel(
             inverse_mass_matrix,
             divergence_threshold,
         )
+        # `info.tuning_parameter`/`raw_extra_info` are declared as the generic
+        # `ArrayTree` in the general spine (opaque to it by design); cast back
+        # to the concrete instance types this kernel actually produces.
+        tuning_parameter = cast(StepSizeTuningParameter, info.tuning_parameter)
+        extra_info = cast(_StepSizeExtra, raw_extra_info)
         step_size_info = GISTStepSizeInfo(
             info.momentum,
-            info.tuning_parameter,
+            tuning_parameter,
             info.is_accepted,
             info.is_divergent,
             info.acceptance_rate,
             info.energy,
             info.num_integration_steps,
-            info.tuning_parameter.step_index,
+            tuning_parameter.step_index,
             extra_info.reverse_step_index,
             extra_info.search_exhausted,
             extra_info.step_size,
