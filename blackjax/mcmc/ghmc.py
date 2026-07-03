@@ -64,6 +64,28 @@ def init(
     return GHMCState(position, momentum, logdensity, logdensity_grad, slice)
 
 
+def _metric_from_momentum_inverse_scale(
+    momentum_inverse_scale: ArrayLikeTree | metrics.MetricTypes,
+) -> metrics.Metric:
+    """Build the momentum ``Metric`` from ``momentum_inverse_scale``.
+
+    Rich metrics (a ``Metric``, ``LowRankInverseMassMatrix``, a callable, or a
+    dense ``(d, d)`` array) carry inverse-mass-matrix semantics and pass
+    straight to ``default_metric`` -- like ``inverse_mass_matrix`` in hmc/nuts.
+    The legacy scalar / 1-D / position-shaped-pytree form is a per-dimension
+    inverse *scale* (used by MEADS): squared elementwise into an inverse
+    variance first, preserved bit-for-bit.
+    """
+    x = momentum_inverse_scale
+    if (
+        isinstance(x, (metrics.Metric, metrics.LowRankInverseMassMatrix))
+        or callable(x)
+        or (hasattr(x, "ndim") and x.ndim >= 2)
+    ):
+        return metrics.default_metric(x)
+    return metrics.default_metric(ravel_pytree(x)[0] ** 2)
+
+
 def build_kernel(
     noise_fn: Callable = lambda _: 0.0,
     divergence_threshold: float = 1000,
@@ -101,7 +123,7 @@ def build_kernel(
         state: GHMCState,
         logdensity_fn: Callable,
         step_size: float,
-        momentum_inverse_scale: ArrayLikeTree,
+        momentum_inverse_scale: ArrayLikeTree | metrics.MetricTypes,
         alpha: float,
         delta: float,
     ) -> tuple[GHMCState, hmc.HMCInfo]:
@@ -118,9 +140,17 @@ def build_kernel(
         step_size
             Variable specifying the size of the integration step.
         momentum_inverse_scale
-            Pytree with the same structure as the targeted position variable
-            specifying the per dimension inverse scaling transformation applied
-            to the persistent momentum variable prior to the integration step.
+            Legacy usage: a Pytree with the same structure as the targeted
+            position variable (or a scalar/1-D array) specifying the per
+            dimension inverse *scale* applied to the persistent momentum
+            variable prior to the integration step; it is squared elementwise
+            to obtain the inverse mass matrix. To use a dense or low-rank
+            metric (mirroring ``hmc``/``nuts``), pass a ``(d, d)`` array (the
+            inverse mass matrix directly, no squaring), a
+            :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`, a
+            :class:`~blackjax.mcmc.metrics.Metric`, or a callable; these are
+            forwarded to :func:`~blackjax.mcmc.metrics.default_metric`
+            unchanged.
         alpha
             Variable specifying the degree of persistent momentum, complementary
             to independent new momentum.
@@ -130,17 +160,14 @@ def build_kernel(
 
         """
 
-        flat_inverse_scale = ravel_pytree(momentum_inverse_scale)[0]
-        momentum_generator, kinetic_energy_fn, *_ = metrics.gaussian_euclidean(
-            flat_inverse_scale**2
-        )
+        metric = _metric_from_momentum_inverse_scale(momentum_inverse_scale)
 
         symplectic_integrator = integrators.velocity_verlet(
-            logdensity_fn, kinetic_energy_fn
+            logdensity_fn, metric.kinetic_energy
         )
         proposal_generator = hmc.hmc_proposal(
             symplectic_integrator,
-            kinetic_energy_fn,
+            metric.kinetic_energy,
             step_size,
             divergence_threshold=divergence_threshold,
             sample_proposal=nonreversible_slice_sampling,
@@ -149,7 +176,7 @@ def build_kernel(
         key_momentum, key_noise = jax.random.split(rng_key)
         position, momentum, logdensity, logdensity_grad, slice = state
         # New momentum is persistent
-        momentum = update_momentum(key_momentum, state, alpha, momentum_generator)
+        momentum = update_momentum(key_momentum, state, alpha, metric.sample_momentum)
         # Slice is non-reversible
         slice = ((slice + 1.0 + delta + noise_fn(key_noise)) % 2) - 1.0
 
@@ -199,7 +226,7 @@ def update_momentum(rng_key, state, alpha, momentum_generator):
 def as_top_level_api(
     logdensity_fn: Callable,
     step_size: float,
-    momentum_inverse_scale: ArrayLikeTree,
+    momentum_inverse_scale: ArrayLikeTree | metrics.MetricTypes,
     alpha: float,
     delta: float,
     *,
@@ -250,9 +277,17 @@ def as_top_level_api(
         values used for as a step size for each dimension of the target space in
         the velocity verlet integrator.
     momentum_inverse_scale
-        Pytree with the same structure as the targeted position variable
-        specifying the per dimension inverse scaling transformation applied
-        to the persistent momentum variable prior to the integration step.
+        Legacy usage: a Pytree with the same structure as the targeted
+        position variable (or a scalar/1-D array) specifying the per
+        dimension inverse *scale* applied to the persistent momentum
+        variable prior to the integration step; it is squared elementwise
+        to obtain the inverse mass matrix. To use a dense or low-rank
+        metric (mirroring ``hmc``/``nuts``), pass a ``(d, d)`` array (the
+        inverse mass matrix directly, no squaring), a
+        :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`, a
+        :class:`~blackjax.mcmc.metrics.Metric`, or a callable; these are
+        forwarded to :func:`~blackjax.mcmc.metrics.default_metric`
+        unchanged.
     alpha
         The value defining the persistence of the momentum variable.
     delta
@@ -272,10 +307,11 @@ def as_top_level_api(
     """
 
     kernel = build_kernel(noise_fn, divergence_threshold)
+    metric = _metric_from_momentum_inverse_scale(momentum_inverse_scale)
     return build_sampling_algorithm(
         kernel,
         init,
         logdensity_fn,
-        kernel_args=(step_size, momentum_inverse_scale, alpha, delta),
+        kernel_args=(step_size, metric, alpha, delta),
         pass_rng_key_to_init=True,
     )

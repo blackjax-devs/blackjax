@@ -30,10 +30,24 @@ Key algorithmic choices that match nutpie:
 * **Population variance** (divide by *n*, not *n-1*) for diagonal scaling.
 * **σ clipping** to ``[1e-20, 1e20]`` to avoid premature saturation.
 * **Optimal translation** μ* = x̄ + σ²⊙ᾱ is computed and returned.
-* **Regularisation**: projected covariance is ``P P^T / (n·γ) + I``
-  (nutpie's convention; default γ=1 gives ``P P^T / n + I``).
-* **SPD mean** via eigendecomposition of the gradient covariance (not
-  Cholesky of the draw covariance).
+* **Regularisation**: projected covariance is ``P P^T / γ + I`` (nutpie's
+  convention: the *unnormalised* sum-of-outer-products is divided by ``γ``
+  directly, with no ``n`` scaling; see ``nuts-rs``
+  ``src/transform/adapt/low_rank.rs::estimate_mass_matrix``). Default
+  ``γ=1e-5`` matches nutpie's ``LowRankSettings::default``. The
+  regularisation therefore only matters when the projected subspace is
+  rank-deficient (few draws relative to ``2·max_rank``); it fades away as
+  the number of draws grows, consistent with Theorem 2.4 of
+  :cite:p:`seyboldt2026preconditioning` (exact recovery once draws exceed
+  ``d+1``).
+* **SPD mean of the draw covariance and the *inverse* score covariance**:
+  Theorem 2.3 / Eq. 9 of :cite:p:`seyboldt2026preconditioning` give the
+  (regularised) optimal inverse mass matrix as
+  ``M_γ⁻¹ = (cov(x)+γI) # (cov(∇log p)+γI)⁻¹`` — the AIRM geometric mean of
+  the draw covariance with the *inverse* of the score/gradient covariance.
+  Cross-validated against nutpie's own Rust ``spd_mean`` (``nuts-rs``
+  ``src/transform/adapt/low_rank.rs``), whose own unit test confirms
+  ``spd_mean(cov_draws, cov_grads) == cov_draws # cov_grads⁻¹``.
 * **Eigenvalue masking**: components with λ ∈ [1/cutoff, cutoff] are set
   to λ=1 rather than clipped (default cutoff=2, matching nutpie's ``c=2``).
 
@@ -64,6 +78,7 @@ from blackjax.util import pytree_size
 __all__ = [
     "LowRankAdaptationState",
     "base",
+    "build_growing_window_schedule",
     "window_adaptation_low_rank",
 ]
 
@@ -162,9 +177,11 @@ def _compute_low_rank_metric(
     max_rank
         Maximum number of eigenvectors to retain.
     gamma
-        Regularisation scale.  The projected covariance is divided by
-        ``n * gamma`` before adding the identity, following nutpie's convention.
-        Larger values → stronger regularisation toward the identity.
+        Regularisation scale.  The projected covariance is divided by ``gamma``
+        (not scaled by ``n``) before adding the identity, following nutpie's
+        convention.  Smaller values → weaker regularisation (the identity term
+        matters less relative to the data term); the influence of the
+        regularisation fades as the number of draws grows.
     cutoff
         Eigenvectors whose eigenvalue falls in ``[1/cutoff, cutoff]`` are
         masked (eigenvalue set to 1), as they provide no useful preconditioning.
@@ -223,13 +240,20 @@ def _compute_low_rank_metric(
     P_a = Q.T @ A.T  # (q, B)
 
     # --- Step 6: projected covariance matrices ---
-    # nutpie: C = P P^T / (n * gamma) + I  (scale by 1/gamma, then add identity)
-    scale = n_safe * gamma
-    C_x = (P_x @ P_x.T) / scale + jnp.eye(q)
-    C_a = (P_a @ P_a.T) / scale + jnp.eye(q)
+    # nutpie: C = P P^T / gamma + I  (raw gamma, NOT scaled by n -- nuts-rs
+    # estimate_mass_matrix divides the unnormalised sum-of-outer-products by
+    # gamma directly; there is no /n anywhere in that pipeline).
+    C_x = (P_x @ P_x.T) / gamma + jnp.eye(q)
+    C_a = (P_a @ P_a.T) / gamma + jnp.eye(q)
 
-    # --- Step 7: SPD geometric mean Σ = C_x # C_a ---
-    Sigma = _spd_mean(C_x, C_a)
+    # --- Step 7: SPD geometric mean Σ = C_x # C_a^{-1} ---
+    # Theorem 2.3 / Eq. 9 (arXiv:2603.18845): the regularized optimal inverse
+    # mass matrix is M_gamma^{-1} = (cov(x)+gamma*I) # (cov(alpha)+gamma*I)^{-1}
+    # -- the score/gradient covariance must be INVERTED before the geometric
+    # mean. Cross-validated against nutpie's own `spd_mean` (nuts-rs
+    # src/transform/adapt/low_rank.rs), whose own unit test confirms
+    # spd_mean(cov_draws, cov_grads) == cov_draws # cov_grads^{-1}.
+    Sigma = _spd_mean(C_x, jnp.linalg.inv(C_a))
 
     # --- Step 8: eigendecompose Σ in the projected subspace ---
     vals, vecs = jnp.linalg.eigh(Sigma)  # vals ascending, (2k,)
@@ -258,6 +282,126 @@ def _compute_low_rank_metric(
 
 
 # ---------------------------------------------------------------------------
+# Schedule builders
+# ---------------------------------------------------------------------------
+
+
+def build_growing_window_schedule(
+    num_steps: int,
+    early_window: float = 0.3,
+    step_size_window: float = 0.15,
+    early_window_size: int = 10,
+    window_size: int = 80,
+    window_growth: float = 1.5,
+) -> Array:
+    """Proportional-to-tune, geometrically-growing-window warmup schedule.
+
+    An alternate to :func:`~blackjax.adaptation.window_adaptation.build_schedule`
+    (Stan's fixed-absolute, 2x-doubling schedule) that instead sizes windows
+    *proportionally to* ``num_steps`` and grows them by ``window_growth``
+    (1.5x) rather than doubling, matching nutpie's window-sizing and
+    growth-factor choices (see ``nuts-rs`` ``src/adapt_strategy.rs``,
+    ``EuclideanAdaptOptions::default``):
+
+    * ``early_window=0.3``, ``step_size_window=0.15`` -- fractions of
+      ``num_steps``, vs Stan/blackjax's fixed absolute defaults
+      (``initial_buffer_size=75``, ``final_buffer_size=50``) that are only
+      rescaled when they don't fit the budget.
+    * ``window_growth=1.5`` -- vs Stan's 2x doubling
+      (``mass_matrix_window_growth`` in nutpie's receipts).
+
+    **Scope note.** This function (together with the ``gradient_based_init``
+    option on :func:`base` / :func:`window_adaptation_low_rank`) implements
+    the window-sizing and gradient-based-init components of nutpie's warmup.
+    Recompute cadence and buffer semantics follow the *host* Stan-style
+    machinery unchanged: nutpie's actual schedule is an *online*, per-draw
+    decision (``adapt_strategy.rs``'s ``is_late`` look-ahead + a
+    partial-forget circular buffer + up-to-every-draw metric recomputation,
+    ``mass_matrix_update_freq=1``), whereas blackjax's warmup runs the
+    entire schedule as a static array through a single ``jax.lax.scan``
+    (fixed ahead of time, like Stan's own :func:`build_schedule`), so this
+    function precomputes an equivalent *offline* schedule with the same
+    growth/sizing character. Recompute cadence stays window-boundary-only
+    (unchanged from :func:`build_schedule`'s semantics: ``slow_final`` still
+    only fires at a window end) and buffer memory stays a hard reset
+    (unchanged: ``slow_final`` still zeros the buffer) -- nutpie's
+    continuous per-draw recomputation and partial-forget buffer are a
+    "faithful port" follow-up; see the note in
+    :func:`window_adaptation_low_rank`'s docstring.
+
+    Unlike Stan's schedule, there is no purely step-size-only *initial*
+    buffer: nutpie starts adapting the mass matrix from the very first draw
+    (paper §3.2, "More frequent updates"), so the entire region up to the
+    final step-size-only window is labelled "slow" (mass-matrix-adapting),
+    split into windows of size ``early_window_size`` during the early phase
+    and growing windows (starting at ``window_size``, x``window_growth``
+    each switch) during the main phase.
+
+    Parameters
+    ----------
+    num_steps
+        Total number of warmup steps.
+    early_window
+        Fraction of ``num_steps`` devoted to the early phase (fixed small
+        windows of size ``early_window_size``). Default ``0.3`` matches
+        nutpie's ``early_window``.
+    step_size_window
+        Fraction of ``num_steps`` devoted to the final step-size-only
+        phase (no mass-matrix updates). Default ``0.15`` matches nutpie's
+        ``step_size_window``.
+    early_window_size
+        Fixed window size during the early phase. Default ``10`` matches
+        nutpie's ``early_mass_matrix_switch_freq``.
+    window_size
+        Starting window size for the main (post-early) phase, before
+        growth. Default ``80`` matches nutpie's ``mass_matrix_switch_freq``.
+    window_growth
+        Multiplicative growth factor applied to the window size after each
+        switch in the main phase. Default ``1.5`` matches nutpie's
+        ``mass_matrix_window_growth``.
+
+    Returns
+    -------
+    A ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs, in the
+    same format as :func:`~blackjax.adaptation.window_adaptation.build_schedule`
+    (stage ``0`` = fast/step-size-only, stage ``1`` = slow/mass-matrix-adapting).
+    """
+    if num_steps < 20:
+        return jnp.array([(0, False)] * num_steps)
+
+    final_buffer_size = max(int(round(step_size_window * num_steps)), 1)
+    final_buffer_start = num_steps - final_buffer_size
+    early_end = min(max(int(round(early_window * num_steps)), 1), final_buffer_start)
+
+    schedule = []
+
+    # Early phase: fixed-size windows of `early_window_size`, slow stage.
+    pos = 0
+    while pos < early_end:
+        size = min(early_window_size, early_end - pos)
+        schedule += [(1, False)] * (size - 1)
+        schedule.append((1, True))
+        pos += size
+
+    # Main phase: windows starting at `window_size`, growing by
+    # `window_growth` after each switch, slow stage.
+    current_size = window_size
+    while pos < final_buffer_start:
+        remaining = final_buffer_start - pos
+        size = min(current_size, remaining)
+        schedule += [(1, False)] * (size - 1)
+        schedule.append((1, True))
+        pos += size
+        current_size = max(current_size + 1, int(round(current_size * window_growth)))
+
+    # Final phase: step-size-only, fast stage.
+    schedule += [(0, False)] * (num_steps - pos - 1)
+    schedule.append((0, False))
+
+    return jnp.array(schedule)
+
+
+# ---------------------------------------------------------------------------
 # Warmup primitives  (init / update / final)
 # ---------------------------------------------------------------------------
 
@@ -265,8 +409,9 @@ def _compute_low_rank_metric(
 def base(
     max_rank: int = 10,
     target_acceptance_rate: float = 0.80,
-    gamma: float = 1.0,
+    gamma: float = 1e-5,
     cutoff: float = 2.0,
+    gradient_based_init: bool = False,
 ) -> tuple[Callable, Callable, Callable]:
     """Warmup scheme using the low-rank mass matrix adaptation.
 
@@ -281,12 +426,37 @@ def base(
     target_acceptance_rate
         Target acceptance rate for dual-averaging step-size adaptation.
     gamma
-        Regularisation scale.  The projected covariance is divided by
-        ``n * gamma`` before adding identity (nutpie convention).  Default
-        ``1.0`` gives ``C = P P^T / n + I``.
+        Regularisation scale.  The projected covariance is divided by ``gamma``
+        (nutpie convention -- no ``n`` scaling).  Default ``1e-5`` matches
+        nutpie's ``LowRankSettings::default``.
     cutoff
         Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked
         (eigenvalue set to 1).  Default ``2.0`` matches nutpie's ``c=2``.
+    gradient_based_init
+        If ``True``, seed the diagonal scale from the initial gradient
+        instead of the identity: nutpie's own ``init`` calls
+        ``update_from_grad`` on the very first observed point (``nuts-rs``
+        ``src/transform/adapt/low_rank.rs::init``), which the paper's §3.1
+        motivates as ``M = diag(|alpha^(0)|)`` -- a regularised diagonal of
+        the gradient outer-product, a common Hessian approximation at the
+        starting point (cf. L-BFGS). Since blackjax's ``sigma**2`` is the
+        *inverse*-mass-matrix diagonal, this sets
+        ``sigma = 1/sqrt(clip(|grad|, 1e-20, 1e20))`` so that
+        ``M^{-1}_diag = sigma**2 = 1/|grad|``, matching ``M = diag(|grad|)``
+        -- **except per-coordinate where** ``|grad_i| < 1e-10``, **where
+        sigma_i falls back to 1.0** (the identity) instead of propagating
+        the ``1e-20`` clip floor into an astronomically loose ``sigma_i =
+        1e10``. This defends the real edge case of initialising at (or very
+        near) a stationary point of the target -- e.g. ``x=0`` on any
+        centered/standardised density -- where the gradient is exactly (or
+        near-)zero and an extreme initial scale causes near-certain
+        divergence on the very first trajectory (see the fisher-2x2
+        calibration study's root-caused finding). Only the diagonal scale
+        changes; ``U``/``lam`` still start at no-correction (``U=0``,
+        ``lam=1``), same as the default. Default ``False`` reproduces the
+        original identity/zero initialisation exactly (see also
+        :func:`build_growing_window_schedule`, which implements the
+        companion window-sizing piece of nutpie's warmup).
 
     Returns
     -------
@@ -302,7 +472,32 @@ def base(
         buffer_size: int,
     ) -> LowRankAdaptationState:
         d = pytree_size(position)
-        sigma = jnp.ones(d)
+        if gradient_based_init:
+            grad_flat, _ = fu.ravel_pytree(grad)
+            abs_grad = jnp.abs(grad_flat)
+            # Per-coordinate fallback to the identity (sigma_i=1.0) below a
+            # near-zero-gradient threshold, rather than propagating the
+            # 1e-20 clip floor into sigma_i=1e10. A real user-facing edge:
+            # x=0 initialisation on any centered/standardised target gives
+            # an EXACTLY zero gradient, and nuts-rs's own
+            # array_update_var_inv_std_grad has no formula-level defense for
+            # this either (clamp(0, 1e-20, 1e20).recip() = 1e20 is finite,
+            # so its `fill_invalid` branch -- reserved for non-finite results
+            # -- never fires); nutpie avoids this in practice purely by
+            # jittering the initial position elsewhere in its pipeline, not
+            # via this formula. sigma=1e10 at every dimension mistunes the
+            # metric so severely relative to initial_step_size that the
+            # first trajectory diverges immediately, freezing the chain for
+            # the whole first window and collapsing the subsequent estimate
+            # -- root-caused via the Fisher 2x2 calibration study's
+            # instrumented re-run (design doc "Calibration verdict" section).
+            # Threshold 1e-10 is a defensible, disclosed choice (no nuts-rs
+            # precedent to cite at this exact boundary).
+            near_zero_grad_threshold = 1e-10
+            safe_sigma = jnp.power(jnp.clip(abs_grad, 1e-20, 1e20), -0.5)
+            sigma = jnp.where(abs_grad < near_zero_grad_threshold, 1.0, safe_sigma)
+        else:
+            sigma = jnp.ones(d)
         mu_star = jnp.zeros(d)
         U = jnp.zeros((d, max_rank))
         lam = jnp.ones(max_rank)
@@ -442,11 +637,13 @@ def window_adaptation_low_rank(
     max_rank: int = 10,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
-    gamma: float = 1.0,
+    gamma: float = 1e-5,
     cutoff: float = 2.0,
     progress_bar: bool = False,
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
+    gradient_based_init: bool = False,
+    schedule_fn: Callable[[int], Array] = build_schedule,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt step size and a low-rank mass matrix for HMC-family samplers.
@@ -473,8 +670,9 @@ def window_adaptation_low_rank(
     target_acceptance_rate
         Target acceptance rate for dual averaging.
     gamma
-        Regularisation scale; projected covariance is divided by ``n * gamma``
-        before adding identity (nutpie convention).
+        Regularisation scale; projected covariance is divided by ``gamma``
+        before adding identity (nutpie convention -- no ``n`` scaling).
+        Default ``1e-5`` matches nutpie's ``LowRankSettings::default``.
     cutoff
         Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked.
         Default ``2.0`` matches nutpie's ``c=2``.
@@ -485,6 +683,19 @@ def window_adaptation_low_rank(
         ``blackjax.adaptation.base``.
     integrator
         Integrator to pass to ``algorithm.build_kernel``.
+    gradient_based_init
+        Seed the diagonal scale from the initial gradient instead of the
+        identity, matching nutpie's own initialisation (see :func:`base`).
+        Default ``False`` reproduces the original behaviour exactly.
+    schedule_fn
+        Schedule-generator function ``num_steps -> (num_steps, 2)`` array of
+        ``(stage, is_window_end)`` pairs. Default is Stan's fixed-absolute,
+        2x-doubling :func:`~blackjax.adaptation.window_adaptation.build_schedule`
+        (unchanged default behaviour). Pass
+        :func:`build_growing_window_schedule` for nutpie's proportional-to-tune,
+        1.5x-growing-window schedule -- see that function's docstring for
+        exactly what it does and does not capture relative to nutpie's own
+        (online, per-draw) schedule.
     **extra_parameters
         Additional keyword arguments forwarded to the kernel at every step
         (e.g. ``num_integration_steps`` for HMC).
@@ -518,6 +729,7 @@ def window_adaptation_low_rank(
         target_acceptance_rate=target_acceptance_rate,
         gamma=gamma,
         cutoff=cutoff,
+        gradient_based_init=gradient_based_init,
     )
 
     def one_step(carry, xs):
@@ -569,7 +781,7 @@ def window_adaptation_low_rank(
             print("Running low-rank window adaptation")
         scan_fn = gen_scan_fn(num_steps, progress_bar=progress_bar)
         keys = jax.random.split(rng_key, num_steps)
-        schedule = build_schedule(num_steps)
+        schedule = schedule_fn(num_steps)
         last_state, info = scan_fn(
             one_step,
             (init_state, init_adaptation_state),
