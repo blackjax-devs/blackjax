@@ -181,60 +181,111 @@ def step_size_selector(
         )
     is_symmetric = criterion == "symmetric"
 
-    def log_acceptance_ratio(state, step_size, logdensity_fn, metric):
-        """``ell(theta, rho, epsilon)`` -- ``-delta_energy`` at one trial
-        step size, section 2.1.2. Renamed from the paper's terse ``ell`` to
-        a descriptive name, per the naming-conventions checklist.
-        """
-        symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
-        build_trajectory = trajectory.static_integration(symplectic_integrator)
-        end_state = build_trajectory(state, step_size, num_integration_steps)
-        end_state = hmc.flip_momentum(end_state)
-        initial_energy = -state.logdensity + metric.kinetic_energy(state.momentum)
-        new_energy = -end_state.logdensity + metric.kinetic_energy(end_state.momentum)
-        return safe_energy_diff(initial_energy, new_energy)
+    def mu(
+        state: IntegratorState,
+        a,
+        b,
+        logdensity_fn,
+        metric,
+        *,
+        build_trajectory: Callable | None = None,
+    ):
+        # Build (or reuse a caller-supplied) trajectory builder exactly once
+        # per `mu` call -- this is what `integrator(logdensity_fn,
+        # metric.kinetic_energy)` wraps `logdensity_fn` in a fresh
+        # `jax.value_and_grad` (matching the hmc/nuts convention of building
+        # the symplectic integrator once and threading it through, rather
+        # than rebuilding per trial step size -- the latter tripped
+        # `chex.assert_max_traces` during implementation: rebuilding inside
+        # the trial-evaluation helper counted as a separate trace per call).
+        # `apply_fn` passes its own already-built trajectory function so the
+        # reverse selection re-run shares it instead of re-wrapping
+        # `logdensity_fn` a second time.
+        if build_trajectory is None:
+            symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
+            build_trajectory = trajectory.static_integration(symplectic_integrator)
 
-    def mu(state: IntegratorState, a, b, logdensity_fn, metric):
+        def log_acceptance_ratio(step_size):
+            """``ell(theta, rho, epsilon)`` -- ``-delta_energy`` at one
+            trial step size, section 2.1.2. Renamed from the paper's terse
+            ``ell`` to a descriptive name, per the naming-conventions
+            checklist.
+            """
+            end_state = build_trajectory(state, step_size, num_integration_steps)
+            end_state = hmc.flip_momentum(end_state)
+            initial_energy = -state.logdensity + metric.kinetic_energy(state.momentum)
+            new_energy = -end_state.logdensity + metric.kinetic_energy(
+                end_state.momentum
+            )
+            return safe_energy_diff(initial_energy, new_energy)
+
         log_a = jnp.log(a)
         log_b = jnp.log(b)
-        ell0 = log_acceptance_ratio(state, initial_step_size, logdensity_fn, metric)
 
-        if is_symmetric:
-            do_expand = jnp.abs(ell0) < jnp.abs(log_b)  # too small a step
-            do_shrink = jnp.abs(ell0) > jnp.abs(log_a)  # too large a step
-        else:
-            do_expand = ell0 >= log_b
-            do_shrink = ell0 <= log_a
-        v = jnp.where(do_expand, 1, jnp.where(do_shrink, -1, 0)).astype(jnp.int32)
-
+        # Deciding `v` from `ell0` (section 2.1.2) is folded into iteration 0
+        # of the same `while_loop` that runs the doubling/halving search,
+        # rather than a separate call to `log_acceptance_ratio` before the
+        # loop -- `jax.lax.while_loop` traces its body exactly once
+        # regardless of how many concrete iterations run, so folding this in
+        # keeps `log_acceptance_ratio` (hence `logdensity_fn`) to a single
+        # trace-time call site per `mu` invocation, instead of two (one for
+        # `ell0`, one inside the loop body) -- the latter tripped
+        # `chex.assert_max_traces` during implementation.
         def cond_fn(carry):
-            _, n, terminated = carry
-            return jnp.logical_not(terminated) & (n < max_search_steps)
+            _, n, terminated, _ = carry
+            return jnp.logical_not(terminated) & (n < max_search_steps + 1)
 
         def body_fn(carry):
-            j, n, _ = carry
-            j_next = j + v
-            step_size = initial_step_size * 2.0 ** j_next.astype(jnp.float32)
-            ell = log_acceptance_ratio(state, step_size, logdensity_fn, metric)
+            j, n, _, v = carry
+            is_deciding = n == 0
+            # Iteration 0 evaluates at the *current* j (i.e. `ell0`, j
+            # unchanged); iteration n>=1 evaluates at j+v using the v
+            # decided at iteration 0.
+            trial_j = jnp.where(is_deciding, j, j + v)
+            step_size = initial_step_size * 2.0 ** trial_j.astype(jnp.float32)
+            ell = log_acceptance_ratio(step_size)
+
             if is_symmetric:
-                term_expand = (v == 1) & (jnp.abs(ell) >= jnp.abs(log_b))
-                term_shrink = (v == -1) & (jnp.abs(ell) <= jnp.abs(log_a))
+                do_expand = jnp.abs(ell) < jnp.abs(log_b)  # too small a step
+                do_shrink = jnp.abs(ell) > jnp.abs(log_a)  # too large a step
             else:
-                term_expand = (v == 1) & (ell < log_b)
-                term_shrink = (v == -1) & (ell > log_a)
-            return j_next, n + 1, term_expand | term_shrink
+                do_expand = ell >= log_b
+                do_shrink = ell <= log_a
+            v_decided = jnp.where(do_expand, 1, jnp.where(do_shrink, -1, 0)).astype(
+                jnp.int32
+            )
+            v_next = jnp.where(is_deciding, v_decided, v)
+
+            if is_symmetric:
+                term_expand = (v_next == 1) & (jnp.abs(ell) >= jnp.abs(log_b))
+                term_shrink = (v_next == -1) & (jnp.abs(ell) <= jnp.abs(log_a))
+            else:
+                term_expand = (v_next == 1) & (ell < log_b)
+                term_shrink = (v_next == -1) & (ell > log_a)
+            # At the deciding iteration (n=0), "ell op threshold" can never
+            # also satisfy the opposite-direction termination test (the two
+            # are complementary comparisons of the same ell against the same
+            # threshold), so `term_expand | term_shrink` is always False
+            # there; termination at n=0 is instead exactly `v_decided == 0`.
+            terminated_search = term_expand | term_shrink
+            terminated_next = jnp.where(is_deciding, v_next == 0, terminated_search)
+
+            return trial_j, n + 1, terminated_next, v_next
 
         init_carry = (
             jnp.asarray(0, dtype=jnp.int32),
             jnp.asarray(0, dtype=jnp.int32),
-            v == 0,
+            jnp.asarray(False),
+            jnp.asarray(0, dtype=jnp.int32),
         )
-        j_final, _, terminated_final = jax.lax.while_loop(cond_fn, body_fn, init_carry)
-        search_exhausted = jnp.logical_not(terminated_final) & (v != 0)
+        j_final, _, terminated_final, v_final = jax.lax.while_loop(
+            cond_fn, body_fn, init_carry
+        )
+        search_exhausted = jnp.logical_not(terminated_final) & (v_final != 0)
         # "Final halving": on a successful *expansion*, report one step back
         # (section 2.1.2) -- necessary for the reversibility check to ever
         # pass in the doubling sub-case ([autoMALA] p.4).
-        step_index = jnp.where(terminated_final & (v == 1), j_final - 1, j_final)
+        step_index = jnp.where(terminated_final & (v_final == 1), j_final - 1, j_final)
         return step_index, search_exhausted
 
     return mu
@@ -268,8 +319,16 @@ def _apply_fn(
         proposal_state = build_trajectory(state, step_size, num_integration_steps)
         proposal_state = hmc.flip_momentum(proposal_state)
 
+        # Reuse this apply_fn's own trajectory builder for the reversibility
+        # re-check instead of letting the selector build (and re-wrap
+        # `logdensity_fn` in) another one -- see the comment in `mu`.
         reverse_step_index, search_exhausted_reverse = selector(
-            proposal_state, a, b, logdensity_fn, metric
+            proposal_state,
+            a,
+            b,
+            logdensity_fn,
+            metric,
+            build_trajectory=build_trajectory,
         )
         search_exhausted = search_exhausted_forward | search_exhausted_reverse
         is_reversible = reverse_step_index == step_index
