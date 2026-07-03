@@ -444,5 +444,56 @@ class LowRankDiagonalConsistencyTest(BlackJAXTest):
             np.testing.assert_allclose(float(lam[0]), 1.0, atol=1e-3)
 
 
+class LowRankSmallNRobustnessTest(BlackJAXTest):
+    """Small-n robustness (early-warmup buffer sizes) -- reviewer finding.
+
+    Statistician correctness review (stat-e1) surfaced this adversarial
+    check during the fix's review: at borderline-rank-deficient buffer
+    sizes typical of the *first* slow window in warmup (n as low as 4, up
+    to n=200), the fixed estimator with the corrected ``gamma=1e-5``
+    regularisation must (a) never produce NaN/Inf at JAX's default float32
+    precision, and (b) already recover the correct sign -- and a
+    non-trivial fraction of the true magnitude -- at n=4, where the OLD
+    ``gamma=1.0`` default's n-scaled regularisation shows essentially
+    nothing (implied correlation collapses to ~0.0 at n=4; see PR draft for
+    the side-by-side numbers). This locks in that the gamma-scale fix is
+    *more* robust in the small-n regime, not just asymptotically correct.
+    """
+
+    def test_no_nan_inf_and_correct_sign_across_small_n(self):
+        rho = 0.7
+        cov = jnp.array([[4.0, rho * 2.0], [rho * 2.0, 1.0]])
+        for n in (4, 10, 50, 200):
+            draws = jax.random.multivariate_normal(
+                self.next_key(), jnp.zeros(2), cov, shape=(n,)
+            )
+            grads = -draws @ jnp.linalg.inv(cov).T
+            sigma, mu_star, U, lam = _compute_low_rank_metric(
+                draws, grads, n, 2, 1e-5, 2.0
+            )
+            for name, arr in [
+                ("sigma", sigma),
+                ("mu_star", mu_star),
+                ("U", U),
+                ("lam", lam),
+            ]:
+                self.assertTrue(
+                    bool(jnp.all(jnp.isfinite(arr))),
+                    f"n={n} -- {name} has NaN/Inf: {arr}",
+                )
+            minv = _low_rank_inverse_mass_matrix(sigma, U, lam)
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(minv))), f"n={n} -- M^-1 has NaN/Inf"
+            )
+            implied_corr = round(
+                float(minv[0, 1] / jnp.sqrt(minv[0, 0] * minv[1, 1])), 4
+            )
+            self.assertGreater(
+                implied_corr,
+                0.3,
+                f"n={n} -- correlation not recovered (got {implied_corr})",
+            )
+
+
 if __name__ == "__main__":
     absltest.main()
