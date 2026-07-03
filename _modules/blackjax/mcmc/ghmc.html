@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb035e9cf2" />
+  <meta name="docsearch:version" content="0.1.dev1+g0b3386d27" />
   </head>
   
   
@@ -480,6 +480,42 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_metric_from_momentum_inverse_scale</span><span class="p">(</span>
+    <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the momentum ``Metric`` from ``momentum_inverse_scale``.</span>
+
+<span class="sd">    ``momentum_inverse_scale`` is documented (and used by MEADS) as a</span>
+<span class="sd">    per-dimension *inverse scale*, not an inverse mass matrix: the legacy</span>
+<span class="sd">    diagonal/scalar path squares it elementwise -- turning an inverse</span>
+<span class="sd">    standard deviation into an inverse variance -- before handing it to</span>
+<span class="sd">    ``gaussian_euclidean``, which expects the latter. That elementwise</span>
+<span class="sd">    squaring only makes sense for the legacy input shape (an Array of ndim</span>
+<span class="sd">    &lt;= 1, or a Pytree matching ``position``), so it is preserved exactly</span>
+<span class="sd">    there, keeping existing diagonal/scalar callers (including MEADS)</span>
+<span class="sd">    bit-for-bit unchanged.</span>
+
+<span class="sd">    A dense ``(d, d)`` array, a</span>
+<span class="sd">    :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`, a</span>
+<span class="sd">    :class:`~blackjax.mcmc.metrics.Metric`, or a callable already carry</span>
+<span class="sd">    inverse-mass-matrix (not inverse-scale) semantics -- exactly as</span>
+<span class="sd">    ``inverse_mass_matrix`` does for ``hmc``/``nuts`` -- so these are</span>
+<span class="sd">    forwarded to :func:`~blackjax.mcmc.metrics.default_metric` unchanged,</span>
+<span class="sd">    with no squaring.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+        <span class="n">momentum_inverse_scale</span><span class="p">,</span> <span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">)</span>
+    <span class="p">)</span> <span class="ow">or</span> <span class="nb">callable</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">,</span> <span class="s2">&quot;ndim&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">momentum_inverse_scale</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)</span>
+
+    <span class="n">flat_inverse_scale</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">flat_inverse_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+
 <div class="viewcode-block" id="build_kernel">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/ghmc/index.html#blackjax.mcmc.ghmc.build_kernel">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
@@ -519,7 +555,7 @@
         <span class="n">state</span><span class="p">:</span> <span class="n">GHMCState</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
         <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
         <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">GHMCState</span><span class="p">,</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCInfo</span><span class="p">]:</span>
@@ -536,9 +572,17 @@
 <span class="sd">        step_size</span>
 <span class="sd">            Variable specifying the size of the integration step.</span>
 <span class="sd">        momentum_inverse_scale</span>
-<span class="sd">            Pytree with the same structure as the targeted position variable</span>
-<span class="sd">            specifying the per dimension inverse scaling transformation applied</span>
-<span class="sd">            to the persistent momentum variable prior to the integration step.</span>
+<span class="sd">            Legacy usage: a Pytree with the same structure as the targeted</span>
+<span class="sd">            position variable (or a scalar/1-D array) specifying the per</span>
+<span class="sd">            dimension inverse *scale* applied to the persistent momentum</span>
+<span class="sd">            variable prior to the integration step; it is squared elementwise</span>
+<span class="sd">            to obtain the inverse mass matrix. To use a dense or low-rank</span>
+<span class="sd">            metric (mirroring ``hmc``/``nuts``), pass a ``(d, d)`` array (the</span>
+<span class="sd">            inverse mass matrix directly, no squaring), a</span>
+<span class="sd">            :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`, a</span>
+<span class="sd">            :class:`~blackjax.mcmc.metrics.Metric`, or a callable; these are</span>
+<span class="sd">            forwarded to :func:`~blackjax.mcmc.metrics.default_metric`</span>
+<span class="sd">            unchanged.</span>
 <span class="sd">        alpha</span>
 <span class="sd">            Variable specifying the degree of persistent momentum, complementary</span>
 <span class="sd">            to independent new momentum.</span>
@@ -548,17 +592,14 @@
 
 <span class="sd">        &quot;&quot;&quot;</span>
 
-        <span class="n">flat_inverse_scale</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">momentum_generator</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">gaussian_euclidean</span><span class="p">(</span>
-            <span class="n">flat_inverse_scale</span><span class="o">**</span><span class="mi">2</span>
-        <span class="p">)</span>
+        <span class="n">metric</span> <span class="o">=</span> <span class="n">_metric_from_momentum_inverse_scale</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)</span>
 
         <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">(</span>
-            <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">kinetic_energy_fn</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span>
         <span class="p">)</span>
         <span class="n">proposal_generator</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">hmc_proposal</span><span class="p">(</span>
             <span class="n">symplectic_integrator</span><span class="p">,</span>
-            <span class="n">kinetic_energy_fn</span><span class="p">,</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">,</span>
             <span class="n">step_size</span><span class="p">,</span>
             <span class="n">divergence_threshold</span><span class="o">=</span><span class="n">divergence_threshold</span><span class="p">,</span>
             <span class="n">sample_proposal</span><span class="o">=</span><span class="n">nonreversible_slice_sampling</span><span class="p">,</span>
@@ -567,7 +608,7 @@
         <span class="n">key_momentum</span><span class="p">,</span> <span class="n">key_noise</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">)</span>
         <span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">,</span> <span class="nb">slice</span> <span class="o">=</span> <span class="n">state</span>
         <span class="c1"># New momentum is persistent</span>
-        <span class="n">momentum</span> <span class="o">=</span> <span class="n">update_momentum</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">momentum_generator</span><span class="p">)</span>
+        <span class="n">momentum</span> <span class="o">=</span> <span class="n">update_momentum</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">sample_momentum</span><span class="p">)</span>
         <span class="c1"># Slice is non-reversible</span>
         <span class="nb">slice</span> <span class="o">=</span> <span class="p">((</span><span class="nb">slice</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">+</span> <span class="n">noise_fn</span><span class="p">(</span><span class="n">key_noise</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="mf">1.0</span>
 
@@ -620,7 +661,7 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">as_top_level_api</span><span class="p">(</span>
     <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
     <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+    <span class="n">momentum_inverse_scale</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
     <span class="n">alpha</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">delta</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
@@ -671,9 +712,17 @@
 <span class="sd">        values used for as a step size for each dimension of the target space in</span>
 <span class="sd">        the velocity verlet integrator.</span>
 <span class="sd">    momentum_inverse_scale</span>
-<span class="sd">        Pytree with the same structure as the targeted position variable</span>
-<span class="sd">        specifying the per dimension inverse scaling transformation applied</span>
-<span class="sd">        to the persistent momentum variable prior to the integration step.</span>
+<span class="sd">        Legacy usage: a Pytree with the same structure as the targeted</span>
+<span class="sd">        position variable (or a scalar/1-D array) specifying the per</span>
+<span class="sd">        dimension inverse *scale* applied to the persistent momentum</span>
+<span class="sd">        variable prior to the integration step; it is squared elementwise</span>
+<span class="sd">        to obtain the inverse mass matrix. To use a dense or low-rank</span>
+<span class="sd">        metric (mirroring ``hmc``/``nuts``), pass a ``(d, d)`` array (the</span>
+<span class="sd">        inverse mass matrix directly, no squaring), a</span>
+<span class="sd">        :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`, a</span>
+<span class="sd">        :class:`~blackjax.mcmc.metrics.Metric`, or a callable; these are</span>
+<span class="sd">        forwarded to :func:`~blackjax.mcmc.metrics.default_metric`</span>
+<span class="sd">        unchanged.</span>
 <span class="sd">    alpha</span>
 <span class="sd">        The value defining the persistence of the momentum variable.</span>
 <span class="sd">    delta</span>
@@ -693,11 +742,12 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">noise_fn</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">)</span>
+    <span class="n">metric</span> <span class="o">=</span> <span class="n">_metric_from_momentum_inverse_scale</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
         <span class="n">kernel</span><span class="p">,</span>
         <span class="n">init</span><span class="p">,</span>
         <span class="n">logdensity_fn</span><span class="p">,</span>
-        <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">momentum_inverse_scale</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">delta</span><span class="p">),</span>
+        <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="n">metric</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">delta</span><span class="p">),</span>
         <span class="n">pass_rng_key_to_init</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span></div>
 
