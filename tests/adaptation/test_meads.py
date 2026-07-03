@@ -6,7 +6,13 @@ import numpy as np
 import pytest
 
 import blackjax
-from blackjax.adaptation.meads_adaptation import MEADSAdaptationState, base
+from blackjax.adaptation.meads_adaptation import (
+    _LRD_EIGENVALUE_FLOOR,
+    MEADSAdaptationState,
+    _lrd_accumulator_init,
+    _lrd_accumulator_update,
+    base,
+)
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.fixtures import BlackJAXTest
 
@@ -375,3 +381,118 @@ class TestMEADSLowRank(BlackJAXTest):
         self.assertTrue(
             hasattr(blackjax.mcmc.ghmc, "_metric_from_momentum_inverse_scale")
         )
+
+
+class TestMEADSLowRankHighDimFixes(BlackJAXTest):
+    """Tests for the MEADS-LRD high-dimension (d >> num_chains) fixes: the
+    window-accumulated covariance (FIX 1), the step-size/low-rank-metric
+    decouple (FIX 2), and the eigenvalue floor (FIX 3)."""
+
+    def test_invalid_low_rank_window_fraction(self):
+        """low_rank_window_fraction must be in [0.0, 1.0]."""
+        with pytest.raises(ValueError, match="low_rank_window_fraction"):
+            blackjax.meads_adaptation(
+                make_logdensity(dim=3),
+                num_chains=8,
+                num_folds=4,
+                low_rank_rank=1,
+                low_rank_window_fraction=1.5,
+            )
+        with pytest.raises(ValueError, match="low_rank_window_fraction"):
+            blackjax.meads_adaptation(
+                make_logdensity(dim=3),
+                num_chains=8,
+                num_folds=4,
+                low_rank_rank=1,
+                low_rank_window_fraction=-0.1,
+            )
+
+    def test_accumulator_matches_naive_batch_covariance(self):
+        """FIX 1: the Chan/Welford merge must reproduce the naive covariance
+        of the concatenated batches, with effective n = the sum of the batch
+        sizes -- i.e. num_chains * window_steps once wired into
+        meads_adaptation, rather than a single num_chains-sized snapshot."""
+        key = self.next_key()
+        d, n_b, num_batches = 5, 8, 4
+        batches = jax.random.normal(key, (num_batches, n_b, d))
+
+        acc = _lrd_accumulator_init(d)
+        for b in range(num_batches):
+            acc = _lrd_accumulator_update(acc, batches[b])
+
+        self.assertEqual(float(acc.count), n_b * num_batches)
+        self.assertGreater(float(acc.count), n_b)  # eff n > a single snapshot
+
+        all_samples = batches.reshape(-1, d)
+        naive_cov = jnp.cov(all_samples, rowvar=False)
+        accumulated_cov = acc.m2 / (acc.count - 1.0)
+        np.testing.assert_allclose(accumulated_cov, naive_cov, atol=1e-5, rtol=1e-5)
+
+    def test_step_size_independent_of_low_rank_metric(self):
+        """FIX 2 (ε-decouple): the step size after one warmup step must be
+        bit-for-bit identical whether low_rank_rank is None or set. It is
+        computed purely from the pre-step diagonal-preconditioned gradients
+        (identical in both configs at step 0), never from the low-rank
+        metric."""
+        num_chains, num_folds, dim = 16, 4, 6
+        logdensity = make_correlated_pair_logdensity(dim, rho=0.9)
+        positions = jax.random.normal(self.next_key(), (num_chains, dim))
+        key = self.next_key()
+
+        warmup_diag = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=num_folds
+        )
+        warmup_lrd = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=num_folds, low_rank_rank=3
+        )
+        (_, params_diag), _ = warmup_diag.run(key, positions, num_steps=1)
+        (_, params_lrd), _ = warmup_lrd.run(key, positions, num_steps=1)
+
+        np.testing.assert_array_equal(params_diag["step_size"], params_lrd["step_size"])
+
+    def test_low_rank_floors_degenerate_eigenvalues_collinear_init(self):
+        """FIX 3: a collinear (rank-1) initial ensemble -- tuningfork's
+        canonical init -- must not produce a degenerate low-rank metric that
+        could self-reinforce into a metric collapse."""
+        num_chains, num_folds, dim = 32, 4, 6
+        logdensity = make_correlated_pair_logdensity(dim, rho=0.9)
+
+        direction = jax.random.normal(self.next_key(), (dim,))
+        direction = direction / jnp.linalg.norm(direction)
+        scalars = jax.random.normal(self.next_key(), (num_chains,))
+        positions = scalars[:, None] * direction[None, :]  # exactly rank-1
+
+        warmup = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=num_folds, low_rank_rank=3
+        )
+        (last_states, params), _ = warmup.run(self.next_key(), positions, num_steps=20)
+
+        mis = params["momentum_inverse_scale"]
+        self.assertTrue(jnp.all(mis.lam >= _LRD_EIGENVALUE_FLOOR))
+        self.assertTrue(jnp.all(jnp.isfinite(mis.lam)))
+        self.assertTrue(jnp.all(jnp.isfinite(last_states.position)))
+
+    def test_low_rank_higher_dim_no_step_size_collapse(self):
+        """Regression guard at d larger than num_chains: window accumulation
+        (FIX 1) plus the ε-decouple (FIX 2) must keep the step size in a
+        sane, non-collapsed range -- this is the failure mode a single,
+        p >> n snapshot caused (measured on the real radon model: ~20x
+        collapse). A smaller synthetic analogue here for test speed."""
+        num_chains, num_folds, dim = 32, 4, 40
+        direction = jax.random.normal(jax.random.key(0), (dim,))
+        direction = direction / jnp.linalg.norm(direction)
+
+        def logdensity(x):
+            proj = x @ direction
+            return -0.5 * jnp.sum(x**2) - 0.5 * 24.0 * proj**2
+
+        positions = jax.random.normal(self.next_key(), (num_chains, dim))
+
+        warmup = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=num_folds, low_rank_rank=10
+        )
+        (last_states, params), _ = warmup.run(self.next_key(), positions, num_steps=60)
+
+        self.assertGreater(float(params["step_size"]), 1e-2)
+        self.assertTrue(jnp.all(jnp.isfinite(last_states.position)))
+        self.assertTrue(jnp.all(jnp.isfinite(params["momentum_inverse_scale"].lam)))
