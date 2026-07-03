@@ -332,15 +332,16 @@ class LowRankCorrelationRecoveryTest(BlackJAXTest):
         jax.clear_caches()
         super().tearDown()
 
-    def _pairwise_mvn(self, rho, key, n=20_000):
+    def _pairwise_mvn(self, rho, key, n=2_000):
         """2-D correlated Gaussian: var 4/1, correlation rho (case study control).
 
-        n=20_000 (down from the original 200_000): verified empirically
-        before shrinking that the same atol=0.05 assertion still holds with
-        wide margin at this n (err ~1e-4, not marginal) -- this is exact
-        recovery in the noise-free-limit regime (Theorem 2.4), not a
-        Monte-Carlo-noise-limited statistic, so n reduction doesn't trade
-        away real power.
+        n=2_000 (down from 200_000 originally, then 20_000 in the first
+        CI-OOM shrink pass): re-verified empirically before this second
+        shrink, across 5 seeds per rho, that the same atol=0.05 assertion
+        still holds with wide margin (worst err ~0, exact recovery, not
+        marginal) -- this is exact recovery in the noise-free-limit regime
+        (Theorem 2.4), not a Monte-Carlo-noise-limited statistic, so the
+        further n reduction doesn't trade away real power.
         """
         cov = jnp.array([[4.0, rho * 2.0], [rho * 2.0, 1.0]])
         draws = jax.random.multivariate_normal(key, jnp.zeros(2), cov, shape=(n,))
@@ -371,7 +372,7 @@ class LowRankCorrelationRecoveryTest(BlackJAXTest):
         rho = 0.3
         cov = jnp.eye(d).at[0, 1:].set(rho).at[1:, 0].set(rho)
         draws = jax.random.multivariate_normal(
-            self.next_key(), jnp.zeros(d), cov, shape=(20_000,)
+            self.next_key(), jnp.zeros(d), cov, shape=(2_000,)
         )
         grads = -draws @ jnp.linalg.inv(cov).T
         for max_rank in (3, 6):
@@ -396,15 +397,18 @@ class LowRankGaussianLimitTest(BlackJAXTest):
         M^{-1} == Sigma, matching Theorem 2.4's exact-recovery guarantee once
         the number of draws exceeds d+1. ``cutoff=1.0`` disables eigenvalue
         masking (masks only exactly-unity eigenvalues) so the full-rank
-        correction is retained. n=20_000 (down from 50_000): verified
-        empirically before shrinking -- still exact recovery (max abs/rel
-        error ~0, not marginal) since this is Theorem 2.4's noise-free
-        exact-recovery regime, not a Monte-Carlo-limited statistic."""
+        correction is retained. n=2_000 (down from 50_000 originally, then
+        20_000 in the first CI-OOM shrink pass; d=5 here, well under the
+        d+1 draws Theorem 2.4 requires for exact recovery): re-verified
+        empirically before this second shrink, across 5 seeds -- still
+        exact recovery (max abs/rel error ~0, not marginal) since this is
+        Theorem 2.4's noise-free exact-recovery regime, not a
+        Monte-Carlo-limited statistic."""
         d = 5
         key1, key2 = jax.random.split(self.next_key())
         A = jax.random.normal(key1, (d, d))
         cov = A @ A.T + d * jnp.eye(d)
-        draws = jax.random.multivariate_normal(key2, jnp.zeros(d), cov, shape=(20_000,))
+        draws = jax.random.multivariate_normal(key2, jnp.zeros(d), cov, shape=(2_000,))
         grads = -draws @ jnp.linalg.inv(cov).T
         sigma, _, U, lam = _compute_low_rank_metric(
             draws, grads, draws.shape[0], d, 1e-5, 1.0
@@ -432,16 +436,17 @@ class LowRankSeedStabilityTest(BlackJAXTest):
         super().tearDown()
 
     def test_top_eigenvector_direction_stable_across_seeds(self):
-        """n=20_000 (down from 200_000): verified empirically before
-        shrinking -- 6-seed std stays ~1e-3 to 3e-3 (well under the 0.05
-        threshold, not marginal) at this n."""
+        """n=2_000 (down from 200_000 originally, then 20_000 in the first
+        CI-OOM shrink pass): re-verified empirically before this second
+        shrink -- 6-seed std stays ~5e-3 (well under the 0.05 threshold,
+        not marginal) at this n."""
         rho = 0.7
         cov = jnp.array([[4.0, rho * 2.0], [rho * 2.0, 1.0]])
         corrs = []
         for _ in range(6):
             key = self.next_key()
             draws = jax.random.multivariate_normal(
-                key, jnp.zeros(2), cov, shape=(20_000,)
+                key, jnp.zeros(2), cov, shape=(2_000,)
             )
             grads = -draws @ jnp.linalg.inv(cov).T
             sigma, _, U, lam = _compute_low_rank_metric(
