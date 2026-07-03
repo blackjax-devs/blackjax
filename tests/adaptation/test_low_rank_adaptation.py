@@ -22,7 +22,7 @@ from blackjax.adaptation.low_rank_adaptation import (
     _compute_low_rank_metric,
     _spd_mean,
     base,
-    build_schedule_nutpie_mvp,
+    build_growing_window_schedule,
 )
 from blackjax.adaptation.window_adaptation import build_schedule
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
@@ -501,14 +501,15 @@ class LowRankSmallNRobustnessTest(BlackJAXTest):
             )
 
 
-class BuildScheduleNutpieMVPTest(BlackJAXTest):
-    """Tests for build_schedule_nutpie_mvp (nutpie-continuous schedule MVP,
-    queue #9 -- window-growth/sizing delta only; see the function's
-    docstring for what this MVP proxy does and does not capture)."""
+class BuildGrowingWindowScheduleTest(BlackJAXTest):
+    """Tests for build_growing_window_schedule -- the proportional-to-tune,
+    geometrically-growing-window schedule that implements the window-sizing
+    piece of nutpie's warmup (queue #9); see the function's docstring for
+    the exact scope relative to nutpie's own online schedule."""
 
     def test_shape_and_total_length(self):
         for num_steps in (50, 200, 1000, 5000):
-            schedule = build_schedule_nutpie_mvp(num_steps)
+            schedule = build_growing_window_schedule(num_steps)
             self.assertEqual(schedule.shape, (num_steps, 2))
 
     def test_golden_default_window_sequence_at_5000(self):
@@ -522,7 +523,7 @@ class BuildScheduleNutpieMVPTest(BlackJAXTest):
         (1.5x, round-half-to-even) truncated to 175 to exactly fill the
         remaining budget before the final buffer, then 750 fast
         (step-size-only) steps."""
-        schedule = build_schedule_nutpie_mvp(5000)
+        schedule = build_growing_window_schedule(5000)
         window_end_indices = np.where(np.asarray(schedule[:, 1]) == 1)[0]
         window_sizes = np.diff(np.concatenate([[-1], window_end_indices])).tolist()
         expected = [10] * 150 + [80, 120, 180, 270, 405, 608, 912, 175]
@@ -533,9 +534,9 @@ class BuildScheduleNutpieMVPTest(BlackJAXTest):
     def test_final_phase_is_fast_no_window_ends(self):
         """The final step_size_window fraction must be pure fast (stage 0)
         with no window-end recomputes, matching Stan's final-buffer
-        semantics (unchanged recompute-cadence scope for the MVP)."""
+        semantics (recompute cadence is unchanged from the host machinery)."""
         num_steps = 2000
-        schedule = build_schedule_nutpie_mvp(num_steps, step_size_window=0.15)
+        schedule = build_growing_window_schedule(num_steps, step_size_window=0.15)
         final_start = num_steps - int(round(0.15 * num_steps))
         final_stage = schedule[final_start:, 0]
         final_is_end = schedule[final_start:, 1]
@@ -545,9 +546,9 @@ class BuildScheduleNutpieMVPTest(BlackJAXTest):
     def test_no_purely_fast_initial_buffer(self):
         """Unlike Stan's schedule (which starts with a pure step-size-only
         buffer), nutpie adapts the mass matrix from the very first draw --
-        the MVP schedule's first entry must be the slow (mass-matrix
-        adapting) stage, not fast."""
-        schedule = build_schedule_nutpie_mvp(1000)
+        this schedule's first entry must be the slow (mass-matrix adapting)
+        stage, not fast."""
+        schedule = build_growing_window_schedule(1000)
         self.assertEqual(int(schedule[0, 0]), 1)
         # Contrast: Stan's default schedule starts fast.
         stan_schedule = build_schedule(1000)
@@ -558,7 +559,7 @@ class BuildScheduleNutpieMVPTest(BlackJAXTest):
         main phase must be non-decreasing, reflecting the 1.5x growth
         factor (vs Stan's fixed-size doubling-only-at-restart windows)."""
         num_steps = 5000
-        schedule = build_schedule_nutpie_mvp(
+        schedule = build_growing_window_schedule(
             num_steps, early_window=0.3, step_size_window=0.15
         )
         window_end_indices = np.where(np.asarray(schedule[:, 1]) == 1)[0]
@@ -572,13 +573,13 @@ class BuildScheduleNutpieMVPTest(BlackJAXTest):
 
     def test_degenerate_small_num_steps_does_not_crash(self):
         for num_steps in (1, 5, 19, 20, 21):
-            schedule = build_schedule_nutpie_mvp(num_steps)
+            schedule = build_growing_window_schedule(num_steps)
             self.assertEqual(schedule.shape, (num_steps, 2))
 
     def test_custom_fractions(self):
         """Custom early_window/step_size_window fractions are respected."""
         num_steps = 1000
-        schedule = build_schedule_nutpie_mvp(
+        schedule = build_growing_window_schedule(
             num_steps, early_window=0.5, step_size_window=0.2
         )
         final_start = num_steps - int(round(0.2 * num_steps))
@@ -586,7 +587,7 @@ class BuildScheduleNutpieMVPTest(BlackJAXTest):
 
 
 class LowRankGradientBasedInitTest(BlackJAXTest):
-    """Tests for the gradient_based_init MVP delta (queue #9)."""
+    """Tests for the gradient_based_init option (queue #9)."""
 
     def test_default_reproduces_identity_init(self):
         """gradient_based_init=False (default) must reproduce the original
@@ -622,9 +623,9 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
         self.assertTrue(bool(jnp.all(jnp.isfinite(state.sigma))))
         self.assertTrue(bool(jnp.all(state.sigma > 0)))
 
-    def test_end_to_end_mvp_options_run_finite(self):
-        """window_adaptation_low_rank with both MVP deltas (gradient_based
-        init + the nutpie-mvp schedule) runs to a finite result."""
+    def test_end_to_end_new_options_run_finite(self):
+        """window_adaptation_low_rank with both new options (gradient_based
+        init + build_growing_window_schedule) runs to a finite result."""
         d = 5
         logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
         warmup = blackjax.window_adaptation_low_rank(
@@ -632,7 +633,7 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
             logdensity_fn,
             max_rank=3,
             gradient_based_init=True,
-            schedule_fn=build_schedule_nutpie_mvp,
+            schedule_fn=build_growing_window_schedule,
         )
         (state, params), _ = warmup.run(self.next_key(), jnp.ones(d), num_steps=300)
         self.assertTrue(bool(jnp.all(jnp.isfinite(state.position))))

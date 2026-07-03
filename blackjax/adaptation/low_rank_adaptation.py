@@ -78,7 +78,7 @@ from blackjax.util import pytree_size
 __all__ = [
     "LowRankAdaptationState",
     "base",
-    "build_schedule_nutpie_mvp",
+    "build_growing_window_schedule",
     "window_adaptation_low_rank",
 ]
 
@@ -286,7 +286,7 @@ def _compute_low_rank_metric(
 # ---------------------------------------------------------------------------
 
 
-def build_schedule_nutpie_mvp(
+def build_growing_window_schedule(
     num_steps: int,
     early_window: float = 0.3,
     step_size_window: float = 0.15,
@@ -294,13 +294,13 @@ def build_schedule_nutpie_mvp(
     window_size: int = 80,
     window_growth: float = 1.5,
 ) -> Array:
-    """nutpie-style proportional/growing-window schedule (MVP schedule proxy).
+    """Proportional-to-tune, geometrically-growing-window warmup schedule.
 
     An alternate to :func:`~blackjax.adaptation.window_adaptation.build_schedule`
     (Stan's fixed-absolute, 2x-doubling schedule) that instead sizes windows
     *proportionally to* ``num_steps`` and grows them by ``window_growth``
-    (1.5x) rather than doubling, matching two of nutpie's four schedule
-    differences from Stan's (see ``nuts-rs`` ``src/adapt_strategy.rs``,
+    (1.5x) rather than doubling, matching nutpie's window-sizing and
+    growth-factor choices (see ``nuts-rs`` ``src/adapt_strategy.rs``,
     ``EuclideanAdaptOptions::default``):
 
     * ``early_window=0.3``, ``step_size_window=0.15`` -- fractions of
@@ -310,10 +310,14 @@ def build_schedule_nutpie_mvp(
     * ``window_growth=1.5`` -- vs Stan's 2x doubling
       (``mass_matrix_window_growth`` in nutpie's receipts).
 
-    This is an **MVP proxy, not a faithful port**: nutpie's actual schedule
-    is an *online*, per-draw decision (``adapt_strategy.rs``'s ``is_late``
-    look-ahead + a partial-forget circular buffer + up-to-every-draw metric
-    recomputation, ``mass_matrix_update_freq=1``). blackjax's warmup runs the
+    **Scope note.** This function (together with the ``gradient_based_init``
+    option on :func:`base` / :func:`window_adaptation_low_rank`) implements
+    the window-sizing and gradient-based-init components of nutpie's warmup.
+    Recompute cadence and buffer semantics follow the *host* Stan-style
+    machinery unchanged: nutpie's actual schedule is an *online*, per-draw
+    decision (``adapt_strategy.rs``'s ``is_late`` look-ahead + a
+    partial-forget circular buffer + up-to-every-draw metric recomputation,
+    ``mass_matrix_update_freq=1``), whereas blackjax's warmup runs the
     entire schedule as a static array through a single ``jax.lax.scan``
     (fixed ahead of time, like Stan's own :func:`build_schedule`), so this
     function precomputes an equivalent *offline* schedule with the same
@@ -321,8 +325,9 @@ def build_schedule_nutpie_mvp(
     (unchanged from :func:`build_schedule`'s semantics: ``slow_final`` still
     only fires at a window end) and buffer memory stays a hard reset
     (unchanged: ``slow_final`` still zeros the buffer) -- nutpie's
-    continuous per-draw recomputation and partial-forget buffer are
-    explicitly out of scope for this MVP (a "faithful port" follow-up).
+    continuous per-draw recomputation and partial-forget buffer are a
+    "faithful port" follow-up; see the note in
+    :func:`window_adaptation_low_rank`'s docstring.
 
     Unlike Stan's schedule, there is no purely step-size-only *initial*
     buffer: nutpie starts adapting the mass matrix from the very first draw
@@ -441,8 +446,8 @@ def base(
         Only the diagonal scale changes; ``U``/``lam`` still start at
         no-correction (``U=0``, ``lam=1``), same as the default. Default
         ``False`` reproduces the original identity/zero initialisation
-        exactly (part of the nutpie-schedule MVP, see
-        :func:`build_schedule_nutpie_mvp`).
+        exactly (see also :func:`build_growing_window_schedule`, which
+        implements the companion window-sizing piece of nutpie's warmup).
 
     Returns
     -------
@@ -657,9 +662,10 @@ def window_adaptation_low_rank(
         ``(stage, is_window_end)`` pairs. Default is Stan's fixed-absolute,
         2x-doubling :func:`~blackjax.adaptation.window_adaptation.build_schedule`
         (unchanged default behaviour). Pass
-        :func:`build_schedule_nutpie_mvp` for nutpie's proportional-to-tune,
-        1.5x-growing-window schedule (MVP proxy -- see that function's
-        docstring for what it does and does not capture).
+        :func:`build_growing_window_schedule` for nutpie's proportional-to-tune,
+        1.5x-growing-window schedule -- see that function's docstring for
+        exactly what it does and does not capture relative to nutpie's own
+        (online, per-draw) schedule.
     **extra_parameters
         Additional keyword arguments forwarded to the kernel at every step
         (e.g. ``num_integration_steps`` for HMC).
