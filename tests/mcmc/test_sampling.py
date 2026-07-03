@@ -10,13 +10,16 @@ import jax.scipy.stats as stats
 import numpy as np
 import optax
 from absl.testing import absltest, parameterized
+from jax.flatten_util import ravel_pytree
 
 # import blackjax
 import blackjax.diagnostics as diagnostics
+import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.adaptation.laps import laps as run_laps
 from blackjax.mcmc.adjusted_mclmc import rescale
+from blackjax.mcmc.ghmc import _metric_from_momentum_inverse_scale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
@@ -1236,6 +1239,108 @@ class UnivariateNormalTest(chex.TestCase):
         self.univariate_normal_test_case(
             inference_algorithm, self.key, initial_state, 20000, 2_000
         )
+
+
+class GHMCRichMetricTest(chex.TestCase):
+    """Test blackjax.ghmc with dense and low-rank momentum metrics.
+
+    `momentum_inverse_scale` now accepts the same `metrics.MetricTypes`
+    that `hmc`/`nuts` already do (dense array, `LowRankInverseMassMatrix`,
+    `Metric`, callable) in addition to the legacy per-dimension inverse
+    scale.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.key(7)
+
+    def correlated_gaussian(self):
+        """A 3-D correlated Gaussian target with a known mean/covariance."""
+        loc = jnp.array([1.0, -2.0, 0.5])
+        scale = jnp.array([1.0, 2.0, 0.5])
+        correlation = jnp.array([[1.0, 0.6, -0.3], [0.6, 1.0, 0.2], [-0.3, 0.2, 1.0]])
+        cov = correlation * scale[:, None] * scale[None, :]
+
+        def logdensity_fn(x):
+            return stats.multivariate_normal.logpdf(x, loc, cov).sum()
+
+        return logdensity_fn, loc, cov
+
+    def run_ghmc(self, momentum_inverse_scale, num_steps=8000, burnin=2000):
+        # `delta` is a translation applied modulo 2 to the persistent slice
+        # variable: a multiple of 2 (e.g. the `delta=2.0` used elsewhere in
+        # this file for a univariate target) leaves the slice frozen and
+        # severely biases mixing for a correlated target, so we pick a
+        # non-degenerate value here.
+        logdensity_fn, loc, cov = self.correlated_gaussian()
+        inference_algorithm = blackjax.ghmc(
+            logdensity_fn,
+            step_size=0.3,
+            momentum_inverse_scale=momentum_inverse_scale,
+            alpha=0.8,
+            delta=1.3,
+        )
+        init_key, sample_key = jax.random.split(self.key)
+        initial_state = inference_algorithm.init(loc, init_key)
+        _, states = run_inference_algorithm(
+            rng_key=sample_key,
+            initial_state=initial_state,
+            inference_algorithm=inference_algorithm,
+            transform=lambda state, info: state.position,
+            num_steps=num_steps,
+        )
+        return states[burnin:], loc, cov
+
+    def test_dense_metric_recovers_moments(self):
+        """A dense (d, d) inverse mass matrix recovers mean and covariance."""
+        _, loc, cov = self.correlated_gaussian()
+        samples, loc, cov = self.run_ghmc(cov)
+        np.testing.assert_allclose(jnp.mean(samples, axis=0), loc, atol=0.35)
+        np.testing.assert_allclose(jnp.cov(samples.T), cov, atol=0.6)
+
+    def test_low_rank_metric_recovers_moments(self):
+        """A LowRankInverseMassMatrix metric recovers mean and covariance."""
+        _, loc, cov = self.correlated_gaussian()
+        sigma = jnp.sqrt(jnp.diagonal(cov))
+        inv_sigma = 1.0 / sigma
+        correlation = cov * inv_sigma[:, None] * inv_sigma[None, :]
+        eigenvalues, eigenvectors = jnp.linalg.eigh(correlation)
+        # Keep the 2 (out of d=3) eigendirections farthest from an identity
+        # correlation -- a genuine rank-2 low-rank correction.
+        order = jnp.argsort(jnp.abs(eigenvalues - 1.0))[::-1]
+        top = order[:2]
+        imm = metrics.LowRankInverseMassMatrix(
+            sigma=sigma, U=eigenvectors[:, top], lam=eigenvalues[top]
+        )
+        samples, loc, cov = self.run_ghmc(imm)
+        np.testing.assert_allclose(jnp.mean(samples, axis=0), loc, atol=0.35)
+        np.testing.assert_allclose(jnp.cov(samples.T), cov, atol=0.6)
+
+    def test_diagonal_metric_matches_legacy_gaussian_euclidean(self):
+        """Diagonal/scalar `momentum_inverse_scale` is unchanged by the
+        generalization: it must still reproduce today's
+        `gaussian_euclidean(scale**2)` bit-for-bit. This is the scale-vs-
+        variance subtlety -- squaring is preserved exactly for the legacy
+        input shape, only the new rich types (dense array, low-rank,
+        `Metric`, callable) skip it.
+        """
+        for momentum_inverse_scale in (jnp.array(1.0), jnp.array([1.0, 2.0, 0.5])):
+            metric = _metric_from_momentum_inverse_scale(momentum_inverse_scale)
+            flat_scale = ravel_pytree(momentum_inverse_scale)[0]
+            legacy_metric = metrics.gaussian_euclidean(flat_scale**2)
+
+            position = jnp.zeros_like(flat_scale)
+            momentum = jnp.arange(flat_scale.shape[0], dtype=flat_scale.dtype) * 0.1
+            key = jax.random.key(0)
+
+            np.testing.assert_allclose(
+                metric.kinetic_energy(momentum),
+                legacy_metric.kinetic_energy(momentum),
+            )
+            np.testing.assert_allclose(
+                ravel_pytree(metric.sample_momentum(key, position))[0],
+                ravel_pytree(legacy_metric.sample_momentum(key, position))[0],
+            )
 
 
 mcse_test_cases = [
