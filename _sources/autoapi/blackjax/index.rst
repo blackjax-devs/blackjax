@@ -46,6 +46,8 @@ Attributes
    blackjax.ghmc
    blackjax.barker
    blackjax.barker_proposal
+   blackjax.gist_step_size
+   blackjax.gist_trajectory_length
    blackjax.mhmc
    blackjax.multinomial_hmc
    blackjax.dmhmc
@@ -115,6 +117,10 @@ Package Contents
 .. py:data:: barker
 
 .. py:data:: barker_proposal
+
+.. py:data:: gist_step_size
+
+.. py:data:: gist_trajectory_length
 
 .. py:data:: mhmc
 

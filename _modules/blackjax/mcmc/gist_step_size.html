@@ -1,0 +1,1036 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.mcmc.gist_step_size</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/gist_step_size';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g75f28aa32" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blackjax.mcmc.gist_step_size</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;GIST instance (a): self-tuning step size, autoStep-style.</span>
+
+<span class="sd">The tuning parameter is ``alpha = (a, b, j)``: ``(a, b)`` are soft</span>
+<span class="sd">acceptance-ratio thresholds freshly drawn every transition from the uniform</span>
+<span class="sd">distribution on the triangle ``Delta = {(a, b) in (0, 1)^2 : a &lt; b}``, and</span>
+<span class="sd">``j`` is the integer log2 step-size index (``step_size = initial_step_size *</span>
+<span class="sd">2**j``) selected *deterministically* given ``(theta, rho, a, b)`` by the</span>
+<span class="sd">doubling/halving selector :func:`step_size_selector` (section 2.1.2).</span>
+
+<span class="sd">Because ``p(a, b, j | theta, rho) = Uniform_Delta(a, b) . 1{j = mu(theta, rho,</span>
+<span class="sd">a, b)}`` is a Dirac measure in its ``j``-argument, the GIST tuning-density</span>
+<span class="sd">ratio (eq. 9) collapses to an indicator that the *reverse* selection ``j&#39; =</span>
+<span class="sd">mu(theta&#39;, rho&#39;, a, b)`` (re-run at the proposal, with the *same* ``(a, b)``)</span>
+<span class="sd">matches the forward ``j`` -- the &quot;reversibility check&quot; of</span>
+<span class="sd">[autoMALA]/[AutoStep], derived directly from the GIST framework rather than</span>
+<span class="sd">bolted on as a separate correctness patch (section 2.1.3).</span>
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+<span class="sd">.. [1] Bou-Rabee, Carpenter, Marsden, &quot;GIST: Gibbs self-tuning for locally</span>
+<span class="sd">   adaptive Hamiltonian Monte Carlo&quot;, arXiv:2404.15253, section 2 (mapping</span>
+<span class="sd">   onto the general kernel).</span>
+<span class="sd">.. [2] Liu, Surjanovic, Biron-Lattes, Bouchard-Cote, Campbell, &quot;AutoStep:</span>
+<span class="sd">   Locally adaptive involutive MCMC&quot;, arXiv:2410.18929, Algorithm 2 (the</span>
+<span class="sd">   symmetric selector, default here).</span>
+<span class="sd">.. [3] Biron-Lattes, Surjanovic, Syed, Campbell, Bouchard-Cote, &quot;autoMALA:</span>
+<span class="sd">   Locally adaptive Metropolis-adjusted Langevin algorithm&quot;,</span>
+<span class="sd">   arXiv:2310.16782, Algorithm 2 (the asymmetric selector, ``criterion=</span>
+<span class="sd">   &quot;asymmetric&quot;``, provided for cross-validation against the original paper</span>
+<span class="sd">   only -- can get stuck near the mode/in the tails).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.gist</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">gist</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.hmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hmc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.integrators</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">integrators</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">metrics</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.trajectory</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">trajectory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingAlgorithm</span><span class="p">,</span> <span class="n">build_sampling_algorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.integrators</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegratorState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.proposal</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_energy_diff</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">PRNGKey</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;GISTStepSizeInfo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;StepSizeTuningParameter&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;init&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;step_size_selector&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<div class="viewcode-block" id="init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.init">[docs]</a>
+<span class="n">init</span> <span class="o">=</span> <span class="n">gist</span><span class="o">.</span><span class="n">init</span></div>
+
+
+
+<div class="viewcode-block" id="StepSizeTuningParameter">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.StepSizeTuningParameter">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">StepSizeTuningParameter</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The GIST tuning parameter ``alpha = (a, b, j)``, section 2.1.1.</span>
+
+<span class="sd">    a, b</span>
+<span class="sd">        Soft acceptance-ratio thresholds, freshly drawn ~ Uniform on</span>
+<span class="sd">        ``{(a, b) in (0, 1)^2 : a &lt; b}`` every transition (the Gibbs refresh</span>
+<span class="sd">        of the tuning parameter). The uniform density cancels in the</span>
+<span class="sd">        acceptance ratio since ``g = identity`` carries ``(a, b)`` through</span>
+<span class="sd">        the involution unchanged (section 2.1.3) -- any consistent</span>
+<span class="sd">        (deterministic-given-key) way of drawing them would do, but the</span>
+<span class="sd">        uniform-on-the-triangle draw is what the paper&#39;s own ``p(alpha |</span>
+<span class="sd">        theta, rho)`` factorization assumes.</span>
+<span class="sd">    step_index</span>
+<span class="sd">        ``j``, the integer log2 step-size index:</span>
+<span class="sd">        ``step_size = initial_step_size * 2**j``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="StepSizeTuningParameter.a">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.StepSizeTuningParameter.a">[docs]</a>
+    <span class="n">a</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="StepSizeTuningParameter.b">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.StepSizeTuningParameter.b">[docs]</a>
+    <span class="n">b</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="StepSizeTuningParameter.step_index">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.StepSizeTuningParameter.step_index">[docs]</a>
+    <span class="n">step_index</span><span class="p">:</span> <span class="n">Array</span></div>
+</div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_StepSizeExtra</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extra info computed by ``apply_fn``, threaded into</span>
+<span class="sd">    :class:`GISTStepSizeInfo` without recomputation.&quot;&quot;&quot;</span>
+
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">reverse_step_index</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">search_exhausted</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="n">Array</span>
+
+
+<div class="viewcode-block" id="GISTStepSizeInfo">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GISTStepSizeInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information for a ``gist_step_size`` transition.</span>
+
+<span class="sd">    momentum, tuning_parameter, is_accepted, is_divergent, acceptance_rate,</span>
+<span class="sd">    energy, num_integration_steps</span>
+<span class="sd">        Same as :class:`~blackjax.mcmc.gist.GISTInfo` (this instance&#39;s Info</span>
+<span class="sd">        extends it with flat, named fields rather than nesting -- matches</span>
+<span class="sd">        the ``NUTSInfo``-extends-``HMCInfo``-fields precedent, not literal</span>
+<span class="sd">        NamedTuple inheritance).</span>
+<span class="sd">    step_index, reverse_step_index</span>
+<span class="sd">        ``j`` (selected forward) and ``j&#39;`` (re-selected at the proposal,</span>
+<span class="sd">        the &quot;reversibility check&quot;, section 2.1.3). ``is_accepted`` is False</span>
+<span class="sd">        whenever ``reverse_step_index != step_index``, in addition to the</span>
+<span class="sd">        ordinary energy-based rejection path -- both are folded into</span>
+<span class="sd">        ``is_accepted``; these two fields let you tell them apart.</span>
+<span class="sd">    search_exhausted</span>
+<span class="sd">        True if the doubling/halving search (forward OR reverse) hit</span>
+<span class="sd">        ``max_search_steps`` without the selection criterion terminating.</span>
+<span class="sd">        When True, the transition was forced to reject regardless of the</span>
+<span class="sd">        energy term (section 2.1.2).</span>
+<span class="sd">    step_size</span>
+<span class="sd">        The step size ``epsilon = initial_step_size * 2**step_index``</span>
+<span class="sd">        actually used to build the proposal.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.momentum">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.momentum">[docs]</a>
+    <span class="n">momentum</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.tuning_parameter">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.tuning_parameter">[docs]</a>
+    <span class="n">tuning_parameter</span><span class="p">:</span> <span class="n">StepSizeTuningParameter</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.is_accepted">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.is_accepted">[docs]</a>
+    <span class="n">is_accepted</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.is_divergent">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.is_divergent">[docs]</a>
+    <span class="n">is_divergent</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.acceptance_rate">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.acceptance_rate">[docs]</a>
+    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.energy">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.energy">[docs]</a>
+    <span class="n">energy</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.num_integration_steps">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.num_integration_steps">[docs]</a>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.step_index">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.step_index">[docs]</a>
+    <span class="n">step_index</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.reverse_step_index">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.reverse_step_index">[docs]</a>
+    <span class="n">reverse_step_index</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.search_exhausted">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.search_exhausted">[docs]</a>
+    <span class="n">search_exhausted</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTStepSizeInfo.step_size">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo.step_size">[docs]</a>
+    <span class="n">step_size</span><span class="p">:</span> <span class="n">Array</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="step_size_selector">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.step_size_selector">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">step_size_selector</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">max_search_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">criterion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;symmetric&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the ``mu(state, a, b, logdensity_fn, metric) -&gt; (step_index,</span>
+<span class="sd">    search_exhausted)`` selector, section 2.1.2.</span>
+
+<span class="sd">    (``logdensity_fn``/``metric`` extend the paper&#39;s ``mu(state, a, b)``</span>
+<span class="sd">    shorthand: evaluating ``F(alpha)`` fundamentally requires both, they are</span>
+<span class="sd">    not a free design choice.)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    integrator</span>
+<span class="sd">        Symplectic integrator used for the ``num_integration_steps``-step</span>
+<span class="sd">        trial trajectories.</span>
+<span class="sd">    num_integration_steps</span>
+<span class="sd">        ``L``, the fixed number of leapfrog steps per trial trajectory.</span>
+<span class="sd">    initial_step_size</span>
+<span class="sd">        ``epsilon_init``, the fixed base step size the doubling/halving</span>
+<span class="sd">        search starts from and reports its selection relative to.</span>
+<span class="sd">    max_search_steps</span>
+<span class="sd">        Cap on doubling/halving iterations.</span>
+<span class="sd">    criterion</span>
+<span class="sd">        ``&quot;symmetric&quot;`` ([AutoStep] Algorithm 2, default -- proven</span>
+<span class="sd">        irreducible and aperiodic) or ``&quot;asymmetric&quot;`` ([autoMALA]&#39;s</span>
+<span class="sd">        original criterion, provided for cross-validation against the</span>
+<span class="sd">        original paper only).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    The selector ``mu``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">criterion</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;symmetric&quot;</span><span class="p">,</span> <span class="s2">&quot;asymmetric&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;criterion must be &#39;symmetric&#39; or &#39;asymmetric&#39;, got &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">criterion</span><span class="si">!r}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">is_symmetric</span> <span class="o">=</span> <span class="n">criterion</span> <span class="o">==</span> <span class="s2">&quot;symmetric&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">mu</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span>
+        <span class="n">a</span><span class="p">,</span>
+        <span class="n">b</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">,</span>
+        <span class="n">metric</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">build_trajectory</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># Build (or reuse a caller-supplied) trajectory builder exactly once</span>
+        <span class="c1"># per `mu` call -- this is what `integrator(logdensity_fn,</span>
+        <span class="c1"># metric.kinetic_energy)` wraps `logdensity_fn` in a fresh</span>
+        <span class="c1"># `jax.value_and_grad` (matching the hmc/nuts convention of building</span>
+        <span class="c1"># the symplectic integrator once and threading it through, rather</span>
+        <span class="c1"># than rebuilding per trial step size -- the latter tripped</span>
+        <span class="c1"># `chex.assert_max_traces` during implementation: rebuilding inside</span>
+        <span class="c1"># the trial-evaluation helper counted as a separate trace per call).</span>
+        <span class="c1"># `apply_fn` passes its own already-built trajectory function so the</span>
+        <span class="c1"># reverse selection re-run shares it instead of re-wrapping</span>
+        <span class="c1"># `logdensity_fn` a second time.</span>
+        <span class="k">if</span> <span class="n">build_trajectory</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">)</span>
+            <span class="n">build_trajectory</span> <span class="o">=</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">static_integration</span><span class="p">(</span><span class="n">symplectic_integrator</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">log_acceptance_ratio</span><span class="p">(</span><span class="n">step_size</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;``ell(theta, rho, epsilon)`` -- ``-delta_energy`` at one</span>
+<span class="sd">            trial step size, section 2.1.2. Renamed from the paper&#39;s terse</span>
+<span class="sd">            ``ell`` to a descriptive name, per the naming-conventions</span>
+<span class="sd">            checklist.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">end_state</span> <span class="o">=</span> <span class="n">build_trajectory</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+            <span class="n">end_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">flip_momentum</span><span class="p">(</span><span class="n">end_state</span><span class="p">)</span>
+            <span class="n">initial_energy</span> <span class="o">=</span> <span class="o">-</span><span class="n">state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span>
+            <span class="n">new_energy</span> <span class="o">=</span> <span class="o">-</span><span class="n">end_state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">(</span>
+                <span class="n">end_state</span><span class="o">.</span><span class="n">momentum</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">safe_energy_diff</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">new_energy</span><span class="p">)</span>
+
+        <span class="n">log_a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">log_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+
+        <span class="c1"># Deciding `v` from `ell0` (section 2.1.2) is folded into iteration 0</span>
+        <span class="c1"># of the same `while_loop` that runs the doubling/halving search,</span>
+        <span class="c1"># rather than a separate call to `log_acceptance_ratio` before the</span>
+        <span class="c1"># loop -- `jax.lax.while_loop` traces its body exactly once</span>
+        <span class="c1"># regardless of how many concrete iterations run, so folding this in</span>
+        <span class="c1"># keeps `log_acceptance_ratio` (hence `logdensity_fn`) to a single</span>
+        <span class="c1"># trace-time call site per `mu` invocation, instead of two (one for</span>
+        <span class="c1"># `ell0`, one inside the loop body) -- the latter tripped</span>
+        <span class="c1"># `chex.assert_max_traces` during implementation.</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">cond_fn</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">terminated</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">carry</span>
+            <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">terminated</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="n">max_search_steps</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">body_fn</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+            <span class="n">j</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">carry</span>
+            <span class="n">is_deciding</span> <span class="o">=</span> <span class="n">n</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="c1"># Iteration 0 evaluates at the *current* j (i.e. `ell0`, j</span>
+            <span class="c1"># unchanged); iteration n&gt;=1 evaluates at j+v using the v</span>
+            <span class="c1"># decided at iteration 0.</span>
+            <span class="n">trial_j</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_deciding</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">j</span> <span class="o">+</span> <span class="n">v</span><span class="p">)</span>
+            <span class="n">step_size</span> <span class="o">=</span> <span class="n">initial_step_size</span> <span class="o">*</span> <span class="mf">2.0</span> <span class="o">**</span> <span class="n">trial_j</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+            <span class="n">ell</span> <span class="o">=</span> <span class="n">log_acceptance_ratio</span><span class="p">(</span><span class="n">step_size</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">is_symmetric</span><span class="p">:</span>
+                <span class="n">do_expand</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ell</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">log_b</span><span class="p">)</span>  <span class="c1"># too small a step</span>
+                <span class="n">do_shrink</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ell</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">log_a</span><span class="p">)</span>  <span class="c1"># too large a step</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">do_expand</span> <span class="o">=</span> <span class="n">ell</span> <span class="o">&gt;=</span> <span class="n">log_b</span>
+                <span class="n">do_shrink</span> <span class="o">=</span> <span class="n">ell</span> <span class="o">&lt;=</span> <span class="n">log_a</span>
+            <span class="n">v_decided</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">do_expand</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">do_shrink</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span>
+            <span class="p">)</span>
+            <span class="n">v_next</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_deciding</span><span class="p">,</span> <span class="n">v_decided</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">is_symmetric</span><span class="p">:</span>
+                <span class="n">term_expand</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_next</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ell</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">log_b</span><span class="p">))</span>
+                <span class="n">term_shrink</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_next</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">ell</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">log_a</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">term_expand</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_next</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ell</span> <span class="o">&lt;</span> <span class="n">log_b</span><span class="p">)</span>
+                <span class="n">term_shrink</span> <span class="o">=</span> <span class="p">(</span><span class="n">v_next</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">ell</span> <span class="o">&gt;</span> <span class="n">log_a</span><span class="p">)</span>
+            <span class="c1"># At the deciding iteration (n=0), &quot;ell op threshold&quot; can never</span>
+            <span class="c1"># also satisfy the opposite-direction termination test (the two</span>
+            <span class="c1"># are complementary comparisons of the same ell against the same</span>
+            <span class="c1"># threshold), so `term_expand | term_shrink` is always False</span>
+            <span class="c1"># there; termination at n=0 is instead exactly `v_decided == 0`.</span>
+            <span class="n">terminated_search</span> <span class="o">=</span> <span class="n">term_expand</span> <span class="o">|</span> <span class="n">term_shrink</span>
+            <span class="n">terminated_next</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_deciding</span><span class="p">,</span> <span class="n">v_next</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">terminated_search</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">trial_j</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">terminated_next</span><span class="p">,</span> <span class="n">v_next</span>
+
+        <span class="n">init_carry</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">j_final</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">terminated_final</span><span class="p">,</span> <span class="n">v_final</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>
+            <span class="n">cond_fn</span><span class="p">,</span> <span class="n">body_fn</span><span class="p">,</span> <span class="n">init_carry</span>
+        <span class="p">)</span>
+        <span class="n">search_exhausted</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">terminated_final</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">v_final</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="c1"># &quot;Final halving&quot;: on a successful *expansion*, report one step back</span>
+        <span class="c1"># (section 2.1.2) -- necessary for the reversibility check to ever</span>
+        <span class="c1"># pass in the doubling sub-case ([autoMALA] p.4).</span>
+        <span class="n">step_index</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">terminated_final</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">v_final</span> <span class="o">==</span> <span class="mi">1</span><span class="p">),</span> <span class="n">j_final</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">j_final</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">step_index</span><span class="p">,</span> <span class="n">search_exhausted</span>
+
+    <span class="k">return</span> <span class="n">mu</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tuning_parameter_fn</span><span class="p">(</span><span class="n">selector</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tuning_parameter_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="p">):</span>
+        <span class="n">u</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">2</span><span class="p">,))</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">step_index</span><span class="p">,</span> <span class="n">search_exhausted</span> <span class="o">=</span> <span class="n">selector</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">StepSizeTuningParameter</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">step_index</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">search_exhausted</span>
+
+    <span class="k">return</span> <span class="n">tuning_parameter_fn</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_apply_fn</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">selector</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">step_index</span> <span class="o">=</span> <span class="n">alpha</span>
+        <span class="n">search_exhausted_forward</span> <span class="o">=</span> <span class="n">aux</span>
+        <span class="n">step_size</span> <span class="o">=</span> <span class="n">initial_step_size</span> <span class="o">*</span> <span class="mf">2.0</span> <span class="o">**</span> <span class="n">step_index</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+        <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">)</span>
+        <span class="n">build_trajectory</span> <span class="o">=</span> <span class="n">trajectory</span><span class="o">.</span><span class="n">static_integration</span><span class="p">(</span><span class="n">symplectic_integrator</span><span class="p">)</span>
+        <span class="n">proposal_state</span> <span class="o">=</span> <span class="n">build_trajectory</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">)</span>
+        <span class="n">proposal_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">flip_momentum</span><span class="p">(</span><span class="n">proposal_state</span><span class="p">)</span>
+
+        <span class="c1"># Reuse this apply_fn&#39;s own trajectory builder for the reversibility</span>
+        <span class="c1"># re-check instead of letting the selector build (and re-wrap</span>
+        <span class="c1"># `logdensity_fn` in) another one -- see the comment in `mu`.</span>
+        <span class="n">reverse_step_index</span><span class="p">,</span> <span class="n">search_exhausted_reverse</span> <span class="o">=</span> <span class="n">selector</span><span class="p">(</span>
+            <span class="n">proposal_state</span><span class="p">,</span>
+            <span class="n">a</span><span class="p">,</span>
+            <span class="n">b</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">metric</span><span class="p">,</span>
+            <span class="n">build_trajectory</span><span class="o">=</span><span class="n">build_trajectory</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">search_exhausted</span> <span class="o">=</span> <span class="n">search_exhausted_forward</span> <span class="o">|</span> <span class="n">search_exhausted_reverse</span>
+        <span class="n">is_reversible</span> <span class="o">=</span> <span class="n">reverse_step_index</span> <span class="o">==</span> <span class="n">step_index</span>
+        <span class="n">log_tuning_density_ratio</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">is_reversible</span> <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">search_exhausted</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="n">jnp</span><span class="o">.</span><span class="n">inf</span>
+        <span class="p">)</span>
+        <span class="n">extra_info</span> <span class="o">=</span> <span class="n">_StepSizeExtra</span><span class="p">(</span>
+            <span class="n">num_integration_steps</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">),</span>
+            <span class="n">reverse_step_index</span><span class="o">=</span><span class="n">reverse_step_index</span><span class="p">,</span>
+            <span class="n">search_exhausted</span><span class="o">=</span><span class="n">search_exhausted</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="o">=</span><span class="n">step_size</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">proposal_state</span><span class="p">,</span> <span class="n">log_tuning_density_ratio</span><span class="p">,</span> <span class="n">extra_info</span>
+
+    <span class="k">return</span> <span class="n">apply_fn</span>
+
+
+<div class="viewcode-block" id="build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.build_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">criterion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;symmetric&quot;</span><span class="p">,</span>
+    <span class="n">max_search_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``gist_step_size`` kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    integrator</span>
+<span class="sd">        The symplectic integrator to use to integrate the Hamiltonian</span>
+<span class="sd">        dynamics.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        Value of the difference in energy above which we consider that the</span>
+<span class="sd">        transition is divergent.</span>
+<span class="sd">    criterion</span>
+<span class="sd">        ``&quot;symmetric&quot;`` (default) or ``&quot;asymmetric&quot;``, see</span>
+<span class="sd">        :func:`step_size_selector`.</span>
+<span class="sd">    max_search_steps</span>
+<span class="sd">        Cap on doubling/halving iterations (both the forward selection and</span>
+<span class="sd">        the reversibility-check re-selection).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel that takes a rng_key and a Pytree that contains the current</span>
+<span class="sd">    state of the chain and that returns a new state of the chain along with</span>
+<span class="sd">    information about the transition.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">criterion</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;symmetric&quot;</span><span class="p">,</span> <span class="s2">&quot;asymmetric&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;criterion must be &#39;symmetric&#39; or &#39;asymmetric&#39;, got &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">criterion</span><span class="si">!r}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">gist_step</span> <span class="o">=</span> <span class="n">gist</span><span class="o">.</span><span class="n">_step</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">gist</span><span class="o">.</span><span class="n">GISTState</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
+        <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">gist</span><span class="o">.</span><span class="n">GISTState</span><span class="p">,</span> <span class="n">GISTStepSizeInfo</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the ``gist_step_size`` kernel.&quot;&quot;&quot;</span>
+        <span class="n">selector</span> <span class="o">=</span> <span class="n">step_size_selector</span><span class="p">(</span>
+            <span class="n">integrator</span><span class="p">,</span>
+            <span class="n">num_integration_steps</span><span class="p">,</span>
+            <span class="n">initial_step_size</span><span class="p">,</span>
+            <span class="n">max_search_steps</span><span class="p">,</span>
+            <span class="n">criterion</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">tuning_parameter_fn</span> <span class="o">=</span> <span class="n">_tuning_parameter_fn</span><span class="p">(</span><span class="n">selector</span><span class="p">)</span>
+        <span class="n">apply_fn</span> <span class="o">=</span> <span class="n">_apply_fn</span><span class="p">(</span>
+            <span class="n">integrator</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">,</span> <span class="n">selector</span>
+        <span class="p">)</span>
+
+        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">raw_extra_info</span> <span class="o">=</span> <span class="n">gist_step</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">tuning_parameter_fn</span><span class="p">,</span>
+            <span class="n">apply_fn</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="n">divergence_threshold</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># `info.tuning_parameter`/`raw_extra_info` are declared as the generic</span>
+        <span class="c1"># `ArrayTree` in the general spine (opaque to it by design); cast back</span>
+        <span class="c1"># to the concrete instance types this kernel actually produces.</span>
+        <span class="n">tuning_parameter</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">StepSizeTuningParameter</span><span class="p">,</span> <span class="n">info</span><span class="o">.</span><span class="n">tuning_parameter</span><span class="p">)</span>
+        <span class="n">extra_info</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">_StepSizeExtra</span><span class="p">,</span> <span class="n">raw_extra_info</span><span class="p">)</span>
+        <span class="n">step_size_info</span> <span class="o">=</span> <span class="n">GISTStepSizeInfo</span><span class="p">(</span>
+            <span class="n">info</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span>
+            <span class="n">tuning_parameter</span><span class="p">,</span>
+            <span class="n">info</span><span class="o">.</span><span class="n">is_accepted</span><span class="p">,</span>
+            <span class="n">info</span><span class="o">.</span><span class="n">is_divergent</span><span class="p">,</span>
+            <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
+            <span class="n">info</span><span class="o">.</span><span class="n">energy</span><span class="p">,</span>
+            <span class="n">info</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="p">,</span>
+            <span class="n">tuning_parameter</span><span class="o">.</span><span class="n">step_index</span><span class="p">,</span>
+            <span class="n">extra_info</span><span class="o">.</span><span class="n">reverse_step_index</span><span class="p">,</span>
+            <span class="n">extra_info</span><span class="o">.</span><span class="n">search_exhausted</span><span class="p">,</span>
+            <span class="n">extra_info</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">step_size_info</span>
+
+    <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+
+<div class="viewcode-block" id="as_top_level_api">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html#blackjax.mcmc.gist_step_size.as_top_level_api">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">as_top_level_api</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
+    <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">criterion</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;symmetric&quot;</span><span class="p">,</span>
+    <span class="n">max_search_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;``blackjax.gist_step_size`` -- GIST self-tuning step size (autoStep-style).</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+
+<span class="sd">    A new ``gist_step_size`` kernel can be initialized and used with the</span>
+<span class="sd">    following code:</span>
+
+<span class="sd">    .. code::</span>
+
+<span class="sd">        gist_step_size = blackjax.gist_step_size(</span>
+<span class="sd">            logdensity_fn, inverse_mass_matrix, initial_step_size=0.1</span>
+<span class="sd">        )</span>
+<span class="sd">        state = gist_step_size.init(position)</span>
+<span class="sd">        new_state, info = gist_step_size.step(rng_key, state)</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        The log-density function we wish to draw samples from.</span>
+<span class="sd">    inverse_mass_matrix</span>
+<span class="sd">        The value to use for the inverse mass matrix when drawing a value</span>
+<span class="sd">        for the momentum and computing the kinetic energy.</span>
+<span class="sd">    initial_step_size</span>
+<span class="sd">        ``epsilon_init``, section 2.1.1; the fixed base step size the</span>
+<span class="sd">        doubling/halving search starts from and reports its selection</span>
+<span class="sd">        relative to (``epsilon = initial_step_size * 2**j``). NOT re-tuned</span>
+<span class="sd">        by this kernel -- round-based re-tuning of ``initial_step_size``</span>
+<span class="sd">        ([AutoStep]/[autoMALA] Algorithm 3) is out of scope; it belongs in</span>
+<span class="sd">        ``blackjax/adaptation/``.</span>
+<span class="sd">    num_integration_steps</span>
+<span class="sd">        ``L``, the (fixed) number of leapfrog steps per proposal at the</span>
+<span class="sd">        selected step size. Default 1 reproduces the MALA-equivalent</span>
+<span class="sd">        single-leapfrog-step case both source papers analyze.</span>
+<span class="sd">    criterion</span>
+<span class="sd">        ``&quot;symmetric&quot;`` (default, [AutoStep] Algorithm 2 -- proven</span>
+<span class="sd">        irreducible and aperiodic) or ``&quot;asymmetric&quot;`` ([autoMALA]&#39;s</span>
+<span class="sd">        original criterion -- provided for cross-validation against the</span>
+<span class="sd">        original paper only; can get stuck near the mode/in the tails, see</span>
+<span class="sd">        the module docstring).</span>
+<span class="sd">    max_search_steps</span>
+<span class="sd">        Cap on doubling/halving iterations (both the forward selection and</span>
+<span class="sd">        the reversibility-check re-selection). On exhaustion the transition</span>
+<span class="sd">        is forced to reject; see ``GISTStepSizeInfo.search_exhausted``.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        The absolute value of the difference in energy between two states</span>
+<span class="sd">        above which we say that the transition is divergent.</span>
+<span class="sd">    integrator</span>
+<span class="sd">        (algorithm parameter) The symplectic integrator to use to integrate</span>
+<span class="sd">        the trajectory.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">,</span> <span class="n">divergence_threshold</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">max_search_steps</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
+        <span class="n">kernel</span><span class="p">,</span>
+        <span class="n">init</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">,</span>
+        <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span><span class="n">initial_step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

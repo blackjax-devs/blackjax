@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0001be1ef" />
+  <meta name="docsearch:version" content="0.1.dev1+g75f28aa32" />
   </head>
   
   
@@ -203,6 +203,9 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
@@ -416,6 +419,8 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">.mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">dynamic_hmc</span> <span class="k">as</span> <span class="n">_dynamic_hmc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">elliptical_slice</span> <span class="k">as</span> <span class="n">_elliptical_slice</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ghmc</span> <span class="k">as</span> <span class="n">_ghmc</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">gist_step_size</span> <span class="k">as</span> <span class="n">_gist_step_size</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">gist_trajectory_length</span> <span class="k">as</span> <span class="n">_gist_trajectory_length</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">hmc</span> <span class="k">as</span> <span class="n">_hmc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">laplace_dynamic_hmc</span> <span class="k">as</span> <span class="n">_laplace_dynamic_hmc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">laplace_hmc</span> <span class="k">as</span> <span class="n">_laplace_hmc</span>
@@ -592,6 +597,14 @@
 <div class="viewcode-block" id="barker_proposal">
 <a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.barker_proposal">[docs]</a>
 <span class="n">barker_proposal</span> <span class="o">=</span> <span class="n">barker</span>  <span class="c1"># backwards-compatible alias</span></div>
+
+<div class="viewcode-block" id="gist_step_size">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.gist_step_size">[docs]</a>
+<span class="n">gist_step_size</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_gist_step_size</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="gist_trajectory_length">
+<a class="viewcode-back" href="../autoapi/blackjax/index.html#blackjax.gist_trajectory_length">[docs]</a>
+<span class="n">gist_trajectory_length</span> <span class="o">=</span> <span class="n">generate_top_level_api_from</span><span class="p">(</span><span class="n">_gist_trajectory_length</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="mhmc">
@@ -785,6 +798,8 @@
     <span class="s2">&quot;elliptical_slice&quot;</span><span class="p">,</span>
     <span class="s2">&quot;slice_sampling&quot;</span><span class="p">,</span>
     <span class="s2">&quot;coordinate_slice&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gist_step_size&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gist_trajectory_length&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mclmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;adjusted_mclmc&quot;</span><span class="p">,</span>
     <span class="s2">&quot;adjusted_mclmc_dynamic&quot;</span><span class="p">,</span>

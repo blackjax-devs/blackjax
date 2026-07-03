@@ -1,0 +1,846 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.mcmc.gist</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/gist';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g75f28aa32" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blackjax.mcmc.gist</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;General spine for the GIST (Gibbs self-tuning) sampler family.</span>
+
+<span class="sd">GIST (:cite:p:`bou2024gist`) augments the Hamiltonian phase space ``(theta,</span>
+<span class="sd">rho)`` with a tuning parameter ``alpha`` (a step size, a trajectory length,</span>
+<span class="sd">...) drawn from a user-supplied conditional density ``p(alpha | theta, rho)``,</span>
+<span class="sd">then applies a measure-preserving involution ``G(theta, rho, alpha) = (S o</span>
+<span class="sd">F(alpha)(theta, rho), g(theta, rho)(alpha))`` where ``S`` is the momentum-flip</span>
+<span class="sd">map and ``F(alpha)`` a reversible, volume-preserving map indexed by ``alpha``</span>
+<span class="sd">(typically a fixed number of leapfrog steps, or a variable number of steps at</span>
+<span class="sd">a fixed step size). Provided ``G`` is measure preserving, the resulting</span>
+<span class="sd">Metropolis-Hastings chain is reversible w.r.t. the target and the</span>
+<span class="sd">``theta``-marginal recovers the original target exactly.</span>
+
+<span class="sd">This module implements the *general* kernel (Gibbs-refresh momentum,</span>
+<span class="sd">Gibbs-refresh tuning parameter, apply the involution, one Metropolis test) --</span>
+<span class="sd">it is not user-facing on its own. Concrete instances plug in</span>
+<span class="sd">``tuning_parameter_fn``/``apply_fn`` and are exposed as</span>
+<span class="sd">``blackjax.gist_step_size`` (:mod:`blackjax.mcmc.gist_step_size`) and</span>
+<span class="sd">``blackjax.gist_trajectory_length`` (:mod:`blackjax.mcmc.gist_trajectory_length`).</span>
+
+<span class="sd">Both shipped instances take ``g(theta, rho) = identity`` on the tuning</span>
+<span class="sd">parameter, which is a sufficient condition for ``G`` to be a</span>
+<span class="sd">measure-preserving involution (Corollary 4): since ``S o F(alpha)`` is a</span>
+<span class="sd">volume-preserving involution for every fixed ``alpha``, Fubini&#39;s theorem lifts</span>
+<span class="sd">this to the product space ``R^{2d} x A`` without needing a nontrivial ``g``.</span>
+
+<span class="sd">References</span>
+<span class="sd">----------</span>
+<span class="sd">.. [1] Bou-Rabee, Carpenter, Marsden, &quot;GIST: Gibbs self-tuning for locally</span>
+<span class="sd">   adaptive Hamiltonian Monte Carlo&quot;, arXiv:2404.15253, Statistical Surveys</span>
+<span class="sd">   2026, Vol. 20, pp. 135-179. Algorithm 1 (p.6), eq. 9 (p.7).</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.hmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hmc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">metrics</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">SamplingAlgorithm</span><span class="p">,</span> <span class="n">build_sampling_algorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.integrators</span><span class="w"> </span><span class="kn">import</span> <span class="n">IntegratorState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.proposal</span><span class="w"> </span><span class="kn">import</span> <span class="n">safe_energy_diff</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;GISTState&quot;</span><span class="p">,</span> <span class="s2">&quot;GISTInfo&quot;</span><span class="p">,</span> <span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span> <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="GISTState">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GISTState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of the GIST sampling chain.</span>
+
+<span class="sd">    position</span>
+<span class="sd">        Current position of the chain.</span>
+<span class="sd">    logdensity</span>
+<span class="sd">        Log-density of the target at ``position``.</span>
+<span class="sd">    logdensity_grad</span>
+<span class="sd">        Gradient of the log-density at ``position``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GISTState.position">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTState.position">[docs]</a>
+    <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="GISTState.logdensity">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTState.logdensity">[docs]</a>
+    <span class="n">logdensity</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="GISTState.logdensity_grad">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTState.logdensity_grad">[docs]</a>
+    <span class="n">logdensity_grad</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="GISTInfo">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTInfo">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">GISTInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on a GIST transition.</span>
+
+<span class="sd">    momentum</span>
+<span class="sd">        The momentum sampled at the start of the transition (before the</span>
+<span class="sd">        involution is applied) -- the Gibbs draw ``rho ~ N(0, Sigma)``.</span>
+<span class="sd">    tuning_parameter</span>
+<span class="sd">        The tuning parameter ``alpha`` drawn from ``p(. | position,</span>
+<span class="sd">        momentum)`` (a PyTree; e.g. an integer step-count for</span>
+<span class="sd">        ``gist_trajectory_length``, or ``(a, b, j)`` for ``gist_step_size``).</span>
+<span class="sd">    is_accepted</span>
+<span class="sd">        Whether the involution&#39;s output was accepted.</span>
+<span class="sd">    is_divergent</span>
+<span class="sd">        Whether the *energy* term of the acceptance ratio (``-delta_energy``)</span>
+<span class="sd">        exceeded ``divergence_threshold``. This is distinct from a structural</span>
+<span class="sd">        rejection (e.g. the step-size reversibility check failing, or the</span>
+<span class="sd">        tuning parameter falling outside the reverse U-turn interval) --</span>
+<span class="sd">        those are reported via instance-specific ``Info`` fields, not here.</span>
+<span class="sd">    acceptance_rate</span>
+<span class="sd">        The realized GIST acceptance probability actually used -- already</span>
+<span class="sd">        includes any tuning-density-ratio factor (the reversibility-check</span>
+<span class="sd">        indicator for ``gist_step_size``, or the interval-width ratio for</span>
+<span class="sd">        ``gist_trajectory_length``), not just the bare energy-based</span>
+<span class="sd">        Metropolis term.</span>
+<span class="sd">    energy</span>
+<span class="sd">        Total Hamiltonian energy of the proposal state.</span>
+<span class="sd">    num_integration_steps</span>
+<span class="sd">        Number of leapfrog evaluations spent on the accepted/rejected</span>
+<span class="sd">        proposal&#39;s own trajectory (NOT counting any extra evaluations spent</span>
+<span class="sd">        inside the tuning-parameter sampler itself, e.g. the step-size</span>
+<span class="sd">        doubling/halving search or the forward/reverse U-turn rollouts --</span>
+<span class="sd">        see the instance-specific ``Info`` fields for those separately, since</span>
+<span class="sd">        they matter for tuning-inclusive cost accounting).</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    Bou-Rabee, Carpenter, Marsden, &quot;GIST: Gibbs self-tuning for locally</span>
+<span class="sd">    adaptive Hamiltonian Monte Carlo&quot;, arXiv:2404.15253, Algorithm 1 (p.6),</span>
+<span class="sd">    eq. 9 (p.7).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="GISTInfo.momentum">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTInfo.momentum">[docs]</a>
+    <span class="n">momentum</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="GISTInfo.tuning_parameter">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTInfo.tuning_parameter">[docs]</a>
+    <span class="n">tuning_parameter</span><span class="p">:</span> <span class="n">ArrayTree</span></div>
+
+<div class="viewcode-block" id="GISTInfo.is_accepted">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTInfo.is_accepted">[docs]</a>
+    <span class="n">is_accepted</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTInfo.is_divergent">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTInfo.is_divergent">[docs]</a>
+    <span class="n">is_divergent</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTInfo.acceptance_rate">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTInfo.acceptance_rate">[docs]</a>
+    <span class="n">acceptance_rate</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="GISTInfo.energy">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTInfo.energy">[docs]</a>
+    <span class="n">energy</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="GISTInfo.num_integration_steps">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.GISTInfo.num_integration_steps">[docs]</a>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="n">Array</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.init">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">GISTState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create the initial GIST state.</span>
+
+<span class="sd">    Numerically identical to :func:`blackjax.mcmc.hmc.init` (same</span>
+<span class="sd">    ``value_and_grad`` computation); re-wrapped into :class:`GISTState`</span>
+<span class="sd">    rather than aliased directly (``init = hmc.init``) so that every</span>
+<span class="sd">    ``GISTState`` produced by this module is actually an instance of</span>
+<span class="sd">    ``GISTState``, not ``HMCState``. This matters because ``jax.lax.cond`` in</span>
+<span class="sd">    :func:`build_kernel` branches between a freshly built ``GISTState`` and</span>
+<span class="sd">    the incoming ``state`` -- both branches must share the exact same pytree</span>
+<span class="sd">    treedef, which a bare alias would violate on the very first call.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">GISTState</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_step</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">GISTState</span><span class="p">,</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">tuning_parameter_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">apply_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">GISTState</span><span class="p">,</span> <span class="n">GISTInfo</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Shared implementation of the general GIST kernel.</span>
+
+<span class="sd">    Returns the ``(new_state, info, extra_info)`` triple. The public</span>
+<span class="sd">    :func:`build_kernel` discards ``extra_info`` to honor the kernel&#39;s</span>
+<span class="sd">    documented ``(GISTState, GISTInfo)`` contract; instance modules</span>
+<span class="sd">    (``gist_step_size``, ``gist_trajectory_length``) call this directly so</span>
+<span class="sd">    they can thread ``extra_info`` (e.g. the reversibility-check index, the</span>
+<span class="sd">    forward/reverse U-turn counts) into their own, richer ``Info`` NamedTuple</span>
+<span class="sd">    without recomputing it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+    <span class="n">key_momentum</span><span class="p">,</span> <span class="n">key_tuning</span><span class="p">,</span> <span class="n">key_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+    <span class="n">position</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span> <span class="o">=</span> <span class="n">state</span>
+    <span class="n">momentum</span> <span class="o">=</span> <span class="n">metric</span><span class="o">.</span><span class="n">sample_momentum</span><span class="p">(</span><span class="n">key_momentum</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>  <span class="c1"># GIBBS: rho</span>
+    <span class="n">integrator_state</span> <span class="o">=</span> <span class="n">IntegratorState</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">,</span> <span class="n">logdensity_grad</span><span class="p">)</span>
+
+    <span class="c1"># GIBBS: alpha ~ p(. | theta, rho)</span>
+    <span class="n">alpha</span><span class="p">,</span> <span class="n">aux</span> <span class="o">=</span> <span class="n">tuning_parameter_fn</span><span class="p">(</span>
+        <span class="n">key_tuning</span><span class="p">,</span> <span class="n">integrator_state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span>
+    <span class="p">)</span>
+
+    <span class="c1"># METROPOLIS: (theta&#39;, rho&#39;) = S o F(alpha)(theta, rho)</span>
+    <span class="n">proposal_state</span><span class="p">,</span> <span class="n">log_tuning_density_ratio</span><span class="p">,</span> <span class="n">extra_info</span> <span class="o">=</span> <span class="n">apply_fn</span><span class="p">(</span>
+        <span class="n">integrator_state</span><span class="p">,</span> <span class="n">alpha</span><span class="p">,</span> <span class="n">aux</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span>
+    <span class="p">)</span>
+
+    <span class="n">initial_energy</span> <span class="o">=</span> <span class="o">-</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">(</span><span class="n">momentum</span><span class="p">)</span>
+    <span class="n">proposal_energy</span> <span class="o">=</span> <span class="o">-</span><span class="n">proposal_state</span><span class="o">.</span><span class="n">logdensity</span> <span class="o">+</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">(</span>
+        <span class="n">proposal_state</span><span class="o">.</span><span class="n">momentum</span>
+    <span class="p">)</span>
+    <span class="n">delta_energy</span> <span class="o">=</span> <span class="n">safe_energy_diff</span><span class="p">(</span><span class="n">initial_energy</span><span class="p">,</span> <span class="n">proposal_energy</span><span class="p">)</span>
+    <span class="n">is_diverging</span> <span class="o">=</span> <span class="o">-</span><span class="n">delta_energy</span> <span class="o">&gt;</span> <span class="n">divergence_threshold</span>
+
+    <span class="n">log_accept</span> <span class="o">=</span> <span class="n">delta_energy</span> <span class="o">+</span> <span class="n">log_tuning_density_ratio</span>
+    <span class="n">accept_prob</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">log_accept</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>  <span class="c1"># log_accept=-inf -&gt; 0</span>
+    <span class="n">do_accept</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key_accept</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">accept_prob</span>
+
+    <span class="n">new_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+        <span class="n">do_accept</span><span class="p">,</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">GISTState</span><span class="p">(</span>
+            <span class="n">proposal_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+            <span class="n">proposal_state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span>
+            <span class="n">proposal_state</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">state</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">GISTInfo</span><span class="p">(</span>
+        <span class="n">momentum</span><span class="p">,</span>
+        <span class="n">alpha</span><span class="p">,</span>
+        <span class="n">do_accept</span><span class="p">,</span>
+        <span class="n">is_diverging</span><span class="p">,</span>
+        <span class="n">accept_prob</span><span class="p">,</span>
+        <span class="n">proposal_energy</span><span class="p">,</span>
+        <span class="n">extra_info</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">extra_info</span>
+
+
+<div class="viewcode-block" id="build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.build_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span><span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the general GIST kernel.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        Threshold on the energy term of the acceptance ratio above which a</span>
+<span class="sd">        transition is flagged ``is_divergent`` (same convention as</span>
+<span class="sd">        ``hmc``/``nuts``).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel with signature ``kernel(rng_key, state, logdensity_fn,</span>
+<span class="sd">    tuning_parameter_fn, apply_fn, inverse_mass_matrix) -&gt; (GISTState,</span>
+<span class="sd">    GISTInfo)`` where:</span>
+
+<span class="sd">    ``tuning_parameter_fn(rng_key, state: IntegratorState, logdensity_fn,</span>
+<span class="sd">    metric) -&gt; (alpha, aux)``</span>
+<span class="sd">        The GIBBS step: draws ``alpha ~ p(. | theta, rho)``. ``aux`` is an</span>
+<span class="sd">        opaque PyTree threaded to ``apply_fn`` for anything computed here</span>
+<span class="sd">        that ``apply_fn`` would otherwise have to recompute (e.g. the</span>
+<span class="sd">        forward U-turn count ``U(theta, rho)``, or the ``(a, b)``</span>
+<span class="sd">        thresholds).</span>
+<span class="sd">    ``apply_fn(state: IntegratorState, alpha, aux, logdensity_fn, metric) -&gt;</span>
+<span class="sd">    (proposal_state: IntegratorState, log_tuning_density_ratio: Array,</span>
+<span class="sd">    extra_info: ArrayTree)``</span>
+<span class="sd">        Computes the involution ``G(theta, rho, alpha) = (S o</span>
+<span class="sd">        F(alpha)(theta, rho), g(theta, rho)(alpha))`` and returns ``log[</span>
+<span class="sd">        p(g(theta, rho)(alpha) | S o F(alpha)(theta, rho)) / p(alpha |</span>
+<span class="sd">        theta, rho) ]`` directly as a scalar log-ratio -- NOT two separate</span>
+<span class="sd">        density evaluations (a Dirac-measure ``p``, as in ``gist_step_size``,</span>
+<span class="sd">        has no well-defined value away from its atom, so the ratio must be</span>
+<span class="sd">        computed directly rather than as two independent evaluations).</span>
+<span class="sd">        ``extra_info`` is threaded straight into the instance&#39;s own ``Info``</span>
+<span class="sd">        NamedTuple; it must carry (at least) a ``num_integration_steps``</span>
+<span class="sd">        field.</span>
+
+<span class="sd">    Note on tracing cost</span>
+<span class="sd">    --------------------</span>
+<span class="sd">    Because ``tuning_parameter_fn`` and ``apply_fn`` each receive</span>
+<span class="sd">    ``logdensity_fn``/``metric`` fresh from this seam (not a shared</span>
+<span class="sd">    pre-built trajectory function), an instance whose ``apply_fn`` re-runs</span>
+<span class="sd">    the tuning-parameter search at the proposal (as both shipped instances</span>
+<span class="sd">    do, for the reversibility/no-return check) pays one extra</span>
+<span class="sd">    ``logdensity_fn`` trace for that re-check, on top of the forward</span>
+<span class="sd">    search and the accepted-move build -- three per kernel call, not the</span>
+<span class="sd">    two of a single-forward-pass sampler like hmc/nuts. This is a</span>
+<span class="sd">    deliberate seam-simplicity tradeoff, not a retracing bug: threading a</span>
+<span class="sd">    shared pre-built trajectory function through this seam could bring it</span>
+<span class="sd">    down to two, at the cost of a more complex seam contract. See</span>
+<span class="sd">    ``gist_step_size``/``gist_trajectory_length``&#39;s own</span>
+<span class="sd">    ``chex.assert_max_traces(n=4)`` tests (1 at ``init`` + 3 per kernel</span>
+<span class="sd">    trace) for the empirically-verified count.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">GISTState</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">tuning_parameter_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">apply_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">GISTState</span><span class="p">,</span> <span class="n">GISTInfo</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new sample with the general GIST kernel.&quot;&quot;&quot;</span>
+        <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_step</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">tuning_parameter_fn</span><span class="p">,</span>
+            <span class="n">apply_fn</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="n">divergence_threshold</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+
+<div class="viewcode-block" id="as_top_level_api">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/gist/index.html#blackjax.mcmc.gist.as_top_level_api">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">as_top_level_api</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
+    <span class="n">tuning_parameter_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">apply_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``SamplingAlgorithm`` from the general GIST kernel.</span>
+
+<span class="sd">    This is mainly an internal building block for the two instance modules</span>
+<span class="sd">    (:mod:`blackjax.mcmc.gist_step_size`,</span>
+<span class="sd">    :mod:`blackjax.mcmc.gist_trajectory_length`) -- end users call</span>
+<span class="sd">    ``blackjax.gist_step_size(...)`` / ``blackjax.gist_trajectory_length(...)``,</span>
+<span class="sd">    not this function directly (mirroring how ``nuts.as_top_level_api``</span>
+<span class="sd">    doesn&#39;t route end users through ``hmc.as_top_level_api``, even though it</span>
+<span class="sd">    reuses ``hmc.py``&#39;s pieces internally). There is deliberately no</span>
+<span class="sd">    top-level ``blackjax.gist``; reach this via</span>
+<span class="sd">    ``blackjax.mcmc.gist.as_top_level_api``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        The log-density function we wish to draw samples from.</span>
+<span class="sd">    inverse_mass_matrix</span>
+<span class="sd">        The value to use for the inverse mass matrix when drawing a value</span>
+<span class="sd">        for the momentum and computing the kinetic energy.</span>
+<span class="sd">    tuning_parameter_fn</span>
+<span class="sd">        The GIBBS seam, see :func:`build_kernel`.</span>
+<span class="sd">    apply_fn</span>
+<span class="sd">        The involution seam, see :func:`build_kernel`.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        The absolute value of the difference in energy between two states</span>
+<span class="sd">        above which we say that the transition is divergent.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span><span class="n">divergence_threshold</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">build_sampling_algorithm</span><span class="p">(</span>
+        <span class="n">kernel</span><span class="p">,</span>
+        <span class="n">init</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">,</span>
+        <span class="n">kernel_args</span><span class="o">=</span><span class="p">(</span><span class="n">tuning_parameter_fn</span><span class="p">,</span> <span class="n">apply_fn</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

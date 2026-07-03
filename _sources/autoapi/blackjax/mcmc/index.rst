@@ -17,6 +17,9 @@ Submodules
    /autoapi/blackjax/mcmc/dynamic_hmc/index
    /autoapi/blackjax/mcmc/elliptical_slice/index
    /autoapi/blackjax/mcmc/ghmc/index
+   /autoapi/blackjax/mcmc/gist/index
+   /autoapi/blackjax/mcmc/gist_step_size/index
+   /autoapi/blackjax/mcmc/gist_trajectory_length/index
    /autoapi/blackjax/mcmc/hmc/index
    /autoapi/blackjax/mcmc/integrators/index
    /autoapi/blackjax/mcmc/laplace_dynamic_hmc/index
