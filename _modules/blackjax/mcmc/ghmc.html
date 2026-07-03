@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0b3386d27" />
+  <meta name="docsearch:version" content="0.1.dev1+g26a72c940" />
   </head>
   
   
@@ -485,35 +485,21 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the momentum ``Metric`` from ``momentum_inverse_scale``.</span>
 
-<span class="sd">    ``momentum_inverse_scale`` is documented (and used by MEADS) as a</span>
-<span class="sd">    per-dimension *inverse scale*, not an inverse mass matrix: the legacy</span>
-<span class="sd">    diagonal/scalar path squares it elementwise -- turning an inverse</span>
-<span class="sd">    standard deviation into an inverse variance -- before handing it to</span>
-<span class="sd">    ``gaussian_euclidean``, which expects the latter. That elementwise</span>
-<span class="sd">    squaring only makes sense for the legacy input shape (an Array of ndim</span>
-<span class="sd">    &lt;= 1, or a Pytree matching ``position``), so it is preserved exactly</span>
-<span class="sd">    there, keeping existing diagonal/scalar callers (including MEADS)</span>
-<span class="sd">    bit-for-bit unchanged.</span>
-
-<span class="sd">    A dense ``(d, d)`` array, a</span>
-<span class="sd">    :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`, a</span>
-<span class="sd">    :class:`~blackjax.mcmc.metrics.Metric`, or a callable already carry</span>
-<span class="sd">    inverse-mass-matrix (not inverse-scale) semantics -- exactly as</span>
-<span class="sd">    ``inverse_mass_matrix`` does for ``hmc``/``nuts`` -- so these are</span>
-<span class="sd">    forwarded to :func:`~blackjax.mcmc.metrics.default_metric` unchanged,</span>
-<span class="sd">    with no squaring.</span>
-
+<span class="sd">    Rich metrics (a ``Metric``, ``LowRankInverseMassMatrix``, a callable, or a</span>
+<span class="sd">    dense ``(d, d)`` array) carry inverse-mass-matrix semantics and pass</span>
+<span class="sd">    straight to ``default_metric`` -- like ``inverse_mass_matrix`` in hmc/nuts.</span>
+<span class="sd">    The legacy scalar / 1-D / position-shaped-pytree form is a per-dimension</span>
+<span class="sd">    inverse *scale* (used by MEADS): squared elementwise into an inverse</span>
+<span class="sd">    variance first, preserved bit-for-bit.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
-        <span class="n">momentum_inverse_scale</span><span class="p">,</span> <span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">)</span>
-    <span class="p">)</span> <span class="ow">or</span> <span class="nb">callable</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">):</span>
-        <span class="k">return</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">,</span> <span class="s2">&quot;ndim&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">momentum_inverse_scale</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)</span>
-
-    <span class="n">flat_inverse_scale</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">momentum_inverse_scale</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">flat_inverse_scale</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">momentum_inverse_scale</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">))</span>
+        <span class="ow">or</span> <span class="nb">callable</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="p">(</span><span class="nb">hasattr</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;ndim&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="build_kernel">
