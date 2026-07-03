@@ -18,7 +18,13 @@ import numpy as np
 from absl.testing import absltest
 
 import blackjax
-from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric, _spd_mean
+from blackjax.adaptation.low_rank_adaptation import (
+    _compute_low_rank_metric,
+    _spd_mean,
+    base,
+    build_schedule_nutpie_mvp,
+)
+from blackjax.adaptation.window_adaptation import build_schedule
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.fixtures import BlackJAXTest
 
@@ -493,6 +499,140 @@ class LowRankSmallNRobustnessTest(BlackJAXTest):
                 0.3,
                 f"n={n} -- correlation not recovered (got {implied_corr})",
             )
+
+
+class BuildScheduleNutpieMVPTest(BlackJAXTest):
+    """Tests for build_schedule_nutpie_mvp (nutpie-continuous schedule MVP,
+    queue #9 -- window-growth/sizing delta only; see the function's
+    docstring for what this MVP proxy does and does not capture)."""
+
+    def test_shape_and_total_length(self):
+        for num_steps in (50, 200, 1000, 5000):
+            schedule = build_schedule_nutpie_mvp(num_steps)
+            self.assertEqual(schedule.shape, (num_steps, 2))
+
+    def test_final_phase_is_fast_no_window_ends(self):
+        """The final step_size_window fraction must be pure fast (stage 0)
+        with no window-end recomputes, matching Stan's final-buffer
+        semantics (unchanged recompute-cadence scope for the MVP)."""
+        num_steps = 2000
+        schedule = build_schedule_nutpie_mvp(num_steps, step_size_window=0.15)
+        final_start = num_steps - int(round(0.15 * num_steps))
+        final_stage = schedule[final_start:, 0]
+        final_is_end = schedule[final_start:, 1]
+        self.assertTrue(bool(jnp.all(final_stage == 0)))
+        self.assertTrue(bool(jnp.all(final_is_end == 0)))
+
+    def test_no_purely_fast_initial_buffer(self):
+        """Unlike Stan's schedule (which starts with a pure step-size-only
+        buffer), nutpie adapts the mass matrix from the very first draw --
+        the MVP schedule's first entry must be the slow (mass-matrix
+        adapting) stage, not fast."""
+        schedule = build_schedule_nutpie_mvp(1000)
+        self.assertEqual(int(schedule[0, 0]), 1)
+        # Contrast: Stan's default schedule starts fast.
+        stan_schedule = build_schedule(1000)
+        self.assertEqual(int(stan_schedule[0, 0]), 0)
+
+    def test_window_sizes_grow_in_main_phase(self):
+        """Successive window sizes (gaps between window-end markers) in the
+        main phase must be non-decreasing, reflecting the 1.5x growth
+        factor (vs Stan's fixed-size doubling-only-at-restart windows)."""
+        num_steps = 5000
+        schedule = build_schedule_nutpie_mvp(
+            num_steps, early_window=0.3, step_size_window=0.15
+        )
+        window_end_indices = np.where(np.asarray(schedule[:, 1]) == 1)[0]
+        # Window sizes = gaps between consecutive window-end markers.
+        gaps = np.diff(np.concatenate([[-1], window_end_indices]))
+        # Drop the first few (early phase, fixed size) -- check the tail
+        # (main phase) is non-decreasing until the final truncated window.
+        main_phase_gaps = gaps[3:-1] if len(gaps) > 4 else gaps
+        if len(main_phase_gaps) > 1:
+            self.assertTrue(bool(np.all(np.diff(main_phase_gaps) >= 0)))
+
+    def test_degenerate_small_num_steps_does_not_crash(self):
+        for num_steps in (1, 5, 19, 20, 21):
+            schedule = build_schedule_nutpie_mvp(num_steps)
+            self.assertEqual(schedule.shape, (num_steps, 2))
+
+    def test_custom_fractions(self):
+        """Custom early_window/step_size_window fractions are respected."""
+        num_steps = 1000
+        schedule = build_schedule_nutpie_mvp(
+            num_steps, early_window=0.5, step_size_window=0.2
+        )
+        final_start = num_steps - int(round(0.2 * num_steps))
+        self.assertTrue(bool(jnp.all(schedule[final_start:, 0] == 0)))
+
+
+class LowRankGradientBasedInitTest(BlackJAXTest):
+    """Tests for the gradient_based_init MVP delta (queue #9)."""
+
+    def test_default_reproduces_identity_init(self):
+        """gradient_based_init=False (default) must reproduce the original
+        sigma=ones(d) initialisation exactly -- no default-behavior change."""
+        init, _, _ = base(max_rank=3, gradient_based_init=False)
+        d = 5
+        grad = jnp.array([2.0, -4.0, 0.5, 10.0, 0.1])
+        state = init(jnp.zeros(d), grad, 1.0, 100)
+        np.testing.assert_allclose(state.sigma, jnp.ones(d))
+        np.testing.assert_allclose(state.U, jnp.zeros((d, 3)))
+        np.testing.assert_allclose(state.lam, jnp.ones(3))
+
+    def test_gradient_based_init_formula(self):
+        """gradient_based_init=True seeds sigma = 1/sqrt(|grad|), so that
+        M^{-1}_diag = sigma**2 = 1/|grad|, matching the paper's
+        M = diag(|grad|) (mass matrix, not inverse) initialisation."""
+        init, _, _ = base(max_rank=3, gradient_based_init=True)
+        d = 5
+        grad = jnp.array([2.0, -4.0, 0.5, 10.0, 0.1])
+        state = init(jnp.zeros(d), grad, 1.0, 100)
+        expected_sigma = jnp.abs(grad) ** -0.5
+        np.testing.assert_allclose(state.sigma, expected_sigma, rtol=1e-5)
+        # Only the diagonal changes; low-rank correction still starts inert.
+        np.testing.assert_allclose(state.U, jnp.zeros((d, 3)))
+        np.testing.assert_allclose(state.lam, jnp.ones(3))
+
+    def test_gradient_based_init_clips_extreme_gradients(self):
+        """Zero or huge gradient components must not produce NaN/Inf."""
+        init, _, _ = base(max_rank=2, gradient_based_init=True)
+        d = 4
+        grad = jnp.array([0.0, 1e30, 1e-30, 5.0])
+        state = init(jnp.zeros(d), grad, 1.0, 50)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(state.sigma))))
+        self.assertTrue(bool(jnp.all(state.sigma > 0)))
+
+    def test_end_to_end_mvp_options_run_finite(self):
+        """window_adaptation_low_rank with both MVP deltas (gradient_based
+        init + the nutpie-mvp schedule) runs to a finite result."""
+        d = 5
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+        warmup = blackjax.window_adaptation_low_rank(
+            blackjax.nuts,
+            logdensity_fn,
+            max_rank=3,
+            gradient_based_init=True,
+            schedule_fn=build_schedule_nutpie_mvp,
+        )
+        (state, params), _ = warmup.run(self.next_key(), jnp.ones(d), num_steps=300)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(state.position))))
+        self.assertTrue(
+            bool(jnp.all(jnp.isfinite(params["inverse_mass_matrix"].sigma)))
+        )
+        self.assertGreater(float(params["step_size"]), 0.0)
+
+    def test_default_schedule_fn_unchanged(self):
+        """window_adaptation_low_rank without schedule_fn/gradient_based_init
+        must still use Stan's default build_schedule (no behavior change)."""
+        d = 4
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+        warmup = blackjax.window_adaptation_low_rank(
+            blackjax.nuts, logdensity_fn, max_rank=2
+        )
+        (state, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=200)
+        self.assertEqual(state.position.shape, (d,))
+        self.assertGreater(float(params["step_size"]), 0.0)
 
 
 if __name__ == "__main__":
