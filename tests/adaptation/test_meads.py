@@ -310,10 +310,9 @@ class TestMEADSLowRank(BlackJAXTest):
         mis = params["momentum_inverse_scale"]
         self.assertIsInstance(mis, LowRankInverseMassMatrix)
         self.assertEqual(mis.sigma.shape, (dim,))
-        # The FINAL metric is re-estimated from the full num_chains population
-        # (clamp num_chains - 1), richer than the num_folds - 1 clamp used
-        # for the internal per-fold warmup heuristic -- see meads_adaptation's
-        # docstring.
+        # Both the per-step warmup metric and the FINAL metric are estimated
+        # from the full num_chains population (clamp num_chains - 1) -- see
+        # meads_adaptation's docstring.
         expected_k = min(3, num_chains - 1)
         self.assertEqual(mis.U.shape, (dim, expected_k))
         self.assertEqual(mis.lam.shape, (expected_k,))
@@ -345,10 +344,11 @@ class TestMEADSLowRank(BlackJAXTest):
         self.assertTrue(jnp.all(jnp.isfinite(new_states.position)))
         self.assertTrue(jnp.all(jnp.isfinite(new_states.logdensity)))
 
-    def test_low_rank_rank_clamped_to_n_per_fold_minus_one(self):
-        """n_per_fold - 1 == 1 here; low_rank_rank=1 is exactly reachable and
-        should run without error."""
-        num_chains, num_folds, dim = 8, 4, 3  # n_per_fold = 2
+    def test_low_rank_rank_clamped_to_num_chains_minus_one(self):
+        """The metric is estimated from the full population, so the clamp is
+        num_chains - 1 (not n_per_fold - 1): low_rank_rank=1 is reachable
+        even with a small per-fold ensemble (n_per_fold=2 here)."""
+        num_chains, num_folds, dim = 8, 4, 3  # n_per_fold = 2, num_chains - 1 = 7
         logdensity, positions = self._make_correlated_problem(num_chains, dim)
 
         warmup = blackjax.meads_adaptation(
@@ -357,14 +357,15 @@ class TestMEADSLowRank(BlackJAXTest):
         (last_states, params), _ = warmup.run(self.next_key(), positions, num_steps=5)
         self.assertTrue(jnp.all(jnp.isfinite(last_states.position)))
 
-    def test_low_rank_rank_unreachable_for_folds_raises(self):
-        """n_per_fold=1 (num_chains == num_folds) can't support any per-fold
-        low-rank estimate (n_per_fold - 1 == 0): must raise ValueError."""
+    def test_low_rank_rank_unreachable_for_single_chain_raises(self):
+        """The low-rank metric is estimated from the full num_chains
+        population, so it's unreachable only when num_chains - 1 < 1, i.e.
+        num_chains == 1: must raise ValueError."""
         with pytest.raises(ValueError, match="low_rank_rank"):
             blackjax.meads_adaptation(
                 make_logdensity(dim=3),
-                num_chains=4,
-                num_folds=4,
+                num_chains=1,
+                num_folds=1,
                 low_rank_rank=1,
             )
 
