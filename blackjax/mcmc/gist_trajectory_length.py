@@ -116,9 +116,12 @@ def num_steps_to_uturn(
     The dot product uses the **metric-corrected velocity**
     ``M^{-1} rho`` (the gradient of the kinetic energy) rather than the raw
     momentum, so the criterion generalizes correctly to a non-identity
-    ``inverse_mass_matrix`` (diagonal / dense / low-rank) -- matching how
-    ``metrics.gaussian_euclidean``'s own ``check_turning`` generalizes the
-    analogous inner product for NUTS. This changes no formula for the
+    ``inverse_mass_matrix`` (diagonal / dense / low-rank). This is eq. 33's
+    position-displacement-times-velocity condition, a *different* turning
+    criterion from NUTS's momentum-sum ``check_turning`` -- the analogy to
+    ``metrics.gaussian_euclidean``'s ``check_turning`` is only in *how* it
+    substitutes ``M^{-1} rho`` for raw momentum in a dot product, not that
+    the two criteria coincide. This changes no formula for the
     identity-metric case the paper's own experiments use.
 
     ``max_num_steps`` is a hard cap, exactly analogous to NUTS's

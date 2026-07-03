@@ -244,6 +244,23 @@ def build_kernel(divergence_threshold: float = 1000) -> Callable:
         ``extra_info`` is threaded straight into the instance's own ``Info``
         NamedTuple; it must carry (at least) a ``num_integration_steps``
         field.
+
+    Note on tracing cost
+    --------------------
+    Because ``tuning_parameter_fn`` and ``apply_fn`` each receive
+    ``logdensity_fn``/``metric`` fresh from this seam (not a shared
+    pre-built trajectory function), an instance whose ``apply_fn`` re-runs
+    the tuning-parameter search at the proposal (as both shipped instances
+    do, for the reversibility/no-return check) pays one extra
+    ``logdensity_fn`` trace for that re-check, on top of the forward
+    search and the accepted-move build -- three per kernel call, not the
+    two of a single-forward-pass sampler like hmc/nuts. This is a
+    deliberate seam-simplicity tradeoff, not a retracing bug: threading a
+    shared pre-built trajectory function through this seam could bring it
+    down to two, at the cost of a more complex seam contract. See
+    ``gist_step_size``/``gist_trajectory_length``'s own
+    ``chex.assert_max_traces(n=4)`` tests (1 at ``init`` + 3 per kernel
+    trace) for the empirically-verified count.
     """
 
     def kernel(

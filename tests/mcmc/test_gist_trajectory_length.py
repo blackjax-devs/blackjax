@@ -1,5 +1,13 @@
 """Tests for the GIST self-tuning trajectory-length sampler (no-U-turn,
-NOT NUTS's recursive doubling)."""
+NOT NUTS's recursive doubling).
+
+CI note: run with ``--benchmark-disable`` when parallelizing under xdist
+(e.g. ``-n 2``) -- a bare ``-n 2`` run hits an ``INTERNALERROR`` from
+pytest-benchmark x xdist under this project's ``filterwarnings = error``
+(the same masking-bug family as the probdiffeq migration saga). Not a code
+issue in this module; the documented blackjax test command already
+includes ``--benchmark-disable``.
+"""
 import chex
 import jax
 import jax.numpy as jnp
@@ -175,10 +183,17 @@ class MomentRecoveryTest(BlackJAXTest):
         )
         pos, infos = run_chain(algo, jnp.zeros(2), self.next_key(), 6000)
         s = np.asarray(pos[3000:])
+        # The mean/std bounds are the actual reversed-direction/sign-bug
+        # detector here (confirmed empirically against a planted direction
+        # bug in review: a broken rollout inflates std well outside this
+        # band, well before the skew sign would flip). The skew check below
+        # is a secondary correctness check, tightened to a band around the
+        # closed-form truth (-1.1395) rather than a bare sign check, so it
+        # earns its own assertion.
         np.testing.assert_allclose(s.mean(axis=0), -0.5772, atol=0.25)
         np.testing.assert_allclose(s.std(axis=0), 1.2825, rtol=0.25)
         skew = np.mean(((s - s.mean(0)) / s.std(0)) ** 3, axis=0)
-        self.assertTrue((skew < 0.0).all())  # left-skewed, not mirrored
+        np.testing.assert_allclose(skew, -1.1395, atol=1.0)
         self.assertGreater(float(jnp.mean(infos.acceptance_rate)), 0.05)
 
     def test_neal_funnel_neck_marginal(self):
@@ -256,10 +271,16 @@ class ClosedFormCrossCheckTest(BlackJAXTest):
         inv_mass = jnp.array([100.0, 0.01])
         metric = metrics.default_metric(inv_mass)
         state = integrators.IntegratorState(
-            jnp.array([0.0, 0.0]), jnp.array([1.0, 1.0]), jnp.array(0.0), jnp.array([0.0, 0.0])
+            jnp.array([0.0, 0.0]),
+            jnp.array([1.0, 1.0]),
+            jnp.array(0.0),
+            jnp.array([0.0, 0.0]),
         )
         uturn_fn = gist_trajectory_length.num_steps_to_uturn(
-            integrators.velocity_verlet, step_size=0.05, metric=metric, max_num_steps=200
+            integrators.velocity_verlet,
+            step_size=0.05,
+            metric=metric,
+            max_num_steps=200,
         )
         corrected = int(uturn_fn(state, std_normal_logdensity))
 

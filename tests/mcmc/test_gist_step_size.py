@@ -1,4 +1,12 @@
-"""Tests for the GIST self-tuning step-size sampler (autoStep-style)."""
+"""Tests for the GIST self-tuning step-size sampler (autoStep-style).
+
+CI note: run with ``--benchmark-disable`` when parallelizing under xdist
+(e.g. ``-n 2``) -- a bare ``-n 2`` run hits an ``INTERNALERROR`` from
+pytest-benchmark x xdist under this project's ``filterwarnings = error``
+(the same masking-bug family as the probdiffeq migration saga). Not a code
+issue in this module; the documented blackjax test command already
+includes ``--benchmark-disable``.
+"""
 import chex
 import jax
 import jax.numpy as jnp
@@ -62,7 +70,9 @@ class SingleStepTest(chex.TestCase):
 
     def test_jit(self):
         algo = blackjax.gist_step_size(
-            std_normal_logdensity, inverse_mass_matrix=jnp.ones(3), initial_step_size=0.3
+            std_normal_logdensity,
+            inverse_mass_matrix=jnp.ones(3),
+            initial_step_size=0.3,
         )
         state = algo.init(jnp.zeros(3))
         new_state, _ = jax.jit(algo.step)(jax.random.key(0), state)
@@ -142,15 +152,15 @@ class StationarityTest(BlackJAXTest):
         chex.assert_trees_all_close(
             jnp.mean(samples, axis=0), jnp.zeros((d,)), atol=0.15, rtol=0.15
         )
-        chex.assert_trees_all_close(
-            jnp.cov(samples.T), jnp.eye(d), atol=0.2, rtol=0.2
-        )
+        chex.assert_trees_all_close(jnp.cov(samples.T), jnp.eye(d), atol=0.2, rtol=0.2)
 
 
 class MomentRecoveryTest(BlackJAXTest):
     def test_isotropic_std_normal(self):
         algo = blackjax.gist_step_size(
-            std_normal_logdensity, inverse_mass_matrix=jnp.ones(3), initial_step_size=0.8
+            std_normal_logdensity,
+            inverse_mass_matrix=jnp.ones(3),
+            initial_step_size=0.8,
         )
         pos, infos = run_chain(algo, jnp.zeros(3), self.next_key(), 6000)
         s = np.asarray(pos[3000:])
@@ -163,7 +173,9 @@ class MomentRecoveryTest(BlackJAXTest):
         Sigma = jnp.array([[2.0, 1.2], [1.2, 1.0]])
         Sinv = jnp.linalg.inv(Sigma)
         logp = lambda x: -0.5 * x @ Sinv @ x
-        algo = blackjax.gist_step_size(logp, inverse_mass_matrix=Sigma, initial_step_size=0.5)
+        algo = blackjax.gist_step_size(
+            logp, inverse_mass_matrix=Sigma, initial_step_size=0.5
+        )
         pos, _ = run_chain(algo, jnp.zeros(2), self.next_key(), 8000)
         emp = np.cov(np.asarray(pos[4000:]), rowvar=False)
         np.testing.assert_allclose(emp, np.asarray(Sigma), atol=0.5)
@@ -178,14 +190,23 @@ class MomentRecoveryTest(BlackJAXTest):
         # Exponential representation is a poor fit for a gradient-based
         # sampler).
         algo = blackjax.gist_step_size(
-            smooth_skewed_logdensity, inverse_mass_matrix=jnp.ones(2), initial_step_size=0.4
+            smooth_skewed_logdensity,
+            inverse_mass_matrix=jnp.ones(2),
+            initial_step_size=0.4,
         )
         pos, infos = run_chain(algo, jnp.zeros(2), self.next_key(), 8000)
         s = np.asarray(pos[4000:])
+        # The mean/std bounds are the actual reversed-direction/sign-bug
+        # detector here (confirmed empirically against a planted direction
+        # bug in review: a broken rollout inflates std well outside this
+        # band, well before the skew sign would flip). The skew check below
+        # is a secondary correctness check, tightened to a band around the
+        # closed-form truth (-1.1395) rather than a bare sign check, so it
+        # earns its own assertion.
         np.testing.assert_allclose(s.mean(axis=0), -0.5772, atol=0.2)
         np.testing.assert_allclose(s.std(axis=0), 1.2825, rtol=0.2)
         skew = np.mean(((s - s.mean(0)) / s.std(0)) ** 3, axis=0)
-        self.assertTrue((skew < 0.0).all())  # left-skewed, not mirrored
+        np.testing.assert_allclose(skew, -1.1395, atol=0.9)
 
     def test_neal_funnel_neck_marginal(self):
         # The canonical stress test for step-size adaptation (a single
@@ -233,7 +254,11 @@ class SelectorUnitTest(BlackJAXTest):
             state.logdensity_grad,
         )
         step_index, search_exhausted = selector(
-            integrator_state, jnp.array(0.4), jnp.array(0.6), std_normal_logdensity, metric
+            integrator_state,
+            jnp.array(0.4),
+            jnp.array(0.6),
+            std_normal_logdensity,
+            metric,
         )
         self.assertFalse(bool(search_exhausted))
         self.assertGreater(int(step_index), 0)  # expanded away from the tiny step
@@ -257,7 +282,11 @@ class SelectorUnitTest(BlackJAXTest):
             state.logdensity_grad,
         )
         _, search_exhausted = selector(
-            integrator_state, jnp.array(0.3), jnp.array(0.7), std_normal_logdensity, metric
+            integrator_state,
+            jnp.array(0.3),
+            jnp.array(0.7),
+            std_normal_logdensity,
+            metric,
         )
         self.assertTrue(bool(search_exhausted))
 
@@ -293,7 +322,10 @@ class EdgeCaseTest(BlackJAXTest):
         # reciprocal-sqrt derivative formula itself inherits the NaN.
         logp = lambda x: -jnp.sum(jnp.sqrt(x))
         algo = blackjax.gist_step_size(
-            logp, inverse_mass_matrix=jnp.ones(2), initial_step_size=2.0, max_search_steps=5
+            logp,
+            inverse_mass_matrix=jnp.ones(2),
+            initial_step_size=2.0,
+            max_search_steps=5,
         )
         pos, infos = run_chain(algo, jnp.array([1.0, 1.0]), self.next_key(), 500)
         self.assertTrue(np.all(np.isfinite(np.asarray(pos))))
