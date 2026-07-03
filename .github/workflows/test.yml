@@ -35,7 +35,7 @@ jobs:
       run: uv sync --group dev --extra progress
     - name: Run tests
       run: |
-        uv run pytest -n auto -vv --benchmark-disable --cov=blackjax --cov-report=xml --cov-report=term tests
+        uv run pytest -n 2 -vv --benchmark-disable --cov=blackjax --cov-report=xml --cov-report=term tests
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3
       with:
