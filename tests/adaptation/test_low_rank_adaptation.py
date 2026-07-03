@@ -23,6 +23,19 @@ from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.fixtures import BlackJAXTest
 
 
+def _low_rank_inverse_mass_matrix(sigma, U, lam):
+    """Reconstruct the dense inverse mass matrix from the low-rank factors.
+
+    ``M^{-1} = diag(sigma) (I + U (lam - I) U^T) diag(sigma)``, matching
+    Eq. (10)-(11) of :cite:p:`seyboldt2026preconditioning` and the docstring
+    of :func:`window_adaptation_low_rank`.
+    """
+    d = sigma.shape[0]
+    return (
+        jnp.diag(sigma) @ (jnp.eye(d) + U @ jnp.diag(lam - 1.0) @ U.T) @ jnp.diag(sigma)
+    )
+
+
 class SPDMeanTest(BlackJAXTest):
     """Tests for _spd_mean (SPD geometric mean)."""
 
@@ -291,6 +304,195 @@ class LowRankWindowAdaptationTest(BlackJAXTest):
         )
         new_state, _info = nuts.step(self.next_key(), chain0_state)
         self.assertEqual(new_state.position.shape, (d,))
+
+
+class LowRankCorrelationRecoveryTest(BlackJAXTest):
+    """Regression tests for the missing score-covariance inversion.
+
+    Finding: ``_spd_mean(C_x, C_a)`` in ``_compute_low_rank_metric`` omitted
+    the matrix inversion of ``C_a`` (the regularized score/gradient
+    covariance) required by Theorem 2.3 / Eq. (9) of
+    :cite:p:`seyboldt2026preconditioning`. Cross-validated against nutpie's
+    Rust reference implementation (``nuts-rs``
+    ``src/transform/adapt/low_rank.rs``). See the worklog case study
+    ``worklog/lessons/case-studies/gp_regression/2026-05-13-low-rank-wrong-sign-suspicion.md``
+    for the full diagnosis, including the exact controls reused below.
+    """
+
+    def _pairwise_mvn(self, rho, key, n=200_000):
+        """2-D correlated Gaussian: var 4/1, correlation rho (case study control)."""
+        cov = jnp.array([[4.0, rho * 2.0], [rho * 2.0, 1.0]])
+        draws = jax.random.multivariate_normal(key, jnp.zeros(2), cov, shape=(n,))
+        grads = -draws @ jnp.linalg.inv(cov).T
+        return draws, grads
+
+    def test_pairwise_sign_and_magnitude_recovery(self):
+        """Both the sign and the magnitude of a known pairwise correlation
+        are recovered (before the fix: exactly-degenerate eigenspectrum,
+        seed-unstable sign; see LowRankSeedStabilityTest below)."""
+        for rho in (0.7, -0.7, 0.9):
+            draws, grads = self._pairwise_mvn(rho, self.next_key())
+            sigma, _, U, lam = _compute_low_rank_metric(
+                draws, grads, draws.shape[0], 2, 1e-5, 2.0
+            )
+            minv = _low_rank_inverse_mass_matrix(sigma, U, lam)
+            implied_corr = float(minv[0, 1] / jnp.sqrt(minv[0, 0] * minv[1, 1]))
+            self.assertEqual(np.sign(implied_corr), np.sign(rho))
+            np.testing.assert_allclose(implied_corr, rho, atol=0.05)
+
+    def test_star_topology_sign_recovery(self):
+        """7-D hub-and-spoke topology (case study control #2 — closer to a
+        real hierarchical funnel than an isolated pair). Before the fix this
+        was *stably* wrong-signed (not noise): true +0.30 recovered as
+        approximately -0.20 at max_rank=1, shrinking to approximately -0.02
+        at max_rank=3-6."""
+        d = 7
+        rho = 0.3
+        cov = jnp.eye(d).at[0, 1:].set(rho).at[1:, 0].set(rho)
+        draws = jax.random.multivariate_normal(
+            self.next_key(), jnp.zeros(d), cov, shape=(200_000,)
+        )
+        grads = -draws @ jnp.linalg.inv(cov).T
+        for max_rank in (3, 6):
+            sigma, _, U, lam = _compute_low_rank_metric(
+                draws, grads, draws.shape[0], max_rank, 1e-5, 2.0
+            )
+            minv = _low_rank_inverse_mass_matrix(sigma, U, lam)
+            hub_spoke_corrs = minv[0, 1:] / jnp.sqrt(minv[0, 0] * jnp.diag(minv)[1:])
+            self.assertTrue(bool(jnp.all(hub_spoke_corrs > 0)))
+            np.testing.assert_allclose(np.asarray(hub_spoke_corrs), rho, atol=0.1)
+
+
+class LowRankGaussianLimitTest(BlackJAXTest):
+    """Gaussian-limit exact-recovery test (Theorem 2.4)."""
+
+    def test_recovers_known_covariance(self):
+        """Exact iid draws + exact scores from a known Sigma recover
+        M^{-1} == Sigma, matching Theorem 2.4's exact-recovery guarantee once
+        the number of draws exceeds d+1. ``cutoff=1.0`` disables eigenvalue
+        masking (masks only exactly-unity eigenvalues) so the full-rank
+        correction is retained."""
+        d = 5
+        key1, key2 = jax.random.split(self.next_key())
+        A = jax.random.normal(key1, (d, d))
+        cov = A @ A.T + d * jnp.eye(d)
+        draws = jax.random.multivariate_normal(key2, jnp.zeros(d), cov, shape=(50_000,))
+        grads = -draws @ jnp.linalg.inv(cov).T
+        sigma, _, U, lam = _compute_low_rank_metric(
+            draws, grads, draws.shape[0], d, 1e-5, 1.0
+        )
+        minv = _low_rank_inverse_mass_matrix(sigma, U, lam)
+        np.testing.assert_allclose(
+            np.asarray(minv), np.asarray(cov), rtol=0.1, atol=0.1
+        )
+
+
+class LowRankSeedStabilityTest(BlackJAXTest):
+    """Top-eigenvector seed-stability test.
+
+    Before the fix, an isolated 2x2 correlated block produced an exactly
+    degenerate ``_spd_mean`` eigenspectrum (eigenvalues equal to ~7
+    significant figures), so which eigenvector ``max_rank=1`` retained — and
+    hence the sign and magnitude of the implied correlation — was arbitrary,
+    seed-dependent noise even at n=1,000,000 iid draws (not finite-sample
+    noise: the degeneracy was exact). After the fix the recovered
+    correlation must be stable (consistent sign, low seed-to-seed variance).
+    """
+
+    def test_top_eigenvector_direction_stable_across_seeds(self):
+        rho = 0.7
+        cov = jnp.array([[4.0, rho * 2.0], [rho * 2.0, 1.0]])
+        corrs = []
+        for _ in range(6):
+            key = self.next_key()
+            draws = jax.random.multivariate_normal(
+                key, jnp.zeros(2), cov, shape=(200_000,)
+            )
+            grads = -draws @ jnp.linalg.inv(cov).T
+            sigma, _, U, lam = _compute_low_rank_metric(
+                draws, grads, draws.shape[0], 1, 1e-5, 2.0
+            )
+            minv = _low_rank_inverse_mass_matrix(sigma, U, lam)
+            corrs.append(float(minv[0, 1] / jnp.sqrt(minv[0, 0] * minv[1, 1])))
+        corrs = np.array(corrs)
+        self.assertTrue(bool(np.all(corrs > 0)), f"sign flipped across seeds: {corrs}")
+        self.assertLess(float(np.std(corrs)), 0.05, f"unstable across seeds: {corrs}")
+
+
+class LowRankDiagonalConsistencyTest(BlackJAXTest):
+    """1-D low-rank/diagonal consistency test.
+
+    In 1 dimension there is no possible correlation structure beyond the
+    diagonal scale itself, so Step 7's SPD-mean eigenvalue must reduce to
+    lambda=1 (no correction), leaving ``M^{-1} == sigma**2`` exactly matching
+    Step 1's diagonal formula. Before the fix, the un-inverted ``_spd_mean``
+    implied a spurious ``sqrt(var_x * var_g)``-flavoured correction,
+    contradicting the Step-1 diagonal's own ``sqrt(var_x / var_g)`` formula
+    three lines above it in the source.
+    """
+
+    def test_low_rank_path_agrees_with_diagonal_in_1d(self):
+        for var_x, var_g in [(4.0, 1.0), (0.1, 9.0), (25.0, 0.5)]:
+            key1, key2 = jax.random.split(self.next_key())
+            n = 50_000
+            x = jax.random.normal(key1, (n, 1)) * jnp.sqrt(var_x)
+            g = jax.random.normal(key2, (n, 1)) * jnp.sqrt(var_g)
+            sigma, _, U, lam = _compute_low_rank_metric(x, g, n, 1, 1e-5, 2.0)
+            diagonal_only = float(sigma[0] ** 2)
+            low_rank = float(_low_rank_inverse_mass_matrix(sigma, U, lam)[0, 0])
+            np.testing.assert_allclose(low_rank, diagonal_only, rtol=1e-3)
+            np.testing.assert_allclose(float(lam[0]), 1.0, atol=1e-3)
+
+
+class LowRankSmallNRobustnessTest(BlackJAXTest):
+    """Small-n robustness (early-warmup buffer sizes) -- reviewer finding.
+
+    Statistician correctness review (stat-e1) surfaced this adversarial
+    check during the fix's review: at borderline-rank-deficient buffer
+    sizes typical of the *first* slow window in warmup (n as low as 4, up
+    to n=200), the fixed estimator with the corrected ``gamma=1e-5``
+    regularisation must (a) never produce NaN/Inf at JAX's default float32
+    precision, and (b) already recover the correct sign -- and a
+    non-trivial fraction of the true magnitude -- at n=4, where the OLD
+    ``gamma=1.0`` default's n-scaled regularisation shows essentially
+    nothing (implied correlation collapses to ~0.0 at n=4; see PR draft for
+    the side-by-side numbers). This locks in that the gamma-scale fix is
+    *more* robust in the small-n regime, not just asymptotically correct.
+    """
+
+    def test_no_nan_inf_and_correct_sign_across_small_n(self):
+        rho = 0.7
+        cov = jnp.array([[4.0, rho * 2.0], [rho * 2.0, 1.0]])
+        for n in (4, 10, 50, 200):
+            draws = jax.random.multivariate_normal(
+                self.next_key(), jnp.zeros(2), cov, shape=(n,)
+            )
+            grads = -draws @ jnp.linalg.inv(cov).T
+            sigma, mu_star, U, lam = _compute_low_rank_metric(
+                draws, grads, n, 2, 1e-5, 2.0
+            )
+            for name, arr in [
+                ("sigma", sigma),
+                ("mu_star", mu_star),
+                ("U", U),
+                ("lam", lam),
+            ]:
+                self.assertTrue(
+                    bool(jnp.all(jnp.isfinite(arr))),
+                    f"n={n} -- {name} has NaN/Inf: {arr}",
+                )
+            minv = _low_rank_inverse_mass_matrix(sigma, U, lam)
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(minv))), f"n={n} -- M^-1 has NaN/Inf"
+            )
+            implied_corr = round(
+                float(minv[0, 1] / jnp.sqrt(minv[0, 0] * minv[1, 1])), 4
+            )
+            self.assertGreater(
+                implied_corr,
+                0.3,
+                f"n={n} -- correlation not recovered (got {implied_corr})",
+            )
 
 
 if __name__ == "__main__":
