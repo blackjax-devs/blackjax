@@ -127,6 +127,16 @@ def _make_algorithm(name):
             std_normal_logdensity,
             max_expansions=5,
         ),
+        "gist_step_size": lambda: blackjax.gist_step_size(
+            std_normal_logdensity,
+            inverse_mass_matrix=inv_mass,
+            initial_step_size=0.1,
+        ),
+        "gist_trajectory_length": lambda: blackjax.gist_trajectory_length(
+            std_normal_logdensity,
+            inverse_mass_matrix=inv_mass,
+            step_size=0.1,
+        ),
     }
 
     if name not in factories:
@@ -157,6 +167,8 @@ _MCMC_ALGORITHMS = [
     "irmh",
     "slice_sampling",
     "coordinate_slice",
+    "gist_step_size",
+    "gist_trajectory_length",
 ]
 
 
