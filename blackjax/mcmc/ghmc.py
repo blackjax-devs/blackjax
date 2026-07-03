@@ -69,35 +69,21 @@ def _metric_from_momentum_inverse_scale(
 ) -> metrics.Metric:
     """Build the momentum ``Metric`` from ``momentum_inverse_scale``.
 
-    ``momentum_inverse_scale`` is documented (and used by MEADS) as a
-    per-dimension *inverse scale*, not an inverse mass matrix: the legacy
-    diagonal/scalar path squares it elementwise -- turning an inverse
-    standard deviation into an inverse variance -- before handing it to
-    ``gaussian_euclidean``, which expects the latter. That elementwise
-    squaring only makes sense for the legacy input shape (an Array of ndim
-    <= 1, or a Pytree matching ``position``), so it is preserved exactly
-    there, keeping existing diagonal/scalar callers (including MEADS)
-    bit-for-bit unchanged.
-
-    A dense ``(d, d)`` array, a
-    :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`, a
-    :class:`~blackjax.mcmc.metrics.Metric`, or a callable already carry
-    inverse-mass-matrix (not inverse-scale) semantics -- exactly as
-    ``inverse_mass_matrix`` does for ``hmc``/``nuts`` -- so these are
-    forwarded to :func:`~blackjax.mcmc.metrics.default_metric` unchanged,
-    with no squaring.
-
+    Rich metrics (a ``Metric``, ``LowRankInverseMassMatrix``, a callable, or a
+    dense ``(d, d)`` array) carry inverse-mass-matrix semantics and pass
+    straight to ``default_metric`` -- like ``inverse_mass_matrix`` in hmc/nuts.
+    The legacy scalar / 1-D / position-shaped-pytree form is a per-dimension
+    inverse *scale* (used by MEADS): squared elementwise into an inverse
+    variance first, preserved bit-for-bit.
     """
-    if isinstance(
-        momentum_inverse_scale, (metrics.Metric, metrics.LowRankInverseMassMatrix)
-    ) or callable(momentum_inverse_scale):
-        return metrics.default_metric(momentum_inverse_scale)
-
-    if hasattr(momentum_inverse_scale, "ndim") and momentum_inverse_scale.ndim >= 2:
-        return metrics.default_metric(momentum_inverse_scale)
-
-    flat_inverse_scale = ravel_pytree(momentum_inverse_scale)[0]
-    return metrics.default_metric(flat_inverse_scale**2)
+    x = momentum_inverse_scale
+    if (
+        isinstance(x, (metrics.Metric, metrics.LowRankInverseMassMatrix))
+        or callable(x)
+        or (hasattr(x, "ndim") and x.ndim >= 2)
+    ):
+        return metrics.default_metric(x)
+    return metrics.default_metric(ravel_pytree(x)[0] ** 2)
 
 
 def build_kernel(
