@@ -656,13 +656,56 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
         np.testing.assert_allclose(state.lam, jnp.ones(3))
 
     def test_gradient_based_init_clips_extreme_gradients(self):
-        """Zero or huge gradient components must not produce NaN/Inf."""
+        """Zero or huge gradient components must not produce NaN/Inf, and an
+        exactly-zero component must fall back to sigma_i=1.0 (the
+        near-zero-gradient hardening fix), not the 1e-20-clip-floor-derived
+        sigma_i=1e10 extreme."""
         init, _, _ = base(max_rank=2, gradient_based_init=True)
         d = 4
         grad = jnp.array([0.0, 1e30, 1e-30, 5.0])
         state = init(jnp.zeros(d), grad, 1.0, 50)
         self.assertTrue(bool(jnp.all(jnp.isfinite(state.sigma))))
         self.assertTrue(bool(jnp.all(state.sigma > 0)))
+        self.assertAlmostEqual(float(state.sigma[0]), 1.0, places=5)
+
+    def test_gradient_based_init_handles_exact_zero_gradient(self):
+        """Real user-facing edge case (Fisher 2x2 calibration study's
+        "Calibration verdict" finding): initialising at x=0 on any
+        centered/standardised target gives an EXACTLY zero gradient. Before
+        this fix, the formula clipped to sigma=1e10 uniformly across all
+        dimensions -- an astronomically loose metric that mistunes the very
+        first trajectory badly enough to cause near-certain divergence,
+        freezing the chain for the whole first window and collapsing the
+        subsequent metric estimate to the opposite (1e-20) extreme
+        (mechanistically confirmed via an instrumented re-run, see the
+        design doc's "Calibration verdict" section). nuts-rs's own
+        `array_update_var_inv_std_grad` has no formula-level defense for
+        this either (`clamp(0, 1e-20, 1e20).recip() = 1e20` is finite, so
+        its `fill_invalid` branch -- reserved for non-finite results --
+        never fires); nutpie avoids this in practice purely via jittering
+        the initial position elsewhere in its pipeline, not via this
+        formula, so there is no nuts-rs receipt to follow at this exact
+        boundary -- 1e-10 is a defensible, disclosed threshold choice."""
+        d = 10
+        grad = jnp.zeros(d)
+        init, _, _ = base(max_rank=3, gradient_based_init=True)
+        state = init(jnp.zeros(d), grad, 1.0, 100)
+        np.testing.assert_allclose(state.sigma, jnp.ones(d))
+
+        # End-to-end: warmup on a centered Gaussian, x0=0 exactly, must
+        # survive and produce finite draws with no sigma extremes.
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+        warmup = blackjax.window_adaptation_low_rank(
+            blackjax.nuts, logdensity_fn, max_rank=3, gradient_based_init=True
+        )
+        (state, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=200)
+        sigma_out = params["inverse_mass_matrix"].sigma
+        self.assertTrue(bool(jnp.all(jnp.isfinite(state.position))))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(sigma_out))))
+        self.assertTrue(
+            bool(jnp.all(sigma_out > 1e-8)), f"sigma collapsed: {sigma_out}"
+        )
+        self.assertTrue(bool(jnp.all(sigma_out < 1e8)), f"sigma exploded: {sigma_out}")
 
     def test_end_to_end_new_options_run_finite(self):
         """window_adaptation_low_rank with both new options (gradient_based

@@ -442,12 +442,21 @@ def base(
         starting point (cf. L-BFGS). Since blackjax's ``sigma**2`` is the
         *inverse*-mass-matrix diagonal, this sets
         ``sigma = 1/sqrt(clip(|grad|, 1e-20, 1e20))`` so that
-        ``M^{-1}_diag = sigma**2 = 1/|grad|``, matching ``M = diag(|grad|)``.
-        Only the diagonal scale changes; ``U``/``lam`` still start at
-        no-correction (``U=0``, ``lam=1``), same as the default. Default
-        ``False`` reproduces the original identity/zero initialisation
-        exactly (see also :func:`build_growing_window_schedule`, which
-        implements the companion window-sizing piece of nutpie's warmup).
+        ``M^{-1}_diag = sigma**2 = 1/|grad|``, matching ``M = diag(|grad|)``
+        -- **except per-coordinate where** ``|grad_i| < 1e-10``, **where
+        sigma_i falls back to 1.0** (the identity) instead of propagating
+        the ``1e-20`` clip floor into an astronomically loose ``sigma_i =
+        1e10``. This defends the real edge case of initialising at (or very
+        near) a stationary point of the target -- e.g. ``x=0`` on any
+        centered/standardised density -- where the gradient is exactly (or
+        near-)zero and an extreme initial scale causes near-certain
+        divergence on the very first trajectory (see the fisher-2x2
+        calibration study's root-caused finding). Only the diagonal scale
+        changes; ``U``/``lam`` still start at no-correction (``U=0``,
+        ``lam=1``), same as the default. Default ``False`` reproduces the
+        original identity/zero initialisation exactly (see also
+        :func:`build_growing_window_schedule`, which implements the
+        companion window-sizing piece of nutpie's warmup).
 
     Returns
     -------
@@ -465,7 +474,28 @@ def base(
         d = pytree_size(position)
         if gradient_based_init:
             grad_flat, _ = fu.ravel_pytree(grad)
-            sigma = jnp.power(jnp.clip(jnp.abs(grad_flat), 1e-20, 1e20), -0.5)
+            abs_grad = jnp.abs(grad_flat)
+            # Per-coordinate fallback to the identity (sigma_i=1.0) below a
+            # near-zero-gradient threshold, rather than propagating the
+            # 1e-20 clip floor into sigma_i=1e10. A real user-facing edge:
+            # x=0 initialisation on any centered/standardised target gives
+            # an EXACTLY zero gradient, and nuts-rs's own
+            # array_update_var_inv_std_grad has no formula-level defense for
+            # this either (clamp(0, 1e-20, 1e20).recip() = 1e20 is finite,
+            # so its `fill_invalid` branch -- reserved for non-finite results
+            # -- never fires); nutpie avoids this in practice purely by
+            # jittering the initial position elsewhere in its pipeline, not
+            # via this formula. sigma=1e10 at every dimension mistunes the
+            # metric so severely relative to initial_step_size that the
+            # first trajectory diverges immediately, freezing the chain for
+            # the whole first window and collapsing the subsequent estimate
+            # -- root-caused via the Fisher 2x2 calibration study's
+            # instrumented re-run (design doc "Calibration verdict" section).
+            # Threshold 1e-10 is a defensible, disclosed choice (no nuts-rs
+            # precedent to cite at this exact boundary).
+            near_zero_grad_threshold = 1e-10
+            safe_sigma = jnp.power(jnp.clip(abs_grad, 1e-20, 1e20), -0.5)
+            sigma = jnp.where(abs_grad < near_zero_grad_threshold, 1.0, safe_sigma)
         else:
             sigma = jnp.ones(d)
         mu_star = jnp.zeros(d)
