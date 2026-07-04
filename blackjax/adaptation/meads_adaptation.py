@@ -348,15 +348,17 @@ _LRD_EIGENVALUE_FLOOR = 1e-6
 def _floor_lrd_eigenvalues(lam: Array) -> Array:
     """Clamp low-rank eigenvalues away from 0.
 
-    A collinear or otherwise rank-deficient ensemble (e.g. tuningfork's
-    canonical rank-1 initial ensemble) can make the sample/accumulated
-    correlation matrix singular along one or more of the selected top-k
-    directions, giving ``lam ~ 0``. Both whitening transforms
-    (``_low_rank_precondition_grad`` / ``_low_rank_precondition_pos``)
-    multiply or divide by ``sqrt(lam)``, so an unfloored near-zero
-    eigenvalue can self-reinforce into a degenerate metric (``rhat = inf``)
-    before the ensemble has a chance to decorrelate. Flooring keeps the
-    whitening transform's scale factor bounded.
+    A collinear or otherwise rank-deficient ensemble (e.g. a rank-1
+    initial ensemble) can make the sample/accumulated correlation matrix
+    singular along one or more of the selected top-k directions, giving
+    ``lam ~ 0`` — and ``float32`` ``eigh`` can even return slightly
+    *negative* eigenvalues, whose ``sqrt`` is NaN. The whitening transform
+    (``_low_rank_precondition_pos``) and the momentum metric both scale by
+    ``sqrt(lam)``, so flooring keeps those factors finite. This guard is
+    intentionally redundant with the step-size decoupling (which keeps
+    ``sqrt(lam)`` out of the step-size heuristic entirely): the degenerate
+    collapse (``rhat = inf``, NaN step size) only occurs if *both* guards
+    are defeated.
     """
     return jnp.maximum(lam, _LRD_EIGENVALUE_FLOOR)
 
