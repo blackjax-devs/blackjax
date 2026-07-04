@@ -238,14 +238,25 @@ def _recompute_eig_state(
 
 
 def _apply_length_floor(
-    trajectory_length: Array, lambda_max: Array, engaged: Array, enable: bool
-) -> Array:
+    trajectory_length: Array,
+    lambda_max: Array,
+    engaged: Array,
+    enable: bool,
+    max_leapfrog_steps: int = 1000,
+    step_size: float = 0.1,
+) -> tuple[Array, Array]:
     """Floor ``trajectory_length`` at
     ``CHEES_LENGTH_FLOOR_FACTOR * sqrt(lambda_max)`` -- the slow-direction
     trajectory-length floor. Applied at CONSUMPTION only: a pure function of
     the already-adapted length and the current ``lambda_max`` estimate,
     never fed back into the ChEES optimizer's own state, so the floor is
-    cleanly ablatable.
+    cleanly ablatable. The consumed length respects the user's budget:
+    ``min(max(adapted, floor), max_leapfrog_steps · step_size)``.
+
+    Returns the consumed trajectory_length and a boolean diagnostic flag
+    ``floor_clipped_by_cap`` (True when the cap binds below the slow-direction
+    floor): if the cap constrains the floor below its floor value, raise
+    ``max_leapfrog_steps`` to restore the guarantee.
 
     ``enable`` (the private ``_length_floor`` seam) is a static Python bool:
     when False, ``trajectory_length`` is returned completely unchanged --
@@ -253,13 +264,24 @@ def _apply_length_floor(
     ``engaged`` (a traced boolean, the SAME support gate as the diagonal
     mass-matrix estimate) makes the floor a no-op before that gate -- pre-
     gate, ``lambda_max`` is not yet a meaningful estimate.
+
+    At the default ``max_leapfrog_steps=1000``, the cap is 1000·step_size, and
+    ``λ_max ≤ d`` for a correlation matrix means the floor can never bind
+    (belt-and-suspenders insurance; ``floor_clipped_by_cap`` will be False).
     """
     if not enable:
-        return trajectory_length
+        return trajectory_length, jnp.asarray(False)
+
     floor_value = jnp.where(
         engaged, CHEES_LENGTH_FLOOR_FACTOR * jnp.sqrt(lambda_max), 0.0
     )
-    return jnp.maximum(trajectory_length, floor_value)
+    cap = max_leapfrog_steps * step_size
+    floored_length = jnp.maximum(trajectory_length, floor_value)
+    consumed_length = jnp.minimum(floored_length, cap)
+    floor_clipped_by_cap = jnp.logical_and(
+        jnp.logical_and(engaged, enable), floor_value > cap
+    )
+    return consumed_length, floor_clipped_by_cap
 
 
 def weighted_empirical_mean(x, w):
@@ -314,9 +336,9 @@ def base(
         ``inverse_mass_matrix`` passed to ``update`` (see the derivation in
         ``compute_parameters``). When False, the criterion is computed exactly
         as the original identity-mass-matrix expression regardless of the
-        ``inverse_mass_matrix`` passed in -- used to validate that the
-        whitening correction (rather than the mass matrix alone) is what
-        fixes ChEES on scale-separated targets.
+        ``inverse_mass_matrix`` passed in -- used in validation studies to
+        isolate the whitening correction's contribution relative to the mass
+        matrix alone.
 
 
     Returns
@@ -688,11 +710,20 @@ def chees_adaptation(
         "Engagement gate" below). ChEES's own trajectory-length criterion is
         also whitened by this estimate so it stays metric-consistent with the
         kernel it is tuning (see the derivation in
-        :func:`base`'s ``compute_parameters``) -- this whitening, not just
-        the mass matrix estimation itself, is required for the feature to
-        help on scale-separated targets: without it, the raw (Euclidean)
-        ChEES criterion is dominated by the largest-variance dimensions
-        regardless of the metric the kernel actually samples with.
+        :func:`base`'s ``compute_parameters``) -- this whitening keeps the
+        criterion metric-consistent and responsive to the preconditioned geometry;
+        measured effect is small (≲12%) on NCP-standardized targets where most
+        dimensions are near unit scale. The feature's main value is delivered by
+        the slow-direction *length floor* (when enabled), which recovers large
+        ESS-per-gradient wins on targets with a residual slow correlation
+        direction the diagonal metric cannot remove.
+
+        **Scope: validated under located (typical-set) initializations.** On
+        funnel-like targets the diagonal metric can *reduce* per-draw ESS
+        relative to the identity metric's fine-step regime (an efficiency caveat,
+        not a bias—posterior means are unaffected); the length floor recovers most
+        of it. Cold or dispersed initialization on hard geometry is a separate
+        warmup-robustness limitation, out of scope for this feature.
 
         Engagement gate: before the pooled accumulator (effective sample
         size ``num_chains * window_steps``) exceeds ``max(64, 2*sqrt(num_dim))``
@@ -846,11 +877,13 @@ def chees_adaptation(
             # the ChEES optimizer's state.
             if enable_length_floor:
                 engaged = mm_accum.sample_size >= mm_engagement_threshold
-                consumed_trajectory_length = _apply_length_floor(
+                consumed_trajectory_length, _ = _apply_length_floor(
                     adaptation_state.trajectory_length,
                     eig_state.lambda_max,
                     engaged,
                     _length_floor,
+                    max_leapfrog_steps,
+                    adaptation_state.step_size,
                 )
             else:
                 consumed_trajectory_length = adaptation_state.trajectory_length
@@ -969,11 +1002,13 @@ def chees_adaptation(
                 last_adaptation_state.log_trajectory_length_moving_average
             )
             step_size_ma = jnp.exp(last_adaptation_state.log_step_size_moving_average)
-            consumed_trajectory_length_ma = _apply_length_floor(
+            consumed_trajectory_length_ma, floor_clipped_by_cap = _apply_length_floor(
                 trajectory_length_ma,
                 final_eig_state.lambda_max,
                 final_engaged,
                 _length_floor,
+                max_leapfrog_steps,
+                float(step_size_ma),
             )
             num_leapfrog_steps = consumed_trajectory_length_ma / step_size_ma
         else:
@@ -981,6 +1016,7 @@ def chees_adaptation(
                 last_adaptation_state.log_trajectory_length_moving_average
                 - last_adaptation_state.log_step_size_moving_average
             )
+            floor_clipped_by_cap = jnp.asarray(False)
 
         parameters = {
             "step_size": jnp.exp(last_adaptation_state.log_step_size_moving_average),
@@ -990,6 +1026,22 @@ def chees_adaptation(
             "integration_steps_params": (num_leapfrog_steps,),
         }
 
-        return AdaptationResults(last_states, parameters), info
+        # Attach floor_clipped_by_cap diagnostic to final info via a transparent
+        # wrapper that delegates to the original info but adds the diagnostic flag
+        # as an additional attribute. This ensures the flag is accessible without
+        # breaking the existing API.
+        class _AdaptationInfoWrapper:
+            """Transparent wrapper for adaptation info with floor diagnostic flag."""
+
+            def __init__(self, info_obj, floor_flag):
+                self._wrapped_info = info_obj
+                self.floor_clipped_by_cap = floor_flag
+
+            def __getattr__(self, name):
+                return getattr(self._wrapped_info, name)
+
+        enriched_info = _AdaptationInfoWrapper(info, floor_clipped_by_cap)
+
+        return AdaptationResults(last_states, parameters), enriched_info
 
     return AdaptationAlgorithm(run)  # type: ignore[arg-type]

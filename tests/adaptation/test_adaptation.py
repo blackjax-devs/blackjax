@@ -510,29 +510,59 @@ def test_length_floor_power_iteration_converges_from_warm_start():
 def test_apply_length_floor_arithmetic():
     """Direct unit test of the floor arithmetic (no sampling, mocked
     lambda_max): the consumed length is
-    max(adapted, CHEES_LENGTH_FLOOR_FACTOR * sqrt(lambda_max)) when engaged
-    and enabled; the private _length_floor=False seam (enable=False) leaves
-    the adapted length completely unchanged."""
+    min(max(adapted, CHEES_LENGTH_FLOOR_FACTOR * sqrt(lambda_max)), cap)
+    when engaged and enabled; the private _length_floor=False seam (enable=False)
+    leaves the adapted length completely unchanged. The floor_clipped_by_cap
+    flag indicates when the cap (max_leapfrog_steps * step_size) binds below
+    the floor value."""
     adapted_length = 3.0
     lambda_max = 100.0
     expected_floor = float(CHEES_LENGTH_FLOOR_FACTOR * jnp.sqrt(lambda_max))
     assert expected_floor > adapted_length  # the floor must actually bind here
 
-    consumed = _apply_length_floor(
-        adapted_length, lambda_max, engaged=True, enable=True
+    consumed, flag = _apply_length_floor(
+        adapted_length,
+        lambda_max,
+        engaged=True,
+        enable=True,
+        max_leapfrog_steps=1000,
+        step_size=0.1,
     )
     np.testing.assert_allclose(float(consumed), expected_floor)
+    assert float(flag) == 0.0  # cap does not bind with default large budget
 
     # The floor must not shrink an already-long adapted length.
-    consumed_large = _apply_length_floor(50.0, lambda_max, engaged=True, enable=True)
+    consumed_large, flag_large = _apply_length_floor(
+        50.0,
+        lambda_max,
+        engaged=True,
+        enable=True,
+        max_leapfrog_steps=1000,
+        step_size=0.1,
+    )
     assert float(consumed_large) == 50.0
+    assert float(flag_large) == 0.0
 
     # Ablation seam: enable=False (the private _length_floor=False path)
     # returns the adapted length unchanged, regardless of lambda_max/engaged.
-    consumed_disabled = _apply_length_floor(
+    consumed_disabled, flag_disabled = _apply_length_floor(
         adapted_length, lambda_max, engaged=True, enable=False
     )
     assert float(consumed_disabled) == adapted_length
+    assert float(flag_disabled) == 0.0
+
+    # Test that cap actually binds with a tiny budget (max_leapfrog_steps=8)
+    consumed_capped, flag_capped = _apply_length_floor(
+        adapted_length,
+        lambda_max,
+        engaged=True,
+        enable=True,
+        max_leapfrog_steps=8,
+        step_size=0.1,
+    )
+    cap = 8 * 0.1  # 0.8
+    np.testing.assert_allclose(float(consumed_capped), cap, rtol=1e-6)
+    assert float(flag_capped) == 1.0  # floor value exceeds cap
 
 
 def test_apply_length_floor_inert_pre_gate():
@@ -541,10 +571,16 @@ def test_apply_length_floor_inert_pre_gate():
     not yet a meaningful estimate (mirrors _diagonal_mass_matrix_or_fallback's
     engagement-gate semantics for the diagonal estimate itself)."""
     adapted_length = 3.0
-    consumed = _apply_length_floor(
-        adapted_length, lambda_max=1.0e6, engaged=False, enable=True
+    consumed, flag = _apply_length_floor(
+        adapted_length,
+        lambda_max=1.0e6,
+        engaged=False,
+        enable=True,
+        max_leapfrog_steps=1000,
+        step_size=0.1,
     )
     assert float(consumed) == adapted_length
+    assert float(flag) == 0.0  # no clipping when not engaged
 
 
 def test_chees_length_floor_e2e_smoke_recovers_slow_direction():
@@ -634,3 +670,89 @@ def test_halton_sequence_raise_value():
 
     with pytest.raises(ValueError, match="max_bits"):
         halton_sequence(jnp.array([0], dtype=jnp.int32), max_bits=32)
+
+
+def test_whitened_criterion_correctness():
+    """TEST-W (kills M1+M5): For any diagonal Sigma, the whitened update on
+    (props, inits, moms) must equal the trusted RAW update fed PRE-TRANSFORMED
+    inputs:
+        raw_update(Sigma^-1/2 . props, Sigma^-1/2 . inits, Sigma^+1/2 . moms, ones)
+        == whitened_update(props, inits, moms, Sigma)
+    Whitening is linear and commutes with centering, so the raw path on the
+    pre-transformed inputs reproduces exactly norm_Sigma^-1(Dx) and the raw
+    pairing <Dx, p>. A flipped whitening direction (M1) or a dropped velocity
+    re-whitening (M5) breaks this by factors of Sigma (orders of magnitude at
+    large spread).
+    """
+    num_chains, dim = 12, 4
+    # Sigma with 4 orders of magnitude (whitening far from a no-op), but
+    # gradient stays unclipped under SGD lr=1e-3.
+    imm = jnp.array([1e-2, 1e-1, 1e1, 1e2])
+    keys = jax.random.split(jax.random.key(0), 4)
+    props = jax.random.normal(keys[0], (num_chains, dim))
+    moms = jax.random.normal(keys[1], (num_chains, dim))
+    inits = jax.random.normal(keys[2], (num_chains, dim))
+    accept = jax.random.uniform(keys[3], (num_chains,))
+
+    def run_update(whiten, props_in, moms_in, inits_in, imm_in):
+        # SGD with small lr=1e-3 keeps log-trajectory-length update in LINEAR
+        # (unclipped, non-sign-saturated) regime, so trajectory_length tracks
+        # the trajectory_gradient VALUE -- adam's sign-only first step + the
+        # ±0.35 clip otherwise mask gradient-magnitude changes.
+        init, update = chees_base(
+            jitter_generator=lambda i: 0.5,
+            next_random_arg_fn=lambda i: i + 1,
+            optim=optax.sgd(learning_rate=1e-3),
+            target_acceptance_rate=0.651,
+            decay_rate=0.5,
+            max_leapfrog_steps=1000,
+            _whiten_criterion=whiten,
+        )
+        state0 = init(0, 0.1)
+        is_div = jnp.zeros((props_in.shape[0],), dtype=bool)
+        return update(state0, props_in, moms_in, inits_in, accept, is_div, imm_in)
+
+    # Whitened path on (props, inits, moms) with the real Sigma
+    state_whitened = run_update(True, props, moms, inits, imm)
+
+    # Trusted RAW path on PRE-TRANSFORMED inputs with Sigma=ones:
+    #   raw_update(S^-1/2 props, S^+1/2 moms, S^-1/2 inits, ones)
+    # reproduces exactly norm_{S^-1}(Dx) and the raw pairing <Dx, p>, so it
+    # equals the CORRECT whitened update.
+    inv_sqrt = 1.0 / jnp.sqrt(imm)
+    sqrt = jnp.sqrt(imm)
+    state_reference = run_update(
+        False, props * inv_sqrt, moms * sqrt, inits * inv_sqrt, jnp.ones(dim)
+    )
+
+    # Observe the PRE-CLIP log-trajectory-length MA (the trajectory_length
+    # field itself min-clips to step_size, masking the gradient). At step 1
+    # this equals log(0.1) + clip(-lr*grad, ±0.35); with lr=1e-3 it is
+    # unclipped and tracks the gradient linearly.
+    tl_whitened = float(state_whitened.log_trajectory_length_moving_average)
+    tl_reference = float(state_reference.log_trajectory_length_moving_average)
+
+    # Both must be unclipped and close (rtol=1e-6 for kill margin 9-15%).
+    np.testing.assert_allclose(tl_whitened, tl_reference, rtol=1e-6)
+
+
+def test_floor_constant_value():
+    """TEST-F (kills M3): _apply_length_floor(0, lambda_max=4, engaged, enable)
+    must equal the HARDCODED (pi/2)*sqrt(4) = pi, NOT via the
+    CHEES_LENGTH_FLOOR_FACTOR symbol. The symbolic form is exactly what let
+    the mutant (e.g., pi/4 instead of pi/2) survive mutation testing.
+    """
+    # Engaged floor with lambda_max=4 -> (pi/2)*2 = pi, hardcoded expectation
+    consumed_length, _ = _apply_length_floor(
+        0.0,
+        jnp.asarray(4.0),
+        jnp.asarray(True),
+        True,
+        max_leapfrog_steps=1000,
+        step_size=0.1,
+    )
+    val = float(consumed_length)
+    expected = float(
+        np.pi
+    )  # (pi/2)*sqrt(4), NOT via the CHEES_LENGTH_FLOOR_FACTOR symbol
+    np.testing.assert_allclose(val, expected, rtol=1e-6)
