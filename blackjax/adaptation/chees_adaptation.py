@@ -11,6 +11,7 @@ import optax
 import blackjax.mcmc.dynamic_hmc as dynamic_hmc
 import blackjax.optimizers.dual_averaging as dual_averaging
 from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
+from blackjax.adaptation.mass_matrix import welford_algorithm
 from blackjax.base import AdaptationAlgorithm
 from blackjax.types import Array, ArrayLikeTree, PRNGKey
 from blackjax.util import pytree_size
@@ -56,6 +57,38 @@ class ChEESAdaptationState(NamedTuple):
     step: int
 
 
+def _mass_matrix_engagement_threshold(num_dim: int) -> int:
+    """Minimum pooled Welford sample count before ``mass_matrix_estimation``'s
+    diagonal estimate engages (see ``chees_adaptation``'s docstring).
+
+    A per-dimension variance estimate, unlike a joint eigenbasis (the
+    ``meads_adaptation`` low-rank case, gated at ``2 * d``), does not need
+    ``O(d)`` samples to escape noise domination -- each dimension is
+    estimated independently. A small constant floor (64) is enough on its
+    own for typical dimensions; the mild ``2 * sqrt(d)`` term only matters
+    for very high-dimensional targets, where it grows the floor slightly.
+    """
+    return max(64, int(2 * np.sqrt(num_dim)))
+
+
+def _diagonal_mass_matrix_or_fallback(mm_accum, threshold: int, num_dim: int) -> Array:
+    """Return the Welford-estimated diagonal ``inverse_mass_matrix`` once
+    ``mm_accum.sample_size`` reaches ``threshold``, otherwise fall back to
+    ``jnp.ones(num_dim)`` -- the pre-estimation / ``mass_matrix_estimation=
+    None`` behavior. Mirrors ``meads_adaptation``'s
+    ``_lrd_diagonal_fallback``/engagement-gate pattern, specialized to the
+    single diagonal (no low-rank) case.
+    """
+    _, _, wc_final = welford_algorithm(is_diagonal_matrix=True)
+    enough = mm_accum.sample_size >= threshold
+    return jax.lax.cond(
+        enough,
+        lambda acc: jnp.maximum(wc_final(acc)[0], EPS_FLOAT),
+        lambda acc: jnp.ones(num_dim),
+        mm_accum,
+    )
+
+
 def weighted_empirical_mean(x, w):
     # x: (num_chains, dim), w: (num_chains,)
     x_safe = jnp.where(jnp.isfinite(x), x, 0.0)
@@ -74,6 +107,7 @@ def base(
     target_acceptance_rate: float,
     decay_rate: float,
     max_leapfrog_steps: int,
+    _whiten_criterion: bool = True,
 ) -> tuple[Callable, Callable]:
     """Maximizing the Change in the Estimator of the Expected Square criterion
     (trajectory length) and dual averaging procedure (step size) for the jittered
@@ -101,6 +135,15 @@ def base(
     decay_rate
         Float representing how much to favor recent iterations over earlier ones in the optimization
         of step size and trajectory length.
+    _whiten_criterion
+        Private, undocumented ablation seam (not part of the public API). When
+        True (default) the ChEES criterion accounts for a non-identity
+        ``inverse_mass_matrix`` passed to ``update`` (see the derivation in
+        ``compute_parameters``). When False, the criterion is computed exactly
+        as the original identity-mass-matrix expression regardless of the
+        ``inverse_mass_matrix`` passed in -- used to validate that the
+        whitening correction (rather than the mass matrix alone) is what
+        fixes ChEES on scale-separated targets.
 
 
     Returns
@@ -121,6 +164,7 @@ def base(
         acceptance_probabilities: Array,
         is_divergent: Array,
         initial_adaptation_state: ChEESAdaptationState,
+        inverse_mass_matrix: Array,
     ) -> ChEESAdaptationState:
         """Compute values for the parameters based on statistics collected from
         multiple chains.
@@ -140,6 +184,13 @@ def base(
             Metropolis-Hastings acceptance probabilty of proposals of every chain.
         initial_adaptation_state:
             ChEES adaptation step used to generate proposals and acceptance probabilities.
+        inverse_mass_matrix:
+            The diagonal ``inverse_mass_matrix`` (Σ) the kernel used to generate this
+            step's proposals -- ``jnp.ones(num_dim)`` unless
+            ``chees_adaptation``'s ``mass_matrix_estimation="diagonal"`` has engaged.
+            Used to whiten the ChEES criterion so it stays metric-consistent with
+            the kernel (see the derivation below). Has no effect when equal to
+            ``jnp.ones(num_dim)``, since the whitening reduces to a no-op there.
 
         Returns
         -------
@@ -198,12 +249,73 @@ def base(
         initials_matrix = vmap_flatten_op(initials_centered)
         momentums_matrix = vmap_flatten_op(proposed_momentums)
 
+        # --- Metric-aware (whitened) ChEES criterion ------------------------
+        # ChEES's trajectory-length gradient is a pathwise-derivative estimator
+        # of d/dL E[||x' - E[x']||^2], built from the product
+        #     (||Δx'||^2 - ||Δx||^2) * <Δx', dx'/dL>
+        # where dx'/dL is proportional to the trajectory's *velocity* at the
+        # endpoint. Under Hamiltonian dynamics with mass matrix M = Σ^-1,
+        # velocity v = M^-1 p = Σp -- this is blackjax's own convention, e.g.
+        # metrics.py's `linear_map(inverse_mass_matrix, momentum)` kinetic-
+        # energy term and the NUTS U-turn check. The pre-existing code below
+        # implicitly assumes M = I (so v == p): that's exactly what TFP's own
+        # implementation comment flags at this spot ("implicitly assumes an
+        # identity mass matrix") -- there is no reference implementation for
+        # the general-M case to copy, hence the derivation here.
+        #
+        # For a general diagonal M, the *norm* term must be measured in the
+        # geometry M induces -- the whitened space x̃ = Σ^{-1/2}x in which the
+        # preconditioned sampler behaves isotropically -- otherwise a handful
+        # of large-variance dimensions dominate ||Δx||^2 and swamp the
+        # trajectory-length signal coming from the well-scaled ones. That is
+        # edit 1: proposals/initials get whitened by Σ^{-1/2} before the dot
+        # products that build the norm difference.
+        #
+        # The <Δx', v'> term needs the SAME whitening transform applied to
+        # velocity: velocity is a tangent vector living in position-space (not
+        # momentum's dual/cotangent space), so under x̃ = Σ^{-1/2}x it
+        # transforms the same way position differences do, i.e.
+        # ṽ = Σ^{-1/2}v -- NOT the contragredient transform momentum itself
+        # would get. That is edit 2, and skipping it is the "silent-bug trap":
+        # reusing the edit-1-whitened Δx' in `jnp.dot(pm, mm)` without also
+        # whitening the velocity leaves a spurious Σ^{-1/2} factor on the
+        # momentum term. Composing both edits explicitly:
+        #     v'  = Σ  p'                (velocity, metrics.py convention)
+        #     ṽ' = Σ^{-1/2} v' = Σ^{1/2} p'   (velocity whitened like position)
+        #     <x̃', ṽ'> = Σ_i (Δx'_i / √Σ_i) · (√Σ_i · p'_i) = Σ_i Δx'_i p'_i
+        #              = <Δx', p'>   (the RAW expression, for *any* diagonal Σ)
+        # This exact cancellation is not a coincidence: Δx' and p' are
+        # canonically conjugate (position, momentum), so their pairing is
+        # metric-invariant -- unlike ||Δx||^2 alone. The code below still
+        # computes both quantities via the explicit whitening transforms
+        # (rather than hand-simplifying to the raw dot product) so that (a)
+        # this derivation is directly checkable against the code and (b) with
+        # Σ = ones every multiply/divide is an IEEE-754 no-op, so the whitened
+        # path is bit-for-bit identical to the original expression -- see
+        # ``test_whitened_criterion_reduces_to_raw_when_identity``.
+        #
+        # `_whiten_criterion=False` (private ablation seam, see `base`'s
+        # docstring) skips both edits and always uses the raw, pre-existing
+        # expression regardless of `inverse_mass_matrix` -- this is the
+        # "naive" arm (kernel uses the estimated diagonal metric, but the
+        # criterion does not) the validation study compares against.
+        if _whiten_criterion:
+            inv_sqrt_imm = 1.0 / jnp.sqrt(inverse_mass_matrix)
+            proposals_matrix_w = proposals_matrix * inv_sqrt_imm
+            initials_matrix_w = initials_matrix * inv_sqrt_imm
+            velocity_matrix = momentums_matrix * inverse_mass_matrix  # v' = Σp'
+            velocity_matrix_w = velocity_matrix * inv_sqrt_imm  # ṽ' = Σ^{-1/2}v'
+        else:
+            proposals_matrix_w = proposals_matrix
+            initials_matrix_w = initials_matrix
+            velocity_matrix_w = momentums_matrix
+
         trajectory_gradients = (
             jitter_generator(random_generator_arg)
             * trajectory_length  # this effectively make this gradient w.r.t. log_trajectory_length
             * jax.vmap(
                 lambda pm, im, mm: (jnp.dot(pm, pm) - jnp.dot(im, im)) * jnp.dot(pm, mm)
-            )(proposals_matrix, initials_matrix, momentums_matrix)
+            )(proposals_matrix_w, initials_matrix_w, velocity_matrix_w)
         )
 
         trajectory_gradient = jnp.sum(
@@ -270,6 +382,7 @@ def base(
         initial_positions: ArrayLikeTree,
         acceptance_probabilities: Array,
         is_divergent: Array,
+        inverse_mass_matrix: Array,
     ):
         """Update the adaptation state and parameter values.
 
@@ -285,6 +398,10 @@ def base(
             The initial position at the start of the HMC algorithm of every chain.
         acceptance_probabilities:
             Metropolis-Hastings acceptance probabilty of proposals of every chain.
+        inverse_mass_matrix:
+            The diagonal ``inverse_mass_matrix`` the kernel used to generate this
+            step's proposals; see ``compute_parameters`` for how it whitens the
+            ChEES criterion.
 
         Returns
         -------
@@ -299,6 +416,7 @@ def base(
             acceptance_probabilities,
             is_divergent,
             adaptation_state,
+            inverse_mass_matrix,
         )
 
         return new_state
@@ -316,6 +434,9 @@ def chees_adaptation(
     decay_rate: float = 0.5,
     max_leapfrog_steps: int = 1000,
     adaptation_info_fn: Callable = return_all_adapt_info,
+    mass_matrix_estimation: str | None = None,
+    mass_matrix_window_fraction: float = 0.5,
+    _whiten_criterion: bool = True,
 ) -> AdaptationAlgorithm:
     """Adapt the step size and trajectory length (number of integration steps / step size)
     parameters of the jittered HMC algorthm.
@@ -380,6 +501,44 @@ def chees_adaptation(
         and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
         information is saved - this can result in excessive memory usage if the
         information is unused.
+    mass_matrix_estimation
+        Opt-in ensemble-estimated *diagonal* ``inverse_mass_matrix`` (opt-in,
+        default ``None``). ``None`` keeps the original behavior, bit-for-bit:
+        the kernel always uses ``inverse_mass_matrix=jnp.ones(num_dim)``.
+        ``"diagonal"`` instead estimates a per-dimension variance from the
+        ensemble of all ``num_chains`` chains via a running Welford
+        accumulator (:func:`~blackjax.adaptation.mass_matrix.welford_algorithm`),
+        accumulated over the *last* ``mass_matrix_window_fraction`` of warmup
+        (see that parameter), and uses it as the kernel's diagonal
+        ``inverse_mass_matrix`` once enough samples have accumulated (see
+        "Engagement gate" below). ChEES's own trajectory-length criterion is
+        also whitened by this estimate so it stays metric-consistent with the
+        kernel it is tuning (see the derivation in
+        :func:`base`'s ``compute_parameters``) -- this whitening, not just
+        the mass matrix estimation itself, is required for the feature to
+        help on scale-separated targets: without it, the raw (Euclidean)
+        ChEES criterion is dominated by the largest-variance dimensions
+        regardless of the metric the kernel actually samples with.
+
+        Engagement gate: before the pooled accumulator (effective sample
+        size ``num_chains * window_steps``) exceeds ``max(64, 2*sqrt(num_dim))``
+        -- a modest floor chosen because a per-dimension variance estimate,
+        unlike a joint eigenbasis, does not need ``O(d)`` samples to escape
+        noise domination, so a small constant plus a mild ``d``-scaling for
+        very high-dimensional targets is enough -- the kernel and criterion
+        both use ``jnp.ones(num_dim)`` (identical to ``None``). The final
+        ``inverse_mass_matrix`` returned by ``run()`` is the engaged-or-
+        fallback estimate at the end of the accumulation window.
+    mass_matrix_window_fraction
+        Only used when ``mass_matrix_estimation="diagonal"``. Fraction of
+        warmup steps, counted from the end, over which the diagonal
+        ``inverse_mass_matrix``'s Welford accumulator collects samples
+        (default ``0.5``: the last half of warmup, mirroring
+        ``meads_adaptation``'s ``low_rank_window_fraction`` and Stan's
+        practice of excluding window adaptation's own early/transient
+        fraction). Must be in ``[0.0, 1.0]``; ``0.0`` accumulates from step
+        0, ``1.0`` disables accumulation entirely (falls back to
+        ``jnp.ones(num_dim)`` throughout the run).
 
     Returns
     -------
@@ -387,6 +546,17 @@ def chees_adaptation(
     tuned parameter values, and all the warm-up states for diagnostics.
 
     """
+    if mass_matrix_estimation not in (None, "diagonal"):
+        raise ValueError(
+            "mass_matrix_estimation must be None or 'diagonal', got "
+            f"{mass_matrix_estimation!r}."
+        )
+    if not 0.0 <= mass_matrix_window_fraction <= 1.0:
+        raise ValueError(
+            "mass_matrix_window_fraction must be in [0.0, 1.0], got "
+            f"{mass_matrix_window_fraction}."
+        )
+    estimate_mass_matrix = mass_matrix_estimation == "diagonal"
 
     def run(
         rng_key: PRNGKey,
@@ -436,17 +606,53 @@ def chees_adaptation(
             target_acceptance_rate,
             decay_rate,
             max_leapfrog_steps,
+            _whiten_criterion,
         )
 
-        def one_step(carry, rng_key):
-            states, adaptation_state = carry
+        # Opt-in ensemble-estimated diagonal inverse_mass_matrix (Σ). Mirrors
+        # meads_adaptation's low_rank_rank / low_rank_window_fraction pattern:
+        # a Welford accumulator (reused verbatim from mass_matrix.py, not
+        # reinvented) pools every chain's position at every step inside the
+        # last `mass_matrix_window_fraction` of warmup, and the estimate only
+        # engages once enough samples have accumulated (see the docstring
+        # above for the gate + rationale). Before engagement, and always when
+        # mass_matrix_estimation is None, the kernel and criterion both use
+        # jnp.ones(num_dim) -- exactly the pre-existing behavior.
+        if estimate_mass_matrix:
+            wc_init, wc_update, _ = welford_algorithm(is_diagonal_matrix=True)
+            window_start = int(mass_matrix_window_fraction * num_steps)
+            mm_engagement_threshold = _mass_matrix_engagement_threshold(num_dim)
+        else:
+            window_start = num_steps
+        in_window_flags = jnp.arange(num_steps) >= window_start
+
+        def _fold_welford_batch(wc_state, batch):
+            """Fold a batch of ``num_chains`` samples into ``wc_state`` one
+            row at a time -- ``welford_algorithm``'s ``update`` is single-
+            sample, so the whole ensemble is pooled via a sequential scan
+            rather than reinventing a batched Chan-style merge."""
+            new_state, _ = jax.lax.scan(
+                lambda carry, x: (wc_update(carry, x), None), wc_state, batch
+            )
+            return new_state
+
+        def one_step(carry, xs):
+            rng_key, in_window = xs
+            states, adaptation_state, mm_accum = carry
+
+            if estimate_mass_matrix:
+                current_imm = _diagonal_mass_matrix_or_fallback(
+                    mm_accum, mm_engagement_threshold, num_dim
+                )
+            else:
+                current_imm = jnp.ones(num_dim)
 
             keys = jax.random.split(rng_key, num_chains)
             _step_fn = partial(
                 step_fn,
                 logdensity_fn=logdensity_fn,
                 step_size=adaptation_state.step_size,
-                inverse_mass_matrix=jnp.ones(num_dim),
+                inverse_mass_matrix=current_imm,
                 integration_steps_params=(
                     adaptation_state.trajectory_length / adaptation_state.step_size,
                 ),
@@ -459,9 +665,23 @@ def chees_adaptation(
                 states.position,
                 info.acceptance_rate,
                 info.is_divergent,
+                current_imm,
             )
 
-            return (new_states, new_adaptation_state), adaptation_info_fn(
+            if estimate_mass_matrix:
+                flat_positions = jax.vmap(
+                    lambda p: jax.flatten_util.ravel_pytree(p)[0]
+                )(new_states.position)
+                new_mm_accum = jax.lax.cond(
+                    in_window,
+                    lambda acc: _fold_welford_batch(acc, flat_positions),
+                    lambda acc: acc,
+                    mm_accum,
+                )
+            else:
+                new_mm_accum = mm_accum
+
+            return (new_states, new_adaptation_state, new_mm_accum), adaptation_info_fn(
                 new_states, info, new_adaptation_state
             )
 
@@ -470,19 +690,29 @@ def chees_adaptation(
         )
         init_states = batch_init(positions)
         init_adaptation_state = init(init_random_arg, step_size)
+        init_mm_accum = wc_init(num_dim) if estimate_mass_matrix else None
 
         keys_step = jax.random.split(rng_key, num_steps)
-        (last_states, last_adaptation_state), info = jax.lax.scan(
-            one_step, (init_states, init_adaptation_state), keys_step
+        (last_states, last_adaptation_state, last_mm_accum), info = jax.lax.scan(
+            one_step,
+            (init_states, init_adaptation_state, init_mm_accum),
+            (keys_step, in_window_flags),
         )
 
         num_leapfrog_steps = jnp.exp(
             last_adaptation_state.log_trajectory_length_moving_average
             - last_adaptation_state.log_step_size_moving_average
         )
+        final_inverse_mass_matrix = (
+            _diagonal_mass_matrix_or_fallback(
+                last_mm_accum, mm_engagement_threshold, num_dim
+            )
+            if estimate_mass_matrix
+            else jnp.ones(num_dim)
+        )
         parameters = {
             "step_size": jnp.exp(last_adaptation_state.log_step_size_moving_average),
-            "inverse_mass_matrix": jnp.ones(num_dim),
+            "inverse_mass_matrix": final_inverse_mass_matrix,
             "next_random_arg_fn": next_random_arg_fn,
             "integration_steps_fn": integration_steps_fn,
             "integration_steps_params": (num_leapfrog_steps,),
