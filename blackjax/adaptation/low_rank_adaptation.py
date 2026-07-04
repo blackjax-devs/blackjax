@@ -54,6 +54,19 @@ Key algorithmic choices that match nutpie:
 The warmup schedule mirrors Stan's window adaptation: an initial fast phase,
 a series of doubling slow windows (metric + step-size), and a final fast
 phase.
+
+**Buffer policy and recompute cadence** (opt-in, default unchanged). The
+schedule above hard-resets the draw/gradient buffer to empty at every window
+switch and only recomputes the metric at a window's end. nutpie instead keeps
+an *accumulating*, partial-forget buffer: at a switch it pops only the draws
+that were already "background" (i.e. from the window before last), so the
+buffer retains the just-completed window's draws in addition to whatever
+accumulates in the next one -- and it recomputes the metric up to every draw
+(``mass_matrix_update_freq=1`` in ``nuts-rs``), not just at window ends
+(``nuts-rs`` ``src/transform/adapt/low_rank.rs::switch`` /
+``src/adapt_strategy.rs``). Passing ``buffer_policy="accumulating"`` to
+:func:`base` / :func:`window_adaptation_low_rank` enables this; the default
+``"reset"`` reproduces the original hard-reset behaviour exactly.
 """
 import inspect
 from typing import Callable, NamedTuple
@@ -61,6 +74,7 @@ from typing import Callable, NamedTuple
 import jax
 import jax.flatten_util as fu
 import jax.numpy as jnp
+import numpy as np
 
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
@@ -105,8 +119,22 @@ class LowRankAdaptationState(NamedTuple):
         Circular buffer storing the corresponding log-density gradients,
         shape ``(buffer_size, d)``.
     buffer_idx
-        Number of samples written to the current buffer (resets at each slow
-        window boundary).
+        Number of currently-valid samples in the buffer (the first
+        ``buffer_idx`` rows). Under ``buffer_policy="reset"`` this resets to
+        0 at each slow window boundary; under ``"accumulating"`` it only
+        shrinks by ``background_split`` at a switch (nutpie's partial-forget
+        pop), so it persists across window boundaries.
+    background_split
+        Number of the buffer's leading (oldest) rows considered "background"
+        -- to be dropped at the *next* switch, matching nuts-rs's
+        ``LowRankMassMatrixStrategy::background_split`` (``switch()`` pops
+        this many draws from the front, then resets it to the post-pop
+        buffer length). Always ``0`` and inert under ``buffer_policy="reset"``.
+    recompute_counter
+        Number of slow-stage steps since the metric was last recomputed;
+        gates the ``recompute_every`` cadence under ``buffer_policy=
+        "accumulating"``. Always inert under ``buffer_policy="reset"``
+        (recompute there is tied solely to ``is_window_end``).
     """
 
     ss_state: DualAveragingAdaptationState
@@ -118,6 +146,8 @@ class LowRankAdaptationState(NamedTuple):
     draws_buffer: Array
     grads_buffer: Array
     buffer_idx: int
+    background_split: int
+    recompute_counter: int
 
 
 # ---------------------------------------------------------------------------
@@ -185,6 +215,49 @@ def _spd_mean(A: Array, B: Array) -> Array:
     # = (V_b diag(sqrt_b) V_m) diag(sqrt_m) (V_b diag(sqrt_b) V_m)^T
     W = vecs_b @ (sqrt_b[:, None] * vecs_m)  # (k, k)
     return (W * sqrt_m[None, :]) @ W.T
+
+
+def _shift_buffer_left(buf: Array, shift: Array) -> Array:
+    """Drop the first ``shift`` rows of ``buf``, shifting the remainder to
+    the front and zero-filling the newly-vacated tail.
+
+    Implements nutpie's partial-forget buffer pop under JAX's static-shape
+    constraint (``nuts-rs`` ``src/transform/adapt/low_rank.rs::switch``:
+    ``for _ in 0..background_split { draws.pop_front() }``): pad the buffer
+    with its own capacity in zeros, then take a single dynamic-length-free
+    ``dynamic_slice`` starting at ``shift`` (a traced integer is fine here,
+    only the slice *size* -- the static ``capacity`` -- needs to be a
+    concrete Python int).
+    """
+    capacity = buf.shape[0]
+    shift = jnp.clip(shift, 0, capacity)
+    padded = jnp.concatenate([buf, jnp.zeros_like(buf)], axis=0)
+    return jax.lax.dynamic_slice_in_dim(padded, shift, capacity, axis=0)
+
+
+def _accumulating_buffer_capacity(schedule: Array) -> int:
+    """Static buffer capacity required by ``buffer_policy="accumulating"``,
+    derived from a concrete ``(stage, is_window_end)`` schedule array.
+
+    Under the partial-forget switch, the buffer holds at most the
+    just-completed window's draws (kept as the new background) plus however
+    many draws have accumulated in the in-progress next window at *its* own
+    switch (up to that window's own size) -- so the tight worst case across
+    the whole schedule is ``max(window[i] + window[i-1])`` over consecutive
+    window-size pairs. Computed once, outside any trace (the schedule is a
+    concrete array by construction -- ``num_steps`` must already be a static
+    Python int for ``jax.random.split``/the scan length elsewhere in
+    :func:`window_adaptation_low_rank`'s ``run``), so ordinary numpy suffices.
+    """
+    is_end = np.asarray(schedule[:, 1]).astype(bool)
+    window_end_idx = np.flatnonzero(is_end)
+    if window_end_idx.size == 0:
+        return 1
+    window_sizes = np.diff(np.concatenate([[-1], window_end_idx]))
+    if window_sizes.size == 1:
+        return int(window_sizes[0])
+    pair_sums = window_sizes[1:] + window_sizes[:-1]
+    return int(max(window_sizes[0], pair_sums.max()))
 
 
 def _compute_low_rank_metric(
@@ -497,6 +570,8 @@ def base(
     gamma: float = 1e-5,
     cutoff: float = 2.0,
     gradient_based_init: bool = False,
+    buffer_policy: str = "reset",
+    recompute_every: int = 1,
 ) -> tuple[Callable, Callable, Callable]:
     """Warmup scheme using the low-rank mass matrix adaptation.
 
@@ -542,12 +617,45 @@ def base(
         original identity/zero initialisation exactly (see also
         :func:`build_growing_window_schedule`, which implements the
         companion window-sizing piece of nutpie's warmup).
+    buffer_policy
+        ``"reset"`` (default) hard-resets the draw/gradient buffer to empty
+        at every window switch, matching the original Stan-schedule
+        behaviour exactly -- zero default-behavior change.
+        ``"accumulating"`` instead ports nutpie's partial-forget buffer
+        (``nuts-rs`` ``src/transform/adapt/low_rank.rs::switch``): at a
+        window switch, only the draws that were already "background" (the
+        window before last) are dropped, so the buffer keeps the
+        just-completed window's draws in addition to the next window's, and
+        the metric is recomputed both at every switch (unconditionally,
+        nutpie's ``force_update``) and periodically in between per
+        ``recompute_every`` (nutpie's ``mass_matrix_update_freq``). Composes
+        with any ``schedule_fn`` -- the buffer policy only changes what
+        happens *at* a window boundary the schedule already defines, not
+        when those boundaries occur.
+    recompute_every
+        Only used when ``buffer_policy="accumulating"``. Number of
+        slow-stage steps between metric recomputes *between* window
+        switches (switches themselves always force a recompute,
+        independent of this cadence). Default ``1`` recomputes on every
+        slow-stage step, matching nutpie's default
+        ``mass_matrix_update_freq=1`` (the fully faithful port). Raising
+        this trades fidelity for compute: an SVD-based recompute every
+        single step can be costly in JAX for large ``d``/buffer size; see
+        the PR description for measured timings before deviating from the
+        default. Ignored under ``buffer_policy="reset"`` (recompute there is
+        tied solely to ``is_window_end``, as before).
 
     Returns
     -------
     ``(init, update, final)``
         The three adaptation primitives expected by the window-adaptation loop.
     """
+    if buffer_policy not in ("reset", "accumulating"):
+        raise ValueError(
+            f"buffer_policy must be 'reset' or 'accumulating', got {buffer_policy!r}"
+        )
+    if recompute_every < 1:
+        raise ValueError(f"recompute_every must be >= 1, got {recompute_every!r}")
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
     def init(
@@ -599,6 +707,8 @@ def base(
             draws_buffer,
             grads_buffer,
             0,
+            0,
+            0,
         )
 
     def fast_update(
@@ -620,6 +730,8 @@ def base(
             state.draws_buffer,
             state.grads_buffer,
             state.buffer_idx,
+            state.background_split,
+            state.recompute_counter,
         )
 
     def slow_update(
@@ -650,10 +762,16 @@ def base(
             new_draws,
             new_grads,
             state.buffer_idx + 1,
+            state.background_split,
+            state.recompute_counter + 1,
         )
 
     def slow_final(state: LowRankAdaptationState) -> LowRankAdaptationState:
-        """End of slow window: recompute metric and reset buffer."""
+        """End of slow window under ``buffer_policy="reset"``: recompute
+        metric and hard-reset the buffer to empty. Unchanged from the
+        original (pre-``buffer_policy``) behaviour -- ``background_split``/
+        ``recompute_counter`` are inert under this policy, zeroed here to
+        match the buffer's own reset for cleanliness."""
         sigma, mu_star, U, lam = _compute_low_rank_metric(
             state.draws_buffer,
             state.grads_buffer,
@@ -675,6 +793,88 @@ def base(
             jnp.zeros((B, d)),
             jnp.zeros((B, d)),
             0,
+            0,
+            0,
+        )
+
+    def slow_switch(state: LowRankAdaptationState) -> LowRankAdaptationState:
+        """End of slow window under ``buffer_policy="accumulating"``: nutpie's
+        partial-forget ``switch()`` -- drop only the ``background_split``
+        oldest rows (shift the rest to the front), then the *entire*
+        surviving buffer (the just-completed window) becomes the new
+        background, matching ``nuts-rs``'s
+        ``self.background_split = self.draws.len()`` (set *after* the pop).
+        The recompute is unconditional here (nutpie's ``force_update=true``
+        on every switch), guarded only by the same ``n>=3`` minimum ``adapt()``
+        floor nuts-rs itself uses (``current_count() < 3 => return false``)
+        to avoid fitting a metric from a near-empty buffer."""
+        shift = state.background_split
+        new_draws = _shift_buffer_left(state.draws_buffer, shift)
+        new_grads = _shift_buffer_left(state.grads_buffer, shift)
+        new_n_valid = state.buffer_idx - shift
+
+        def _recompute():
+            return _compute_low_rank_metric(
+                new_draws, new_grads, new_n_valid, max_rank, gamma, cutoff
+            )
+
+        def _keep():
+            return state.sigma, state.mu_star, state.U, state.lam
+
+        sigma, mu_star, U, lam = jax.lax.cond(new_n_valid >= 3, _recompute, _keep)
+        # Re-initialise dual averaging at the current averaged step size --
+        # unchanged Stan-schedule convention, orthogonal to the buffer
+        # question (nuts-rs restarts step size only once, on the *first*
+        # successful mass-matrix change; porting that is out of this task's
+        # scope, see the module docstring / PR description).
+        new_ss = da_init(da_final(state.ss_state))
+        return LowRankAdaptationState(
+            new_ss,
+            sigma,
+            mu_star,
+            U,
+            lam,
+            jnp.exp(new_ss.log_step_size),
+            new_draws,
+            new_grads,
+            new_n_valid,
+            new_n_valid,
+            0,
+        )
+
+    def slow_recompute_only(state: LowRankAdaptationState) -> LowRankAdaptationState:
+        """Continuous (mid-window) metric recompute under
+        ``buffer_policy="accumulating"``: reuses whatever is currently in
+        the buffer (the retained previous window plus the partial current
+        window), matching nuts-rs's ``adapt()`` firing on (up to) every draw
+        independent of the window-end ``switch()`` event
+        (``mass_matrix_update_freq=1``, gated here by ``recompute_every``).
+        Buffer contents, ``background_split``, and the step-size
+        dual-averaging state are left untouched -- only the mass-matrix
+        factors change."""
+        n = state.buffer_idx
+
+        def _recompute():
+            return _compute_low_rank_metric(
+                state.draws_buffer, state.grads_buffer, n, max_rank, gamma, cutoff
+            )
+
+        def _keep():
+            return state.sigma, state.mu_star, state.U, state.lam
+
+        sigma, mu_star, U, lam = jax.lax.cond(n >= 3, _recompute, _keep)
+        return LowRankAdaptationState(
+            state.ss_state,
+            sigma,
+            mu_star,
+            U,
+            lam,
+            state.step_size,
+            state.draws_buffer,
+            state.grads_buffer,
+            state.buffer_idx,
+            state.background_split,
+            0,
         )
 
     def update(
@@ -694,12 +894,27 @@ def base(
             acceptance_rate,
             state,
         )
-        new_state = jax.lax.cond(
-            is_window_end,
-            slow_final,
-            lambda s: s,
-            new_state,
-        )
+        if buffer_policy == "accumulating":
+
+            def _maybe_periodic_recompute(s: LowRankAdaptationState):
+                due = jnp.logical_and(
+                    stage == 1, s.recompute_counter % recompute_every == 0
+                )
+                return jax.lax.cond(due, slow_recompute_only, lambda x: x, s)
+
+            new_state = jax.lax.cond(
+                is_window_end,
+                slow_switch,
+                _maybe_periodic_recompute,
+                new_state,
+            )
+        else:
+            new_state = jax.lax.cond(
+                is_window_end,
+                slow_final,
+                lambda s: s,
+                new_state,
+            )
         return new_state
 
     def final(
@@ -729,6 +944,8 @@ def window_adaptation_low_rank(
     integrator=mcmc.integrators.velocity_verlet,
     gradient_based_init: bool = False,
     schedule_fn: Callable[[int], Array] = build_schedule,
+    buffer_policy: str = "reset",
+    recompute_every: int = 1,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt step size and a low-rank mass matrix for HMC-family samplers.
@@ -781,6 +998,12 @@ def window_adaptation_low_rank(
         1.5x-growing-window schedule -- see that function's docstring for
         exactly what it does and does not capture relative to nutpie's own
         (online, per-draw) schedule.
+    buffer_policy
+        ``"reset"`` (default, unchanged behaviour) or ``"accumulating"``
+        (nutpie's partial-forget buffer) -- see :func:`base` for the exact
+        semantics. Composes with any ``schedule_fn``.
+    recompute_every
+        Only used when ``buffer_policy="accumulating"``; see :func:`base`.
     **extra_parameters
         Additional keyword arguments forwarded to the kernel at every step
         (e.g. ``num_integration_steps`` for HMC).
@@ -815,6 +1038,8 @@ def window_adaptation_low_rank(
         gamma=gamma,
         cutoff=cutoff,
         gradient_based_init=gradient_based_init,
+        buffer_policy=buffer_policy,
+        recompute_every=recompute_every,
     )
 
     def one_step(carry, xs):
@@ -848,13 +1073,26 @@ def window_adaptation_low_rank(
 
     def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
         init_state = algorithm.init(position, logdensity_fn)
-        # Size the buffer to the expected largest slow window rather than the
-        # full warmup length.  The modular indexing in slow_update means that
-        # if a window exceeds buffer_size only the most recent buffer_size
-        # draws are kept — matching nutpie's fixed-buffer behaviour and
-        # avoiding O(num_steps × d) allocations for large d.
-        typical_window = max(num_steps // 5, 128)
-        buffer_size = min(typical_window * 2, max(num_steps, 1))
+        # `schedule` must be computed before sizing the buffer under
+        # "accumulating" (its capacity is schedule-derived); `num_steps` is
+        # already required to be a concrete Python int here regardless (it
+        # sizes `jax.random.split` and the scan length below), so `schedule`
+        # is a concrete array too -- safe to inspect with plain numpy.
+        schedule = schedule_fn(num_steps)
+        if buffer_policy == "accumulating":
+            # Capacity = the accumulating policy's own worst-case buffer
+            # content (previous + current window), not the "reset" policy's
+            # heuristic below -- see _accumulating_buffer_capacity.
+            buffer_size = max(_accumulating_buffer_capacity(schedule), 1)
+        else:
+            # Size the buffer to the expected largest slow window rather than
+            # the full warmup length.  The modular indexing in slow_update
+            # means that if a window exceeds buffer_size only the most
+            # recent buffer_size draws are kept — matching nutpie's
+            # fixed-buffer behaviour and avoiding O(num_steps × d)
+            # allocations for large d.
+            typical_window = max(num_steps // 5, 128)
+            buffer_size = min(typical_window * 2, max(num_steps, 1))
         init_adaptation_state = adapt_init(
             position,
             init_state.logdensity_grad,
@@ -866,7 +1104,6 @@ def window_adaptation_low_rank(
             print("Running low-rank window adaptation")
         scan_fn = gen_scan_fn(num_steps, progress_bar=progress_bar)
         keys = jax.random.split(rng_key, num_steps)
-        schedule = schedule_fn(num_steps)
         last_state, info = scan_fn(
             one_step,
             (init_state, init_adaptation_state),
