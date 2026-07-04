@@ -19,7 +19,9 @@ from absl.testing import absltest
 
 import blackjax
 from blackjax.adaptation.low_rank_adaptation import (
+    _accumulating_buffer_capacity,
     _compute_low_rank_metric,
+    _shift_buffer_left,
     _spd_mean,
     base,
     build_growing_window_schedule,
@@ -879,6 +881,332 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
         )
         (state, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=100)
         self.assertEqual(state.position.shape, (d,))
+        self.assertGreater(float(params["step_size"]), 0.0)
+
+
+def _run_schedule(policy, schedule, draws, grads, max_rank, d, recompute_every=1):
+    """Drive base()'s init/update through a concrete schedule with known
+    (draw, grad) inputs, tracking buffer_idx at every step. Used by the
+    accumulating-buffer tests below to inspect the buffer bookkeeping
+    without needing to expose the private slow_update/slow_switch closures.
+    """
+    init, update, final = base(
+        max_rank=max_rank, buffer_policy=policy, recompute_every=recompute_every
+    )
+    if policy == "accumulating":
+        buffer_size = _accumulating_buffer_capacity(schedule)
+    else:
+        num_steps = schedule.shape[0]
+        typical_window = max(num_steps // 5, 128)
+        buffer_size = min(typical_window * 2, max(num_steps, 1))
+    state0 = init(jnp.zeros(d), grads[0], 1.0, buffer_size)
+
+    def step(state, xs):
+        stage, is_end, pos, grad = xs
+        new_state = update(state, (stage, is_end), pos, grad, 0.8)
+        return new_state, new_state
+
+    xs = (schedule[:, 0], schedule[:, 1].astype(bool), draws, grads)
+    final_state, trace = jax.lax.scan(step, state0, xs)
+    return final_state, trace
+
+
+class ShiftBufferLeftTest(BlackJAXTest):
+    """Unit tests for _shift_buffer_left, the traced-shift-safe partial-forget
+    pop used by the accumulating buffer policy."""
+
+    def test_drops_leading_rows_and_zero_pads_tail(self):
+        buf = jnp.arange(10.0)[:, None] * jnp.ones((1, 2))
+        shifted = _shift_buffer_left(buf, jnp.array(3))
+        expected = jnp.concatenate([jnp.arange(3.0, 10.0), jnp.zeros(3)])
+        np.testing.assert_allclose(np.asarray(shifted[:, 0]), np.asarray(expected))
+        np.testing.assert_allclose(np.asarray(shifted[:, 1]), np.asarray(expected))
+
+    def test_zero_shift_is_identity(self):
+        buf = jax.random.normal(self.next_key(), (8, 3))
+        shifted = _shift_buffer_left(buf, jnp.array(0))
+        np.testing.assert_allclose(np.asarray(shifted), np.asarray(buf))
+
+    def test_full_shift_zeros_everything(self):
+        buf = jax.random.normal(self.next_key(), (8, 3))
+        shifted = _shift_buffer_left(buf, jnp.array(8))
+        np.testing.assert_allclose(np.asarray(shifted), np.zeros((8, 3)))
+
+    def test_traced_shift_matches_python_shift(self):
+        """shift may be a traced integer (as it is inside jax.lax.scan)."""
+        buf = jax.random.normal(self.next_key(), (12, 2))
+        for shift in (0, 1, 5, 11, 12):
+            expected = jnp.concatenate([buf[shift:], jnp.zeros((shift, 2))], axis=0)
+            got = jax.jit(_shift_buffer_left)(buf, jnp.array(shift))
+            np.testing.assert_allclose(np.asarray(got), np.asarray(expected))
+
+
+class AccumulatingBufferCapacityTest(BlackJAXTest):
+    """Unit tests for _accumulating_buffer_capacity."""
+
+    def test_matches_hand_computed_pair_sums(self):
+        schedule = build_growing_window_schedule(5000)
+        window_end_idx = np.where(np.asarray(schedule[:, 1]) == 1)[0]
+        window_sizes = np.diff(np.concatenate([[-1], window_end_idx]))
+        expected = max(
+            window_sizes[i] + window_sizes[i - 1] for i in range(1, len(window_sizes))
+        )
+        self.assertEqual(_accumulating_buffer_capacity(schedule), int(expected))
+
+    def test_single_window_returns_its_own_size(self):
+        # A degenerate schedule with exactly one window-end marker.
+        schedule = jnp.array([(1, False)] * 4 + [(1, True)])
+        self.assertEqual(_accumulating_buffer_capacity(schedule), 5)
+
+    def test_no_window_ends_returns_one(self):
+        schedule = jnp.array([(0, False)] * 10)
+        self.assertEqual(_accumulating_buffer_capacity(schedule), 1)
+
+
+class AccumulatingBufferPolicyTest(BlackJAXTest):
+    """Tests for buffer_policy="accumulating" -- the nutpie-faithful
+    partial-forget buffer port. See the fisher-2x2 design doc's "G2 verdict"
+    (2026-07-04): under buffer_policy="reset", the final metric recompute of
+    any growing-window schedule is starved to the truncation-remainder final
+    window (e.g. 45 draws at d=50, n_warmup=2000) -- structurally smaller
+    than Stan's at every budget, making schedule-axis attribution a
+    directionally-biased false negative. This class checks the fix.
+    """
+
+    def tearDown(self):
+        jax.clear_caches()
+        super().tearDown()
+
+    def test_invalid_buffer_policy_raises(self):
+        with self.assertRaises(ValueError):
+            base(buffer_policy="bogus")
+
+    def test_invalid_recompute_every_raises(self):
+        with self.assertRaises(ValueError):
+            base(recompute_every=0)
+
+    def test_default_buffer_policy_state_fields_stay_inert(self):
+        """buffer_policy="reset" (default): background_split and
+        recompute_counter are always 0 -- these fields are brand new and
+        must not perturb the pre-existing (pre-buffer_policy) behaviour."""
+        d = 6
+        num_steps = 300
+        schedule = build_growing_window_schedule(num_steps)
+        key = self.next_key()
+        draws = jax.random.normal(key, (num_steps, d))
+        grads = -draws
+        final_state, trace = _run_schedule(
+            "reset", schedule, draws, grads, max_rank=2, d=d
+        )
+        self.assertTrue(bool(jnp.all(trace.background_split == 0)))
+        self.assertTrue(bool(jnp.all(trace.recompute_counter == 0)))
+
+    def test_switch_pops_only_the_prior_windows_worth_of_draws(self):
+        """Hand-computed window-switch trace against three windows of
+        sizes (10, 10, 20), reproducing nuts-rs's switch() exactly (fresh
+        receipt: src/transform/adapt/low_rank.rs -- pop background_split
+        oldest rows, then background_split := post-pop buffer length):
+
+        window 1 (size 10, background_split starts at 0): pop 0 -> buffer_idx=10, background_split=10
+        window 2 (size 10): pop 10 (drop window 1 entirely) -> buffer_idx=10, background_split=10
+        window 3 (size 20): pop 10 (drop window 2) -> buffer_idx=20, background_split=20
+
+        i.e. right before each switch the buffer holds prior_window + this_window
+        (peaks at 10+10=20 and 10+20=30), and right after, only this_window survives
+        as the new background -- a rolling 2-window accumulator, not the "reset"
+        policy's always-just-this-window-alone.
+        """
+        d = 3
+        schedule = jnp.array(
+            [(1, False)] * 9
+            + [(1, True)]
+            + [(1, False)] * 9
+            + [(1, True)]
+            + [(1, False)] * 19
+            + [(1, True)]
+        )
+        num_steps = schedule.shape[0]
+        key = self.next_key()
+        draws = jax.random.normal(key, (num_steps, d))
+        grads = -draws
+        final_state, trace = _run_schedule(
+            "accumulating",
+            schedule,
+            draws,
+            grads,
+            max_rank=1,
+            d=d,
+            recompute_every=10**9,
+        )
+        buffer_idx = np.asarray(trace.buffer_idx)
+        background_split = np.asarray(trace.background_split)
+        # Index 9 = end of window 1, index 19 = end of window 2, index 39 = end of window 3.
+        self.assertEqual((buffer_idx[9], background_split[9]), (10, 10))
+        self.assertEqual((buffer_idx[19], background_split[19]), (10, 10))
+        self.assertEqual((buffer_idx[39], background_split[39]), (20, 20))
+
+    def test_effective_support_far_exceeds_final_window_at_nw2000(self):
+        """The exact G2-verdict scenario: n_warmup=2000, growing schedule,
+        d=50. The "reset" policy's final metric recompute uses only the
+        final (truncated) window's own draws; "accumulating" uses that
+        window's draws *plus* the entire previous window, kept as
+        background. Effective support must be far larger than the final
+        window's own size (not just marginally so)."""
+        d = 50
+        num_steps = 2000
+        schedule = build_growing_window_schedule(num_steps)
+        window_end_idx = np.where(np.asarray(schedule[:, 1]) == 1)[0]
+        window_sizes = np.diff(np.concatenate([[-1], window_end_idx]))
+        final_window_size = int(window_sizes[-1])
+        previous_window_size = int(window_sizes[-2])
+        last_switch_idx = int(window_end_idx[-1])
+
+        key = self.next_key()
+        draws = jax.random.normal(key, (num_steps, d))
+        grads = -draws
+
+        _, trace_reset = _run_schedule(
+            "reset", schedule, draws, grads, max_rank=10, d=d
+        )
+        _, trace_acc = _run_schedule(
+            "accumulating",
+            schedule,
+            draws,
+            grads,
+            max_rank=10,
+            d=d,
+            recompute_every=10**9,
+        )
+        # n used by the recompute at the final switch = buffer_idx the step
+        # *before* the switch (post-append, pre-reset/pre-pop) + 1 (this
+        # step's own append, which fires in the same update() call as the
+        # switch/final handling).
+        n_reset = int(np.asarray(trace_reset.buffer_idx)[last_switch_idx - 1]) + 1
+        n_acc = int(np.asarray(trace_acc.buffer_idx)[last_switch_idx - 1]) + 1
+
+        self.assertEqual(n_reset, final_window_size)
+        self.assertEqual(n_acc, final_window_size + previous_window_size)
+        self.assertGreater(n_acc, 5 * n_reset)  # "far exceeds", not marginal
+
+    def test_recovered_metric_less_degenerate_with_accumulating_support(self):
+        """Downstream consequence of the support difference above: at
+        d=50, max_rank=10, n=45 (reset-policy-level support) is a
+        materially worse (higher relative-Frobenius-error) recovery of a
+        known rank-10-plus-diagonal covariance than n=450 (accumulating-
+        policy-level support at the same n_warmup=2000 schedule) -- the
+        exact failure mode the design doc's G2 verdict names ("subspace
+        selection...can pick a garbage direction and collapse a specific
+        coordinate's eigenvalue"). Re-verified across 6 seeds during
+        development: reset-level error stably 0.41-0.46, accumulating-level
+        stably 0.20-0.21 -- a robust ~2x gap, not seed noise."""
+        d, rank = 50, 10
+        key1, key2, key3 = jax.random.split(self.next_key(), 3)
+        Q, _ = jnp.linalg.qr(jax.random.normal(key1, (d, rank)))
+        lam_true = jax.random.uniform(key2, (rank,), minval=5.0, maxval=15.0)
+        cov = jnp.eye(d) + Q @ jnp.diag(lam_true) @ Q.T
+        draws = jax.random.multivariate_normal(key3, jnp.zeros(d), cov, shape=(500,))
+        grads = -draws @ jnp.linalg.inv(cov).T
+
+        def relative_error(n):
+            sigma, _, U, lam = _compute_low_rank_metric(
+                draws[:n], grads[:n], n, rank, 1e-5, 2.0
+            )
+            minv = _low_rank_inverse_mass_matrix(sigma, U, lam)
+            return float(jnp.linalg.norm(minv - cov) / jnp.linalg.norm(cov))
+
+        err_reset_level = relative_error(45)
+        err_accumulating_level = relative_error(450)
+        self.assertGreater(err_reset_level, 0.3)
+        self.assertLess(err_accumulating_level, 0.3)
+        self.assertLess(err_accumulating_level, 0.7 * err_reset_level)
+
+    def test_recompute_every_default_updates_metric_mid_window(self):
+        """recompute_every=1 (default, faithful): the metric must change
+        between two consecutive non-window-end slow steps, not just at
+        window ends -- the "continuous recompute cadence" delta."""
+        d = 6
+        schedule = jnp.array([(1, False)] * 20)  # one long window, no switches
+        key1, key2 = jax.random.split(self.next_key())
+        # Independent draws/grads (not grads = -draws or any other fixed
+        # linear map of draws): a fixed linear relationship makes
+        # Var[x]/Var[g] an exact algebraic invariant of the data (identically
+        # 1 for *any* n, and the whole downstream Sigma collapses to the
+        # identity exactly) -- a degenerate construction under which sigma
+        # never legitimately changes with n, so a passing diff-based
+        # assertion would only reflect eigendecomposition floating-point
+        # noise, not the recompute cadence actually being exercised.
+        draws = jax.random.normal(key1, (20, d)) * jnp.arange(1, 21)[:, None]
+        grads = jax.random.normal(key2, (20, d)) * 3.0
+        _, trace = _run_schedule(
+            "accumulating", schedule, draws, grads, max_rank=2, d=d, recompute_every=1
+        )
+        sigmas = np.asarray(trace.sigma)
+        # sigma must differ across at least one consecutive pair once n>=3.
+        diffs = np.abs(np.diff(sigmas[2:], axis=0)).sum(axis=1)
+        self.assertTrue(bool(np.any(diffs > 1e-4)))
+
+    def test_recompute_every_large_freezes_metric_mid_window(self):
+        """A large recompute_every (opt-in performance knob): the metric
+        must NOT change between switches -- only the forced switch-time
+        recompute fires."""
+        d = 6
+        schedule = jnp.array([(1, False)] * 19 + [(1, True)])
+        key1, key2 = jax.random.split(self.next_key())
+        # Independent (not deterministically related) draws/grads: this is a
+        # mechanical test of the *cadence* seam, not a physical target, so
+        # deliberately avoid grads = -draws (or any fixed linear map) here --
+        # that makes Var[x]/Var[g] an exact algebraic invariant of the data
+        # (identically 1 for *any* n), which would pass/fail regardless of
+        # whether a recompute actually fired.
+        draws = jax.random.normal(key1, (20, d))
+        grads = jax.random.normal(key2, (20, d)) * 3.0
+        _, trace = _run_schedule(
+            "accumulating",
+            schedule,
+            draws,
+            grads,
+            max_rank=2,
+            d=d,
+            recompute_every=10**9,
+        )
+        sigmas = np.asarray(trace.sigma)
+        # Before the final switch (index 19), sigma must be constant.
+        np.testing.assert_allclose(sigmas[:19], np.tile(sigmas[0], (19, 1)))
+
+    def test_end_to_end_nuts_with_accumulating_buffer(self):
+        """e2e smoke: NUTS + window_adaptation_low_rank(buffer_policy=
+        "accumulating"), finite draws, sane (nonzero, <=1) acceptance."""
+        d = 8
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+        warmup = blackjax.window_adaptation_low_rank(
+            blackjax.nuts,
+            logdensity_fn,
+            max_rank=3,
+            buffer_policy="accumulating",
+            schedule_fn=build_growing_window_schedule,
+        )
+        (state, params), info = warmup.run(self.next_key(), jnp.ones(d), num_steps=300)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(state.position))))
+        self.assertTrue(
+            bool(jnp.all(jnp.isfinite(params["inverse_mass_matrix"].sigma)))
+        )
+        self.assertGreater(float(params["step_size"]), 0.0)
+        acceptance = np.asarray(info.info.acceptance_rate)
+        self.assertTrue(bool(np.all(np.isfinite(acceptance))))
+        # Allow a tiny float32 slack above 1.0 (observed ~1.0000001).
+        self.assertTrue(bool(np.all((acceptance >= 0.0) & (acceptance <= 1.0 + 1e-5))))
+
+    def test_accumulating_composes_with_default_stan_schedule(self):
+        """buffer_policy="accumulating" is schedule-agnostic: it must also
+        run finite-valued with the default Stan doubling schedule, not just
+        build_growing_window_schedule."""
+        d = 5
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+        warmup = blackjax.window_adaptation_low_rank(
+            blackjax.nuts, logdensity_fn, max_rank=2, buffer_policy="accumulating"
+        )
+        (state, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=250)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(state.position))))
         self.assertGreater(float(params["step_size"]), 0.0)
 
 

@@ -752,6 +752,14 @@ def base(
             state.grads_buffer, grad_flat[None, :], (idx, 0)
         )
         new_ss = da_update(state.ss_state, acceptance_rate)
+        # Only accumulate under "accumulating" -- keeps the field genuinely
+        # inert (always 0) rather than merely unread under "reset", so state
+        # inspection under the default policy is unambiguous.
+        new_recompute_counter = (
+            state.recompute_counter + 1
+            if buffer_policy == "accumulating"
+            else state.recompute_counter
+        )
         return LowRankAdaptationState(
             new_ss,
             state.sigma,
@@ -763,7 +771,7 @@ def base(
             new_grads,
             state.buffer_idx + 1,
             state.background_split,
-            state.recompute_counter + 1,
+            new_recompute_counter,
         )
 
     def slow_final(state: LowRankAdaptationState) -> LowRankAdaptationState:
