@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.mclmc_lrd_adaptation" href="../mclmc_lrd_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g75f28aa32" />
+  <meta name="docsearch:version" content="0.1.dev1+g470be7d2a" />
   </head>
   
   
@@ -529,7 +529,7 @@ as in the paper).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.meads_adaptation.meads_adaptation">
-<span class="sig-name descname"><span class="pre">meads_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_folds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size_multiplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">damping_slowdown</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation_info_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">return_all_adapt_info</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.AdaptationAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meads_adaptation.html#meads_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meads_adaptation.meads_adaptation" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">meads_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_chains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_folds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size_multiplier</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">damping_slowdown</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation_info_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">return_all_adapt_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_rank_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">low_rank_window_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.AdaptationAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meads_adaptation.html#meads_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meads_adaptation.meads_adaptation" title="Link to this definition">#</a></dt>
 <dd><p>Adapt the parameters of the Generalized HMC algorithm.</p>
 <p>Full implementation of Algorithm 3 from <span id="id2">[<a class="reference internal" href="../../../../bib.html#id16" title="Matthew D Hoffman and Pavel Sountsov. Tuning-free generalized hamiltonian monte carlo. In International Conference on Artificial Intelligence and Statistics, 7799–7813. PMLR, 2022.">HS22</a>]</span> with
 K-fold cross-chain adaptation and periodic chain shuffling.</p>
@@ -553,6 +553,90 @@ as in the paper. Higher values force stronger damping in early iterations.</p></
 and get_filter_adapt_info_fn in blackjax.adaptation.base. By default all
 information is saved - this can result in excessive memory usage if the
 information is unused.</p></li>
+<li><p><strong>low_rank_rank</strong> – <p>MEADS-LRD extension (opt-in, default <code class="docutils literal notranslate"><span class="pre">None</span></code>). <code class="docutils literal notranslate"><span class="pre">None</span></code> adapts a
+<em>diagonal</em> momentum metric from the fold ensemble – exactly the
+original behavior, bit-for-bit. An <code class="docutils literal notranslate"><span class="pre">int</span></code> instead adapts a
+rank-<code class="docutils literal notranslate"><span class="pre">low_rank_rank</span></code> <a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a>
+from the <strong>full population of all ``num_chains`` chains</strong> (requires
+<a class="reference internal" href="../../mcmc/ghmc/index.html#module-blackjax.mcmc.ghmc" title="blackjax.mcmc.ghmc"><code class="xref py py-func docutils literal notranslate"><span class="pre">blackjax.mcmc.ghmc()</span></code></a>’s dense/low-rank momentum-metric support,
+blackjax#950), generalizing MEADS the way MCLMC-LRD generalized
+MCLMC. Unlike the diagonal scale (estimated per-fold, from each
+fold’s own <code class="docutils literal notranslate"><span class="pre">num_chains</span> <span class="pre">//</span> <span class="pre">num_folds</span></code> chains), the low-rank
+eigenbasis is estimated <em>once per step</em> from the pooled global
+population and then shared across all folds: a single fold’s
+ensemble (paper default <code class="docutils literal notranslate"><span class="pre">num_folds=4</span></code> gives only 16 chains/fold)
+is too small for its top-k eigenvectors to be stable step-to-step,
+and the resulting jitter destabilizes ghmc’s persistent momentum
+(measured regression: low-rank underperformed diagonal at
+<code class="docutils literal notranslate"><span class="pre">num_folds=4</span></code> despite beating it at <code class="docutils literal notranslate"><span class="pre">num_folds=1</span></code>, where the
+per-fold estimate happens to already be the global one). The metric
+is a shared symmetric preconditioner, not a per-fold statistic like
+step size or damping, so pooling all chains to estimate it needs no
+special justification – it is the same practice window adaptation
+uses for its diagonal/dense metric. The per-fold step-size and
+damping heuristics (Algorithm 3) are otherwise unchanged, except they
+now whiten by this shared global metric rather than a per-fold one,
+so they stay consistent with the metric ghmc actually samples with.
+The rank is clamped to <code class="docutils literal notranslate"><span class="pre">min(low_rank_rank,</span> <span class="pre">num_chains</span> <span class="pre">-</span> <span class="pre">1,</span> <span class="pre">d)</span></code> (raises
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if <code class="docutils literal notranslate"><span class="pre">num_chains</span> <span class="pre">-</span> <span class="pre">1</span> <span class="pre">&lt;</span> <span class="pre">1</span></code>). A rank-<code class="docutils literal notranslate"><span class="pre">d</span></code> metric equals the
+full dense metric, so clamping by <code class="docutils literal notranslate"><span class="pre">d</span></code> is lossless and prevents shape
+disagreements in the jax.lax.cond branches. The metric <em>returned</em> by
+<code class="docutils literal notranslate"><span class="pre">run()</span></code> is the final state of the same window-accumulated estimator
+described under <code class="docutils literal notranslate"><span class="pre">low_rank_window_fraction</span></code> below.</p>
+<p>Two further fixes address a validated high-dimension (<code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">&gt;&gt;</span>
+<span class="pre">num_chains</span></code>) failure mode where a single-snapshot low-rank metric
+made MEADS-LRD <em>worse</em> than the diagonal baseline (a p &gt;&gt; n noise-
+dominated eigenbasis fed into ghmc’s step-size heuristic collapsed
+<code class="docutils literal notranslate"><span class="pre">epsilon</span></code> to ~1e-3 and froze the chains):</p>
+<ul>
+<li><p>The step-size heuristic (Algorithm 3, line 8) always whitens its
+gradients by the plain per-fold diagonal scale (<code class="docutils literal notranslate"><span class="pre">grad</span> <span class="pre">*</span> <span class="pre">sigma</span></code>),
+never by the low-rank metric, even when <code class="docutils literal notranslate"><span class="pre">low_rank_rank</span></code> is set.
+Whitening <code class="docutils literal notranslate"><span class="pre">epsilon</span></code> by a noisy low-rank eigenbasis couples the
+step size to whichever direction the estimate currently
+over-weights, which is what caused the collapse above; the
+low-rank metric still preconditions the <em>momentum</em> (where it
+helps), just not the step-size proxy.</p></li>
+<li><p>Selected eigenvalues are floored away from 0 (see
+<code class="docutils literal notranslate"><span class="pre">_floor_lrd_eigenvalues</span></code>) so a collinear/rank-deficient initial
+ensemble can’t seed a degenerate metric that self-reinforces into
+<code class="docutils literal notranslate"><span class="pre">rhat</span> <span class="pre">=</span> <span class="pre">inf</span></code>. Collinear / near-collinear initial ensembles
+(e.g. all chains on a 1-D offset line) do not crash — two redundant
+guards (the step-size decoupling and the eigenvalue floor) prevent
+the NaN collapse — but expect severe under-mixing (measured
+rhat≈5 on a rank-1 init); use a dispersed, full-rank initialization.</p></li>
+</ul>
+</p></li>
+<li><p><strong>low_rank_window_fraction</strong> – Only used when <code class="docutils literal notranslate"><span class="pre">low_rank_rank</span></code> is not <code class="docutils literal notranslate"><span class="pre">None</span></code>. Fraction of
+warmup steps, counted from the end, over which the low-rank metric’s
+covariance is accumulated (default <code class="docutils literal notranslate"><span class="pre">0.5</span></code>: the last half of
+warmup). A single <code class="docutils literal notranslate"><span class="pre">num_chains</span></code>-sized ensemble snapshot is
+<code class="docutils literal notranslate"><span class="pre">p</span> <span class="pre">&gt;&gt;</span> <span class="pre">n</span></code> noise-dominated once the dimension <code class="docutils literal notranslate"><span class="pre">d</span></code> exceeds
+<code class="docutils literal notranslate"><span class="pre">num_chains</span></code> – exactly the regime a single fold’s estimate was
+already too noisy for (see <code class="docutils literal notranslate"><span class="pre">low_rank_rank</span></code> above), just worse,
+since now the <em>whole</em> population’s snapshot is undersized too, and
+(measured directly) even routing through it as a one-off fallback
+is enough to destabilize the ensemble. Instead, a running
+Chan/Welford covariance accumulator (mirroring the pattern
+<a class="reference internal" href="../mass_matrix/index.html#blackjax.adaptation.mass_matrix.welford_algorithm" title="blackjax.adaptation.mass_matrix.welford_algorithm"><code class="xref py py-func docutils literal notranslate"><span class="pre">welford_algorithm()</span></code></a> uses for
+the mass matrix, generalized to a whole ensemble per step) is
+updated with every chain’s position at every step <em>inside</em> the
+window, giving an effective sample size of <code class="docutils literal notranslate"><span class="pre">num_chains</span> <span class="pre">*</span>
+<span class="pre">window_steps</span></code>. Once that effective size exceeds <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">d</span></code> (a bare
+minimum for the estimate to not be noise-dominated), the low-rank
+momentum metric switches on and keeps improving every further
+window step; before that point – either because the step is
+before the window (the initial, still-transient fraction of
+warmup, mirroring why Stan’s window adaptation excludes its own
+initial/final fast windows from mass-matrix estimation), or because
+the window hasn’t yet pooled <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">d</span></code> samples – the momentum
+metric falls back to a purely diagonal one
+(<code class="xref py py-func docutils literal notranslate"><span class="pre">_lrd_diagonal_fallback()</span></code>, i.e. no low-rank correction at
+all, matching <code class="docutils literal notranslate"><span class="pre">low_rank_rank=None</span></code>’s momentum exactly), never a
+low-rank estimate from too little data.
+Must be in <code class="docutils literal notranslate"><span class="pre">[0.0,</span> <span class="pre">1.0]</span></code>; <code class="docutils literal notranslate"><span class="pre">0.0</span></code> accumulates from step 0, <code class="docutils literal notranslate"><span class="pre">1.0</span></code>
+disables accumulation entirely (falls back to the purely diagonal
+momentum metric throughout the run).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
