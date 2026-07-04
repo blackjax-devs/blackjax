@@ -225,20 +225,6 @@ def _low_rank_apply(element: Array, U: Array, lam_pow: Array) -> Array:
     return element + (Ue * (lam_pow - 1.0)) @ U.T
 
 
-def _low_rank_precondition_grad(
-    grad: Array, sigma: Array, U: Array, lam: Array
-) -> Array:
-    """Low-rank generalization of the legacy ``grad * sigma`` preconditioning.
-
-    Mirrors ``M^{-1/2} grad`` (i.e. ``metric.scale(_, grad, inv=True,
-    trans=False)`` for
-    :func:`~blackjax.mcmc.metrics.gaussian_euclidean_low_rank`); reduces to
-    ``grad * sigma`` when ``lam == 1`` (the diagonal limit), matching the
-    legacy preconditioning bit-for-bit.
-    """
-    return _low_rank_apply(grad, U, jnp.sqrt(lam)) * sigma
-
-
 def _low_rank_precondition_pos(pos: Array, sigma: Array, U: Array, lam: Array) -> Array:
     """Low-rank generalization of the legacy ``pos / sigma`` preconditioning.
 
@@ -441,10 +427,12 @@ def meads_adaptation(
         damping heuristics (Algorithm 3) are otherwise unchanged, except they
         now whiten by this shared global metric rather than a per-fold one,
         so they stay consistent with the metric ghmc actually samples with.
-        The rank is clamped to ``num_chains - 1`` (raises ``ValueError`` if
-        this would be < 1). The metric *returned* by ``run()`` is the final
-        state of the same window-accumulated estimator described under
-        ``low_rank_window_fraction`` below.
+        The rank is clamped to ``min(low_rank_rank, num_chains - 1, d)`` (raises
+        ``ValueError`` if ``num_chains - 1 < 1``). A rank-``d`` metric equals the
+        full dense metric, so clamping by ``d`` is lossless and prevents shape
+        disagreements in the jax.lax.cond branches. The metric *returned* by
+        ``run()`` is the final state of the same window-accumulated estimator
+        described under ``low_rank_window_fraction`` below.
 
         Two further fixes address a validated high-dimension (``d >>
         num_chains``) failure mode where a single-snapshot low-rank metric
@@ -463,7 +451,11 @@ def meads_adaptation(
         - Selected eigenvalues are floored away from 0 (see
           ``_floor_lrd_eigenvalues``) so a collinear/rank-deficient initial
           ensemble can't seed a degenerate metric that self-reinforces into
-          ``rhat = inf``.
+          ``rhat = inf``. Collinear / near-collinear initial ensembles
+          (e.g. all chains on a 1-D offset line) do not crash — two redundant
+          guards (the step-size decoupling and the eigenvalue floor) prevent
+          the NaN collapse — but expect severe under-mixing (measured
+          rhat≈5 on a rank-1 init); use a dispersed, full-rank initialization.
     low_rank_window_fraction
         Only used when ``low_rank_rank`` is not ``None``. Fraction of
         warmup steps, counted from the end, over which the low-rank metric's
@@ -769,7 +761,13 @@ def meads_adaptation(
             # values -- num_steps is always a concrete int here, never traced.
             window_start = int(low_rank_window_fraction * num_steps)
             flat_init_pos = jax.vmap(lambda p: ravel_pytree(p)[0])(init_states.position)
-            init_lrd_accum = _lrd_accumulator_init(flat_init_pos.shape[-1])
+            d = flat_init_pos.shape[-1]
+            # Clamp the rank to the flattened dimension as well: rank > d makes the
+            # two jax.lax.cond branches disagree on output shapes. A rank-d metric
+            # equals the full dense metric, so this clamp is lossless.
+            nonlocal low_rank_k
+            low_rank_k = min(low_rank_k, d)
+            init_lrd_accum = _lrd_accumulator_init(d)
         else:
             window_start = num_steps
             init_lrd_accum = None

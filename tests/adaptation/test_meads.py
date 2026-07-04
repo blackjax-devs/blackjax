@@ -496,3 +496,52 @@ class TestMEADSLowRankHighDimFixes(BlackJAXTest):
         self.assertGreater(float(params["step_size"]), 1e-2)
         self.assertTrue(jnp.all(jnp.isfinite(last_states.position)))
         self.assertTrue(jnp.all(jnp.isfinite(params["momentum_inverse_scale"].lam)))
+
+    def test_low_rank_metric_captures_correlated_subspace(self):
+        """Deterministic guard: the low-rank metric's leading eigenvector must
+        capture the correlated subspace. This test guards the feature's value
+        proposition -- a metric silently degraded to uninformative passes all
+        other tests. On the make_correlated_pair_logdensity fixture (correlated
+        pair lives in span{e0, e1}), the leading eigenvector's energy in the
+        correlated subspace must be substantial."""
+        num_chains, num_folds, dim = 32, 4, 6
+        logdensity = make_correlated_pair_logdensity(dim, rho=0.9)
+        # Use a fixed seed for determinism
+        positions = jax.random.normal(jax.random.key(42), (num_chains, dim))
+
+        warmup = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=num_folds, low_rank_rank=2
+        )
+        (last_states, params), _ = warmup.run(
+            jax.random.key(42), positions, num_steps=40
+        )
+
+        mis = params["momentum_inverse_scale"]
+        # The leading eigenvector is column 0 of U (if columns are sorted by |lam - 1|).
+        # Compute energy in the correlated subspace: sqrt(U[0,0]^2 + U[1,0]^2).
+        energy_in_correlated_subspace = jnp.sqrt(mis.U[0, 0] ** 2 + mis.U[1, 0] ** 2)
+        self.assertGreater(
+            float(energy_in_correlated_subspace),
+            0.5,
+            "Leading eigenvector does not capture the correlated subspace",
+        )
+
+    def test_low_rank_rank_clamped_to_dimension(self):
+        """Regression test: low_rank_rank > d must be clamped to d to prevent
+        shape disagreements in jax.lax.cond branches. With low_rank_rank=7
+        on a d=6 target with num_chains=32, the metric must run without error
+        and yield U with min(k, d)=6 columns."""
+        num_chains, num_folds, dim = 32, 4, 6
+        logdensity = make_correlated_pair_logdensity(dim, rho=0.9)
+        positions = jax.random.normal(self.next_key(), (num_chains, dim))
+
+        warmup = blackjax.meads_adaptation(
+            logdensity, num_chains=num_chains, num_folds=num_folds, low_rank_rank=7
+        )
+        (last_states, params), _ = warmup.run(self.next_key(), positions, num_steps=20)
+
+        mis = params["momentum_inverse_scale"]
+        # Rank should be clamped to min(7, num_chains-1, d) = min(7, 31, 6) = 6
+        expected_k = min(7, num_chains - 1, dim)
+        self.assertEqual(mis.U.shape, (dim, expected_k))
+        self.assertTrue(jnp.all(jnp.isfinite(last_states.position)))
