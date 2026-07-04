@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g470be7d2a" />
+  <meta name="docsearch:version" content="0.1.dev1+g7f0155052" />
   </head>
   
   
@@ -409,6 +409,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.dynamic_hmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dynamic_hmc</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.optimizers.dual_averaging</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dual_averaging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptationResults</span><span class="p">,</span> <span class="n">return_all_adapt_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.mass_matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">welford_algorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">pytree_size</span>
@@ -490,6 +491,236 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_mass_matrix_engagement_threshold</span><span class="p">(</span><span class="n">num_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Minimum pooled Welford sample count before ``mass_matrix_estimation``&#39;s</span>
+<span class="sd">    diagonal estimate engages (see ``chees_adaptation``&#39;s docstring).</span>
+
+<span class="sd">    A per-dimension variance estimate, unlike a joint eigenbasis (the</span>
+<span class="sd">    ``meads_adaptation`` low-rank case, gated at ``2 * d``), does not need</span>
+<span class="sd">    ``O(d)`` samples to escape noise domination -- each dimension is</span>
+<span class="sd">    estimated independently. A small constant floor (64) is enough on its</span>
+<span class="sd">    own for typical dimensions; the mild ``2 * sqrt(d)`` term only matters</span>
+<span class="sd">    for very high-dimensional targets, where it grows the floor slightly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">64</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_diagonal_mass_matrix_or_fallback</span><span class="p">(</span><span class="n">mm_accum</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the Welford-estimated diagonal ``inverse_mass_matrix`` once</span>
+<span class="sd">    ``mm_accum.sample_size`` reaches ``threshold``, otherwise fall back to</span>
+<span class="sd">    ``jnp.ones(num_dim)`` -- the pre-estimation / ``mass_matrix_estimation=</span>
+<span class="sd">    None`` behavior. Mirrors ``meads_adaptation``&#39;s</span>
+<span class="sd">    ``_lrd_diagonal_fallback``/engagement-gate pattern, specialized to the</span>
+<span class="sd">    single diagonal (no low-rank) case.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">wc_final</span> <span class="o">=</span> <span class="n">welford_algorithm</span><span class="p">(</span><span class="n">is_diagonal_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">enough</span> <span class="o">=</span> <span class="n">mm_accum</span><span class="o">.</span><span class="n">sample_size</span> <span class="o">&gt;=</span> <span class="n">threshold</span>
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+        <span class="n">enough</span><span class="p">,</span>
+        <span class="k">lambda</span> <span class="n">acc</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">wc_final</span><span class="p">(</span><span class="n">acc</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">EPS_FLOAT</span><span class="p">),</span>
+        <span class="k">lambda</span> <span class="n">acc</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_dim</span><span class="p">),</span>
+        <span class="n">mm_accum</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="c1"># --- Slow-direction trajectory-length floor -----------------------------</span>
+<span class="c1"># See `chees_adaptation`&#39;s `mass_matrix_estimation` docstring / the module&#39;s</span>
+<span class="c1"># commit message for the full derivation. Summary: composing a diagonal</span>
+<span class="c1"># metric with ChEES&#39;s own trajectory-length criterion converges a near</span>
+<span class="c1"># metric-invariant physical length (dominated by the well-conditioned bulk</span>
+<span class="c1"># dimensions), which under-serves any residual (off-diagonal) slow</span>
+<span class="c1"># correlation direction the diagonal metric can&#39;t remove. A whitened</span>
+<span class="c1"># direction with eigenvalue lambda undergoes simple-harmonic HMC motion with</span>
+<span class="c1"># oscillation period 2*pi*sqrt(lambda); a quarter turn is (pi/2)*sqrt(lambda).</span>
+<span class="c1"># ChEES&#39;s own criterion already converges close to this quarter-turn rule</span>
+<span class="c1"># for the bulk (lambda ~= 1 -&gt; ChEES&#39;s own adapted length ~= pi/2, confirmed</span>
+<span class="c1"># empirically), so flooring the consumed trajectory length at</span>
+<span class="c1"># CHEES_LENGTH_FLOOR_FACTOR * sqrt(lambda_max) -- lambda_max the top</span>
+<span class="c1"># eigenvalue of the WHITENED ensemble covariance -- extends the same rule to</span>
+<span class="c1"># the direction the bulk-dominated criterion under-serves. Applied at</span>
+<span class="c1"># CONSUMPTION only (see `_apply_length_floor`): never fed back into the</span>
+<span class="c1"># ChEES optimizer&#39;s own state, so the floor is cleanly ablatable via the</span>
+<span class="c1"># private `_length_floor` seam and has no effect on `base`/`compute_</span>
+<span class="c1"># parameters` (unmodified by this feature).</span>
+<div class="viewcode-block" id="CHEES_LENGTH_FLOOR_FACTOR">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.CHEES_LENGTH_FLOOR_FACTOR">[docs]</a>
+<span class="n">CHEES_LENGTH_FLOOR_FACTOR</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span></div>
+
+<span class="c1"># Cadence (in adaptation steps) at which lambda_max is refreshed via power</span>
+<span class="c1"># iteration. A full eigh every step would cost O(num_dim^3); power iteration</span>
+<span class="c1"># is O(num_dim^2) per iteration, and warm-starting the eigenvector from the</span>
+<span class="c1"># previous recompute means only a handful of iterations are needed to track</span>
+<span class="c1"># a slowly-drifting estimate, so refreshing every</span>
+<span class="c1"># `_LENGTH_FLOOR_RECOMPUTE_INTERVAL` steps (rather than every step) keeps</span>
+<span class="c1"># this cheap even at large num_dim (e.g. 390).</span>
+<span class="n">_LENGTH_FLOOR_RECOMPUTE_INTERVAL</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="n">_LENGTH_FLOOR_POWER_ITERATIONS</span> <span class="o">=</span> <span class="mi">5</span>
+<span class="n">_LENGTH_FLOOR_FINAL_POWER_ITERATIONS</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="c1"># Floors lambda_max away from 0 -- mirrors meads_adaptation&#39;s</span>
+<span class="c1"># _LRD_EIGENVALUE_FLOOR (1e-6): a collinear/rank-deficient accumulated</span>
+<span class="c1"># covariance can give a near-zero (or, from floating-point cancellation,</span>
+<span class="c1"># slightly negative) top eigenvalue, whose sqrt would be NaN.</span>
+<span class="n">_LENGTH_FLOOR_LAMBDA_EPS</span> <span class="o">=</span> <span class="mf">1e-6</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_ChEESCovAccumulatorState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Running Chan/Welford full covariance accumulator for the slow-</span>
+<span class="sd">    direction trajectory-length floor&#39;s ``lambda_max`` estimate.</span>
+
+<span class="sd">    Mirrors ``meads_adaptation``&#39;s ``_LowRankAccumulatorState`` (identical</span>
+<span class="sd">    mean/M2/count recurrence) -- mirrored here rather than imported, to keep</span>
+<span class="sd">    this feature&#39;s diff self-contained to ``chees_adaptation.py``</span>
+<span class="sd">    (``meads_adaptation.py`` is out of scope for this change). Accumulated</span>
+<span class="sd">    over the SAME late-warmup window, from the SAME per-step ensemble batch,</span>
+<span class="sd">    as the diagonal mass-matrix Welford accumulator (``mm_accum``) -- but</span>
+<span class="sd">    tracks the full ``num_dim x num_dim`` second moment (not just the</span>
+<span class="sd">    diagonal), since the floor needs the ensemble&#39;s cross-dimension</span>
+<span class="sd">    structure, not just its per-dimension scale.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">mean</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">m2</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">count</span><span class="p">:</span> <span class="n">Array</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cov_accumulator_init</span><span class="p">(</span><span class="n">num_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">(</span>
+        <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_dim</span><span class="p">,)),</span>
+        <span class="n">m2</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_dim</span><span class="p">,</span> <span class="n">num_dim</span><span class="p">)),</span>
+        <span class="n">count</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_cov_accumulator_update</span><span class="p">(</span>
+    <span class="n">acc</span><span class="p">:</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Array</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge a batch of samples, shape ``(n_b, num_dim)`` (one step&#39;s</span>
+<span class="sd">    ensemble of ``num_chains`` positions), into the running accumulator via</span>
+<span class="sd">    Chan et al.&#39;s parallel/batch generalization of Welford&#39;s algorithm --</span>
+<span class="sd">    the same recurrence ``meads_adaptation._lrd_accumulator_update`` uses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mean_a</span><span class="p">,</span> <span class="n">m2_a</span><span class="p">,</span> <span class="n">n_a</span> <span class="o">=</span> <span class="n">acc</span>
+    <span class="n">n_b</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">mean_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">centered_b</span> <span class="o">=</span> <span class="n">batch</span> <span class="o">-</span> <span class="n">mean_b</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">m2_b</span> <span class="o">=</span> <span class="n">centered_b</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">centered_b</span>
+
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">mean_b</span> <span class="o">-</span> <span class="n">mean_a</span>
+    <span class="n">n_ab</span> <span class="o">=</span> <span class="n">n_a</span> <span class="o">+</span> <span class="n">n_b</span>
+    <span class="n">mean_ab</span> <span class="o">=</span> <span class="n">mean_a</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_b</span> <span class="o">/</span> <span class="n">n_ab</span><span class="p">)</span>
+    <span class="n">m2_ab</span> <span class="o">=</span> <span class="n">m2_a</span> <span class="o">+</span> <span class="n">m2_b</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_a</span> <span class="o">*</span> <span class="n">n_b</span> <span class="o">/</span> <span class="n">n_ab</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">mean_ab</span><span class="p">,</span> <span class="n">m2</span><span class="o">=</span><span class="n">m2_ab</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">n_ab</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">_ChEESEigState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Warm-startable top-eigenvector/eigenvalue estimate of the WHITENED</span>
+<span class="sd">    ensemble covariance (``D^{-1/2} C_hat D^{-1/2}``, ``D`` = the currently</span>
+<span class="sd">    engaged diagonal ``inverse_mass_matrix``), refreshed every</span>
+<span class="sd">    ``_LENGTH_FLOOR_RECOMPUTE_INTERVAL`` steps by a few power iterations</span>
+<span class="sd">    (see ``_power_iteration_lambda_max``) warm-started on ``eigenvector``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">eigenvector</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">lambda_max</span><span class="p">:</span> <span class="n">Array</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_eig_state_init</span><span class="p">(</span><span class="n">num_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ChEESEigState</span><span class="p">:</span>
+    <span class="n">v0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">num_dim</span><span class="p">,))</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_ChEESEigState</span><span class="p">(</span><span class="n">eigenvector</span><span class="o">=</span><span class="n">v0</span><span class="p">,</span> <span class="n">lambda_max</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(()))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_power_iteration_lambda_max</span><span class="p">(</span>
+    <span class="n">matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">v0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A handful of power iterations of the symmetric PSD ``matrix``, warm-</span>
+<span class="sd">    started from ``v0``. Returns the top-eigenvalue estimate (the Rayleigh</span>
+<span class="sd">    quotient of the converged direction) and the normalized eigenvector --</span>
+<span class="sd">    the latter to warm-start the NEXT recompute. ``O(num_dim**2)`` per</span>
+<span class="sd">    iteration, versus a full ``eigh``&#39;s ``O(num_dim**3)`` -- see the module</span>
+<span class="sd">    comment above ``CHEES_LENGTH_FLOOR_FACTOR`` for why a full eigh every</span>
+<span class="sd">    step is avoided.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+        <span class="n">v_next</span> <span class="o">=</span> <span class="n">matrix</span> <span class="o">@</span> <span class="n">v</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">v_next</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">v_next</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">norm</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">norm</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+    <span class="n">v</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">fori_loop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_iterations</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">v0</span><span class="p">)</span>
+    <span class="n">lambda_max</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">matrix</span> <span class="o">@</span> <span class="n">v</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lambda_max</span><span class="p">,</span> <span class="n">v</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_recompute_eig_state</span><span class="p">(</span>
+    <span class="n">cov_accum</span><span class="p">:</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">,</span>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">eig_state</span><span class="p">:</span> <span class="n">_ChEESEigState</span><span class="p">,</span>
+    <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_LENGTH_FLOOR_POWER_ITERATIONS</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ChEESEigState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Whiten the accumulated covariance by the currently engaged diagonal</span>
+<span class="sd">    ``inverse_mass_matrix`` (giving the correlation-like matrix</span>
+<span class="sd">    ``D^{-1/2} C_hat D^{-1/2}``) and refresh the top-eigenvalue estimate via</span>
+<span class="sd">    power iteration warm-started on ``eig_state.eigenvector``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">covariance</span> <span class="o">=</span> <span class="n">cov_accum</span><span class="o">.</span><span class="n">m2</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">cov_accum</span><span class="o">.</span><span class="n">count</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">inv_sqrt_d</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+    <span class="n">whitened_covariance</span> <span class="o">=</span> <span class="n">covariance</span> <span class="o">*</span> <span class="n">inv_sqrt_d</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">inv_sqrt_d</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">lambda_max</span><span class="p">,</span> <span class="n">eigenvector</span> <span class="o">=</span> <span class="n">_power_iteration_lambda_max</span><span class="p">(</span>
+        <span class="n">whitened_covariance</span><span class="p">,</span> <span class="n">eig_state</span><span class="o">.</span><span class="n">eigenvector</span><span class="p">,</span> <span class="n">num_iterations</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">_ChEESEigState</span><span class="p">(</span>
+        <span class="n">eigenvector</span><span class="o">=</span><span class="n">eigenvector</span><span class="p">,</span>
+        <span class="n">lambda_max</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">lambda_max</span><span class="p">,</span> <span class="n">_LENGTH_FLOOR_LAMBDA_EPS</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_apply_length_floor</span><span class="p">(</span>
+    <span class="n">trajectory_length</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">lambda_max</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">engaged</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">enable</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">max_leapfrog_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Floor ``trajectory_length`` at</span>
+<span class="sd">    ``CHEES_LENGTH_FLOOR_FACTOR * sqrt(lambda_max)`` -- the slow-direction</span>
+<span class="sd">    trajectory-length floor. Applied at CONSUMPTION only: a pure function of</span>
+<span class="sd">    the already-adapted length and the current ``lambda_max`` estimate,</span>
+<span class="sd">    never fed back into the ChEES optimizer&#39;s own state, so the floor is</span>
+<span class="sd">    cleanly ablatable. The consumed length respects the user&#39;s budget:</span>
+<span class="sd">    ``min(max(adapted, floor), max_leapfrog_steps · step_size)``.</span>
+
+<span class="sd">    Returns the consumed trajectory_length and a boolean diagnostic flag</span>
+<span class="sd">    ``floor_clipped_by_cap`` (True when the cap binds below the slow-direction</span>
+<span class="sd">    floor): if the cap constrains the floor below its floor value, raise</span>
+<span class="sd">    ``max_leapfrog_steps`` to restore the guarantee.</span>
+
+<span class="sd">    ``enable`` (the private ``_length_floor`` seam) is a static Python bool:</span>
+<span class="sd">    when False, ``trajectory_length`` is returned completely unchanged --</span>
+<span class="sd">    no ``lambda_max``/``engaged`` computation is even required to have run.</span>
+<span class="sd">    ``engaged`` (a traced boolean, the SAME support gate as the diagonal</span>
+<span class="sd">    mass-matrix estimate) makes the floor a no-op before that gate -- pre-</span>
+<span class="sd">    gate, ``lambda_max`` is not yet a meaningful estimate.</span>
+
+<span class="sd">    At the default ``max_leapfrog_steps=1000``, the cap is 1000·step_size, and</span>
+<span class="sd">    ``λ_max ≤ d`` for a correlation matrix means the floor can never bind</span>
+<span class="sd">    (belt-and-suspenders insurance; ``floor_clipped_by_cap`` will be False).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">enable</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">trajectory_length</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="n">floor_value</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">engaged</span><span class="p">,</span> <span class="n">CHEES_LENGTH_FLOOR_FACTOR</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">lambda_max</span><span class="p">),</span> <span class="mf">0.0</span>
+    <span class="p">)</span>
+    <span class="n">cap</span> <span class="o">=</span> <span class="n">max_leapfrog_steps</span> <span class="o">*</span> <span class="n">step_size</span>
+    <span class="n">floored_length</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">trajectory_length</span><span class="p">,</span> <span class="n">floor_value</span><span class="p">)</span>
+    <span class="n">consumed_length</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">floored_length</span><span class="p">,</span> <span class="n">cap</span><span class="p">)</span>
+    <span class="n">floor_clipped_by_cap</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">engaged</span><span class="p">,</span> <span class="n">enable</span><span class="p">),</span> <span class="n">floor_value</span> <span class="o">&gt;</span> <span class="n">cap</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">consumed_length</span><span class="p">,</span> <span class="n">floor_clipped_by_cap</span>
+
+
 <div class="viewcode-block" id="weighted_empirical_mean">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html#blackjax.adaptation.chees_adaptation.weighted_empirical_mean">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">weighted_empirical_mean</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">w</span><span class="p">):</span>
@@ -513,6 +744,7 @@
     <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">decay_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">max_leapfrog_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">_whiten_criterion</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Maximizing the Change in the Estimator of the Expected Square criterion</span>
 <span class="sd">    (trajectory length) and dual averaging procedure (step size) for the jittered</span>
@@ -540,6 +772,15 @@
 <span class="sd">    decay_rate</span>
 <span class="sd">        Float representing how much to favor recent iterations over earlier ones in the optimization</span>
 <span class="sd">        of step size and trajectory length.</span>
+<span class="sd">    _whiten_criterion</span>
+<span class="sd">        Private, undocumented ablation seam (not part of the public API). When</span>
+<span class="sd">        True (default) the ChEES criterion accounts for a non-identity</span>
+<span class="sd">        ``inverse_mass_matrix`` passed to ``update`` (see the derivation in</span>
+<span class="sd">        ``compute_parameters``). When False, the criterion is computed exactly</span>
+<span class="sd">        as the original identity-mass-matrix expression regardless of the</span>
+<span class="sd">        ``inverse_mass_matrix`` passed in -- used in validation studies to</span>
+<span class="sd">        isolate the whitening correction&#39;s contribution relative to the mass</span>
+<span class="sd">        matrix alone.</span>
 
 
 <span class="sd">    Returns</span>
@@ -560,6 +801,7 @@
         <span class="n">acceptance_probabilities</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">is_divergent</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">initial_adaptation_state</span><span class="p">:</span> <span class="n">ChEESAdaptationState</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChEESAdaptationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute values for the parameters based on statistics collected from</span>
 <span class="sd">        multiple chains.</span>
@@ -579,6 +821,13 @@
 <span class="sd">            Metropolis-Hastings acceptance probabilty of proposals of every chain.</span>
 <span class="sd">        initial_adaptation_state:</span>
 <span class="sd">            ChEES adaptation step used to generate proposals and acceptance probabilities.</span>
+<span class="sd">        inverse_mass_matrix:</span>
+<span class="sd">            The diagonal ``inverse_mass_matrix`` (Σ) the kernel used to generate this</span>
+<span class="sd">            step&#39;s proposals -- ``jnp.ones(num_dim)`` unless</span>
+<span class="sd">            ``chees_adaptation``&#39;s ``mass_matrix_estimation=&quot;diagonal&quot;`` has engaged.</span>
+<span class="sd">            Used to whiten the ChEES criterion so it stays metric-consistent with</span>
+<span class="sd">            the kernel (see the derivation below). Has no effect when equal to</span>
+<span class="sd">            ``jnp.ones(num_dim)``, since the whitening reduces to a no-op there.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -637,12 +886,73 @@
         <span class="n">initials_matrix</span> <span class="o">=</span> <span class="n">vmap_flatten_op</span><span class="p">(</span><span class="n">initials_centered</span><span class="p">)</span>
         <span class="n">momentums_matrix</span> <span class="o">=</span> <span class="n">vmap_flatten_op</span><span class="p">(</span><span class="n">proposed_momentums</span><span class="p">)</span>
 
+        <span class="c1"># --- Metric-aware (whitened) ChEES criterion ------------------------</span>
+        <span class="c1"># ChEES&#39;s trajectory-length gradient is a pathwise-derivative estimator</span>
+        <span class="c1"># of d/dL E[||x&#39; - E[x&#39;]||^2], built from the product</span>
+        <span class="c1">#     (||Δx&#39;||^2 - ||Δx||^2) * &lt;Δx&#39;, dx&#39;/dL&gt;</span>
+        <span class="c1"># where dx&#39;/dL is proportional to the trajectory&#39;s *velocity* at the</span>
+        <span class="c1"># endpoint. Under Hamiltonian dynamics with mass matrix M = Σ^-1,</span>
+        <span class="c1"># velocity v = M^-1 p = Σp -- this is blackjax&#39;s own convention, e.g.</span>
+        <span class="c1"># metrics.py&#39;s `linear_map(inverse_mass_matrix, momentum)` kinetic-</span>
+        <span class="c1"># energy term and the NUTS U-turn check. The pre-existing code below</span>
+        <span class="c1"># implicitly assumes M = I (so v == p): that&#39;s exactly what TFP&#39;s own</span>
+        <span class="c1"># implementation comment flags at this spot (&quot;implicitly assumes an</span>
+        <span class="c1"># identity mass matrix&quot;) -- there is no reference implementation for</span>
+        <span class="c1"># the general-M case to copy, hence the derivation here.</span>
+        <span class="c1">#</span>
+        <span class="c1"># For a general diagonal M, the *norm* term must be measured in the</span>
+        <span class="c1"># geometry M induces -- the whitened space x̃ = Σ^{-1/2}x in which the</span>
+        <span class="c1"># preconditioned sampler behaves isotropically -- otherwise a handful</span>
+        <span class="c1"># of large-variance dimensions dominate ||Δx||^2 and swamp the</span>
+        <span class="c1"># trajectory-length signal coming from the well-scaled ones. That is</span>
+        <span class="c1"># edit 1: proposals/initials get whitened by Σ^{-1/2} before the dot</span>
+        <span class="c1"># products that build the norm difference.</span>
+        <span class="c1">#</span>
+        <span class="c1"># The &lt;Δx&#39;, v&#39;&gt; term needs the SAME whitening transform applied to</span>
+        <span class="c1"># velocity: velocity is a tangent vector living in position-space (not</span>
+        <span class="c1"># momentum&#39;s dual/cotangent space), so under x̃ = Σ^{-1/2}x it</span>
+        <span class="c1"># transforms the same way position differences do, i.e.</span>
+        <span class="c1"># ṽ = Σ^{-1/2}v -- NOT the contragredient transform momentum itself</span>
+        <span class="c1"># would get. That is edit 2, and skipping it is the &quot;silent-bug trap&quot;:</span>
+        <span class="c1"># reusing the edit-1-whitened Δx&#39; in `jnp.dot(pm, mm)` without also</span>
+        <span class="c1"># whitening the velocity leaves a spurious Σ^{-1/2} factor on the</span>
+        <span class="c1"># momentum term. Composing both edits explicitly:</span>
+        <span class="c1">#     v&#39;  = Σ  p&#39;                (velocity, metrics.py convention)</span>
+        <span class="c1">#     ṽ&#39; = Σ^{-1/2} v&#39; = Σ^{1/2} p&#39;   (velocity whitened like position)</span>
+        <span class="c1">#     &lt;x̃&#39;, ṽ&#39;&gt; = Σ_i (Δx&#39;_i / √Σ_i) · (√Σ_i · p&#39;_i) = Σ_i Δx&#39;_i p&#39;_i</span>
+        <span class="c1">#              = &lt;Δx&#39;, p&#39;&gt;   (the RAW expression, for *any* diagonal Σ)</span>
+        <span class="c1"># This exact cancellation is not a coincidence: Δx&#39; and p&#39; are</span>
+        <span class="c1"># canonically conjugate (position, momentum), so their pairing is</span>
+        <span class="c1"># metric-invariant -- unlike ||Δx||^2 alone. The code below still</span>
+        <span class="c1"># computes both quantities via the explicit whitening transforms</span>
+        <span class="c1"># (rather than hand-simplifying to the raw dot product) so that (a)</span>
+        <span class="c1"># this derivation is directly checkable against the code and (b) with</span>
+        <span class="c1"># Σ = ones every multiply/divide is an IEEE-754 no-op, so the whitened</span>
+        <span class="c1"># path is bit-for-bit identical to the original expression -- see</span>
+        <span class="c1"># ``test_whitened_criterion_reduces_to_raw_when_identity``.</span>
+        <span class="c1">#</span>
+        <span class="c1"># `_whiten_criterion=False` (private ablation seam, see `base`&#39;s</span>
+        <span class="c1"># docstring) skips both edits and always uses the raw, pre-existing</span>
+        <span class="c1"># expression regardless of `inverse_mass_matrix` -- this is the</span>
+        <span class="c1"># &quot;naive&quot; arm (kernel uses the estimated diagonal metric, but the</span>
+        <span class="c1"># criterion does not) the validation study compares against.</span>
+        <span class="k">if</span> <span class="n">_whiten_criterion</span><span class="p">:</span>
+            <span class="n">inv_sqrt_imm</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+            <span class="n">proposals_matrix_w</span> <span class="o">=</span> <span class="n">proposals_matrix</span> <span class="o">*</span> <span class="n">inv_sqrt_imm</span>
+            <span class="n">initials_matrix_w</span> <span class="o">=</span> <span class="n">initials_matrix</span> <span class="o">*</span> <span class="n">inv_sqrt_imm</span>
+            <span class="n">velocity_matrix</span> <span class="o">=</span> <span class="n">momentums_matrix</span> <span class="o">*</span> <span class="n">inverse_mass_matrix</span>  <span class="c1"># v&#39; = Σp&#39;</span>
+            <span class="n">velocity_matrix_w</span> <span class="o">=</span> <span class="n">velocity_matrix</span> <span class="o">*</span> <span class="n">inv_sqrt_imm</span>  <span class="c1"># ṽ&#39; = Σ^{-1/2}v&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">proposals_matrix_w</span> <span class="o">=</span> <span class="n">proposals_matrix</span>
+            <span class="n">initials_matrix_w</span> <span class="o">=</span> <span class="n">initials_matrix</span>
+            <span class="n">velocity_matrix_w</span> <span class="o">=</span> <span class="n">momentums_matrix</span>
+
         <span class="n">trajectory_gradients</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">jitter_generator</span><span class="p">(</span><span class="n">random_generator_arg</span><span class="p">)</span>
             <span class="o">*</span> <span class="n">trajectory_length</span>  <span class="c1"># this effectively make this gradient w.r.t. log_trajectory_length</span>
             <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
                 <span class="k">lambda</span> <span class="n">pm</span><span class="p">,</span> <span class="n">im</span><span class="p">,</span> <span class="n">mm</span><span class="p">:</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">pm</span><span class="p">,</span> <span class="n">pm</span><span class="p">)</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">im</span><span class="p">))</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">pm</span><span class="p">,</span> <span class="n">mm</span><span class="p">)</span>
-            <span class="p">)(</span><span class="n">proposals_matrix</span><span class="p">,</span> <span class="n">initials_matrix</span><span class="p">,</span> <span class="n">momentums_matrix</span><span class="p">)</span>
+            <span class="p">)(</span><span class="n">proposals_matrix_w</span><span class="p">,</span> <span class="n">initials_matrix_w</span><span class="p">,</span> <span class="n">velocity_matrix_w</span><span class="p">)</span>
         <span class="p">)</span>
 
         <span class="n">trajectory_gradient</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
@@ -709,6 +1019,7 @@
         <span class="n">initial_positions</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">acceptance_probabilities</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">is_divergent</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the adaptation state and parameter values.</span>
 
@@ -724,6 +1035,10 @@
 <span class="sd">            The initial position at the start of the HMC algorithm of every chain.</span>
 <span class="sd">        acceptance_probabilities:</span>
 <span class="sd">            Metropolis-Hastings acceptance probabilty of proposals of every chain.</span>
+<span class="sd">        inverse_mass_matrix:</span>
+<span class="sd">            The diagonal ``inverse_mass_matrix`` the kernel used to generate this</span>
+<span class="sd">            step&#39;s proposals; see ``compute_parameters`` for how it whitens the</span>
+<span class="sd">            ChEES criterion.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -738,6 +1053,7 @@
             <span class="n">acceptance_probabilities</span><span class="p">,</span>
             <span class="n">is_divergent</span><span class="p">,</span>
             <span class="n">adaptation_state</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">new_state</span>
@@ -758,6 +1074,10 @@
     <span class="n">decay_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
     <span class="n">max_leapfrog_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
     <span class="n">adaptation_info_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">return_all_adapt_info</span><span class="p">,</span>
+    <span class="n">mass_matrix_estimation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">mass_matrix_window_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="n">_whiten_criterion</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">_length_floor</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AdaptationAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Adapt the step size and trajectory length (number of integration steps / step size)</span>
 <span class="sd">    parameters of the jittered HMC algorthm.</span>
@@ -822,6 +1142,53 @@
 <span class="sd">        and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all</span>
 <span class="sd">        information is saved - this can result in excessive memory usage if the</span>
 <span class="sd">        information is unused.</span>
+<span class="sd">    mass_matrix_estimation</span>
+<span class="sd">        Opt-in ensemble-estimated *diagonal* ``inverse_mass_matrix`` (opt-in,</span>
+<span class="sd">        default ``None``). ``None`` keeps the original behavior, bit-for-bit:</span>
+<span class="sd">        the kernel always uses ``inverse_mass_matrix=jnp.ones(num_dim)``.</span>
+<span class="sd">        ``&quot;diagonal&quot;`` instead estimates a per-dimension variance from the</span>
+<span class="sd">        ensemble of all ``num_chains`` chains via a running Welford</span>
+<span class="sd">        accumulator (:func:`~blackjax.adaptation.mass_matrix.welford_algorithm`),</span>
+<span class="sd">        accumulated over the *last* ``mass_matrix_window_fraction`` of warmup</span>
+<span class="sd">        (see that parameter), and uses it as the kernel&#39;s diagonal</span>
+<span class="sd">        ``inverse_mass_matrix`` once enough samples have accumulated (see</span>
+<span class="sd">        &quot;Engagement gate&quot; below). ChEES&#39;s own trajectory-length criterion is</span>
+<span class="sd">        also whitened by this estimate so it stays metric-consistent with the</span>
+<span class="sd">        kernel it is tuning (see the derivation in</span>
+<span class="sd">        :func:`base`&#39;s ``compute_parameters``) -- this whitening keeps the</span>
+<span class="sd">        criterion metric-consistent and responsive to the preconditioned geometry;</span>
+<span class="sd">        measured effect is small (≲12%) on NCP-standardized targets where most</span>
+<span class="sd">        dimensions are near unit scale. The feature&#39;s main value is delivered by</span>
+<span class="sd">        the slow-direction *length floor* (when enabled), which recovers large</span>
+<span class="sd">        ESS-per-gradient wins on targets with a residual slow correlation</span>
+<span class="sd">        direction the diagonal metric cannot remove.</span>
+
+<span class="sd">        **Scope: validated under located (typical-set) initializations.** On</span>
+<span class="sd">        funnel-like targets the diagonal metric can *reduce* per-draw ESS</span>
+<span class="sd">        relative to the identity metric&#39;s fine-step regime (an efficiency caveat,</span>
+<span class="sd">        not a bias—posterior means are unaffected); the length floor recovers most</span>
+<span class="sd">        of it. Cold or dispersed initialization on hard geometry is a separate</span>
+<span class="sd">        warmup-robustness limitation, out of scope for this feature.</span>
+
+<span class="sd">        Engagement gate: before the pooled accumulator (effective sample</span>
+<span class="sd">        size ``num_chains * window_steps``) exceeds ``max(64, 2*sqrt(num_dim))``</span>
+<span class="sd">        -- a modest floor chosen because a per-dimension variance estimate,</span>
+<span class="sd">        unlike a joint eigenbasis, does not need ``O(d)`` samples to escape</span>
+<span class="sd">        noise domination, so a small constant plus a mild ``d``-scaling for</span>
+<span class="sd">        very high-dimensional targets is enough -- the kernel and criterion</span>
+<span class="sd">        both use ``jnp.ones(num_dim)`` (identical to ``None``). The final</span>
+<span class="sd">        ``inverse_mass_matrix`` returned by ``run()`` is the engaged-or-</span>
+<span class="sd">        fallback estimate at the end of the accumulation window.</span>
+<span class="sd">    mass_matrix_window_fraction</span>
+<span class="sd">        Only used when ``mass_matrix_estimation=&quot;diagonal&quot;``. Fraction of</span>
+<span class="sd">        warmup steps, counted from the end, over which the diagonal</span>
+<span class="sd">        ``inverse_mass_matrix``&#39;s Welford accumulator collects samples</span>
+<span class="sd">        (default ``0.5``: the last half of warmup, mirroring</span>
+<span class="sd">        ``meads_adaptation``&#39;s ``low_rank_window_fraction`` and Stan&#39;s</span>
+<span class="sd">        practice of excluding window adaptation&#39;s own early/transient</span>
+<span class="sd">        fraction). Must be in ``[0.0, 1.0]``; ``0.0`` accumulates from step</span>
+<span class="sd">        0, ``1.0`` disables accumulation entirely (falls back to</span>
+<span class="sd">        ``jnp.ones(num_dim)`` throughout the run).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -829,6 +1196,24 @@
 <span class="sd">    tuned parameter values, and all the warm-up states for diagnostics.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">mass_matrix_estimation</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;diagonal&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;mass_matrix_estimation must be None or &#39;diagonal&#39;, got &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mass_matrix_estimation</span><span class="si">!r}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">mass_matrix_window_fraction</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;mass_matrix_window_fraction must be in [0.0, 1.0], got &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">mass_matrix_window_fraction</span><span class="si">}</span><span class="s2">.&quot;</span>
+        <span class="p">)</span>
+    <span class="n">estimate_mass_matrix</span> <span class="o">=</span> <span class="n">mass_matrix_estimation</span> <span class="o">==</span> <span class="s2">&quot;diagonal&quot;</span>
+    <span class="c1"># The slow-direction length floor (see the module comment above</span>
+    <span class="c1"># CHEES_LENGTH_FLOOR_FACTOR) only ever engages when the diagonal mass</span>
+    <span class="c1"># matrix is also engaged -- private `_length_floor=False` (the ablation</span>
+    <span class="c1"># seam) skips building the extra d x d covariance accumulator entirely,</span>
+    <span class="c1"># so the &quot;metric-without-floor&quot; ablation arm has zero overhead beyond</span>
+    <span class="c1"># the pre-existing mass_matrix_estimation=&quot;diagonal&quot; feature.</span>
+    <span class="n">enable_length_floor</span> <span class="o">=</span> <span class="n">estimate_mass_matrix</span> <span class="ow">and</span> <span class="n">_length_floor</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
@@ -878,19 +1263,84 @@
             <span class="n">target_acceptance_rate</span><span class="p">,</span>
             <span class="n">decay_rate</span><span class="p">,</span>
             <span class="n">max_leapfrog_steps</span><span class="p">,</span>
+            <span class="n">_whiten_criterion</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">):</span>
-            <span class="n">states</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="c1"># Opt-in ensemble-estimated diagonal inverse_mass_matrix (Σ). Mirrors</span>
+        <span class="c1"># meads_adaptation&#39;s low_rank_rank / low_rank_window_fraction pattern:</span>
+        <span class="c1"># a Welford accumulator (reused verbatim from mass_matrix.py, not</span>
+        <span class="c1"># reinvented) pools every chain&#39;s position at every step inside the</span>
+        <span class="c1"># last `mass_matrix_window_fraction` of warmup, and the estimate only</span>
+        <span class="c1"># engages once enough samples have accumulated (see the docstring</span>
+        <span class="c1"># above for the gate + rationale). Before engagement, and always when</span>
+        <span class="c1"># mass_matrix_estimation is None, the kernel and criterion both use</span>
+        <span class="c1"># jnp.ones(num_dim) -- exactly the pre-existing behavior.</span>
+        <span class="k">if</span> <span class="n">estimate_mass_matrix</span><span class="p">:</span>
+            <span class="n">wc_init</span><span class="p">,</span> <span class="n">wc_update</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">welford_algorithm</span><span class="p">(</span><span class="n">is_diagonal_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">window_start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mass_matrix_window_fraction</span> <span class="o">*</span> <span class="n">num_steps</span><span class="p">)</span>
+            <span class="n">mm_engagement_threshold</span> <span class="o">=</span> <span class="n">_mass_matrix_engagement_threshold</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">window_start</span> <span class="o">=</span> <span class="n">num_steps</span>
+        <span class="n">in_window_flags</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">window_start</span>
+
+        <span class="c1"># Cheap regardless of enable_length_floor (no num_dim-sized arrays</span>
+        <span class="c1"># here); when the floor is disabled this is built but never read by</span>
+        <span class="c1"># one_step (mirrors in_window_flags&#39;s unconditional construction</span>
+        <span class="c1"># above).</span>
+        <span class="k">if</span> <span class="n">enable_length_floor</span><span class="p">:</span>
+            <span class="n">recompute_flags</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span> <span class="o">%</span> <span class="n">_LENGTH_FLOOR_RECOMPUTE_INTERVAL</span>
+            <span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">recompute_flags</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">num_steps</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_fold_welford_batch</span><span class="p">(</span><span class="n">wc_state</span><span class="p">,</span> <span class="n">batch</span><span class="p">):</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Fold a batch of ``num_chains`` samples into ``wc_state`` one</span>
+<span class="sd">            row at a time -- ``welford_algorithm``&#39;s ``update`` is single-</span>
+<span class="sd">            sample, so the whole ensemble is pooled via a sequential scan</span>
+<span class="sd">            rather than reinventing a batched Chan-style merge.&quot;&quot;&quot;</span>
+            <span class="n">new_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">carry</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="p">(</span><span class="n">wc_update</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">x</span><span class="p">),</span> <span class="kc">None</span><span class="p">),</span> <span class="n">wc_state</span><span class="p">,</span> <span class="n">batch</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">new_state</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
+            <span class="n">rng_key</span><span class="p">,</span> <span class="n">in_window</span><span class="p">,</span> <span class="n">do_recompute</span> <span class="o">=</span> <span class="n">xs</span>
+            <span class="n">states</span><span class="p">,</span> <span class="n">adaptation_state</span><span class="p">,</span> <span class="n">mm_accum</span><span class="p">,</span> <span class="n">cov_accum</span><span class="p">,</span> <span class="n">eig_state</span> <span class="o">=</span> <span class="n">carry</span>
+
+            <span class="k">if</span> <span class="n">estimate_mass_matrix</span><span class="p">:</span>
+                <span class="n">current_imm</span> <span class="o">=</span> <span class="n">_diagonal_mass_matrix_or_fallback</span><span class="p">(</span>
+                    <span class="n">mm_accum</span><span class="p">,</span> <span class="n">mm_engagement_threshold</span><span class="p">,</span> <span class="n">num_dim</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">current_imm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span>
+
+            <span class="c1"># Floor applied at CONSUMPTION only: `adaptation_state.</span>
+            <span class="c1"># trajectory_length` (the value `update` below reads to compute</span>
+            <span class="c1"># its OWN gradient step) is untouched -- only the length handed</span>
+            <span class="c1"># to `_step_fn` is floored, so the floor never feeds back into</span>
+            <span class="c1"># the ChEES optimizer&#39;s state.</span>
+            <span class="k">if</span> <span class="n">enable_length_floor</span><span class="p">:</span>
+                <span class="n">engaged</span> <span class="o">=</span> <span class="n">mm_accum</span><span class="o">.</span><span class="n">sample_size</span> <span class="o">&gt;=</span> <span class="n">mm_engagement_threshold</span>
+                <span class="n">consumed_trajectory_length</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_apply_length_floor</span><span class="p">(</span>
+                    <span class="n">adaptation_state</span><span class="o">.</span><span class="n">trajectory_length</span><span class="p">,</span>
+                    <span class="n">eig_state</span><span class="o">.</span><span class="n">lambda_max</span><span class="p">,</span>
+                    <span class="n">engaged</span><span class="p">,</span>
+                    <span class="n">_length_floor</span><span class="p">,</span>
+                    <span class="n">max_leapfrog_steps</span><span class="p">,</span>
+                    <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">consumed_trajectory_length</span> <span class="o">=</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">trajectory_length</span>
 
             <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)</span>
             <span class="n">_step_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
                 <span class="n">step_fn</span><span class="p">,</span>
                 <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity_fn</span><span class="p">,</span>
                 <span class="n">step_size</span><span class="o">=</span><span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_dim</span><span class="p">),</span>
+                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">current_imm</span><span class="p">,</span>
                 <span class="n">integration_steps_params</span><span class="o">=</span><span class="p">(</span>
-                    <span class="n">adaptation_state</span><span class="o">.</span><span class="n">trajectory_length</span> <span class="o">/</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+                    <span class="n">consumed_trajectory_length</span> <span class="o">/</span> <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
                 <span class="p">),</span>
             <span class="p">)</span>
             <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_step_fn</span><span class="p">)(</span><span class="n">keys</span><span class="p">,</span> <span class="n">states</span><span class="p">)</span>
@@ -901,36 +1351,143 @@
                 <span class="n">states</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
                 <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
                 <span class="n">info</span><span class="o">.</span><span class="n">is_divergent</span><span class="p">,</span>
+                <span class="n">current_imm</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="k">return</span> <span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span> <span class="n">adaptation_info_fn</span><span class="p">(</span>
-                <span class="n">new_states</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">estimate_mass_matrix</span><span class="p">:</span>
+                <span class="n">flat_positions</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
+                    <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">p</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)(</span><span class="n">new_states</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+                <span class="n">new_mm_accum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                    <span class="n">in_window</span><span class="p">,</span>
+                    <span class="k">lambda</span> <span class="n">acc</span><span class="p">:</span> <span class="n">_fold_welford_batch</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="n">flat_positions</span><span class="p">),</span>
+                    <span class="k">lambda</span> <span class="n">acc</span><span class="p">:</span> <span class="n">acc</span><span class="p">,</span>
+                    <span class="n">mm_accum</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_mm_accum</span> <span class="o">=</span> <span class="n">mm_accum</span>
+
+            <span class="k">if</span> <span class="n">enable_length_floor</span><span class="p">:</span>
+                <span class="c1"># `flat_positions` is always defined here: enable_length_floor</span>
+                <span class="c1"># implies estimate_mass_matrix (see its derivation above).</span>
+                <span class="n">new_cov_accum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                    <span class="n">in_window</span><span class="p">,</span>
+                    <span class="k">lambda</span> <span class="n">acc</span><span class="p">:</span> <span class="n">_cov_accumulator_update</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="n">flat_positions</span><span class="p">),</span>
+                    <span class="k">lambda</span> <span class="n">acc</span><span class="p">:</span> <span class="n">acc</span><span class="p">,</span>
+                    <span class="n">cov_accum</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">new_eig_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                    <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">in_window</span><span class="p">,</span> <span class="n">do_recompute</span><span class="p">),</span>
+                    <span class="k">lambda</span> <span class="n">es</span><span class="p">:</span> <span class="n">_recompute_eig_state</span><span class="p">(</span><span class="n">new_cov_accum</span><span class="p">,</span> <span class="n">current_imm</span><span class="p">,</span> <span class="n">es</span><span class="p">),</span>
+                    <span class="k">lambda</span> <span class="n">es</span><span class="p">:</span> <span class="n">es</span><span class="p">,</span>
+                    <span class="n">eig_state</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">new_cov_accum</span> <span class="o">=</span> <span class="n">cov_accum</span>
+                <span class="n">new_eig_state</span> <span class="o">=</span> <span class="n">eig_state</span>
+
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="n">new_states</span><span class="p">,</span>
+                <span class="n">new_adaptation_state</span><span class="p">,</span>
+                <span class="n">new_mm_accum</span><span class="p">,</span>
+                <span class="n">new_cov_accum</span><span class="p">,</span>
+                <span class="n">new_eig_state</span><span class="p">,</span>
+            <span class="p">),</span> <span class="n">adaptation_info_fn</span><span class="p">(</span><span class="n">new_states</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">)</span>
 
         <span class="n">batch_init</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span>
             <span class="k">lambda</span> <span class="n">p</span><span class="p">:</span> <span class="n">dynamic_hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">init_random_arg</span><span class="p">)</span>
         <span class="p">)</span>
         <span class="n">init_states</span> <span class="o">=</span> <span class="n">batch_init</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
         <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">init_random_arg</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
+        <span class="n">init_mm_accum</span> <span class="o">=</span> <span class="n">wc_init</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">estimate_mass_matrix</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">init_cov_accum</span> <span class="o">=</span> <span class="n">_cov_accumulator_init</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">enable_length_floor</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">init_eig_state</span> <span class="o">=</span> <span class="n">_eig_state_init</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">enable_length_floor</span> <span class="k">else</span> <span class="kc">None</span>
 
         <span class="n">keys_step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-        <span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">last_adaptation_state</span><span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-            <span class="n">one_step</span><span class="p">,</span> <span class="p">(</span><span class="n">init_states</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">),</span> <span class="n">keys_step</span>
+        <span class="p">(</span>
+            <span class="n">last_states</span><span class="p">,</span>
+            <span class="n">last_adaptation_state</span><span class="p">,</span>
+            <span class="n">last_mm_accum</span><span class="p">,</span>
+            <span class="n">last_cov_accum</span><span class="p">,</span>
+            <span class="n">last_eig_state</span><span class="p">,</span>
+        <span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+            <span class="n">one_step</span><span class="p">,</span>
+            <span class="p">(</span>
+                <span class="n">init_states</span><span class="p">,</span>
+                <span class="n">init_adaptation_state</span><span class="p">,</span>
+                <span class="n">init_mm_accum</span><span class="p">,</span>
+                <span class="n">init_cov_accum</span><span class="p">,</span>
+                <span class="n">init_eig_state</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="p">(</span><span class="n">keys_step</span><span class="p">,</span> <span class="n">in_window_flags</span><span class="p">,</span> <span class="n">recompute_flags</span><span class="p">),</span>
         <span class="p">)</span>
 
-        <span class="n">num_leapfrog_steps</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
-            <span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_trajectory_length_moving_average</span>
-            <span class="o">-</span> <span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_step_size_moving_average</span>
+        <span class="n">final_inverse_mass_matrix</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">_diagonal_mass_matrix_or_fallback</span><span class="p">(</span>
+                <span class="n">last_mm_accum</span><span class="p">,</span> <span class="n">mm_engagement_threshold</span><span class="p">,</span> <span class="n">num_dim</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">estimate_mass_matrix</span>
+            <span class="k">else</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span>
         <span class="p">)</span>
+
+        <span class="c1"># Floor applied at the SECOND consumption point: the final</span>
+        <span class="c1"># integration_steps_params handed back to the caller. Bit-for-bit</span>
+        <span class="c1"># identical to the pre-floor computation whenever the floor is</span>
+        <span class="c1"># disabled (mass_matrix_estimation=None OR _length_floor=False) --</span>
+        <span class="c1"># see `enable_length_floor`&#39;s derivation above.</span>
+        <span class="k">if</span> <span class="n">enable_length_floor</span><span class="p">:</span>
+            <span class="n">final_engaged</span> <span class="o">=</span> <span class="n">last_mm_accum</span><span class="o">.</span><span class="n">sample_size</span> <span class="o">&gt;=</span> <span class="n">mm_engagement_threshold</span>
+            <span class="n">final_eig_state</span> <span class="o">=</span> <span class="n">_recompute_eig_state</span><span class="p">(</span>
+                <span class="n">last_cov_accum</span><span class="p">,</span>
+                <span class="n">final_inverse_mass_matrix</span><span class="p">,</span>
+                <span class="n">last_eig_state</span><span class="p">,</span>
+                <span class="n">num_iterations</span><span class="o">=</span><span class="n">_LENGTH_FLOOR_FINAL_POWER_ITERATIONS</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">trajectory_length_ma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+                <span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_trajectory_length_moving_average</span>
+            <span class="p">)</span>
+            <span class="n">step_size_ma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_step_size_moving_average</span><span class="p">)</span>
+            <span class="n">consumed_trajectory_length_ma</span><span class="p">,</span> <span class="n">floor_clipped_by_cap</span> <span class="o">=</span> <span class="n">_apply_length_floor</span><span class="p">(</span>
+                <span class="n">trajectory_length_ma</span><span class="p">,</span>
+                <span class="n">final_eig_state</span><span class="o">.</span><span class="n">lambda_max</span><span class="p">,</span>
+                <span class="n">final_engaged</span><span class="p">,</span>
+                <span class="n">_length_floor</span><span class="p">,</span>
+                <span class="n">max_leapfrog_steps</span><span class="p">,</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">step_size_ma</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">num_leapfrog_steps</span> <span class="o">=</span> <span class="n">consumed_trajectory_length_ma</span> <span class="o">/</span> <span class="n">step_size_ma</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">num_leapfrog_steps</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+                <span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_trajectory_length_moving_average</span>
+                <span class="o">-</span> <span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_step_size_moving_average</span>
+            <span class="p">)</span>
+            <span class="n">floor_clipped_by_cap</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+
         <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
             <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">last_adaptation_state</span><span class="o">.</span><span class="n">log_step_size_moving_average</span><span class="p">),</span>
-            <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">num_dim</span><span class="p">),</span>
+            <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">final_inverse_mass_matrix</span><span class="p">,</span>
             <span class="s2">&quot;next_random_arg_fn&quot;</span><span class="p">:</span> <span class="n">next_random_arg_fn</span><span class="p">,</span>
             <span class="s2">&quot;integration_steps_fn&quot;</span><span class="p">:</span> <span class="n">integration_steps_fn</span><span class="p">,</span>
             <span class="s2">&quot;integration_steps_params&quot;</span><span class="p">:</span> <span class="p">(</span><span class="n">num_leapfrog_steps</span><span class="p">,),</span>
         <span class="p">}</span>
 
-        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
+        <span class="c1"># Attach floor_clipped_by_cap diagnostic to final info via a transparent</span>
+        <span class="c1"># wrapper that delegates to the original info but adds the diagnostic flag</span>
+        <span class="c1"># as an additional attribute. This ensures the flag is accessible without</span>
+        <span class="c1"># breaking the existing API.</span>
+        <span class="k">class</span><span class="w"> </span><span class="nc">_AdaptationInfoWrapper</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Transparent wrapper for adaptation info with floor diagnostic flag.&quot;&quot;&quot;</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">info_obj</span><span class="p">,</span> <span class="n">floor_flag</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_wrapped_info</span> <span class="o">=</span> <span class="n">info_obj</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">floor_clipped_by_cap</span> <span class="o">=</span> <span class="n">floor_flag</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_wrapped_info</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+
+        <span class="n">enriched_info</span> <span class="o">=</span> <span class="n">_AdaptationInfoWrapper</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">floor_clipped_by_cap</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">last_states</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">enriched_info</span>
 
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span>  <span class="c1"># type: ignore[arg-type]</span></div>
 

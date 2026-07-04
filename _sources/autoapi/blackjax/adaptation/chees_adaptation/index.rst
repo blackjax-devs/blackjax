@@ -17,6 +17,7 @@ Attributes
    blackjax.adaptation.chees_adaptation.OPTIMAL_TARGET_ACCEPTANCE_RATE
    blackjax.adaptation.chees_adaptation.LOG_UPDATE_CLIP
    blackjax.adaptation.chees_adaptation.EPS_FLOAT
+   blackjax.adaptation.chees_adaptation.CHEES_LENGTH_FLOOR_FACTOR
 
 
 Classes
@@ -110,9 +111,12 @@ Module Contents
       :type:  int
 
 
+.. py:data:: CHEES_LENGTH_FLOOR_FACTOR
+   :type:  float
+
 .. py:function:: weighted_empirical_mean(x, w)
 
-.. py:function:: base(jitter_generator: Callable, next_random_arg_fn: Callable, optim: optax.GradientTransformation, target_acceptance_rate: float, decay_rate: float, max_leapfrog_steps: int) -> tuple[Callable, Callable]
+.. py:function:: base(jitter_generator: Callable, next_random_arg_fn: Callable, optim: optax.GradientTransformation, target_acceptance_rate: float, decay_rate: float, max_leapfrog_steps: int, _whiten_criterion: bool = True) -> tuple[Callable, Callable]
 
    Maximizing the Change in the Estimator of the Expected Square criterion
    (trajectory length) and dual averaging procedure (step size) for the jittered
@@ -133,12 +137,20 @@ Module Contents
    :param target_acceptance_rate: Average acceptance rate to target with dual averaging.
    :param decay_rate: Float representing how much to favor recent iterations over earlier ones in the optimization
                       of step size and trajectory length.
+   :param _whiten_criterion: Private, undocumented ablation seam (not part of the public API). When
+                             True (default) the ChEES criterion accounts for a non-identity
+                             ``inverse_mass_matrix`` passed to ``update`` (see the derivation in
+                             ``compute_parameters``). When False, the criterion is computed exactly
+                             as the original identity-mass-matrix expression regardless of the
+                             ``inverse_mass_matrix`` passed in -- used in validation studies to
+                             isolate the whitening correction's contribution relative to the mass
+                             matrix alone.
 
    :returns: * *init* -- Function that initializes the warmup.
              * *update* -- Function that moves the warmup one step.
 
 
-.. py:function:: chees_adaptation(logdensity_fn: Callable, num_chains: int, *, jitter_generator: Callable | None = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5, max_leapfrog_steps: int = 1000, adaptation_info_fn: Callable = return_all_adapt_info) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: chees_adaptation(logdensity_fn: Callable, num_chains: int, *, jitter_generator: Callable | None = None, jitter_amount: float = 1.0, target_acceptance_rate: float = OPTIMAL_TARGET_ACCEPTANCE_RATE, decay_rate: float = 0.5, max_leapfrog_steps: int = 1000, adaptation_info_fn: Callable = return_all_adapt_info, mass_matrix_estimation: str | None = None, mass_matrix_window_fraction: float = 0.5, _whiten_criterion: bool = True, _length_floor: bool = True) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the step size and trajectory length (number of integration steps / step size)
    parameters of the jittered HMC algorthm.
@@ -193,6 +205,51 @@ Module Contents
                               and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
                               information is saved - this can result in excessive memory usage if the
                               information is unused.
+   :param mass_matrix_estimation: Opt-in ensemble-estimated *diagonal* ``inverse_mass_matrix`` (opt-in,
+                                  default ``None``). ``None`` keeps the original behavior, bit-for-bit:
+                                  the kernel always uses ``inverse_mass_matrix=jnp.ones(num_dim)``.
+                                  ``"diagonal"`` instead estimates a per-dimension variance from the
+                                  ensemble of all ``num_chains`` chains via a running Welford
+                                  accumulator (:func:`~blackjax.adaptation.mass_matrix.welford_algorithm`),
+                                  accumulated over the *last* ``mass_matrix_window_fraction`` of warmup
+                                  (see that parameter), and uses it as the kernel's diagonal
+                                  ``inverse_mass_matrix`` once enough samples have accumulated (see
+                                  "Engagement gate" below). ChEES's own trajectory-length criterion is
+                                  also whitened by this estimate so it stays metric-consistent with the
+                                  kernel it is tuning (see the derivation in
+                                  :func:`base`'s ``compute_parameters``) -- this whitening keeps the
+                                  criterion metric-consistent and responsive to the preconditioned geometry;
+                                  measured effect is small (≲12%) on NCP-standardized targets where most
+                                  dimensions are near unit scale. The feature's main value is delivered by
+                                  the slow-direction *length floor* (when enabled), which recovers large
+                                  ESS-per-gradient wins on targets with a residual slow correlation
+                                  direction the diagonal metric cannot remove.
+
+                                  **Scope: validated under located (typical-set) initializations.** On
+                                  funnel-like targets the diagonal metric can *reduce* per-draw ESS
+                                  relative to the identity metric's fine-step regime (an efficiency caveat,
+                                  not a bias—posterior means are unaffected); the length floor recovers most
+                                  of it. Cold or dispersed initialization on hard geometry is a separate
+                                  warmup-robustness limitation, out of scope for this feature.
+
+                                  Engagement gate: before the pooled accumulator (effective sample
+                                  size ``num_chains * window_steps``) exceeds ``max(64, 2*sqrt(num_dim))``
+                                  -- a modest floor chosen because a per-dimension variance estimate,
+                                  unlike a joint eigenbasis, does not need ``O(d)`` samples to escape
+                                  noise domination, so a small constant plus a mild ``d``-scaling for
+                                  very high-dimensional targets is enough -- the kernel and criterion
+                                  both use ``jnp.ones(num_dim)`` (identical to ``None``). The final
+                                  ``inverse_mass_matrix`` returned by ``run()`` is the engaged-or-
+                                  fallback estimate at the end of the accumulation window.
+   :param mass_matrix_window_fraction: Only used when ``mass_matrix_estimation="diagonal"``. Fraction of
+                                       warmup steps, counted from the end, over which the diagonal
+                                       ``inverse_mass_matrix``'s Welford accumulator collects samples
+                                       (default ``0.5``: the last half of warmup, mirroring
+                                       ``meads_adaptation``'s ``low_rank_window_fraction`` and Stan's
+                                       practice of excluding window adaptation's own early/transient
+                                       fraction). Must be in ``[0.0, 1.0]``; ``0.0`` accumulates from step
+                                       0, ``1.0`` disables accumulation entirely (falls back to
+                                       ``jnp.ones(num_dim)`` throughout the run).
 
    :returns: * *A function that returns the last cross-chain state, a sampling kernel with the*
              * *tuned parameter values, and all the warm-up states for diagnostics.*
