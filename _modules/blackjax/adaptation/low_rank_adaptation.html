@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g1ce0e426b" />
+  <meta name="docsearch:version" content="0.1.dev1+g0506d9ef2" />
   </head>
   
   
@@ -553,25 +553,60 @@
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_relative_pd_floor</span><span class="p">(</span><span class="n">vals</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Machine-epsilon floor, SCALED to ``vals``&#39; own magnitude.</span>
+
+<span class="sd">    An absolute floor (e.g. a bare ``jnp.finfo(dtype).eps``) is wrong here:</span>
+<span class="sd">    this module&#39;s SPD matrices routinely span many orders of magnitude --</span>
+<span class="sd">    e.g. ``C_a = P_a P_a^T / gamma + I`` scales like ``O(n / gamma)``</span>
+<span class="sd">    (``~1e10`` at ``n=50_000`` draws, default ``gamma=1e-5``), so</span>
+<span class="sd">    ``inv(C_a)``&#39;s eigenvalues legitimately live around ``~1e-10`` -- an</span>
+<span class="sd">    absolute ``eps`` (``~1.2e-7`` for float32) would incorrectly clamp that</span>
+<span class="sd">    perfectly-conditioned small eigenvalue UP by several orders of</span>
+<span class="sd">    magnitude, corrupting the result (caught by</span>
+<span class="sd">    ``LowRankDiagonalConsistencyTest``: a bare absolute floor turned the 1D</span>
+<span class="sd">    case&#39;s correct ``lam=1.0`` into ``lam=34.6``). Flooring relative to the</span>
+<span class="sd">    largest eigenvalue IN THE SAME SPECTRUM correctly leaves a</span>
+<span class="sd">    uniformly-small-but-well-conditioned spectrum untouched while still</span>
+<span class="sd">    catching a genuinely near-zero-relative-to-its-own-scale eigenvalue</span>
+<span class="sd">    (the actual rounding-noise failure mode the PD guard targets).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">vals</span><span class="p">)),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">vals</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">vals</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="n">scale</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_spd_mean</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Symmetric positive-definite (AIRM) geometric mean of A and B.</span>
 
 <span class="sd">    Computes :math:`A \\#_{1/2} B = B^{1/2}(B^{-1/2}AB^{-1/2})^{1/2}B^{1/2}`</span>
 <span class="sd">    via the eigendecomposition of B (the gradient covariance), following the</span>
 <span class="sd">    nutpie convention.  Both matrices must be SPD with shape ``(k, k)``.</span>
+
+<span class="sd">    **PD guard** (round-9 schedule-port audit, GAP-2): both intermediate</span>
+<span class="sd">    eigenspectra are floored at :func:`_relative_pd_floor` rather than</span>
+<span class="sd">    ``0.0``. nuts-rs&#39;s own unit test (``low_rank.rs::test_estimate_mass_matrix``)</span>
+<span class="sd">    *asserts* this pipeline returns strictly-positive eigenvalues -- it is</span>
+<span class="sd">    PD by construction in exact arithmetic, since ``A``/``B`` are each</span>
+<span class="sd">    ``P P^T / gamma + I``. The float32 audit found that rounding in this</span>
+<span class="sd">    eigendecomposition-heavy pipeline (condition number up to ``~1/gamma``)</span>
+<span class="sd">    can nonetheless produce small negative eigenvalues that silently make</span>
+<span class="sd">    the whole geometric mean indefinite; a *scale-relative* floor (see</span>
+<span class="sd">    :func:`_relative_pd_floor`&#39;s docstring for why an absolute one is wrong</span>
+<span class="sd">    here) fixes this without perturbing legitimately-informative</span>
+<span class="sd">    eigenvalues, matching nuts-rs&#39;s own PD-by-construction invariant.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># Eigendecompose B: B = V_b D_b V_b^T</span>
     <span class="n">vals_b</span><span class="p">,</span> <span class="n">vecs_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
-    <span class="n">vals_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">vals_b</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">vals_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">vals_b</span><span class="p">,</span> <span class="n">_relative_pd_floor</span><span class="p">(</span><span class="n">vals_b</span><span class="p">))</span>
     <span class="n">sqrt_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vals_b</span><span class="p">)</span>
-    <span class="n">inv_sqrt_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">vals_b</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">sqrt_b</span><span class="p">,</span> <span class="mf">1e-30</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">inv_sqrt_b</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sqrt_b</span>  <span class="c1"># vals_b &gt; 0 (floored), so this never divides by 0</span>
 
     <span class="c1"># M = B^{-1/2} A B^{-1/2} in B&#39;s eigenbasis</span>
     <span class="n">tmp</span> <span class="o">=</span> <span class="n">vecs_b</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">A</span> <span class="o">@</span> <span class="n">vecs_b</span>  <span class="c1"># (k, k)</span>
     <span class="n">M</span> <span class="o">=</span> <span class="n">inv_sqrt_b</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">tmp</span> <span class="o">*</span> <span class="n">inv_sqrt_b</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
 
     <span class="n">vals_m</span><span class="p">,</span> <span class="n">vecs_m</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
-    <span class="n">vals_m</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">vals_m</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+    <span class="n">vals_m</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">vals_m</span><span class="p">,</span> <span class="n">_relative_pd_floor</span><span class="p">(</span><span class="n">vals_m</span><span class="p">))</span>
     <span class="n">sqrt_m</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vals_m</span><span class="p">)</span>
 
     <span class="c1"># A # B = B^{1/2} M^{1/2} B^{1/2}</span>
@@ -624,7 +659,36 @@
 <span class="sd">        Shape ``(d, max_rank)``.  Low-rank eigenvectors (orthonormal columns).</span>
 <span class="sd">    lam</span>
 <span class="sd">        Shape ``(max_rank,)``.  Eigenvalues (1 for masked components).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    **Dtype promotion** (round-9 schedule-port audit, GAP-1). nuts-rs runs</span>
+<span class="sd">    this whole estimator in ``f64`` unconditionally; blackjax chains</span>
+<span class="sd">    typically run in ``float32`` (JAX&#39;s default), and the audit found that</span>
+<span class="sd">    running THIS pipeline specifically (inverting + AIRM-geometric-meaning</span>
+<span class="sd">    matrices whose condition number can reach ``~1/gamma``, e.g. ``1e5`` at</span>
+<span class="sd">    the default ``gamma=1e-5``) in float32 produces small negative</span>
+<span class="sd">    eigenvalues ~98% of the time on the models tested, silently making the</span>
+<span class="sd">    returned metric indefinite. If the caller has enabled JAX&#39;s ``x64``</span>
+<span class="sd">    mode (``jax.config.update(&quot;jax_enable_x64&quot;, True)``), this function</span>
+<span class="sd">    promotes its inputs to ``float64`` internally regardless of the</span>
+<span class="sd">    incoming (possibly ``float32``) chain dtype, then casts the result back</span>
+<span class="sd">    -- decoupling the metric estimate&#39;s numerical precision from the</span>
+<span class="sd">    sampler&#39;s own working dtype, at zero cost to any other part of the</span>
+<span class="sd">    chain. If ``x64`` is not enabled, a cast to ``float64`` would silently</span>
+<span class="sd">    be truncated back to ``float32`` by JAX (there is no per-call way to</span>
+<span class="sd">    opt into ``float64`` without the global flag), so this function instead</span>
+<span class="sd">    proceeds in the input&#39;s native dtype and relies on the PD guard in</span>
+<span class="sd">    :func:`_spd_mean` (and the floor below) to keep the returned metric</span>
+<span class="sd">    positive-definite regardless. **Enabling x64 is strongly recommended**</span>
+<span class="sd">    for ``buffer_policy=&quot;accumulating&quot;``/nutpie-schedule low-rank warmup,</span>
+<span class="sd">    matching nuts-rs&#39;s own dtype and the shipped sampling-book example.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">orig_dtype</span> <span class="o">=</span> <span class="n">draws_buffer</span><span class="o">.</span><span class="n">dtype</span>
+    <span class="n">compute_dtype</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span> <span class="k">if</span> <span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">jax_enable_x64</span> <span class="k">else</span> <span class="n">orig_dtype</span>
+    <span class="n">draws_buffer</span> <span class="o">=</span> <span class="n">draws_buffer</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">compute_dtype</span><span class="p">)</span>
+    <span class="n">grads_buffer</span> <span class="o">=</span> <span class="n">grads_buffer</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">compute_dtype</span><span class="p">)</span>
+
     <span class="n">B</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span>
 
     <span class="c1"># Mask valid rows</span>
@@ -685,6 +749,17 @@
 
     <span class="c1"># --- Step 8: eigendecompose Σ in the projected subspace ---</span>
     <span class="n">vals</span><span class="p">,</span> <span class="n">vecs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>  <span class="c1"># vals ascending, (2k,)</span>
+    <span class="c1"># PD guard (round-9 audit, GAP-2): Sigma is PD by construction in exact</span>
+    <span class="c1"># arithmetic (both C_x, C_a are `P P^T / gamma + I`, hence PD, and</span>
+    <span class="c1"># _spd_mean itself is now floored -- see its docstring), but float32</span>
+    <span class="c1"># rounding through this eigendecomposition-heavy pipeline can still tip</span>
+    <span class="c1"># a near-zero eigenvalue negative. Flooring here is the same</span>
+    <span class="c1"># scale-relative guard as _spd_mean&#39;s (see _relative_pd_floor -- an</span>
+    <span class="c1"># ABSOLUTE eps floor is wrong for this pipeline&#39;s wide dynamic range),</span>
+    <span class="c1"># applied to the metric&#39;s OWN final eigenvalues (belt-and-suspenders,</span>
+    <span class="c1"># matching nuts-rs&#39;s own `vals.all(|x| x &gt; 0.)` assertion in</span>
+    <span class="c1"># `test_estimate_mass_matrix`).</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">_relative_pd_floor</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span>
     <span class="n">U_full</span> <span class="o">=</span> <span class="n">Q</span> <span class="o">@</span> <span class="n">vecs</span>  <span class="c1"># (d, 2k) back to original space</span>
 
     <span class="c1"># --- Step 9: select top max_rank by |λ-1|; mask near-unity eigenvalues ---</span>
@@ -706,7 +781,17 @@
         <span class="n">U_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">U_out</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,</span> <span class="n">pad</span><span class="p">))],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">lam_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">lam_out</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">pad</span><span class="p">)])</span>
 
-    <span class="k">return</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_star</span><span class="p">,</span> <span class="n">U_out</span><span class="p">,</span> <span class="n">lam_out</span>
+    <span class="c1"># Cast back to the caller&#39;s original dtype -- the metric&#39;s INTERNAL</span>
+    <span class="c1"># computation may have been promoted to float64 above, but the returned</span>
+    <span class="c1"># state fields (sigma/mu_star/U/lam, folded into LowRankAdaptationState)</span>
+    <span class="c1"># must stay in the chain&#39;s own working dtype so the rest of the warmup</span>
+    <span class="c1"># loop&#39;s pytree structure is unaffected.</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">sigma</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">orig_dtype</span><span class="p">),</span>
+        <span class="n">mu_star</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">orig_dtype</span><span class="p">),</span>
+        <span class="n">U_out</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">orig_dtype</span><span class="p">),</span>
+        <span class="n">lam_out</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">orig_dtype</span><span class="p">),</span>
+    <span class="p">)</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
