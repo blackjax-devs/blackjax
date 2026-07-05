@@ -197,14 +197,20 @@ class MomentRecoveryTest(BlackJAXTest):
         self.assertGreater(float(jnp.mean(infos.acceptance_rate)), 0.05)
 
     def test_neal_funnel_neck_marginal(self):
+        # The canonical stress test for step-size adaptation (a single
+        # global step size cannot work). Check only the well-behaved "neck"
+        # marginal y ~ N(0, 3**2) exactly -- the funnel coordinates' marginal
+        # variance is a log-normal mixture (heavy-tailed, high MC variance),
+        # not a useful numeric target at feasible sample sizes.
+        # (Rationale mirrors test_gist_step_size.py::test_neal_funnel_neck_marginal)
         algo = blackjax.gist_trajectory_length(
             neal_funnel_logdensity,
             inverse_mass_matrix=jnp.ones(3),
             step_size=0.15,
             max_num_steps=128,
         )
-        pos, infos = run_chain(algo, jnp.zeros(3), self.next_key(), 4000)
-        y = np.asarray(pos[2000:, 0])
+        pos, infos = run_chain(algo, jnp.zeros(3), self.next_key(), 6000)
+        y = np.asarray(pos[3000:, 0])
         np.testing.assert_allclose(y.mean(), 0.0, atol=0.7)
         self.assertTrue(np.all(np.isfinite(np.asarray(pos))))
 
