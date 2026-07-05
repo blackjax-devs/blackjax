@@ -18,6 +18,7 @@ import numpy as np
 from absl.testing import absltest
 
 import blackjax
+from blackjax.adaptation.base import return_all_adapt_info
 from blackjax.adaptation.low_rank_adaptation import (
     _accumulating_buffer_capacity,
     _compute_low_rank_metric,
@@ -1361,6 +1362,107 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
         (state, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=250)
         self.assertTrue(bool(jnp.all(jnp.isfinite(state.position))))
         self.assertGreater(float(params["step_size"]), 0.0)
+
+
+class LowRankAdaptationInfoOOMFixTest(BlackJAXTest):
+    """Regression tests for the OOM root-cause + fix (round-9 audit,
+    ``BUFFER_BUG.md``).
+
+    Root cause: with the framework's generic ``return_all_adapt_info`` as
+    the default ``adaptation_info_fn``, ``window_adaptation_low_rank``'s
+    ``run`` stacks the ENTIRE per-step ``LowRankAdaptationState`` --
+    including ``draws_buffer``/``grads_buffer``, each shape
+    ``(buffer_size, d)`` -- via ``jax.lax.scan``'s per-step output
+    stacking, producing a ``(num_steps, buffer_size, d)`` array per field.
+    At d=503, ``buffer_size=4100`` (Stan's schedule, ``num_steps=5000``,
+    ``buffer_policy="accumulating"``), ``5000*4100*503*4 bytes =
+    41,246,000,000`` -- an EXACT match to the reported
+    ``jax.errors.JaxRuntimeError: Out of memory allocating 41246000000
+    bytes``. Isolating ``_compute_low_rank_metric`` at the SAME (B, d)
+    shape uses only ~350 MB, confirming the stacked ``ys`` output -- not
+    the metric's own SVD/QR pipeline -- was the single failing
+    allocation. These tests run at small, fast scale (structural
+    assertions); the production-scale OOM fix itself was verified directly
+    by re-running the exact previously-OOMing config (d=503,
+    num_steps=5000, ``buffer_policy="accumulating"``, Stan schedule) under
+    ``systemd-run --user --scope -p MemoryMax=10G`` (see the PR
+    description for the full transcript) -- it now completes without a
+    cgroup-kill.
+    """
+
+    def tearDown(self):
+        jax.clear_caches()
+        super().tearDown()
+
+    def test_default_info_fn_drops_raw_buffers(self):
+        """The default ``adaptation_info_fn`` must NOT stack
+        ``draws_buffer``/``grads_buffer`` in the per-step trace (the O(
+        num_steps * buffer_size * d) allocation that OOM'd), while every
+        OTHER adaptation-state field stays fully populated per step."""
+        d = 6
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+        warmup = blackjax.window_adaptation_low_rank(
+            blackjax.nuts,
+            logdensity_fn,
+            max_rank=2,
+            buffer_policy="accumulating",
+        )
+        num_steps = 50
+        (_, params), info = warmup.run(
+            self.next_key(), jnp.zeros(d), num_steps=num_steps
+        )
+        adapt_state = info.adaptation_state
+
+        self.assertIsNone(adapt_state.draws_buffer)
+        self.assertIsNone(adapt_state.grads_buffer)
+
+        # Every other field must still be fully populated (stacked over
+        # num_steps), so no OTHER diagnostic information was silently lost.
+        self.assertEqual(adapt_state.sigma.shape[0], num_steps)
+        self.assertEqual(adapt_state.mu_star.shape[0], num_steps)
+        self.assertEqual(adapt_state.U.shape[0], num_steps)
+        self.assertEqual(adapt_state.lam.shape[0], num_steps)
+        self.assertEqual(adapt_state.step_size.shape[0], num_steps)
+        self.assertEqual(adapt_state.buffer_idx.shape[0], num_steps)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(adapt_state.sigma))))
+        self.assertGreater(float(params["step_size"]), 0.0)
+
+    def test_explicit_return_all_adapt_info_still_available(self):
+        """Passing ``adaptation_info_fn=return_all_adapt_info`` explicitly
+        must still return the FULL raw per-step buffers -- the fix changes
+        only the DEFAULT, not what is possible."""
+        d = 6
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+        warmup = blackjax.window_adaptation_low_rank(
+            blackjax.nuts,
+            logdensity_fn,
+            max_rank=2,
+            buffer_policy="accumulating",
+            adaptation_info_fn=return_all_adapt_info,
+        )
+        num_steps = 50
+        _, info = warmup.run(self.next_key(), jnp.zeros(d), num_steps=num_steps)
+        adapt_state = info.adaptation_state
+
+        self.assertIsNotNone(adapt_state.draws_buffer)
+        self.assertIsNotNone(adapt_state.grads_buffer)
+        self.assertEqual(adapt_state.draws_buffer.shape[0], num_steps)
+        self.assertEqual(adapt_state.grads_buffer.shape[0], num_steps)
+
+    def test_default_info_fn_drops_buffers_under_reset_policy_too(self):
+        """The fix is unconditional on ``buffer_policy`` -- "reset" carries
+        the same (draws_buffer, grads_buffer) fields and the same
+        ``jax.lax.scan`` stacking mechanism, so the default must drop them
+        there too (not just under "accumulating")."""
+        d = 6
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)
+        warmup = blackjax.window_adaptation_low_rank(
+            blackjax.nuts, logdensity_fn, max_rank=2, buffer_policy="reset"
+        )
+        _, info = warmup.run(self.next_key(), jnp.zeros(d), num_steps=50)
+        adapt_state = info.adaptation_state
+        self.assertIsNone(adapt_state.draws_buffer)
+        self.assertIsNone(adapt_state.grads_buffer)
 
 
 if __name__ == "__main__":

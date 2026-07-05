@@ -67,6 +67,21 @@ accumulates in the next one -- and it recomputes the metric up to every draw
 ``src/adapt_strategy.rs``). Passing ``buffer_policy="accumulating"`` to
 :func:`base` / :func:`window_adaptation_low_rank` enables this; the default
 ``"reset"`` reproduces the original hard-reset behaviour exactly.
+
+**Numerical robustness** (round-9 schedule-port audit). ``_compute_low_rank_metric``
+opportunistically promotes its internal computation to ``float64`` when JAX's
+``jax_enable_x64`` mode is enabled (regardless of the chain's own working
+dtype), and always applies a scale-relative positive-definiteness floor to
+both intermediate eigenspectra and the metric's own final eigenvalues --
+matching nuts-rs's own f64-throughout, PD-by-construction estimator. Enabling
+``jax_enable_x64`` is strongly recommended for this warmup.
+
+**Memory**: :func:`window_adaptation_low_rank`'s default ``adaptation_info_fn``
+drops the internal ``draws_buffer``/``grads_buffer`` working buffers from the
+per-step diagnostic trace (an O(``num_steps`` x ``buffer_size`` x ``d``)
+allocation ``jax.lax.scan`` would otherwise stack for no benefit); pass
+``adaptation_info_fn=blackjax.adaptation.base.return_all_adapt_info``
+explicitly to keep them.
 """
 import inspect
 from typing import Callable, NamedTuple
@@ -77,7 +92,7 @@ import jax.numpy as jnp
 import numpy as np
 
 import blackjax.mcmc as mcmc
-from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
+from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
 from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
@@ -148,6 +163,49 @@ class LowRankAdaptationState(NamedTuple):
     buffer_idx: int
     background_split: int
     recompute_counter: int
+
+
+def _default_low_rank_adaptation_info_fn(
+    state, info, adaptation_state: LowRankAdaptationState
+) -> AdaptationInfo:
+    """Default ``adaptation_info_fn`` for :func:`window_adaptation_low_rank`.
+
+    Root-caused OOM finding (round-9 audit, calibration harness escalation
+    ``BUFFER_BUG.md``): with the framework's generic
+    :func:`~blackjax.adaptation.base.return_all_adapt_info` as the default,
+    ``run``'s ``jax.lax.scan`` stacks the ENTIRE per-step
+    :class:`LowRankAdaptationState` -- including ``draws_buffer`` and
+    ``grads_buffer``, each shape ``(buffer_size, d)`` -- into a
+    ``(num_steps, buffer_size, d)`` array *per field*, even though nothing
+    downstream reads the raw per-step buffer contents (verified: no test or
+    callsite in this codebase touches ``info.adaptation_state.draws_buffer``
+    /``.grads_buffer``). At d=503, ``buffer_size=4100`` (Stan's own schedule
+    at ``num_steps=5000`` under ``buffer_policy="accumulating"``), this is
+    ``5000 * 4100 * 503 * 4 bytes = 41,246,000,000`` -- an EXACT match to
+    the reported ``jax.errors.JaxRuntimeError: Out of memory allocating
+    41246000000 bytes``, confirming the stacked buffer (not
+    ``_compute_low_rank_metric``'s own SVD/QR pipeline, which uses only
+    ~350 MB in isolation at this exact (B, d) shape) is the single
+    allocation that failed. This applies to BOTH buffer policies (the same
+    state shape, same ``lax.scan`` stacking mechanism) -- "reset"'s own
+    buffer-size heuristic can reach a comparable scale at large enough
+    ``num_steps``, so this default drops the two large fields
+    unconditionally rather than special-casing ``buffer_policy``.
+
+    Drops ``draws_buffer``/``grads_buffer`` from the per-step
+    ``adaptation_state`` trace (replaced with ``None``, i.e. no leaves --
+    a standard JAX pytree pattern for "don't stack this"), while otherwise
+    behaving exactly like ``return_all_adapt_info`` (``state``/``info`` and
+    every OTHER ``adaptation_state`` field -- ``sigma``, ``mu_star``, ``U``,
+    ``lam``, ``step_size``, etc. -- stay fully populated per step, each
+    O(d) or O(d*max_rank), i.e. negligible even stacked over
+    ``num_steps``). Callers who need the raw per-step buffer trace can pass
+    ``adaptation_info_fn=return_all_adapt_info`` explicitly.
+    """
+    trimmed_adaptation_state = adaptation_state._replace(
+        draws_buffer=None, grads_buffer=None
+    )
+    return AdaptationInfo(state, info, trimmed_adaptation_state)
 
 
 # ---------------------------------------------------------------------------
@@ -976,7 +1034,7 @@ def window_adaptation_low_rank(
     gamma: float = 1e-5,
     cutoff: float = 2.0,
     progress_bar: bool = False,
-    adaptation_info_fn: Callable = return_all_adapt_info,
+    adaptation_info_fn: Callable = _default_low_rank_adaptation_info_fn,
     integrator=mcmc.integrators.velocity_verlet,
     gradient_based_init: bool = False,
     schedule_fn: Callable[[int], Array] = build_schedule,
@@ -1018,7 +1076,15 @@ def window_adaptation_low_rank(
         Show a progress bar during warmup.
     adaptation_info_fn
         Controls what adaptation info is retained; see
-        ``blackjax.adaptation.base``.
+        ``blackjax.adaptation.base``. Default
+        :func:`_default_low_rank_adaptation_info_fn` drops the raw
+        ``draws_buffer``/``grads_buffer`` internal working buffers from the
+        per-step trace (an O(num_steps * buffer_size * d) allocation
+        otherwise stacked by ``jax.lax.scan`` for no benefit -- the exact
+        root cause of a reported OOM at high d + large
+        ``buffer_policy="accumulating"`` buffers; see that function's
+        docstring). Pass ``blackjax.adaptation.base.return_all_adapt_info``
+        explicitly to keep the raw per-step buffer trace.
     integrator
         Integrator to pass to ``algorithm.build_kernel``.
     gradient_based_init
