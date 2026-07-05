@@ -697,14 +697,21 @@ class BuildGrowingWindowScheduleTest(BlackJAXTest):
         through the looser structural checks below. Verified independently
         against nuts-rs's own schedule constants (statistician parity
         review, 2026-07-03): 150 early windows of size 10 (early_end=1500),
-        then main-phase windows growing 80->120->180->270->405->608->912
-        (1.5x, round-half-to-even) truncated to 175 to exactly fill the
-        remaining budget before the final buffer, then 750 fast
-        (step-size-only) steps."""
+        then main-phase windows growing 80->120->180->270->405->608, at
+        which point nuts-rs's ``is_late`` rule fires (round-9 schedule-port
+        audit fix): starting the next window (912) would end at
+        3163+912=4075, and *that* window's own successor (1368) would then
+        end at 5443, past ``final_buffer_start=4250`` -- so the 608-window
+        never switches to a fresh 912-window; instead it keeps absorbing
+        draws, unswitched, all the way to 4250 (912+175=1087 total), then
+        750 fast (step-size-only) steps. Before the fix (naive
+        ``min(current_size, remaining)`` truncation) this schedule instead
+        emitted a separate, starved 175-draw final window -- see the
+        superseded golden values in git history for this test."""
         schedule = build_growing_window_schedule(5000)
         window_end_indices = np.where(np.asarray(schedule[:, 1]) == 1)[0]
         window_sizes = np.diff(np.concatenate([[-1], window_end_indices])).tolist()
-        expected = [10] * 150 + [80, 120, 180, 270, 405, 608, 912, 175]
+        expected = [10] * 150 + [80, 120, 180, 270, 405, 608, 1087]
         self.assertEqual(window_sizes, expected)
         n_fast = int((np.asarray(schedule[:, 0]) == 0).sum())
         self.assertEqual(n_fast, 750)
@@ -735,7 +742,15 @@ class BuildGrowingWindowScheduleTest(BlackJAXTest):
     def test_window_sizes_grow_in_main_phase(self):
         """Successive window sizes (gaps between window-end markers) in the
         main phase must be non-decreasing, reflecting the 1.5x growth
-        factor (vs Stan's fixed-size doubling-only-at-restart windows)."""
+        factor (vs Stan's fixed-size doubling-only-at-restart windows).
+
+        Post-``is_late``-fix, this now holds for the FULL main-phase
+        sequence including the final window: the fix's absorbing final
+        window is, by construction, always at least as large as the window
+        it grew from (round-9 schedule-port audit) -- unlike the pre-fix
+        naive truncation, which could (and at num_steps=2000 did) make the
+        final window *smaller* than the one before it, which is why this
+        test used to explicitly exclude the last gap from the check."""
         num_steps = 5000
         schedule = build_growing_window_schedule(
             num_steps, early_window=0.3, step_size_window=0.15
@@ -744,8 +759,9 @@ class BuildGrowingWindowScheduleTest(BlackJAXTest):
         # Window sizes = gaps between consecutive window-end markers.
         gaps = np.diff(np.concatenate([[-1], window_end_indices]))
         # Drop the first few (early phase, fixed size) -- check the tail
-        # (main phase) is non-decreasing until the final truncated window.
-        main_phase_gaps = gaps[3:-1] if len(gaps) > 4 else gaps
+        # (main phase, now including the final absorbing window) is
+        # non-decreasing.
+        main_phase_gaps = gaps[3:] if len(gaps) > 4 else gaps
         if len(main_phase_gaps) > 1:
             self.assertTrue(bool(np.all(np.diff(main_phase_gaps) >= 0)))
 
@@ -762,6 +778,118 @@ class BuildGrowingWindowScheduleTest(BlackJAXTest):
         )
         final_start = num_steps - int(round(0.2 * num_steps))
         self.assertTrue(bool(jnp.all(schedule[final_start:, 0] == 0)))
+
+
+class IsLateFinalWindowTest(BlackJAXTest):
+    """Regression tests for the ``is_late`` fix (round-9 schedule-port audit).
+
+    Before this fix, ``build_growing_window_schedule``'s main phase
+    truncated its final window to ``min(current_size, remaining)``,
+    manufacturing a final mass-matrix recompute window that could be far
+    *smaller* than the schedule's own growth would otherwise reach -- as
+    little as 45 draws (under ``d=50``) at ``num_steps=2000``, starving a
+    rank-10 low-rank (or dense) metric fit and (per the audit) manufacturing
+    a large fraction of the "continuous schedule breaks the low-rank
+    estimator" A/B #8 negative. Porting nuts-rs's ``is_late`` look-ahead
+    (``adapt_strategy.rs``: don't start a window whose own successor
+    wouldn't fit before the step-size-only phase) instead lets the
+    in-progress window absorb the remainder, giving a final window
+    comparable in scale to Stan's own (much larger) final buffer.
+    """
+
+    def test_golden_final_window_sizes(self):
+        """Exact final-window sizes at the three audited num_steps values,
+        with the DEFAULT schedule constants -- locks in the fix's behaviour
+        (regression-proof against a silent re-introduction of the naive
+        truncation). Cross-checked by hand against nuts-rs's ``is_late``
+        semantics in the round-9 schedule-port audit."""
+        expected_final_window = {1000: 350, 2000: 450, 5000: 1087}
+        for num_steps, expected in expected_final_window.items():
+            schedule = build_growing_window_schedule(num_steps)
+            window_end_indices = np.where(np.asarray(schedule[:, 1]) == 1)[0]
+            window_sizes = np.diff(np.concatenate([[-1], window_end_indices]))
+            self.assertEqual(
+                int(window_sizes[-1]),
+                expected,
+                f"num_steps={num_steps}: final window size drifted",
+            )
+
+    def test_final_window_far_exceeds_naive_truncation(self):
+        """At every audited num_steps, the fixed final window must be
+        substantially larger (>= 2x) than the pre-fix naive
+        ``min(current_size, remaining)`` truncation would have given --
+        the whole point of the fix. Recomputes the pre-fix value directly
+        (rather than hand-coding it) so the test documents *why* the ratio
+        holds, not just that it does."""
+        for num_steps in (1000, 2000, 5000):
+            schedule = build_growing_window_schedule(num_steps)
+            window_end_indices = np.where(np.asarray(schedule[:, 1]) == 1)[0]
+            window_sizes = np.diff(np.concatenate([[-1], window_end_indices]))
+            fixed_final_window = int(window_sizes[-1])
+
+            # Recompute the pre-fix (naive truncation) final window size
+            # directly from the same early/main-phase constants.
+            final_buffer_size = max(int(round(0.15 * num_steps)), 1)
+            final_buffer_start = num_steps - final_buffer_size
+            early_end = min(max(int(round(0.3 * num_steps)), 1), final_buffer_start)
+            pos, current_size = early_end, 80
+            naive_final_window = None
+            while pos < final_buffer_start:
+                remaining = final_buffer_start - pos
+                naive_final_window = min(current_size, remaining)
+                pos += naive_final_window
+                current_size = max(current_size + 1, int(round(current_size * 1.5)))
+
+            self.assertGreaterEqual(fixed_final_window, 2 * naive_final_window)
+
+    def test_final_window_at_least_2k_for_default_max_rank(self):
+        """Sane-floor check: the fixed final window must comfortably exceed
+        ``q = 2*max_rank`` (the projected-subspace dimension
+        ``_compute_low_rank_metric`` needs support for) at the library
+        default ``max_rank=10`` -- i.e. never rank-deficient for the
+        default low-rank configuration, at any of the three audited
+        num_steps values."""
+        max_rank = 10
+        for num_steps in (1000, 2000, 5000):
+            schedule = build_growing_window_schedule(num_steps)
+            window_end_indices = np.where(np.asarray(schedule[:, 1]) == 1)[0]
+            window_sizes = np.diff(np.concatenate([[-1], window_end_indices]))
+            self.assertGreater(int(window_sizes[-1]), 2 * max_rank)
+
+    def test_final_window_vs_d_up_to_500_documented_shortfall(self):
+        """ "sane floor" honesty check (brief's explicit "d up to ~500"
+        ask): the fixed final window comfortably covers d up to ~500 at
+        num_steps in {2000, 5000} (450 and 1087 respectively), but at
+        num_steps=1000 the fixed final window (350) does NOT reach d=500 --
+        an inherent limitation of a warmup budget that tight for that
+        dimensionality (any schedule, not just this one, would struggle),
+        not a further bug. This test pins that boundary explicitly rather
+        than silently asserting a floor that doesn't hold."""
+        final_window = {
+            num_steps: int(
+                np.diff(
+                    np.concatenate(
+                        [
+                            [-1],
+                            np.where(
+                                np.asarray(
+                                    build_growing_window_schedule(num_steps)[:, 1]
+                                )
+                                == 1
+                            )[0],
+                        ]
+                    )
+                )[-1]
+            )
+            for num_steps in (1000, 2000, 5000)
+        }
+        self.assertGreaterEqual(final_window[2000], 450)
+        self.assertGreaterEqual(final_window[5000], 500)
+        # Documented shortfall, not a bug: nw=1000's final window (350)
+        # stays below d=500 -- too little total warmup budget for that
+        # dimensionality regardless of schedule.
+        self.assertLess(final_window[1000], 500)
+        self.assertGreaterEqual(final_window[1000], 2 * 10)  # still >> 2*max_rank
 
 
 class LowRankGradientBasedInitTest(BlackJAXTest):
@@ -1046,12 +1174,24 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
         self.assertEqual((buffer_idx[39], background_split[39]), (20, 20))
 
     def test_effective_support_far_exceeds_final_window_at_nw2000(self):
-        """The exact G2-verdict scenario: n_warmup=2000, growing schedule,
-        d=50. The "reset" policy's final metric recompute uses only the
-        final (truncated) window's own draws; "accumulating" uses that
-        window's draws *plus* the entire previous window, kept as
-        background. Effective support must be far larger than the final
-        window's own size (not just marginally so)."""
+        """The G2-verdict scenario: n_warmup=2000, growing schedule, d=50.
+        The "reset" policy's final metric recompute uses only the final
+        window's own draws; "accumulating" uses that window's draws *plus*
+        the entire previous window, kept as background.
+
+        Finding (round-9 schedule-port audit / ``is_late`` fix): this test
+        originally pinned "accumulating support far exceeds (>5x) reset
+        support" against the PRE-FIX schedule, where the naive
+        ``min(current_size, remaining)`` truncation starved "reset"'s final
+        window to 45 draws (< d=50) while "accumulating" recovered to 450.
+        The ``is_late`` schedule fix removes that starvation for BOTH buffer
+        policies (schedule generation is buffer-policy-agnostic) -- "reset"
+        now also gets the large, well-supported final window (450 at
+        nw=2000), so the *dramatic* 10x gap this test used to assert is
+        gone. What remains, and is still real, is "accumulating"'s modest
+        structural advantage (it additionally retains the FULL previous
+        window as background, not just its own): 450+270=720 vs reset's
+        450, a robust ~1.6x, not "far exceeds"."""
         d = 50
         num_steps = 2000
         schedule = build_growing_window_schedule(num_steps)
@@ -1086,19 +1226,32 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
 
         self.assertEqual(n_reset, final_window_size)
         self.assertEqual(n_acc, final_window_size + previous_window_size)
-        self.assertGreater(n_acc, 5 * n_reset)  # "far exceeds", not marginal
+        # "accumulating" still gives strictly more support than "reset"
+        # (it additionally retains the prior window as background), but --
+        # post is_late-fix -- both are now well-supported (>> d=50), so the
+        # advantage is a modest multiple, not the pre-fix "far exceeds".
+        self.assertGreater(n_acc, n_reset)
+        self.assertLess(n_acc, 3 * n_reset)
 
     def test_recovered_metric_less_degenerate_with_accumulating_support(self):
         """Downstream consequence of the support difference above: at
-        d=50, max_rank=10, n=45 (reset-policy-level support) is a
-        materially worse (higher relative-Frobenius-error) recovery of a
-        known rank-10-plus-diagonal covariance than n=450 (accumulating-
-        policy-level support at the same n_warmup=2000 schedule) -- the
-        exact failure mode the design doc's G2 verdict names ("subspace
-        selection...can pick a garbage direction and collapse a specific
-        coordinate's eigenvalue"). Re-verified across 6 seeds during
-        development: reset-level error stably 0.41-0.46, accumulating-level
-        stably 0.20-0.21 -- a robust ~2x gap, not seed noise."""
+        d=50, max_rank=10, n=45 is a materially worse (higher
+        relative-Frobenius-error) recovery of a known rank-10-plus-diagonal
+        covariance than n=450 -- the exact failure mode the design doc's G2
+        verdict names ("subspace selection...can pick a garbage direction
+        and collapse a specific coordinate's eigenvalue"). Re-verified
+        across 6 seeds during development: n=45-level error stably
+        0.41-0.46, n=450-level stably 0.20-0.21 -- a robust ~2x gap, not
+        seed noise.
+
+        Note (post ``is_late``-fix): n=45/n=450 are called directly against
+        ``_compute_low_rank_metric`` (bypassing the schedule), so this
+        illustrative characterization of the starvation mechanism is
+        unaffected by the schedule fix -- but n=45 is no longer what
+        n_warmup=2000's "reset" policy actually produces post-fix (see
+        ``test_effective_support_far_exceeds_final_window_at_nw2000``
+        above); it's retained here as the pre-fix magnitude that motivated
+        the fix, not a live schedule output."""
         d, rank = 50, 10
         key1, key2, key3 = jax.random.split(self.next_key(), 3)
         Q, _ = jnp.linalg.qr(jax.random.normal(key1, (d, rank)))

@@ -470,22 +470,29 @@ def build_growing_window_schedule(
 
     **Scope note.** This function (together with the ``gradient_based_init``
     option on :func:`base` / :func:`window_adaptation_low_rank`) implements
-    the window-sizing and gradient-based-init components of nutpie's warmup.
-    Recompute cadence and buffer semantics follow the *host* Stan-style
-    machinery unchanged: nutpie's actual schedule is an *online*, per-draw
-    decision (``adapt_strategy.rs``'s ``is_late`` look-ahead + a
-    partial-forget circular buffer + up-to-every-draw metric recomputation,
+    the window-sizing and gradient-based-init components of nutpie's warmup;
+    pair it with ``buffer_policy="accumulating"`` (see :func:`base`) for the
+    partial-forget buffer and continuous recompute cadence, matching
+    nutpie's other main pieces.
+
+    nutpie's actual schedule is an *online*, per-draw decision
+    (``adapt_strategy.rs``'s ``is_late`` look-ahead + a partial-forget
+    circular buffer + up-to-every-draw metric recomputation,
     ``mass_matrix_update_freq=1``), whereas blackjax's warmup runs the
     entire schedule as a static array through a single ``jax.lax.scan``
     (fixed ahead of time, like Stan's own :func:`build_schedule`), so this
     function precomputes an equivalent *offline* schedule with the same
-    growth/sizing character. Recompute cadence stays window-boundary-only
-    (unchanged from :func:`build_schedule`'s semantics: ``slow_final`` still
-    only fires at a window end) and buffer memory stays a hard reset
-    (unchanged: ``slow_final`` still zeros the buffer) -- nutpie's
-    continuous per-draw recomputation and partial-forget buffer are a
-    "faithful port" follow-up; see the note in
-    :func:`window_adaptation_low_rank`'s docstring.
+    growth/sizing character -- **including the ``is_late`` rule**: the main
+    phase does not start a window whose own successor (grown by
+    ``window_growth``) would not fit before ``final_buffer_start``; instead
+    the in-progress window keeps absorbing draws, unswitched, all the way to
+    the step-size-only phase boundary. Without this, the naive
+    ``min(current_size, remaining)`` truncation manufactures a tiny final
+    window (e.g. 45 draws, under ``d=50``, at ``num_steps=2000``) that
+    starves the final low-rank/dense metric recompute -- the ``is_late``
+    rule instead gives a large, well-supported final window (e.g. 450 at the
+    same budget), matching nuts-rs's own final-recompute support (round-9
+    schedule-port audit).
 
     Unlike Stan's schedule, there is no purely step-size-only *initial*
     buffer: nutpie starts adapting the mass matrix from the very first draw
@@ -543,14 +550,35 @@ def build_growing_window_schedule(
 
     # Main phase: windows starting at `window_size`, growing by
     # `window_growth` after each switch, slow stage.
+    #
+    # ``is_late`` (nuts-rs ``adapt_strategy.rs``: ``next_window_size + draw >
+    # final_step_size_window``): before committing to a window switch, check
+    # whether the window AFTER this one (grown by `window_growth`) would even
+    # fit before `final_buffer_start`. If not, this window never switches --
+    # it keeps absorbing draws, unswitched, all the way to
+    # `final_buffer_start`, so the metric's FINAL recompute sees a large,
+    # well-supported buffer instead of a truncated remainder. Naively
+    # truncating this window to `min(current_size, remaining)` (the pre-fix
+    # behaviour) manufactures a final window that can be far smaller than the
+    # schedule's own growth would otherwise reach -- e.g. 45 draws (< d=50)
+    # at n_warmup=2000 on a rank-10 low-rank fit, vs 450 once absorbed here
+    # (round-9 schedule-port audit, both arms).
     current_size = window_size
     while pos < final_buffer_start:
         remaining = final_buffer_start - pos
-        size = min(current_size, remaining)
+        next_size = max(current_size + 1, int(round(current_size * window_growth)))
+        is_late = (pos + current_size) + next_size > final_buffer_start
+        if is_late:
+            size = remaining
+            schedule += [(1, False)] * (size - 1)
+            schedule.append((1, True))
+            pos += size
+            break
+        size = current_size
         schedule += [(1, False)] * (size - 1)
         schedule.append((1, True))
         pos += size
-        current_size = max(current_size + 1, int(round(current_size * window_growth)))
+        current_size = next_size
 
     # Final phase: step-size-only, fast stage.
     schedule += [(0, False)] * (num_steps - pos - 1)
