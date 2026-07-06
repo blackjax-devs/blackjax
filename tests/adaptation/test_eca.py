@@ -39,12 +39,20 @@ from blackjax.eca import ensemble_execute_fn  # noqa: E402
 class ECAMultiDeviceTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
-        self.assertGreaterEqual(
-            jax.device_count(),
-            2,
-            "This test requires >=2 devices; check that XLA_FLAGS took effect "
-            "before jax was first used in this process.",
-        )
+        if jax.device_count() < 2:
+            # XLA_FLAGS only takes effect if this module is the first to touch
+            # jax in its process. Under pytest-xdist, another test file in the
+            # same worker frequently imports jax first, locking in a 1-device
+            # backend before this module's os.environ assignment ever runs.
+            # Skip rather than fail so this doesn't depend on test-collection
+            # ordering across the full suite; it still runs (and exercises
+            # the real bug) whenever this module happens to load first, or
+            # when run standalone, e.g. `pytest tests/adaptation/test_eca.py`.
+            self.skipTest(
+                f"Requires >=2 devices, got {jax.device_count()}. XLA_FLAGS "
+                "did not take effect before jax was first used in this "
+                "process (likely due to pytest-xdist test ordering)."
+            )
         self.mesh = Mesh(jax.devices()[:2], "chains")
 
     def test_args_as_sharded_array_does_not_raise(self):
