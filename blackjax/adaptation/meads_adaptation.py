@@ -15,10 +15,12 @@ from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
+from jax.flatten_util import ravel_pytree
 
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
 from blackjax.base import AdaptationAlgorithm
+from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 __all__ = ["MEADSAdaptationState", "base", "maximum_eigenvalue", "meads_adaptation"]
@@ -208,6 +210,159 @@ def base(
     return init, update
 
 
+def _low_rank_apply(element: Array, U: Array, lam_pow: Array) -> Array:
+    """Batched ``element + U @ ((lam_pow - 1) * (U.T @ element))``.
+
+    ``element`` has shape ``(n, d)`` (a batch of ``n`` flat vectors), ``U``
+    has shape ``(d, k)``, ``lam_pow`` has shape ``(k,)``. Shared building
+    block for the two low-rank whitening transforms below -- it mirrors the
+    ``B`` / ``A*`` matrices inside
+    :func:`~blackjax.mcmc.metrics.gaussian_euclidean_low_rank`'s ``scale``
+    closure, specialized to a batch of vectors so it composes with MEADS's
+    per-fold ``jax.vmap``.
+    """
+    Ue = element @ U  # (n, k)
+    return element + (Ue * (lam_pow - 1.0)) @ U.T
+
+
+def _low_rank_precondition_pos(pos: Array, sigma: Array, U: Array, lam: Array) -> Array:
+    """Low-rank generalization of the legacy ``pos / sigma`` preconditioning.
+
+    Mirrors ``M^{1/2} pos`` (i.e. ``metric.scale(_, pos, inv=False,
+    trans=False)`` for
+    :func:`~blackjax.mcmc.metrics.gaussian_euclidean_low_rank`); reduces to
+    ``pos / sigma`` when ``lam == 1`` (the diagonal limit), matching the
+    legacy preconditioning bit-for-bit.
+    """
+    return _low_rank_apply(pos, U, 1.0 / jnp.sqrt(lam)) / sigma
+
+
+class _LowRankAccumulatorState(NamedTuple):
+    """Running Chan/Welford covariance accumulator for MEADS-LRD's window
+    accumulation (high-d fix: see ``low_rank_rank``'s docstring).
+
+    Carries the mean, the Chan "M2" sum-of-outer-products, and the effective
+    sample count pooled across *all* ``num_chains`` chains and every
+    accumulated window step, so the low-rank metric can eventually be
+    estimated from effective ``n = num_chains * window_steps`` rather than a
+    single ``num_chains``-sized ensemble snapshot.
+    """
+
+    mean: Array
+    m2: Array
+    count: Array
+
+
+def _lrd_accumulator_init(d: int) -> _LowRankAccumulatorState:
+    return _LowRankAccumulatorState(
+        mean=jnp.zeros((d,)), m2=jnp.zeros((d, d)), count=jnp.zeros(())
+    )
+
+
+def _lrd_accumulator_update(
+    acc: _LowRankAccumulatorState, batch: Array
+) -> _LowRankAccumulatorState:
+    """Merge a batch of ``n_b`` samples, shape ``(n_b, d)``, into the running
+    accumulator via Chan et al.'s parallel/batch generalization of Welford's
+    algorithm -- the same recurrence
+    :func:`~blackjax.adaptation.mass_matrix.welford_algorithm` applies one
+    sample at a time, applied here to a whole ensemble at once.
+    """
+    mean_a, m2_a, n_a = acc
+    n_b = batch.shape[0]
+    mean_b = jnp.mean(batch, axis=0)
+    centered_b = batch - mean_b[None, :]
+    m2_b = centered_b.T @ centered_b
+
+    delta = mean_b - mean_a
+    n_ab = n_a + n_b
+    mean_ab = mean_a + delta * (n_b / n_ab)
+    m2_ab = m2_a + m2_b + jnp.outer(delta, delta) * (n_a * n_b / n_ab)
+    return _LowRankAccumulatorState(mean=mean_ab, m2=m2_ab, count=n_ab)
+
+
+def _lrd_from_accumulated_covariance(
+    acc: _LowRankAccumulatorState, k: int
+) -> tuple[Array, Array, Array]:
+    """Extract ``(sigma, U, lam)`` from a window-accumulated covariance
+    (effective ``n = num_chains * window_steps``) via ``eigh`` of the
+    accumulated correlation matrix, selecting the top-``k`` directions by
+    ``|lam - 1|`` (the directions that deviate most from isotropic). This is
+    what makes the low-rank metric estimable at high dimension (``d >>
+    num_chains``): a single ``num_chains``-sized ensemble snapshot is
+    ``p >> n`` noise-dominated once ``d`` exceeds ``num_chains``, but the
+    window-accumulated covariance's effective ``n`` can comfortably exceed
+    ``d`` given enough window steps.
+    """
+    mean, m2, count = acc
+    del mean  # only the second moment is needed below
+    covariance = m2 / jnp.maximum(count - 1.0, 1.0)
+    variance = jnp.diag(covariance)
+    sigma = jnp.sqrt(jnp.maximum(variance, 0.0))
+    sigma = jnp.where(sigma <= 0.0, 1.0, sigma)  # avoid div-by-zero
+
+    inv_sigma = 1.0 / sigma
+    correlation = covariance * inv_sigma[:, None] * inv_sigma[None, :]
+
+    # eigh gives ascending eigenvalues of the (symmetric) correlation matrix.
+    lam_all, V = jnp.linalg.eigh(correlation)
+    sort_idx = jnp.argsort(jnp.abs(lam_all - 1.0))[::-1]
+    top_idx = sort_idx[:k]
+    lam = lam_all[top_idx]
+    U = V[:, top_idx]
+    return sigma, U, lam
+
+
+def _lrd_diagonal_fallback(flat_positions: Array, k: int) -> tuple[Array, Array, Array]:
+    """Diagonal-only fallback ``(sigma, U, lam)`` for MEADS-LRD's momentum
+    metric, used before the accumulation window holds enough pooled samples
+    to support a rank-``k`` estimate (FIX 1).
+
+    Estimating an eigenbasis from a single ``num_chains``-sized ensemble
+    snapshot is exactly the noise-dominated (``p >> n``) estimator that
+    causes the high-d step-size/momentum instability these fixes address --
+    measured directly: routing through it even as a *pre-window* fallback
+    (rather than attempting a low-rank correction from too little data) was
+    enough to blow up the ensemble and collapse epsilon at ``d=40,
+    num_chains=32``. So instead this returns ``lam = 1`` (no correction --
+    ``_low_rank_apply``'s ``(lam_pow - 1)`` term vanishes identically),
+    degenerating the momentum metric to exactly the diagonal-only
+    preconditioning ``low_rank_rank=None`` uses. ``U``'s columns are then
+    irrelevant (they multiply a zero coefficient) -- any orthonormal set
+    works; the leading standard basis vectors are the cheapest choice. Only
+    ``sigma`` (a per-dimension population statistic, well-estimated from as
+    few as 2 samples per dimension, unlike a joint eigenbasis) carries real
+    information here.
+    """
+    sigma = jnp.std(flat_positions, axis=0)
+    sigma = jnp.where(sigma <= 0.0, 1.0, sigma)
+    d = flat_positions.shape[-1]
+    U = jnp.eye(d, k)
+    lam = jnp.ones((k,))
+    return sigma, U, lam
+
+
+_LRD_EIGENVALUE_FLOOR = 1e-6
+
+
+def _floor_lrd_eigenvalues(lam: Array) -> Array:
+    """Clamp low-rank eigenvalues away from 0.
+
+    A collinear or otherwise rank-deficient ensemble (e.g. a rank-1
+    initial ensemble) can make the sample/accumulated correlation matrix
+    singular along one or more of the selected top-k directions, giving
+    ``lam ~ 0`` — and ``float32`` ``eigh`` can even return slightly
+    *negative* eigenvalues, whose ``sqrt`` is NaN. The whitening transform
+    (``_low_rank_precondition_pos``) and the momentum metric both scale by
+    ``sqrt(lam)``, so flooring keeps those factors finite. This guard is
+    intentionally redundant with the step-size decoupling (which keeps
+    ``sqrt(lam)`` out of the step-size heuristic entirely): the degenerate
+    collapse (``rhat = inf``, NaN step size) only occurs if *both* guards
+    are defeated.
+    """
+    return jnp.maximum(lam, _LRD_EIGENVALUE_FLOOR)
+
+
 def meads_adaptation(
     logdensity_fn: Callable,
     num_chains: int,
@@ -215,6 +370,8 @@ def meads_adaptation(
     step_size_multiplier: float = 0.5,
     damping_slowdown: float = 1.0,
     adaptation_info_fn: Callable = return_all_adapt_info,
+    low_rank_rank: int | None = None,
+    low_rank_window_fraction: float = 0.5,
 ) -> AdaptationAlgorithm:
     """Adapt the parameters of the Generalized HMC algorithm.
 
@@ -247,6 +404,91 @@ def meads_adaptation(
         and get_filter_adapt_info_fn in blackjax.adaptation.base. By default all
         information is saved - this can result in excessive memory usage if the
         information is unused.
+    low_rank_rank
+        MEADS-LRD extension (opt-in, default ``None``). ``None`` adapts a
+        *diagonal* momentum metric from the fold ensemble -- exactly the
+        original behavior, bit-for-bit. An ``int`` instead adapts a
+        rank-``low_rank_rank`` :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`
+        from the **full population of all ``num_chains`` chains** (requires
+        :func:`blackjax.mcmc.ghmc`'s dense/low-rank momentum-metric support,
+        blackjax#950), generalizing MEADS the way MCLMC-LRD generalized
+        MCLMC. Unlike the diagonal scale (estimated per-fold, from each
+        fold's own ``num_chains // num_folds`` chains), the low-rank
+        eigenbasis is estimated *once per step* from the pooled global
+        population and then shared across all folds: a single fold's
+        ensemble (paper default ``num_folds=4`` gives only 16 chains/fold)
+        is too small for its top-k eigenvectors to be stable step-to-step,
+        and the resulting jitter destabilizes ghmc's persistent momentum
+        (measured regression: low-rank underperformed diagonal at
+        ``num_folds=4`` despite beating it at ``num_folds=1``, where the
+        per-fold estimate happens to already be the global one). The metric
+        is a shared symmetric preconditioner, not a per-fold statistic like
+        step size or damping, so pooling all chains to estimate it needs no
+        special justification -- it is the same practice window adaptation
+        uses for its diagonal/dense metric. The per-fold step-size and
+        damping heuristics (Algorithm 3) are otherwise unchanged, except they
+        now whiten by this shared global metric rather than a per-fold one,
+        so they stay consistent with the metric ghmc actually samples with.
+        The rank is clamped to ``min(low_rank_rank, num_chains - 1, d)`` (raises
+        ``ValueError`` if ``num_chains - 1 < 1``). A rank-``d`` metric equals the
+        full dense metric, so clamping by ``d`` is lossless and prevents shape
+        disagreements in the jax.lax.cond branches. The metric *returned* by
+        ``run()`` is the final state of the same window-accumulated estimator
+        described under ``low_rank_window_fraction`` below.
+
+        Two further fixes address a validated high-dimension (``d >>
+        num_chains``) failure mode where a single-snapshot low-rank metric
+        made MEADS-LRD *worse* than the diagonal baseline (a p >> n noise-
+        dominated eigenbasis fed into ghmc's step-size heuristic collapsed
+        ``epsilon`` to ~1e-3 and froze the chains):
+
+        - The step-size heuristic (Algorithm 3, line 8) always whitens its
+          gradients by the plain per-fold diagonal scale (``grad * sigma``),
+          never by the low-rank metric, even when ``low_rank_rank`` is set.
+          Whitening ``epsilon`` by a noisy low-rank eigenbasis couples the
+          step size to whichever direction the estimate currently
+          over-weights, which is what caused the collapse above; the
+          low-rank metric still preconditions the *momentum* (where it
+          helps), just not the step-size proxy.
+        - Selected eigenvalues are floored away from 0 (see
+          ``_floor_lrd_eigenvalues``) so a collinear/rank-deficient initial
+          ensemble can't seed a degenerate metric that self-reinforces into
+          ``rhat = inf``. Collinear / near-collinear initial ensembles
+          (e.g. all chains on a 1-D offset line) do not crash — two redundant
+          guards (the step-size decoupling and the eigenvalue floor) prevent
+          the NaN collapse — but expect severe under-mixing (measured
+          rhat≈5 on a rank-1 init); use a dispersed, full-rank initialization.
+    low_rank_window_fraction
+        Only used when ``low_rank_rank`` is not ``None``. Fraction of
+        warmup steps, counted from the end, over which the low-rank metric's
+        covariance is accumulated (default ``0.5``: the last half of
+        warmup). A single ``num_chains``-sized ensemble snapshot is
+        ``p >> n`` noise-dominated once the dimension ``d`` exceeds
+        ``num_chains`` -- exactly the regime a single fold's estimate was
+        already too noisy for (see ``low_rank_rank`` above), just worse,
+        since now the *whole* population's snapshot is undersized too, and
+        (measured directly) even routing through it as a one-off fallback
+        is enough to destabilize the ensemble. Instead, a running
+        Chan/Welford covariance accumulator (mirroring the pattern
+        :func:`~blackjax.adaptation.mass_matrix.welford_algorithm` uses for
+        the mass matrix, generalized to a whole ensemble per step) is
+        updated with every chain's position at every step *inside* the
+        window, giving an effective sample size of ``num_chains *
+        window_steps``. Once that effective size exceeds ``2 * d`` (a bare
+        minimum for the estimate to not be noise-dominated), the low-rank
+        momentum metric switches on and keeps improving every further
+        window step; before that point -- either because the step is
+        before the window (the initial, still-transient fraction of
+        warmup, mirroring why Stan's window adaptation excludes its own
+        initial/final fast windows from mass-matrix estimation), or because
+        the window hasn't yet pooled ``2 * d`` samples -- the momentum
+        metric falls back to a purely diagonal one
+        (:func:`_lrd_diagonal_fallback`, i.e. no low-rank correction at
+        all, matching ``low_rank_rank=None``'s momentum exactly), never a
+        low-rank estimate from too little data.
+        Must be in ``[0.0, 1.0]``; ``0.0`` accumulates from step 0, ``1.0``
+        disables accumulation entirely (falls back to the purely diagonal
+        momentum metric throughout the run).
 
     Returns
     -------
@@ -263,12 +505,35 @@ def meads_adaptation(
         )
     n_per_fold = num_chains // num_folds
 
+    low_rank_k: int | None = None
+    if low_rank_rank is not None:
+        if not hasattr(mcmc.ghmc, "_metric_from_momentum_inverse_scale"):
+            raise RuntimeError(
+                "low_rank_rank requires blackjax.mcmc.ghmc's dense/low-rank "
+                "momentum-metric support (blackjax#950); the installed ghmc "
+                "module predates it."
+            )
+        low_rank_k = min(low_rank_rank, num_chains - 1)
+        if low_rank_k < 1:
+            raise ValueError(
+                f"low_rank_rank={low_rank_rank} cannot be honored: the "
+                f"low-rank metric is estimated from the full population of "
+                f"num_chains={num_chains} chains, and that estimate needs "
+                "num_chains - 1 >= 1. Increase num_chains."
+            )
+        if not 0.0 <= low_rank_window_fraction <= 1.0:
+            raise ValueError(
+                "low_rank_window_fraction must be in [0.0, 1.0], got "
+                f"{low_rank_window_fraction}."
+            )
+
     ghmc_kernel = mcmc.ghmc.build_kernel()
     adapt_init, _ = base(num_folds, step_size_multiplier, damping_slowdown)
     batch_init = jax.vmap(lambda p, r: mcmc.ghmc.init(p, logdensity_fn, r))
 
-    def one_step(carry, rng_key):
-        states, adaptation_state = carry
+    def one_step(carry, xs):
+        rng_key, in_window = xs
+        states, adaptation_state, lrd_accum = carry
         t = adaptation_state.current_iteration
 
         # Fold to freeze this step (Algorithm 3, line 4: "excluding k = t mod K")
@@ -295,6 +560,64 @@ def meads_adaptation(
             folded_scales,
         )
 
+        # MEADS-LRD: estimate ONE rank-`low_rank_k` correlation eigenbasis
+        # (sigma, U, lam) per step from the FULL population of all
+        # num_chains chains -- NOT from each fold's own noisy n_per_fold
+        # snapshot. A fold's ensemble is too small (paper default
+        # n_per_fold=16) for its top-k eigenvectors to be stable
+        # step-to-step; the resulting eigenvector jitter destabilizes ghmc's
+        # persistent momentum. The metric is a shared symmetric
+        # preconditioner (unlike step-size/damping, which stay genuinely
+        # per-fold below), so pooling all chains to estimate it needs no
+        # per-fold isolation -- the same practice window adaptation uses for
+        # its diagonal/dense metric. This low-rank metric then preconditions
+        # the damping heuristic below (via `_low_rank_precondition_pos`), so
+        # alpha/delta stay consistent with the metric actually handed to
+        # ghmc for sampling this step. It does NOT precondition the
+        # step-size heuristic (see the ε-decouple fix just below).
+        #
+        # FIX (high-d, p >> n): a single num_chains-sized snapshot is noise-
+        # dominated once d exceeds num_chains, so `lrd_accum` -- a running
+        # Chan/Welford covariance pooled over every chain at every step
+        # *inside* the accumulation window (see `low_rank_window_fraction`'s
+        # docstring) -- is used instead once its effective sample count
+        # exceeds 2*d (a bare minimum for a covariance estimate to not be
+        # noise-dominated). Before that (outside the window, or too early
+        # inside it), fall back to a purely diagonal metric
+        # (`_lrd_diagonal_fallback`) rather than ever attempting a low-rank
+        # estimate from too little data -- see that function's docstring for
+        # why a single-snapshot estimate is unsafe even as a fallback.
+        if low_rank_rank is not None:
+            flat_all_pos = jax.vmap(lambda p: ravel_pytree(p)[0])(states.position)
+            d = flat_all_pos.shape[-1]
+            flat_folded_pos = flat_all_pos.reshape((num_folds, n_per_fold, d))
+
+            updated_lrd_accum = jax.lax.cond(
+                in_window,
+                lambda a: _lrd_accumulator_update(a, flat_all_pos),
+                lambda a: a,
+                lrd_accum,
+            )
+            enough_accumulated = updated_lrd_accum.count >= 2 * d
+            use_accumulated = jnp.logical_and(in_window, enough_accumulated)
+            global_sigma, global_U, global_lam = jax.lax.cond(
+                use_accumulated,
+                lambda a: _lrd_from_accumulated_covariance(a, low_rank_k),
+                lambda a: _lrd_diagonal_fallback(flat_all_pos, low_rank_k),
+                updated_lrd_accum,
+            )
+            global_lam = _floor_lrd_eigenvalues(global_lam)
+        else:
+            updated_lrd_accum = lrd_accum
+
+        # ε-decouple: the step-size heuristic (Algorithm 3, line 8) always
+        # whitens by the plain per-fold diagonal scale, never by the
+        # low-rank metric -- whitening it by a noisy low-rank eigenbasis
+        # couples epsilon to whichever direction the estimate currently
+        # over-weights (measured: collapsed epsilon ~20x at d=390), and the
+        # low-rank metric's benefit is in the momentum, not the step size.
+        precond_grads_for_step_size = precond_grads
+
         # Per-fold step size from each fold's own preconditioned grads.
         # Then roll by 1 so fold k gets the step size from fold k-1.
         # (Algorithm 3, line 8 + cross-fold roll)
@@ -304,7 +627,9 @@ def meads_adaptation(
                 1.0,
             )
 
-        step_size_own = jax.vmap(fold_step_size)(precond_grads)  # [num_folds]
+        step_size_own = jax.vmap(fold_step_size)(
+            precond_grads_for_step_size
+        )  # [num_folds]
         # fold k uses step_size from fold k-1
         step_size_rolled = jnp.roll(step_size_own, 1)  # [num_folds]
         # fold k uses the momentum scale (std) from fold k-1
@@ -334,7 +659,20 @@ def meads_adaptation(
             folded_pos,
             folded_scales,
         )
-        alphas, deltas = jax.vmap(fold_damping)(precond_pos, step_size_rolled)
+        if low_rank_rank is not None:
+            # Same shared global (sigma, U, lam) as the step-size block above
+            # -- broadcast across folds (in_axes=None), not rolled: unlike
+            # the per-fold diagonal scale, there is only one metric this
+            # step, so every fold whitens by (and every chain samples with)
+            # the same eigenbasis.
+            precond_pos_for_damping = jax.vmap(
+                _low_rank_precondition_pos, in_axes=(0, None, None, None)
+            )(flat_folded_pos, global_sigma, global_U, global_lam)
+        else:
+            precond_pos_for_damping = precond_pos
+        alphas, deltas = jax.vmap(fold_damping)(
+            precond_pos_for_damping, step_size_rolled
+        )
 
         # Broadcast per-fold parameters to per-chain arrays
         chain_step_sizes = jnp.repeat(step_size_rolled, n_per_fold)
@@ -344,13 +682,27 @@ def meads_adaptation(
         chain_alphas = jnp.repeat(alphas, n_per_fold)
         chain_deltas = jnp.repeat(deltas, n_per_fold)
 
+        if low_rank_rank is not None:
+            # Feed ghmc the SAME global LowRankInverseMassMatrix for every
+            # chain (no per-fold rolling -- there is only one metric this
+            # step); blackjax#950 lets ghmc's momentum_inverse_scale accept
+            # this directly (no elementwise squaring, unlike the legacy
+            # diagonal path).
+            chain_momentum_inverse_scale = LowRankInverseMassMatrix(
+                sigma=jnp.repeat(global_sigma[None], num_chains, axis=0),
+                U=jnp.repeat(global_U[None], num_chains, axis=0),
+                lam=jnp.repeat(global_lam[None], num_chains, axis=0),
+            )
+        else:
+            chain_momentum_inverse_scale = chain_scales
+
         # Step all chains with their fold's parameters
         new_states, info = jax.vmap(ghmc_kernel, in_axes=(0, 0, None, 0, 0, 0, 0))(
             chain_keys,
             states,
             logdensity_fn,
             chain_step_sizes,
-            chain_scales,
+            chain_momentum_inverse_scale,
             chain_alphas,
             chain_deltas,
         )
@@ -390,9 +742,11 @@ def meads_adaptation(
                 new_states,
             )
 
-        return (new_states, new_adaptation_state), adaptation_info_fn(
-            new_states, info, new_adaptation_state
-        )
+        return (
+            new_states,
+            new_adaptation_state,
+            updated_lrd_accum,
+        ), adaptation_info_fn(new_states, info, new_adaptation_state)
 
     def run(rng_key: PRNGKey, positions: ArrayLikeTree, num_steps: int = 1000):
         key_init, key_adapt = jax.random.split(rng_key)
@@ -401,17 +755,68 @@ def meads_adaptation(
         init_states = batch_init(positions, rng_keys)
         init_adaptation_state = adapt_init(positions, init_states.logdensity_grad)
 
+        if low_rank_rank is not None:
+            # Accumulate the covariance over the LAST `low_rank_window_fraction`
+            # of warmup steps only (skip the still-transient early fraction),
+            # mirroring how Stan's window adaptation delimits its own windows.
+            # `window_start`/`in_window_flags` are plain Python/concrete-shape
+            # values -- num_steps is always a concrete int here, never traced.
+            window_start = int(low_rank_window_fraction * num_steps)
+            flat_init_pos = jax.vmap(lambda p: ravel_pytree(p)[0])(init_states.position)
+            d = flat_init_pos.shape[-1]
+            # Clamp the rank to the flattened dimension as well: rank > d makes the
+            # two jax.lax.cond branches disagree on output shapes. A rank-d metric
+            # equals the full dense metric, so this clamp is lossless.
+            nonlocal low_rank_k
+            low_rank_k = min(low_rank_k, d)
+            init_lrd_accum = _lrd_accumulator_init(d)
+        else:
+            window_start = num_steps
+            init_lrd_accum = None
+        in_window_flags = jnp.arange(num_steps) >= window_start
+
         keys = jax.random.split(key_adapt, num_steps)
-        (last_states, last_adaptation_state), info = jax.lax.scan(
-            one_step, (init_states, init_adaptation_state), keys
+        (last_states, last_adaptation_state, last_lrd_accum), info = jax.lax.scan(
+            one_step,
+            (init_states, init_adaptation_state, init_lrd_accum),
+            (keys, in_window_flags),
         )
+
+        if low_rank_rank is not None:
+            # The metric returned to the caller is the FINAL state of the
+            # same window-accumulated estimator `one_step` uses per-step
+            # (effective n = num_chains * window_steps), falling back to the
+            # diagonal-only estimate only if the window never accumulated
+            # enough samples (e.g. num_steps too small). See
+            # `low_rank_window_fraction`'s docstring. `low_rank_k` (==
+            # min(low_rank_rank, num_chains - 1)) is reused unchanged.
+            flat_final_pos = jax.vmap(lambda p: ravel_pytree(p)[0])(
+                last_states.position
+            )
+            # low_rank_k is set to a non-None int whenever low_rank_rank is
+            # not None (validated above); assert narrows it for mypy.
+            assert low_rank_k is not None
+            d_final = flat_final_pos.shape[-1]
+            use_accumulated_final = last_lrd_accum.count >= 2 * d_final
+            final_sigma, final_U, final_lam = jax.lax.cond(
+                use_accumulated_final,
+                lambda a: _lrd_from_accumulated_covariance(a, low_rank_k),
+                lambda a: _lrd_diagonal_fallback(flat_final_pos, low_rank_k),
+                last_lrd_accum,
+            )
+            final_lam = _floor_lrd_eigenvalues(final_lam)
+            momentum_inverse_scale = LowRankInverseMassMatrix(
+                sigma=final_sigma, U=final_U, lam=final_lam
+            )
+        else:
+            momentum_inverse_scale = jax.tree.map(
+                lambda s: s.mean(axis=0), last_adaptation_state.position_sigma
+            )
 
         # Return mean parameters across folds for use with a single ghmc kernel
         parameters = {
             "step_size": last_adaptation_state.step_size.mean(),
-            "momentum_inverse_scale": jax.tree.map(
-                lambda s: s.mean(axis=0), last_adaptation_state.position_sigma
-            ),
+            "momentum_inverse_scale": momentum_inverse_scale,
             "alpha": last_adaptation_state.alpha.mean(),
             "delta": last_adaptation_state.delta.mean(),
         }
