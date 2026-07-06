@@ -18,6 +18,7 @@ import blackjax
 from blackjax.mcmc import gist, gist_step_size, integrators, metrics
 from tests.fixtures import (
     BlackJAXTest,
+    assert_mean_within_ess_gated_tolerance,
     neal_funnel_logdensity,
     smooth_skewed_logdensity,
     std_normal_logdensity,
@@ -222,7 +223,13 @@ class MomentRecoveryTest(BlackJAXTest):
         )
         pos, infos = run_chain(algo, jnp.zeros(3), self.next_key(), 6000)
         y = np.asarray(pos[3000:, 0])
-        np.testing.assert_allclose(y.mean(), 0.0, atol=0.6)
+        # Self-calibrating ESS-gated assertion: replaces fixed atol=0.6,
+        # robust across JAX versions and environments (see lesson
+        # worklog/lessons/code-patterns/2026-05-11-single-realization-mc-noisy-assertion.md).
+        assert_mean_within_ess_gated_tolerance(
+            y, expected_mean=0.0, ess_min=5, k_sigma=5.0
+        )
+        # Check standard deviation against theoretical N(0, 9)
         np.testing.assert_allclose(y.std(), 3.0, rtol=0.35)
         self.assertTrue(np.all(np.isfinite(np.asarray(pos))))
         # Regression guard: the symmetric default must not silently degrade

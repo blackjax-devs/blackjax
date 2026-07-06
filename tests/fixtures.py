@@ -17,7 +17,10 @@ import datetime
 import chex
 import jax
 import jax.numpy as jnp
+import numpy as np
 from jax.flatten_util import ravel_pytree
+
+import blackjax.diagnostics
 
 
 class BlackJAXTest(chex.TestCase):
@@ -120,3 +123,68 @@ def smooth_skewed_logdensity(x):
     1.6449), skewness approx -1.1395 (left-skewed).
     """
     return jnp.sum(x - jnp.exp(x))
+
+
+def assert_mean_within_ess_gated_tolerance(
+    samples: np.ndarray,
+    expected_mean: float = 0.0,
+    ess_min: float = 100.0,
+    k_sigma: float = 5.0,
+):
+    """Self-calibrating, ESS-gated assertion for moment recovery in single-chain tests.
+
+    Replaces fixed-tolerance assertions like ``assert_allclose(y.mean(), 0.0, atol=X)``
+    with a robust, environment-independent check that scales to the chain's achieved precision.
+
+    **Principle**: A test whose pass/fail depends on a single MCMC realization is fragile.
+    By conditioning on the chain's own effective sample size (ESS), we pass whenever
+    the sampler is unbiased-and-mixing regardless of the specific realization or JAX version,
+    and fail only on genuine bias (worklog lesson 2026-05-11).
+
+    Parameters
+    ----------
+    samples : np.ndarray
+        1-D array of post-warmup samples (e.g., ``y = pos[3000:, 0]``).
+    expected_mean : float
+        Target mean. Default 0.0.
+    ess_min : float
+        Minimum ESS gate. Pass only if ``ess >= ess_min`` (mixing guard).
+        Default 100.
+    k_sigma : float
+        Sigma multiple for unbiasedness gate. Pass if ``|mean - expected| < k_sigma * se``.
+        Default 5 (passes at ~5-sigma confidence, fails only on real bias).
+
+    Raises
+    ------
+    AssertionError
+        If ESS < ess_min (chain is not mixing well) OR if |mean - expected| >= k_sigma * SE
+        (mean is statistically inconsistent with expected).
+    """
+    # Reshape to (n_chains=1, n_samples) for diagnostics.effective_sample_size.
+    samples_2d = np.expand_dims(samples, axis=0)
+    ess = float(
+        blackjax.diagnostics.effective_sample_size(
+            samples_2d, chain_axis=0, sample_axis=1
+        )
+    )
+
+    # Gate 1: mixing check
+    assert ess >= ess_min, (
+        "Chain is not mixing well: ESS = {:.1f} < {:.1f}. "
+        "Increase num_samples or check sampler tuning.".format(ess, ess_min)
+    )
+
+    # Gate 2: unbiasedness check (within achieved precision)
+    se = np.std(samples) / np.sqrt(ess)
+    actual_mean = float(np.mean(samples))
+    threshold = k_sigma * se
+    mean_diff = abs(actual_mean - expected_mean)
+    assert mean_diff < threshold, (
+        "Sample mean {:.6f} is statistically inconsistent with "
+        "expected {:.6f} (difference {:.6f} "
+        ">= {}-sigma threshold {:.6f}). "
+        "ESS={:.1f}, SE={:.6f}. "
+        "This may indicate a sampler bias.".format(
+            actual_mean, expected_mean, mean_diff, k_sigma, threshold, ess, se
+        )
+    )
