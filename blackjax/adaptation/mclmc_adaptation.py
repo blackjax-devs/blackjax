@@ -55,7 +55,7 @@ def mclmc_find_L_and_step_size(
     diagonal_preconditioning=True,
     params=None,
     l_factor=0.4,
-    progress_bar=True,  # <-- NEW: Add progress bar toggle here
+    progress_bar=False,
     print_rate=None,
 ):
     """
