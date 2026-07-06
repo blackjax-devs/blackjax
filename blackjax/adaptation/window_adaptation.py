@@ -264,6 +264,7 @@ def window_adaptation(
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     progress_bar: bool = False,
+    print_rate: int | None = None,
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
     **extra_parameters,
@@ -337,6 +338,9 @@ def window_adaptation(
         The acceptance rate that we target during step size adaptation.
     progress_bar
         Whether we should display a progress bar.
+    print_rate
+        The rate at which the progress bar is updated. If None, defaults to
+        printing every `num_steps // 20` steps.
     adaptation_info_fn
         Function to select the adaptation info returned. See return_all_adapt_info
         and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
@@ -418,7 +422,9 @@ def window_adaptation(
 
         if progress_bar:
             print("Running window adaptation")
-        scan_fn = gen_scan_fn(num_steps, progress_bar=progress_bar)
+        scan_fn = gen_scan_fn(
+            num_steps, progress_bar=progress_bar, print_rate=print_rate
+        )
         start_state = (init_state, init_adaptation_state)
         keys = jax.random.split(rng_key, num_steps)
         schedule = build_schedule(num_steps)

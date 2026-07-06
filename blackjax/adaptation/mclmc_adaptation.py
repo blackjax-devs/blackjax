@@ -14,12 +14,13 @@
 """Algorithms to adapt the MCLMC kernel parameters, namely step size and L."""
 
 from typing import NamedTuple
-from blackjax.progress_bar import gen_scan_fn
+
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
 from blackjax.diagnostics import effective_sample_size
+from blackjax.progress_bar import gen_scan_fn
 from blackjax.util import generate_unit_vector, incremental_value_update, pytree_size
 
 
@@ -39,7 +40,6 @@ class MCLMCAdaptationState(NamedTuple):
     inverse_mass_matrix: float
 
 
-
 def mclmc_find_L_and_step_size(
     mclmc_kernel,
     num_steps,
@@ -56,6 +56,7 @@ def mclmc_find_L_and_step_size(
     params=None,
     l_factor=0.4,
     progress_bar=True,  # <-- NEW: Add progress bar toggle here
+    print_rate=None,
 ):
     """
     Finds the optimal value of the parameters for the MCLMC algorithm.
@@ -92,6 +93,9 @@ def mclmc_find_L_and_step_size(
         Initial params to start tuning from (optional)
     l_factor
         The factor scaling the estimated autocorrelation length to obtain momentum decoherence length L.
+    print_rate
+        The rate at which the progress bar is updated. If None, defaults to
+        printing every `num_steps // 20` steps.
 
     Returns
     -------
@@ -155,17 +159,19 @@ def mclmc_find_L_and_step_size(
         trust_in_estimate=trust_in_estimate,
         num_effective_samples=num_effective_samples,
         diagonal_preconditioning=diagonal_preconditioning,
-        progress_bar=progress_bar, 
+        progress_bar=progress_bar,
+        print_rate=print_rate,
     )(state, params, num_steps, part1_key)
     total_num_tuning_integrator_steps += num_steps1 + num_steps2
 
     if num_steps3 >= 2:
         state, params = make_adaptation_L(
-            mclmc_kernel, 
+            mclmc_kernel,
             logdensity_fn,
-            frac=frac_tune3, 
+            frac=frac_tune3,
             l_factor=l_factor,
             progress_bar=progress_bar,
+            print_rate=print_rate,
         )(state, params, num_steps, part2_key)
         total_num_tuning_integrator_steps += num_steps3
 
@@ -183,6 +189,7 @@ def make_L_step_size_adaptation(
     trust_in_estimate=1.5,
     num_effective_samples=150,
     progress_bar=False,
+    print_rate=None,
 ):
     """Adapts the stepsize and L of the MCLMC kernel. Designed for unadjusted MCLMC"""
 
@@ -265,10 +272,9 @@ def make_L_step_size_adaptation(
 
         return (state, params, adaptive_state, streaming_avg), None
 
-    
     # NEW: Redefine run_steps to take `length` and use `gen_scan_fn`
     def run_steps(xs, state, params, length):
-        scan_fn = gen_scan_fn(length, progress_bar)
+        scan_fn = gen_scan_fn(length, progress_bar, print_rate)
         mask, keys = xs
         return scan_fn(
             step,
@@ -299,10 +305,10 @@ def make_L_step_size_adaptation(
 
         # NEW: Pass the length for the first scan
         state, params, _, (_, average) = run_steps(
-            xs=(mask, L_step_size_adaptation_keys), 
-            state=state, 
-            params=params, 
-            length=num_steps1 + num_steps2
+            xs=(mask, L_step_size_adaptation_keys),
+            state=state,
+            params=params,
+            length=num_steps1 + num_steps2,
         )
 
         L = params.L
@@ -322,10 +328,7 @@ def make_L_step_size_adaptation(
                 steps = round(num_steps2 / 3)  # we do some small number of steps
                 keys = jax.random.split(final_key, steps)
                 state, params, _, (_, average) = run_steps(
-                    xs=(jnp.ones(steps), keys), 
-                    state=state, 
-                    params=params, 
-                    length=steps
+                    xs=(jnp.ones(steps), keys), state=state, params=params, length=steps
                 )
 
         return state, MCLMCAdaptationState(L, params.step_size, inverse_mass_matrix)
@@ -333,7 +336,9 @@ def make_L_step_size_adaptation(
     return L_step_size_adaptation
 
 
-def make_adaptation_L(kernel, logdensity_fn, frac, l_factor, progress_bar=False): 
+def make_adaptation_L(
+    kernel, logdensity_fn, frac, l_factor, progress_bar=False, print_rate=None
+):
     """determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)"""
 
     def adaptation_L(state, params, num_steps, key):
@@ -354,7 +359,7 @@ def make_adaptation_L(kernel, logdensity_fn, frac, l_factor, progress_bar=False)
             return next_state, next_state.position
 
         # NEW: Replace standard jax.lax.scan with gen_scan_fn
-        scan_fn = gen_scan_fn(num_steps_3, progress_bar)
+        scan_fn = gen_scan_fn(num_steps_3, progress_bar, print_rate)
         state, samples = scan_fn(
             step,
             state,

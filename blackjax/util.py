@@ -155,6 +155,7 @@ def run_inference_algorithm(
     initial_state: ArrayLikeTree = None,
     initial_position: ArrayLikeTree = None,
     progress_bar: bool = False,
+    print_rate: int | None = None,
     transform: Callable = lambda state, info: (state, info),
 ) -> tuple:
     """Wrapper to run an inference algorithm.
@@ -177,6 +178,9 @@ def run_inference_algorithm(
         Number of MCMC steps.
     progress_bar
         Whether to display a progress bar.
+    print_rate
+        The rate at which the progress bar is updated. If None, defaults to
+        printing every `num_steps // 20` steps.
     transform
         A transformation of the trace of states (and info) to be returned. This is useful for
         computing determinstic variables, or returning a subset of the states.
@@ -208,7 +212,7 @@ def run_inference_algorithm(
         state, info = inference_algorithm.step(rng_key, state)
         return state, transform(state, info)
 
-    scan_fn = gen_scan_fn(num_steps, progress_bar)
+    scan_fn = gen_scan_fn(num_steps, progress_bar, print_rate)
 
     xs = jnp.arange(num_steps), keys
     final_state, history = scan_fn(one_step, initial_state, xs)
