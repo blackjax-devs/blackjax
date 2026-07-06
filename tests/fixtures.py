@@ -139,7 +139,12 @@ def assert_mean_within_ess_gated_tolerance(
     **Principle**: A test whose pass/fail depends on a single MCMC realization is fragile.
     By conditioning on the chain's own effective sample size (ESS), we pass whenever
     the sampler is unbiased-and-mixing regardless of the specific realization or JAX version,
-    and fail only on genuine bias (worklog lesson 2026-05-11).
+    and fail only on genuine bias (see worklog/lessons/code-patterns/2026-05-11-*.md).
+
+    **Tuning ess_min**: Set based on the sampler's typical mixing on the specific target,
+    not a universal default. For difficult hierarchical targets (e.g., Neal's funnel with
+    step-size-only adaptation), ESS may be only 10-20; set ``ess_min`` to reject outliers
+    (e.g., ess_min=6) rather than requiring implausibly high mixing.
 
     Parameters
     ----------
