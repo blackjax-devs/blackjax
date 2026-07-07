@@ -20,7 +20,8 @@ import jax
 import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
-from jax.sharding import Mesh, NamedSharding, PartitionSpec as P
+from jax.sharding import Mesh, NamedSharding
+from jax.sharding import PartitionSpec as P
 
 import blackjax
 
@@ -39,7 +40,7 @@ class ShardMapMultiChainTest(absltest.TestCase):
         Checks that output shape is (num_chains, num_steps, ndims).
         """
         ndims = 2
-        num_chains = 2   # one chain per device
+        num_chains = 2  # one chain per device
         num_steps = 20
 
         def logdensity(x):
@@ -62,9 +63,7 @@ class ShardMapMultiChainTest(absltest.TestCase):
         initial_states = jax.device_put(initial_states, sharding)
 
         # One key per chain, sharded
-        sample_keys = jax.device_put(
-            jax.random.split(sample_key, num_chains), sharding
-        )
+        sample_keys = jax.device_put(jax.random.split(sample_key, num_chains), sharding)
 
         def run_one_chain(key, state):
             # shard_map gives us the per-device slice: shape (1, ...).
@@ -95,9 +94,7 @@ class ShardMapMultiChainTest(absltest.TestCase):
         # Chains should diverge — if both produce identical positions the
         # key-sharding is broken.
         self.assertFalse(
-            np.allclose(
-                np.array(result[0]), np.array(result[1])
-            ),
+            np.allclose(np.array(result[0]), np.array(result[1])),
             "Both chains produced identical positions — key sharding may be broken.",
         )
 
