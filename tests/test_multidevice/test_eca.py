@@ -95,6 +95,37 @@ class ECAMultiDeviceTest(absltest.TestCase):
         result, _ = ensemble_execute_fn(step, rng_key, num_chains, self.mesh)
         np.testing.assert_allclose(result, jnp.ones(num_chains))
 
+    def test_laps_end_to_end_two_devices(self):
+        """Regression: laps() must complete on a 2-device mesh without the #932 crash.
+
+        The bug path: laps_burn_in passes a sharded `signs` array as `args` to a
+        second ensemble_execute_fn call.  Before the fix that raised NotImplementedError.
+        """
+        from blackjax.adaptation.laps import laps as run_laps
+
+        def logdensity(x):
+            return -0.5 * jnp.sum(x**2)
+
+        _, _, _, final_state = run_laps(
+            logdensity_fn=logdensity,
+            sample_init=lambda key: jax.random.normal(key, shape=(2,)),
+            ndims=2,
+            num_steps1=20,
+            num_steps2=20,
+            num_chains=4,  # 4 chains across 2 devices → 2 per device
+            mesh=self.mesh,
+            rng_key=jax.random.key(0),
+            early_stop=False,
+            diagonal_preconditioning=True,
+            integrator_coefficients=None,
+            steps_per_sample=5,
+            r_end=0.5,
+            diagnostics=False,
+            superchain_size=1,
+        )
+
+        self.assertEqual(final_state.position.shape, (4, 2))
+
 
 if __name__ == "__main__":
     absltest.main()
