@@ -32,7 +32,7 @@ class ECAMultiDeviceTest(absltest.TestCase):
     def setUp(self):
         super().setUp()
         if jax.device_count() < 2:
-            self.skipTest(f"Requires >=2 devices; got {jax.device_count()}.")
+            self.skipTest(f"Requires >=2 devices, got {jax.device_count()}.")
         self.mesh = Mesh(jax.devices()[:2], "chains")
 
     def test_args_as_sharded_array_does_not_raise(self):
