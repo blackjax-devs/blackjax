@@ -298,12 +298,25 @@ def ensemble_execute_fn(
         num_chains,
     )
 
-    def F(x, keys):
+    def F(x, keys, args):
         """This function operates on a single device. key is a random key for this device."""
         y, summary_statistics = _F((x, args), (None, keys, None))[0]
         return y, summary_statistics
 
-    parallel_execute = shard_map(F, mesh=mesh, in_specs=(p, p), out_specs=(p, pscalar))
+    # `args` may itself be a sharded JAX array (e.g. when chained from the
+    # output of a prior `ensemble_execute_fn` call, as in LAPS burn-in) rather
+    # than a plain Python value. Closing over it inside `F` instead of passing
+    # it through `shard_map`'s tracked arguments makes `shard_map` raise
+    # NotImplementedError on N>1 devices ("shard_map does not support
+    # closed-over JAX arrays with NamedSharding"); on a single device this is
+    # silently a no-op, which is why it stayed hidden. Passing `args`
+    # explicitly with a spec matching its own pytree structure (built via
+    # `jax.tree.map` so it also handles the `args=None` default, whose empty
+    # pytree structure needs no spec) fixes this for any number of devices.
+    args_specs = jax.tree.map(lambda _: pscalar, args)
+    parallel_execute = shard_map(
+        F, mesh=mesh, in_specs=(p, p, args_specs), out_specs=(p, pscalar)
+    )
 
     if superchain_size == 1:
         _keys = split(rng_key, num_chains)
@@ -318,4 +331,4 @@ def ensemble_execute_fn(
     )  # random keys, distributed across devices
 
     # apply F in parallel
-    return parallel_execute(X, keys)
+    return parallel_execute(X, keys, args)
