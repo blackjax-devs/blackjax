@@ -303,22 +303,13 @@ def ensemble_execute_fn(
         y, summary_statistics = _F((x, args), (None, keys, None))[0]
         return y, summary_statistics
 
-    # `args` may itself be a sharded JAX array (e.g. when chained from the
-    # output of a prior `ensemble_execute_fn` call, as in LAPS burn-in) rather
-    # than a plain Python value. Closing over it inside `F` instead of passing
-    # it through `shard_map`'s tracked arguments makes `shard_map` raise
-    # NotImplementedError on N>1 devices ("shard_map does not support
-    # closed-over JAX arrays with NamedSharding"); on a single device this is
-    # silently a no-op, which is why it stayed hidden. Passing `args`
-    # explicitly with a spec matching its own pytree structure (built via
-    # `jax.tree.map` so it also handles the `args=None` default, whose empty
-    # pytree structure needs no spec) fixes this for any number of devices.
+    # Pass args explicitly so shard_map can track NamedSharding arrays (fixes #932).
     args_specs = jax.tree.map(lambda _: pscalar, args)
     parallel_execute = shard_map(
         F, mesh=mesh, in_specs=(p, p, args_specs), out_specs=(p, pscalar)
     )
 
-    if superchain_size == 1:
+    if superchain_size is None or superchain_size == 1:
         _keys = split(rng_key, num_chains)
 
     else:

@@ -1,0 +1,36 @@
+name: Multi-device tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  style:
+    name: Check the code style
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
+      with:
+        python-version: 3.13
+    - uses: pre-commit/action@v3.0.0
+
+  test-multidevice:
+    name: Multi-device tests (shard_map)
+    runs-on: ubuntu-latest
+    needs:
+      - style
+    env:
+      XLA_FLAGS: "--xla_force_host_platform_device_count=2"
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: '3.13'
+      - name: Set up test environment
+        run: uv sync --group dev --extra progress
+      - name: Run multi-device tests
+        run: uv run pytest tests/test_multidevice/ -v
