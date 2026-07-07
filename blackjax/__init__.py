@@ -14,6 +14,7 @@ from .adaptation.pathfinder_adaptation import pathfinder_adaptation
 from .adaptation.window_adaptation import window_adaptation
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
+from .diagnostics import nested_rhat
 from .diagnostics import potential_scale_reduction as rhat
 from .mcmc import adjusted_mclmc as _adjusted_mclmc
 from .mcmc import adjusted_mclmc_dynamic as _adjusted_mclmc_dynamic
@@ -305,6 +306,7 @@ __all__ = [
     "fullrank_vi",
     "schrodinger_follmer",
     "ess",  # diagnostics
+    "nested_rhat",
     "rhat",
     "SamplingAlgorithm",  # base
     "VIAlgorithm",
