@@ -55,7 +55,7 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gbb91a2431" />
+  <meta name="docsearch:version" content="0.1.dev1+g2ad3a801d" />
   </head>
   
   
@@ -165,6 +165,7 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_progress_bar.html">Show progress during sampling?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_custom_gradients.html">Use custom gradients?</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Use non-JAX log-prob functions?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
@@ -477,9 +478,7 @@ log-density and its gradient to Numba:</p>
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>-2.02397888777953
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>-0.5191426168238079
+-0.5191426168238079
 </pre></div>
 </div>
 </div>
@@ -602,8 +601,8 @@ Python (and Numba) on every call. Let’s see the overhead:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 595 ms, sys: 0 ns, total: 595 ms
-Wall time: 595 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 590 ms, sys: 0 ns, total: 590 ms
+Wall time: 590 ms
 </pre></div>
 </div>
 </div>
@@ -617,8 +616,8 @@ Wall time: 595 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.8 s, sys: 725 ms, total: 11.6 s
-Wall time: 11.5 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.3 s, sys: 675 ms, total: 11 s
+Wall time: 10.9 s
 </pre></div>
 </div>
 </div>

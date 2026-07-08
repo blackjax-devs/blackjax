@@ -55,7 +55,7 @@
     <link rel="prev" title="Use with Numpyro models" href="howto_use_numpyro.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gbb91a2431" />
+  <meta name="docsearch:version" content="0.1.dev1+g2ad3a801d" />
   </head>
   
   
@@ -165,6 +165,7 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
 <ul class="nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_progress_bar.html">Show progress during sampling?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_custom_gradients.html">Use custom gradients?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
@@ -592,9 +593,7 @@ that <code class="docutils literal notranslate"><span class="pre">jax.grad</span
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>log p(data | init): -813.15216
-</pre></div>
-</div>
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>grad w.r.t. mu    : [-80.09981    4.946947  69.5648  ]
+grad w.r.t. mu    : [-80.09981    4.946947  69.5648  ]
 </pre></div>
 </div>
 </div>
@@ -618,8 +617,8 @@ for sampling.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.71 s, sys: 210 ms, total: 3.92 s
-Wall time: 1.76 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.64 s, sys: 205 ms, total: 3.84 s
+Wall time: 1.72 s
 </pre></div>
 </div>
 </div>
@@ -658,8 +657,8 @@ Wall time: 1.76 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.63 s, sys: 50.1 ms, total: 2.68 s
-Wall time: 1.1 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.59 s, sys: 56.6 ms, total: 2.64 s
+Wall time: 1.07 s
 </pre></div>
 </div>
 </div>
@@ -843,8 +842,8 @@ grad w.r.t. mu    : [ -49.360638 -419.00766   110.963005]
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.44 s, sys: 112 ms, total: 3.55 s
-Wall time: 1.56 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 3.32 s, sys: 119 ms, total: 3.44 s
+Wall time: 1.48 s
 </pre></div>
 </div>
 </div>
@@ -861,8 +860,8 @@ Wall time: 1.56 s
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.98 s, sys: 38.5 ms, total: 3.01 s
-Wall time: 1.22 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 2.9 s, sys: 48.7 ms, total: 2.95 s
+Wall time: 1.2 s
 </pre></div>
 </div>
 </div>

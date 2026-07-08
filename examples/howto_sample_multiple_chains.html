@@ -52,11 +52,11 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'examples/howto_sample_multiple_chains';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Use custom gradients" href="howto_custom_gradients.html" />
+    <link rel="next" title="Show progress during sampling" href="howto_progress_bar.html" />
     <link rel="prev" title="Use with TFP models" href="howto_use_tfp.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gbb91a2431" />
+  <meta name="docsearch:version" content="0.1.dev1+g2ad3a801d" />
   </head>
   
   
@@ -166,6 +166,7 @@
 <p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
 <ul class="current nav bd-sidenav">
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_progress_bar.html">Show progress during sampling?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_custom_gradients.html">Use custom gradients?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
 <li class="toctree-l1"><a class="reference internal" href="howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
@@ -553,8 +554,8 @@ and <a class="reference external" href="https://docs.jax.dev/en/latest/notebooks
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 22.3 s, sys: 269 ms, total: 22.5 s
-Wall time: 19.9 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 21.9 s, sys: 263 ms, total: 22.2 s
+Wall time: 19.6 s
 </pre></div>
 </div>
 </div>
@@ -659,8 +660,8 @@ to instruct JAX to split the CPU into multiple devices. See <a class="reference 
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 41 s, sys: 92.3 ms, total: 41.1 s
-Wall time: 11.3 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 40.1 s, sys: 82.2 ms, total: 40.2 s
+Wall time: 10.9 s
 </pre></div>
 </div>
 </div>
@@ -708,11 +709,11 @@ Wall time: 11.3 s
       </div>
     </a>
     <a class="right-next"
-       href="howto_custom_gradients.html"
+       href="howto_progress_bar.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Use custom gradients</p>
+        <p class="prev-next-title">Show progress during sampling</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

@@ -1,0 +1,1053 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Show progress during sampling</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../_static/design-tabs.js?v=f930bc37"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'examples/howto_progress_bar';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Use custom gradients" href="howto_custom_gradients.html" />
+    <link rel="prev" title="Sample with multiple chains in parallel" href="howto_sample_multiple_chains.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g2ad3a801d" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../autoapi/blackjax/progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>Show progress during sampling</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-works">How it works</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-bayesian-linear-regression">The model: Bayesian linear regression</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage-labeled-bar-around-a-warmup">Basic usage: labeled bar around a warmup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#controlling-update-frequency-with-print-rate">Controlling update frequency with <code class="docutils literal notranslate"><span class="pre">print_rate</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-phase-workflows-adaptation-and-sampling-in-one-context">Multi-phase workflows: adaptation and sampling in one context</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-chain-sampling-with-jax-vmap">Multi-chain sampling with <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tempered-smc-bar-ticks-per-temperature">Tempered SMC: bar ticks per temperature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#file-based-progress-external-monitoring">File-based progress: external monitoring</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-gotchas">Common gotchas</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#jit-cache-staleness">JIT cache staleness</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#manual-enter-without-exit-leaks-the-patch">Manual <code class="docutils literal notranslate"><span class="pre">__enter__</span></code> without <code class="docutils literal notranslate"><span class="pre">__exit__</span></code> leaks the patch</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#other-caveats">Other caveats</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jupyter-rendering">Jupyter rendering</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="show-progress-during-sampling">
+<h1>Show progress during sampling<a class="headerlink" href="#show-progress-during-sampling" title="Link to this heading">#</a></h1>
+<p>BlackJAX provides a context manager, <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code>, that adds a live progress bar to <strong>any</strong> sampling call without modifying the algorithm itself. The bar works transparently under JAX transformations like <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>, fixing the shape-mismatch crashes of the old <code class="docutils literal notranslate"><span class="pre">progress_bar=</span></code> parameter (see issue <a class="reference external" href="https://github.com/blackjax-devs/blackjax/issues/927">#927</a>).</p>
+<section id="how-it-works">
+<h2>How it works<a class="headerlink" href="#how-it-works" title="Link to this heading">#</a></h2>
+<p>The context manager instruments the outermost <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> encountered at trace time and injects a step counter via a JAX callback. No algorithm parameters need to change—simply wrap your sampling call with <code class="docutils literal notranslate"><span class="pre">with</span> <span class="pre">blackjax.progress_bar():</span></code>.</p>
+</section>
+<section id="the-model-bayesian-linear-regression">
+<h2>The model: Bayesian linear regression<a class="headerlink" href="#the-model-bayesian-linear-regression" title="Link to this heading">#</a></h2>
+<p>For all examples in this guide, we’ll use the same Bayesian linear regression problem:</p>
+<p><div class="math notranslate nohighlight">
+\[y = X w + \varepsilon, \quad \varepsilon \sim N(0, \sigma^2)\]</div>
+</p>
+<p>with known noise scale <span class="math notranslate nohighlight">\(\sigma\)</span> and Gaussian priors on the weight vector <span class="math notranslate nohighlight">\(w\)</span>.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">norm</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">run_inference_algorithm</span>
+
+<span class="c1"># Headless doc builds have no ipywidgets; the plain-text bar is intended here.</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s2">&quot;IProgress not found&quot;</span><span class="p">)</span>
+
+<span class="n">N</span><span class="p">,</span> <span class="n">DIM</span><span class="p">,</span> <span class="n">SIGMA</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mf">0.5</span>
+<span class="n">kx</span><span class="p">,</span> <span class="n">kw</span><span class="p">,</span> <span class="n">kn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">kx</span><span class="p">,</span> <span class="p">(</span><span class="n">N</span><span class="p">,</span> <span class="n">DIM</span><span class="p">))</span>
+<span class="n">true_w</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">kw</span><span class="p">,</span> <span class="p">(</span><span class="n">DIM</span><span class="p">,))</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">X</span> <span class="o">@</span> <span class="n">true_w</span> <span class="o">+</span> <span class="n">SIGMA</span> <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">kn</span><span class="p">,</span> <span class="p">(</span><span class="n">N</span><span class="p">,))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">logprior</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">loglikelihood</span><span class="p">(</span><span class="n">w</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">norm</span><span class="o">.</span><span class="n">logpdf</span><span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">X</span> <span class="o">@</span> <span class="n">w</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">SIGMA</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+
+
+<span class="n">logdensity</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">w</span><span class="p">:</span> <span class="n">logprior</span><span class="p">(</span><span class="n">w</span><span class="p">)</span> <span class="o">+</span> <span class="n">loglikelihood</span><span class="p">(</span><span class="n">w</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="basic-usage-labeled-bar-around-a-warmup">
+<h2>Basic usage: labeled bar around a warmup<a class="headerlink" href="#basic-usage-labeled-bar-around-a-warmup" title="Link to this heading">#</a></h2>
+<p>Wrap any sampling call with <code class="docutils literal notranslate"><span class="pre">with</span> <span class="pre">blackjax.progress_bar()</span></code> and provide a label. The bar automatically detects the outermost scan and displays live updates.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">)</span>
+<span class="n">k_warm</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;NUTS warmup&quot;</span><span class="p">):</span>
+    <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">DIM</span><span class="p">),</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>NUTS warmup:   0%|          | 0/1000 [00:00&lt;?, ?step/s]
+NUTS warmup:   0%|          | 1/1000 [00:00&lt;00:00, 74898.29step/s]
+NUTS warmup:  30%|███       | 301/1000 [00:00&lt;00:02, 324.60step/s]
+NUTS warmup:  65%|██████▌   | 651/1000 [00:01&lt;00:00, 632.85step/s]
+NUTS warmup: 100%|██████████| 1000/1000 [00:01&lt;00:00, 884.79step/s]
+NUTS warmup: 100%|██████████| 1000/1000 [00:01&lt;00:00, 812.37step/s]
+NUTS warmup: 100%|██████████| 1000/1000 [00:01&lt;00:00, 811.88step/s]
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="controlling-update-frequency-with-print-rate">
+<h2>Controlling update frequency with <code class="docutils literal notranslate"><span class="pre">print_rate</span></code><a class="headerlink" href="#controlling-update-frequency-with-print-rate" title="Link to this heading">#</a></h2>
+<p>By default, the bar updates every 5% of steps (≈ <code class="docutils literal notranslate"><span class="pre">num_steps</span> <span class="pre">//</span> <span class="pre">20</span></code>). For slower iterations (e.g., when each step is expensive), use <code class="docutils literal notranslate"><span class="pre">print_rate=1</span></code> to update every step. This is especially useful for slow distributed clusters (see issue <a class="reference external" href="https://github.com/blackjax-devs/blackjax/issues/960">#960</a>).</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;NUTS sampling&quot;</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">samples</span> <span class="o">=</span> <span class="n">run_inference_algorithm</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span>
+        <span class="n">initial_state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+        <span class="n">inference_algorithm</span><span class="o">=</span><span class="n">nuts</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
+        <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">st</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">st</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="n">posterior_mean</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;max |posterior_mean - true_w| =&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">posterior_mean</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>max |posterior_mean - true_w| = 0.04362774
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>NUTS sampling:   0%|          | 0/1500 [00:00&lt;?, ?step/s]
+NUTS sampling:   0%|          | 1/1500 [00:00&lt;00:00, 110376.42step/s]
+NUTS sampling:  14%|█▎        | 204/1500 [00:00&lt;00:04, 288.69step/s]
+NUTS sampling:  38%|███▊      | 565/1500 [00:00&lt;00:01, 699.22step/s]
+NUTS sampling:  61%|██████    | 917/1500 [00:00&lt;00:00, 1008.11step/s]
+NUTS sampling:  85%|████████▌ | 1277/1500 [00:01&lt;00:00, 1262.61step/s]
+NUTS sampling: 100%|██████████| 1500/1500 [00:01&lt;00:00, 1347.43step/s]
+NUTS sampling: 100%|██████████| 1500/1500 [00:01&lt;00:00, 1346.58step/s]
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-phase-workflows-adaptation-and-sampling-in-one-context">
+<h2>Multi-phase workflows: adaptation and sampling in one context<a class="headerlink" href="#multi-phase-workflows-adaptation-and-sampling-in-one-context" title="Link to this heading">#</a></h2>
+<p>Some algorithms (like <code class="docutils literal notranslate"><span class="pre">mclmc_find_L_and_step_size</span></code>) perform multiple internal scans during adaptation. A single <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> context wraps all phases. Watch the bar reset per phase with its own total and elapsed time—this is expected behavior for multi-phase runs.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">k_init</span><span class="p">,</span> <span class="n">k_tune</span><span class="p">,</span> <span class="n">k_run</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">3</span><span class="p">),</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">mclmc_state</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mclmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span>
+    <span class="n">position</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">DIM</span><span class="p">),</span> <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="n">k_init</span>
+<span class="p">)</span>
+<span class="n">kernel</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mclmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="o">=</span><span class="n">blackjax</span><span class="o">.</span><span class="n">mcmc</span><span class="o">.</span><span class="n">mclmc</span><span class="o">.</span><span class="n">isokinetic_mclachlan</span>
+<span class="p">)</span>
+
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;MCLMC adapt+sample&quot;</span><span class="p">):</span>
+    <span class="n">tuned_state</span><span class="p">,</span> <span class="n">mclmc_params</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mclmc_find_L_and_step_size</span><span class="p">(</span>
+        <span class="n">mclmc_kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="o">=</span><span class="n">logdensity</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span>
+        <span class="n">state</span><span class="o">=</span><span class="n">mclmc_state</span><span class="p">,</span>
+        <span class="n">rng_key</span><span class="o">=</span><span class="n">k_tune</span><span class="p">,</span>
+        <span class="n">diagonal_preconditioning</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">alg</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">mclmc</span><span class="p">(</span>
+        <span class="n">logdensity</span><span class="p">,</span>
+        <span class="n">L</span><span class="o">=</span><span class="n">mclmc_params</span><span class="o">.</span><span class="n">L</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="o">=</span><span class="n">mclmc_params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+        <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">mclmc_params</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">mclmc_samples</span> <span class="o">=</span> <span class="n">run_inference_algorithm</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="o">=</span><span class="n">k_run</span><span class="p">,</span>
+        <span class="n">initial_state</span><span class="o">=</span><span class="n">tuned_state</span><span class="p">,</span>
+        <span class="n">inference_algorithm</span><span class="o">=</span><span class="n">alg</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
+        <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">st</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">st</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+    <span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MCLMC max |mean - true_w| =&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mclmc_samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>MCLMC max |mean - true_w| = 0.044856787
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>MCLMC adapt+sample:   0%|          | 0/400 [00:00&lt;?, ?step/s]
+MCLMC adapt+sample:   0%|          | 1/400 [00:00&lt;00:00, 99864.38step/s]
+MCLMC adapt+sample:  40%|████      | 161/400 [00:01&lt;00:01, 156.22step/s]
+MCLMC adapt+sample: 100%|██████████| 400/400 [00:01&lt;00:00, 353.22step/s]
+MCLMC adapt+sample:   0%|          | 0/67 [00:00&lt;?, ?step/s]
+MCLMC adapt+sample: 400step [00:00, 7652.86step/s]
+MCLMC adapt+sample:   0%|          | 0/67 [00:00&lt;?, ?step/s]
+MCLMC adapt+sample:  82%|████████▏ | 55/67 [00:00&lt;00:00, 45862.17step/s]
+MCLMC adapt+sample: 100%|██████████| 67/67 [00:00&lt;00:00, 654.54step/s]
+MCLMC adapt+sample:   0%|          | 0/200 [00:00&lt;?, ?step/s]
+MCLMC adapt+sample:  34%|███▎      | 67/200 [00:00&lt;00:00, 8916.41step/s]
+MCLMC adapt+sample: 100%|██████████| 200/200 [00:00&lt;00:00, 274.66step/s]
+MCLMC adapt+sample:   0%|          | 0/100 [00:00&lt;?, ?step/s]
+MCLMC adapt+sample: 200step [00:00, 252440.81step/s]
+MCLMC adapt+sample:   0%|          | 0/100 [00:00&lt;?, ?step/s]
+MCLMC adapt+sample: 100%|██████████| 100/100 [00:00&lt;00:00, 137383.03step/s]
+MCLMC adapt+sample:   0%|          | 0/1500 [00:00&lt;?, ?step/s]
+MCLMC adapt+sample:   7%|▋         | 100/1500 [00:00&lt;00:00, 2374.65step/s]
+MCLMC adapt+sample:   0%|          | 0/1500 [00:00&lt;?, ?step/s]
+MCLMC adapt+sample:   5%|▌         | 76/1500 [00:00&lt;00:00, 46305.51step/s]
+MCLMC adapt+sample:  35%|███▌      | 526/1500 [00:00&lt;00:00, 5055.39step/s]
+MCLMC adapt+sample:  65%|██████▌   | 976/1500 [00:00&lt;00:00, 4765.52step/s]
+MCLMC adapt+sample:  95%|█████████▌| 1426/1500 [00:00&lt;00:00, 4656.29step/s]
+MCLMC adapt+sample: 100%|██████████| 1500/1500 [00:00&lt;00:00, 3677.55step/s]
+MCLMC adapt+sample: 100%|██████████| 1500/1500 [00:00&lt;00:00, 3672.91step/s]
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="multi-chain-sampling-with-jax-vmap">
+<h2>Multi-chain sampling with <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code><a class="headerlink" href="#multi-chain-sampling-with-jax-vmap" title="Link to this heading">#</a></h2>
+<p>This is the centerpiece: a full multi-chain workflow using <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>. The old progress bar crashed under vmap with shape mismatches (issue <a class="reference external" href="https://github.com/blackjax-devs/blackjax/issues/927">#927</a>). The new callback-based implementation is vmap-safe because the injected step index never depends on the batched axis—it’s a compile-time constant. <strong>The bar fires exactly once per real step regardless of chain count.</strong></p>
+<p>First, run a vmapped warmup across 4 chains in parallel:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">n_chains</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="n">k_wu</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">11</span><span class="p">),</span> <span class="n">n_chains</span><span class="p">)</span>
+<span class="n">init_positions</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">13</span><span class="p">),</span> <span class="p">(</span><span class="n">n_chains</span><span class="p">,</span> <span class="n">DIM</span><span class="p">))</span>
+
+<span class="n">mc_warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">warmup_one</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">pos</span><span class="p">):</span>
+    <span class="p">(</span><span class="n">st</span><span class="p">,</span> <span class="n">chain_params</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">mc_warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">st</span><span class="p">,</span> <span class="n">chain_params</span>
+
+
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;vmap warmup (</span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2"> chains)&quot;</span><span class="p">):</span>
+    <span class="n">warm_states</span><span class="p">,</span> <span class="n">chain_params</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">warmup_one</span><span class="p">)(</span><span class="n">k_wu</span><span class="p">,</span> <span class="n">init_positions</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Per-chain adapted params shape:&quot;</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">chain_params</span><span class="p">))</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Per-chain adapted params shape: {&#39;inverse_mass_matrix&#39;: (4, 10), &#39;step_size&#39;: (4,)}
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>vmap warmup (4 chains):   0%|          | 0/1000 [00:00&lt;?, ?step/s]
+vmap warmup (4 chains):   0%|          | 1/1000 [00:00&lt;00:00, 97541.95step/s]
+vmap warmup (4 chains):  15%|█▌        | 151/1000 [00:02&lt;00:12, 66.54step/s]
+vmap warmup (4 chains):  45%|████▌     | 451/1000 [00:02&lt;00:02, 190.26step/s]
+vmap warmup (4 chains):  80%|████████  | 801/1000 [00:02&lt;00:00, 324.06step/s]
+vmap warmup (4 chains): 100%|██████████| 1000/1000 [00:02&lt;00:00, 388.64step/s]
+vmap warmup (4 chains): 100%|██████████| 1000/1000 [00:02&lt;00:00, 388.53step/s]
+</pre></div>
+</div>
+</div>
+</div>
+<p>Now sample from each chain with its own adapted parameters:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">k_sm</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">12</span><span class="p">),</span> <span class="n">n_chains</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_one</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">st</span><span class="p">,</span> <span class="n">p</span><span class="p">):</span>
+    <span class="n">alg</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity</span><span class="p">,</span> <span class="o">**</span><span class="n">p</span><span class="p">)</span>  <span class="c1"># per-chain step_size + mass matrix</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">hist</span> <span class="o">=</span> <span class="n">run_inference_algorithm</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+        <span class="n">initial_state</span><span class="o">=</span><span class="n">st</span><span class="p">,</span>
+        <span class="n">inference_algorithm</span><span class="o">=</span><span class="n">alg</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="o">=</span><span class="mi">1500</span><span class="p">,</span>
+        <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">s</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">hist</span>
+
+
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;vmap sampling (</span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2"> chains)&quot;</span><span class="p">):</span>
+    <span class="n">mc_chains</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">sample_one</span><span class="p">)(</span><span class="n">k_sm</span><span class="p">,</span> <span class="n">warm_states</span><span class="p">,</span> <span class="n">chain_params</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Output shape (chains, steps, dim):&quot;</span><span class="p">,</span> <span class="n">mc_chains</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Output shape (chains, steps, dim): (4, 1500, 10)
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>vmap sampling (4 chains):   0%|          | 0/1500 [00:00&lt;?, ?step/s]
+vmap sampling (4 chains):   0%|          | 1/1500 [00:00&lt;00:00, 95325.09step/s]
+vmap sampling (4 chains):  10%|█         | 151/1500 [00:01&lt;00:13, 97.75step/s]
+vmap sampling (4 chains):  35%|███▌      | 526/1500 [00:01&lt;00:03, 319.41step/s]
+vmap sampling (4 chains):  55%|█████▌    | 826/1500 [00:01&lt;00:01, 472.50step/s]
+vmap sampling (4 chains):  80%|████████  | 1201/1500 [00:01&lt;00:00, 649.27step/s]
+vmap sampling (4 chains): 100%|██████████| 1500/1500 [00:01&lt;00:00, 768.91step/s]
+vmap sampling (4 chains): 100%|██████████| 1500/1500 [00:02&lt;00:00, 731.11step/s]
+vmap sampling (4 chains): 100%|██████████| 1500/1500 [00:02&lt;00:00, 730.86step/s]
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="tempered-smc-bar-ticks-per-temperature">
+<h2>Tempered SMC: bar ticks per temperature<a class="headerlink" href="#tempered-smc-bar-ticks-per-temperature" title="Link to this heading">#</a></h2>
+<p>Sequential Monte Carlo iteratively tempering a likelihood is a natural fit for progress bars: the bar ticks once per <strong>temperature</strong>, not per particle move. This is because the outermost scan is over the tempering schedule.</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.smc.resampling</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">resampling</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.smc</span><span class="w"> </span><span class="kn">import</span> <span class="n">extend_params</span>
+
+<span class="n">num_particles</span><span class="p">,</span> <span class="n">num_tempering</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span> <span class="mi">30</span>
+<span class="n">lambda_schedule</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">num_tempering</span><span class="p">)</span>
+
+<span class="n">hmc_parameters</span> <span class="o">=</span> <span class="n">extend_params</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="mf">1e-2</span><span class="p">,</span>
+        <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">DIM</span><span class="p">),</span>
+        <span class="s2">&quot;num_integration_steps&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+<span class="n">tempering</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">tempered_smc</span><span class="p">(</span>
+    <span class="n">logprior</span><span class="p">,</span>
+    <span class="n">loglikelihood</span><span class="p">,</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(),</span>
+    <span class="n">blackjax</span><span class="o">.</span><span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">,</span>
+    <span class="n">hmc_parameters</span><span class="p">,</span>
+    <span class="n">resampling</span><span class="o">.</span><span class="n">systematic</span><span class="p">,</span>
+    <span class="mi">10</span><span class="p">,</span>  <span class="c1"># num_mcmc_steps per tempering move</span>
+<span class="p">)</span>
+
+<span class="n">k_particles</span><span class="p">,</span> <span class="n">k_smc</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">initial_particles</span> <span class="o">=</span> <span class="mf">5.0</span> <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">k_particles</span><span class="p">,</span> <span class="p">(</span><span class="n">num_particles</span><span class="p">,</span> <span class="n">DIM</span><span class="p">))</span>
+<span class="n">smc_state</span> <span class="o">=</span> <span class="n">tempering</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">initial_particles</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">smc_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">):</span>
+    <span class="n">i</span><span class="p">,</span> <span class="n">st</span> <span class="o">=</span> <span class="n">carry</span>
+    <span class="n">st</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">tempering</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">fold_in</span><span class="p">(</span><span class="n">k_smc</span><span class="p">,</span> <span class="n">i</span><span class="p">),</span> <span class="n">st</span><span class="p">,</span> <span class="n">lmbda</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">st</span><span class="p">),</span> <span class="n">info</span>
+
+
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;tempered SMC (</span><span class="si">{</span><span class="n">num_tempering</span><span class="si">}</span><span class="s2"> temps)&quot;</span><span class="p">):</span>
+    <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">smc_final</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">smc_step</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">smc_state</span><span class="p">),</span> <span class="n">lambda_schedule</span><span class="p">)</span>
+
+<span class="n">smc_mean</span> <span class="o">=</span> <span class="n">smc_final</span><span class="o">.</span><span class="n">particles</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;SMC  max |particle mean - true_w| =&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">smc_mean</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>SMC  max |particle mean - true_w| = 0.042065382
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tempered SMC (30 temps):   0%|          | 0/30 [00:00&lt;?, ?step/s]
+tempered SMC (30 temps):   3%|▎         | 1/30 [00:00&lt;00:00, 97541.95step/s]
+tempered SMC (30 temps):  10%|█         | 3/30 [00:02&lt;00:18,  1.46step/s]
+tempered SMC (30 temps):  30%|███       | 9/30 [00:02&lt;00:05,  4.17step/s]
+tempered SMC (30 temps):  47%|████▋     | 14/30 [00:02&lt;00:02,  6.20step/s]
+tempered SMC (30 temps):  63%|██████▎   | 19/30 [00:02&lt;00:01,  8.05step/s]
+tempered SMC (30 temps):  83%|████████▎ | 25/30 [00:02&lt;00:00, 10.16step/s]
+tempered SMC (30 temps): 100%|██████████| 30/30 [00:02&lt;00:00, 11.71step/s]
+tempered SMC (30 temps): 100%|██████████| 30/30 [00:02&lt;00:00, 11.27step/s]
+tempered SMC (30 temps): 100%|██████████| 30/30 [00:02&lt;00:00, 11.26step/s]
+</pre></div>
+</div>
+</div>
+</div>
+<p><strong>Note:</strong> Adaptive tempering (with unknown length) runs inside a <code class="docutils literal notranslate"><span class="pre">while_loop</span></code>, so a determinate progress bar is not possible. Use <code class="docutils literal notranslate"><span class="pre">output_file=</span></code> and the external reader (see below) to get a heartbeat instead.</p>
+</section>
+<section id="file-based-progress-external-monitoring">
+<h2>File-based progress: external monitoring<a class="headerlink" href="#file-based-progress-external-monitoring" title="Link to this heading">#</a></h2>
+<p>For long-running jobs, write progress to a file that can be monitored from a separate terminal:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span>
+    <span class="n">label</span><span class="o">=</span><span class="s2">&quot;file-backed&quot;</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="s2">&quot;/tmp/bjx_progress.txt&quot;</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="mi">1</span>
+<span class="p">):</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">run_inference_algorithm</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">6</span><span class="p">),</span>
+        <span class="n">initial_state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+        <span class="n">inference_algorithm</span><span class="o">=</span><span class="n">nuts</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span>  <span class="c1"># reduced for docs build time</span>
+        <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">st</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">st</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>file-backed:   0%|          | 0/500 [00:00&lt;?, ?step/s]
+file-backed:   0%|          | 1/500 [00:00&lt;00:00, 61680.94step/s]
+file-backed:   6%|▌         | 29/500 [00:00&lt;00:10, 44.85step/s]
+file-backed:  53%|█████▎    | 264/500 [00:00&lt;00:00, 352.93step/s]
+file-backed:  99%|█████████▉| 494/500 [00:00&lt;00:00, 582.04step/s]
+file-backed: 100%|██████████| 500/500 [00:00&lt;00:00, 526.44step/s]
+file-backed: 100%|██████████| 500/500 [00:00&lt;00:00, 526.09step/s]
+</pre></div>
+</div>
+</div>
+</div>
+<p>While sampling runs in one process, monitor it from another:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">blackjax</span> <span class="o">&amp;&amp;</span> <span class="n">uv</span> <span class="n">run</span> <span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_reader</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">bjx_progress</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<p>This displays live updates of <code class="docutils literal notranslate"><span class="pre">&lt;current_step&gt;</span> <span class="pre">&lt;total_steps&gt;</span></code> and is useful for HPCs where Jupyter is unavailable.</p>
+</section>
+<section id="common-gotchas">
+<h2>Common gotchas<a class="headerlink" href="#common-gotchas" title="Link to this heading">#</a></h2>
+<section id="jit-cache-staleness">
+<h3>JIT cache staleness<a class="headerlink" href="#jit-cache-staleness" title="Link to this heading">#</a></h3>
+<p>A function traced (compiled) inside one <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> context caches the bar injection in JAX’s JIT cache. Calling that same compiled function inside a <em>later</em> context will hit the cache and reuse the old callback—resulting in <strong>no bar and a warning at exit</strong>.</p>
+<p>Safe pattern: keep one <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> context open across all calls to the same compiled function (as shown in the multi-phase MCLMC example). If you must re-enter contexts, clear the cache:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
+
+<span class="n">sample_jitted</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">run_inference_algorithm</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+        <span class="n">initial_state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+        <span class="n">inference_algorithm</span><span class="o">=</span><span class="n">nuts</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">st</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">st</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+    <span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="c1"># Context 1: traces the function</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 1 (traces)&quot;</span><span class="p">):</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span>
+
+<span class="c1"># Context 2: cache hit → no bar → UserWarning at exit</span>
+<span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">w</span><span class="p">:</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;always&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 2 (cache hit)&quot;</span><span class="p">):</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">w</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning:&quot;</span><span class="p">,</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Warning: blackjax.progress_bar: no scan step was ever observed inside this context. Either the wrapped code never called jax.lax.scan, or the function was already jit-compiled/traced before this context was entered (jax.jit&#39;s cache is keyed by function identity, so a cache hit skips retracing and the injected callback never gets baked in). Keep ONE progress_bar() context open across repeated calls to the same compiled function, or force a retrace with jax.clear_caches().
+</pre></div>
+</div>
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>chain 1 (traces):   0%|          | 0/100 [00:00&lt;?, ?step/s]
+chain 1 (traces):   1%|          | 1/100 [00:00&lt;00:00, 87381.33step/s]
+chain 1 (traces): 100%|██████████| 100/100 [00:00&lt;00:00, 123.53step/s]
+chain 1 (traces): 100%|██████████| 100/100 [00:00&lt;00:00, 123.40step/s]
+</pre></div>
+</div>
+</div>
+</div>
+<p>Workaround: call <code class="docutils literal notranslate"><span class="pre">jax.clear_caches()</span></code> between contexts to force a retrace:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">clear_caches</span><span class="p">()</span>  <span class="c1"># Clear JAX&#39;s JIT cache</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 3&quot;</span><span class="p">):</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">9</span><span class="p">))</span>  <span class="c1"># Retraced, bar now works</span>
+</pre></div>
+</div>
+<p>Let’s verify the cache-clear workaround:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clear caches and re-trace in a new context</span>
+<span class="n">jax</span><span class="o">.</span><span class="n">clear_caches</span><span class="p">()</span>
+
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 3 (fresh trace)&quot;</span><span class="p">):</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">9</span><span class="p">))</span>  <span class="c1"># Bar works</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>chain 3 (fresh trace):   0%|          | 0/100 [00:00&lt;?, ?step/s]
+chain 3 (fresh trace):   1%|          | 1/100 [00:00&lt;00:00, 82241.25step/s]
+chain 3 (fresh trace): 100%|██████████| 100/100 [00:00&lt;00:00, 107.52step/s]
+chain 3 (fresh trace): 100%|██████████| 100/100 [00:00&lt;00:00, 107.42step/s]
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="manual-enter-without-exit-leaks-the-patch">
+<h3>Manual <code class="docutils literal notranslate"><span class="pre">__enter__</span></code> without <code class="docutils literal notranslate"><span class="pre">__exit__</span></code> leaks the patch<a class="headerlink" href="#manual-enter-without-exit-leaks-the-patch" title="Link to this heading">#</a></h3>
+<p>Never use manual <code class="docutils literal notranslate"><span class="pre">__enter__</span></code> / <code class="docutils literal notranslate"><span class="pre">__exit__</span></code> except for error handling. Leaving a context unclosed patches <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> for the entire kernel session:</p>
+<div class="cell docutils container">
+<div class="cell_input docutils container">
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show the leak and recovery</span>
+<span class="n">cm</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;leaked&quot;</span><span class="p">)</span>
+<span class="n">cm</span><span class="o">.</span><span class="fm">__enter__</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Scan is patched:&quot;</span><span class="p">,</span> <span class="s2">&quot;progress_bar&quot;</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
+
+<span class="c1"># Recovery: always call __exit__. (We suppress the zero-step UserWarning --</span>
+<span class="c1"># nothing was sampled inside this demonstration context, by design.)</span>
+<span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">():</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;ignore&quot;</span><span class="p">,</span> <span class="ne">UserWarning</span><span class="p">)</span>
+    <span class="n">cm</span><span class="o">.</span><span class="fm">__exit__</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Scan is restored:&quot;</span><span class="p">,</span> <span class="s2">&quot;progress_bar&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="o">.</span><span class="vm">__module__</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="cell_output docutils container">
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Scan is patched: True
+Scan is restored: True
+</pre></div>
+</div>
+</div>
+</div>
+</section>
+<section id="other-caveats">
+<h3>Other caveats<a class="headerlink" href="#other-caveats" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><strong>Checkpoint + gradient:</strong> Under <code class="docutils literal notranslate"><span class="pre">jax.checkpoint</span></code> combined with differentiation, the callback fires twice per logical step (primal + recompute), so step counts appear roughly doubled. Computed values and gradients are unaffected.</p></li>
+<li><p><strong>Multi-device sharding:</strong> Under <code class="docutils literal notranslate"><span class="pre">jax.shard_map</span></code>, the callback fires once per device per step, multiplying the host dispatch overhead. The bar may reach 100% while slower shards are still running.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">functools.partial</span></code> bypass:</strong> A <code class="docutils literal notranslate"><span class="pre">functools.partial(jax.lax.scan,</span> <span class="pre">...)</span></code> captured before the context is entered silently bypasses the bar with no error.</p></li>
+<li><p><strong>Shared <code class="docutils literal notranslate"><span class="pre">output_file</span></code>:</strong> If two contexts share the same file path, their writes interleave and corrupt the file. Use a unique path per context.</p></li>
+</ul>
+</section>
+</section>
+<section id="jupyter-rendering">
+<h2>Jupyter rendering<a class="headerlink" href="#jupyter-rendering" title="Link to this heading">#</a></h2>
+<p>By default, the progress bar displays as a <strong>rich widget</strong> in Jupyter (requires <code class="docutils literal notranslate"><span class="pre">ipywidgets</span></code> &gt;= 7.0, installed separately). Without it, you get a text-based bar on stderr. Both work identically; the widget is simply prettier in notebooks.</p>
+<p>To use the rich widget:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>ipywidgets
+</pre></div>
+</div>
+<p>No code changes needed—the bar detects the environment automatically.</p>
+</section>
+<section id="summary">
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading">#</a></h2>
+<ul class="simple">
+<li><p>Wrap any sampling call with <code class="docutils literal notranslate"><span class="pre">with</span> <span class="pre">blackjax.progress_bar(label=&quot;...&quot;)</span></code> to add a live bar.</p></li>
+<li><p>Works under <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> without shape mismatches (fixes issue <a class="reference external" href="https://github.com/blackjax-devs/blackjax/issues/927">#927</a>).</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">print_rate=</span></code> to control update frequency for expensive iterations.</p></li>
+<li><p>Multi-phase runs (e.g., MCLMC tuning + sampling) show bar resets per phase—expected behavior.</p></li>
+<li><p>Keep one context open across repeated calls to the same compiled function to avoid JIT cache staleness.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">output_file=</span></code> + <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">-m</span> <span class="pre">blackjax.progress_reader</span></code> for monitoring long-running jobs from another terminal.</p></li>
+<li><p>Always use the <code class="docutils literal notranslate"><span class="pre">with</span></code> form; manual <code class="docutils literal notranslate"><span class="pre">__enter__</span></code> without <code class="docutils literal notranslate"><span class="pre">__exit__</span></code> leaks the patch.</p></li>
+</ul>
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="howto_sample_multiple_chains.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Sample with multiple chains in parallel</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="howto_custom_gradients.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Use custom gradients</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-it-works">How it works</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-model-bayesian-linear-regression">The model: Bayesian linear regression</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-usage-labeled-bar-around-a-warmup">Basic usage: labeled bar around a warmup</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#controlling-update-frequency-with-print-rate">Controlling update frequency with <code class="docutils literal notranslate"><span class="pre">print_rate</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-phase-workflows-adaptation-and-sampling-in-one-context">Multi-phase workflows: adaptation and sampling in one context</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#multi-chain-sampling-with-jax-vmap">Multi-chain sampling with <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tempered-smc-bar-ticks-per-temperature">Tempered SMC: bar ticks per temperature</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#file-based-progress-external-monitoring">File-based progress: external monitoring</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#common-gotchas">Common gotchas</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#jit-cache-staleness">JIT cache staleness</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#manual-enter-without-exit-leaks-the-patch">Manual <code class="docutils literal notranslate"><span class="pre">__enter__</span></code> without <code class="docutils literal notranslate"><span class="pre">__exit__</span></code> leaks the patch</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#other-caveats">Other caveats</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#jupyter-rendering">Jupyter rendering</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#summary">Summary</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
