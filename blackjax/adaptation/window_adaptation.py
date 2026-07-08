@@ -29,7 +29,6 @@ from blackjax.adaptation.step_size import (
     dual_averaging_adaptation,
 )
 from blackjax.base import AdaptationAlgorithm
-from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, PRNGKey
 from blackjax.util import pytree_size
 
@@ -263,7 +262,6 @@ def window_adaptation(
     imm_shrinkage_to_previous: float = 0.0,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
-    progress_bar: bool = False,
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
     **extra_parameters,
@@ -335,8 +333,6 @@ def window_adaptation(
         The initial step size used in the algorithm.
     target_acceptance_rate
         The acceptance rate that we target during step size adaptation.
-    progress_bar
-        Whether we should display a progress bar.
     adaptation_info_fn
         Function to select the adaptation info returned. See return_all_adapt_info
         and get_filter_adapt_info_fn in blackjax.adaptation.base.  By default all
@@ -349,6 +345,11 @@ def window_adaptation(
     Returns
     -------
     A function that runs the adaptation and returns an `AdaptationResult` object.
+
+    Notes
+    -----
+    Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a
+    progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.
 
     """
     # Validate initial_inverse_mass_matrix shape against is_mass_matrix_diagonal.
@@ -416,13 +417,10 @@ def window_adaptation(
         init_state = algorithm.init(position, logdensity_fn)
         init_adaptation_state = adapt_init(position, initial_step_size)
 
-        if progress_bar:
-            print("Running window adaptation")
-        scan_fn = gen_scan_fn(num_steps, progress_bar=progress_bar)
         start_state = (init_state, init_adaptation_state)
         keys = jax.random.split(rng_key, num_steps)
         schedule = build_schedule(num_steps)
-        last_state, info = scan_fn(
+        last_state, info = jax.lax.scan(
             one_step,
             start_state,
             (jnp.arange(num_steps), keys, schedule),

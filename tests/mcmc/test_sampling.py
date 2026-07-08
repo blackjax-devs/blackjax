@@ -222,7 +222,6 @@ class LinearRegressionTest(chex.TestCase):
             inference_algorithm=alg,
             num_steps=num_steps,
             transform=lambda state, _: state.position,
-            progress_bar=False,
         )
 
         return out
@@ -282,7 +281,6 @@ class LinearRegressionTest(chex.TestCase):
             inference_algorithm=alg,
             num_steps=num_steps,
             transform=lambda state, _: state.position,
-            progress_bar=False,
         )
 
         return out
@@ -340,7 +338,6 @@ class LinearRegressionTest(chex.TestCase):
             case["algorithm"],
             logposterior_fn,
             is_mass_matrix_diagonal,
-            progress_bar=True,
             adaptation_info_fn=window_adapt_config["filter_fn"],
             **case["parameters"],
         )

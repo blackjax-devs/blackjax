@@ -100,7 +100,6 @@ from blackjax.adaptation.step_size import (
 from blackjax.adaptation.window_adaptation import build_schedule
 from blackjax.base import AdaptationAlgorithm
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix, gaussian_euclidean_low_rank
-from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, PRNGKey
 from blackjax.util import pytree_size
 
@@ -1033,7 +1032,6 @@ def window_adaptation_low_rank(
     target_acceptance_rate: float = 0.80,
     gamma: float = 1e-5,
     cutoff: float = 2.0,
-    progress_bar: bool = False,
     adaptation_info_fn: Callable = _default_low_rank_adaptation_info_fn,
     integrator=mcmc.integrators.velocity_verlet,
     gradient_based_init: bool = False,
@@ -1072,8 +1070,6 @@ def window_adaptation_low_rank(
     cutoff
         Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked.
         Default ``2.0`` matches nutpie's ``c=2``.
-    progress_bar
-        Show a progress bar during warmup.
     adaptation_info_fn
         Controls what adaptation info is retained; see
         ``blackjax.adaptation.base``. Default
@@ -1128,6 +1124,11 @@ def window_adaptation_low_rank(
     production sampling.  The last chain state from warmup is available as
     ``warmup_info[-1].state``, and μ* as
     ``warmup_info[-1].adaptation_state.mu_star``.
+
+    Notes
+    -----
+    Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a
+    progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.
     """
     if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
         mcmc_kernel = algorithm.build_kernel(integrator)
@@ -1202,11 +1203,8 @@ def window_adaptation_low_rank(
             buffer_size,
         )
 
-        if progress_bar:
-            print("Running low-rank window adaptation")
-        scan_fn = gen_scan_fn(num_steps, progress_bar=progress_bar)
         keys = jax.random.split(rng_key, num_steps)
-        last_state, info = scan_fn(
+        last_state, info = jax.lax.scan(
             one_step,
             (init_state, init_adaptation_state),
             (jnp.arange(num_steps), keys, schedule),

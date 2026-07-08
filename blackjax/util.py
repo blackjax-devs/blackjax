@@ -17,7 +17,6 @@ from blackjax.eca import eca_step as eca_step  # noqa: F401
 from blackjax.eca import ensemble_execute_fn as ensemble_execute_fn  # noqa: F401
 from blackjax.eca import run_eca as run_eca  # noqa: F401
 from blackjax.eca import while_with_info as while_with_info  # noqa: F401
-from blackjax.progress_bar import gen_scan_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
 
@@ -154,7 +153,6 @@ def run_inference_algorithm(
     num_steps: int,
     initial_state: ArrayLikeTree = None,
     initial_position: ArrayLikeTree = None,
-    progress_bar: bool = False,
     transform: Callable = lambda state, info: (state, info),
 ) -> tuple:
     """Wrapper to run an inference algorithm.
@@ -162,6 +160,9 @@ def run_inference_algorithm(
     Note that this utility function does not work for Stochastic Gradient MCMC samplers
     like sghmc, as SG-MCMC samplers require additional control flow for batches of data
     to be passed in during each sample.
+
+    Wrap the call in :func:`blackjax.progress_bar` to display a progress bar,
+    e.g. ``with blackjax.progress_bar(): run_inference_algorithm(...)``.
 
     Parameters
     ----------
@@ -175,8 +176,6 @@ def run_inference_algorithm(
         One of blackjax's sampling algorithms or variational inference algorithms.
     num_steps
         Number of MCMC steps.
-    progress_bar
-        Whether to display a progress bar.
     transform
         A transformation of the trace of states (and info) to be returned. This is useful for
         computing determinstic variables, or returning a subset of the states.
@@ -208,10 +207,8 @@ def run_inference_algorithm(
         state, info = inference_algorithm.step(rng_key, state)
         return state, transform(state, info)
 
-    scan_fn = gen_scan_fn(num_steps, progress_bar)
-
     xs = jnp.arange(num_steps), keys
-    final_state, history = scan_fn(one_step, initial_state, xs)
+    final_state, history = lax.scan(one_step, initial_state, xs)
 
     return final_state, history
 
@@ -257,7 +254,6 @@ def store_only_expectation_values(
              inference_algorithm=memory_efficient_sampling_alg,
              num_steps=num_steps,
              transform=transform,
-             progress_bar=True,
          )
     """
 

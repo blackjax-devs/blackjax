@@ -2,7 +2,7 @@ from functools import partial
 
 import chex
 import numpy as np
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
 from jax import jit
 from jax import numpy as jnp
 from jax import random as jr
@@ -30,17 +30,16 @@ class RunInferenceAlgorithmTest(chex.TestCase):
         )
         self.num_steps = 10
 
-    def check_compatible(self, initial_state, progress_bar):
+    def check_compatible(self, initial_state):
         """
         Runs 10 steps with `run_inference_algorithm` starting with
-        `initial_state` and potentially a progress bar.
+        `initial_state`.
         """
         _ = run_inference_algorithm(
             rng_key=self.key,
             initial_state=initial_state,
             inference_algorithm=self.algorithm,
             num_steps=self.num_steps,
-            progress_bar=progress_bar,
             transform=lambda state, info: state.position,
         )
 
@@ -74,7 +73,6 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             inference_algorithm=sampling_alg,
             num_steps=num_steps,
             transform=lambda state, info: state_transform(state),
-            progress_bar=True,
         )
 
         print("average of steps (slow way):", samples.mean(axis=0))
@@ -91,26 +89,22 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             inference_algorithm=memory_efficient_sampling_alg,
             num_steps=num_steps,
             transform=transform,
-            progress_bar=True,
         )
 
         assert jnp.allclose(trace_at_every_step[0][-1], samples.mean(axis=0))
 
-    @parameterized.parameters([True, False])
-    def test_compatible_with_initial_pos(self, progress_bar):
+    def test_compatible_with_initial_pos(self):
         _ = run_inference_algorithm(
             rng_key=self.key,
             initial_position=jnp.array([1.0, 1.0]),
             inference_algorithm=self.algorithm,
             num_steps=self.num_steps,
-            progress_bar=progress_bar,
             transform=lambda state, info: state.position,
         )
 
-    @parameterized.parameters([True, False])
-    def test_compatible_with_initial_state(self, progress_bar):
+    def test_compatible_with_initial_state(self):
         state = self.algorithm.init(jnp.array([1.0, 1.0]))
-        self.check_compatible(state, progress_bar)
+        self.check_compatible(state)
 
     @staticmethod
     def logdensity_fn(x):
