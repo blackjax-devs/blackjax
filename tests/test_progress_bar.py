@@ -14,6 +14,7 @@
 """Unit tests for the ``jax.lax.scan``-monkeypatching progress bar."""
 import os
 import stat
+import sys
 import tempfile
 import threading
 import warnings
@@ -25,9 +26,18 @@ import numpy as np
 from absl.testing import absltest
 
 import blackjax
-from blackjax.progress_bar import _original_scan, _patched_scan
+from blackjax.progress_bar import ProgressState, _original_scan, _patched_scan
 from blackjax.progress_reader import read_progress
 from blackjax.util import run_inference_algorithm
+
+# `blackjax/__init__.py` does `from .progress_bar import progress_bar`, which
+# shadows the *submodule* name `blackjax.progress_bar` with the *function* on
+# the `blackjax` package object. `from blackjax.progress_bar import X` above
+# is unaffected (it resolves `X` from sys.modules directly), but reading the
+# module's mutable globals (`_session_scan`, reassigned at runtime, so a
+# `from ... import _session_scan` would only ever see the import-time value)
+# needs the real submodule object -- pull it out of sys.modules explicitly.
+_progress_bar_module = sys.modules["blackjax.progress_bar"]
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 
@@ -265,6 +275,81 @@ class ProgressBarTest(BlackJAXTest):
             jax.block_until_ready(final)
 
         self.assertEqual(state.current_step, 29)
+
+    def test_step_callback_survives_promoted_warnings(self):
+        """The never-raise invariant must hold even when the active
+        warnings filter promotes ``UserWarning`` to an error (this
+        project's own ``pytest.ini`` does): driving ``_step_callback``
+        directly against an unwritable ``output_file`` must not raise, and
+        ``output_file`` must still end up disabled (TL round-2 finding --
+        the courtesy warning itself was escaping as the very crash item A
+        exists to prevent)."""
+        if os.geteuid() == 0:
+            self.skipTest("running as root bypasses directory permissions")
+
+        tmpdir = tempfile.mkdtemp()
+        readonly_dir = os.path.join(tmpdir, "readonly")
+        os.makedirs(readonly_dir)
+        os.chmod(readonly_dir, stat.S_IREAD | stat.S_IEXEC)
+        bad_path = os.path.join(readonly_dir, "progress.txt")
+
+        try:
+            state = ProgressState(label="direct", print_rate=1, output_file=bad_path)
+            state.n_steps = 10
+            with warnings.catch_warnings():
+                warnings.simplefilter("error")
+                try:
+                    state._step_callback(jnp.array(0))
+                except Exception as e:  # pragma: no cover -- failure path
+                    self.fail(
+                        "_step_callback raised under a promoted warnings "
+                        f"filter: {e!r}"
+                    )
+            self.assertIsNone(state.output_file)
+        finally:
+            os.chmod(readonly_dir, stat.S_IRWXU)
+
+    def test_concurrent_first_enter_no_self_capture(self):
+        """Two threads racing to be the FIRST ``progress_bar()`` entrant
+        must never let one capture the OTHER's freshly-installed
+        ``_patched_scan`` as ``_session_scan`` (which would self-recurse on
+        every pass-through call). Repeated with a ``threading.Barrier`` so
+        both threads hit ``__enter__`` at the same instant (TL round-2
+        finding #2 -- the registry-lock + self-capture guard)."""
+
+        def body(carry, x):
+            return carry + x, carry
+
+        for i in range(50):
+            barrier = threading.Barrier(2)
+            captured = []
+            results = {}
+
+            def worker(label, n):
+                barrier.wait(timeout=5)
+                with blackjax.progress_bar(label=label) as state:
+                    captured.append(_progress_bar_module._session_scan)
+                    f, _ = jax.lax.scan(body, 0.0, jnp.arange(n))
+                    jax.block_until_ready(f)
+                    results[label] = state.n_steps
+
+            t1 = threading.Thread(target=worker, args=("r1", 4))
+            t2 = threading.Thread(target=worker, args=("r2", 5))
+            t1.start()
+            t2.start()
+            t1.join(timeout=10)
+            t2.join(timeout=10)
+
+            self.assertFalse(t1.is_alive(), f"iteration {i}: thread 1 hung")
+            self.assertFalse(t2.is_alive(), f"iteration {i}: thread 2 hung")
+            for c in captured:
+                self.assertIsNot(
+                    c, _patched_scan, f"iteration {i}: captured our own patch"
+                )
+            self.assertEqual(results.get("r1"), 4)
+            self.assertEqual(results.get("r2"), 5)
+
+        self.assertIs(jax.lax.scan, _original_scan)
 
     def test_owner_thread_routing_two_contexts(self):
         """With >=2 simultaneously active contexts, a scan is attributed

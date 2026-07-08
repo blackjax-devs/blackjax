@@ -37,6 +37,21 @@ _original_scan = jax.lax.scan
 _scan_depth = threading.local()
 _progress_registry: dict = {}  # uuid -> ProgressState
 
+# Guards the registry empty<->non-empty transitions and the _session_scan
+# capture/restore below (progress_bar() enter/exit only -- NOT held across
+# the `yield`, and NOT touched by _patched_scan/_inject_progress on the
+# scan-tracing hot path). Without this, two threads racing to be the FIRST
+# entrant could both observe an empty registry before either inserts: the
+# second to actually patch `jax.lax.scan` would have the FIRST's bare
+# `_patched_scan` visible as "the current jax.lax.scan" and capture that as
+# `_session_scan`, making `_underlying_scan()` return `_patched_scan` itself
+# -- infinite self-recursion on every subsequent pass-through call. Holding
+# this lock around the narrow enter/exit critical section (a dict insert/del
+# plus one attribute read-or-write) serializes exactly that race at
+# essentially zero cost, since entering/exiting a context is rare compared
+# to the scans that run inside it.
+_registry_lock = threading.Lock()
+
 # The scan implementation captured on the empty->non-empty registry
 # transition (i.e. whatever `jax.lax.scan` pointed to when the FIRST
 # concurrently-active progress_bar() context was entered). This may be a
@@ -188,6 +203,14 @@ class ProgressState:
         handles the one recurring, retryable-looking failure (the
         ``output_file`` write) so we stop paying a doomed write on every
         remaining step instead of relying on the outer catch every time.
+
+        Both handlers mutate state (the warned-once flag, disabling
+        ``output_file``) BEFORE attempting to warn, and wrap the
+        ``warnings.warn`` call itself in its own ``try/except``: if the
+        active warnings filter promotes ``UserWarning`` to an error (this
+        project's own ``pytest.ini`` does), the courtesy warning must not be
+        allowed to become the very exception this function exists to
+        prevent -- the never-raise invariant outranks the warning.
         """
         if self.closed:
             return
@@ -215,25 +238,40 @@ class ProgressState:
                             fh.write(f"{step} {self.n_steps}")
                         os.replace(tmp, self.output_file)  # atomic
                     except OSError as e:
-                        if not self._output_file_warned:
-                            warnings.warn(
-                                "blackjax.progress_bar: disabling "
-                                f"output_file after a write failure ({e!r}) "
-                                "-- the progress bar itself is unaffected.",
-                                stacklevel=2,
-                            )
-                            self._output_file_warned = True
+                        already_warned = self._output_file_warned
+                        self._output_file_warned = True
                         self.output_file = None
+                        if not already_warned:
+                            try:
+                                warnings.warn(
+                                    "blackjax.progress_bar: disabling "
+                                    f"output_file after a write failure "
+                                    f"({e!r}) -- the progress bar itself is "
+                                    "unaffected.",
+                                    stacklevel=2,
+                                )
+                            except Exception:
+                                # warnings can be promoted to errors by the
+                                # active filter; the never-raise invariant
+                                # outranks the courtesy.
+                                pass
         except Exception as e:  # noqa: BLE001 -- see invariant above
-            if not self._callback_warned:
-                warnings.warn(
-                    "blackjax.progress_bar: internal callback error "
-                    f"({e!r}) -- further progress updates for this context "
-                    "are disabled, but the underlying computation is "
-                    "unaffected.",
-                    stacklevel=2,
-                )
-                self._callback_warned = True
+            already_warned = self._callback_warned
+            self._callback_warned = True
+            if not already_warned:
+                try:
+                    warnings.warn(
+                        "blackjax.progress_bar: internal callback error "
+                        f"({e!r}) -- further progress updates for this "
+                        "context are disabled, but the underlying "
+                        "computation is unaffected.",
+                        stacklevel=2,
+                    )
+                except Exception:
+                    # warnings can be promoted to errors by the active
+                    # filter; the never-raise invariant outranks the
+                    # courtesy.
+                    pass
 
     def _start_display(self):
         from tqdm.auto import tqdm
@@ -375,12 +413,21 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
 
     key = str(uuid.uuid4())
     state = ProgressState(label=label, print_rate=print_rate, output_file=output_file)
-    if not _progress_registry:  # empty -> non-empty: this is the session opener
-        _session_scan = (
-            jax.lax.scan
-        )  # capture whatever is installed now (foreign or original)
-    _progress_registry[key] = state
-    jax.lax.scan = _patched_scan
+    with _registry_lock:
+        if not _progress_registry:  # empty -> non-empty: this is the session opener
+            candidate = jax.lax.scan  # whatever is installed now (foreign or original)
+            # Belt-and-braces: the lock above already prevents the race
+            # that could make this true (two threads both observing an
+            # empty registry before either inserts), but guard the
+            # invariant directly anyway -- capturing our OWN bare patch
+            # here would make _underlying_scan() return _patched_scan
+            # itself, i.e. infinite self-recursion on every pass-through
+            # call. A foreign wrapper installed AROUND _patched_scan is a
+            # different object and would still chain through correctly.
+            if candidate is not _patched_scan:
+                _session_scan = candidate
+        _progress_registry[key] = state
+        jax.lax.scan = _patched_scan
     state._start_display()
     try:
         yield state
@@ -389,14 +436,15 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
         state._stop_event.set()
         if state._display_thread is not None:
             state._display_thread.join(timeout=2.0)
-        del _progress_registry[key]
-        if not _progress_registry:  # non-empty -> empty: this is the session closer
-            if jax.lax.scan is _patched_scan:
-                jax.lax.scan = _session_scan
-            # Else: something else replaced jax.lax.scan while we were
-            # active -- leave it alone rather than clobbering a foreign
-            # patch installed during our session.
-            _session_scan = None
+        with _registry_lock:
+            del _progress_registry[key]
+            if not _progress_registry:  # non-empty -> empty: session closer
+                if jax.lax.scan is _patched_scan:
+                    jax.lax.scan = _session_scan
+                # Else: something else replaced jax.lax.scan while we were
+                # active -- leave it alone rather than clobbering a foreign
+                # patch installed during our session.
+                _session_scan = None
         # Clear before removing: a jit-cached function traced inside this
         # context keeps its callback baked in after exit (see the docstring
         # Notes), and a post-exit call would otherwise resurrect the file
