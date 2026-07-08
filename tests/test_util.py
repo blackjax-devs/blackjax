@@ -182,7 +182,6 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
             initial_state=state,
             inference_algorithm=sampler,
             num_steps=num_steps,
-            # progress_bar=True,
         )
         return state, history
 

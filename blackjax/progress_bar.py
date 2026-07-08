@@ -212,5 +212,10 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
         del _progress_registry[key]
         if not _progress_registry:
             jax.lax.scan = _original_scan
+        # Clear before removing: a jit-cached function traced inside this
+        # context keeps its callback baked in after exit (see the docstring
+        # Notes), and a post-exit call would otherwise resurrect the file
+        # we are about to delete via that stale _step_callback.
+        state.output_file = None
         if output_file and os.path.exists(output_file):
             os.remove(output_file)
