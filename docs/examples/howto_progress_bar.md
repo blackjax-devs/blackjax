@@ -346,6 +346,8 @@ print("Scan is restored:", "progress_bar" not in jax.lax.scan.__module__)
 
 By default, the progress bar displays as a **rich widget** in Jupyter (requires `ipywidgets` >= 7.0, installed separately). Without it, you get a text-based bar on stderr. Both work identically; the widget is simply prettier in notebooks.
 
+Verified frontends: **terminal**, **JupyterLab** (widget and text modes), **VS Code's notebook interface** (including Remote-SSH), and **marimo** (console-path text bar; for long marimo runs the `output_file=` + reader pattern above is a good alternative).
+
 To use the rich widget:
 
 ```bash
