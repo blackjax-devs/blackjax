@@ -39,12 +39,17 @@ $$y = X w + \varepsilon, \quad \varepsilon \sim N(0, \sigma^2)$$
 with known noise scale $\sigma$ and Gaussian priors on the weight vector $w$.
 
 ```{code-cell} ipython3
+import warnings
+
 import jax
 import jax.numpy as jnp
 from jax.scipy.stats import norm
 
 import blackjax
 from blackjax.util import run_inference_algorithm
+
+# Headless doc builds have no ipywidgets; the plain-text bar is intended here.
+warnings.filterwarnings("ignore", message="IProgress not found")
 
 N, DIM, SIGMA = 300, 10, 0.5
 kx, kw, kn = jax.random.split(jax.random.key(0), 3)
@@ -322,8 +327,11 @@ cm = blackjax.progress_bar(label="leaked")
 cm.__enter__()
 print("Scan is patched:", "progress_bar" in jax.lax.scan.__module__)
 
-# Recovery: always call __exit__
-cm.__exit__(None, None, None)
+# Recovery: always call __exit__. (We suppress the zero-step UserWarning --
+# nothing was sampled inside this demonstration context, by design.)
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore", UserWarning)
+    cm.__exit__(None, None, None)
 print("Scan is restored:", "progress_bar" not in jax.lax.scan.__module__)
 ```
 
