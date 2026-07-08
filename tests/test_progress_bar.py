@@ -159,6 +159,36 @@ class ProgressBarTest(BlackJAXTest):
         np.testing.assert_allclose(final, 10.0)
         np.testing.assert_allclose(ys, jnp.array([0.0, 0.0, 1.0, 3.0, 6.0]))
 
+    def test_sequential_scans_different_lengths(self):
+        """Two sequential outermost scans of different lengths inside one
+        context are each (re-)instrumented -- regression test for the
+        multi-phase display bug (e.g. mclmc_find_L_and_step_size's several
+        sequential warmup scans rendered with the first phase's total
+        frozen for the rest of the run)."""
+        calls = []
+
+        def body(carry, x):
+            return carry + x, carry
+
+        with blackjax.progress_bar(label="sequential", print_rate=1) as state:
+            original_callback = state._step_callback
+
+            def counting_callback(idx):
+                calls.append(int(idx))
+                original_callback(idx)
+
+            state._step_callback = counting_callback
+
+            final1, _ = jax.lax.scan(body, 0.0, jnp.arange(30))
+            final2, _ = jax.lax.scan(body, final1, jnp.arange(50))
+            jax.block_until_ready(final2)
+
+        self.assertEqual(len(calls), 30 + 50)
+        self.assertEqual(calls.count(0), 2)  # both phases fired step 0
+        self.assertEqual(calls[:30], list(range(30)))
+        self.assertEqual(calls[30:], list(range(50)))
+        self.assertEqual(state.n_steps, 50)
+
     def test_kwargs_passthrough(self):
         """``reverse=True`` and ``unroll=2`` are forwarded faithfully and
         still produce correct results."""

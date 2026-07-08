@@ -121,6 +121,12 @@ class ProgressState:
         if step % rate == 0 or step == self.n_steps - 1:
             # Track the max seen so the bar stays monotone even if steps
             # arrive out of order (e.g. under some future scheduling).
+            # `step == 0` is an unconditional reset: on a multi-phase run
+            # (e.g. mclmc_find_L_and_step_size's ~5 sequential warmup scans),
+            # this is what tells _render_loop a new phase has started even
+            # when the new phase happens to have the same length as the
+            # previous one (so `n_steps` alone would not change) -- see
+            # _render_loop's `cur < last` check.
             if step > self.current_step or step == 0:
                 self.current_step = step
             if self.output_file:
@@ -142,10 +148,34 @@ class ProgressState:
         while not self._stop_event.is_set():
             # n_steps is unknown until the outermost scan is traced, so wait
             # for it before creating the bar.
-            if self.n_steps > 0 and bar is None:
-                bar = self._tqdm_cls(total=self.n_steps, desc=self.label, unit="step")
-            if bar is not None:
+            if self.n_steps > 0:
                 cur = self.current_step
+                # Detect a new phase on a multi-phase run (e.g.
+                # mclmc_find_L_and_step_size's ~5 sequential warmup scans of
+                # different lengths, immediately followed by a sampling
+                # scan): `n_steps` changing is the common case, but two
+                # consecutive phases can share the same length, in which
+                # case `n_steps` alone would not signal the restart -- `cur
+                # < last` catches that (a new phase's step 0 always resets
+                # `current_step`, see _step_callback). Either signal resets
+                # the bar so its total/elapsed-timer/rate stats reflect the
+                # new phase instead of freezing at the first phase's total
+                # (the observed bug) or overflowing into tqdm's unbounded
+                # counter mode once a later phase runs longer than the
+                # first. `n_steps` is written at trace time, strictly
+                # before that phase's first callback can fire, so the only
+                # possible race is a single stale tick where this loop
+                # observes the new `n_steps` before `current_step` has been
+                # reset to 0 by that phase's first callback -- harmless,
+                # self-corrects on the very next 0.1s tick.
+                if bar is None:
+                    bar = self._tqdm_cls(
+                        total=self.n_steps, desc=self.label, unit="step"
+                    )
+                    last = -1
+                elif self.n_steps != bar.total or cur < last:
+                    bar.reset(total=self.n_steps)
+                    last = -1
                 if cur != last:
                     bar.n = cur + 1
                     bar.refresh()
