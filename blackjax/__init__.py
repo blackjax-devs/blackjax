@@ -41,6 +41,7 @@ from .mcmc.random_walk import (
 )
 from .ns import nss as _nss
 from .optimizers import dual_averaging, lbfgs
+from .progress_bar import progress_bar
 from .sgmcmc import csgld as _csgld
 from .sgmcmc import sghmc as _sghmc
 from .sgmcmc import sgld as _sgld
@@ -308,4 +309,5 @@ __all__ = [
     "rhat",
     "SamplingAlgorithm",  # base
     "VIAlgorithm",
+    "progress_bar",  # progress bar context manager
 ]
