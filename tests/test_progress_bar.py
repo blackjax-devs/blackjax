@@ -13,7 +13,10 @@
 # limitations under the License.
 """Unit tests for the ``jax.lax.scan``-monkeypatching progress bar."""
 import os
+import stat
 import tempfile
+import threading
+import warnings
 
 import chex
 import jax
@@ -22,7 +25,7 @@ import numpy as np
 from absl.testing import absltest
 
 import blackjax
-from blackjax.progress_bar import _original_scan
+from blackjax.progress_bar import _original_scan, _patched_scan
 from blackjax.progress_reader import read_progress
 from blackjax.util import run_inference_algorithm
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
@@ -188,6 +191,242 @@ class ProgressBarTest(BlackJAXTest):
         self.assertEqual(calls[:30], list(range(30)))
         self.assertEqual(calls[30:], list(range(50)))
         self.assertEqual(state.n_steps, 50)
+
+    def test_reverse_display_ascends(self):
+        """``reverse=True`` must show an ascending display sequence ending
+        at ``n - 1``, not a countdown that looks reset-to-zero on
+        completion (adversarial-review finding #A4)."""
+        n = 6
+        seen = []
+
+        def body(carry, x):
+            return carry + x, carry
+
+        with blackjax.progress_bar(label="reverse", print_rate=1) as state:
+            original_callback = state._step_callback
+
+            def recording_callback(idx):
+                seen.append(int(idx))
+                original_callback(idx)
+
+            state._step_callback = recording_callback
+            final, _ = jax.lax.scan(body, 0.0, jnp.arange(float(n)), reverse=True)
+            jax.block_until_ready(final)
+
+        self.assertEqual(seen, list(range(n)))
+        self.assertEqual(state.current_step, n - 1)
+
+    def test_unwritable_output_file_completes_with_one_warning(self):
+        """An ``output_file`` write failure must not crash the run --
+        ``_step_callback`` is a total function -- and must warn exactly
+        once, not once per remaining step (adversarial-review finding #B14,
+        the sole crash path found)."""
+        if os.geteuid() == 0:
+            self.skipTest("running as root bypasses directory permissions")
+
+        tmpdir = tempfile.mkdtemp()
+        readonly_dir = os.path.join(tmpdir, "readonly")
+        os.makedirs(readonly_dir)
+        os.chmod(readonly_dir, stat.S_IREAD | stat.S_IEXEC)
+        bad_path = os.path.join(readonly_dir, "progress.txt")
+
+        def body(carry, x):
+            return carry + x, carry
+
+        try:
+            with warnings.catch_warnings(record=True) as caught:
+                warnings.simplefilter("always")
+                with blackjax.progress_bar(
+                    label="perm", output_file=bad_path, print_rate=1
+                ) as state:
+                    final, _ = jax.lax.scan(body, 0.0, jnp.arange(50))
+                    jax.block_until_ready(final)
+            output_file_warnings = [
+                w
+                for w in caught
+                if issubclass(w.category, UserWarning)
+                and "output_file" in str(w.message)
+            ]
+            self.assertEqual(len(output_file_warnings), 1)
+            self.assertEqual(state.current_step, 49)
+            np.testing.assert_allclose(final, float(jnp.arange(50.0).sum()))
+        finally:
+            os.chmod(readonly_dir, stat.S_IRWXU)
+
+    def test_print_rate_zero_no_crash(self):
+        """``print_rate=0`` (an innocent typo) must not
+        ``ZeroDivisionError`` inside the callback."""
+
+        def body(carry, x):
+            return carry + x, carry
+
+        with blackjax.progress_bar(label="zero-rate", print_rate=0) as state:
+            final, _ = jax.lax.scan(body, 0.0, jnp.arange(30))
+            jax.block_until_ready(final)
+
+        self.assertEqual(state.current_step, 29)
+
+    def test_owner_thread_routing_two_contexts(self):
+        """With >=2 simultaneously active contexts, a scan is attributed
+        only to its OWNER thread (the thread that called ``__enter__``); a
+        true bystander thread owning neither context falls through with no
+        bar rather than being misattributed (adversarial-review finding
+        #B4)."""
+
+        def body(carry, x):
+            return carry + x, carry
+
+        def run_scan(n):
+            f, _ = jax.lax.scan(body, 0.0, jnp.arange(n))
+            jax.block_until_ready(f)
+
+        # -- owner-correct cell: each thread's own scan lands on its own
+        # context, never on the other's. --
+        ready1, ready2, done1 = (
+            threading.Event(),
+            threading.Event(),
+            threading.Event(),
+        )
+        results = {}
+
+        def owner_a():
+            with blackjax.progress_bar(label="A") as sa:
+                results["a"] = sa
+                ready1.set()
+                ready2.wait(timeout=5)
+                run_scan(31)
+                done1.set()
+
+        def owner_b():
+            ready1.wait(timeout=5)
+            with blackjax.progress_bar(label="B") as sb:
+                results["b"] = sb
+                ready2.set()
+                done1.wait(timeout=5)
+                run_scan(32)
+
+        ta, tb = threading.Thread(target=owner_a), threading.Thread(target=owner_b)
+        ta.start()
+        tb.start()
+        ta.join(timeout=10)
+        tb.join(timeout=10)
+
+        self.assertEqual(results["a"].n_steps, 31)
+        self.assertEqual(results["b"].n_steps, 32)
+
+        # -- bystander cell: a genuine third thread owning NEITHER active
+        # context must not be misattributed to either. --
+        ready1.clear()
+        ready2.clear()
+        done1.clear()
+        results2 = {}
+
+        def owner_a2():
+            with blackjax.progress_bar(label="A2") as sa:
+                results2["a"] = sa
+                ready1.set()
+                ready2.wait(timeout=5)
+                bystander = threading.Thread(target=lambda: run_scan(41))
+                bystander.start()
+                bystander.join(timeout=5)
+                done1.set()
+
+        def owner_b2():
+            ready1.wait(timeout=5)
+            with blackjax.progress_bar(label="B2") as sb:
+                results2["b"] = sb
+                ready2.set()
+                done1.wait(timeout=5)
+
+        # Both A2 and B2 legitimately end this cell with zero attributed
+        # steps (that is the point of the test -- the bystander's scan
+        # must land on neither), which by design now also triggers the
+        # zero-step UserWarning on each context's exit; suppress it here
+        # since it's expected, not a signal something went wrong under this
+        # project's filterwarnings=error.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            ta2 = threading.Thread(target=owner_a2)
+            tb2 = threading.Thread(target=owner_b2)
+            ta2.start()
+            tb2.start()
+            ta2.join(timeout=10)
+            tb2.join(timeout=10)
+
+        self.assertEqual(results2["a"].n_steps, 0)
+        self.assertEqual(results2["b"].n_steps, 0)
+
+    def test_foreign_patch_chaining_and_restoration(self):
+        """A third-party ``jax.lax.scan`` patch installed before our context
+        keeps firing for scans run inside it (chaining), and is restored --
+        not clobbered back to the true original -- on exit
+        (adversarial-review finding #B8)."""
+        foreign_calls = []
+        real_original = _original_scan
+
+        def foreign_patch(f, init, xs=None, length=None, **kwargs):
+            foreign_calls.append(1)
+            return real_original(f, init, xs=xs, length=length, **kwargs)
+
+        def body(carry, x):
+            return carry + x, carry
+
+        jax.lax.scan = foreign_patch
+        try:
+            with blackjax.progress_bar(label="chain-test") as state:
+                final, _ = jax.lax.scan(body, 0.0, jnp.arange(15))
+                jax.block_until_ready(final)
+
+            self.assertGreater(len(foreign_calls), 0)
+            self.assertEqual(state.n_steps, 15)
+            # Restored to the FOREIGN patch, not clobbered back to the true
+            # original -- the foreign patch predates our session.
+            self.assertIs(jax.lax.scan, foreign_patch)
+        finally:
+            jax.lax.scan = real_original
+
+    def test_nonlifo_two_context_restore(self):
+        """A enters, B enters, A exits first, B exits last --
+        ``jax.lax.scan`` is restored to the true original once the LAST
+        context exits, regardless of entry/exit order (adversarial-review
+        finding #B8, non-LIFO exit-order case)."""
+
+        def body(carry, x):
+            return carry + x, carry
+
+        cm_a = blackjax.progress_bar(label="A")
+        cm_b = blackjax.progress_bar(label="B")
+        cm_a.__enter__()
+        cm_b.__enter__()
+        try:
+            final, _ = jax.lax.scan(body, 0.0, jnp.arange(9))
+            jax.block_until_ready(final)
+        finally:
+            # Both contexts are owned by this (the main) thread, so the
+            # single scan above is attributed only to B (the most recently
+            # entered of the two, per the owner-tie-break rule) -- A
+            # legitimately sees zero steps and warns on exit; that warning
+            # is expected here; it is not what this test is checking.
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", UserWarning)
+                cm_a.__exit__(None, None, None)
+            self.assertIs(jax.lax.scan, _patched_scan)  # B is still active
+            cm_b.__exit__(None, None, None)
+
+        self.assertIs(jax.lax.scan, _original_scan)
+
+    def test_zero_step_warns(self):
+        """A context that never observes a scan step warns once, naming
+        both possible root causes."""
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            with blackjax.progress_bar(label="no-scan"):
+                pass
+
+        messages = [
+            str(w.message) for w in caught if issubclass(w.category, UserWarning)
+        ]
+        self.assertTrue(any("no scan step was ever observed" in m for m in messages))
 
     def test_kwargs_passthrough(self):
         """``reverse=True`` and ``unroll=2`` are forwarded faithfully and
