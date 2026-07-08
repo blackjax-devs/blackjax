@@ -328,7 +328,7 @@ Module Contents
    :rtype: ``(init, update, final)``
 
 
-.. py:function:: window_adaptation_low_rank(algorithm, logdensity_fn: Callable, max_rank: int = 10, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, gamma: float = 1e-05, cutoff: float = 2.0, progress_bar: bool = False, adaptation_info_fn: Callable = _default_low_rank_adaptation_info_fn, integrator=mcmc.integrators.velocity_verlet, gradient_based_init: bool = False, schedule_fn: Callable[[int], blackjax.types.Array] = build_schedule, buffer_policy: str = 'reset', recompute_every: int = 1, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: window_adaptation_low_rank(algorithm, logdensity_fn: Callable, max_rank: int = 10, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, gamma: float = 1e-05, cutoff: float = 2.0, adaptation_info_fn: Callable = _default_low_rank_adaptation_info_fn, integrator=mcmc.integrators.velocity_verlet, gradient_based_init: bool = False, schedule_fn: Callable[[int], blackjax.types.Array] = build_schedule, buffer_policy: str = 'reset', recompute_every: int = 1, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt step size and a low-rank mass matrix for HMC-family samplers.
 
@@ -351,7 +351,6 @@ Module Contents
                  Default ``1e-5`` matches nutpie's ``LowRankSettings::default``.
    :param cutoff: Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked.
                   Default ``2.0`` matches nutpie's ``c=2``.
-   :param progress_bar: Show a progress bar during warmup.
    :param adaptation_info_fn: Controls what adaptation info is retained; see
                               ``blackjax.adaptation.base``. Default
                               :func:`_default_low_rank_adaptation_info_fn` drops the raw
@@ -396,5 +395,10 @@ Module Contents
              * *production sampling.  The last chain state from warmup is available as*
              * ``warmup_info[-1].state``, and μ* as
              * ``warmup_info[-1].adaptation_state.mu_star``.
+
+   .. rubric:: Notes
+
+   Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a
+   progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.
 
 

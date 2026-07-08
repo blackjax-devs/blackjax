@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.hmc" href="../hmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc3df06762" />
+  <meta name="docsearch:version" content="0.1.dev1+gbb91a2431" />
   </head>
   
   
@@ -235,6 +235,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../ns/utils/index.html">blackjax.ns.utils</a></li>
 </ul>
 </details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../progress_reader/index.html">blackjax.progress_reader</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
@@ -428,13 +429,13 @@
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.velocity_verlet" title="blackjax.mcmc.integrators.velocity_verlet"><code class="xref py py-obj docutils literal notranslate"><span class="pre">velocity_verlet</span></code></a></p></td>
-<td><p>Two-stage palindromic symplectic integrator derived in <span id="id1">[<a class="reference internal" href="../../../../bib.html#id24" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>.</p></td>
+<td><p>Two-stage palindromic symplectic integrator derived in <span id="id1">[<a class="reference internal" href="../../../../bib.html#id23" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.mclachlan" title="blackjax.mcmc.integrators.mclachlan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mclachlan</span></code></a></p></td>
-<td><p>Three stages palindromic symplectic integrator derived in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id21" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span></p></td>
+<td><p>Three stages palindromic symplectic integrator derived in <span id="id2">[<a class="reference internal" href="../../../../bib.html#id20" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.yoshida" title="blackjax.mcmc.integrators.yoshida"><code class="xref py py-obj docutils literal notranslate"><span class="pre">yoshida</span></code></a></p></td>
-<td><p>Eleven-stage palindromic symplectic integrator derived in <span id="id3">[<a class="reference internal" href="../../../../bib.html#id54" title="IP Omelyan, IM Mryglod, and R Folk. Symplectic analytically integrable decomposition algorithms: classification, derivation, and application to molecular dynamics, quantum and celestial mechanics simulations. Computer Physics Communications, 151(3):272–314, 2003.">OMF03</a>]</span>.</p></td>
+<td><p>Eleven-stage palindromic symplectic integrator derived in <span id="id3">[<a class="reference internal" href="../../../../bib.html#id53" title="IP Omelyan, IM Mryglod, and R Folk. Symplectic analytically integrable decomposition algorithms: classification, derivation, and application to molecular dynamics, quantum and celestial mechanics simulations. Computer Physics Communications, 151(3):272–314, 2003.">OMF03</a>]</span>.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.integrators.omelyan" title="blackjax.mcmc.integrators.omelyan"><code class="xref py py-obj docutils literal notranslate"><span class="pre">omelyan</span></code></a></p></td>
 <td><p></p></td>
@@ -474,11 +475,11 @@
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.mcmc.integrators.velocity_verlet">
 <span class="sig-name descname"><span class="pre">velocity_verlet</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#velocity_verlet"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.velocity_verlet" title="Link to this definition">#</a></dt>
-<dd><p>Two-stage palindromic symplectic integrator derived in <span id="id4">[<a class="reference internal" href="../../../../bib.html#id24" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>.</p>
+<dd><p>Two-stage palindromic symplectic integrator derived in <span id="id4">[<a class="reference internal" href="../../../../bib.html#id23" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>.</p>
 <p>The integrator is of the form (b1, a1, b2, a1, b1). The choice of the parameters
 determine both the bound on the integration error and the stability of the
 method with respect to the value of <cite>step_size</cite>. The values used here are
-the ones derived in <span id="id5">[<a class="reference internal" href="../../../../bib.html#id21" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span>; note that <span id="id6">[<a class="reference internal" href="../../../../bib.html#id24" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>
+the ones derived in <span id="id5">[<a class="reference internal" href="../../../../bib.html#id20" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span>; note that <span id="id6">[<a class="reference internal" href="../../../../bib.html#id23" title="Sergio Blanes, Fernando Casas, and Jesús Marıa Sanz-Serna. Numerical integrators for the hybrid monte carlo method. SIAM Journal on Scientific Computing, 36(4):A1556–A1580, 2014.">BCSS14</a>]</span>
 is more focused on stability and derives different values.</p>
 <p>Also known as the minimal norm integrator.</p>
 </dd></dl>
@@ -486,19 +487,19 @@ is more focused on stability and derives different values.</p>
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.mcmc.integrators.mclachlan">
 <span class="sig-name descname"><span class="pre">mclachlan</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#mclachlan"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.mclachlan" title="Link to this definition">#</a></dt>
-<dd><p>Three stages palindromic symplectic integrator derived in <span id="id7">[<a class="reference internal" href="../../../../bib.html#id21" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span></p>
+<dd><p>Three stages palindromic symplectic integrator derived in <span id="id7">[<a class="reference internal" href="../../../../bib.html#id20" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span></p>
 <p>The integrator is of the form (b1, a1, b2, a2, b2, a1, b1). The choice of
 the parameters determine both the bound on the integration error and the
 stability of the method with respect to the value of <cite>step_size</cite>. The
-values used here are the ones derived in <span id="id8">[<a class="reference internal" href="../../../../bib.html#id21" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span> which
+values used here are the ones derived in <span id="id8">[<a class="reference internal" href="../../../../bib.html#id20" title="Robert I McLachlan. On the numerical integration of ordinary differential equations by symmetric composition methods. SIAM Journal on Scientific Computing, 16(1):151–168, 1995.">McL95</a>]</span> which
 guarantees a stability interval length approximately equal to 4.67.</p>
 </dd></dl>
 
 <dl class="py data">
 <dt class="sig sig-object py" id="blackjax.mcmc.integrators.yoshida">
 <span class="sig-name descname"><span class="pre">yoshida</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#yoshida"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.yoshida" title="Link to this definition">#</a></dt>
-<dd><p>Eleven-stage palindromic symplectic integrator derived in <span id="id9">[<a class="reference internal" href="../../../../bib.html#id54" title="IP Omelyan, IM Mryglod, and R Folk. Symplectic analytically integrable decomposition algorithms: classification, derivation, and application to molecular dynamics, quantum and celestial mechanics simulations. Computer Physics Communications, 151(3):272–314, 2003.">OMF03</a>]</span>.</p>
-<p>Popular in LQCD, see also <span id="id10">[<a class="reference internal" href="../../../../bib.html#id55" title="Tetsuya Takaishi and Philippe De Forcrand. Testing and tuning symplectic integrators for the hybrid monte carlo algorithm in lattice qcd. Physical Review E, 73(3):036706, 2006.">TDF06</a>]</span>.</p>
+<dd><p>Eleven-stage palindromic symplectic integrator derived in <span id="id9">[<a class="reference internal" href="../../../../bib.html#id53" title="IP Omelyan, IM Mryglod, and R Folk. Symplectic analytically integrable decomposition algorithms: classification, derivation, and application to molecular dynamics, quantum and celestial mechanics simulations. Computer Physics Communications, 151(3):272–314, 2003.">OMF03</a>]</span>.</p>
+<p>Popular in LQCD, see also <span id="id10">[<a class="reference internal" href="../../../../bib.html#id54" title="Tetsuya Takaishi and Philippe De Forcrand. Testing and tuning symplectic integrators for the hybrid monte carlo algorithm in lattice qcd. Physical Review E, 73(3):036706, 2006.">TDF06</a>]</span>.</p>
 </dd></dl>
 
 <dl class="py data">
@@ -535,7 +536,7 @@ guarantees a stability interval length approximately equal to 4.67.</p>
 <dt class="sig sig-object py" id="blackjax.mcmc.integrators.implicit_midpoint">
 <span class="sig-name descname"><span class="pre">implicit_midpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_energy_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.mcmc.metrics.KineticEnergy</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">FixedPointSolver</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">solve_fixed_point_iteration</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">solver_kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Integrator</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/integrators.html#implicit_midpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.integrators.implicit_midpoint" title="Link to this definition">#</a></dt>
 <dd><p>The implicit midpoint integrator with support for non-stationary kinetic energy</p>
-<p>This is an integrator based on <span id="id11">Brofos and Lederman [<a class="reference internal" href="../../../../bib.html#id22" title="James Brofos and Roy R Lederman. Evaluating the implicit midpoint integrator for riemannian hamiltonian monte carlo. In Marina Meila and Tong Zhang, editors, Proceedings of the 38th International Conference on Machine Learning, volume 139 of Proceedings of Machine Learning Research, 1072–1081. PMLR, 18–24 Jul 2021.">BL21</a>]</span>, which provides
+<p>This is an integrator based on <span id="id11">Brofos and Lederman [<a class="reference internal" href="../../../../bib.html#id21" title="James Brofos and Roy R Lederman. Evaluating the implicit midpoint integrator for riemannian hamiltonian monte carlo. In Marina Meila and Tong Zhang, editors, Proceedings of the 38th International Conference on Machine Learning, volume 139 of Proceedings of Machine Learning Research, 1072–1081. PMLR, 18–24 Jul 2021.">BL21</a>]</span>, which provides
 support for kinetic energies that depend on position. This integrator requires that
 the kinetic energy function takes two arguments: position and momentum.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">solver</span></code> parameter allows overloading of the fixed point solver. By default, a

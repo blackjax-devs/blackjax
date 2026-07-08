@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.window_adaptation" href="../adaptation/window_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc3df06762" />
+  <meta name="docsearch:version" content="0.1.dev1+gbb91a2431" />
   </head>
   
   
@@ -236,6 +236,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../ns/utils/index.html">blackjax.ns.utils</a></li>
 </ul>
 </details></li>
+<li class="toctree-l2"><a class="reference internal" href="../progress_reader/index.html">blackjax.progress_reader</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
@@ -488,9 +489,9 @@ contains a chain dimension and a sample dimension.</p></li>
 <p>where <span class="math notranslate nohighlight">\(M\)</span> is the number of chains, <span class="math notranslate nohighlight">\(N\)</span> the number of draws,
 <span class="math notranslate nohighlight">\(\hat{\rho}_t\)</span> is the estimated _autocorrelation at lag <span class="math notranslate nohighlight">\(t\)</span>, and
 <span class="math notranslate nohighlight">\(K\)</span> is the last integer for which <span class="math notranslate nohighlight">\(\hat{P}_{K} = \hat{\rho}_{2K} +
-\hat{\rho}_{2K+1}\)</span> is still positive <span id="id2">[<a class="reference internal" href="../../../bib.html#id6" title="Effective sample size, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html.">staa</a>, <a class="reference internal" href="../../../bib.html#id11" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 1995.">GCSR95</a>]</span>.</p>
+\hat{\rho}_{2K+1}\)</span> is still positive <span id="id2">[<a class="reference internal" href="../../../bib.html#id6" title="Effective sample size, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html.">staa</a>, <a class="reference internal" href="../../../bib.html#id10" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 1995.">GCSR95</a>]</span>.</p>
 <p>The current implementation is similar to Stan, which uses Geyer’s initial monotone sequence
-criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#id12" title="Charles J Geyer. Practical markov chain monte carlo. Statistical science, pages 473–483, 1992.">Gey92</a>, <a class="reference internal" href="../../../bib.html#id13" title="Charles J Geyer. Introduction to markov chain monte carlo. Handbook of Markov Chain Monte Carlo, 20116022:45, 2011.">Gey11</a>]</span>.</p>
+criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#id11" title="Charles J Geyer. Practical markov chain monte carlo. Statistical science, pages 473–483, 1992.">Gey92</a>, <a class="reference internal" href="../../../bib.html#id12" title="Charles J Geyer. Introduction to markov chain monte carlo. Handbook of Markov Chain Monte Carlo, 20116022:45, 2011.">Gey11</a>]</span>.</p>
 </dd></dl>
 
 <dl class="py function">

@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.vi.fullrank_vi" href="../fullrank_vi/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc3df06762" />
+  <meta name="docsearch:version" content="0.1.dev1+gbb91a2431" />
   </head>
   
   
@@ -235,6 +235,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../ns/utils/index.html">blackjax.ns.utils</a></li>
 </ul>
 </details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../progress_reader/index.html">blackjax.progress_reader</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
@@ -509,9 +510,9 @@ the approximation and the target log-density.</p></li>
 <li><p><strong>objective</strong> – The variational objective to minimize. <cite>KL()</cite> by default or
 <cite>RenyiAlpha(alpha)</cite>. For alpha = 1, Renyi reduces to KL.</p></li>
 <li><p><strong>stl_estimator</strong> – Whether to use the stick-the-landing (STL) gradient estimator
-<span id="id1">[<a class="reference internal" href="../../../../bib.html#id41" title="Geoffrey Roeder, Yuhuai Wu, and David K Duvenaud. Sticking the landing: simple, lower-variance gradient estimators for variational inference. Advances in Neural Information Processing Systems, 2017.">RWD17</a>]</span>. The STL estimator has lower gradient
+<span id="id1">[<a class="reference internal" href="../../../../bib.html#id40" title="Geoffrey Roeder, Yuhuai Wu, and David K Duvenaud. Sticking the landing: simple, lower-variance gradient estimators for variational inference. Advances in Neural Information Processing Systems, 2017.">RWD17</a>]</span>. The STL estimator has lower gradient
 variance by removing the score function term from the gradient.
-<span id="id2">[<a class="reference internal" href="../../../../bib.html#id42" title="Abhinav Agrawal, Daniel R Sheldon, and Justin Domke. Advances in black-box vi: normalizing flows, importance weighting, and optimization. Advances in Neural Information Processing Systems, 33:17358–17369, 2020.">ASD20</a>]</span> recommend keeping it enabled.</p></li>
+<span id="id2">[<a class="reference internal" href="../../../../bib.html#id41" title="Abhinav Agrawal, Daniel R Sheldon, and Justin Domke. Advances in black-box vi: normalizing flows, importance weighting, and optimization. Advances in Neural Information Processing Systems, 33:17358–17369, 2020.">ASD20</a>]</span> recommend keeping it enabled.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Return type<span class="colon">:</span></dt>

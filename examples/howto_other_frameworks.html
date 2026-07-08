@@ -55,7 +55,7 @@
     <link rel="prev" title="Use custom gradients" href="howto_custom_gradients.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc3df06762" />
+  <meta name="docsearch:version" content="0.1.dev1+gbb91a2431" />
   </head>
   
   
@@ -235,6 +235,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
 </ul>
 </details></li>
+<li class="toctree-l2"><a class="reference internal" href="../autoapi/blackjax/progress_reader/index.html">blackjax.progress_reader</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
@@ -584,7 +585,7 @@ that calls the Numba-compiled gradient via a second <code class="docutils litera
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(-0.45951626, dtype=float32, weak_type=True), logdensity=Array(-1.7397573, dtype=float32), logdensity_grad=Array(0.17932169, dtype=float32))
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>HMCState(position=Array(0.18302608, dtype=float32, weak_type=True), logdensity=Array(-1.7286496, dtype=float32), logdensity_grad=Array(-0.15798356, dtype=float32))
 </pre></div>
 </div>
 </div>
@@ -601,8 +602,8 @@ Python (and Numba) on every call. Let’s see the overhead:</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 602 ms, sys: 946 μs, total: 603 ms
-Wall time: 603 ms
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 595 ms, sys: 0 ns, total: 595 ms
+Wall time: 595 ms
 </pre></div>
 </div>
 </div>
@@ -616,8 +617,8 @@ Wall time: 603 ms
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.4 s, sys: 923 ms, total: 11.3 s
-Wall time: 11.3 s
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>CPU times: user 10.8 s, sys: 725 ms, total: 11.6 s
+Wall time: 11.5 s
 </pre></div>
 </div>
 </div>

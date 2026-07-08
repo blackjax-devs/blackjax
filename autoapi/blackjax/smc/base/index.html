@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.smc.adaptive_tempered" href="../adaptive_tempered/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc3df06762" />
+  <meta name="docsearch:version" content="0.1.dev1+gbb91a2431" />
   </head>
   
   
@@ -236,6 +236,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../ns/utils/index.html">blackjax.ns.utils</a></li>
 </ul>
 </details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../progress_reader/index.html">blackjax.progress_reader</a></li>
 <li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
 <li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
@@ -614,7 +615,7 @@ new particles.</p></li>
 <li><p><strong>weight_fn</strong> (<em>Callable</em>) – Function that assigns a weight to the particles.</p></li>
 <li><p><strong>resample_fn</strong> (<em>Callable</em>) – Function that resamples the particles.</p></li>
 <li><p><strong>num_resampled</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – The number of particles to resample. This can be used to implement
-Waste-Free SMC <span id="id1">[<a class="reference internal" href="../../../../bib.html#id35" title="Hai-Dang Dau and Nicolas Chopin. Waste-free sequential monte carlo. arXiv preprint arXiv:2011.02328, 2020.">DC20</a>]</span>, in which case we resample a number
+Waste-Free SMC <span id="id1">[<a class="reference internal" href="../../../../bib.html#id34" title="Hai-Dang Dau and Nicolas Chopin. Waste-free sequential monte carlo. arXiv preprint arXiv:2011.02328, 2020.">DC20</a>]</span>, in which case we resample a number
 <span class="math notranslate nohighlight">\(M&lt;N\)</span> of particles, and the update function is in charge of returning
 <span class="math notranslate nohighlight">\(N\)</span> samples.</p></li>
 </ul>
