@@ -105,5 +105,6 @@ docs = [
     "sphinx-math-dollar",
     "sphinxcontrib-bibtex",
     "tfp-nightly[jax]",
+    "tqdm>=4.66",
     "versioneer",
 ]

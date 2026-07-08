@@ -201,6 +201,7 @@ docs = [
     { name = "sphinx-math-dollar" },
     { name = "sphinxcontrib-bibtex" },
     { name = "tfp-nightly", extra = ["jax"] },
+    { name = "tqdm" },
     { name = "versioneer" },
 ]
 
@@ -249,6 +250,7 @@ docs = [
     { name = "sphinx-math-dollar" },
     { name = "sphinxcontrib-bibtex" },
     { name = "tfp-nightly", extras = ["jax"] },
+    { name = "tqdm", specifier = ">=4.66" },
     { name = "versioneer" },
 ]
 
