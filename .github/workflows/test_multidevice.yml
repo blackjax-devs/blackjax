@@ -22,8 +22,6 @@ jobs:
     runs-on: ubuntu-latest
     needs:
       - style
-    env:
-      XLA_FLAGS: "--xla_force_host_platform_device_count=2"
     steps:
       - uses: actions/checkout@v3
       - name: Set up uv
