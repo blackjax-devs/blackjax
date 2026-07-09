@@ -197,6 +197,11 @@ class MomentRecoveryTest(BlackJAXTest):
         np.testing.assert_allclose(skew, -1.1395, atol=1.0)
         self.assertGreater(float(jnp.mean(infos.acceptance_rate)), 0.05)
 
+    @absltest.skip(
+        "Flaky (3rd MC-tolerance escape; #957, #959 insufficient) -- skipped "
+        "pending a multi-seed robust rewrite. Tracking: "
+        "https://github.com/blackjax-devs/blackjax/issues/970"
+    )
     def test_neal_funnel_neck_marginal(self):
         # The canonical stress test for step-size adaptation (a single
         # global step size cannot work). Check only the well-behaved "neck"
