@@ -231,22 +231,27 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
     Works under ``jax.vmap`` -- only the outermost ``jax.lax.scan`` is
     instrumented (nested scans inside the body are not tapped), so the
     progress bar fires exactly once per real outer step regardless of
-    chain count.
+    chain count.  The mechanism: jaxtap inserts a step counter as
+    ``jnp.int32(0)`` in the scan carry -- a compile-time constant that
+    depends only on itself (``step + 1``), so it stays unbatched under
+    vmap even when the rest of the carry is batched; ``jax.debug.callback``
+    with an unbatched argument fires once per step for the entire batch.
 
-    Only the outermost ``jax.lax.scan`` traced *while this context is
-    active* is instrumented. The retrace boundary that actually matters is
-    repeated calls to an already-traced/jit'd/checkpointed function across
-    DIFFERENT ``progress_bar()`` contexts -- a fresh ``jax.jit(fn)`` wrapper
-    is NOT itself a retrace boundary (JAX's jit cache is keyed by function
-    identity, not by whether a progress_bar context happens to be active),
-    so calling the SAME compiled function again inside a *later* context
-    reuses the cached trace and its callback stays baked in from whichever
-    context (if any) was active the FIRST time it was traced. Safe pattern:
-    keep ONE ``progress_bar()`` context open across all repeated calls to
-    the same compiled function. Workaround if you must re-enter: force a
-    retrace with ``jax.clear_caches()`` before the next call. A stale
-    baked-in callback also has a small phantom cost on every future
-    execution into an already-closed, inert state.
+    JIT-cache staleness has two distinct cases:
+
+    * **Function compiled inside an earlier context, called inside a new
+      one** (cache-hit in ctx2): jaxtap bakes ``_dynamic_router``, a
+      module-level singleton, into XLA artifacts rather than a closure.
+      A cache-hit in ctx2 routes events to ctx2's live recorder at call
+      time -- the bar works, no zero-step warning fires.  Keeping one
+      context open across repeated calls to the same compiled function is
+      still the safest pattern (avoids any edge cases from mismatched
+      ``select`` config baked at trace time).
+    * **Function compiled before entering any context**: no callback is
+      baked in at all (``jax.lax.scan`` was the original at compile time).
+      A later context sees zero events and the zero-step warning fires.
+      Fix: call ``jax.clear_caches()`` before entering the context to
+      force a retrace.
 
     Under ``jax.checkpoint`` combined with differentiation, the wrapped scan
     body -- including the injected callback -- runs twice per logical step

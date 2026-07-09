@@ -142,7 +142,7 @@ print("MCLMC max |mean - true_w| =", jnp.abs(mclmc_samples.mean(0) - true_w).max
 
 ## Multi-chain sampling with `jax.vmap`
 
-This is the centerpiece: a full multi-chain workflow using `jax.vmap`. The old progress bar crashed under vmap with shape mismatches (issue [#927](https://github.com/blackjax-devs/blackjax/issues/927)). The new callback-based implementation is vmap-safe because the injected step index never depends on the batched axis—it's a compile-time constant. **The bar fires exactly once per real step regardless of chain count.**
+This is the centerpiece: a full multi-chain workflow using `jax.vmap`. The old progress bar crashed under vmap with shape mismatches (issue [#927](https://github.com/blackjax-devs/blackjax/issues/927)). The new implementation is vmap-safe because jaxtap inserts the step counter as `jnp.int32(0)` in the scan carry—a compile-time constant that depends only on itself (`step + 1`) and therefore stays unbatched under `jax.vmap` even when the rest of the carry is batched. `jax.debug.callback` with an unbatched argument fires once per step for the entire batch. **The bar fires exactly once per real step regardless of chain count.**
 
 First, run a vmapped warmup across 4 chains in parallel:
 
@@ -269,13 +269,12 @@ This displays live updates of `<current_step> <total_steps>` and is useful for H
 
 ### JIT cache staleness
 
-A function traced (compiled) inside one `progress_bar()` context caches the bar injection in JAX's JIT cache. Calling that same compiled function inside a *later* context will hit the cache and reuse the old callback—resulting in **no bar and a warning at exit**.
+There are two distinct JIT-cache cases with different behaviors.
 
-Safe pattern: keep one `progress_bar()` context open across all calls to the same compiled function (as shown in the multi-phase MCLMC example). If you must re-enter contexts, clear the cache:
+**Case A — compiled in an earlier context, called in a new one (improved):**
+jaxtap bakes a module-level singleton (`_dynamic_router`) into XLA artifacts rather than a closure over the creating context. A cache-hit in a new context routes events to the *currently-active* recorder at call time — the bar works and no warning fires.
 
 ```{code-cell} ipython3
-import warnings
-
 sample_jitted = jax.jit(
     lambda key: run_inference_algorithm(
         rng_key=key,
@@ -286,35 +285,46 @@ sample_jitted = jax.jit(
     )[1]
 )
 
-# Context 1: traces the function
+# Context 1: traces the function, bakes _dynamic_router
 with blackjax.progress_bar(label="chain 1 (traces)"):
     _ = sample_jitted(jax.random.key(7))
 
-# Context 2: cache hit → no bar → UserWarning at exit
-with warnings.catch_warnings(record=True) as w:
-    warnings.simplefilter("always")
-    with blackjax.progress_bar(label="chain 2 (cache hit)"):
-        _ = sample_jitted(jax.random.key(8))
-    if w:
-        print("Warning:", w[0].message)
+# Context 2: cache hit → _dynamic_router routes to ctx2's recorder → bar works
+with blackjax.progress_bar(label="chain 2 (cache hit → bar works)"):
+    _ = sample_jitted(jax.random.key(8))
 ```
 
-Workaround: call `jax.clear_caches()` between contexts to force a retrace:
-
-```python
-jax.clear_caches()  # Clear JAX's JIT cache
-with blackjax.progress_bar(label="chain 3"):
-    _ = sample_jitted(jax.random.key(9))  # Retraced, bar now works
-```
-
-Let's verify the cache-clear workaround:
+**Case B — compiled before entering any context (unchanged behavior):**
+If a function was JIT-compiled before any `progress_bar()` was ever entered, no `_dynamic_router` callback is baked in. A later context sees zero events and the zero-step warning fires. Fix: `jax.clear_caches()` before entering to force a retrace.
 
 ```{code-cell} ipython3
-# Clear caches and re-trace in a new context
-jax.clear_caches()
+import warnings
 
-with blackjax.progress_bar(label="chain 3 (fresh trace)"):
-    _ = sample_jitted(jax.random.key(9))  # Bar works
+# Compile entirely outside any progress_bar context.
+jax.clear_caches()
+pre_compiled = jax.jit(
+    lambda key: run_inference_algorithm(
+        rng_key=key,
+        initial_state=state,
+        inference_algorithm=nuts,
+        num_steps=100,
+        transform=lambda st, _: st.position,
+    )[1]
+)
+_ = pre_compiled(jax.random.key(10))  # compiled now, no callback baked in
+
+# Inside a context: 0 events → warning fires.
+with warnings.catch_warnings(record=True) as w:
+    warnings.simplefilter("always")
+    with blackjax.progress_bar(label="pre-compiled (no bar)"):
+        _ = pre_compiled(jax.random.key(11))
+    if w:
+        print("Warning (expected):", w[0].message)
+
+# Fix: clear caches to force retrace with the callback baked in.
+jax.clear_caches()
+with blackjax.progress_bar(label="after clear_caches (bar works)"):
+    _ = pre_compiled(jax.random.key(12))  # retraced, bar now works
 ```
 
 ### Manual `__enter__` without `__exit__` leaks the patch
@@ -341,6 +351,7 @@ print("Scan is restored:", "progress_bar" not in jax.lax.scan.__module__)
 - **Multi-device sharding:** Under `jax.shard_map`, the callback fires once per device per step, multiplying the host dispatch overhead. The bar may reach 100% while slower shards are still running.
 - **`functools.partial` bypass:** A `functools.partial(jax.lax.scan, ...)` captured before the context is entered silently bypasses the bar with no error.
 - **Shared `output_file`:** If two contexts share the same file path, their writes interleave and corrupt the file. Use a unique path per context.
+- **Composing with `jaxtap.record()`:** If you open a `jaxtap.record()` context *inside* a `progress_bar()` context, the user's inner context wins attribution for scans run within its block (innermost-context-wins rule from jaxtap). The progress bar will be silent for those scans and resume receiving events afterward. This is documented behavior, not a bug.
 
 ## Jupyter rendering
 

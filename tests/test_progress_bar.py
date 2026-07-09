@@ -21,16 +21,6 @@ import warnings
 import chex
 import jax
 import jax.numpy as jnp
-
-# M1 adaptation: _original_scan / _patched_scan / _session_scan were deleted
-# from blackjax.progress_bar when the homegrown scan-patch machinery was
-# replaced by jaxtap.  These are now jaxtap's internal globals.  Tests that
-# need to assert restoration / self-capture / non-LIFO exit semantics import
-# them from jaxtap._ashell, where the identical invariants are maintained.
-# Justification: patch lifecycle (install / chain / restore) is now jaxtap's
-# responsibility; the user-visible semantics (scan restored after exit, foreign
-# patch chained and restored, >=2-context owner-affinity) are identical.
-import jaxtap._ashell as _jaxtap_ashell
 import numpy as np
 from absl.testing import absltest
 
@@ -38,10 +28,6 @@ import blackjax
 from blackjax.progress_bar import ProgressState
 from blackjax.progress_reader import read_progress
 from blackjax.util import run_inference_algorithm
-
-_original_scan = _jaxtap_ashell._original_scan
-_patched_scan = _jaxtap_ashell._patched_scan
-
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 
@@ -92,6 +78,53 @@ class ProgressBarTest(BlackJAXTest):
         chex.assert_shape(final_state.position, (2, 2))
         self.assertEqual(state.n_steps, 50)
         self.assertGreater(state.current_step, 0)
+
+    def test_vmap_fire_count(self):
+        """Under ``jax.vmap``, the callback fires exactly N times (once per
+        scan step), NOT N × n_chains times.
+
+        [TESTED] Mechanism: jaxtap B-core inserts the step counter as
+        ``jnp.int32(0)`` in the carry — a compile-time constant that starts
+        unbatched.  Because it only depends on itself (``step + 1``), it
+        remains unbatched under vmap even though the rest of the carry is
+        batched.  ``jax.debug.callback`` with an unbatched argument fires
+        once per step for the entire batch; ``select=lambda _: ()`` prevents
+        any batched carry bytes from reaching the host.
+
+        This verifies the guarantee stated in the public docstring: "the
+        progress bar fires exactly once per real outer step regardless of
+        chain count."
+        """
+
+        def body(carry, x):
+            return carry + x, carry
+
+        n_chains = 4
+        n_steps = 15
+        fires = []
+
+        with blackjax.progress_bar(label="vmap-count") as pstate:
+            orig_cb = pstate._step_callback
+
+            def counting_cb(idx):
+                fires.append(int(idx))
+                orig_cb(idx)
+
+            pstate._step_callback = counting_cb
+
+            results = jax.vmap(
+                lambda init: jax.lax.scan(body, init, jnp.arange(n_steps))
+            )(jnp.zeros(n_chains))
+            jax.block_until_ready(results)
+
+        self.assertEqual(
+            len(fires),
+            n_steps,
+            f"expected {n_steps} fires (single-fire), got {len(fires)} "
+            f"(would be {n_chains * n_steps} if per-chain)",
+        )
+        self.assertEqual(fires, list(range(n_steps)))
+        self.assertEqual(pstate.n_steps, n_steps)
 
     def test_outermost_only(self):
         """Only the outermost scan (10 steps) is instrumented; the inner
@@ -162,12 +195,18 @@ class ProgressBarTest(BlackJAXTest):
 
     def test_restoration(self):
         """After the context exits, ``jax.lax.scan`` is restored to the
-        original, unpatched function and behaves normally."""
+        pre-context function and behaves normally.
+
+        Behavioral assertion: capture the reference BEFORE entering the
+        context (no active context → scan is the real original) and assert
+        identity after exit.  This avoids coupling to jaxtap private symbols.
+        """
+        pre_ctx = jax.lax.scan  # unpatched at this point — no active context
         with blackjax.progress_bar(label="restore-me"):
             final, _ = jax.lax.scan(lambda c, x: (c + x, c), 0.0, jnp.arange(5))
             jax.block_until_ready(final)
 
-        self.assertIs(jax.lax.scan, _original_scan)
+        self.assertIs(jax.lax.scan, pre_ctx)
 
         # A plain scan after exit works exactly as jax.lax.scan normally does
         # -- no progress-bar machinery (and therefore no callback) is
@@ -315,32 +354,32 @@ class ProgressBarTest(BlackJAXTest):
 
     def test_concurrent_first_enter_no_self_capture(self):
         """Two threads racing to be the FIRST ``progress_bar()`` entrant
-        must never let one capture the OTHER's freshly-installed
-        ``_patched_scan`` as ``_session_scan`` (which would self-recurse on
-        every pass-through call). Repeated with a ``threading.Barrier`` so
-        both threads hit ``__enter__`` at the same instant.
+        must never self-recurse (self-capture of the patched scan as the
+        session scan would cause infinite recursion on every pass-through
+        call).  Repeated with a ``threading.Barrier`` so both threads hit
+        ``__enter__`` at the same instant.
 
-        M1 adaptation: self-capture guard is now jaxtap's responsibility.
-        We verify jaxtap's own invariant: ``_jaxtap_ashell._session_scan``
-        must not equal ``jaxtap._ashell._patched_scan`` inside either
-        thread's context.  The semantics are identical to the #964 test --
-        only which module owns the guard changes.
+        Behavioral assertion: if self-capture occurs the worker hangs or
+        stack-overflows; checking both threads join within timeout and
+        produce correct n_steps results is sufficient.  After all contexts
+        exit, ``jax.lax.scan`` is restored to what it was before the test.
+
+        No jaxtap private symbol imports needed — the invariant is fully
+        observable through external behavior.
         """
 
         def body(carry, x):
             return carry + x, carry
 
+        before_test = jax.lax.scan  # capture pre-test reference
+
         for i in range(50):
             barrier = threading.Barrier(2)
-            captured = []
             results = {}
 
             def worker(label, n):
                 barrier.wait(timeout=5)
                 with blackjax.progress_bar(label=label) as state:
-                    # Capture jaxtap's _session_scan (the #964 invariant now
-                    # lives in jaxtap._ashell, not in blackjax.progress_bar).
-                    captured.append(_jaxtap_ashell._session_scan)
                     f, _ = jax.lax.scan(body, 0.0, jnp.arange(n))
                     jax.block_until_ready(f)
                     results[label] = state.n_steps
@@ -354,14 +393,10 @@ class ProgressBarTest(BlackJAXTest):
 
             self.assertFalse(t1.is_alive(), f"iteration {i}: thread 1 hung")
             self.assertFalse(t2.is_alive(), f"iteration {i}: thread 2 hung")
-            for c in captured:
-                self.assertIsNot(
-                    c, _patched_scan, f"iteration {i}: captured our own patch"
-                )
             self.assertEqual(results.get("r1"), 4)
             self.assertEqual(results.get("r2"), 5)
 
-        self.assertIs(jax.lax.scan, _original_scan)
+        self.assertIs(jax.lax.scan, before_test)
 
     def test_owner_thread_routing_two_contexts(self):
         """With >=2 simultaneously active contexts, a scan is attributed
@@ -457,9 +492,14 @@ class ProgressBarTest(BlackJAXTest):
         """A third-party ``jax.lax.scan`` patch installed before our context
         keeps firing for scans run inside it (chaining), and is restored --
         not clobbered back to the true original -- on exit
-        (adversarial-review finding #B8)."""
+        (adversarial-review finding #B8).
+
+        Behavioral: capture ``jax.lax.scan`` BEFORE installing the foreign
+        patch (no context active → this is the real original).  No jaxtap
+        private symbol imports needed.
+        """
         foreign_calls = []
-        real_original = _original_scan
+        real_original = jax.lax.scan  # capture before any patching
 
         def foreign_patch(f, init, xs=None, length=None, **kwargs):
             foreign_calls.append(1)
@@ -484,13 +524,20 @@ class ProgressBarTest(BlackJAXTest):
 
     def test_nonlifo_two_context_restore(self):
         """A enters, B enters, A exits first, B exits last --
-        ``jax.lax.scan`` is restored to the true original once the LAST
+        ``jax.lax.scan`` is restored to the pre-entry state once the LAST
         context exits, regardless of entry/exit order (adversarial-review
-        finding #B8, non-LIFO exit-order case)."""
+        finding #B8, non-LIFO exit-order case).
+
+        Behavioral: capture ``jax.lax.scan`` before both contexts are
+        entered (no context active → this is the real original).  After A
+        exits (B still active), scan is NOT back to pre-entry; after B exits
+        it IS.  No jaxtap private symbol imports needed.
+        """
 
         def body(carry, x):
             return carry + x, carry
 
+        before_both = jax.lax.scan  # capture before any context entered
         cm_a = blackjax.progress_bar(label="A")
         cm_b = blackjax.progress_bar(label="B")
         cm_a.__enter__()
@@ -507,10 +554,135 @@ class ProgressBarTest(BlackJAXTest):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", UserWarning)
                 cm_a.__exit__(None, None, None)
-            self.assertIs(jax.lax.scan, _patched_scan)  # B is still active
+            # B still active → scan is still patched (not restored yet).
+            self.assertIsNot(jax.lax.scan, before_both)
             cm_b.__exit__(None, None, None)
 
-        self.assertIs(jax.lax.scan, _original_scan)
+        # Both exited → restored to pre-entry state.
+        self.assertIs(jax.lax.scan, before_both)
+
+    def test_jit_cache_staleness(self):
+        """Verify the two JIT-cache staleness cases under jaxtap's dynamic routing.
+
+        Case A — compile in ctx1, call in ctx2 [TESTED: IMPROVED behavior]:
+          jaxtap bakes ``_dynamic_router`` (a module-level singleton) into the
+          XLA artifact — NOT a closure over ctx1's recorder.  A cache-hit in
+          ctx2 routes events to ctx2's live recorder at call time.  The bar
+          works; no zero-step warning fires.  (Under the old homegrown
+          machinery the bar was silent and the warning fired — behavior
+          improved by jaxtap's dynamic router.)
+
+        Case B — compile BEFORE any context, call inside a context [TESTED:
+          UNCHANGED behavior]: no ``_dynamic_router`` callback is baked in at
+          all (the function was compiled when ``jax.lax.scan`` was still the
+          original).  The context sees 0 events and the zero-step warning
+          fires.  Workaround: ``jax.clear_caches()`` before entering.
+        """
+        algorithm = blackjax.nuts(
+            std_normal_logdensity, step_size=0.1, inverse_mass_matrix=jnp.eye(2)
+        )
+        sample_jitted = jax.jit(
+            lambda key: run_inference_algorithm(
+                rng_key=key,
+                inference_algorithm=algorithm,
+                num_steps=30,
+                initial_position=jnp.zeros(2),
+            )
+        )
+
+        # Case A: trace in ctx1, call cached version in ctx2.
+        fires_ctx1 = []
+        fires_ctx2 = []
+
+        with blackjax.progress_bar(label="ctx1") as pstate1:
+            orig_cb = pstate1._step_callback
+
+            def counting_cb1(idx):
+                fires_ctx1.append(int(idx))
+                orig_cb(idx)
+
+            pstate1._step_callback = counting_cb1
+            _ = sample_jitted(self.next_key())
+            jax.block_until_ready(_)
+
+        self.assertEqual(len(fires_ctx1), 30)
+
+        with warnings.catch_warnings(record=True) as w_ctx2:
+            warnings.simplefilter("always")
+            with blackjax.progress_bar(label="ctx2") as pstate2:
+                orig_cb2 = pstate2._step_callback
+
+                def counting_cb2(idx):
+                    fires_ctx2.append(int(idx))
+                    orig_cb2(idx)
+
+                pstate2._step_callback = counting_cb2
+                _ = sample_jitted(self.next_key())
+                jax.block_until_ready(_)
+
+        # Under jaxtap's dynamic router, the cache-hit routes to ctx2.
+        self.assertEqual(
+            len(fires_ctx2),
+            30,
+            "cache-hit in ctx2 should deliver events via jaxtap's _dynamic_router",
+        )
+        zero_step_warnings_ctx2 = [
+            x
+            for x in w_ctx2
+            if issubclass(x.category, UserWarning)
+            and "no scan step was ever observed" in str(x.message)
+        ]
+        self.assertEqual(
+            len(zero_step_warnings_ctx2),
+            0,
+            "no zero-step warning expected when dynamic router delivers events",
+        )
+
+        # Case B: compile BEFORE any context, then call inside a context.
+        # No _dynamic_router is baked in → 0 events, warning fires.
+        jax.clear_caches()
+        pre_compiled = jax.jit(
+            lambda key: run_inference_algorithm(
+                rng_key=key,
+                inference_algorithm=algorithm,
+                num_steps=30,
+                initial_position=jnp.zeros(2),
+            )
+        )
+        # Compile outside any context.
+        _ = pre_compiled(self.next_key())
+        jax.block_until_ready(_)
+
+        fires_case_b = []
+        with warnings.catch_warnings(record=True) as w_case_b:
+            warnings.simplefilter("always")
+            with blackjax.progress_bar(label="case-b") as pstate_b:
+                orig_cb_b = pstate_b._step_callback
+
+                def counting_cb_b(idx):
+                    fires_case_b.append(int(idx))
+                    orig_cb_b(idx)
+
+                pstate_b._step_callback = counting_cb_b
+                _ = pre_compiled(self.next_key())
+                jax.block_until_ready(_)
+
+        self.assertEqual(
+            len(fires_case_b),
+            0,
+            "function compiled before any context → no callback baked in → 0 events",
+        )
+        zero_step_warnings_b = [
+            x
+            for x in w_case_b
+            if issubclass(x.category, UserWarning)
+            and "no scan step was ever observed" in str(x.message)
+        ]
+        self.assertEqual(
+            len(zero_step_warnings_b),
+            1,
+            "zero-step warning should fire when function was pre-compiled outside context",
+        )
 
     def test_zero_step_warns(self):
         """A context that never observes a scan step warns once, naming
@@ -567,6 +739,7 @@ class ProgressBarTest(BlackJAXTest):
         def body(carry, x):
             return carry + x, carry
 
+        pre_compose = jax.lax.scan  # no context active → this is the original
         with blackjax.progress_bar(label="outer") as pstate:
             # Scan 1: outside user's context → progress bar gets it.
             final1, _ = jax.lax.scan(body, 0.0, jnp.arange(10))
@@ -590,8 +763,8 @@ class ProgressBarTest(BlackJAXTest):
         # last scan attributed to it).  The 15-step scan was NOT routed here.
         self.assertEqual(pstate.n_steps, 5)
 
-        # No crash; scan restored to the import-time original.
-        self.assertIs(jax.lax.scan, _original_scan)
+        # No crash; scan restored to what it was before the contexts were entered.
+        self.assertIs(jax.lax.scan, pre_compose)
 
 
 if __name__ == "__main__":
