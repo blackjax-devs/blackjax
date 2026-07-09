@@ -41,7 +41,7 @@ dependencies = [
 dynamic = ["version"]
 
 [project.optional-dependencies]
-progress = ["tqdm>=4.66"]
+progress = ["tqdm>=4.66", "jax-tap>=0.2.0"]
 
 [project.urls]
 homepage = "https://github.com/blackjax-devs/blackjax"
