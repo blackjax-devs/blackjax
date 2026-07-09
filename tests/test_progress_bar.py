@@ -684,6 +684,120 @@ class ProgressBarTest(BlackJAXTest):
             "zero-step warning should fire when function was pre-compiled outside context",
         )
 
+    def test_cross_consumer_user_trace_in_progress_bar(self):
+        """Cross-consumer staleness: function compiled under user's ``tap.record(select=custom)``
+        called inside ``progress_bar()``.
+
+        Direction A of the cross-consumer AYS-2(2) gate.
+
+        Under jaxtap's A-shell, the device-side ``select`` is baked at trace time
+        (inside the compiled XLA artifact) but ``_dynamic_router`` is the module-level
+        singleton, so events are routed to whichever context is active AT CALL TIME.
+
+        When the baked ``select`` ships carry bytes and ``_on_step`` receives them,
+        ``_on_step`` must NOT crash: it only reads ``event.step`` and ``event.total``,
+        never touching ``event.value``.  The progress bar must still count steps
+        correctly (``n_steps`` set from the outer scan's ``event.total``).
+        """
+        import jaxtap as tap
+
+        def body(carry, x):
+            return carry + x, carry
+
+        n_steps = 20
+        jax.clear_caches()
+        sample_fn = jax.jit(lambda xs: jax.lax.scan(body, 0.0, xs))
+
+        # Trace under user's tap.record with a custom select that ships carry bytes.
+        with tap.record(select=lambda carry: (carry[0],)):
+            _ = sample_fn(jnp.arange(float(n_steps)))
+            jax.block_until_ready(_)
+
+        # Call the cached function inside progress_bar().  _dynamic_router routes
+        # events to _on_step; event.value contains the custom carry bytes — must
+        # NOT crash.
+        fires_a = []
+        with blackjax.progress_bar(label="cross-consumer-a") as pstate_a:
+            orig = pstate_a._step_callback
+
+            def counting_a(idx):
+                fires_a.append(int(idx))
+                orig(idx)
+
+            pstate_a._step_callback = counting_a
+            _ = sample_fn(jnp.arange(float(n_steps)))
+            jax.block_until_ready(_)
+
+        # No crash.  At least n_steps events arrive (all-depth events included).
+        # n_steps set correctly from the outer scan's event.total.
+        self.assertGreaterEqual(
+            len(fires_a),
+            n_steps,
+            "_on_step must fire at least once per outer scan step",
+        )
+        self.assertEqual(
+            pstate_a.n_steps,
+            n_steps,
+            "n_steps must be set from outer scan's event.total",
+        )
+
+    def test_cross_consumer_progress_bar_trace_in_user_record(self):
+        """Cross-consumer staleness: function compiled under ``progress_bar()``
+        called inside user's ``tap.record(select=custom)``.
+
+        Direction B of the cross-consumer AYS-2(2) gate.
+
+        jaxtap's documented boundary: the device-side ``select`` (``lambda _: ()``,
+        baked when ``progress_bar()`` traced the function) wins over the user's
+        custom select specified at ``tap.record()`` time — because that selection
+        runs on-device and cannot be changed dynamically.
+
+        The user's recorder DOES receive events (``_dynamic_router`` correctly
+        routes to the user's context at call time), but ``event.value == ()``
+        rather than the custom carry bytes the user's select would have produced.
+        No crash occurs in either direction.
+        """
+        import jaxtap as tap
+
+        def body(carry, x):
+            return carry + x, carry
+
+        n_steps = 20
+        jax.clear_caches()
+        sample_fn = jax.jit(lambda xs: jax.lax.scan(body, 0.0, xs))
+
+        # Trace under progress_bar (baked select = lambda _: (), baked max_depth=0).
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            with blackjax.progress_bar(label="cross-consumer-b-trace"):
+                _ = sample_fn(jnp.arange(float(n_steps)))
+                jax.block_until_ready(_)
+
+        # Call the cached function inside user's tap.record with a custom select.
+        # _dynamic_router routes events to user's recorder.  But the device-side
+        # select is baked as () from the progress_bar() trace, not the user's
+        # custom select — so the user's events have value=() not carry bytes.
+        with tap.record(select=lambda carry: (carry[0],)) as user_rec:
+            _ = sample_fn(jnp.arange(float(n_steps)))
+            jax.block_until_ready(_)
+
+        # User recorder receives events (routing IS live) but value=() (select is baked).
+        self.assertGreater(
+            len(user_rec.events),
+            0,
+            "user recorder must receive events (host routing is live via _dynamic_router)",
+        )
+        self.assertTrue(
+            all(e.value == () for e in user_rec.events),
+            "event.value must be () — baked select=lambda _:() from progress_bar() "
+            "wins device-side; user's custom select is not applied",
+        )
+        self.assertEqual(
+            len(user_rec.events),
+            n_steps,
+            "exactly n_steps events expected (max_depth=0 baked; one outer scan)",
+        )
+
     def test_zero_step_warns(self):
         """A context that never observes a scan step warns once, naming
         both possible root causes."""
