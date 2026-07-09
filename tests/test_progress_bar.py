@@ -11,10 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Unit tests for the ``jax.lax.scan``-monkeypatching progress bar."""
+"""Unit tests for the jaxtap-powered progress bar."""
 import os
 import stat
-import sys
 import tempfile
 import threading
 import warnings
@@ -22,22 +21,27 @@ import warnings
 import chex
 import jax
 import jax.numpy as jnp
+
+# M1 adaptation: _original_scan / _patched_scan / _session_scan were deleted
+# from blackjax.progress_bar when the homegrown scan-patch machinery was
+# replaced by jaxtap.  These are now jaxtap's internal globals.  Tests that
+# need to assert restoration / self-capture / non-LIFO exit semantics import
+# them from jaxtap._ashell, where the identical invariants are maintained.
+# Justification: patch lifecycle (install / chain / restore) is now jaxtap's
+# responsibility; the user-visible semantics (scan restored after exit, foreign
+# patch chained and restored, >=2-context owner-affinity) are identical.
+import jaxtap._ashell as _jaxtap_ashell
 import numpy as np
 from absl.testing import absltest
 
 import blackjax
-from blackjax.progress_bar import ProgressState, _original_scan, _patched_scan
+from blackjax.progress_bar import ProgressState
 from blackjax.progress_reader import read_progress
 from blackjax.util import run_inference_algorithm
 
-# `blackjax/__init__.py` does `from .progress_bar import progress_bar`, which
-# shadows the *submodule* name `blackjax.progress_bar` with the *function* on
-# the `blackjax` package object. `from blackjax.progress_bar import X` above
-# is unaffected (it resolves `X` from sys.modules directly), but reading the
-# module's mutable globals (`_session_scan`, reassigned at runtime, so a
-# `from ... import _session_scan` would only ever see the import-time value)
-# needs the real submodule object -- pull it out of sys.modules explicitly.
-_progress_bar_module = sys.modules["blackjax.progress_bar"]
+_original_scan = _jaxtap_ashell._original_scan
+_patched_scan = _jaxtap_ashell._patched_scan
+
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 
@@ -314,8 +318,14 @@ class ProgressBarTest(BlackJAXTest):
         must never let one capture the OTHER's freshly-installed
         ``_patched_scan`` as ``_session_scan`` (which would self-recurse on
         every pass-through call). Repeated with a ``threading.Barrier`` so
-        both threads hit ``__enter__`` at the same instant (TL round-2
-        finding #2 -- the registry-lock + self-capture guard)."""
+        both threads hit ``__enter__`` at the same instant.
+
+        M1 adaptation: self-capture guard is now jaxtap's responsibility.
+        We verify jaxtap's own invariant: ``_jaxtap_ashell._session_scan``
+        must not equal ``jaxtap._ashell._patched_scan`` inside either
+        thread's context.  The semantics are identical to the #964 test --
+        only which module owns the guard changes.
+        """
 
         def body(carry, x):
             return carry + x, carry
@@ -328,7 +338,9 @@ class ProgressBarTest(BlackJAXTest):
             def worker(label, n):
                 barrier.wait(timeout=5)
                 with blackjax.progress_bar(label=label) as state:
-                    captured.append(_progress_bar_module._session_scan)
+                    # Capture jaxtap's _session_scan (the #964 invariant now
+                    # lives in jaxtap._ashell, not in blackjax.progress_bar).
+                    captured.append(_jaxtap_ashell._session_scan)
                     f, _ = jax.lax.scan(body, 0.0, jnp.arange(n))
                     jax.block_until_ready(f)
                     results[label] = state.n_steps
@@ -531,6 +543,55 @@ class ProgressBarTest(BlackJAXTest):
 
         np.testing.assert_allclose(final, expected_final)
         np.testing.assert_allclose(ys, expected_ys)
+
+    def test_compose_jaxtap_record_inside_progress_bar(self):
+        """``blackjax.progress_bar()`` + user's ``jaxtap.record()`` simultaneously.
+
+        Parity checklist item 6 (compose test).
+
+        With >=2 jaxtap contexts active, attribution follows the
+        innermost-owner-thread-wins rule from jaxtap's A-shell: scans run
+        inside the user's ``tap.record()`` block route to the user's
+        recorder, not to the progress bar.  Scans run outside the user's
+        block (but inside ``progress_bar()``) continue to route to the
+        progress bar.
+
+        Semantics verdict [TESTED]: both consumers receive events from the
+        scans attributed to them; no crash; no event corruption.  The
+        progress bar does not update while the user's context is innermost
+        -- documented boundary, not a bug (matches jaxtap's
+        ``test_ashell_reentrant_contexts`` contract).
+        """
+        import jaxtap as tap
+
+        def body(carry, x):
+            return carry + x, carry
+
+        with blackjax.progress_bar(label="outer") as pstate:
+            # Scan 1: outside user's context → progress bar gets it.
+            final1, _ = jax.lax.scan(body, 0.0, jnp.arange(10))
+            jax.block_until_ready(final1)
+
+            # User opens their own tap.record() inside progress_bar():
+            # innermost-wins → user's recorder gets the scan, bar silent.
+            with tap.record() as user_rec:
+                final2, _ = jax.lax.scan(body, final1, jnp.arange(15))
+                jax.block_until_ready(final2)
+
+            # Scan 3: user's context exited → progress bar active again.
+            final3, _ = jax.lax.scan(body, final2, jnp.arange(5))
+            jax.block_until_ready(final3)
+
+        # User's recorder received exactly the 15-step scan.
+        user_scan_events = [e for e in user_rec.events if e.path.startswith("scan")]
+        self.assertEqual(len(user_scan_events), 15)
+
+        # Progress bar saw the 10-step and 5-step scans; n_steps = 5 (the
+        # last scan attributed to it).  The 15-step scan was NOT routed here.
+        self.assertEqual(pstate.n_steps, 5)
+
+        # No crash; scan restored to the import-time original.
+        self.assertIs(jax.lax.scan, _original_scan)
 
 
 if __name__ == "__main__":
