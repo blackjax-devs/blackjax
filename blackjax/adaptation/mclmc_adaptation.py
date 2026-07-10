@@ -13,7 +13,6 @@
 # limitations under the License.
 """Algorithms to adapt the MCLMC kernel parameters, namely step size and L."""
 
-import warnings
 from typing import NamedTuple
 
 import jax
@@ -22,66 +21,6 @@ from jax.flatten_util import ravel_pytree
 
 from blackjax.diagnostics import effective_sample_size
 from blackjax.util import generate_unit_vector, incremental_value_update, pytree_size
-
-# ---------------------------------------------------------------------------
-# Diagnostic warning callbacks — safe to call under JIT via jax.debug.callback.
-# Each function must NEVER raise: wrap the body in try/except so that a
-# warnings.simplefilter("error") environment does not corrupt the JAX runtime.
-# ---------------------------------------------------------------------------
-
-
-def _cb_frozen_outcome_warning(step_size, position_std, num_steps):
-    """Warn when the adapted step size cannot traverse the warmup-scale posterior.
-
-    Triggered on mixing infeasibility (step_size * num_steps << warmup position
-    std, or zero position variance from complete divergence).  Scale/budget-
-    relative — no magic absolute constant.  Frozen-vs-healthy separation is
-    ~6 orders of magnitude, so a 3-order margin is highly robust.
-    """
-    try:
-        ss = float(step_size)
-        pos_std = float(position_std)
-        n = int(num_steps)
-        # Two conditions for "frozen":
-        #  (a) pos_std ≈ 0 — all warmup steps diverged, zero position variance.
-        #  (b) step_size * num_steps << pos_std — step too small to traverse.
-        is_zero_scale = pos_std < 1e-10
-        is_step_frozen = (ss * n) < pos_std * 1e-3
-        if is_zero_scale or is_step_frozen:
-            ss_str = format(ss, ".2g")
-            pos_str = format(pos_std, ".2g")
-            warnings.warn(
-                f"MCLMC warmup: adapted step_size {ss_str} cannot traverse "
-                f"the warmup-scale posterior (scale {pos_str}) in {n} "
-                "steps — warmup likely collapsed, check initial step size / "
-                "model support (see blackjax#973).",
-                UserWarning,
-                stacklevel=2,
-            )
-    except Exception:
-        pass
-
-
-def _cb_grad_finiteness_guard(grad_flat):
-    """Warn when the init-state gradient is non-finite.
-
-    Value-finiteness at init is insufficient (e.g. lotka-volterra: finite
-    logdensity but NaN gradient at the ODE solver's stiff regime).  This guard
-    fires once at adaptation start and is nearly free — the gradient was already
-    computed by ``mclmc.init``.
-    """
-    try:
-        if not bool(jnp.all(jnp.isfinite(grad_flat))):
-            warnings.warn(
-                "MCLMC warmup: gradient non-finite at init — this is a "
-                "model/solver/support issue, not a step-size issue. "
-                "Check model code, solver tolerances, and parameter support "
-                "(see blackjax#973).",
-                UserWarning,
-                stacklevel=2,
-            )
-    except Exception:
-        pass
 
 
 class MCLMCAdaptationState(NamedTuple):
@@ -205,17 +144,29 @@ def mclmc_find_L_and_step_size(
         divergence_steps = [
             e.step for e in rec.events if e.kind == "output" and e.value
         ]
+
+    **Checking for degenerate warmup**
+
+    BlackJAX does not emit runtime warnings; checking is the user's
+    responsibility.
+
+    *Before calling* — verify the initial gradient is finite::
+
+        from jax.flatten_util import ravel_pytree
+        ok = jnp.all(jnp.isfinite(ravel_pytree(state.logdensity_grad)[0]))
+        # finite logdensity + non-finite gradient = model/solver/support issue (#973)
+
+    *After calling* — a collapsed warmup leaves ``step_size`` orders of magnitude
+    below the posterior scale; healthy and frozen runs differ by ~6 orders::
+
+        ratio = final_params.step_size * num_steps / final_params.L
+        # ratio ≈ 1 → healthy;  ratio << 1 → likely frozen
     """
     if logdensity_fn is None:
         raise ValueError(
             "logdensity_fn is required. Pass the log-density function of the "
             "target distribution."
         )
-
-    # Guard: check gradient finiteness at init (nearly free — already computed
-    # by mclmc.init; fires once via jax.debug.callback so it works under JIT).
-    flat_grad, _ = ravel_pytree(state.logdensity_grad)
-    jax.debug.callback(_cb_grad_finiteness_guard, flat_grad)
 
     dim = pytree_size(state.position)
     if params is None:
@@ -385,14 +336,11 @@ def make_L_step_size_adaptation(
         )
 
         L = params.L
-        # determine L; track warmup position scale for the frozen-outcome warning
         inverse_mass_matrix = params.inverse_mass_matrix
-        warmup_position_std = jnp.zeros(())  # updated below when data is available
         if num_steps2 > 1:
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
-            warmup_position_std = jnp.sqrt(jnp.sum(variances))
-            L = warmup_position_std
+            L = jnp.sqrt(jnp.sum(variances))
 
             if diagonal_preconditioning:
                 inverse_mass_matrix = variances
@@ -405,14 +353,6 @@ def make_L_step_size_adaptation(
                 (state, params, _, _), _ = run_steps(
                     xs=(jnp.ones(steps), keys), state=state, params=params
                 )
-
-        # Emit endpoint diagnostic warnings (safe under JIT via jax.debug.callback)
-        jax.debug.callback(
-            _cb_frozen_outcome_warning,
-            params.step_size,
-            warmup_position_std,
-            jnp.array(num_steps, dtype=jnp.int32),
-        )
 
         return state, MCLMCAdaptationState(L, params.step_size, inverse_mass_matrix)
 
