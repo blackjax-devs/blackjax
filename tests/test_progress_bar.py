@@ -688,16 +688,20 @@ class ProgressBarTest(BlackJAXTest):
         """Cross-consumer staleness: function compiled under user's ``tap.record(select=custom)``
         called inside ``progress_bar()``.
 
-        Direction A of the cross-consumer AYS-2(2) gate.
+        Direction A of the cross-consumer gate.
 
         Under jaxtap's A-shell, the device-side ``select`` is baked at trace time
         (inside the compiled XLA artifact) but ``_dynamic_router`` is the module-level
         singleton, so events are routed to whichever context is active AT CALL TIME.
 
-        When the baked ``select`` ships carry bytes and ``_on_step`` receives them,
-        ``_on_step`` must NOT crash: it only reads ``event.step`` and ``event.total``,
-        never touching ``event.value``.  The progress bar must still count steps
-        correctly (``n_steps`` set from the outer scan's ``event.total``).
+        Since jaxtap >= 0.2.1, ``_dynamic_router`` also applies the receiving context's
+        ``max_depth`` filter at routing time: ``progress_bar()``'s ``max_depth=0`` means
+        only depth-0 (outermost) events reach ``_on_step`` even when the cached artifact
+        was compiled with ``max_depth=None`` (all depths).  Exactly ``n_steps`` events
+        are delivered, in step order 0..N-1.
+
+        ``_on_step`` must NOT crash regardless: it only reads ``event.step`` and
+        ``event.total``, never touching ``event.value``.
         """
         import jaxtap as tap
 
@@ -728,12 +732,20 @@ class ProgressBarTest(BlackJAXTest):
             _ = sample_fn(jnp.arange(float(n_steps)))
             jax.block_until_ready(_)
 
-        # No crash.  At least n_steps events arrive (all-depth events included).
-        # n_steps set correctly from the outer scan's event.total.
-        self.assertGreaterEqual(
+        # No crash.  Since jaxtap >= 0.2.1, the receiving context's max_depth=0
+        # filter is applied at routing time in _dynamic_router, so only the
+        # outermost-scan events (depth 0, step 0..N-1) reach _on_step — not
+        # extra nested-scan events from the user's all-depth trace.
+        self.assertEqual(
             len(fires_a),
             n_steps,
-            "_on_step must fire at least once per outer scan step",
+            "_on_step must fire exactly once per outer scan step "
+            "(jaxtap >= 0.2.1 applies max_depth=0 at routing time)",
+        )
+        self.assertEqual(
+            fires_a,
+            list(range(n_steps)),
+            "steps must arrive in order 0..N-1",
         )
         self.assertEqual(
             pstate_a.n_steps,
