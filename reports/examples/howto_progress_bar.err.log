@@ -1,0 +1,66 @@
+Traceback (most recent call last):
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/jupyter_cache/executors/utils.py", line 58, in single_nb_execution
+    executenb(
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/nbclient/client.py", line 1323, in execute
+    return NotebookClient(nb=nb, resources=resources, km=km, **kwargs).execute()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/jupyter_core/utils/__init__.py", line 165, in wrapped
+    return loop.run_until_complete(inner)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 687, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/nbclient/client.py", line 709, in async_execute
+    await self.async_execute_cell(
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/nbclient/client.py", line 1062, in async_execute_cell
+    await self._check_raise_for_error(cell, cell_index, exec_reply)
+  File "/home/runner/work/blackjax/blackjax/.venv/lib/python3.12/site-packages/nbclient/client.py", line 918, in _check_raise_for_error
+    raise CellExecutionError.from_cell_and_msg(cell, exec_reply_content)
+nbclient.exceptions.CellExecutionError: An error occurred while executing the following cell:
+------------------
+warmup = blackjax.window_adaptation(blackjax.nuts, logdensity)
+k_warm = jax.random.key(1)
+
+with blackjax.progress_bar(label="NUTS warmup"):
+    (state, params), _ = warmup.run(k_warm, jnp.zeros(DIM), num_steps=1000)
+------------------
+
+
+[31m---------------------------------------------------------------------------[39m
+[31mModuleNotFoundError[39m                       Traceback (most recent call last)
+[36mFile [39m[32m~/work/blackjax/blackjax/blackjax/progress_bar.py:302[39m, in [36mprogress_bar[39m[34m(label, print_rate, output_file)[39m
+[32m    301[39m [38;5;28;01mtry[39;00m:
+[32m--> [39m[32m302[39m     [38;5;28;01mimport[39;00m[38;5;250m [39m[34;01mjaxtap[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[34;01mtap[39;00m
+[32m    303[39m [38;5;28;01mexcept[39;00m [38;5;167;01mImportError[39;00m [38;5;28;01mas[39;00m exc:
+
+[31mModuleNotFoundError[39m: No module named 'jaxtap'
+
+The above exception was the direct cause of the following exception:
+
+[31mImportError[39m                               Traceback (most recent call last)
+[36mCell[39m[36m [39m[32mIn[3][39m[32m, line 4[39m
+[32m      1[39m warmup = blackjax.window_adaptation(blackjax.nuts, logdensity)
+[32m      2[39m k_warm = jax.random.key([32m1[39m)
+[32m      3[39m 
+[32m----> [39m[32m4[39m [38;5;28;01mwith[39;00m blackjax.progress_bar(label=[33m"NUTS warmup"[39m):
+[32m      5[39m     (state, params), _ = warmup.run(k_warm, jnp.zeros(DIM), num_steps=[32m1000[39m)
+
+[36mFile [39m[32m/usr/lib/python3.12/contextlib.py:137[39m, in [36m_GeneratorContextManager.__enter__[39m[34m(self)[39m
+[32m    135[39m [38;5;28;01mdel[39;00m [38;5;28mself[39m.args, [38;5;28mself[39m.kwds, [38;5;28mself[39m.func
+[32m    136[39m [38;5;28;01mtry[39;00m:
+[32m--> [39m[32m137[39m     [38;5;28;01mreturn[39;00m [30;43mnext[39;49m[30;43m([39;49m[30;43mself[39;49m[30;43m.[39;49m[30;43mgen[39;49m[30;43m)[39;49m
+[32m    138[39m [38;5;28;01mexcept[39;00m [38;5;167;01mStopIteration[39;00m:
+[32m    139[39m     [38;5;28;01mraise[39;00m [38;5;167;01mRuntimeError[39;00m([33m"[39m[33mgenerator didn[39m[33m'[39m[33mt yield[39m[33m"[39m) [38;5;28;01mfrom[39;00m[38;5;250m [39m[38;5;28;01mNone[39;00m
+
+[36mFile [39m[32m~/work/blackjax/blackjax/blackjax/progress_bar.py:304[39m, in [36mprogress_bar[39m[34m(label, print_rate, output_file)[39m
+[32m    302[39m     [38;5;28;01mimport[39;00m[38;5;250m [39m[34;01mjaxtap[39;00m[38;5;250m [39m[38;5;28;01mas[39;00m[38;5;250m [39m[34;01mtap[39;00m
+[32m    303[39m [38;5;28;01mexcept[39;00m [38;5;167;01mImportError[39;00m [38;5;28;01mas[39;00m exc:
+[32m--> [39m[32m304[39m     [38;5;28;01mraise[39;00m [38;5;167;01mImportError[39;00m(
+[32m    305[39m         [33m"[39m[33mblackjax.progress_bar requires the [39m[33m'[39m[33mprogress[39m[33m'[39m[33m optional extra. [39m[33m"[39m
+[32m    306[39m         [33m"[39m[33mInstall it with:  pip install [39m[33m'[39m[33mblackjax[progress][39m[33m'[39m[33m"[39m
+[32m    307[39m     ) [38;5;28;01mfrom[39;00m[38;5;250m [39m[34;01mexc[39;00m
+[32m    309[39m state = ProgressState(label=label, print_rate=print_rate, output_file=output_file)
+[32m    311[39m [38;5;28;01mdef[39;00m[38;5;250m [39m[34m_on_step[39m(event):
+
+[31mImportError[39m: blackjax.progress_bar requires the 'progress' optional extra. Install it with:  pip install 'blackjax[progress]'
+

@@ -56,7 +56,7 @@
     <link rel="prev" title="Sample with multiple chains in parallel" href="howto_sample_multiple_chains.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g91056bb28" />
+  <meta name="docsearch:version" content="0.1.dev1+g85c3d2da1" />
   </head>
   
   
@@ -487,13 +487,43 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>NUTS warmup:   0%|          | 0/1000 [00:00&lt;?, ?step/s]
-NUTS warmup:   0%|          | 1/1000 [00:00&lt;00:00, 83886.08step/s]
-NUTS warmup:  30%|███       | 301/1000 [00:00&lt;00:01, 370.44step/s]
-NUTS warmup:  70%|███████   | 701/1000 [00:00&lt;00:00, 766.24step/s]
-NUTS warmup: 100%|██████████| 1000/1000 [00:01&lt;00:00, 984.16step/s]
-NUTS warmup: 100%|██████████| 1000/1000 [00:01&lt;00:00, 895.34step/s]
-NUTS warmup: 100%|██████████| 1000/1000 [00:01&lt;00:00, 894.63step/s]
+<div class="output traceback highlight-ipythontb notranslate"><div class="highlight"><pre><span></span><span class="gt">---------------------------------------------------------------------------</span>
+<span class="ne">ModuleNotFoundError</span><span class="g g-Whitespace">                       </span>Traceback (most recent call last)
+<span class="nn">File ~/work/blackjax/blackjax/blackjax/progress_bar.py:302,</span> in <span class="ni">progress_bar</span><span class="nt">(label, print_rate, output_file)</span>
+<span class="g g-Whitespace">    </span><span class="mi">301</span> <span class="k">try</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">302</span>     <span class="kn">import</span><span class="w"> </span><span class="nn">jaxtap</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tap</span>
+<span class="g g-Whitespace">    </span><span class="mi">303</span> <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+
+<span class="ne">ModuleNotFoundError</span>: No module named &#39;jaxtap&#39;
+
+<span class="n">The</span> <span class="n">above</span> <span class="n">exception</span> <span class="n">was</span> <span class="n">the</span> <span class="n">direct</span> <span class="n">cause</span> <span class="n">of</span> <span class="n">the</span> <span class="n">following</span> <span class="n">exception</span><span class="p">:</span>
+
+<span class="ne">ImportError</span><span class="g g-Whitespace">                               </span>Traceback (most recent call last)
+<span class="n">Cell</span> <span class="n">In</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">line</span> <span class="mi">4</span>
+<span class="g g-Whitespace">      </span><span class="mi">1</span> <span class="n">warmup</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">window_adaptation</span><span class="p">(</span><span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity</span><span class="p">)</span>
+<span class="g g-Whitespace">      </span><span class="mi">2</span> <span class="n">k_warm</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+<span class="g g-Whitespace">      </span><span class="mi">3</span> 
+<span class="ne">----&gt; </span><span class="mi">4</span> <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;NUTS warmup&quot;</span><span class="p">):</span>
+<span class="g g-Whitespace">      </span><span class="mi">5</span>     <span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">_</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">k_warm</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">DIM</span><span class="p">),</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="nn">File /usr/lib/python3.12/contextlib.py:137,</span> in <span class="ni">_GeneratorContextManager.__enter__</span><span class="nt">(self)</span>
+<span class="g g-Whitespace">    </span><span class="mi">135</span> <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwds</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">func</span>
+<span class="g g-Whitespace">    </span><span class="mi">136</span> <span class="k">try</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">137</span>     <span class="k">return</span> <span class="nb">next</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gen</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">138</span> <span class="k">except</span> <span class="ne">StopIteration</span><span class="p">:</span>
+<span class="g g-Whitespace">    </span><span class="mi">139</span>     <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;generator didn&#39;t yield&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+
+<span class="nn">File ~/work/blackjax/blackjax/blackjax/progress_bar.py:304,</span> in <span class="ni">progress_bar</span><span class="nt">(label, print_rate, output_file)</span>
+<span class="g g-Whitespace">    </span><span class="mi">302</span>     <span class="kn">import</span><span class="w"> </span><span class="nn">jaxtap</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tap</span>
+<span class="g g-Whitespace">    </span><span class="mi">303</span> <span class="k">except</span> <span class="ne">ImportError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+<span class="ne">--&gt; </span><span class="mi">304</span>     <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+<span class="g g-Whitespace">    </span><span class="mi">305</span>         <span class="s2">&quot;blackjax.progress_bar requires the &#39;progress&#39; optional extra. &quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">306</span>         <span class="s2">&quot;Install it with:  pip install &#39;blackjax[progress]&#39;&quot;</span>
+<span class="g g-Whitespace">    </span><span class="mi">307</span>     <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">exc</span>
+<span class="g g-Whitespace">    </span><span class="mi">309</span> <span class="n">state</span> <span class="o">=</span> <span class="n">ProgressState</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">label</span><span class="p">,</span> <span class="n">print_rate</span><span class="o">=</span><span class="n">print_rate</span><span class="p">,</span> <span class="n">output_file</span><span class="o">=</span><span class="n">output_file</span><span class="p">)</span>
+<span class="g g-Whitespace">    </span><span class="mi">311</span> <span class="k">def</span><span class="w"> </span><span class="nf">_on_step</span><span class="p">(</span><span class="n">event</span><span class="p">):</span>
+
+<span class="ne">ImportError</span>: blackjax.progress_bar requires the &#39;progress&#39; optional extra. Install it with:  pip install &#39;blackjax[progress]&#39;
 </pre></div>
 </div>
 </div>
@@ -517,21 +547,6 @@ NUTS warmup: 100%|██████████| 1000/1000 [00:01&lt;00:00, 894
 
 <span class="n">posterior_mean</span> <span class="o">=</span> <span class="n">samples</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;max |posterior_mean - true_w| =&quot;</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">posterior_mean</span> <span class="o">-</span> <span class="n">true_w</span><span class="p">)</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>max |posterior_mean - true_w| = 0.04362774
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>NUTS sampling:   0%|          | 0/1500 [00:00&lt;?, ?step/s]
-NUTS sampling:   0%|          | 1/1500 [00:00&lt;00:00, 89240.51step/s]
-NUTS sampling:  17%|█▋        | 258/1500 [00:00&lt;00:03, 363.99step/s]
-NUTS sampling:  43%|████▎     | 649/1500 [00:00&lt;00:01, 801.05step/s]
-NUTS sampling:  71%|███████   | 1059/1500 [00:00&lt;00:00, 1161.57step/s]
-NUTS sampling:  98%|█████████▊| 1464/1500 [00:01&lt;00:00, 1445.43step/s]
-NUTS sampling: 100%|██████████| 1500/1500 [00:01&lt;00:00, 1346.44step/s]
-NUTS sampling: 100%|██████████| 1500/1500 [00:01&lt;00:00, 1345.49step/s]
 </pre></div>
 </div>
 </div>
@@ -577,41 +592,11 @@ NUTS sampling: 100%|██████████| 1500/1500 [00:01&lt;00:00, 1
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>MCLMC max |mean - true_w| = 0.044856787
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>MCLMC adapt+sample:   0%|          | 0/400 [00:00&lt;?, ?step/s]
-MCLMC adapt+sample:   0%|          | 1/400 [00:00&lt;00:00, 107546.26step/s]
-MCLMC adapt+sample: 100%|██████████| 400/400 [00:01&lt;00:00, 394.15step/s]
-MCLMC adapt+sample:   0%|          | 0/67 [00:00&lt;?, ?step/s]
-MCLMC adapt+sample: 400step [00:00, 581936.04step/s]
-MCLMC adapt+sample:   0%|          | 0/67 [00:00&lt;?, ?step/s]
-MCLMC adapt+sample: 100%|██████████| 67/67 [00:00&lt;00:00, 61613.32step/s]
-MCLMC adapt+sample:   0%|          | 0/200 [00:00&lt;?, ?step/s]
-MCLMC adapt+sample:  34%|███▎      | 67/200 [00:00&lt;00:00, 1781.44step/s]
-MCLMC adapt+sample:   0%|          | 0/200 [00:00&lt;?, ?step/s]
-MCLMC adapt+sample:  20%|██        | 41/200 [00:00&lt;00:00, 34161.00step/s]
-MCLMC adapt+sample: 100%|██████████| 200/200 [00:00&lt;00:00, 1960.98step/s]
-MCLMC adapt+sample:   0%|          | 0/100 [00:00&lt;?, ?step/s]
-MCLMC adapt+sample: 200step [00:00, 129714.06step/s]
-MCLMC adapt+sample:   0%|          | 0/100 [00:00&lt;?, ?step/s]
-MCLMC adapt+sample: 100%|██████████| 100/100 [00:00&lt;00:00, 150118.25step/s]
-MCLMC adapt+sample:   0%|          | 0/1500 [00:00&lt;?, ?step/s]
-MCLMC adapt+sample:   7%|▋         | 100/1500 [00:00&lt;00:00, 117718.33step/s]
-MCLMC adapt+sample:  15%|█▌        | 226/1500 [00:00&lt;00:03, 373.75step/s]
-MCLMC adapt+sample:  45%|████▌     | 676/1500 [00:00&lt;00:00, 957.45step/s]
-MCLMC adapt+sample:  80%|████████  | 1201/1500 [00:00&lt;00:00, 1487.56step/s]
-MCLMC adapt+sample: 100%|██████████| 1500/1500 [00:00&lt;00:00, 1650.34step/s]
-MCLMC adapt+sample: 100%|██████████| 1500/1500 [00:00&lt;00:00, 1648.99step/s]
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="multi-chain-sampling-with-jax-vmap">
 <h2>Multi-chain sampling with <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code><a class="headerlink" href="#multi-chain-sampling-with-jax-vmap" title="Link to this heading">#</a></h2>
-<p>This is the centerpiece: a full multi-chain workflow using <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>. The old progress bar crashed under vmap with shape mismatches (issue <a class="reference external" href="https://github.com/blackjax-devs/blackjax/issues/927">#927</a>). The new callback-based implementation is vmap-safe because the injected step index never depends on the batched axis—it’s a compile-time constant. <strong>The bar fires exactly once per real step regardless of chain count.</strong></p>
+<p>This is the centerpiece: a full multi-chain workflow using <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code>. The old progress bar crashed under vmap with shape mismatches (issue <a class="reference external" href="https://github.com/blackjax-devs/blackjax/issues/927">#927</a>). The new implementation is vmap-safe because jaxtap inserts the step counter as <code class="docutils literal notranslate"><span class="pre">jnp.int32(0)</span></code> in the scan carry—a compile-time constant that depends only on itself (<code class="docutils literal notranslate"><span class="pre">step</span> <span class="pre">+</span> <span class="pre">1</span></code>) and therefore stays unbatched under <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> even when the rest of the carry is batched. <code class="docutils literal notranslate"><span class="pre">jax.debug.callback</span></code> with an unbatched argument fires once per step for the entire batch. <strong>The bar fires exactly once per real step regardless of chain count.</strong></p>
 <p>First, run a vmapped warmup across 4 chains in parallel:</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
@@ -631,20 +616,6 @@ MCLMC adapt+sample: 100%|██████████| 1500/1500 [00:00&lt;00:
     <span class="n">warm_states</span><span class="p">,</span> <span class="n">chain_params</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">warmup_one</span><span class="p">)(</span><span class="n">k_wu</span><span class="p">,</span> <span class="n">init_positions</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Per-chain adapted params shape:&quot;</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">chain_params</span><span class="p">))</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Per-chain adapted params shape: {&#39;inverse_mass_matrix&#39;: (4, 10), &#39;step_size&#39;: (4,)}
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>vmap warmup (4 chains):   0%|          | 0/1000 [00:00&lt;?, ?step/s]
-vmap warmup (4 chains):   0%|          | 1/1000 [00:00&lt;00:00, 95325.09step/s]
-vmap warmup (4 chains):  30%|███       | 301/1000 [00:02&lt;00:05, 139.01step/s]
-vmap warmup (4 chains):  70%|███████   | 701/1000 [00:02&lt;00:00, 309.25step/s]
-vmap warmup (4 chains): 100%|██████████| 1000/1000 [00:02&lt;00:00, 422.25step/s]
-vmap warmup (4 chains): 100%|██████████| 1000/1000 [00:02&lt;00:00, 405.02step/s]
-vmap warmup (4 chains): 100%|██████████| 1000/1000 [00:02&lt;00:00, 404.89step/s]
 </pre></div>
 </div>
 </div>
@@ -671,21 +642,6 @@ vmap warmup (4 chains): 100%|██████████| 1000/1000 [00:02&lt
     <span class="n">mc_chains</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">sample_one</span><span class="p">)(</span><span class="n">k_sm</span><span class="p">,</span> <span class="n">warm_states</span><span class="p">,</span> <span class="n">chain_params</span><span class="p">)</span>
 
 <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Output shape (chains, steps, dim):&quot;</span><span class="p">,</span> <span class="n">mc_chains</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Output shape (chains, steps, dim): (4, 1500, 10)
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>vmap sampling (4 chains):   0%|          | 0/1500 [00:00&lt;?, ?step/s]
-vmap sampling (4 chains):   0%|          | 1/1500 [00:00&lt;00:00, 82241.25step/s]
-vmap sampling (4 chains):  15%|█▌        | 226/1500 [00:01&lt;00:08, 147.72step/s]
-vmap sampling (4 chains):  45%|████▌     | 676/1500 [00:01&lt;00:01, 414.42step/s]
-vmap sampling (4 chains):  70%|███████   | 1051/1500 [00:01&lt;00:00, 606.63step/s]
-vmap sampling (4 chains): 100%|██████████| 1500/1500 [00:01&lt;00:00, 817.28step/s]
-vmap sampling (4 chains): 100%|██████████| 1500/1500 [00:01&lt;00:00, 774.76step/s]
-vmap sampling (4 chains): 100%|██████████| 1500/1500 [00:01&lt;00:00, 774.45step/s]
 </pre></div>
 </div>
 </div>
@@ -741,23 +697,6 @@ vmap sampling (4 chains): 100%|██████████| 1500/1500 [00:01&
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>SMC  max |particle mean - true_w| = 0.042065382
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>tempered SMC (30 temps):   0%|          | 0/30 [00:00&lt;?, ?step/s]
-tempered SMC (30 temps):   3%|▎         | 1/30 [00:00&lt;00:00, 87381.33step/s]
-tempered SMC (30 temps):  20%|██        | 6/30 [00:02&lt;00:08,  2.95step/s]
-tempered SMC (30 temps):  37%|███▋      | 11/30 [00:02&lt;00:03,  5.15step/s]
-tempered SMC (30 temps):  50%|█████     | 15/30 [00:02&lt;00:02,  6.70step/s]
-tempered SMC (30 temps):  67%|██████▋   | 20/30 [00:02&lt;00:01,  8.55step/s]
-tempered SMC (30 temps):  83%|████████▎ | 25/30 [00:02&lt;00:00, 10.24step/s]
-tempered SMC (30 temps): 100%|██████████| 30/30 [00:02&lt;00:00, 11.81step/s]
-tempered SMC (30 temps): 100%|██████████| 30/30 [00:02&lt;00:00, 11.36step/s]
-tempered SMC (30 temps): 100%|██████████| 30/30 [00:02&lt;00:00, 11.35step/s]
-</pre></div>
-</div>
-</div>
 </div>
 <p><strong>Note:</strong> Adaptive tempering (with unknown length) runs inside a <code class="docutils literal notranslate"><span class="pre">while_loop</span></code>, so a determinate progress bar is not possible. Use <code class="docutils literal notranslate"><span class="pre">output_file=</span></code> and the external reader (see below) to get a heartbeat instead.</p>
 </section>
@@ -779,16 +718,6 @@ tempered SMC (30 temps): 100%|██████████| 30/30 [00:02&lt;00
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>file-backed:   0%|          | 0/500 [00:00&lt;?, ?step/s]
-file-backed:   0%|          | 1/500 [00:00&lt;00:00, 76260.07step/s]
-file-backed:  10%|█         | 50/500 [00:00&lt;00:05, 81.08step/s]
-file-backed:  58%|█████▊    | 290/500 [00:00&lt;00:00, 404.05step/s]
-file-backed: 100%|██████████| 500/500 [00:00&lt;00:00, 610.77step/s]
-file-backed: 100%|██████████| 500/500 [00:00&lt;00:00, 610.27step/s]
-</pre></div>
-</div>
-</div>
 </div>
 <p>While sampling runs in one process, monitor it from another:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">blackjax</span> <span class="o">&amp;&amp;</span> <span class="n">uv</span> <span class="n">run</span> <span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_reader</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">bjx_progress</span><span class="o">.</span><span class="n">txt</span>
@@ -800,13 +729,12 @@ file-backed: 100%|██████████| 500/500 [00:00&lt;00:00, 610.2
 <h2>Common gotchas<a class="headerlink" href="#common-gotchas" title="Link to this heading">#</a></h2>
 <section id="jit-cache-staleness">
 <h3>JIT cache staleness<a class="headerlink" href="#jit-cache-staleness" title="Link to this heading">#</a></h3>
-<p>A function traced (compiled) inside one <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> context caches the bar injection in JAX’s JIT cache. Calling that same compiled function inside a <em>later</em> context will hit the cache and reuse the old callback—resulting in <strong>no bar and a warning at exit</strong>.</p>
-<p>Safe pattern: keep one <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> context open across all calls to the same compiled function (as shown in the multi-phase MCLMC example). If you must re-enter contexts, clear the cache:</p>
+<p>There are two distinct JIT-cache cases with different behaviors.</p>
+<p><strong>Case A — compiled in an earlier context, called in a new one (improved):</strong>
+jaxtap bakes a module-level singleton (<code class="docutils literal notranslate"><span class="pre">_dynamic_router</span></code>) into XLA artifacts rather than a closure over the creating context. A cache-hit in a new context routes events to the <em>currently-active</em> recorder at call time — the bar works and no warning fires.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
-
-<span class="n">sample_jitted</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sample_jitted</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span>
     <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">run_inference_algorithm</span><span class="p">(</span>
         <span class="n">rng_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
         <span class="n">initial_state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
@@ -816,54 +744,48 @@ file-backed: 100%|██████████| 500/500 [00:00&lt;00:00, 610.2
     <span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
 <span class="p">)</span>
 
-<span class="c1"># Context 1: traces the function</span>
+<span class="c1"># Context 1: traces the function, bakes _dynamic_router</span>
 <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 1 (traces)&quot;</span><span class="p">):</span>
     <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">7</span><span class="p">))</span>
 
-<span class="c1"># Context 2: cache hit → no bar → UserWarning at exit</span>
-<span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">w</span><span class="p">:</span>
-    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;always&quot;</span><span class="p">)</span>
-    <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 2 (cache hit)&quot;</span><span class="p">):</span>
-        <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">w</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning:&quot;</span><span class="p">,</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Warning: blackjax.progress_bar: no scan step was ever observed inside this context. Either the wrapped code never called jax.lax.scan, or the function was already jit-compiled/traced before this context was entered (jax.jit&#39;s cache is keyed by function identity, so a cache hit skips retracing and the injected callback never gets baked in). Keep ONE progress_bar() context open across repeated calls to the same compiled function, or force a retrace with jax.clear_caches().
-</pre></div>
-</div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>chain 1 (traces):   0%|          | 0/100 [00:00&lt;?, ?step/s]
-chain 1 (traces):   1%|          | 1/100 [00:00&lt;00:00, 63550.06step/s]
-chain 1 (traces): 100%|██████████| 100/100 [00:00&lt;00:00, 124.69step/s]
-chain 1 (traces): 100%|██████████| 100/100 [00:00&lt;00:00, 124.58step/s]
+<span class="c1"># Context 2: cache hit → _dynamic_router routes to ctx2&#39;s recorder → bar works</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 2 (cache hit → bar works)&quot;</span><span class="p">):</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">8</span><span class="p">))</span>
 </pre></div>
 </div>
 </div>
 </div>
-<p>Workaround: call <code class="docutils literal notranslate"><span class="pre">jax.clear_caches()</span></code> between contexts to force a retrace:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">jax</span><span class="o">.</span><span class="n">clear_caches</span><span class="p">()</span>  <span class="c1"># Clear JAX&#39;s JIT cache</span>
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 3&quot;</span><span class="p">):</span>
-    <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">9</span><span class="p">))</span>  <span class="c1"># Retraced, bar now works</span>
-</pre></div>
-</div>
-<p>Let’s verify the cache-clear workaround:</p>
+<p><strong>Case B — compiled before entering any context (unchanged behavior):</strong>
+If a function was JIT-compiled before any <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> was ever entered, no <code class="docutils literal notranslate"><span class="pre">_dynamic_router</span></code> callback is baked in. A later context sees zero events and the zero-step warning fires. Fix: <code class="docutils literal notranslate"><span class="pre">jax.clear_caches()</span></code> before entering to force a retrace.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Clear caches and re-trace in a new context</span>
-<span class="n">jax</span><span class="o">.</span><span class="n">clear_caches</span><span class="p">()</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">warnings</span>
 
-<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;chain 3 (fresh trace)&quot;</span><span class="p">):</span>
-    <span class="n">_</span> <span class="o">=</span> <span class="n">sample_jitted</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">9</span><span class="p">))</span>  <span class="c1"># Bar works</span>
-</pre></div>
-</div>
-</div>
-<div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>chain 3 (fresh trace):   0%|          | 0/100 [00:00&lt;?, ?step/s]
-chain 3 (fresh trace):   1%|          | 1/100 [00:00&lt;00:00, 89240.51step/s]
-chain 3 (fresh trace): 100%|██████████| 100/100 [00:00&lt;00:00, 121.37step/s]
-chain 3 (fresh trace): 100%|██████████| 100/100 [00:00&lt;00:00, 121.25step/s]
+<span class="c1"># Compile entirely outside any progress_bar context.</span>
+<span class="n">jax</span><span class="o">.</span><span class="n">clear_caches</span><span class="p">()</span>
+<span class="n">pre_compiled</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">jit</span><span class="p">(</span>
+    <span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">run_inference_algorithm</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="o">=</span><span class="n">key</span><span class="p">,</span>
+        <span class="n">initial_state</span><span class="o">=</span><span class="n">state</span><span class="p">,</span>
+        <span class="n">inference_algorithm</span><span class="o">=</span><span class="n">nuts</span><span class="p">,</span>
+        <span class="n">num_steps</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+        <span class="n">transform</span><span class="o">=</span><span class="k">lambda</span> <span class="n">st</span><span class="p">,</span> <span class="n">_</span><span class="p">:</span> <span class="n">st</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+    <span class="p">)[</span><span class="mi">1</span><span class="p">]</span>
+<span class="p">)</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">pre_compiled</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">10</span><span class="p">))</span>  <span class="c1"># compiled now, no callback baked in</span>
+
+<span class="c1"># Inside a context: 0 events → warning fires.</span>
+<span class="k">with</span> <span class="n">warnings</span><span class="o">.</span><span class="n">catch_warnings</span><span class="p">(</span><span class="n">record</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="k">as</span> <span class="n">w</span><span class="p">:</span>
+    <span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s2">&quot;always&quot;</span><span class="p">)</span>
+    <span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;pre-compiled (no bar)&quot;</span><span class="p">):</span>
+        <span class="n">_</span> <span class="o">=</span> <span class="n">pre_compiled</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">11</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">w</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Warning (expected):&quot;</span><span class="p">,</span> <span class="n">w</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">message</span><span class="p">)</span>
+
+<span class="c1"># Fix: clear caches to force retrace with the callback baked in.</span>
+<span class="n">jax</span><span class="o">.</span><span class="n">clear_caches</span><span class="p">()</span>
+<span class="k">with</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">progress_bar</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;after clear_caches (bar works)&quot;</span><span class="p">):</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">pre_compiled</span><span class="p">(</span><span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">key</span><span class="p">(</span><span class="mi">12</span><span class="p">))</span>  <span class="c1"># retraced, bar now works</span>
 </pre></div>
 </div>
 </div>
@@ -888,12 +810,6 @@ chain 3 (fresh trace): 100%|██████████| 100/100 [00:00&lt;00
 </pre></div>
 </div>
 </div>
-<div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Scan is patched: True
-Scan is restored: True
-</pre></div>
-</div>
-</div>
 </div>
 </section>
 <section id="other-caveats">
@@ -903,6 +819,12 @@ Scan is restored: True
 <li><p><strong>Multi-device sharding:</strong> Under <code class="docutils literal notranslate"><span class="pre">jax.shard_map</span></code>, the callback fires once per device per step, multiplying the host dispatch overhead. The bar may reach 100% while slower shards are still running.</p></li>
 <li><p><strong><code class="docutils literal notranslate"><span class="pre">functools.partial</span></code> bypass:</strong> A <code class="docutils literal notranslate"><span class="pre">functools.partial(jax.lax.scan,</span> <span class="pre">...)</span></code> captured before the context is entered silently bypasses the bar with no error.</p></li>
 <li><p><strong>Shared <code class="docutils literal notranslate"><span class="pre">output_file</span></code>:</strong> If two contexts share the same file path, their writes interleave and corrupt the file. Use a unique path per context.</p></li>
+<li><p><strong>Composing with <code class="docutils literal notranslate"><span class="pre">jaxtap.record()</span></code>:</strong> Two cases to know about:</p>
+<ul>
+<li><p><em>Nesting (innermost wins):</em> If you open a <code class="docutils literal notranslate"><span class="pre">jaxtap.record()</span></code> context <em>inside</em> a <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> context, the user’s inner context wins attribution for scans run within its block. The progress bar will be silent for those scans and resume receiving events afterward. This is documented behavior, not a bug.</p></li>
+<li><p><em>Cross-consumer JIT cache hits:</em> jaxtap’s device-side <code class="docutils literal notranslate"><span class="pre">select</span></code> function is baked into compiled artifacts at trace time — it cannot be changed dynamically. If a function compiled under one context type is called inside a different type: (a) a function traced under <code class="docutils literal notranslate"><span class="pre">tap.record(select=custom_fn)</span></code> called inside <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> works correctly — since jaxtap 0.2.1, <code class="docutils literal notranslate"><span class="pre">_dynamic_router</span></code> applies the receiving context’s <code class="docutils literal notranslate"><span class="pre">max_depth=0</span></code> at routing time, so exactly the outermost <code class="docutils literal notranslate"><span class="pre">n_steps</span></code> events reach <code class="docutils literal notranslate"><span class="pre">_on_step</span></code> regardless of how deeply the original trace instrumented; <code class="docutils literal notranslate"><span class="pre">_on_step</span></code> is also safe with arbitrary <code class="docutils literal notranslate"><span class="pre">event.value</span></code> since it only reads <code class="docutils literal notranslate"><span class="pre">event.step</span></code> and <code class="docutils literal notranslate"><span class="pre">event.total</span></code>; (b) a function traced under <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> called inside user’s <code class="docutils literal notranslate"><span class="pre">tap.record(select=custom_fn)</span></code> delivers events to the user’s recorder, but <code class="docutils literal notranslate"><span class="pre">event.value</span> <span class="pre">==</span> <span class="pre">()</span></code> (the baked <code class="docutils literal notranslate"><span class="pre">select=lambda</span> <span class="pre">_:</span> <span class="pre">()</span></code> from <code class="docutils literal notranslate"><span class="pre">progress_bar()</span></code> wins device-side; the user’s custom select is not applied). Both directions are crash-safe; the Direction B <code class="docutils literal notranslate"><span class="pre">value=()</span></code> behavior is documented jaxtap: “trace-time device-side select wins.”</p></li>
+</ul>
+</li>
 </ul>
 </section>
 </section>
