@@ -198,18 +198,18 @@ def make_L_step_size_adaptation(
             step_size=params.step_size,
         )
 
-        # step updating
+        # step updating — thread info so handle_nans can use the kernel's truthful
+        # nonans flag (#969) instead of re-deriving from the already-reverted next_state.
         success, state, step_size_max, energy_change = handle_nans(
             previous_state,
             next_state,
             params.step_size,
             step_size_max,
             info.energy_change,
+            info.nonans,
             nan_key,
         )
 
-        # Warning: var = 0 if there were nans, but we will give it a very small weight.
-        #
         # The step-size adaptation exploits the scaling relation Var[E] = O(eps^6)
         # for the leapfrog integrator (see Bou-Rabee & Sanz-Serna, 2018).
         # xi measures the energy-variance ratio relative to the target; the
@@ -352,15 +352,41 @@ def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
 
 
 def handle_nans(
-    previous_state, next_state, step_size, step_size_max, kinetic_change, key
+    previous_state,
+    next_state,
+    step_size,
+    step_size_max,
+    kinetic_change,
+    kernel_nonans,
+    key,
 ):
-    """if there are nans, let's reduce the stepsize, and not update the state. The
-    function returns the old state in this case."""
+    """Adaptation-level NaN handler.
 
-    reduced_step_size = 0.8  # multiplicative shrinkage factor applied on NaN recovery
-    p, unravel_fn = ravel_pytree(next_state.position)
-    q, unravel_fn = ravel_pytree(next_state.momentum)
-    nonans = jnp.logical_and(jnp.all(jnp.isfinite(p)), jnp.all(jnp.isfinite(q)))
+    If the kernel reported a divergence (via its truthful ``info.nonans`` after
+    #969 fix), reduce ``step_size_max`` and return the pre-step state.  The
+    kernel's own ``handle_nans`` already sanitises ``next_state`` for both
+    divergence signatures:
+
+    * Case-1: NaN position or momentum (position overshoot through a hard boundary).
+    * Case-2: finite position + momentum but NaN ``logdensity`` (dominant under
+      ``velocity_verlet`` at moderate overshoot on bounded targets).
+
+    Parameters
+    ----------
+    kernel_nonans
+        ``info.nonans`` from the MCLMC kernel — truthful after the #969 fix.
+
+    Returns
+    -------
+    success
+        ``True`` when the step was clean (no divergence and finite energy change).
+    """
+    reduced_step_size = 0.8  # multiplicative shrinkage applied on NaN recovery
+
+    # Consume the kernel's truthful flag; AND with energy finiteness as a
+    # defense-in-depth guard that catches any residual NaN propagation.
+    nonans = jnp.logical_and(kernel_nonans, jnp.isfinite(kinetic_change))
+
     state, step_size, kinetic_change = jax.tree.map(
         lambda new, old: jax.lax.select(nonans, jnp.nan_to_num(new), old),
         (next_state, step_size_max, kinetic_change),
