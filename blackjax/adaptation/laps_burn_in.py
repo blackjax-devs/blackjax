@@ -61,8 +61,12 @@ def build_kernel(logdensity_fn, ndims, microcanonical=True):
             adap.step_size,
         )
 
-        # reject the new state if there were nans
-        nonans = no_nans(new_state)
+        # #969 fix: consume the kernel's truthful info.nonans instead of
+        # re-checking the already-sanitised new_state with no_nans().  Pre-fix,
+        # no_nans(new_state) was always True after the kernel's own revert, so
+        # the "nans" diagnostic and the eps_factor 0.5 halving safety in
+        # Adaptation.update() (:332-334) were dead code.
+        nonans = info.nonans
         new_state = nan_reject(nonans, state, new_state)
 
         return new_state, {

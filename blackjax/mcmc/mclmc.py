@@ -222,8 +222,16 @@ def handle_nans(previous_state, next_state, info, key):
         leaves, _ = jax.tree.flatten(x)
         return jnp.all(jnp.stack([jnp.all(jnp.isfinite(leaf)) for leaf in leaves]))
 
+    # #969 fix: also check logdensity finiteness so that case-2 divergences
+    # (finite position + momentum but NaN logdensity — dominant under velocity_verlet
+    # at moderate overshoot) are correctly detected and reverted.  Pre-fix, case-2
+    # left info.nonans=True while the state carried a NaN logdensity, silently
+    # corrupting subsequent energy_change computations and blocking step-size shrinkage.
     nonans = jnp.logical_and(
-        isfinite_pytree(next_state.position), isfinite_pytree(next_state.momentum)
+        jnp.logical_and(
+            isfinite_pytree(next_state.position), isfinite_pytree(next_state.momentum)
+        ),
+        jnp.isfinite(next_state.logdensity),
     )
 
     state, info = jax.lax.cond(
