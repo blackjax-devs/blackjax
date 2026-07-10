@@ -30,23 +30,6 @@ from blackjax.util import generate_unit_vector, incremental_value_update, pytree
 # ---------------------------------------------------------------------------
 
 
-def _cb_divergence_warning(count, step_size):
-    """Warn when warmup divergences occurred.  Fired at end of adaptation."""
-    try:
-        if int(count) > 0:
-            ss_str = format(float(step_size), ".4g")
-            warnings.warn(
-                f"MCLMC warmup: {int(count)} divergent step(s) detected during "
-                f"tuning (final step_size={ss_str}). "
-                "If unexpected, try a smaller initial step size or check model "
-                "support.",
-                UserWarning,
-                stacklevel=2,
-            )
-    except Exception:
-        pass  # never propagate — a raise inside jax.debug.callback corrupts runtime
-
-
 def _cb_frozen_outcome_warning(step_size, position_std, num_steps):
     """Warn when the adapted step size cannot traverse the warmup-scale posterior.
 
@@ -199,6 +182,29 @@ def mclmc_find_L_and_step_size(
             rng_key=tune_key,
             diagonal_preconditioning=preconditioning,
         )
+
+    Notes
+    -----
+    **Live divergence monitoring (jax-tap >= 0.3.0)**
+
+    The internal tuning scan exposes a per-step divergence flag as its ``ys``
+    output (``True`` = divergence on that step).  Users who install
+    ``jax-tap >= 0.3.0`` can observe this stream with no changes to BlackJAX::
+
+        import jaxtap  # pip install "jax-tap>=0.3.0"
+
+        with jaxtap.record(
+            select_ys=lambda ys: ys[0],  # the single divergence-flag leaf
+            alert_ys=lambda e: "divergence" if e.value else None,
+            alert_ys_once=True,  # one stderr line then silence; drop for per-step
+        ) as rec:
+            state, params, _ = blackjax.mclmc_find_L_and_step_size(
+                mclmc_kernel=kernel, num_steps=N, state=init_state,
+                rng_key=key, logdensity_fn=logdensity_fn,
+            )
+        divergence_steps = [
+            e.step for e in rec.events if e.kind == "output" and e.value
+        ]
     """
     if logdensity_fn is None:
         raise ValueError(
@@ -338,7 +344,9 @@ def make_L_step_size_adaptation(
             weight=mask * success * params.step_size,
         )
 
-        # Emit divergence flag (True = divergence occurred this step)
+        # Enabling seam: per-step divergence flag (True = diverged) is the scan ys.
+        # jaxtap y-taps observe it via select_ys=lambda ys: ys[0] — see Notes in
+        # mclmc_find_L_and_step_size.
         return (state, params, adaptive_state, streaming_avg), jnp.logical_not(success)
 
     def run_steps(xs, state, params):
@@ -371,11 +379,10 @@ def make_L_step_size_adaptation(
         # we use the last num_steps2 to compute the diagonal preconditioner
         mask = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
-        # run the steps; collect per-step divergence flags for the count warning
-        (state, params, _, (_, average)), div_flags1 = run_steps(
+        # run the steps; ys (per-step divergence flags) available to jaxtap y-taps
+        (state, params, _, (_, average)), _ = run_steps(
             xs=(mask, L_step_size_adaptation_keys), state=state, params=params
         )
-        total_div_count = jnp.sum(div_flags1)
 
         L = params.L
         # determine L; track warmup position scale for the frozen-outcome warning
@@ -395,13 +402,11 @@ def make_L_step_size_adaptation(
                 # readjust the stepsize
                 steps = round(num_steps2 / 3)  # we do some small number of steps
                 keys = jax.random.split(final_key, steps)
-                (state, params, _, _), div_flags_dc = run_steps(
+                (state, params, _, _), _ = run_steps(
                     xs=(jnp.ones(steps), keys), state=state, params=params
                 )
-                total_div_count = total_div_count + jnp.sum(div_flags_dc)
 
-        # Emit diagnostic warnings (safe under JIT via jax.debug.callback)
-        jax.debug.callback(_cb_divergence_warning, total_div_count, params.step_size)
+        # Emit endpoint diagnostic warnings (safe under JIT via jax.debug.callback)
         jax.debug.callback(
             _cb_frozen_outcome_warning,
             params.step_size,

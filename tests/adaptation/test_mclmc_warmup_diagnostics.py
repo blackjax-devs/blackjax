@@ -11,22 +11,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for the MCLMC warmup diagnostic warnings (blackjax#973 follow-up trio).
+"""Tests for the MCLMC warmup diagnostic warnings (blackjax#973 follow-up).
 
-Three warn-only guards added in feat/mclmc-warmup-diagnostics:
-  1. Persistent-divergence count warning — fires when any warmup steps diverge.
-  2. Frozen-outcome warning — fires when adapted step_size cannot traverse the
-     posterior in the sampling budget (mixing infeasibility check).
-  3. Gradient-finiteness init guard — fires when the init-state gradient is
+Two bespoke endpoint guards added in feat/mclmc-warmup-diagnostics:
+  1. Frozen-outcome warning — fires when adapted step_size cannot traverse
+     the posterior in the sampling budget (mixing infeasibility check).
+  2. Gradient-finiteness init guard — fires when the init-state gradient is
      non-finite (value-finiteness is insufficient, e.g. lotka ODE stiffness).
+
+Per-step divergence monitoring is delegated to jax-tap (>= 0.3.0) via the
+scan ys enabling seam — see Notes in mclmc_find_L_and_step_size docstring.
 
 All warnings are unreachable on healthy runs (zero behavior change).
 """
-import re
 import warnings
 
 import jax
 import jax.numpy as jnp
+import pytest
 
 from blackjax.adaptation.mclmc_adaptation import (
     MCLMCAdaptationState,
@@ -50,15 +52,10 @@ def _cliff_target(x):
     For any |x|^2 > 0 in float32 the factor 1e35 drives the argument below 0,
     so max clips to 0 and log(0)=-inf.  Since jnp.isfinite(-inf)=False, the
     kernel flags nonans=False on every step and reverts — position stays at
-    x=0, warmup_position_std accumulates to 0, triggering both the count warning
-    and the frozen-outcome warning.
+    x=0, warmup_position_std accumulates to 0, triggering the frozen-outcome
+    warning.
     """
     return jnp.log(jnp.maximum(1.0 - jnp.sum(x**2) * 1e35, 0.0))
-
-
-def _bounded_target(x):
-    """Std-normal inside ±5; large init step size causes initial divergences."""
-    return -0.5 * jnp.sum(x**2) + jnp.sum(jnp.log(5.0 - jnp.abs(x)))
 
 
 def _gaussian_target(x):
@@ -102,53 +99,30 @@ def _run_adaptation(target, ss_init, num_steps=200, frac1=0.5, frac2=0.5, frac3=
 # ---------------------------------------------------------------------------
 
 
-def test_cliff_replica_fires_both_warnings():
+def test_cliff_replica_fires_frozen_warning():
     """Cliff target: every kernel step produces ld=-inf, so pos_std stays 0.
 
-    Expected: divergence-count warning (with count in message) + frozen-outcome
-    warning (pos_std < 1e-10 condition).
+    Expected: frozen-outcome warning (pos_std < 1e-10 condition).
+    No count warning (dropped in favour of the jaxtap y-tap route).
     """
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")
         _, params, _ = _run_adaptation(_cliff_target, ss_init=10.0, num_steps=200)
 
     user_msgs = [str(w.message) for w in caught if issubclass(w.category, UserWarning)]
-    count_warns = [m for m in user_msgs if "divergent" in m.lower()]
     frozen_warns = [m for m in user_msgs if "collapsed" in m.lower()]
 
-    assert count_warns, f"expected divergence-count warning, got {user_msgs}"
     assert frozen_warns, f"expected frozen-outcome warning, got {user_msgs}"
-    # The integer count must appear in the message text
-    assert any(
-        re.search(r"\d+ divergent", m) for m in count_warns
-    ), f"count not in message: {count_warns}"
-
-
-def test_step_caused_fires_count_not_frozen():
-    """Bounded target, ss_init=100: initial divergences then convergence.
-
-    The step_size converges to O(1) after the NaN-shrink ratchet; the adapted
-    sampler can traverse the posterior in num_steps steps — frozen warning must
-    NOT fire.  The count warning MUST fire (divergences happened before settling).
-    """
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        _, params, _ = _run_adaptation(_bounded_target, ss_init=100.0, num_steps=200)
-
-    user_msgs = [str(w.message) for w in caught if issubclass(w.category, UserWarning)]
+    # Must not fire a divergence-count warning (machinery was removed)
     count_warns = [m for m in user_msgs if "divergent" in m.lower()]
-    frozen_warns = [m for m in user_msgs if "collapsed" in m.lower()]
-
-    assert count_warns, f"expected divergence-count warning, got {user_msgs}"
-    ss_final = format(float(params.step_size), ".4g")
-    assert not frozen_warns, (
-        f"frozen warning must NOT fire when ss converges "
-        f"(final ss={ss_final}): {frozen_warns}"
+    assert not count_warns, (
+        f"divergence-count warning must not fire (use jaxtap recipe instead), "
+        f"got {count_warns}"
     )
 
 
 def test_healthy_gaussian_zero_warnings():
-    """Std-normal target from reasonable init: all three warnings must be silent.
+    """Std-normal target from reasonable init: all warnings must be silent.
 
     This is the structural no-op prover for the diagnostics layer: healthy runs
     produce zero UserWarnings (zero behavior change, zero output).
@@ -204,3 +178,35 @@ def test_warning_totality_under_w_error():
     # If we reach here the callbacks' try/except prevented any crash
     assert final_params is not None
     assert total_steps >= 0
+
+
+def test_jaxtap_recipe_fires_on_cliff():
+    """The documented jaxtap 0.3.0 recipe emits output events on the cliff target.
+
+    Verifies that the Notes-paragraph recipe in mclmc_find_L_and_step_size
+    actually fires alert_ys on the cliff replica (every step diverges there).
+    Skipped when jax-tap is not installed — it is an optional monitoring layer.
+    """
+    jaxtap = pytest.importorskip(
+        "jaxtap", minversion="0.3.0", reason="jax-tap>=0.3.0 not installed"
+    )
+
+    with jaxtap.record(
+        select_ys=lambda ys: ys[0],  # the single divergence-flag leaf
+        alert_ys=lambda e: "divergence" if e.value else None,
+    ) as rec:
+        _run_adaptation(_cliff_target, ss_init=10.0, num_steps=200)
+
+    output_events = [e for e in rec.events if e.kind == "output"]
+    divergent = [e for e in output_events if e.value]
+    assert output_events, (
+        "jaxtap recipe produced no output events from cliff target — "
+        "check that the scan ys enabling seam is still in place"
+    )
+    assert divergent, (
+        f"jaxtap recipe: no divergent steps detected on cliff target "
+        f"({len(output_events)} output events, all non-divergent)"
+    )
+    # Spot-check: step index 0 should be divergent on the cliff
+    first_output = output_events[0]
+    assert first_output.step == 0, f"unexpected first step index: {first_output.step}"
