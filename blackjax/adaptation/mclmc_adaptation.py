@@ -121,6 +121,46 @@ def mclmc_find_L_and_step_size(
             rng_key=tune_key,
             diagonal_preconditioning=preconditioning,
         )
+
+    Notes
+    -----
+    **Live divergence monitoring (jax-tap >= 0.3.0)**
+
+    The internal tuning scan exposes a per-step divergence flag as its ``ys``
+    output (``True`` = divergence on that step).  Users who install
+    ``jax-tap >= 0.3.0`` can observe this stream with no changes to BlackJAX::
+
+        import jaxtap  # pip install "jax-tap>=0.3.0"
+
+        with jaxtap.record(
+            select_ys=lambda ys: ys[0],  # the single divergence-flag leaf
+            alert_ys=lambda e: "divergence" if e.value else None,
+            alert_ys_once=True,  # one stderr line then silence; drop for per-step
+        ) as rec:
+            state, params, _ = blackjax.mclmc_find_L_and_step_size(
+                mclmc_kernel=kernel, num_steps=N, state=init_state,
+                rng_key=key, logdensity_fn=logdensity_fn,
+            )
+        divergence_steps = [
+            e.step for e in rec.events if e.kind == "output" and e.value
+        ]
+
+    **Checking for degenerate warmup**
+
+    BlackJAX does not emit runtime warnings; checking is the user's
+    responsibility.
+
+    *Before calling* — verify the initial gradient is finite::
+
+        from jax.flatten_util import ravel_pytree
+        ok = jnp.all(jnp.isfinite(ravel_pytree(state.logdensity_grad)[0]))
+        # finite logdensity + non-finite gradient = model/solver/support issue (#973)
+
+    *After calling* — a collapsed warmup leaves ``step_size`` orders of magnitude
+    below the posterior scale; healthy and frozen runs differ by ~6 orders::
+
+        ratio = final_params.step_size * num_steps / final_params.L
+        # ratio ≈ 1 → healthy;  ratio << 1 → likely frozen
     """
     if logdensity_fn is None:
         raise ValueError(
@@ -255,11 +295,14 @@ def make_L_step_size_adaptation(
             weight=mask * success * params.step_size,
         )
 
-        return (state, params, adaptive_state, streaming_avg), None
+        # Enabling seam: per-step divergence flag (True = diverged) is the scan ys.
+        # jaxtap y-taps observe it via select_ys=lambda ys: ys[0] — see Notes in
+        # mclmc_find_L_and_step_size.
+        return (state, params, adaptive_state, streaming_avg), jnp.logical_not(success)
 
     def run_steps(xs, state, params):
-        """Run adaptation steps via scan, returning final carry state."""
-        return jax.lax.scan(
+        """Run adaptation steps via scan; return (final_carry, per_step_div_flags)."""
+        carry, div_flags = jax.lax.scan(
             step,
             init=(
                 state,
@@ -268,7 +311,8 @@ def make_L_step_size_adaptation(
                 (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
             ),
             xs=xs,
-        )[0]
+        )
+        return carry, div_flags
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
@@ -286,13 +330,12 @@ def make_L_step_size_adaptation(
         # we use the last num_steps2 to compute the diagonal preconditioner
         mask = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
-        # run the steps
-        state, params, _, (_, average) = run_steps(
+        # run the steps; ys (per-step divergence flags) available to jaxtap y-taps
+        (state, params, _, (_, average)), _ = run_steps(
             xs=(mask, L_step_size_adaptation_keys), state=state, params=params
         )
 
         L = params.L
-        # determine L
         inverse_mass_matrix = params.inverse_mass_matrix
         if num_steps2 > 1:
             x_average, x_squared_average = average[0], average[1]
@@ -307,7 +350,7 @@ def make_L_step_size_adaptation(
                 # readjust the stepsize
                 steps = round(num_steps2 / 3)  # we do some small number of steps
                 keys = jax.random.split(final_key, steps)
-                state, params, _, (_, average) = run_steps(
+                (state, params, _, _), _ = run_steps(
                     xs=(jnp.ones(steps), keys), state=state, params=params
                 )
 
