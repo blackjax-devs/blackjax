@@ -13,6 +13,7 @@
 # limitations under the License.
 """Algorithms to adapt the MCLMC kernel parameters, namely step size and L."""
 
+import warnings
 from typing import NamedTuple
 
 import jax
@@ -21,6 +22,83 @@ from jax.flatten_util import ravel_pytree
 
 from blackjax.diagnostics import effective_sample_size
 from blackjax.util import generate_unit_vector, incremental_value_update, pytree_size
+
+# ---------------------------------------------------------------------------
+# Diagnostic warning callbacks — safe to call under JIT via jax.debug.callback.
+# Each function must NEVER raise: wrap the body in try/except so that a
+# warnings.simplefilter("error") environment does not corrupt the JAX runtime.
+# ---------------------------------------------------------------------------
+
+
+def _cb_divergence_warning(count, step_size):
+    """Warn when warmup divergences occurred.  Fired at end of adaptation."""
+    try:
+        if int(count) > 0:
+            ss_str = format(float(step_size), ".4g")
+            warnings.warn(
+                f"MCLMC warmup: {int(count)} divergent step(s) detected during "
+                f"tuning (final step_size={ss_str}). "
+                "If unexpected, try a smaller initial step size or check model "
+                "support.",
+                UserWarning,
+                stacklevel=2,
+            )
+    except Exception:
+        pass  # never propagate — a raise inside jax.debug.callback corrupts runtime
+
+
+def _cb_frozen_outcome_warning(step_size, position_std, num_steps):
+    """Warn when the adapted step size cannot traverse the warmup-scale posterior.
+
+    Triggered on mixing infeasibility (step_size * num_steps << warmup position
+    std, or zero position variance from complete divergence).  Scale/budget-
+    relative — no magic absolute constant.  Frozen-vs-healthy separation is
+    ~6 orders of magnitude, so a 3-order margin is highly robust.
+    """
+    try:
+        ss = float(step_size)
+        pos_std = float(position_std)
+        n = int(num_steps)
+        # Two conditions for "frozen":
+        #  (a) pos_std ≈ 0 — all warmup steps diverged, zero position variance.
+        #  (b) step_size * num_steps << pos_std — step too small to traverse.
+        is_zero_scale = pos_std < 1e-10
+        is_step_frozen = (ss * n) < pos_std * 1e-3
+        if is_zero_scale or is_step_frozen:
+            ss_str = format(ss, ".2g")
+            pos_str = format(pos_std, ".2g")
+            warnings.warn(
+                f"MCLMC warmup: adapted step_size {ss_str} cannot traverse "
+                f"the warmup-scale posterior (scale {pos_str}) in {n} "
+                "steps — warmup likely collapsed, check initial step size / "
+                "model support (see blackjax#973).",
+                UserWarning,
+                stacklevel=2,
+            )
+    except Exception:
+        pass
+
+
+def _cb_grad_finiteness_guard(grad_flat):
+    """Warn when the init-state gradient is non-finite.
+
+    Value-finiteness at init is insufficient (e.g. lotka-volterra: finite
+    logdensity but NaN gradient at the ODE solver's stiff regime).  This guard
+    fires once at adaptation start and is nearly free — the gradient was already
+    computed by ``mclmc.init``.
+    """
+    try:
+        if not bool(jnp.all(jnp.isfinite(grad_flat))):
+            warnings.warn(
+                "MCLMC warmup: gradient non-finite at init — this is a "
+                "model/solver/support issue, not a step-size issue. "
+                "Check model code, solver tolerances, and parameter support "
+                "(see blackjax#973).",
+                UserWarning,
+                stacklevel=2,
+            )
+    except Exception:
+        pass
 
 
 class MCLMCAdaptationState(NamedTuple):
@@ -127,6 +205,11 @@ def mclmc_find_L_and_step_size(
             "logdensity_fn is required. Pass the log-density function of the "
             "target distribution."
         )
+
+    # Guard: check gradient finiteness at init (nearly free — already computed
+    # by mclmc.init; fires once via jax.debug.callback so it works under JIT).
+    flat_grad, _ = ravel_pytree(state.logdensity_grad)
+    jax.debug.callback(_cb_grad_finiteness_guard, flat_grad)
 
     dim = pytree_size(state.position)
     if params is None:
@@ -255,11 +338,12 @@ def make_L_step_size_adaptation(
             weight=mask * success * params.step_size,
         )
 
-        return (state, params, adaptive_state, streaming_avg), None
+        # Emit divergence flag (True = divergence occurred this step)
+        return (state, params, adaptive_state, streaming_avg), jnp.logical_not(success)
 
     def run_steps(xs, state, params):
-        """Run adaptation steps via scan, returning final carry state."""
-        return jax.lax.scan(
+        """Run adaptation steps via scan; return (final_carry, per_step_div_flags)."""
+        carry, div_flags = jax.lax.scan(
             step,
             init=(
                 state,
@@ -268,7 +352,8 @@ def make_L_step_size_adaptation(
                 (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
             ),
             xs=xs,
-        )[0]
+        )
+        return carry, div_flags
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
         num_steps1, num_steps2 = round(num_steps * frac_tune1), round(
@@ -286,18 +371,21 @@ def make_L_step_size_adaptation(
         # we use the last num_steps2 to compute the diagonal preconditioner
         mask = jnp.concatenate((jnp.zeros(num_steps1), jnp.ones(num_steps2)))
 
-        # run the steps
-        state, params, _, (_, average) = run_steps(
+        # run the steps; collect per-step divergence flags for the count warning
+        (state, params, _, (_, average)), div_flags1 = run_steps(
             xs=(mask, L_step_size_adaptation_keys), state=state, params=params
         )
+        total_div_count = jnp.sum(div_flags1)
 
         L = params.L
-        # determine L
+        # determine L; track warmup position scale for the frozen-outcome warning
         inverse_mass_matrix = params.inverse_mass_matrix
+        warmup_position_std = jnp.zeros(())  # updated below when data is available
         if num_steps2 > 1:
             x_average, x_squared_average = average[0], average[1]
             variances = x_squared_average - jnp.square(x_average)
-            L = jnp.sqrt(jnp.sum(variances))
+            warmup_position_std = jnp.sqrt(jnp.sum(variances))
+            L = warmup_position_std
 
             if diagonal_preconditioning:
                 inverse_mass_matrix = variances
@@ -307,9 +395,19 @@ def make_L_step_size_adaptation(
                 # readjust the stepsize
                 steps = round(num_steps2 / 3)  # we do some small number of steps
                 keys = jax.random.split(final_key, steps)
-                state, params, _, (_, average) = run_steps(
+                (state, params, _, _), div_flags_dc = run_steps(
                     xs=(jnp.ones(steps), keys), state=state, params=params
                 )
+                total_div_count = total_div_count + jnp.sum(div_flags_dc)
+
+        # Emit diagnostic warnings (safe under JIT via jax.debug.callback)
+        jax.debug.callback(_cb_divergence_warning, total_div_count, params.step_size)
+        jax.debug.callback(
+            _cb_frozen_outcome_warning,
+            params.step_size,
+            warmup_position_std,
+            jnp.array(num_steps, dtype=jnp.int32),
+        )
 
         return state, MCLMCAdaptationState(L, params.step_size, inverse_mass_matrix)
 
