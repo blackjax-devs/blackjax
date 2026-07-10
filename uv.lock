@@ -164,6 +164,7 @@ dependencies = [
 
 [package.optional-dependencies]
 progress = [
+    { name = "jax-tap" },
     { name = "tqdm" },
 ]
 
@@ -208,6 +209,7 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "jax", specifier = ">=0.9.0" },
+    { name = "jax-tap", marker = "extra == 'progress'", specifier = ">=0.2.0" },
     { name = "jaxlib", specifier = ">=0.9.0" },
     { name = "numpy", specifier = ">=1.25" },
     { name = "optax", specifier = ">=0.2.3" },
@@ -1317,6 +1319,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/50/f0/bcb81d28267d2054d0daed766c7fa16bcee5e481331b4d1e14f5fbe662be/jax-0.10.0.tar.gz", hash = "sha256:0119c767de1645f407df72345d28a3837dc904f1d698911c121d8f2b396fdece", size = 2663397, upload-time = "2026-04-22T13:22:28.563Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/70/aa/dfac6d72cc35bc07e7587115b6946e333ef4ccb2e6cd26ecf639438c5d26/jax-0.10.0-py3-none-any.whl", hash = "sha256:76c42ba163c8db3dc2e449e225b888c0edfb623ded31efdc96d85e0fda1d26e8", size = 3094950, upload-time = "2026-04-16T12:32:11.576Z" },
+]
+
+[[package]]
+name = "jax-tap"
+version = "0.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "jax" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/63/ec/eb19d130fe89595a32c2fe5b5c3137cacf65769dcdffa35bd657075786ac/jax_tap-0.2.0.tar.gz", hash = "sha256:8e2c5d55ba9969cd4dcbb4e43b5eeb1f19d2262a9138bd378dead05c815013ac", size = 308274, upload-time = "2026-07-09T19:42:03.596Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/19/a6/8b263161b4bc8d1dbe316f4277c2ba74085f4b08f0320a918e729eebd3e5/jax_tap-0.2.0-py3-none-any.whl", hash = "sha256:3c9fe4843e690507eef59a710b8a91edfd51b1cccd10419f67905fe4fcb4f9d4", size = 57646, upload-time = "2026-07-09T19:42:02.605Z" },
 ]
 
 [[package]]
