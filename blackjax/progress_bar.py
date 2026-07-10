@@ -11,160 +11,40 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""A ``jax.lax.scan``-monkeypatching progress bar for BlackJAX.
+"""A ``jaxtap``-powered progress bar for BlackJAX.
 
-Supersedes the old ``gen_scan_fn``/``progress_bar_scan`` mechanism (which
-augmented the scan *carry* with a ``chain_id`` and broke under ``jax.vmap``
-with a shape mismatch in its ``io_callback`` result -- see issue #927). This
-module instead augments the scan ``xs`` with a step index and fires a
-``jax.debug.callback`` (which returns ``None``, so there is no result shape to
-mismatch under ``vmap``); the carry is never touched, so it composes cleanly
-with any transformation that batches or otherwise rewrites the carry.
+The :func:`progress_bar` context manager subscribes to scan-step events
+emitted by ``jaxtap.record()`` (the A-shell monkeypatch form) and feeds
+them into a :class:`ProgressState` display loop.  The public API, display
+behaviour, and :mod:`blackjax.progress_reader` file format are unchanged
+from the #964 implementation; only the *emission* side changes:
+
+* **Deleted** (scan-patch machinery):  ``_patched_scan``, ``_inject_progress``,
+  ``_underlying_scan``/``_session_scan``, ``_registry_lock``,
+  ``_progress_registry``, depth counter.  These are now jaxtap's
+  responsibility.
+* **Kept** (display side): :class:`ProgressState` (all fields), the
+  ``_render_loop`` with multi-phase reset, ``_step_callback``'s totality
+  invariant, zero-step ``UserWarning``, ``output_file`` atomic write +
+  reader format.
+
+Import cost: ``import blackjax`` does **not** import ``jaxtap``.  The
+import happens lazily inside :func:`progress_bar`'s ``__enter__`` so a
+plain ``pip install blackjax`` install continues to work.
 """
 import os
 import threading
 import time
-import uuid
 import warnings
 from contextlib import contextmanager
 
-import jax
-import jax.numpy as jnp
-
 __all__ = ["progress_bar"]
-
-_original_scan = jax.lax.scan
-_scan_depth = threading.local()
-_progress_registry: dict = {}  # uuid -> ProgressState
-
-# Guards the registry empty<->non-empty transitions and the _session_scan
-# capture/restore below (progress_bar() enter/exit only -- NOT held across
-# the `yield`, and NOT touched by _patched_scan/_inject_progress on the
-# scan-tracing hot path). Without this, two threads racing to be the FIRST
-# entrant could both observe an empty registry before either inserts: the
-# second to actually patch `jax.lax.scan` would have the FIRST's bare
-# `_patched_scan` visible as "the current jax.lax.scan" and capture that as
-# `_session_scan`, making `_underlying_scan()` return `_patched_scan` itself
-# -- infinite self-recursion on every subsequent pass-through call. Holding
-# this lock around the narrow enter/exit critical section (a dict insert/del
-# plus one attribute read-or-write) serializes exactly that race at
-# essentially zero cost, since entering/exiting a context is rare compared
-# to the scans that run inside it.
-_registry_lock = threading.Lock()
-
-# The scan implementation captured on the empty->non-empty registry
-# transition (i.e. whatever `jax.lax.scan` pointed to when the FIRST
-# concurrently-active progress_bar() context was entered). This may be a
-# third-party monkeypatch rather than `_original_scan` -- capturing and
-# restoring THIS value (instead of unconditionally restoring the import-time
-# original) avoids clobbering a foreign patch that predates or outlives our
-# own. `None` means no session is currently open.
-_session_scan = None
-
-
-def _underlying_scan():
-    """The scan implementation to delegate to for anything we do not
-    instrument (nested scans, no active context, etc).
-
-    Falls back to a captured foreign patch if one was installed before our
-    session started, so a pre-existing third-party `jax.lax.scan` patch
-    keeps functioning for calls made *inside* our context instead of being
-    silently bypassed -- true chaining, not just non-clobbering on exit.
-    """
-    return _session_scan if _session_scan is not None else _original_scan
-
-
-def _patched_scan(f, init, xs=None, length=None, **kwargs):
-    """Drop-in replacement for ``jax.lax.scan`` installed while a
-    :func:`progress_bar` context is active.
-
-    Only the *outermost* ``lax.scan`` encountered at trace time is
-    instrumented -- nested scans (e.g. a thinning inner loop) fall through to
-    the underlying ``lax.scan`` unmodified. Outermost-ness is tracked with a
-    thread-local depth counter that increments for the duration of tracing
-    ``f`` (which happens synchronously inside the call to the underlying
-    ``lax.scan`` below), so any ``lax.scan`` call made from within ``f`` sees
-    a depth > 0 and is left alone.
-
-    Attribution when multiple ``progress_bar()`` contexts are simultaneously
-    active (e.g. one per thread): with exactly one context active, ANY
-    calling thread is attributed to it (this is what makes "enter the
-    context on the main thread, run the scan on a worker thread" work). Once
-    a second context is active, attribution requires an exact match between
-    the calling thread and the context's *owner* thread (the thread that
-    called ``__enter__``); a scan from any other thread -- including a
-    genuine bystander or another context's own delegate -- falls through
-    with no bar rather than risk guessing wrong. See the module docstring
-    Notes for the fully disclosed decision table.
-    """
-    depth = getattr(_scan_depth, "value", 0)
-    _scan_depth.value = depth + 1
-    try:
-        active = list(_progress_registry.values())
-        if depth == 0 and active:
-            if len(active) >= 2:
-                here = threading.get_ident()
-                owned = [s for s in active if s.owner_thread == here]
-                if not owned:
-                    return _underlying_scan()(f, init, xs=xs, length=length, **kwargs)
-                state = owned[-1]
-            else:
-                state = active[-1]
-            return _inject_progress(f, init, xs, length, state, **kwargs)
-        else:
-            return _underlying_scan()(f, init, xs=xs, length=length, **kwargs)
-    finally:
-        _scan_depth.value = depth
-
-
-def _inject_progress(f, init, xs, length, state, **kwargs):
-    """Wrap ``f`` so a step index is threaded through ``xs`` (never the
-    carry) and fire a callback on every step."""
-    if length is not None:
-        n = length
-        if xs is not None:
-            leaves = jax.tree.leaves(xs)
-            if leaves and leaves[0].shape[0] != n:
-                # length disagrees with xs's own leading dimension -- let
-                # the underlying scan raise its own actionable error
-                # ("scan got `length` argument of ... which disagrees
-                # with ...") instead of us augmenting xs and having JAX
-                # blame an error on our internally-built pytree.
-                return _underlying_scan()(f, init, xs=xs, length=length, **kwargs)
-    elif xs is not None:
-        leaves = jax.tree.leaves(xs)
-        if not leaves:
-            return _underlying_scan()(f, init, xs=xs, length=length, **kwargs)
-        n = leaves[0].shape[0]
-    else:
-        return _underlying_scan()(f, init, xs=xs, length=length, **kwargs)
-
-    state.n_steps = n
-    reverse = kwargs.get("reverse", False)
-    indices = jnp.arange(n)
-
-    def f_wrapped(carry, augmented_x):
-        original_x, idx = augmented_x
-        # `display_idx` is a pure function of the static `n` and the
-        # unbatched `idx` (jnp.arange(n)) -- it never touches the batched
-        # axis under vmap, which is what makes the callback fire exactly
-        # once per real step regardless of chain count (see
-        # _step_callback's docstring and the module Notes). If a future
-        # change ever passes a value here that DOES depend on the vmapped
-        # input, JAX's vmap batching rule will unroll it into one call per
-        # batch element per step, silently breaking that guarantee --
-        # re-validate vmap behavior before adding any batched argument.
-        display_idx = (n - 1 - idx) if reverse else idx
-        jax.debug.callback(state._step_callback, display_idx, ordered=False)
-        return f(carry, original_x)
-
-    return _underlying_scan()(f_wrapped, init, xs=(xs, indices), length=None, **kwargs)
 
 
 class ProgressState:
     """Mutable, shared state for one active :func:`progress_bar` context.
 
-    A plain Python object closed over by the ``jax.debug.callback`` -- it
+    A plain Python object updated by the jaxtap ``on_step`` callback — it
     never enters the traced computation itself, only the step index does.
     """
 
@@ -192,6 +72,7 @@ class ProgressState:
         """Runs on the host once per scan step (outermost scan only).
 
         INVARIANT: this function must never raise. It executes inside a
+        jaxtap ``on_step`` callback path that ultimately goes through a
         ``jax.debug.callback``; an exception here crosses back into the XLA
         runtime as a fatal ``JaxRuntimeError`` and kills the ENTIRE traced
         computation, not just the progress display -- e.g. an
@@ -300,9 +181,9 @@ class ProgressState:
                 # new phase instead of freezing at the first phase's total
                 # (the observed bug) or overflowing into tqdm's unbounded
                 # counter mode once a later phase runs longer than the
-                # first. `n_steps` is written at trace time, strictly
-                # before that phase's first callback can fire, so the only
-                # possible race is a single stale tick where this loop
+                # first. `n_steps` is written before that phase's first
+                # callback fires (see _on_step in progress_bar()), so the
+                # only possible race is a single stale tick where this loop
                 # observes the new `n_steps` before `current_step` has been
                 # reset to 0 by that phase's first callback -- harmless,
                 # self-corrects on the very next 0.1s tick.
@@ -331,7 +212,8 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
 
     Automatically detects the outermost ``jax.lax.scan`` in the wrapped code
     and injects a step counter, without requiring any parameter on the
-    algorithm being run.
+    algorithm being run.  Emission is powered by ``jaxtap`` (the
+    ``blackjax[progress]`` optional extra).
 
     Parameters
     ----------
@@ -346,27 +228,30 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
 
     Notes
     -----
-    Works under ``jax.vmap`` -- the injected step index is a compile-time
-    constant (``jnp.arange(n)``) that never depends on the batched axis, so
-    it stays unbatched and the callback fires exactly once per real scan
-    step regardless of chain count, instead of the shape-mismatch crash the
-    old ``io_callback``-based mechanism had (fixes #927).
+    Works under ``jax.vmap`` -- only the outermost ``jax.lax.scan`` is
+    instrumented (nested scans inside the body are not tapped), so the
+    progress bar fires exactly once per real outer step regardless of
+    chain count.  The mechanism: jaxtap inserts a step counter as
+    ``jnp.int32(0)`` in the scan carry -- a compile-time constant that
+    depends only on itself (``step + 1``), so it stays unbatched under
+    vmap even when the rest of the carry is batched; ``jax.debug.callback``
+    with an unbatched argument fires once per step for the entire batch.
 
-    Only the outermost ``jax.lax.scan`` traced *while this context is
-    active* is instrumented. The retrace boundary that actually matters is
-    repeated calls to an already-traced/jit'd/checkpointed function across
-    DIFFERENT ``progress_bar()`` contexts -- a fresh ``jax.jit(fn)`` wrapper
-    is NOT itself a retrace boundary (JAX's jit cache is keyed by function
-    identity, not by whether a progress_bar context happens to be active),
-    so calling the SAME compiled function again inside a *later* context
-    reuses the cached trace and its callback stays baked in from whichever
-    context (if any) was active the FIRST time it was traced. Safe pattern:
-    keep ONE ``progress_bar()`` context open across all repeated calls to
-    the same compiled function. Workaround if you must re-enter: force a
-    retrace with ``jax.clear_caches()`` before the next call. A stale
-    baked-in callback also has a small phantom cost (~32us/step of host
-    dispatch) on every future execution into an already-closed, inert
-    state.
+    JIT-cache staleness has two distinct cases:
+
+    * **Function compiled inside an earlier context, called inside a new
+      one** (cache-hit in ctx2): jaxtap bakes ``_dynamic_router``, a
+      module-level singleton, into XLA artifacts rather than a closure.
+      A cache-hit in ctx2 routes events to ctx2's live recorder at call
+      time -- the bar works, no zero-step warning fires.  Keeping one
+      context open across repeated calls to the same compiled function is
+      still the safest pattern (avoids any edge cases from mismatched
+      ``select`` config baked at trace time).
+    * **Function compiled before entering any context**: no callback is
+      baked in at all (``jax.lax.scan`` was the original at compile time).
+      A later context sees zero events and the zero-step warning fires.
+      Fix: call ``jax.clear_caches()`` before entering the context to
+      force a retrace.
 
     Under ``jax.checkpoint`` combined with differentiation, the wrapped scan
     body -- including the injected callback -- runs twice per logical step
@@ -375,12 +260,12 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
     unaffected.
 
     **Process-global patch -- scope and boundaries.** This context manager
-    monkeypatches ``jax.lax.scan`` for its duration, which has consequences
-    beyond the ``with`` block itself:
+    monkeypatches ``jax.lax.scan`` (via ``jaxtap``) for its duration:
 
     * Only use the ``with`` form. A manually ``__enter__``ed context (e.g.
       in an interactive session) that is never ``__exit__``ed leaves
       ``jax.lax.scan`` patched for the rest of the process/kernel session.
+      Call ``jaxtap.emergency_restore()`` to recover.
     * With exactly one context active, ANY calling thread's top-level scan
       is attributed to it -- this is what makes "enter the context on the
       main thread, run sampling on a worker thread/executor" work, but it
@@ -399,6 +284,10 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
       silently bypasses the bar entirely (no error, no bar).
     * If two contexts share the same ``output_file`` path, their writes
       interleave and corrupt the file -- use a unique path per context.
+    * A user's own ``jaxtap.record()`` context opened *inside* this context
+      wins attribution for scans run within its block (innermost-context
+      wins semantics from jaxtap); the progress bar will not update for
+      those scans.
 
     Examples
     --------
@@ -409,26 +298,58 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
                 blackjax.nuts, logdensity_fn
             ).run(rng_key, initial_position, 1000)
     """
-    global _session_scan
+    try:
+        import jaxtap as tap
+    except ImportError as exc:
+        raise ImportError(
+            "blackjax.progress_bar requires the 'progress' optional extra. "
+            "Install it with:  pip install 'blackjax[progress]'"
+        ) from exc
 
-    key = str(uuid.uuid4())
     state = ProgressState(label=label, print_rate=print_rate, output_file=output_file)
-    with _registry_lock:
-        if not _progress_registry:  # empty -> non-empty: this is the session opener
-            candidate = jax.lax.scan  # whatever is installed now (foreign or original)
-            # Belt-and-braces: the lock above already prevents the race
-            # that could make this true (two threads both observing an
-            # empty registry before either inserts), but guard the
-            # invariant directly anyway -- capturing our OWN bare patch
-            # here would make _underlying_scan() return _patched_scan
-            # itself, i.e. infinite self-recursion on every pass-through
-            # call. A foreign wrapper installed AROUND _patched_scan is a
-            # different object and would still chain through correctly.
-            if candidate is not _patched_scan:
-                _session_scan = candidate
-        _progress_registry[key] = state
-        jax.lax.scan = _patched_scan
+
+    def _on_step(event):
+        """Route a jaxtap TapEvent to the ProgressState display.
+
+        Called on the host for every scan step of the outermost intercepted
+        scan.  ``event.total`` is the scan length (known at trace time and
+        delivered by jaxtap); ``event.step`` is the 0-based iteration index
+        (already a Python int, courtesy of jaxtap's ``step_.item()`` call in
+        its host closure).
+
+        For ``reverse=True`` scans, jaxtap's step counter still runs
+        0, 1, ..., N-1 (it lives in the carry, not in xs), so the display
+        naturally shows an ascending sequence -- no flip needed at this layer.
+
+        For sequential multi-phase runs (e.g. ``mclmc_find_L_and_step_size``'s
+        ~5 warmup scans), each phase delivers ``event.total`` for its own
+        length.  Updating ``n_steps`` before calling ``_step_callback`` ensures
+        the render loop sees the new total before the phase-reset signal
+        (``step == 0``) arrives.
+        """
+        if event.total is not None:
+            state.n_steps = event.total
+        state._step_callback(event.step)
+
+    # tap.record() A-shell:
+    #   select=lambda _: ()  → progress idiom: only the step counter (a Python
+    #                          int after jaxtap's .item() call) crosses the host
+    #                          boundary; zero bytes of carry data shipped.
+    #   ops=("scan",)        → instrument jax.lax.scan only, not while_loop
+    #                          (matches current behaviour).
+    #   max_depth=0          → emit carry taps only for the outermost intercepted
+    #                          scan (depth 0 = path has 0 '/' separators); nested
+    #                          scans inside the body are walked by the B-core but
+    #                          do not emit events, so they never fire _on_step.
+    tap_ctx = tap.record(
+        on_step=_on_step,
+        select=lambda _: (),
+        ops=("scan",),
+        max_depth=0,
+    )
+
     state._start_display()
+    tap_ctx.__enter__()
     try:
         yield state
     finally:
@@ -436,20 +357,12 @@ def progress_bar(label="BlackJAX", print_rate=None, output_file=None):
         state._stop_event.set()
         if state._display_thread is not None:
             state._display_thread.join(timeout=2.0)
-        with _registry_lock:
-            del _progress_registry[key]
-            if not _progress_registry:  # non-empty -> empty: session closer
-                if jax.lax.scan is _patched_scan:
-                    jax.lax.scan = _session_scan
-                # Else: something else replaced jax.lax.scan while we were
-                # active -- leave it alone rather than clobbering a foreign
-                # patch installed during our session.
-                _session_scan = None
         # Clear before removing: a jit-cached function traced inside this
         # context keeps its callback baked in after exit (see the docstring
         # Notes), and a post-exit call would otherwise resurrect the file
-        # we are about to delete via that stale _step_callback.
+        # we are about to delete via that stale on_step callback.
         state.output_file = None
+        tap_ctx.__exit__(None, None, None)
         if output_file and os.path.exists(output_file):
             os.remove(output_file)
         if state.n_steps == 0:
