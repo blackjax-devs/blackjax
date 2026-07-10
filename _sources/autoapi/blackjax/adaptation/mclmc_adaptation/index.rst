@@ -115,9 +115,22 @@ Module Contents
    determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)
 
 
-.. py:function:: handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_change, key)
+.. py:function:: handle_nans(previous_state, next_state, step_size, step_size_max, kinetic_change, kernel_nonans, key)
 
-   if there are nans, let's reduce the stepsize, and not update the state. The
-   function returns the old state in this case.
+   Adaptation-level NaN handler.
+
+   If the kernel reported a divergence (via its truthful ``info.nonans`` after
+   #969 fix), reduce ``step_size_max`` and return the pre-step state.  The
+   kernel's own ``handle_nans`` already sanitises ``next_state`` for both
+   divergence signatures:
+
+   * Case-1: NaN position or momentum (position overshoot through a hard boundary).
+   * Case-2: finite position + momentum but NaN ``logdensity`` (dominant under
+     ``velocity_verlet`` at moderate overshoot on bounded targets).
+
+   :param kernel_nonans: ``info.nonans`` from the MCLMC kernel — truthful after the #969 fix.
+
+   :returns: ``True`` when the step was clean (no divergence and finite energy change).
+   :rtype: success
 
 

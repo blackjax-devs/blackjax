@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.mass_matrix" href="../mass_matrix/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g85c3d2da1" />
+  <meta name="docsearch:version" content="0.1.dev1+g8bf703f4a" />
   </head>
   
   
@@ -450,7 +450,7 @@
 <td><p>determine L by the autocorrelations (around 10 effective samples are needed for this to be accurate)</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.mclmc_adaptation.handle_nans" title="blackjax.adaptation.mclmc_adaptation.handle_nans"><code class="xref py py-obj docutils literal notranslate"><span class="pre">handle_nans</span></code></a>(previous_state, next_state, step_size, ...)</p></td>
-<td><p>if there are nans, let's reduce the stepsize, and not update the state. The</p></td>
+<td><p>Adaptation-level NaN handler.</p></td>
 </tr>
 </tbody>
 </table>
@@ -557,9 +557,28 @@ tuning phases (frac_tune1 + frac_tune2 + frac_tune3 of
 
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.mclmc_adaptation.handle_nans">
-<span class="sig-name descname"><span class="pre">handle_nans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_change</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#handle_nans"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.handle_nans" title="Link to this definition">#</a></dt>
-<dd><p>if there are nans, let’s reduce the stepsize, and not update the state. The
-function returns the old state in this case.</p>
+<span class="sig-name descname"><span class="pre">handle_nans</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">previous_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">next_state</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size_max</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kinetic_change</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kernel_nonans</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mclmc_adaptation.html#handle_nans"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mclmc_adaptation.handle_nans" title="Link to this definition">#</a></dt>
+<dd><p>Adaptation-level NaN handler.</p>
+<p>If the kernel reported a divergence (via its truthful <code class="docutils literal notranslate"><span class="pre">info.nonans</span></code> after
+#969 fix), reduce <code class="docutils literal notranslate"><span class="pre">step_size_max</span></code> and return the pre-step state.  The
+kernel’s own <code class="docutils literal notranslate"><span class="pre">handle_nans</span></code> already sanitises <code class="docutils literal notranslate"><span class="pre">next_state</span></code> for both
+divergence signatures:</p>
+<ul class="simple">
+<li><p>Case-1: NaN position or momentum (position overshoot through a hard boundary).</p></li>
+<li><p>Case-2: finite position + momentum but NaN <code class="docutils literal notranslate"><span class="pre">logdensity</span></code> (dominant under
+<code class="docutils literal notranslate"><span class="pre">velocity_verlet</span></code> at moderate overshoot on bounded targets).</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>kernel_nonans</strong> – <code class="docutils literal notranslate"><span class="pre">info.nonans</span></code> from the MCLMC kernel — truthful after the #969 fix.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">True</span></code> when the step was clean (no divergence and finite energy change).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>success</p>
+</dd>
+</dl>
 </dd></dl>
 
 </section>

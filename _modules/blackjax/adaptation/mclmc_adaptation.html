@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g85c3d2da1" />
+  <meta name="docsearch:version" content="0.1.dev1+g8bf703f4a" />
   </head>
   
   
@@ -615,18 +615,18 @@
             <span class="n">step_size</span><span class="o">=</span><span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="c1"># step updating</span>
+        <span class="c1"># step updating — thread info so handle_nans can use the kernel&#39;s truthful</span>
+        <span class="c1"># nonans flag (#969) instead of re-deriving from the already-reverted next_state.</span>
         <span class="n">success</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">energy_change</span> <span class="o">=</span> <span class="n">handle_nans</span><span class="p">(</span>
             <span class="n">previous_state</span><span class="p">,</span>
             <span class="n">next_state</span><span class="p">,</span>
             <span class="n">params</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
             <span class="n">step_size_max</span><span class="p">,</span>
             <span class="n">info</span><span class="o">.</span><span class="n">energy_change</span><span class="p">,</span>
+            <span class="n">info</span><span class="o">.</span><span class="n">nonans</span><span class="p">,</span>
             <span class="n">nan_key</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="c1"># Warning: var = 0 if there were nans, but we will give it a very small weight.</span>
-        <span class="c1">#</span>
         <span class="c1"># The step-size adaptation exploits the scaling relation Var[E] = O(eps^6)</span>
         <span class="c1"># for the leapfrog integrator (see Bou-Rabee &amp; Sanz-Serna, 2018).</span>
         <span class="c1"># xi measures the energy-variance ratio relative to the target; the</span>
@@ -775,15 +775,41 @@
 <div class="viewcode-block" id="handle_nans">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html#blackjax.adaptation.mclmc_adaptation.handle_nans">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">handle_nans</span><span class="p">(</span>
-    <span class="n">previous_state</span><span class="p">,</span> <span class="n">next_state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">kinetic_change</span><span class="p">,</span> <span class="n">key</span>
+    <span class="n">previous_state</span><span class="p">,</span>
+    <span class="n">next_state</span><span class="p">,</span>
+    <span class="n">step_size</span><span class="p">,</span>
+    <span class="n">step_size_max</span><span class="p">,</span>
+    <span class="n">kinetic_change</span><span class="p">,</span>
+    <span class="n">kernel_nonans</span><span class="p">,</span>
+    <span class="n">key</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;if there are nans, let&#39;s reduce the stepsize, and not update the state. The</span>
-<span class="sd">    function returns the old state in this case.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Adaptation-level NaN handler.</span>
 
-    <span class="n">reduced_step_size</span> <span class="o">=</span> <span class="mf">0.8</span>  <span class="c1"># multiplicative shrinkage factor applied on NaN recovery</span>
-    <span class="n">p</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
-    <span class="n">q</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span>
-    <span class="n">nonans</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">p</span><span class="p">)),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">q</span><span class="p">)))</span>
+<span class="sd">    If the kernel reported a divergence (via its truthful ``info.nonans`` after</span>
+<span class="sd">    #969 fix), reduce ``step_size_max`` and return the pre-step state.  The</span>
+<span class="sd">    kernel&#39;s own ``handle_nans`` already sanitises ``next_state`` for both</span>
+<span class="sd">    divergence signatures:</span>
+
+<span class="sd">    * Case-1: NaN position or momentum (position overshoot through a hard boundary).</span>
+<span class="sd">    * Case-2: finite position + momentum but NaN ``logdensity`` (dominant under</span>
+<span class="sd">      ``velocity_verlet`` at moderate overshoot on bounded targets).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    kernel_nonans</span>
+<span class="sd">        ``info.nonans`` from the MCLMC kernel — truthful after the #969 fix.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    success</span>
+<span class="sd">        ``True`` when the step was clean (no divergence and finite energy change).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">reduced_step_size</span> <span class="o">=</span> <span class="mf">0.8</span>  <span class="c1"># multiplicative shrinkage applied on NaN recovery</span>
+
+    <span class="c1"># Consume the kernel&#39;s truthful flag; AND with energy finiteness as a</span>
+    <span class="c1"># defense-in-depth guard that catches any residual NaN propagation.</span>
+    <span class="n">nonans</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">kernel_nonans</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">kinetic_change</span><span class="p">))</span>
+
     <span class="n">state</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">kinetic_change</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
         <span class="k">lambda</span> <span class="n">new</span><span class="p">,</span> <span class="n">old</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">nonans</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">new</span><span class="p">),</span> <span class="n">old</span><span class="p">),</span>
         <span class="p">(</span><span class="n">next_state</span><span class="p">,</span> <span class="n">step_size_max</span><span class="p">,</span> <span class="n">kinetic_change</span><span class="p">),</span>
