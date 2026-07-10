@@ -104,6 +104,46 @@ Module Contents
            diagonal_preconditioning=preconditioning,
        )
 
+   .. rubric:: Notes
+
+   **Live divergence monitoring (jax-tap >= 0.3.0)**
+
+   The internal tuning scan exposes a per-step divergence flag as its ``ys``
+   output (``True`` = divergence on that step).  Users who install
+   ``jax-tap >= 0.3.0`` can observe this stream with no changes to BlackJAX::
+
+       import jaxtap  # pip install "jax-tap>=0.3.0"
+
+       with jaxtap.record(
+           select_ys=lambda ys: ys[0],  # the single divergence-flag leaf
+           alert_ys=lambda e: "divergence" if e.value else None,
+           alert_ys_once=True,  # one stderr line then silence; drop for per-step
+       ) as rec:
+           state, params, _ = blackjax.mclmc_find_L_and_step_size(
+               mclmc_kernel=kernel, num_steps=N, state=init_state,
+               rng_key=key, logdensity_fn=logdensity_fn,
+           )
+       divergence_steps = [
+           e.step for e in rec.events if e.kind == "output" and e.value
+       ]
+
+   **Checking for degenerate warmup**
+
+   BlackJAX does not emit runtime warnings; checking is the user's
+   responsibility.
+
+   *Before calling* — verify the initial gradient is finite::
+
+       from jax.flatten_util import ravel_pytree
+       ok = jnp.all(jnp.isfinite(ravel_pytree(state.logdensity_grad)[0]))
+       # finite logdensity + non-finite gradient = model/solver/support issue (#973)
+
+   *After calling* — a collapsed warmup leaves ``step_size`` orders of magnitude
+   below the posterior scale; healthy and frozen runs differ by ~6 orders::
+
+       ratio = final_params.step_size * num_steps / final_params.L
+       # ratio ≈ 1 → healthy;  ratio << 1 → likely frozen
+
 
 .. py:function:: make_L_step_size_adaptation(kernel, logdensity_fn, dim, frac_tune1, frac_tune2, diagonal_preconditioning, desired_energy_var=0.001, trust_in_estimate=1.5, num_effective_samples=150)
 
