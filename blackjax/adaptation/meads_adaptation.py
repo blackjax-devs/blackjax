@@ -350,6 +350,10 @@ def _floor_lrd_eigenvalues(lam: Array) -> Array:
     ``sqrt(lam)`` out of the step-size heuristic entirely): the degenerate
     collapse (``rhat = inf``, NaN step size) only occurs if *both* guards
     are defeated.
+
+    ``jnp.maximum(lam, floor)`` guards against small/negative-but-finite
+    eigenvalues only — NaN passes through (``maximum(NaN, floor) = NaN``).
+    PRE-EXISTING behavior; this function is not otherwise in the R3a diff.
     """
     return jnp.maximum(lam, _LRD_EIGENVALUE_FLOOR)
 

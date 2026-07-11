@@ -588,6 +588,54 @@ class SampleCovarianceEighLowRankParityTest(BlackJAXTest):
         # sigma must be 1.0 everywhere (zero variance → fallback to 1.0).
         np.testing.assert_allclose(result.sigma, jnp.ones(d), atol=1e-6)
 
+    def test_zero_variance_coordinate_count_gt_1(self):
+        """Single-zero-variance coordinate at large count fires the per-coord guard.
+
+        Witnesses the ``jnp.where(sigma <= 0, 1, sigma)`` guard on the path
+        where count >> 1 (so the Bessel denominator is non-trivial) but exactly
+        ONE coordinate has zero variance.  The existing
+        ``test_count_1_degenerate_support`` test fires via a different path
+        (all-zero m2 at count=1); this test covers the case where the guard
+        must act per-coordinate on a non-trivial m2.
+
+        A mutated guard (e.g. ``sigma = jnp.where(sigma < 0, 1, sigma)``) on
+        this path produces NaN eigenvalues that silently poison the returned
+        metric (IEEE NaN>x=False → all proposals rejected → frozen chains, no
+        warnings).
+        """
+        d, k, count = 5, 2, 100
+        key = self.next_key()
+        # Build draws where coordinate 0 is constant (zero variance).
+        raw = jax.random.normal(key, (count, d))
+        draws = raw.at[:, 0].set(0.0)  # first coordinate has zero variance
+        mean = jnp.mean(draws, axis=0)
+        diff = draws - mean[None, :]
+        m2 = diff.T @ diff  # m2[0,:] == m2[:,0] == 0 (zero-variance coord)
+
+        result = sample_covariance_eigh_low_rank(m2, count, k)
+
+        # The per-coord guard must fire for coordinate 0 → sigma[0] == 1.0.
+        np.testing.assert_allclose(
+            result.sigma[0],
+            1.0,
+            atol=1e-6,
+            err_msg="zero-variance coordinate must fall back to sigma=1.0",
+        )
+        # All other coordinates must have positive sigma.
+        self.assertTrue(
+            jnp.all(result.sigma[1:] > 0).item(),
+            "non-zero-variance coordinates must have sigma > 0",
+        )
+        # All outputs must be finite (guard failure produces NaN eigenvalues).
+        self.assertTrue(
+            jnp.all(jnp.isfinite(result.sigma)).item(), "sigma must be finite"
+        )
+        self.assertTrue(
+            jnp.all(jnp.isfinite(result.lam)).item(),
+            "lam must be finite (NaN here silently freezes chains)",
+        )
+        self.assertTrue(jnp.all(jnp.isfinite(result.U)).item(), "U must be finite")
+
 
 class WelfordDiagonalParityTest(BlackJAXTest):
     """Parity goldens for welford_diagonal vs np.var(..., ddof=1)."""
