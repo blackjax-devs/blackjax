@@ -63,10 +63,7 @@ from typing import Literal
 import jax
 import jax.numpy as jnp
 
-from blackjax.adaptation.low_rank_adaptation import (
-    _relative_pd_floor,
-    _spd_mean,
-)
+from blackjax.adaptation.low_rank_adaptation import _relative_pd_floor, _spd_mean
 from blackjax.adaptation.mass_matrix import welford_algorithm
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from blackjax.types import Array
@@ -154,6 +151,16 @@ def select_top_eigenvalues_by_informativeness(
         ``mclmc_lrd_adaptation._extract_lrd_from_samples`` :271–275 and
         ``meads_adaptation._lrd_from_accumulated_covariance`` :309–312.
 
+        **Tie-break divergence:** the two modes differ not only in masking
+        but also in sort stability for exact ``|λ−1|`` ties:
+        ``"mask_pad"`` uses ``argsort(-scores)`` (ascending original-index
+        among ties; Fisher consumer convention); ``"raw"`` uses
+        ``argsort(scores)[::-1]`` (descending original-index; both raw-source
+        conventions).  On real ``eigh``/``svd`` spectra bit-exact ties do
+        not occur — even truly degenerate inputs return ulp-broken eigenvalues
+        — so the difference is behaviorally inert on continuous data; the raw
+        path preserves byte-fidelity to its sources nonetheless.
+
     Parameters
     ----------
     eigenvalues
@@ -185,10 +192,11 @@ def select_top_eigenvalues_by_informativeness(
 
     q = eigenvalues.shape[0]
     scores = eigenvalue_informativeness(eigenvalues)
-    # Descending order by informativeness — same idiom in both consumers.
-    order = jnp.argsort(-scores)
 
     if tail_handling == "mask_pad":
+        # argsort(-scores): ascending original-index tie-break — matches the
+        # fisher consumer (low_rank_adaptation._compute_low_rank_metric :468).
+        order = jnp.argsort(-scores)
         actual_rank = min(max_rank, q)  # static: both are Python ints at trace time
         top_order = order[:actual_rank]
         U_out = eigenvectors[:, top_order]  # (d, actual_rank)
@@ -209,6 +217,15 @@ def select_top_eigenvalues_by_informativeness(
         return U_out, lam_out
 
     else:  # "raw"
+        # argsort(scores)[::-1]: descending original-index tie-break — matches
+        # BOTH raw consumers (mclmc_lrd_adaptation._extract_lrd_from_samples :271
+        # and meads_adaptation._lrd_from_accumulated_covariance :309).
+        # This differs from mask_pad's argsort(-scores) tie-break in degenerate
+        # spectra; on real eigh/SVD spectra bit-exact |λ−1| ties never occur
+        # (ulp-broken even for truly degenerate inputs), so the difference is
+        # behaviorally inert on continuous data — but the raw path stays
+        # byte-faithful to its sources.
+        order = jnp.argsort(scores)[::-1]
         top_order = order[:max_rank]
         return eigenvectors[:, top_order], eigenvalues[top_order]
 

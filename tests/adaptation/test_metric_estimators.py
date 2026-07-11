@@ -52,7 +52,6 @@ from blackjax.adaptation.metric_estimators import (
 )
 from tests.fixtures import BlackJAXTest
 
-
 # ---------------------------------------------------------------------------
 # Helpers shared across test classes
 # ---------------------------------------------------------------------------
@@ -379,6 +378,53 @@ class SelectTopEigenvaluesTest(BlackJAXTest):
                 jnp.ones(3), jnp.eye(3), 2, tail_handling="invalid"
             )
 
+    def test_raw_tie_straddling_exact_selection(self):
+        """Exact-tie case: raw mode must match its source consumers' convention.
+
+        lam = [0.4, 1.6, 2.5] → |λ-1| = [0.6, 0.6, 1.5].
+        max_rank=2: index 2 (score 1.5) is unambiguously first; indices 0 and 1
+        are tied at 0.6.  The raw sources (mclmc_lrd/_meads) use
+        argsort(scores)[::-1], which breaks ties by descending original index,
+        selecting {2.5, 1.6} (indices [2, 1]).  mask_pad uses argsort(-scores),
+        breaking ties by ascending index → {2.5, 0.4} (indices [2, 0]).
+        Assert selected SETS (not order) to be sign/ordering-agnostic, but also
+        check against the raw-source convention explicitly.
+        """
+        lam = jnp.array([0.4, 1.6, 2.5])
+        d = 3
+        V = jnp.eye(d)  # trivial eigenvectors: each column is a basis vector
+
+        U_raw, lam_raw = select_top_eigenvalues_by_informativeness(
+            lam, V, max_rank=2, tail_handling="raw"
+        )
+        self.assertEqual(U_raw.shape, (d, 2))
+        self.assertEqual(lam_raw.shape, (2,))
+
+        # The raw sources select {2.5, 1.6} — descending-index tie-break.
+        # Sort descending to get a canonical order for comparison.
+        lam_raw_sorted = jnp.sort(lam_raw)[::-1]
+        np.testing.assert_allclose(
+            lam_raw_sorted,
+            jnp.array([2.5, 1.6]),
+            atol=1e-5,
+            err_msg="raw mode must select {2.5, 1.6}",
+        )
+
+        # mask_pad gets the other convention ({2.5, 0.4}) via ascending-index
+        # tie-break: argsort(-scores) selects index 0 (0.4) over index 1 (1.6)
+        # when both have tied |λ-1|=0.6.  cutoff=2.0: 0.4 < 0.5 and 2.5 > 2.0
+        # are both informative, so the values are not masked.
+        U_mp, lam_mp = select_top_eigenvalues_by_informativeness(
+            lam, V, max_rank=2, tail_handling="mask_pad", cutoff=2.0
+        )
+        lam_mp_sorted = jnp.sort(lam_mp)[::-1]
+        np.testing.assert_allclose(
+            lam_mp_sorted,
+            jnp.array([2.5, 0.4]),
+            atol=1e-5,
+            err_msg="mask_pad must select {2.5, 0.4}",
+        )
+
 
 class FisherScoreLowRankParityTest(BlackJAXTest):
     """Parity goldens for fisher_score_low_rank vs _ref_fisher_score_low_rank."""
@@ -393,14 +439,20 @@ class FisherScoreLowRankParityTest(BlackJAXTest):
     )
     def test_parity_vs_reference(self, n, d, max_rank, gamma, cutoff, dtype):
         draws_f32, _, cov = _make_correlated_draws(
-            self.next_key(), n, d, rho=0.5, scale=jnp.arange(1, d + 1, dtype=jnp.float32)
+            self.next_key(),
+            n,
+            d,
+            rho=0.5,
+            scale=jnp.arange(1, d + 1, dtype=jnp.float32),
         )
         grads_f32 = _analytic_score_grads(draws_f32, cov)
 
         draws = draws_f32.astype(dtype)
         grads = grads_f32.astype(dtype)
 
-        result = fisher_score_low_rank(draws, grads, max_rank, gamma=gamma, cutoff=cutoff)
+        result = fisher_score_low_rank(
+            draws, grads, max_rank, gamma=gamma, cutoff=cutoff
+        )
         ref_sigma, ref_U, ref_lam = _ref_fisher_score_low_rank(
             draws, grads, max_rank, gamma, cutoff
         )
@@ -413,7 +465,9 @@ class FisherScoreLowRankParityTest(BlackJAXTest):
         if n >= d:  # well-defined reconstruction
             M_result = _dense_imm_from_lowrank(result.sigma, result.U, result.lam)
             M_ref = _dense_imm_from_lowrank(ref_sigma, ref_U, ref_lam)
-            np.testing.assert_allclose(M_result, M_ref, atol=atol * 10, err_msg="dense IMM")
+            np.testing.assert_allclose(
+                M_result, M_ref, atol=atol * 10, err_msg="dense IMM"
+            )
 
     def test_output_shapes(self):
         n, d, k = 30, 6, 4
@@ -453,7 +507,7 @@ class DrawsSingularValueLowRankParityTest(BlackJAXTest):
         (50, 10, 1),
         (50, 10, 5),
         (50, 10, 10),  # k=d  (only works when min(n,d) >= d, i.e. n >= d)
-        (10, 6, 3),   # n > d, k < n
+        (10, 6, 3),  # n > d, k < n
     )
     def test_parity_vs_reference(self, n, d, max_rank):
         k = min(max_rank, min(n, d))  # respect SVD rank constraint
@@ -506,7 +560,7 @@ class SampleCovarianceEighLowRankParityTest(BlackJAXTest):
         (100, 10, 1),
         (100, 10, 5),
         (100, 10, 10),  # k=d
-        (8, 10, 3),    # n < d: rank-deficient correlation matrix
+        (8, 10, 3),  # n < d: rank-deficient correlation matrix
     )
     def test_parity_vs_reference(self, n, d, max_rank):
         k = min(max_rank, d)
@@ -540,7 +594,7 @@ class WelfordDiagonalParityTest(BlackJAXTest):
 
     @parameterized.parameters(
         (50, 5),
-        (3, 4),   # small n
+        (3, 4),  # small n
         (200, 2),
     )
     def test_parity_vs_numpy_var(self, n, d):
@@ -580,7 +634,7 @@ class FisherScoreDiagonalParityTest(BlackJAXTest):
     @parameterized.parameters(
         # (n, d)
         (50, 5),
-        (4, 5),   # n < d
+        (4, 5),  # n < d
         (200, 3),
     )
     def test_parity_vs_reference(self, n, d):
@@ -625,8 +679,10 @@ class FisherScoreDiagonalParityTest(BlackJAXTest):
 
         # sigma^2 from low-rank matches the diagonal estimator.
         np.testing.assert_allclose(
-            diag_result, lr_result.sigma**2, atol=1e-5,
-            err_msg="diagonal fisher sigma^2 must match low-rank sigma^2"
+            diag_result,
+            lr_result.sigma**2,
+            atol=1e-5,
+            err_msg="diagonal fisher sigma^2 must match low-rank sigma^2",
         )
 
 
@@ -636,15 +692,16 @@ class SampleVarianceDiagonalParityTest(BlackJAXTest):
     @parameterized.parameters(
         # (n, d)
         (50, 5),
-        (3, 4),   # n < d
+        (3, 4),  # n < d
         (100, 8),
     )
     def test_parity_vs_mclmc_twin(self, n, d):
         draws, _, _ = _make_correlated_draws(self.next_key(), n, d)
         result = sample_variance_diagonal(draws)
         ref = _ref_sample_variance_diagonal_mclmc(draws)
-        np.testing.assert_allclose(result, ref, atol=1e-6,
-                                   err_msg="parity vs mclmc_adaptation twin")
+        np.testing.assert_allclose(
+            result, ref, atol=1e-6, err_msg="parity vs mclmc_adaptation twin"
+        )
 
     @parameterized.parameters(
         (50, 5),
@@ -655,8 +712,9 @@ class SampleVarianceDiagonalParityTest(BlackJAXTest):
         draws, _, _ = _make_correlated_draws(self.next_key(), n, d)
         result = sample_variance_diagonal(draws)
         ref = _ref_sample_variance_diagonal_adjusted(draws)
-        np.testing.assert_allclose(result, ref, atol=1e-6,
-                                   err_msg="parity vs adjusted_mclmc_adaptation twin")
+        np.testing.assert_allclose(
+            result, ref, atol=1e-6, err_msg="parity vs adjusted_mclmc_adaptation twin"
+        )
 
     def test_population_not_bessel(self):
         """sample_variance_diagonal uses population variance (n denominator)."""
@@ -670,7 +728,7 @@ class SampleVarianceDiagonalParityTest(BlackJAXTest):
         # Must differ from Bessel for n>1.
         self.assertFalse(
             jnp.allclose(result, bessel_var, atol=1e-6).item(),
-            "Expected population variance to differ from Bessel-corrected"
+            "Expected population variance to differ from Bessel-corrected",
         )
 
     def test_non_negative(self):
