@@ -43,6 +43,7 @@ __all__ = [
     "gaussian_euclidean",
     "gaussian_euclidean_low_rank",
     "gaussian_riemannian",
+    "lbfgs_inverse_hessian_to_low_rank_metric",
 ]
 
 
@@ -125,6 +126,55 @@ class LowRankInverseMassMatrix(NamedTuple):
 MetricTypes: TypeAlias = (
     Metric | LowRankInverseMassMatrix | Array | Callable[[ArrayLikeTree], Array]
 )
+
+
+def _low_rank_matvec(y: Array, U: Array, eigenvalue_scales: Array) -> Array:
+    r"""Apply the rank-k operator :math:`(I + U(\operatorname{diag}(s) - I)U^\top)` to ``y``.
+
+    This is the shared algebraic primitive underlying all low-rank metric
+    operations in BlackJAX.  For orthonormal
+    :math:`U \in \mathbb{R}^{d \times k}` and a per-eigenvalue scaling vector
+    :math:`s \in \mathbb{R}^k`, it computes
+
+    .. math::
+
+        y \;\mapsto\; y + U \bigl((s - 1) \odot (U^\top y)\bigr)
+
+    in :math:`O(dk)` operations.  When ``eigenvalue_scales`` equals the vector
+    of ones the operator is the identity.
+
+    The same algebraic form appears with different choices of ``eigenvalue_scales``
+    throughout the low-rank metric protocol:
+
+    - :math:`s = \lambda` — inverse mass matrix application (momentum → velocity),
+      as used in kinetic energy and the U-turn check.
+    - :math:`s = \sqrt{\lambda}` — square-root factor :math:`A^* = I+U(\sqrt\Lambda-I)U^\top`,
+      used in momentum sampling and the ESH integrator's ``forward_L`` / ``adjoint_L``
+      operators (:func:`~blackjax.mcmc.integrators.esh_dynamics_momentum_update_one_step`).
+    - :math:`s = 1/\sqrt{\lambda}` — inverse square-root factor :math:`B = I+U(\Lambda^{-1/2}-I)U^\top`,
+      used in the mass-matrix square root for momentum sampling.
+
+    Parameters
+    ----------
+    y
+        Shape ``(d,)``.  Input vector to transform.
+    U
+        Shape ``(d, k)``.  Matrix with orthonormal columns spanning the
+        low-rank correction subspace.
+    eigenvalue_scales
+        Shape ``(k,)``.  Per-eigenvalue scaling factors ``s``.
+
+    Returns
+    -------
+    Array
+        Shape ``(d,)``.  Result :math:`y + U \bigl((s-1) \odot (U^\top y)\bigr)`.
+
+    See Also
+    --------
+    gaussian_euclidean_low_rank : Full low-rank Euclidean metric built from this primitive.
+    lbfgs_inverse_hessian_to_low_rank_metric : Adapter producing a compatible representation.
+    """
+    return y + U @ ((eigenvalue_scales - 1.0) * (U.T @ y))
 
 
 def default_metric(metric: MetricTypes) -> Metric:
@@ -344,7 +394,7 @@ def gaussian_euclidean_low_rank(
         # p = M^{1/2} eps  where  M^{1/2} = D^{-1} B,
         # B = I + U (Λ^{-1/2} - I) U^T,  D^{-1} = diag(1/σ).
         # D^{-1} is applied AFTER B so that E[pp^T] = D^{-1} B B D^{-1} = M.
-        v = eps + U @ ((inv_sqrt_lam - 1.0) * (U.T @ eps))  # B eps
+        v = _low_rank_matvec(eps, U, inv_sqrt_lam)  # B eps
         p = inv_sigma * v  # D^{-1} B eps
         return unravel_fn(p)
 
@@ -355,8 +405,7 @@ def gaussian_euclidean_low_rank(
         p, _ = ravel_pytree(momentum)
         # K(p) = ½ p^T M^{-1} p = ½ q^T (I + U(Λ-I)U^T) q,  q = σ⊙p
         q = sigma * p  # (d,)
-        alpha = U.T @ q  # (k,)
-        return 0.5 * (jnp.dot(q, q) + jnp.dot(alpha, (lam - 1.0) * alpha))
+        return 0.5 * jnp.dot(q, _low_rank_matvec(q, U, lam))
 
     def is_turning(
         momentum_left: ArrayLikeTree,
@@ -372,8 +421,7 @@ def gaussian_euclidean_low_rank(
 
         def _inv_mass_times(p):
             # M^{-1} p = D(I + U(Λ-I)U^T)D p
-            q = sigma * p
-            return sigma * (q + U @ ((lam - 1.0) * (U.T @ q)))
+            return sigma * _low_rank_matvec(sigma * p, U, lam)
 
         vel_left = _inv_mass_times(m_left)
         vel_right = _inv_mass_times(m_right)
@@ -402,21 +450,17 @@ def gaussian_euclidean_low_rank(
         e, unravel_fn = ravel_pytree(element)
 
         if not inv and not trans:
-            # M^{1/2} e = D^{-1} (B e) = (1/σ) * (B e)
-            v = e + U @ ((inv_sqrt_lam - 1.0) * (U.T @ e))
-            scaled = inv_sigma * v
+            # M^{1/2} e = D^{-1} (B e) = (1/σ) * (B e),  B = I+U(Λ^{-1/2}-I)U^T
+            scaled = inv_sigma * _low_rank_matvec(e, U, inv_sqrt_lam)
         elif not inv and trans:
             # (M^{1/2})^T e = B (D^{-1} e) = B (e/σ)
-            q = inv_sigma * e
-            scaled = q + U @ ((inv_sqrt_lam - 1.0) * (U.T @ q))
+            scaled = _low_rank_matvec(inv_sigma * e, U, inv_sqrt_lam)
         elif inv and not trans:
-            # M^{-1/2} e = D (A^{*} e) = σ * (A^{*} e)  where A^{*} = I+U(√Λ-I)U^T
-            v = e + U @ ((sqrt_lam - 1.0) * (U.T @ e))
-            scaled = sigma * v
+            # M^{-1/2} e = D (A^{*} e) = σ * (A^{*} e),  A^{*} = I+U(√Λ-I)U^T
+            scaled = sigma * _low_rank_matvec(e, U, sqrt_lam)
         else:
             # (M^{-1/2})^T e = A^{*} (D e) = A^{*} (σ⊙e)
-            q = sigma * e
-            scaled = q + U @ ((sqrt_lam - 1.0) * (U.T @ q))
+            scaled = _low_rank_matvec(sigma * e, U, sqrt_lam)
 
         return unravel_fn(scaled)
 
@@ -533,6 +577,124 @@ def gaussian_riemannian(
         return unravel_fn(scaled)
 
     return Metric(momentum_generator, kinetic_energy, is_turning, scale)
+
+
+def lbfgs_inverse_hessian_to_low_rank_metric(
+    alpha: Array,
+    beta: Array,
+    gamma: Array,
+) -> LowRankInverseMassMatrix:
+    r"""Convert an L-BFGS factored inverse-Hessian to a :class:`LowRankInverseMassMatrix`.
+
+    The L-BFGS inverse Hessian is stored in the factored form
+
+    .. math::
+
+        H^{-1} = \operatorname{diag}(\alpha) + \beta \Gamma \beta^\top
+
+    (formula II.1 / II.3 of :cite:p:`zhang2022pathfinder`).  This adapter
+    rewrites it as a :class:`LowRankInverseMassMatrix` with
+
+    .. math::
+
+        M^{-1} = \operatorname{diag}(\sigma)
+                 \bigl(I + U(\Lambda - I)U^\top\bigr)
+                 \operatorname{diag}(\sigma),
+        \quad \sigma = \sqrt{\alpha}
+
+    via a compact :math:`O((2m)^3)` inner eigendecomposition that avoids the
+    :math:`O(d^3)` full eigenproblem:
+
+    1. Set :math:`D = \operatorname{diag}(\sigma)` and factor out to obtain
+       :math:`H^{-1} = D(I + \tilde B \Gamma \tilde B^\top)D` with
+       :math:`\tilde B = D^{-1}\beta \in \mathbb{R}^{d \times 2m}`.
+    2. QR-decompose :math:`\tilde B = Q R` (thin QR, :math:`Q` orthonormal
+       :math:`d \times r`, :math:`r = \min(d, 2m)`).
+    3. The inner correction satisfies
+       :math:`\tilde B \Gamma \tilde B^\top = Q (R \Gamma R^\top) Q^\top`,
+       so its eigenvalues are those of the :math:`r \times r` matrix
+       :math:`R \Gamma R^\top`.
+    4. Eigendecompose :math:`R \Gamma R^\top = V \Lambda_c V^\top` (eigh,
+       :math:`r \times r` only).
+    5. Return :math:`U = QV` (orthonormal eigenvectors, shape :math:`d \times r`)
+       and :math:`\lambda = 1 + \Lambda_c` (eigenvalues of :math:`I + \tilde B
+       \Gamma \tilde B^\top`).
+
+    **When to use this.**  Pass the ``(alpha, beta, gamma)`` triple produced by
+    :func:`~blackjax.optimizers.lbfgs.lbfgs_inverse_hessian_factors` to obtain a
+    JAX-pytree-safe :class:`LowRankInverseMassMatrix` that can cross
+    ``jax.vmap`` boundaries and feed any consumer that accepts the unified
+    representation (HMC, MCLMC, etc.).
+
+    .. note::
+        This function is a **pure adapter** — it does not alter Pathfinder's
+        internal sampling path (Phase R3 consumer migration).  In Phase R1 it
+        ships as adapter + golden tests only.
+
+    .. warning::
+        **Positive-definiteness precondition.**  The triple ``(alpha, beta, gamma)``
+        must yield a positive-definite dense form ``diag(alpha) + beta @ gamma @
+        beta.T``; this is guaranteed when the triple comes from
+        :func:`~blackjax.optimizers.lbfgs.lbfgs_inverse_hessian_factors` under a
+        Wolfe-condition line search.  Non-positive-definite inputs produce ``lam <=
+        0`` *silently* here and surface as NaN at momentum sampling.  Additionally,
+        at float32 near-singular metrics (condition number ≳ 1e7) can resolve the
+        smallest eigenvalue with unreliable sign; for such inputs prefer float64
+        factors.
+
+    Parameters
+    ----------
+    alpha
+        Shape ``(d,)``.  Positive diagonal of the inverse Hessian approximation.
+    beta
+        Shape ``(d, 2m)``.  Left factor of the low-rank correction.  When
+        ``m = 0`` (empty L-BFGS history) ``beta`` has shape ``(d, 0)`` and the
+        adapter returns a pure diagonal metric.
+    gamma
+        Shape ``(2m, 2m)``.  Symmetric inner factor of the low-rank correction.
+
+    Returns
+    -------
+    LowRankInverseMassMatrix
+        With ``sigma = sqrt(alpha)``, ``U`` the ``(d, r)`` orthonormal
+        eigenvector matrix, and ``lam = 1 + eigenvalues(R Γ Rᵀ)``.
+        Empty-history edge: ``U`` has shape ``(d, 0)`` and ``lam`` shape ``(0,)``,
+        representing a pure diagonal metric with scale ``sigma``.
+
+    See Also
+    --------
+    LowRankInverseMassMatrix : Target representation consumed by :func:`gaussian_euclidean_low_rank`.
+    gaussian_euclidean_low_rank : Full metric protocol built from the representation.
+    """
+    sigma = jnp.sqrt(alpha)  # (d,)
+    inv_sigma = 1.0 / sigma  # (d,)
+
+    k = beta.shape[-1]
+    if k == 0:
+        # Empty L-BFGS history: pure diagonal metric.
+        d = alpha.shape[0]
+        return LowRankInverseMassMatrix(
+            sigma=sigma,
+            U=jnp.zeros((d, 0), dtype=alpha.dtype),
+            lam=jnp.ones(0, dtype=alpha.dtype),
+        )
+
+    # Whiten beta: B̃ = D^{-1} β,  shape (d, 2m).
+    B_tilde = inv_sigma[:, None] * beta
+
+    # Thin QR: B̃ = Q R,  Q (d, r) orthonormal,  R (r, 2m),  r = min(d, 2m).
+    # C := B̃ Γ B̃ᵀ = Q (R Γ Rᵀ) Qᵀ so eigenvalues(C) = eigenvalues(R Γ Rᵀ).
+    Q, R = jnp.linalg.qr(B_tilde, mode="reduced")  # Q: (d, r), R: (r, k)
+    M_inner = R @ gamma @ R.T  # (r, r), symmetric
+    eigvals, V = jnp.linalg.eigh(M_inner)  # eigvals: (r,), V: (r, r)
+
+    # U = Q V is orthonormal (Q has orthonormal columns; V unitary from eigh).
+    # λ = 1 + eigenvalues(C) = eigenvalues of the full inner factor (I + C).
+    return LowRankInverseMassMatrix(
+        sigma=sigma,
+        U=Q @ V,
+        lam=1.0 + eigvals,
+    )
 
 
 def _format_covariance(cov: Array, is_inv):
