@@ -248,11 +248,11 @@ class MomentRecoveryTest(BlackJAXTest):
         )
         # Pooled std check across all K chains (realization-robust at rtol=0.4).
         np.testing.assert_allclose(np.asarray(ys).std(), 3.0, rtol=0.4)
-        self.assertGreater(float(jnp.mean(accs)), 0.05)
-        self.assertTrue(np.all(np.isfinite(np.asarray(ys))))
         # Regression guard: the symmetric default must not silently degrade
         # to near-zero acceptance the way the asymmetric criterion can
         # ([AutoStep] Fig. 1).
+        self.assertGreater(float(jnp.mean(accs)), 0.05)
+        self.assertTrue(np.all(np.isfinite(np.asarray(ys))))
 
 
 class SelectorUnitTest(BlackJAXTest):
