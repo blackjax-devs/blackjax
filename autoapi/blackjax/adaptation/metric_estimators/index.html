@@ -1,0 +1,1024 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>blackjax.adaptation.metric_estimators</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/adaptation/metric_estimators/index';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.adaptation.pathfinder_adaptation" href="../pathfinder_adaptation/index.html" />
+    <link rel="prev" title="blackjax.adaptation.meads_adaptation" href="../meads_adaptation/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g21c589b29" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">blackjax.adaptation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>blackjax.adaptation.metric_estimators</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.eigenvalue_informativeness"><code class="docutils literal notranslate"><span class="pre">eigenvalue_informativeness()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness"><code class="docutils literal notranslate"><span class="pre">select_top_eigenvalues_by_informativeness()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="docutils literal notranslate"><span class="pre">draws_singular_value_low_rank()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.welford_diagonal"><code class="docutils literal notranslate"><span class="pre">welford_diagonal()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.welford_dense"><code class="docutils literal notranslate"><span class="pre">welford_dense()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="docutils literal notranslate"><span class="pre">fisher_score_diagonal()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.sample_variance_diagonal"><code class="docutils literal notranslate"><span class="pre">sample_variance_diagonal()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-blackjax.adaptation.metric_estimators">
+<span id="blackjax-adaptation-metric-estimators"></span><h1>blackjax.adaptation.metric_estimators<a class="headerlink" href="#module-blackjax.adaptation.metric_estimators" title="Link to this heading">#</a></h1>
+<p>E-layer: pure metric estimator functions for the low-rank unification RFC.</p>
+<p>Each function is a <strong>pure transformation</strong>: explicit arrays in → metric
+representation out.  No buffer state, no scheduling logic, no side effects.
+All functions are JAX-traceable and safe to use inside <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> /
+<code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> provided that <code class="docutils literal notranslate"><span class="pre">max_rank</span></code> (where applicable) is a static
+Python integer (required to determine output shapes).</p>
+<p><strong>Source lineage</strong> (R2a census, 2026-07-11, main &#64; 532631c1):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<thead>
+<tr class="row-odd"><th class="head"><p>Estimator</p></th>
+<th class="head"><p>Extracted from</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">low_rank_adaptation._compute_low_rank</span></code>
+<code class="docutils literal notranslate"><span class="pre">_metric</span></code> + <code class="docutils literal notranslate"><span class="pre">_spd_mean</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank" title="blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">draws_singular_value_low_rank()</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mclmc_lrd_adaptation</span></code>
+<code class="docutils literal notranslate"><span class="pre">._extract_lrd_from_samples</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_covariance_eigh_low`()</span></code>
+<a href="#id1"><span class="problematic" id="id2">``</span></a>_rank`</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">meads_adaptation</span></code>
+<code class="docutils literal notranslate"><span class="pre">._lrd_from_accumulated_covariance</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.welford_diagonal" title="blackjax.adaptation.metric_estimators.welford_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">welford_diagonal()</span></code></a>
+<a class="reference internal" href="#blackjax.adaptation.metric_estimators.welford_dense" title="blackjax.adaptation.metric_estimators.welford_dense"><code class="xref py py-func docutils literal notranslate"><span class="pre">welford_dense()</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mass_matrix.welford_algorithm</span></code>
+(thin scan-wrappers; algorithm untouched)</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_diagonal()</span></code></a></p></td>
+<td><p>branch b197f1e2
+<code class="docutils literal notranslate"><span class="pre">mass_matrix._fisher_diagonal_inverse</span></code>
+<code class="docutils literal notranslate"><span class="pre">_mass</span></code> (dormant; wiring stays dormant)</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.sample_variance_diagonal" title="blackjax.adaptation.metric_estimators.sample_variance_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_variance_diagonal()</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mclmc_adaptation.py:342</span></code> and
+<code class="docutils literal notranslate"><span class="pre">adjusted_mclmc_adaptation.py:375</span></code>
+(verbatim duplicate; one function here)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><strong>Composition law (RFC §0 L2):</strong> estimators, data-feeding policy, and schedule
+are co-adapted package components.  The functions here are the <em>estimator</em>
+component only — callers supply the buffer view.  Gating logic (support gates,
+fraction-window checks, 2·d thresholds) belongs in the G-layer; it is
+explicitly <em>not</em> implemented here (docstrings note the relevant gates for each
+estimator).</p>
+<p><strong>Registration (R2a phase):</strong> these functions are module-public (importable
+from <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.metric_estimators</span></code>) but are NOT exported at the
+<code class="docutils literal notranslate"><span class="pre">blackjax</span></code> top-level.  Top-level registration and consumer re-wiring happen
+in R3.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.eigenvalue_informativeness" title="blackjax.adaptation.metric_estimators.eigenvalue_informativeness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">eigenvalue_informativeness</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Informativeness of each eigenvalue: how far it deviates from isotropic.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness" title="blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_top_eigenvalues_by_informativeness</span></code></a>(...)</p></td>
+<td><p>Select the top-<code class="docutils literal notranslate"><span class="pre">max_rank</span></code> eigenpairs by <a class="reference internal" href="#blackjax.adaptation.metric_estimators.eigenvalue_informativeness" title="blackjax.adaptation.metric_estimators.eigenvalue_informativeness"><code class="xref py py-func docutils literal notranslate"><span class="pre">eigenvalue_informativeness()</span></code></a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fisher_score_low_rank</span></code></a>(...)</p></td>
+<td><p>Fisher-divergence-minimising low-rank inverse mass matrix.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank" title="blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">draws_singular_value_low_rank</span></code></a>(...)</p></td>
+<td><p>Draws-only SVD low-rank inverse mass matrix (MCLMC Scheme A estimator).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank" title="blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank</span></code></a>(...)</p></td>
+<td><p>Chan/Welford-accumulated covariance → low-rank metric via <code class="docutils literal notranslate"><span class="pre">eigh</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.welford_diagonal" title="blackjax.adaptation.metric_estimators.welford_diagonal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">welford_diagonal</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Diagonal (per-coordinate) sample variance via Welford's algorithm.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.welford_dense" title="blackjax.adaptation.metric_estimators.welford_dense"><code class="xref py py-obj docutils literal notranslate"><span class="pre">welford_dense</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Dense sample covariance via Welford's algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fisher_score_diagonal</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Fisher-divergence-minimising diagonal inverse mass matrix.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.sample_variance_diagonal" title="blackjax.adaptation.metric_estimators.sample_variance_diagonal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_variance_diagonal</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Coordinate-wise population variance from raw draws.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.eigenvalue_informativeness">
+<span class="sig-name descname"><span class="pre">eigenvalue_informativeness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eigenvalues</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#eigenvalue_informativeness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.eigenvalue_informativeness" title="Link to this definition">#</a></dt>
+<dd><p>Informativeness of each eigenvalue: how far it deviates from isotropic.</p>
+<p>Computes <span class="math notranslate nohighlight">\(|\lambda - 1|\)</span> for each entry of <code class="docutils literal notranslate"><span class="pre">eigenvalues</span></code>.
+Directions with large informativeness deviate the most from the identity
+metric and benefit the most from low-rank preconditioning.</p>
+<p>This idiom is used identically in:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a> (step 9 — top-k selection in projected
+subspace; see <code class="docutils literal notranslate"><span class="pre">low_rank_adaptation._compute_low_rank_metric</span></code> :468).</p></li>
+<li><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank" title="blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">draws_singular_value_low_rank()</span></code></a> (top-k SVD eigenvalue selection;
+see <code class="docutils literal notranslate"><span class="pre">mclmc_lrd_adaptation._extract_lrd_from_samples</span></code> :271).</p></li>
+<li><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank" title="blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a> (top-k eigh eigenvalue selection;
+see <code class="docutils literal notranslate"><span class="pre">meads_adaptation._lrd_from_accumulated_covariance</span></code> :309).</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>eigenvalues</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(q,)</span></code>.  Eigenvalues of a correlation (or preconditioned)
+matrix.  An isotropic Gaussian has all eigenvalues equal to 1 and
+informativeness 0.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><span class="math notranslate nohighlight">\(|\lambda_i - 1|\)</span> for each <span class="math notranslate nohighlight">\(\lambda_i\)</span>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array, shape <code class="docutils literal notranslate"><span class="pre">(q,)</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness">
+<span class="sig-name descname"><span class="pre">select_top_eigenvalues_by_informativeness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eigenvalues</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigenvectors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail_handling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'mask_pad'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'raw'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mask_pad'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#select_top_eigenvalues_by_informativeness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness" title="Link to this definition">#</a></dt>
+<dd><p>Select the top-<code class="docutils literal notranslate"><span class="pre">max_rank</span></code> eigenpairs by <a class="reference internal" href="#blackjax.adaptation.metric_estimators.eigenvalue_informativeness" title="blackjax.adaptation.metric_estimators.eigenvalue_informativeness"><code class="xref py py-func docutils literal notranslate"><span class="pre">eigenvalue_informativeness()</span></code></a>.</p>
+<p>Two production consumers use this pattern with <strong>divergent tail handling</strong>
+(D2 in the RFC duplication map):</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">tail_handling=&quot;mask_pad&quot;</span></code> (default)</dt><dd><p>Used by <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a>.  Eigenvalues inside the
+uninformative band <span class="math notranslate nohighlight">\([1/\text{cutoff},\ \text{cutoff}]\)</span> are
+<strong>masked to 1</strong> (they carry no preconditioning benefit), making the
+corresponding direction a no-op in the metric.  When the input
+subspace has fewer than <code class="docutils literal notranslate"><span class="pre">max_rank</span></code> eigenvectors (<code class="docutils literal notranslate"><span class="pre">q</span> <span class="pre">&lt;</span> <span class="pre">max_rank</span></code>,
+which arises when <code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">&lt;</span> <span class="pre">2</span> <span class="pre">·</span> <span class="pre">max_rank</span></code>), the output is <strong>zero-padded</strong>
+to the requested shape — zero columns in <code class="docutils literal notranslate"><span class="pre">U</span></code> and <code class="docutils literal notranslate"><span class="pre">lam=1</span></code> entries
+— so the return shape is always <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">max_rank)</span></code> / <code class="docutils literal notranslate"><span class="pre">(max_rank,)</span></code>.
+Matches <code class="docutils literal notranslate"><span class="pre">low_rank_adaptation._compute_low_rank_metric</span></code> steps 8–9
+(:468–484).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">tail_handling=&quot;raw&quot;</span></code></dt><dd><p>Used by <a class="reference internal" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank" title="blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">draws_singular_value_low_rank()</span></code></a> and
+<a class="reference internal" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank" title="blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a>.  The top-k pairs are
+returned <strong>as-is</strong>: no informativeness masking, no padding.  The
+caller must ensure <code class="docutils literal notranslate"><span class="pre">max_rank</span> <span class="pre">&lt;=</span> <span class="pre">q</span></code>; behaviour is undefined (JAX
+will silently return <code class="docutils literal notranslate"><span class="pre">q</span></code> columns) when <code class="docutils literal notranslate"><span class="pre">max_rank</span> <span class="pre">&gt;</span> <span class="pre">q</span></code>.  Matches
+<code class="docutils literal notranslate"><span class="pre">mclmc_lrd_adaptation._extract_lrd_from_samples</span></code> :271–275 and
+<code class="docutils literal notranslate"><span class="pre">meads_adaptation._lrd_from_accumulated_covariance</span></code> :309–312.</p>
+<p><strong>Tie-break divergence:</strong> the two modes differ not only in masking
+but also in sort stability for exact <code class="docutils literal notranslate"><span class="pre">|λ−1|</span></code> ties:
+<code class="docutils literal notranslate"><span class="pre">&quot;mask_pad&quot;</span></code> uses <code class="docutils literal notranslate"><span class="pre">argsort(-scores)</span></code> (ascending original-index
+among ties; Fisher consumer convention); <code class="docutils literal notranslate"><span class="pre">&quot;raw&quot;</span></code> uses
+<code class="docutils literal notranslate"><span class="pre">argsort(scores)[::-1]</span></code> (descending original-index; both raw-source
+conventions).  On real <code class="docutils literal notranslate"><span class="pre">eigh</span></code>/<code class="docutils literal notranslate"><span class="pre">svd</span></code> spectra bit-exact ties do
+not occur — even truly degenerate inputs return ulp-broken eigenvalues
+— so the difference is behaviorally inert on continuous data; the raw
+path preserves byte-fidelity to its sources nonetheless.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>eigenvalues</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(q,)</span></code>.  Must be the eigenvalues associated with the columns
+of <code class="docutils literal notranslate"><span class="pre">eigenvectors</span></code>.</p></li>
+<li><p><strong>eigenvectors</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">q)</span></code>.  Columns are the eigenvectors.</p></li>
+<li><p><strong>max_rank</strong> – Number of eigenpairs to return.  Must be a <strong>static Python integer</strong>
+(determines the output shape).</p></li>
+<li><p><strong>tail_handling</strong> – See above.  Default <code class="docutils literal notranslate"><span class="pre">&quot;mask_pad&quot;</span></code> matches the Fisher-score consumer.</p></li>
+<li><p><strong>cutoff</strong> – Only used when <code class="docutils literal notranslate"><span class="pre">tail_handling=&quot;mask_pad&quot;</span></code>.  Eigenvalues in
+<span class="math notranslate nohighlight">\([1/\text{cutoff},\ \text{cutoff}]\)</span> are masked to 1.
+Default <code class="docutils literal notranslate"><span class="pre">2.0</span></code> matches nutpie’s <code class="docutils literal notranslate"><span class="pre">c=2</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>U_out</strong> (Array, shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">max_rank)</span></code> (mask_pad) or <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">≤max_rank)</span></code> (raw)) – Selected (and possibly masked/padded) eigenvectors.</p></li>
+<li><p><strong>lam_out</strong> (Array, shape <code class="docutils literal notranslate"><span class="pre">(max_rank,)</span></code> or <code class="docutils literal notranslate"><span class="pre">(≤max_rank,)</span></code>) – Selected (and possibly masked) eigenvalues.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.fisher_score_low_rank">
+<span class="sig-name descname"><span class="pre">fisher_score_low_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><span class="pre">blackjax.mcmc.metrics.LowRankInverseMassMatrix</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#fisher_score_low_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="Link to this definition">#</a></dt>
+<dd><p>Fisher-divergence-minimising low-rank inverse mass matrix.</p>
+<p>Implements Steps 1–9 of Algorithm 1 of
+<span id="id3">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following the nutpie reference
+implementation (<code class="docutils literal notranslate"><span class="pre">nuts-rs</span></code> <code class="docutils literal notranslate"><span class="pre">src/transform/adapt/low_rank.rs</span></code>
+<code class="docutils literal notranslate"><span class="pre">estimate_mass_matrix</span></code>).</p>
+<p>The inverse mass matrix has the form</p>
+<div class="math notranslate nohighlight">
+\[M^{-1} = \operatorname{diag}(\sigma)
+         \bigl(I + U(\Lambda - I)U^\top\bigr)
+         \operatorname{diag}(\sigma)\]</div>
+<p>where <span class="math notranslate nohighlight">\(\sigma\)</span>, <span class="math notranslate nohighlight">\(U\)</span>, <span class="math notranslate nohighlight">\(\Lambda\)</span> minimise the sample
+Fisher divergence from <span class="math notranslate nohighlight">\(\{(x_i, \nabla \log p(x_i))\}\)</span>.</p>
+<p><strong>Extracted from:</strong> <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.low_rank_adaptation</span></code>
+<code class="docutils literal notranslate"><span class="pre">._compute_low_rank_metric</span></code> + <code class="docutils literal notranslate"><span class="pre">._spd_mean</span></code> (main &#64; 532631c1).</p>
+<p><strong>Key asymmetry vs</strong> <a class="reference internal" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank" title="blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">draws_singular_value_low_rank()</span></code></a>: this estimator
+uses BOTH draws and score gradients and applies γ-regularisation plus
+cutoff-masking on the eigenvalues.  <a class="reference internal" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank" title="blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">draws_singular_value_low_rank()</span></code></a>
+uses draws only and applies neither — the docstring notes this divergence
+explicitly.</p>
+<p><strong>Diagonal scale</strong> <code class="docutils literal notranslate"><span class="pre">σ</span> <span class="pre">=</span> <span class="pre">(Var[x]</span> <span class="pre">/</span> <span class="pre">Var[∇</span> <span class="pre">log</span> <span class="pre">p])^{1/4}</span></code> is the
+per-coordinate optimal scale (paper §3.1); clipped to <code class="docutils literal notranslate"><span class="pre">[1e-20,</span> <span class="pre">1e20]</span></code>
+(nutpie range).</p>
+<p><strong>AIRM geometric mean</strong> <code class="docutils literal notranslate"><span class="pre">Σ</span> <span class="pre">=</span> <span class="pre">C_x</span> <span class="pre">#</span> <span class="pre">C_a^{-1}</span></code> (AIRM = affine-invariant
+Riemannian metric): Theorem 2.3 / Eq. 9 of
+<span id="id4">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span> — the regularised optimal inverse
+mass matrix is the geometric mean of the draw covariance with the
+<em>inverse</em> score covariance.</p>
+<p><strong>γ-regularisation</strong> <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">P</span> <span class="pre">P^T</span> <span class="pre">/</span> <span class="pre">γ</span> <span class="pre">+</span> <span class="pre">I</span></code> (nutpie convention: the
+<em>unnormalised</em> sum-of-outer-products divided by <code class="docutils literal notranslate"><span class="pre">γ</span></code> directly, no <code class="docutils literal notranslate"><span class="pre">n</span></code>
+scaling). Influence fades as <code class="docutils literal notranslate"><span class="pre">n</span></code> grows (Theorem 2.4).</p>
+<p><strong>Cutoff masking</strong>: eigenvalues in <code class="docutils literal notranslate"><span class="pre">[1/cutoff,</span> <span class="pre">cutoff]</span></code> are set to 1
+(no preconditioning benefit); default <code class="docutils literal notranslate"><span class="pre">cutoff=2</span></code> matches nutpie.</p>
+<p><strong>dtype promotion</strong> (round-9 schedule-port audit): promotes internally to
+<code class="docutils literal notranslate"><span class="pre">float64</span></code> when <code class="docutils literal notranslate"><span class="pre">jax_enable_x64</span></code> is active, regardless of the chain’s
+working dtype.  Returns in the caller’s original dtype.</p>
+<p><strong>G-layer note:</strong> the 2·d support gate (<code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">≥</span> <span class="pre">2·d</span></code> before the LR
+estimate is trusted) and any fraction-window guard are G-layer concerns
+and are NOT implemented here.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>draws</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.  Chain positions (all rows must be valid samples —
+no zero-padding).</p></li>
+<li><p><strong>grads</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.  Log-density gradients at the corresponding draws.</p></li>
+<li><p><strong>max_rank</strong> – Maximum number of eigenvectors in the low-rank correction.  Must be
+a <strong>static Python integer</strong> (determines output shape).</p></li>
+<li><p><strong>gamma</strong> – Regularisation scale (nutpie convention).  Default <code class="docutils literal notranslate"><span class="pre">1e-5</span></code> matches
+nutpie’s <code class="docutils literal notranslate"><span class="pre">LowRankSettings::default</span></code>.</p></li>
+<li><p><strong>cutoff</strong> – Eigenvalue cutoff for informativeness masking.  Default <code class="docutils literal notranslate"><span class="pre">2.0</span></code>
+matches nutpie’s <code class="docutils literal notranslate"><span class="pre">c=2</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(sigma,</span> <span class="pre">U,</span> <span class="pre">lam)</span></code> with shapes <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>, <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">max_rank)</span></code>,
+<code class="docutils literal notranslate"><span class="pre">(max_rank,)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix">LowRankInverseMassMatrix</a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The optimal translation <code class="docutils literal notranslate"><span class="pre">μ*</span> <span class="pre">=</span> <span class="pre">x̄</span> <span class="pre">+</span> <span class="pre">σ²</span> <span class="pre">⊙</span> <span class="pre">ᾱ</span></code> (paper §3.2) is an
+adaptation-layer output, not part of the metric.  Compute it separately
+from the per-draw means if needed by the warmup wiring (R3 concern).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.draws_singular_value_low_rank">
+<span class="sig-name descname"><span class="pre">draws_singular_value_low_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><span class="pre">blackjax.mcmc.metrics.LowRankInverseMassMatrix</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#draws_singular_value_low_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank" title="Link to this definition">#</a></dt>
+<dd><p>Draws-only SVD low-rank inverse mass matrix (MCLMC Scheme A estimator).</p>
+<p>Estimates the low-rank inverse mass matrix from the SVD of centred,
+standardised draws.  No gradient information is required.</p>
+<p><strong>Extracted from:</strong> <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.mclmc_lrd_adaptation</span></code>
+<code class="docutils literal notranslate"><span class="pre">._extract_lrd_from_samples</span></code> (main &#64; 532631c1).</p>
+<p><strong>Key asymmetry vs</strong> <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a>:</p>
+<ul class="simple">
+<li><p>Draws only — no score gradients.</p></li>
+<li><p><strong>No regularisation</strong> (no γ): the covariance is estimated from raw
+outer products without a <code class="docutils literal notranslate"><span class="pre">P</span> <span class="pre">P^T</span> <span class="pre">/</span> <span class="pre">γ</span> <span class="pre">+</span> <span class="pre">I</span></code> regularisation term.</p></li>
+<li><p><strong>No masking</strong>: eigenvalues are returned as-is (<code class="docutils literal notranslate"><span class="pre">tail_handling=&quot;raw&quot;</span></code>
+in <a class="reference internal" href="#blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness" title="blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness"><code class="xref py py-func docutils literal notranslate"><span class="pre">select_top_eigenvalues_by_informativeness()</span></code></a>); non-informative
+eigenvalues are NOT masked to 1.  This is a deliberate design choice
+in the MCLMC-LRD pilot estimator: the raw eigenspectrum is what drives
+the effective condition number diagnostics downstream.</p></li>
+</ul>
+<p>This asymmetry is preserved faithfully here; see the RFC duplication map
+D2 for context.</p>
+<p><strong>G-layer note:</strong> the Geyer-ESS support gate
+(<code class="docutils literal notranslate"><span class="pre">k_used</span> <span class="pre">=</span> <span class="pre">min(k,</span> <span class="pre">⌊n_eff/2⌋)</span></code>, <code class="docutils literal notranslate"><span class="pre">mclmc_lrd_adaptation.py:636</span></code>) and
+the <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">≥</span> <span class="pre">2·d</span></code> threshold are G-layer concerns.  Ensure <code class="docutils literal notranslate"><span class="pre">max_rank</span> <span class="pre">≤</span>
+<span class="pre">min(n,</span> <span class="pre">d)</span></code> before calling (behaviour is undefined otherwise; JAX will
+return fewer than <code class="docutils literal notranslate"><span class="pre">max_rank</span></code> columns when <code class="docutils literal notranslate"><span class="pre">max_rank</span> <span class="pre">&gt;</span> <span class="pre">min(n,</span> <span class="pre">d)</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>draws</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.  All rows must be valid samples (no zero-padding).</p></li>
+<li><p><strong>max_rank</strong> – Number of eigenpairs to return.  Must be a static Python integer and
+satisfy <code class="docutils literal notranslate"><span class="pre">max_rank</span> <span class="pre">≤</span> <span class="pre">min(n,</span> <span class="pre">d)</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(sigma,</span> <span class="pre">U,</span> <span class="pre">lam)</span></code> where <code class="docutils literal notranslate"><span class="pre">sigma</span></code> is the per-coordinate standard
+deviation and <code class="docutils literal notranslate"><span class="pre">lam</span></code> are the raw SVD eigenvalues of the sample
+correlation matrix (not masked to 1 for near-unity values).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix">LowRankInverseMassMatrix</a></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The full eigenspectrum needed for <code class="xref py py-func docutils literal notranslate"><span class="pre">_kappa_eff_pilot()</span></code>
+diagnostics is NOT returned here — that function operates on the full
+sorted spectrum (<code class="docutils literal notranslate"><span class="pre">lam_all_sorted</span></code>).  If you need the full spectrum,
+call <code class="docutils literal notranslate"><span class="pre">_extract_lrd_from_samples</span></code> directly (G-layer concern, not part
+of the pure estimator).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank">
+<span class="sig-name descname"><span class="pre">sample_covariance_eigh_low_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">m2</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">count</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><span class="pre">blackjax.mcmc.metrics.LowRankInverseMassMatrix</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#sample_covariance_eigh_low_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank" title="Link to this definition">#</a></dt>
+<dd><p>Chan/Welford-accumulated covariance → low-rank metric via <code class="docutils literal notranslate"><span class="pre">eigh</span></code>.</p>
+<p>Extracts a low-rank inverse mass matrix from a Chan-parallel-accumulated
+sum of squared deviations matrix (MEADS / MCLMC-LRD Scheme-B estimator).</p>
+<p><strong>Extracted from:</strong> <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.meads_adaptation</span></code>
+<code class="docutils literal notranslate"><span class="pre">._lrd_from_accumulated_covariance</span></code> (main &#64; 532631c1, landed via #954).</p>
+<p>The input <code class="docutils literal notranslate"><span class="pre">m2</span></code> is the accumulated Chan-parallel M2 matrix (shape
+<code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code>):</p>
+<div class="math notranslate nohighlight">
+\[M_2 = \sum_{i=1}^n (x_i - \bar{x}_n)(x_i - \bar{x}_n)^T\]</div>
+<p>which gives the Bessel-corrected sample covariance as
+<code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">M_2</span> <span class="pre">/</span> <span class="pre">(n</span> <span class="pre">-</span> <span class="pre">1)</span></code>.  The correlation matrix is then
+<code class="docutils literal notranslate"><span class="pre">R</span> <span class="pre">=</span> <span class="pre">D^{-1/2}</span> <span class="pre">C</span> <span class="pre">D^{-1/2}</span></code> where <code class="docutils literal notranslate"><span class="pre">D</span> <span class="pre">=</span> <span class="pre">diag(C)</span></code>, and <code class="docutils literal notranslate"><span class="pre">eigh</span></code> of <code class="docutils literal notranslate"><span class="pre">R</span></code>
+gives the eigenbasis.</p>
+<p><strong>Tail handling:</strong> raw (no cutoff masking, no zero-padding) — matching the
+MEADS implementation.  The G-layer (<code class="docutils literal notranslate"><span class="pre">meads_adaptation</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">low_rank_window_fraction</span></code> / 2·d gate) ensures the estimate is only used
+when the accumulated support suffices.</p>
+<p><strong>G-layer note:</strong> the fraction-window gate (only accumulate draws in the
+second half of the adaptation window, <code class="docutils literal notranslate"><span class="pre">low_rank_window_fraction=0.5</span></code>) and
+the 2·d support threshold are G-layer concerns; they gate <em>when</em> to call
+this estimator, not what it computes.  Callers must ensure <code class="docutils literal notranslate"><span class="pre">count</span></code>
+reflects enough effective support before calling.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>m2</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code>.  Accumulated Chan-Welford sum of squared deviations
+(NOT divided by <code class="docutils literal notranslate"><span class="pre">count</span></code>; this function applies the Bessel correction
+<code class="docutils literal notranslate"><span class="pre">/</span> <span class="pre">max(count</span> <span class="pre">-</span> <span class="pre">1,</span> <span class="pre">1)</span></code> internally).</p></li>
+<li><p><strong>count</strong> – Total number of samples accumulated into <code class="docutils literal notranslate"><span class="pre">m2</span></code>.  May be a traced
+JAX integer (safe inside <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code>).</p></li>
+<li><p><strong>max_rank</strong> – Number of eigenpairs to return.  Must be a static Python integer and
+satisfy <code class="docutils literal notranslate"><span class="pre">max_rank</span> <span class="pre">≤</span> <span class="pre">d</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(sigma,</span> <span class="pre">U,</span> <span class="pre">lam)</span></code> with shapes <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>, <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">max_rank)</span></code>,
+<code class="docutils literal notranslate"><span class="pre">(max_rank,)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix">LowRankInverseMassMatrix</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.welford_diagonal">
+<span class="sig-name descname"><span class="pre">welford_diagonal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#welford_diagonal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.welford_diagonal" title="Link to this definition">#</a></dt>
+<dd><p>Diagonal (per-coordinate) sample variance via Welford’s algorithm.</p>
+<p>Thin scan-wrapper over <a class="reference internal" href="../mass_matrix/index.html#blackjax.adaptation.mass_matrix.welford_algorithm" title="blackjax.adaptation.mass_matrix.welford_algorithm"><code class="xref py py-func docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix.welford_algorithm()</span></code></a>
+with <code class="docutils literal notranslate"><span class="pre">is_diagonal_matrix=True</span></code>.  Computes the Bessel-corrected sample
+variance <span class="math notranslate nohighlight">\(s^2_i = \frac{1}{n-1}\sum_{j=1}^n (x_{ji} - \bar{x}_i)^2\)</span>
+for each coordinate <code class="docutils literal notranslate"><span class="pre">i</span></code>.</p>
+<p><strong>Why a wrapper instead of direct ``jnp.var``:</strong> R2b/R3 must have a
+single estimator import surface; this function ensures future callers can
+swap to streaming Welford (e.g., for online adaptation) without changing
+call sites.  The algorithm itself is NOT moved or duplicated — only the
+call site is unified here.</p>
+<p><strong>Source:</strong> <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix.welford_algorithm</span></code>
+(<code class="docutils literal notranslate"><span class="pre">is_diagonal_matrix=True</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>draws</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Bessel-corrected per-coordinate sample variance (= diagonal of the
+sample covariance matrix).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.welford_dense">
+<span class="sig-name descname"><span class="pre">welford_dense</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#welford_dense"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.welford_dense" title="Link to this definition">#</a></dt>
+<dd><p>Dense sample covariance via Welford’s algorithm.</p>
+<p>Thin scan-wrapper over <a class="reference internal" href="../mass_matrix/index.html#blackjax.adaptation.mass_matrix.welford_algorithm" title="blackjax.adaptation.mass_matrix.welford_algorithm"><code class="xref py py-func docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix.welford_algorithm()</span></code></a>
+with <code class="docutils literal notranslate"><span class="pre">is_diagonal_matrix=False</span></code>.  Computes the Bessel-corrected sample
+covariance matrix.</p>
+<p><strong>Source:</strong> <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix.welford_algorithm</span></code>
+(<code class="docutils literal notranslate"><span class="pre">is_diagonal_matrix=False</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>draws</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Bessel-corrected sample covariance matrix.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array, shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.fisher_score_diagonal">
+<span class="sig-name descname"><span class="pre">fisher_score_diagonal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#fisher_score_diagonal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="Link to this definition">#</a></dt>
+<dd><p>Fisher-divergence-minimising diagonal inverse mass matrix.</p>
+<p>Computes <span class="math notranslate nohighlight">\(\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla
+\log p]}\)</span>, the per-coordinate diagonal estimator of
+<span id="id5">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
+<p>This is the <strong>diagonal-only</strong> analogue of <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a>:
+that function’s diagonal scale <span class="math notranslate nohighlight">\(\sigma =
+(\mathrm{Var}[x] / \mathrm{Var}[\nabla \log p])^{1/4}\)</span> gives the
+corresponding inverse mass matrix as
+<span class="math notranslate nohighlight">\(\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla \log p]}\)</span>
+when the low-rank correction <code class="docutils literal notranslate"><span class="pre">(U,</span> <span class="pre">lam)</span></code> is dropped.</p>
+<p><strong>Extracted from:</strong> branch <code class="docutils literal notranslate"><span class="pre">b197f1e2</span></code> (<code class="docutils literal notranslate"><span class="pre">feat/window-adaptation-fisher-diag</span></code>,
+2026-07-04), <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix._fisher_diagonal_inverse_mass</span></code>.
+The branch is DORMANT — its <code class="docutils literal notranslate"><span class="pre">window_adaptation</span></code> wiring (the diagonal
+estimator opt-in in <code class="docutils literal notranslate"><span class="pre">mass_matrix_adaptation</span></code>) is NOT reproduced here and
+stays dormant.  Only the pure estimator math is extracted.</p>
+<p><strong>Near-zero gradient protection</strong> (same as <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a>):
+<code class="docutils literal notranslate"><span class="pre">Var[∇</span> <span class="pre">log</span> <span class="pre">p]</span></code> is floored at <code class="docutils literal notranslate"><span class="pre">1e-10</span></code> before division, and the result
+is clipped to nutpie’s <code class="docutils literal notranslate"><span class="pre">[1e-20,</span> <span class="pre">1e20]</span></code> range before squaring.</p>
+<p><strong>Note on variance convention:</strong> <code class="docutils literal notranslate"><span class="pre">Var[x]</span></code> and <code class="docutils literal notranslate"><span class="pre">Var[∇</span> <span class="pre">log</span> <span class="pre">p]</span></code> are
+computed with the same normalisation (Bessel-corrected, <code class="docutils literal notranslate"><span class="pre">n-1</span></code> divisor,
+via <a class="reference internal" href="#blackjax.adaptation.metric_estimators.welford_diagonal" title="blackjax.adaptation.metric_estimators.welford_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">welford_diagonal()</span></code></a>); the ratio is invariant to a shared
+<code class="docutils literal notranslate"><span class="pre">n</span></code> vs <code class="docutils literal notranslate"><span class="pre">n-1</span></code> factor (branch <code class="docutils literal notranslate"><span class="pre">b197f1e2</span></code> commit message, verified).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>draws</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.  Chain positions.</p></li>
+<li><p><strong>grads</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.  Log-density gradients at the corresponding draws.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Diagonal inverse mass matrix <span class="math notranslate nohighlight">\(\sigma^2\)</span>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.sample_variance_diagonal">
+<span class="sig-name descname"><span class="pre">sample_variance_diagonal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#sample_variance_diagonal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.sample_variance_diagonal" title="Link to this definition">#</a></dt>
+<dd><p>Coordinate-wise population variance from raw draws.</p>
+<p>Computes <span class="math notranslate nohighlight">\(\hat{\sigma}^2_i = \mathbb{E}[x_i^2] - \mathbb{E}[x_i]^2\)</span>
+(population variance, no Bessel correction) for each coordinate <code class="docutils literal notranslate"><span class="pre">i</span></code>.</p>
+<p><strong>Extracted from (verbatim duplicate):</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.mclmc_adaptation</span></code>, <code class="docutils literal notranslate"><span class="pre">L_step_size_adaptation</span></code>
+:341–342: <code class="docutils literal notranslate"><span class="pre">variances</span> <span class="pre">=</span> <span class="pre">x_squared_average</span> <span class="pre">-</span> <span class="pre">jnp.square(x_average)</span></code>
+where <code class="docutils literal notranslate"><span class="pre">x_average</span> <span class="pre">=</span> <span class="pre">E[x]</span></code> and <code class="docutils literal notranslate"><span class="pre">x_squared_average</span> <span class="pre">=</span> <span class="pre">E[x^2]</span></code> are
+streaming step-size-weighted averages.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.adjusted_mclmc_adaptation</span></code>,
+<code class="docutils literal notranslate"><span class="pre">adjusted_mclmc_find_L_and_step_size</span></code> :374–375: identical formula.</p></li>
+</ul>
+<p>Both inline occurrences use the result as <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span> <span class="pre">=</span> <span class="pre">variances</span></code>,
+i.e., the population variance IS the diagonal IMM.  The streaming-average
+formulation (weighted by step size via <code class="docutils literal notranslate"><span class="pre">incremental_value_update</span></code>) is an
+adaptation-layer scheduling concern; the pure estimator here takes the batch
+of accumulated draws directly.</p>
+<p><strong>Population (not Bessel-corrected)</strong> to match the MCLMC streaming form:
+the weighted incremental average
+<code class="docutils literal notranslate"><span class="pre">avg</span> <span class="pre">←</span> <span class="pre">avg</span> <span class="pre">+</span> <span class="pre">w·(x</span> <span class="pre">−</span> <span class="pre">avg)</span> <span class="pre">/</span> <span class="pre">Σw</span></code> converges to <span class="math notranslate nohighlight">\(\mathbb{E}[x]\)</span> under
+uniform weights, not the unbiased <span class="math notranslate nohighlight">\(n/(n-1)\)</span> form.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>draws</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(n,</span> <span class="pre">d)</span></code>.  The draws accumulated over the estimation window.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Per-coordinate population variance
+<span class="math notranslate nohighlight">\(\mathbb{E}[x^2] - \mathbb{E}[x]^2\)</span>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../meads_adaptation/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">blackjax.adaptation.meads_adaptation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../pathfinder_adaptation/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">blackjax.adaptation.pathfinder_adaptation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.eigenvalue_informativeness"><code class="docutils literal notranslate"><span class="pre">eigenvalue_informativeness()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness"><code class="docutils literal notranslate"><span class="pre">select_top_eigenvalues_by_informativeness()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="docutils literal notranslate"><span class="pre">draws_singular_value_low_rank()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.welford_diagonal"><code class="docutils literal notranslate"><span class="pre">welford_diagonal()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.welford_dense"><code class="docutils literal notranslate"><span class="pre">welford_dense()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="docutils literal notranslate"><span class="pre">fisher_score_diagonal()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.sample_variance_diagonal"><code class="docutils literal notranslate"><span class="pre">sample_variance_diagonal()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

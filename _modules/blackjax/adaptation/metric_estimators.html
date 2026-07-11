@@ -1,0 +1,1208 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.adaptation.metric_estimators</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/metric_estimators';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g21c589b29" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blackjax.adaptation.metric_estimators</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;E-layer: pure metric estimator functions for the low-rank unification RFC.</span>
+
+<span class="sd">Each function is a **pure transformation**: explicit arrays in → metric</span>
+<span class="sd">representation out.  No buffer state, no scheduling logic, no side effects.</span>
+<span class="sd">All functions are JAX-traceable and safe to use inside ``jax.lax.scan`` /</span>
+<span class="sd">``jax.vmap`` provided that ``max_rank`` (where applicable) is a static</span>
+<span class="sd">Python integer (required to determine output shapes).</span>
+
+<span class="sd">**Source lineage** (R2a census, 2026-07-11, main @ 532631c1):</span>
+
+<span class="sd">+--------------------------------------+--------------------------------------------+</span>
+<span class="sd">| Estimator                            | Extracted from                             |</span>
+<span class="sd">+======================================+============================================+</span>
+<span class="sd">| :func:`fisher_score_low_rank`        | ``low_rank_adaptation._compute_low_rank``  |</span>
+<span class="sd">|                                      | ``_metric`` + ``_spd_mean``                |</span>
+<span class="sd">+--------------------------------------+--------------------------------------------+</span>
+<span class="sd">| :func:`draws_singular_value_low_rank`| ``mclmc_lrd_adaptation``                   |</span>
+<span class="sd">|                                      | ``._extract_lrd_from_samples``             |</span>
+<span class="sd">+--------------------------------------+--------------------------------------------+</span>
+<span class="sd">| :func:`sample_covariance_eigh_low``  | ``meads_adaptation``                       |</span>
+<span class="sd">| ``_rank`                             | ``._lrd_from_accumulated_covariance``      |</span>
+<span class="sd">+--------------------------------------+--------------------------------------------+</span>
+<span class="sd">| :func:`welford_diagonal`             | ``mass_matrix.welford_algorithm``          |</span>
+<span class="sd">| :func:`welford_dense`                | (thin scan-wrappers; algorithm untouched)  |</span>
+<span class="sd">+--------------------------------------+--------------------------------------------+</span>
+<span class="sd">| :func:`fisher_score_diagonal`        | branch b197f1e2                            |</span>
+<span class="sd">|                                      | ``mass_matrix._fisher_diagonal_inverse``   |</span>
+<span class="sd">|                                      | ``_mass`` (dormant; wiring stays dormant)  |</span>
+<span class="sd">+--------------------------------------+--------------------------------------------+</span>
+<span class="sd">| :func:`sample_variance_diagonal`     | ``mclmc_adaptation.py:342`` and            |</span>
+<span class="sd">|                                      | ``adjusted_mclmc_adaptation.py:375``       |</span>
+<span class="sd">|                                      | (verbatim duplicate; one function here)    |</span>
+<span class="sd">+--------------------------------------+--------------------------------------------+</span>
+
+<span class="sd">**Composition law (RFC §0 L2):** estimators, data-feeding policy, and schedule</span>
+<span class="sd">are co-adapted package components.  The functions here are the *estimator*</span>
+<span class="sd">component only — callers supply the buffer view.  Gating logic (support gates,</span>
+<span class="sd">fraction-window checks, 2·d thresholds) belongs in the G-layer; it is</span>
+<span class="sd">explicitly *not* implemented here (docstrings note the relevant gates for each</span>
+<span class="sd">estimator).</span>
+
+<span class="sd">**Registration (R2a phase):** these functions are module-public (importable</span>
+<span class="sd">from ``blackjax.adaptation.metric_estimators``) but are NOT exported at the</span>
+<span class="sd">``blackjax`` top-level.  Top-level registration and consumer re-wiring happen</span>
+<span class="sd">in R3.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.low_rank_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">_relative_pd_floor</span><span class="p">,</span> <span class="n">_spd_mean</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.mass_matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">welford_algorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LowRankInverseMassMatrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;eigenvalue_informativeness&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;select_top_eigenvalues_by_informativeness&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fisher_score_low_rank&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;draws_singular_value_low_rank&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sample_covariance_eigh_low_rank&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;welford_diagonal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;welford_dense&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fisher_score_diagonal&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;sample_variance_diagonal&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Shared utilities</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="eigenvalue_informativeness">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.eigenvalue_informativeness">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">eigenvalue_informativeness</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Informativeness of each eigenvalue: how far it deviates from isotropic.</span>
+
+<span class="sd">    Computes :math:`|\lambda - 1|` for each entry of ``eigenvalues``.</span>
+<span class="sd">    Directions with large informativeness deviate the most from the identity</span>
+<span class="sd">    metric and benefit the most from low-rank preconditioning.</span>
+
+<span class="sd">    This idiom is used identically in:</span>
+
+<span class="sd">    * :func:`fisher_score_low_rank` (step 9 — top-k selection in projected</span>
+<span class="sd">      subspace; see ``low_rank_adaptation._compute_low_rank_metric`` :468).</span>
+<span class="sd">    * :func:`draws_singular_value_low_rank` (top-k SVD eigenvalue selection;</span>
+<span class="sd">      see ``mclmc_lrd_adaptation._extract_lrd_from_samples`` :271).</span>
+<span class="sd">    * :func:`sample_covariance_eigh_low_rank` (top-k eigh eigenvalue selection;</span>
+<span class="sd">      see ``meads_adaptation._lrd_from_accumulated_covariance`` :309).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    eigenvalues</span>
+<span class="sd">        Shape ``(q,)``.  Eigenvalues of a correlation (or preconditioned)</span>
+<span class="sd">        matrix.  An isotropic Gaussian has all eigenvalues equal to 1 and</span>
+<span class="sd">        informativeness 0.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array, shape ``(q,)``</span>
+<span class="sd">        :math:`|\lambda_i - 1|` for each :math:`\lambda_i`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">eigenvalues</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="select_top_eigenvalues_by_informativeness">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">select_top_eigenvalues_by_informativeness</span><span class="p">(</span>
+    <span class="n">eigenvalues</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">eigenvectors</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">tail_handling</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;mask_pad&quot;</span><span class="p">,</span> <span class="s2">&quot;raw&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;mask_pad&quot;</span><span class="p">,</span>
+    <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Select the top-``max_rank`` eigenpairs by :func:`eigenvalue_informativeness`.</span>
+
+<span class="sd">    Two production consumers use this pattern with **divergent tail handling**</span>
+<span class="sd">    (D2 in the RFC duplication map):</span>
+
+<span class="sd">    ``tail_handling=&quot;mask_pad&quot;`` (default)</span>
+<span class="sd">        Used by :func:`fisher_score_low_rank`.  Eigenvalues inside the</span>
+<span class="sd">        uninformative band :math:`[1/\text{cutoff},\ \text{cutoff}]` are</span>
+<span class="sd">        **masked to 1** (they carry no preconditioning benefit), making the</span>
+<span class="sd">        corresponding direction a no-op in the metric.  When the input</span>
+<span class="sd">        subspace has fewer than ``max_rank`` eigenvectors (``q &lt; max_rank``,</span>
+<span class="sd">        which arises when ``d &lt; 2 · max_rank``), the output is **zero-padded**</span>
+<span class="sd">        to the requested shape — zero columns in ``U`` and ``lam=1`` entries</span>
+<span class="sd">        — so the return shape is always ``(d, max_rank)`` / ``(max_rank,)``.</span>
+<span class="sd">        Matches ``low_rank_adaptation._compute_low_rank_metric`` steps 8–9</span>
+<span class="sd">        (:468–484).</span>
+
+<span class="sd">    ``tail_handling=&quot;raw&quot;``</span>
+<span class="sd">        Used by :func:`draws_singular_value_low_rank` and</span>
+<span class="sd">        :func:`sample_covariance_eigh_low_rank`.  The top-k pairs are</span>
+<span class="sd">        returned **as-is**: no informativeness masking, no padding.  The</span>
+<span class="sd">        caller must ensure ``max_rank &lt;= q``; behaviour is undefined (JAX</span>
+<span class="sd">        will silently return ``q`` columns) when ``max_rank &gt; q``.  Matches</span>
+<span class="sd">        ``mclmc_lrd_adaptation._extract_lrd_from_samples`` :271–275 and</span>
+<span class="sd">        ``meads_adaptation._lrd_from_accumulated_covariance`` :309–312.</span>
+
+<span class="sd">        **Tie-break divergence:** the two modes differ not only in masking</span>
+<span class="sd">        but also in sort stability for exact ``|λ−1|`` ties:</span>
+<span class="sd">        ``&quot;mask_pad&quot;`` uses ``argsort(-scores)`` (ascending original-index</span>
+<span class="sd">        among ties; Fisher consumer convention); ``&quot;raw&quot;`` uses</span>
+<span class="sd">        ``argsort(scores)[::-1]`` (descending original-index; both raw-source</span>
+<span class="sd">        conventions).  On real ``eigh``/``svd`` spectra bit-exact ties do</span>
+<span class="sd">        not occur — even truly degenerate inputs return ulp-broken eigenvalues</span>
+<span class="sd">        — so the difference is behaviorally inert on continuous data; the raw</span>
+<span class="sd">        path preserves byte-fidelity to its sources nonetheless.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    eigenvalues</span>
+<span class="sd">        Shape ``(q,)``.  Must be the eigenvalues associated with the columns</span>
+<span class="sd">        of ``eigenvectors``.</span>
+<span class="sd">    eigenvectors</span>
+<span class="sd">        Shape ``(d, q)``.  Columns are the eigenvectors.</span>
+<span class="sd">    max_rank</span>
+<span class="sd">        Number of eigenpairs to return.  Must be a **static Python integer**</span>
+<span class="sd">        (determines the output shape).</span>
+<span class="sd">    tail_handling</span>
+<span class="sd">        See above.  Default ``&quot;mask_pad&quot;`` matches the Fisher-score consumer.</span>
+<span class="sd">    cutoff</span>
+<span class="sd">        Only used when ``tail_handling=&quot;mask_pad&quot;``.  Eigenvalues in</span>
+<span class="sd">        :math:`[1/\text{cutoff},\ \text{cutoff}]` are masked to 1.</span>
+<span class="sd">        Default ``2.0`` matches nutpie&#39;s ``c=2``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    U_out : Array, shape ``(d, max_rank)`` (mask_pad) or ``(d, ≤max_rank)`` (raw)</span>
+<span class="sd">        Selected (and possibly masked/padded) eigenvectors.</span>
+<span class="sd">    lam_out : Array, shape ``(max_rank,)`` or ``(≤max_rank,)``</span>
+<span class="sd">        Selected (and possibly masked) eigenvalues.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">tail_handling</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;mask_pad&quot;</span><span class="p">,</span> <span class="s2">&quot;raw&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;tail_handling must be &#39;mask_pad&#39; or &#39;raw&#39;, got </span><span class="si">{</span><span class="n">tail_handling</span><span class="si">!r}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="n">eigenvalues</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">scores</span> <span class="o">=</span> <span class="n">eigenvalue_informativeness</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tail_handling</span> <span class="o">==</span> <span class="s2">&quot;mask_pad&quot;</span><span class="p">:</span>
+        <span class="c1"># argsort(-scores): ascending original-index tie-break — matches the</span>
+        <span class="c1"># fisher consumer (low_rank_adaptation._compute_low_rank_metric :468).</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="o">-</span><span class="n">scores</span><span class="p">)</span>
+        <span class="n">actual_rank</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_rank</span><span class="p">,</span> <span class="n">q</span><span class="p">)</span>  <span class="c1"># static: both are Python ints at trace time</span>
+        <span class="n">top_order</span> <span class="o">=</span> <span class="n">order</span><span class="p">[:</span><span class="n">actual_rank</span><span class="p">]</span>
+        <span class="n">U_out</span> <span class="o">=</span> <span class="n">eigenvectors</span><span class="p">[:,</span> <span class="n">top_order</span><span class="p">]</span>  <span class="c1"># (d, actual_rank)</span>
+        <span class="n">lam_raw</span> <span class="o">=</span> <span class="n">eigenvalues</span><span class="p">[</span><span class="n">top_order</span><span class="p">]</span>  <span class="c1"># (actual_rank,)</span>
+
+        <span class="c1"># Mask eigenvalues inside the uninformative band to 1.0.</span>
+        <span class="c1"># nutpie: keep λ &lt; 1/cutoff or λ &gt; cutoff; others set to 1.</span>
+        <span class="n">is_informative</span> <span class="o">=</span> <span class="p">(</span><span class="n">lam_raw</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">cutoff</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">lam_raw</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">)</span>
+        <span class="n">lam_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_informative</span><span class="p">,</span> <span class="n">lam_raw</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+
+        <span class="c1"># Zero-pad to max_rank when the input subspace is smaller.</span>
+        <span class="k">if</span> <span class="n">actual_rank</span> <span class="o">&lt;</span> <span class="n">max_rank</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">eigenvectors</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">pad</span> <span class="o">=</span> <span class="n">max_rank</span> <span class="o">-</span> <span class="n">actual_rank</span>
+            <span class="n">U_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">U_out</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,</span> <span class="n">pad</span><span class="p">))],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">lam_out</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">lam_out</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">pad</span><span class="p">)])</span>
+
+        <span class="k">return</span> <span class="n">U_out</span><span class="p">,</span> <span class="n">lam_out</span>
+
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># &quot;raw&quot;</span>
+        <span class="c1"># argsort(scores)[::-1]: descending original-index tie-break — matches</span>
+        <span class="c1"># BOTH raw consumers (mclmc_lrd_adaptation._extract_lrd_from_samples :271</span>
+        <span class="c1"># and meads_adaptation._lrd_from_accumulated_covariance :309).</span>
+        <span class="c1"># This differs from mask_pad&#39;s argsort(-scores) tie-break in degenerate</span>
+        <span class="c1"># spectra; on real eigh/SVD spectra bit-exact |λ−1| ties never occur</span>
+        <span class="c1"># (ulp-broken even for truly degenerate inputs), so the difference is</span>
+        <span class="c1"># behaviorally inert on continuous data — but the raw path stays</span>
+        <span class="c1"># byte-faithful to its sources.</span>
+        <span class="n">order</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">scores</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">top_order</span> <span class="o">=</span> <span class="n">order</span><span class="p">[:</span><span class="n">max_rank</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">eigenvectors</span><span class="p">[:,</span> <span class="n">top_order</span><span class="p">],</span> <span class="n">eigenvalues</span><span class="p">[</span><span class="n">top_order</span><span class="p">]</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Low-rank estimators</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="fisher_score_low_rank">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_low_rank">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fisher_score_low_rank</span><span class="p">(</span>
+    <span class="n">draws</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">grads</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
+    <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fisher-divergence-minimising low-rank inverse mass matrix.</span>
+
+<span class="sd">    Implements Steps 1–9 of Algorithm 1 of</span>
+<span class="sd">    :cite:p:`seyboldt2026preconditioning`, following the nutpie reference</span>
+<span class="sd">    implementation (``nuts-rs`` ``src/transform/adapt/low_rank.rs``</span>
+<span class="sd">    ``estimate_mass_matrix``).</span>
+
+<span class="sd">    The inverse mass matrix has the form</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        M^{-1} = \operatorname{diag}(\sigma)</span>
+<span class="sd">                 \bigl(I + U(\Lambda - I)U^\top\bigr)</span>
+<span class="sd">                 \operatorname{diag}(\sigma)</span>
+
+<span class="sd">    where :math:`\sigma`, :math:`U`, :math:`\Lambda` minimise the sample</span>
+<span class="sd">    Fisher divergence from :math:`\{(x_i, \nabla \log p(x_i))\}`.</span>
+
+<span class="sd">    **Extracted from:** ``blackjax.adaptation.low_rank_adaptation``</span>
+<span class="sd">    ``._compute_low_rank_metric`` + ``._spd_mean`` (main @ 532631c1).</span>
+
+<span class="sd">    **Key asymmetry vs** :func:`draws_singular_value_low_rank`: this estimator</span>
+<span class="sd">    uses BOTH draws and score gradients and applies γ-regularisation plus</span>
+<span class="sd">    cutoff-masking on the eigenvalues.  :func:`draws_singular_value_low_rank`</span>
+<span class="sd">    uses draws only and applies neither — the docstring notes this divergence</span>
+<span class="sd">    explicitly.</span>
+
+<span class="sd">    **Diagonal scale** ``σ = (Var[x] / Var[∇ log p])^{1/4}`` is the</span>
+<span class="sd">    per-coordinate optimal scale (paper §3.1); clipped to ``[1e-20, 1e20]``</span>
+<span class="sd">    (nutpie range).</span>
+
+<span class="sd">    **AIRM geometric mean** ``Σ = C_x # C_a^{-1}`` (AIRM = affine-invariant</span>
+<span class="sd">    Riemannian metric): Theorem 2.3 / Eq. 9 of</span>
+<span class="sd">    :cite:p:`seyboldt2026preconditioning` — the regularised optimal inverse</span>
+<span class="sd">    mass matrix is the geometric mean of the draw covariance with the</span>
+<span class="sd">    *inverse* score covariance.</span>
+
+<span class="sd">    **γ-regularisation** ``C = P P^T / γ + I`` (nutpie convention: the</span>
+<span class="sd">    *unnormalised* sum-of-outer-products divided by ``γ`` directly, no ``n``</span>
+<span class="sd">    scaling). Influence fades as ``n`` grows (Theorem 2.4).</span>
+
+<span class="sd">    **Cutoff masking**: eigenvalues in ``[1/cutoff, cutoff]`` are set to 1</span>
+<span class="sd">    (no preconditioning benefit); default ``cutoff=2`` matches nutpie.</span>
+
+<span class="sd">    **dtype promotion** (round-9 schedule-port audit): promotes internally to</span>
+<span class="sd">    ``float64`` when ``jax_enable_x64`` is active, regardless of the chain&#39;s</span>
+<span class="sd">    working dtype.  Returns in the caller&#39;s original dtype.</span>
+
+<span class="sd">    **G-layer note:** the 2·d support gate (``n ≥ 2·d`` before the LR</span>
+<span class="sd">    estimate is trusted) and any fraction-window guard are G-layer concerns</span>
+<span class="sd">    and are NOT implemented here.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    draws</span>
+<span class="sd">        Shape ``(n, d)``.  Chain positions (all rows must be valid samples —</span>
+<span class="sd">        no zero-padding).</span>
+<span class="sd">    grads</span>
+<span class="sd">        Shape ``(n, d)``.  Log-density gradients at the corresponding draws.</span>
+<span class="sd">    max_rank</span>
+<span class="sd">        Maximum number of eigenvectors in the low-rank correction.  Must be</span>
+<span class="sd">        a **static Python integer** (determines output shape).</span>
+<span class="sd">    gamma</span>
+<span class="sd">        Regularisation scale (nutpie convention).  Default ``1e-5`` matches</span>
+<span class="sd">        nutpie&#39;s ``LowRankSettings::default``.</span>
+<span class="sd">    cutoff</span>
+<span class="sd">        Eigenvalue cutoff for informativeness masking.  Default ``2.0``</span>
+<span class="sd">        matches nutpie&#39;s ``c=2``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    LowRankInverseMassMatrix</span>
+<span class="sd">        ``(sigma, U, lam)`` with shapes ``(d,)``, ``(d, max_rank)``,</span>
+<span class="sd">        ``(max_rank,)``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The optimal translation ``μ* = x̄ + σ² ⊙ ᾱ`` (paper §3.2) is an</span>
+<span class="sd">    adaptation-layer output, not part of the metric.  Compute it separately</span>
+<span class="sd">    from the per-draw means if needed by the warmup wiring (R3 concern).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">orig_dtype</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">dtype</span>
+    <span class="n">compute_dtype</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span> <span class="k">if</span> <span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">jax_enable_x64</span> <span class="k">else</span> <span class="n">orig_dtype</span>
+    <span class="n">draws</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">compute_dtype</span><span class="p">)</span>
+    <span class="n">grads</span> <span class="o">=</span> <span class="n">grads</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">compute_dtype</span><span class="p">)</span>
+
+    <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># --- Step 1: diagonal scaling  σ = (Var[x] / Var[∇log p])^{1/4} ---</span>
+    <span class="c1"># draws.shape[0] is a static Python int for the pure estimator interface.</span>
+    <span class="n">mean_x</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+    <span class="n">mean_g</span> <span class="o">=</span> <span class="n">grads</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+
+    <span class="n">diff_x</span> <span class="o">=</span> <span class="n">draws</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># (n, d)</span>
+    <span class="n">diff_g</span> <span class="o">=</span> <span class="n">grads</span> <span class="o">-</span> <span class="n">mean_g</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># (n, d)</span>
+
+    <span class="c1"># Population variance (n not n-1), matching nutpie.</span>
+    <span class="n">var_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">diff_x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># (d,)</span>
+    <span class="n">var_g</span> <span class="o">=</span> <span class="p">(</span><span class="n">diff_g</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># (d,)</span>
+
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">var_x</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">var_g</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="mf">0.25</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="mf">1e-20</span><span class="p">,</span> <span class="mf">1e20</span><span class="p">)</span>  <span class="c1"># nutpie range</span>
+
+    <span class="c1"># --- Step 2: scale draws and gradients ---</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="n">diff_x</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># (n, d)  scaled centered draws</span>
+    <span class="n">A</span> <span class="o">=</span> <span class="n">diff_g</span> <span class="o">*</span> <span class="n">sigma</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># (n, d)  scaled centered gradients</span>
+
+    <span class="c1"># --- Step 3: principal subspaces via thin SVD ---</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">Vt_x</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  <span class="c1"># Vt_x: (min(n,d), d)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">Vt_a</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">U_x</span> <span class="o">=</span> <span class="n">Vt_x</span><span class="p">[:</span><span class="n">max_rank</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (d, max_rank)</span>
+    <span class="n">U_a</span> <span class="o">=</span> <span class="n">Vt_a</span><span class="p">[:</span><span class="n">max_rank</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (d, max_rank)</span>
+
+    <span class="c1"># --- Step 4: combined orthonormal basis Q ∈ ℝ^{d × q} ---</span>
+    <span class="n">combined</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">U_x</span><span class="p">,</span> <span class="n">U_a</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># (d, 2*max_rank)</span>
+    <span class="n">Q</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">qr</span><span class="p">(</span><span class="n">combined</span><span class="p">)</span>  <span class="c1"># Q: (d, min(d, 2*max_rank))</span>
+    <span class="n">q</span> <span class="o">=</span> <span class="n">Q</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># actual subspace dimension</span>
+
+    <span class="c1"># --- Step 5: project onto Q ---</span>
+    <span class="n">P_x</span> <span class="o">=</span> <span class="n">Q</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">X</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (q, n)</span>
+    <span class="n">P_a</span> <span class="o">=</span> <span class="n">Q</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">A</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (q, n)</span>
+
+    <span class="c1"># --- Step 6: projected covariance matrices ---</span>
+    <span class="c1"># nutpie: C = P P^T / gamma + I  (raw gamma, no /n).</span>
+    <span class="n">C_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">P_x</span> <span class="o">@</span> <span class="n">P_x</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="n">gamma</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">compute_dtype</span><span class="p">)</span>
+    <span class="n">C_a</span> <span class="o">=</span> <span class="p">(</span><span class="n">P_a</span> <span class="o">@</span> <span class="n">P_a</span><span class="o">.</span><span class="n">T</span><span class="p">)</span> <span class="o">/</span> <span class="n">gamma</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">compute_dtype</span><span class="p">)</span>
+
+    <span class="c1"># --- Step 7: SPD geometric mean Σ = C_x # C_a^{-1} ---</span>
+    <span class="c1"># Theorem 2.3 / Eq. 9 of arXiv:2603.18845.</span>
+    <span class="n">Sigma</span> <span class="o">=</span> <span class="n">_spd_mean</span><span class="p">(</span><span class="n">C_x</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">C_a</span><span class="p">))</span>
+
+    <span class="c1"># --- Step 8: eigendecompose Σ in the projected subspace ---</span>
+    <span class="n">vals</span><span class="p">,</span> <span class="n">vecs</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">Sigma</span><span class="p">)</span>  <span class="c1"># ascending, (q,)</span>
+    <span class="n">vals</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">vals</span><span class="p">,</span> <span class="n">_relative_pd_floor</span><span class="p">(</span><span class="n">vals</span><span class="p">))</span>
+    <span class="n">U_full</span> <span class="o">=</span> <span class="n">Q</span> <span class="o">@</span> <span class="n">vecs</span>  <span class="c1"># (d, q) back to original space</span>
+
+    <span class="c1"># --- Step 9: select top max_rank by |λ-1|; mask near-unity eigenvalues ---</span>
+    <span class="n">U_out</span><span class="p">,</span> <span class="n">lam_out</span> <span class="o">=</span> <span class="n">select_top_eigenvalues_by_informativeness</span><span class="p">(</span>
+        <span class="n">vals</span><span class="p">,</span> <span class="n">U_full</span><span class="p">,</span> <span class="n">max_rank</span><span class="p">,</span> <span class="n">tail_handling</span><span class="o">=</span><span class="s2">&quot;mask_pad&quot;</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">(</span>
+        <span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">orig_dtype</span><span class="p">),</span>
+        <span class="n">U</span><span class="o">=</span><span class="n">U_out</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">orig_dtype</span><span class="p">),</span>
+        <span class="n">lam</span><span class="o">=</span><span class="n">lam_out</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">orig_dtype</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="draws_singular_value_low_rank">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">draws_singular_value_low_rank</span><span class="p">(</span>
+    <span class="n">draws</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Draws-only SVD low-rank inverse mass matrix (MCLMC Scheme A estimator).</span>
+
+<span class="sd">    Estimates the low-rank inverse mass matrix from the SVD of centred,</span>
+<span class="sd">    standardised draws.  No gradient information is required.</span>
+
+<span class="sd">    **Extracted from:** ``blackjax.adaptation.mclmc_lrd_adaptation``</span>
+<span class="sd">    ``._extract_lrd_from_samples`` (main @ 532631c1).</span>
+
+<span class="sd">    **Key asymmetry vs** :func:`fisher_score_low_rank`:</span>
+
+<span class="sd">    * Draws only — no score gradients.</span>
+<span class="sd">    * **No regularisation** (no γ): the covariance is estimated from raw</span>
+<span class="sd">      outer products without a ``P P^T / γ + I`` regularisation term.</span>
+<span class="sd">    * **No masking**: eigenvalues are returned as-is (``tail_handling=&quot;raw&quot;``</span>
+<span class="sd">      in :func:`select_top_eigenvalues_by_informativeness`); non-informative</span>
+<span class="sd">      eigenvalues are NOT masked to 1.  This is a deliberate design choice</span>
+<span class="sd">      in the MCLMC-LRD pilot estimator: the raw eigenspectrum is what drives</span>
+<span class="sd">      the effective condition number diagnostics downstream.</span>
+
+<span class="sd">    This asymmetry is preserved faithfully here; see the RFC duplication map</span>
+<span class="sd">    D2 for context.</span>
+
+<span class="sd">    **G-layer note:** the Geyer-ESS support gate</span>
+<span class="sd">    (``k_used = min(k, ⌊n_eff/2⌋)``, ``mclmc_lrd_adaptation.py:636``) and</span>
+<span class="sd">    the ``n ≥ 2·d`` threshold are G-layer concerns.  Ensure ``max_rank ≤</span>
+<span class="sd">    min(n, d)`` before calling (behaviour is undefined otherwise; JAX will</span>
+<span class="sd">    return fewer than ``max_rank`` columns when ``max_rank &gt; min(n, d)``).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    draws</span>
+<span class="sd">        Shape ``(n, d)``.  All rows must be valid samples (no zero-padding).</span>
+<span class="sd">    max_rank</span>
+<span class="sd">        Number of eigenpairs to return.  Must be a static Python integer and</span>
+<span class="sd">        satisfy ``max_rank ≤ min(n, d)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    LowRankInverseMassMatrix</span>
+<span class="sd">        ``(sigma, U, lam)`` where ``sigma`` is the per-coordinate standard</span>
+<span class="sd">        deviation and ``lam`` are the raw SVD eigenvalues of the sample</span>
+<span class="sd">        correlation matrix (not masked to 1 for near-unity values).</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The full eigenspectrum needed for :func:`~blackjax.adaptation.mclmc_lrd_adaptation._kappa_eff_pilot`</span>
+<span class="sd">    diagnostics is NOT returned here — that function operates on the full</span>
+<span class="sd">    sorted spectrum (``lam_all_sorted``).  If you need the full spectrum,</span>
+<span class="sd">    call ``_extract_lrd_from_samples`` directly (G-layer concern, not part</span>
+<span class="sd">    of the pure estimator).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mean</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">draws</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">draws</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sigma</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>  <span class="c1"># avoid div-by-zero</span>
+
+    <span class="n">standardised</span> <span class="o">=</span> <span class="p">(</span><span class="n">draws</span> <span class="o">-</span> <span class="n">mean</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">/</span> <span class="n">sigma</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># (n, d)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Thin SVD; eigenvalues of the sample correlation matrix: lam_i = s_i^2 / n.</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">S</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">standardised</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="n">Vt</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (d, min(n, d))</span>
+    <span class="n">lam</span> <span class="o">=</span> <span class="p">(</span><span class="n">S</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># (min(n, d),)</span>
+
+    <span class="c1"># Raw top-k selection by |λ-1|: no masking, no padding.</span>
+    <span class="n">U_k</span><span class="p">,</span> <span class="n">lam_k</span> <span class="o">=</span> <span class="n">select_top_eigenvalues_by_informativeness</span><span class="p">(</span>
+        <span class="n">lam</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">max_rank</span><span class="p">,</span> <span class="n">tail_handling</span><span class="o">=</span><span class="s2">&quot;raw&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U_k</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam_k</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="sample_covariance_eigh_low_rank">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_covariance_eigh_low_rank</span><span class="p">(</span>
+    <span class="n">m2</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">count</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Chan/Welford-accumulated covariance → low-rank metric via ``eigh``.</span>
+
+<span class="sd">    Extracts a low-rank inverse mass matrix from a Chan-parallel-accumulated</span>
+<span class="sd">    sum of squared deviations matrix (MEADS / MCLMC-LRD Scheme-B estimator).</span>
+
+<span class="sd">    **Extracted from:** ``blackjax.adaptation.meads_adaptation``</span>
+<span class="sd">    ``._lrd_from_accumulated_covariance`` (main @ 532631c1, landed via #954).</span>
+
+<span class="sd">    The input ``m2`` is the accumulated Chan-parallel M2 matrix (shape</span>
+<span class="sd">    ``(d, d)``):</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        M_2 = \sum_{i=1}^n (x_i - \bar{x}_n)(x_i - \bar{x}_n)^T</span>
+
+<span class="sd">    which gives the Bessel-corrected sample covariance as</span>
+<span class="sd">    ``C = M_2 / (n - 1)``.  The correlation matrix is then</span>
+<span class="sd">    ``R = D^{-1/2} C D^{-1/2}`` where ``D = diag(C)``, and ``eigh`` of ``R``</span>
+<span class="sd">    gives the eigenbasis.</span>
+
+<span class="sd">    **Tail handling:** raw (no cutoff masking, no zero-padding) — matching the</span>
+<span class="sd">    MEADS implementation.  The G-layer (``meads_adaptation``&#39;s</span>
+<span class="sd">    ``low_rank_window_fraction`` / 2·d gate) ensures the estimate is only used</span>
+<span class="sd">    when the accumulated support suffices.</span>
+
+<span class="sd">    **G-layer note:** the fraction-window gate (only accumulate draws in the</span>
+<span class="sd">    second half of the adaptation window, ``low_rank_window_fraction=0.5``) and</span>
+<span class="sd">    the 2·d support threshold are G-layer concerns; they gate *when* to call</span>
+<span class="sd">    this estimator, not what it computes.  Callers must ensure ``count``</span>
+<span class="sd">    reflects enough effective support before calling.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    m2</span>
+<span class="sd">        Shape ``(d, d)``.  Accumulated Chan-Welford sum of squared deviations</span>
+<span class="sd">        (NOT divided by ``count``; this function applies the Bessel correction</span>
+<span class="sd">        ``/ max(count - 1, 1)`` internally).</span>
+<span class="sd">    count</span>
+<span class="sd">        Total number of samples accumulated into ``m2``.  May be a traced</span>
+<span class="sd">        JAX integer (safe inside ``jax.lax.scan``).</span>
+<span class="sd">    max_rank</span>
+<span class="sd">        Number of eigenpairs to return.  Must be a static Python integer and</span>
+<span class="sd">        satisfy ``max_rank ≤ d``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    LowRankInverseMassMatrix</span>
+<span class="sd">        ``(sigma, U, lam)`` with shapes ``(d,)``, ``(d, max_rank)``,</span>
+<span class="sd">        ``(max_rank,)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Bessel-corrected covariance from the accumulated M2.</span>
+    <span class="n">covariance</span> <span class="o">=</span> <span class="n">m2</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">count</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>  <span class="c1"># (d, d)</span>
+    <span class="n">variance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">variance</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>  <span class="c1"># (d,)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sigma</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>  <span class="c1"># avoid div-by-zero</span>
+
+    <span class="n">inv_sigma</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span>  <span class="c1"># (d,)</span>
+    <span class="n">correlation</span> <span class="o">=</span> <span class="n">covariance</span> <span class="o">*</span> <span class="n">inv_sigma</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">inv_sigma</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>  <span class="c1"># (d, d)</span>
+
+    <span class="c1"># eigh gives ascending eigenvalues of the (symmetric) correlation matrix.</span>
+    <span class="n">lam_all</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">correlation</span><span class="p">)</span>  <span class="c1"># (d,), (d, d)</span>
+
+    <span class="c1"># Raw top-k selection by |λ-1|: no masking, no padding.</span>
+    <span class="n">U</span><span class="p">,</span> <span class="n">lam</span> <span class="o">=</span> <span class="n">select_top_eigenvalues_by_informativeness</span><span class="p">(</span>
+        <span class="n">lam_all</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">max_rank</span><span class="p">,</span> <span class="n">tail_handling</span><span class="o">=</span><span class="s2">&quot;raw&quot;</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Diagonal estimators</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="welford_diagonal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.welford_diagonal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">welford_diagonal</span><span class="p">(</span><span class="n">draws</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Diagonal (per-coordinate) sample variance via Welford&#39;s algorithm.</span>
+
+<span class="sd">    Thin scan-wrapper over :func:`blackjax.adaptation.mass_matrix.welford_algorithm`</span>
+<span class="sd">    with ``is_diagonal_matrix=True``.  Computes the Bessel-corrected sample</span>
+<span class="sd">    variance :math:`s^2_i = \frac{1}{n-1}\sum_{j=1}^n (x_{ji} - \bar{x}_i)^2`</span>
+<span class="sd">    for each coordinate ``i``.</span>
+
+<span class="sd">    **Why a wrapper instead of direct ``jnp.var``:** R2b/R3 must have a</span>
+<span class="sd">    single estimator import surface; this function ensures future callers can</span>
+<span class="sd">    swap to streaming Welford (e.g., for online adaptation) without changing</span>
+<span class="sd">    call sites.  The algorithm itself is NOT moved or duplicated — only the</span>
+<span class="sd">    call site is unified here.</span>
+
+<span class="sd">    **Source:** ``blackjax.adaptation.mass_matrix.welford_algorithm``</span>
+<span class="sd">    (``is_diagonal_matrix=True``).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    draws</span>
+<span class="sd">        Shape ``(n, d)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array, shape ``(d,)``</span>
+<span class="sd">        Bessel-corrected per-coordinate sample variance (= diagonal of the</span>
+<span class="sd">        sample covariance matrix).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">wc_init</span><span class="p">,</span> <span class="n">wc_update</span><span class="p">,</span> <span class="n">wc_final</span> <span class="o">=</span> <span class="n">welford_algorithm</span><span class="p">(</span><span class="n">is_diagonal_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">scan_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">draw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">wc_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">draw</span><span class="p">),</span> <span class="kc">None</span>
+
+    <span class="n">final_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">scan_fn</span><span class="p">,</span> <span class="n">wc_init</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">draws</span><span class="p">)</span>
+    <span class="n">covariance</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">wc_final</span><span class="p">(</span><span class="n">final_state</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">covariance</span></div>
+
+
+
+<div class="viewcode-block" id="welford_dense">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.welford_dense">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">welford_dense</span><span class="p">(</span><span class="n">draws</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Dense sample covariance via Welford&#39;s algorithm.</span>
+
+<span class="sd">    Thin scan-wrapper over :func:`blackjax.adaptation.mass_matrix.welford_algorithm`</span>
+<span class="sd">    with ``is_diagonal_matrix=False``.  Computes the Bessel-corrected sample</span>
+<span class="sd">    covariance matrix.</span>
+
+<span class="sd">    **Source:** ``blackjax.adaptation.mass_matrix.welford_algorithm``</span>
+<span class="sd">    (``is_diagonal_matrix=False``).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    draws</span>
+<span class="sd">        Shape ``(n, d)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array, shape ``(d, d)``</span>
+<span class="sd">        Bessel-corrected sample covariance matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">wc_init</span><span class="p">,</span> <span class="n">wc_update</span><span class="p">,</span> <span class="n">wc_final</span> <span class="o">=</span> <span class="n">welford_algorithm</span><span class="p">(</span><span class="n">is_diagonal_matrix</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">scan_fn</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">draw</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">wc_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">draw</span><span class="p">),</span> <span class="kc">None</span>
+
+    <span class="n">final_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">scan_fn</span><span class="p">,</span> <span class="n">wc_init</span><span class="p">(</span><span class="n">d</span><span class="p">),</span> <span class="n">draws</span><span class="p">)</span>
+    <span class="n">covariance</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">wc_final</span><span class="p">(</span><span class="n">final_state</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">covariance</span></div>
+
+
+
+<div class="viewcode-block" id="fisher_score_diagonal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_diagonal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fisher_score_diagonal</span><span class="p">(</span>
+    <span class="n">draws</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">grads</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Fisher-divergence-minimising diagonal inverse mass matrix.</span>
+
+<span class="sd">    Computes :math:`\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla</span>
+<span class="sd">    \log p]}`, the per-coordinate diagonal estimator of</span>
+<span class="sd">    :cite:p:`seyboldt2026preconditioning`.</span>
+
+<span class="sd">    This is the **diagonal-only** analogue of :func:`fisher_score_low_rank`:</span>
+<span class="sd">    that function&#39;s diagonal scale :math:`\sigma =</span>
+<span class="sd">    (\mathrm{Var}[x] / \mathrm{Var}[\nabla \log p])^{1/4}` gives the</span>
+<span class="sd">    corresponding inverse mass matrix as</span>
+<span class="sd">    :math:`\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla \log p]}`</span>
+<span class="sd">    when the low-rank correction ``(U, lam)`` is dropped.</span>
+
+<span class="sd">    **Extracted from:** branch ``b197f1e2`` (``feat/window-adaptation-fisher-diag``,</span>
+<span class="sd">    2026-07-04), ``blackjax.adaptation.mass_matrix._fisher_diagonal_inverse_mass``.</span>
+<span class="sd">    The branch is DORMANT — its ``window_adaptation`` wiring (the diagonal</span>
+<span class="sd">    estimator opt-in in ``mass_matrix_adaptation``) is NOT reproduced here and</span>
+<span class="sd">    stays dormant.  Only the pure estimator math is extracted.</span>
+
+<span class="sd">    **Near-zero gradient protection** (same as :func:`fisher_score_low_rank`):</span>
+<span class="sd">    ``Var[∇ log p]`` is floored at ``1e-10`` before division, and the result</span>
+<span class="sd">    is clipped to nutpie&#39;s ``[1e-20, 1e20]`` range before squaring.</span>
+
+<span class="sd">    **Note on variance convention:** ``Var[x]`` and ``Var[∇ log p]`` are</span>
+<span class="sd">    computed with the same normalisation (Bessel-corrected, ``n-1`` divisor,</span>
+<span class="sd">    via :func:`welford_diagonal`); the ratio is invariant to a shared</span>
+<span class="sd">    ``n`` vs ``n-1`` factor (branch ``b197f1e2`` commit message, verified).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    draws</span>
+<span class="sd">        Shape ``(n, d)``.  Chain positions.</span>
+<span class="sd">    grads</span>
+<span class="sd">        Shape ``(n, d)``.  Log-density gradients at the corresponding draws.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array, shape ``(d,)``</span>
+<span class="sd">        Diagonal inverse mass matrix :math:`\sigma^2`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">var_x</span> <span class="o">=</span> <span class="n">welford_diagonal</span><span class="p">(</span><span class="n">draws</span><span class="p">)</span>  <span class="c1"># (d,)  Bessel-corrected</span>
+    <span class="n">var_g</span> <span class="o">=</span> <span class="n">welford_diagonal</span><span class="p">(</span><span class="n">grads</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">var_x</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">var_g</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="mf">0.25</span><span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="mf">1e-20</span><span class="p">,</span> <span class="mf">1e20</span><span class="p">)</span>  <span class="c1"># nutpie range</span>
+    <span class="k">return</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+
+<div class="viewcode-block" id="sample_variance_diagonal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.sample_variance_diagonal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_variance_diagonal</span><span class="p">(</span><span class="n">draws</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Coordinate-wise population variance from raw draws.</span>
+
+<span class="sd">    Computes :math:`\hat{\sigma}^2_i = \mathbb{E}[x_i^2] - \mathbb{E}[x_i]^2`</span>
+<span class="sd">    (population variance, no Bessel correction) for each coordinate ``i``.</span>
+
+<span class="sd">    **Extracted from (verbatim duplicate):**</span>
+
+<span class="sd">    * ``blackjax.adaptation.mclmc_adaptation``, ``L_step_size_adaptation``</span>
+<span class="sd">      :341–342: ``variances = x_squared_average - jnp.square(x_average)``</span>
+<span class="sd">      where ``x_average = E[x]`` and ``x_squared_average = E[x^2]`` are</span>
+<span class="sd">      streaming step-size-weighted averages.</span>
+
+<span class="sd">    * ``blackjax.adaptation.adjusted_mclmc_adaptation``,</span>
+<span class="sd">      ``adjusted_mclmc_find_L_and_step_size`` :374–375: identical formula.</span>
+
+<span class="sd">    Both inline occurrences use the result as ``inverse_mass_matrix = variances``,</span>
+<span class="sd">    i.e., the population variance IS the diagonal IMM.  The streaming-average</span>
+<span class="sd">    formulation (weighted by step size via ``incremental_value_update``) is an</span>
+<span class="sd">    adaptation-layer scheduling concern; the pure estimator here takes the batch</span>
+<span class="sd">    of accumulated draws directly.</span>
+
+<span class="sd">    **Population (not Bessel-corrected)** to match the MCLMC streaming form:</span>
+<span class="sd">    the weighted incremental average</span>
+<span class="sd">    ``avg ← avg + w·(x − avg) / Σw`` converges to :math:`\mathbb{E}[x]` under</span>
+<span class="sd">    uniform weights, not the unbiased :math:`n/(n-1)` form.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    draws</span>
+<span class="sd">        Shape ``(n, d)``.  The draws accumulated over the estimation window.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array, shape ``(d,)``</span>
+<span class="sd">        Per-coordinate population variance</span>
+<span class="sd">        :math:`\mathbb{E}[x^2] - \mathbb{E}[x]^2`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_average</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">draws</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+    <span class="n">x_squared_average</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">draws</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># (d,)</span>
+    <span class="k">return</span> <span class="n">x_squared_average</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">x_average</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>
