@@ -93,6 +93,10 @@ import numpy as np
 
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
+from blackjax.adaptation.metric_estimators import (  # R3a: dependency flip
+    _relative_pd_floor,
+    _spd_mean,
+)
 from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
@@ -212,66 +216,12 @@ def _default_low_rank_adaptation_info_fn(
 # ---------------------------------------------------------------------------
 
 
-def _relative_pd_floor(vals: Array) -> Array:
-    """Machine-epsilon floor, SCALED to ``vals``' own magnitude.
-
-    An absolute floor (e.g. a bare ``jnp.finfo(dtype).eps``) is wrong here:
-    this module's SPD matrices routinely span many orders of magnitude --
-    e.g. ``C_a = P_a P_a^T / gamma + I`` scales like ``O(n / gamma)``
-    (``~1e10`` at ``n=50_000`` draws, default ``gamma=1e-5``), so
-    ``inv(C_a)``'s eigenvalues legitimately live around ``~1e-10`` -- an
-    absolute ``eps`` (``~1.2e-7`` for float32) would incorrectly clamp that
-    perfectly-conditioned small eigenvalue UP by several orders of
-    magnitude, corrupting the result (caught by
-    ``LowRankDiagonalConsistencyTest``: a bare absolute floor turned the 1D
-    case's correct ``lam=1.0`` into ``lam=34.6``). Flooring relative to the
-    largest eigenvalue IN THE SAME SPECTRUM correctly leaves a
-    uniformly-small-but-well-conditioned spectrum untouched while still
-    catching a genuinely near-zero-relative-to-its-own-scale eigenvalue
-    (the actual rounding-noise failure mode the PD guard targets).
-    """
-    scale = jnp.maximum(jnp.max(jnp.abs(vals)), jnp.finfo(vals.dtype).tiny)
-    return jnp.finfo(vals.dtype).eps * scale
-
-
-def _spd_mean(A: Array, B: Array) -> Array:
-    """Symmetric positive-definite (AIRM) geometric mean of A and B.
-
-    Computes :math:`A \\#_{1/2} B = B^{1/2}(B^{-1/2}AB^{-1/2})^{1/2}B^{1/2}`
-    via the eigendecomposition of B (the gradient covariance), following the
-    nutpie convention.  Both matrices must be SPD with shape ``(k, k)``.
-
-    **PD guard** (round-9 schedule-port audit, GAP-2): both intermediate
-    eigenspectra are floored at :func:`_relative_pd_floor` rather than
-    ``0.0``. nuts-rs's own unit test (``low_rank.rs::test_estimate_mass_matrix``)
-    *asserts* this pipeline returns strictly-positive eigenvalues -- it is
-    PD by construction in exact arithmetic, since ``A``/``B`` are each
-    ``P P^T / gamma + I``. The float32 audit found that rounding in this
-    eigendecomposition-heavy pipeline (condition number up to ``~1/gamma``)
-    can nonetheless produce small negative eigenvalues that silently make
-    the whole geometric mean indefinite; a *scale-relative* floor (see
-    :func:`_relative_pd_floor`'s docstring for why an absolute one is wrong
-    here) fixes this without perturbing legitimately-informative
-    eigenvalues, matching nuts-rs's own PD-by-construction invariant.
-    """
-    # Eigendecompose B: B = V_b D_b V_b^T
-    vals_b, vecs_b = jnp.linalg.eigh(B)
-    vals_b = jnp.maximum(vals_b, _relative_pd_floor(vals_b))
-    sqrt_b = jnp.sqrt(vals_b)
-    inv_sqrt_b = 1.0 / sqrt_b  # vals_b > 0 (floored), so this never divides by 0
-
-    # M = B^{-1/2} A B^{-1/2} in B's eigenbasis
-    tmp = vecs_b.T @ A @ vecs_b  # (k, k)
-    M = inv_sqrt_b[:, None] * tmp * inv_sqrt_b[None, :]
-
-    vals_m, vecs_m = jnp.linalg.eigh(M)
-    vals_m = jnp.maximum(vals_m, _relative_pd_floor(vals_m))
-    sqrt_m = jnp.sqrt(vals_m)
-
-    # A # B = B^{1/2} M^{1/2} B^{1/2}
-    # = (V_b diag(sqrt_b) V_m) diag(sqrt_m) (V_b diag(sqrt_b) V_m)^T
-    W = vecs_b @ (sqrt_b[:, None] * vecs_m)  # (k, k)
-    return (W * sqrt_m[None, :]) @ W.T
+# _relative_pd_floor and _spd_mean have been moved to metric_estimators (R3a
+# dependency flip) and are imported above.  They remain accessible from this
+# module's namespace for backward-compatibility (tests import _spd_mean from
+# here; low_rank_adaptation._compute_low_rank_metric still calls both).
+# E-layer: see blackjax.adaptation.metric_estimators._relative_pd_floor
+# E-layer: see blackjax.adaptation.metric_estimators._spd_mean
 
 
 def _shift_buffer_left(buf: Array, shift: Array) -> Array:
@@ -385,6 +335,20 @@ def _compute_low_rank_metric(
     positive-definite regardless. **Enabling x64 is strongly recommended**
     for ``buffer_policy="accumulating"``/nutpie-schedule low-rank warmup,
     matching nuts-rs's own dtype and the shipped sampling-book example.
+
+    **R3a E-layer cross-reference:** the pure-array form of this estimator
+    (all-valid rows, no masking) lives in
+    :func:`blackjax.adaptation.metric_estimators.fisher_score_low_rank`.
+    This buffer-masked variant is NOT expressible as a direct call to that
+    function because ``n`` is a traced JAX integer (inside ``jax.lax.scan``
+    closures from :func:`slow_final` / :func:`slow_switch` /
+    :func:`slow_recompute_only`): dynamic slicing to ``draws_buffer[:n]``
+    changes the array shape at trace time (not supported under JAX's
+    static-shape rule), so the masking pattern is necessary and integral to
+    ALL computation steps (masked mean, masked variance, masked covariance),
+    not just a pre-processing trim before the pure math.
+    ``_spd_mean`` and ``_relative_pd_floor`` have been moved to the E-layer
+    (R3a dependency flip) and are imported above from metric_estimators.
     """
     orig_dtype = draws_buffer.dtype
     compute_dtype = jnp.float64 if jax.config.jax_enable_x64 else orig_dtype
