@@ -631,6 +631,17 @@ def lbfgs_inverse_hessian_to_low_rank_metric(
         internal sampling path (Phase R3 consumer migration).  In Phase R1 it
         ships as adapter + golden tests only.
 
+    .. warning::
+        **Positive-definiteness precondition.**  The triple ``(alpha, beta, gamma)``
+        must yield a positive-definite dense form ``diag(alpha) + beta @ gamma @
+        beta.T``; this is guaranteed when the triple comes from
+        :func:`~blackjax.optimizers.lbfgs.lbfgs_inverse_hessian_factors` under a
+        Wolfe-condition line search.  Non-positive-definite inputs produce ``lam <=
+        0`` *silently* here and surface as NaN at momentum sampling.  Additionally,
+        at float32 near-singular metrics (condition number ≳ 1e7) can resolve the
+        smallest eigenvalue with unreliable sign; for such inputs prefer float64
+        factors.
+
     Parameters
     ----------
     alpha

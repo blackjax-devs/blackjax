@@ -653,9 +653,11 @@ class GaussianEuclideanLowRankRefactorParityTest(chex.TestCase):
 
     @parameterized.named_parameters(
         {"testcase_name": "d2_k1_f32", "d": 2, "k": 1, "dtype": "float32"},
+        {"testcase_name": "d5_k5_f32", "d": 5, "k": 5, "dtype": "float32"},
         {"testcase_name": "d7_k3_f32", "d": 7, "k": 3, "dtype": "float32"},
         {"testcase_name": "d50_k25_f32", "d": 50, "k": 25, "dtype": "float32"},
         {"testcase_name": "d2_k1_f64", "d": 2, "k": 1, "dtype": "float64"},
+        {"testcase_name": "d5_k5_f64", "d": 5, "k": 5, "dtype": "float64"},
         {"testcase_name": "d7_k3_f64", "d": 7, "k": 3, "dtype": "float64"},
         {"testcase_name": "d50_k25_f64", "d": 50, "k": 25, "dtype": "float64"},
     )
