@@ -19,7 +19,7 @@ import blackjax
 from blackjax.mcmc import gist, gist_trajectory_length, integrators, metrics
 from tests.fixtures import (
     BlackJAXTest,
-    assert_mean_within_ess_gated_tolerance,
+    assert_grand_mean_within_robust_tolerance,
     neal_funnel_logdensity,
     smooth_skewed_logdensity,
     std_normal_logdensity,
@@ -197,33 +197,41 @@ class MomentRecoveryTest(BlackJAXTest):
         np.testing.assert_allclose(skew, -1.1395, atol=1.0)
         self.assertGreater(float(jnp.mean(infos.acceptance_rate)), 0.05)
 
-    @absltest.skip(
-        "Flaky (3rd MC-tolerance escape; #957, #959 insufficient) -- skipped "
-        "pending a multi-seed robust rewrite. Tracking: "
-        "https://github.com/blackjax-devs/blackjax/issues/970"
-    )
     def test_neal_funnel_neck_marginal(self):
-        # The canonical stress test for step-size adaptation (a single
-        # global step size cannot work). Check only the well-behaved "neck"
-        # marginal y ~ N(0, 3**2) exactly -- the funnel coordinates' marginal
+        # The canonical stress test for trajectory-length adaptation (a single
+        # global step size cannot work well here). Check only the well-behaved
+        # "neck" marginal y ~ N(0, 3**2) -- the funnel coordinates' marginal
         # variance is a log-normal mixture (heavy-tailed, high MC variance),
         # not a useful numeric target at feasible sample sizes.
-        # (Rationale mirrors test_gist_step_size.py::test_neal_funnel_neck_marginal)
+        #
+        # Multi-chain robust grand-mean gate (replaces the ESS-gated single-
+        # chain assertion that escaped 3 times, issue #970; lineage
+        # #957 → #959 → #971 skip): K=24 independent chains via vmap; grand
+        # mean over chain-means with MAD-based robust SE and an absolute-
+        # tolerance floor.  A single stuck chain cannot inflate the threshold
+        # and hide a real bias (MAD breakdown ~50%).  See
+        # tests/fixtures.py::assert_grand_mean_within_robust_tolerance for
+        # the full design rationale.
         algo = blackjax.gist_trajectory_length(
             neal_funnel_logdensity,
             inverse_mass_matrix=jnp.ones(3),
             step_size=0.15,
             max_num_steps=128,
         )
-        pos, infos = run_chain(algo, jnp.zeros(3), self.next_key(), 6000)
-        y = np.asarray(pos[3000:, 0])
-        # Self-calibrating ESS-gated assertion: replaces fixed atol=0.7,
-        # robust across JAX versions and environments (see lesson
-        # worklog/lessons/code-patterns/2026-05-11-single-realization-mc-noisy-assertion.md).
-        assert_mean_within_ess_gated_tolerance(
-            y, expected_mean=0.0, ess_min=80, k_sigma=5.0
+
+        K = 24
+        keys = jax.random.split(self.next_key(), K)
+
+        def one_chain(key):
+            pos, infos = run_chain(algo, jnp.zeros(3), key, 3000)
+            return pos[1500:, 0], infos.acceptance_rate
+
+        ys, accs = jax.vmap(one_chain)(keys)  # ys: (K, T)
+        assert_grand_mean_within_robust_tolerance(
+            np.asarray(ys), expected_mean=0.0, atol_floor=1.0, k_sigma=5.0
         )
-        self.assertTrue(np.all(np.isfinite(np.asarray(pos))))
+        self.assertGreater(float(jnp.mean(accs)), 0.05)
+        self.assertTrue(np.all(np.isfinite(np.asarray(ys))))
 
 
 class ClosedFormCrossCheckTest(BlackJAXTest):
