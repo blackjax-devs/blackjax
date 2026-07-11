@@ -353,7 +353,6 @@ def _floor_lrd_eigenvalues(lam: Array) -> Array:
 
     ``jnp.maximum(lam, floor)`` guards against small/negative-but-finite
     eigenvalues only — NaN passes through (``maximum(NaN, floor) = NaN``).
-    PRE-EXISTING behavior; this function is not otherwise in the R3a diff.
     """
     return jnp.maximum(lam, _LRD_EIGENVALUE_FLOOR)
 
