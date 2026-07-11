@@ -19,7 +19,11 @@ import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 from jax.random import normal
 
-from blackjax.mcmc.metrics import KineticEnergy, LowRankInverseMassMatrix
+from blackjax.mcmc.metrics import (
+    KineticEnergy,
+    LowRankInverseMassMatrix,
+    _low_rank_matvec,
+)
 from blackjax.types import ArrayTree
 
 __all__ = [
@@ -415,16 +419,15 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         U = inverse_mass_matrix.U
         sqrt_lam = jnp.sqrt(inverse_mass_matrix.lam)
 
-        # forward_L(y) = σ ⊙ (y + U (√Λ − I) Uᵀ y)   — maps whitened momentum
-        #                                                   to position velocity
+        # forward_L(y) = σ ⊙ (I + U(√Λ−I)Uᵀ) y   — maps whitened momentum
+        #                                               to position velocity
         def forward_L(y):
-            return sigma * (y + U @ ((sqrt_lam - 1.0) * (U.T @ y)))
+            return sigma * _low_rank_matvec(y, U, sqrt_lam)
 
-        # adjoint_L(g) = (I + U (√Λ − I) Uᵀ)(σ ⊙ g)  — maps gradient to
-        #                                                   whitened-frame gradient
+        # adjoint_L(g) = (I + U(√Λ−I)Uᵀ)(σ ⊙ g)  — maps gradient to
+        #                                               whitened-frame gradient
         def adjoint_L(g):
-            g_scaled = sigma * g
-            return g_scaled + U @ ((sqrt_lam - 1.0) * (U.T @ g_scaled))
+            return _low_rank_matvec(sigma * g, U, sqrt_lam)
 
     else:
         sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
