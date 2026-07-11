@@ -725,6 +725,18 @@ def chees_adaptation(
         of it. Cold or dispersed initialization on hard geometry is a separate
         warmup-robustness limitation, out of scope for this feature.
 
+        GPU-scale validation (2× independent runs, ensembles up to 5000 chains): the
+        ``"diagonal"`` metric with the trajectory-length floor additionally makes the
+        adaptation robust to *dispersed* initializations — e.g. per-chain uniform box
+        inits on the unconstrained space, which catastrophically break identity-metric
+        ChEES on scale-separated targets (dispersion inflates the cross-chain jump-distance
+        criterion, driving the adapted trajectory length down; the floor's √λ_max term
+        grows with ensemble dispersion and self-corrects). A dispersed initialization is
+        also what gives R̂ its diagnostic power: initializing all chains at a single point
+        (e.g. the origin) can produce clean R̂ that is structurally blind to same-basin
+        non-equilibrium — prefer dispersed inits and treat single-point-init R̂ with
+        caution.
+
         Engagement gate: before the pooled accumulator (effective sample
         size ``num_chains * window_steps``) exceeds ``max(64, 2*sqrt(num_dim))``
         -- a modest floor chosen because a per-dimension variance estimate,
