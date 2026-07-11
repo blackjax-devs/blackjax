@@ -40,6 +40,7 @@ Functions
    blackjax.mcmc.metrics.gaussian_euclidean
    blackjax.mcmc.metrics.gaussian_euclidean_low_rank
    blackjax.mcmc.metrics.gaussian_riemannian
+   blackjax.mcmc.metrics.lbfgs_inverse_hessian_to_low_rank_metric
 
 
 Module Contents
@@ -180,5 +181,86 @@ Module Contents
 
    :returns: * A ``Metric`` object with ``sample_momentum``, ``kinetic_energy``,
              * ``check_turning``, and ``scale`` fields.
+
+
+.. py:function:: lbfgs_inverse_hessian_to_low_rank_metric(alpha: blackjax.types.Array, beta: blackjax.types.Array, gamma: blackjax.types.Array) -> LowRankInverseMassMatrix
+
+   Convert an L-BFGS factored inverse-Hessian to a :class:`LowRankInverseMassMatrix`.
+
+   The L-BFGS inverse Hessian is stored in the factored form
+
+   .. math::
+
+       H^{-1} = \operatorname{diag}(\alpha) + \beta \Gamma \beta^\top
+
+   (formula II.1 / II.3 of :cite:p:`zhang2022pathfinder`).  This adapter
+   rewrites it as a :class:`LowRankInverseMassMatrix` with
+
+   .. math::
+
+       M^{-1} = \operatorname{diag}(\sigma)
+                \bigl(I + U(\Lambda - I)U^\top\bigr)
+                \operatorname{diag}(\sigma),
+       \quad \sigma = \sqrt{\alpha}
+
+   via a compact :math:`O((2m)^3)` inner eigendecomposition that avoids the
+   :math:`O(d^3)` full eigenproblem:
+
+   1. Set :math:`D = \operatorname{diag}(\sigma)` and factor out to obtain
+      :math:`H^{-1} = D(I + \tilde B \Gamma \tilde B^\top)D` with
+      :math:`\tilde B = D^{-1}\beta \in \mathbb{R}^{d \times 2m}`.
+   2. QR-decompose :math:`\tilde B = Q R` (thin QR, :math:`Q` orthonormal
+      :math:`d \times r`, :math:`r = \min(d, 2m)`).
+   3. The inner correction satisfies
+      :math:`\tilde B \Gamma \tilde B^\top = Q (R \Gamma R^\top) Q^\top`,
+      so its eigenvalues are those of the :math:`r \times r` matrix
+      :math:`R \Gamma R^\top`.
+   4. Eigendecompose :math:`R \Gamma R^\top = V \Lambda_c V^\top` (eigh,
+      :math:`r \times r` only).
+   5. Return :math:`U = QV` (orthonormal eigenvectors, shape :math:`d \times r`)
+      and :math:`\lambda = 1 + \Lambda_c` (eigenvalues of :math:`I + \tilde B
+      \Gamma \tilde B^\top`).
+
+   **When to use this.**  Pass the ``(alpha, beta, gamma)`` triple produced by
+   :func:`~blackjax.optimizers.lbfgs.lbfgs_inverse_hessian_factors` to obtain a
+   JAX-pytree-safe :class:`LowRankInverseMassMatrix` that can cross
+   ``jax.vmap`` boundaries and feed any consumer that accepts the unified
+   representation (HMC, MCLMC, etc.).
+
+   .. note::
+       This function is a **pure adapter** — it does not alter Pathfinder's
+       internal sampling path (Phase R3 consumer migration).  In Phase R1 it
+       ships as adapter + golden tests only.
+
+   .. warning::
+       **Positive-definiteness precondition.**  The triple ``(alpha, beta, gamma)``
+       must yield a positive-definite dense form ``diag(alpha) + beta @ gamma @
+       beta.T``; this is guaranteed when the triple comes from
+       :func:`~blackjax.optimizers.lbfgs.lbfgs_inverse_hessian_factors` under a
+       Wolfe-condition line search.  Non-positive-definite inputs produce ``lam <=
+       0`` *silently* here and surface as NaN at momentum sampling.  Additionally,
+       at float32 near-singular metrics (condition number ≳ 1e7) can resolve the
+       smallest eigenvalue with unreliable sign; for such inputs prefer float64
+       factors.
+
+   :param alpha: Shape ``(d,)``.  Positive diagonal of the inverse Hessian approximation.
+   :param beta: Shape ``(d, 2m)``.  Left factor of the low-rank correction.  When
+                ``m = 0`` (empty L-BFGS history) ``beta`` has shape ``(d, 0)`` and the
+                adapter returns a pure diagonal metric.
+   :param gamma: Shape ``(2m, 2m)``.  Symmetric inner factor of the low-rank correction.
+
+   :returns: With ``sigma = sqrt(alpha)``, ``U`` the ``(d, r)`` orthonormal
+             eigenvector matrix, and ``lam = 1 + eigenvalues(R Γ Rᵀ)``.
+             Empty-history edge: ``U`` has shape ``(d, 0)`` and ``lam`` shape ``(0,)``,
+             representing a pure diagonal metric with scale ``sigma``.
+   :rtype: LowRankInverseMassMatrix
+
+   .. seealso::
+
+      :py:obj:`LowRankInverseMassMatrix`
+          Target representation consumed by :func:`gaussian_euclidean_low_rank`.
+
+      :py:obj:`gaussian_euclidean_low_rank`
+          Full metric protocol built from the representation.
 
 

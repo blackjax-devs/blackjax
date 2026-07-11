@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.mclmc" href="../mclmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g1bed2f936" />
+  <meta name="docsearch:version" content="0.1.dev1+g532631c1b" />
   </head>
   
   
@@ -413,6 +413,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_riemannian"><code class="docutils literal notranslate"><span class="pre">gaussian_riemannian()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.lbfgs_inverse_hessian_to_low_rank_metric"><code class="docutils literal notranslate"><span class="pre">lbfgs_inverse_hessian_to_low_rank_metric()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -464,6 +465,9 @@ dynamic is independent of the position and only depends on the momentum
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_riemannian" title="blackjax.mcmc.metrics.gaussian_riemannian"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_riemannian</span></code></a>(→ Metric)</p></td>
 <td><p>Hamiltonian dynamic on Riemannian manifold with normally-distributed momentum.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.metrics.lbfgs_inverse_hessian_to_low_rank_metric" title="blackjax.mcmc.metrics.lbfgs_inverse_hessian_to_low_rank_metric"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lbfgs_inverse_hessian_to_low_rank_metric</span></code></a>(...)</p></td>
+<td><p>Convert an L-BFGS factored inverse-Hessian to a <a class="reference internal" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -635,6 +639,92 @@ location (positive definite, one or two-dimensional array).</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.metrics.lbfgs_inverse_hessian_to_low_rank_metric">
+<span class="sig-name descname"><span class="pre">lbfgs_inverse_hessian_to_low_rank_metric</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">beta</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><span class="pre">LowRankInverseMassMatrix</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/metrics.html#lbfgs_inverse_hessian_to_low_rank_metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.metrics.lbfgs_inverse_hessian_to_low_rank_metric" title="Link to this definition">#</a></dt>
+<dd><p>Convert an L-BFGS factored inverse-Hessian to a <a class="reference internal" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a>.</p>
+<p>The L-BFGS inverse Hessian is stored in the factored form</p>
+<div class="math notranslate nohighlight">
+\[H^{-1} = \operatorname{diag}(\alpha) + \beta \Gamma \beta^\top\]</div>
+<p>(formula II.1 / II.3 of <span id="id8">[<a class="reference internal" href="../../../../bib.html#id37" title="Lu Zhang, Bob Carpenter, Andrew Gelman, and Aki Vehtari. Pathfinder: parallel quasi-newton variational inference. Journal of Machine Learning Research, 23(306):1–49, 2022.">ZCGV22</a>]</span>).  This adapter
+rewrites it as a <a class="reference internal" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a> with</p>
+<div class="math notranslate nohighlight">
+\[M^{-1} = \operatorname{diag}(\sigma)
+         \bigl(I + U(\Lambda - I)U^\top\bigr)
+         \operatorname{diag}(\sigma),
+\quad \sigma = \sqrt{\alpha}\]</div>
+<p>via a compact <span class="math notranslate nohighlight">\(O((2m)^3)\)</span> inner eigendecomposition that avoids the
+<span class="math notranslate nohighlight">\(O(d^3)\)</span> full eigenproblem:</p>
+<ol class="arabic simple">
+<li><p>Set <span class="math notranslate nohighlight">\(D = \operatorname{diag}(\sigma)\)</span> and factor out to obtain
+<span class="math notranslate nohighlight">\(H^{-1} = D(I + \tilde B \Gamma \tilde B^\top)D\)</span> with
+<span class="math notranslate nohighlight">\(\tilde B = D^{-1}\beta \in \mathbb{R}^{d \times 2m}\)</span>.</p></li>
+<li><p>QR-decompose <span class="math notranslate nohighlight">\(\tilde B = Q R\)</span> (thin QR, <span class="math notranslate nohighlight">\(Q\)</span> orthonormal
+<span class="math notranslate nohighlight">\(d \times r\)</span>, <span class="math notranslate nohighlight">\(r = \min(d, 2m)\)</span>).</p></li>
+<li><p>The inner correction satisfies
+<span class="math notranslate nohighlight">\(\tilde B \Gamma \tilde B^\top = Q (R \Gamma R^\top) Q^\top\)</span>,
+so its eigenvalues are those of the <span class="math notranslate nohighlight">\(r \times r\)</span> matrix
+<span class="math notranslate nohighlight">\(R \Gamma R^\top\)</span>.</p></li>
+<li><p>Eigendecompose <span class="math notranslate nohighlight">\(R \Gamma R^\top = V \Lambda_c V^\top\)</span> (eigh,
+<span class="math notranslate nohighlight">\(r \times r\)</span> only).</p></li>
+<li><p>Return <span class="math notranslate nohighlight">\(U = QV\)</span> (orthonormal eigenvectors, shape <span class="math notranslate nohighlight">\(d \times r\)</span>)
+and <span class="math notranslate nohighlight">\(\lambda = 1 + \Lambda_c\)</span> (eigenvalues of <span class="math notranslate nohighlight">\(I + \tilde B
+\Gamma \tilde B^\top\)</span>).</p></li>
+</ol>
+<p><strong>When to use this.</strong>  Pass the <code class="docutils literal notranslate"><span class="pre">(alpha,</span> <span class="pre">beta,</span> <span class="pre">gamma)</span></code> triple produced by
+<code class="xref py py-func docutils literal notranslate"><span class="pre">lbfgs_inverse_hessian_factors()</span></code> to obtain a
+JAX-pytree-safe <a class="reference internal" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a> that can cross
+<code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> boundaries and feed any consumer that accepts the unified
+representation (HMC, MCLMC, etc.).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>This function is a <strong>pure adapter</strong> — it does not alter Pathfinder’s
+internal sampling path (Phase R3 consumer migration).  In Phase R1 it
+ships as adapter + golden tests only.</p>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><strong>Positive-definiteness precondition.</strong>  The triple <code class="docutils literal notranslate"><span class="pre">(alpha,</span> <span class="pre">beta,</span> <span class="pre">gamma)</span></code>
+must yield a positive-definite dense form <code class="docutils literal notranslate"><span class="pre">diag(alpha)</span> <span class="pre">+</span> <span class="pre">beta</span> <span class="pre">&#64;</span> <span class="pre">gamma</span> <span class="pre">&#64;</span>
+<span class="pre">beta.T</span></code>; this is guaranteed when the triple comes from
+<code class="xref py py-func docutils literal notranslate"><span class="pre">lbfgs_inverse_hessian_factors()</span></code> under a
+Wolfe-condition line search.  Non-positive-definite inputs produce <code class="docutils literal notranslate"><span class="pre">lam</span> <span class="pre">&lt;=</span>
+<span class="pre">0</span></code> <em>silently</em> here and surface as NaN at momentum sampling.  Additionally,
+at float32 near-singular metrics (condition number ≳ 1e7) can resolve the
+smallest eigenvalue with unreliable sign; for such inputs prefer float64
+factors.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>alpha</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.  Positive diagonal of the inverse Hessian approximation.</p></li>
+<li><p><strong>beta</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">2m)</span></code>.  Left factor of the low-rank correction.  When
+<code class="docutils literal notranslate"><span class="pre">m</span> <span class="pre">=</span> <span class="pre">0</span></code> (empty L-BFGS history) <code class="docutils literal notranslate"><span class="pre">beta</span></code> has shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">0)</span></code> and the
+adapter returns a pure diagonal metric.</p></li>
+<li><p><strong>gamma</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(2m,</span> <span class="pre">2m)</span></code>.  Symmetric inner factor of the low-rank correction.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>With <code class="docutils literal notranslate"><span class="pre">sigma</span> <span class="pre">=</span> <span class="pre">sqrt(alpha)</span></code>, <code class="docutils literal notranslate"><span class="pre">U</span></code> the <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">r)</span></code> orthonormal
+eigenvector matrix, and <code class="docutils literal notranslate"><span class="pre">lam</span> <span class="pre">=</span> <span class="pre">1</span> <span class="pre">+</span> <span class="pre">eigenvalues(R</span> <span class="pre">Γ</span> <span class="pre">Rᵀ)</span></code>.
+Empty-history edge: <code class="docutils literal notranslate"><span class="pre">U</span></code> has shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">0)</span></code> and <code class="docutils literal notranslate"><span class="pre">lam</span></code> shape <code class="docutils literal notranslate"><span class="pre">(0,)</span></code>,
+representing a pure diagonal metric with scale <code class="docutils literal notranslate"><span class="pre">sigma</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix">LowRankInverseMassMatrix</a></p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<dl class="simple">
+<dt><a class="reference internal" href="#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a></dt><dd><p>Target representation consumed by <a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a>.</p>
+</dd>
+<dt><a class="reference internal" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank" title="blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank</span></code></a></dt><dd><p>Full metric protocol built from the representation.</p>
+</dd>
+</dl>
+</div>
+</dd></dl>
+
 </section>
 </section>
 
@@ -701,6 +791,7 @@ location (positive definite, one or two-dimensional array).</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_euclidean_low_rank"><code class="docutils literal notranslate"><span class="pre">gaussian_euclidean_low_rank()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.gaussian_riemannian"><code class="docutils literal notranslate"><span class="pre">gaussian_riemannian()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.metrics.lbfgs_inverse_hessian_to_low_rank_metric"><code class="docutils literal notranslate"><span class="pre">lbfgs_inverse_hessian_to_low_rank_metric()</span></code></a></li>
 </ul>
 </li>
 </ul>

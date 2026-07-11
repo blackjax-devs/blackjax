@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g1bed2f936" />
+  <meta name="docsearch:version" content="0.1.dev1+g532631c1b" />
   </head>
   
   
@@ -419,7 +419,11 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">ravel_pytree</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">jax.random</span><span class="w"> </span><span class="kn">import</span> <span class="n">normal</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">KineticEnergy</span><span class="p">,</span> <span class="n">LowRankInverseMassMatrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">KineticEnergy</span><span class="p">,</span>
+    <span class="n">LowRankInverseMassMatrix</span><span class="p">,</span>
+    <span class="n">_low_rank_matvec</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">ArrayTree</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -827,16 +831,15 @@
         <span class="n">U</span> <span class="o">=</span> <span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">U</span>
         <span class="n">sqrt_lam</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span>
 
-        <span class="c1"># forward_L(y) = σ ⊙ (y + U (√Λ − I) Uᵀ y)   — maps whitened momentum</span>
-        <span class="c1">#                                                   to position velocity</span>
+        <span class="c1"># forward_L(y) = σ ⊙ (I + U(√Λ−I)Uᵀ) y   — maps whitened momentum</span>
+        <span class="c1">#                                               to position velocity</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">forward_L</span><span class="p">(</span><span class="n">y</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">sigma</span> <span class="o">*</span> <span class="p">(</span><span class="n">y</span> <span class="o">+</span> <span class="n">U</span> <span class="o">@</span> <span class="p">((</span><span class="n">sqrt_lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">y</span><span class="p">)))</span>
+            <span class="k">return</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">_low_rank_matvec</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">sqrt_lam</span><span class="p">)</span>
 
-        <span class="c1"># adjoint_L(g) = (I + U (√Λ − I) Uᵀ)(σ ⊙ g)  — maps gradient to</span>
-        <span class="c1">#                                                   whitened-frame gradient</span>
+        <span class="c1"># adjoint_L(g) = (I + U(√Λ−I)Uᵀ)(σ ⊙ g)  — maps gradient to</span>
+        <span class="c1">#                                               whitened-frame gradient</span>
         <span class="k">def</span><span class="w"> </span><span class="nf">adjoint_L</span><span class="p">(</span><span class="n">g</span><span class="p">):</span>
-            <span class="n">g_scaled</span> <span class="o">=</span> <span class="n">sigma</span> <span class="o">*</span> <span class="n">g</span>
-            <span class="k">return</span> <span class="n">g_scaled</span> <span class="o">+</span> <span class="n">U</span> <span class="o">@</span> <span class="p">((</span><span class="n">sqrt_lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">U</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">g_scaled</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">_low_rank_matvec</span><span class="p">(</span><span class="n">sigma</span> <span class="o">*</span> <span class="n">g</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">sqrt_lam</span><span class="p">)</span>
 
     <span class="k">else</span><span class="p">:</span>
         <span class="n">sqrt_inverse_mass_matrix</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
