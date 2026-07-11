@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.base" href="../base/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g21c589b29" />
+  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
   </head>
   
   
@@ -695,6 +695,17 @@ relative to the identity metric’s fine-step regime (an efficiency caveat,
 not a bias—posterior means are unaffected); the length floor recovers most
 of it. Cold or dispersed initialization on hard geometry is a separate
 warmup-robustness limitation, out of scope for this feature.</p>
+<p>GPU-scale validation (2× independent runs, ensembles up to 5000 chains): the
+<code class="docutils literal notranslate"><span class="pre">&quot;diagonal&quot;</span></code> metric with the trajectory-length floor additionally makes the
+adaptation robust to <em>dispersed</em> initializations — e.g. per-chain uniform box
+inits on the unconstrained space, which catastrophically break identity-metric
+ChEES on scale-separated targets (dispersion inflates the cross-chain jump-distance
+criterion, driving the adapted trajectory length down; the floor’s √λ_max term
+grows with ensemble dispersion and self-corrects). A dispersed initialization is
+also what gives R̂ its diagnostic power: initializing all chains at a single point
+(e.g. the origin) can produce clean R̂ that is structurally blind to same-basin
+non-equilibrium — prefer dispersed inits and treat single-point-init R̂ with
+caution.</p>
 <p>Engagement gate: before the pooled accumulator (effective sample
 size <code class="docutils literal notranslate"><span class="pre">num_chains</span> <span class="pre">*</span> <span class="pre">window_steps</span></code>) exceeds <code class="docutils literal notranslate"><span class="pre">max(64,</span> <span class="pre">2*sqrt(num_dim))</span></code>
 – a modest floor chosen because a per-dimension variance estimate,

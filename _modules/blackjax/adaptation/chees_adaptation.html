@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g21c589b29" />
+  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
   </head>
   
   
@@ -1172,6 +1172,18 @@
 <span class="sd">        not a bias—posterior means are unaffected); the length floor recovers most</span>
 <span class="sd">        of it. Cold or dispersed initialization on hard geometry is a separate</span>
 <span class="sd">        warmup-robustness limitation, out of scope for this feature.</span>
+
+<span class="sd">        GPU-scale validation (2× independent runs, ensembles up to 5000 chains): the</span>
+<span class="sd">        ``&quot;diagonal&quot;`` metric with the trajectory-length floor additionally makes the</span>
+<span class="sd">        adaptation robust to *dispersed* initializations — e.g. per-chain uniform box</span>
+<span class="sd">        inits on the unconstrained space, which catastrophically break identity-metric</span>
+<span class="sd">        ChEES on scale-separated targets (dispersion inflates the cross-chain jump-distance</span>
+<span class="sd">        criterion, driving the adapted trajectory length down; the floor&#39;s √λ_max term</span>
+<span class="sd">        grows with ensemble dispersion and self-corrects). A dispersed initialization is</span>
+<span class="sd">        also what gives R̂ its diagnostic power: initializing all chains at a single point</span>
+<span class="sd">        (e.g. the origin) can produce clean R̂ that is structurally blind to same-basin</span>
+<span class="sd">        non-equilibrium — prefer dispersed inits and treat single-point-init R̂ with</span>
+<span class="sd">        caution.</span>
 
 <span class="sd">        Engagement gate: before the pooled accumulator (effective sample</span>
 <span class="sd">        size ``num_chains * window_steps``) exceeds ``max(64, 2*sqrt(num_dim))``</span>

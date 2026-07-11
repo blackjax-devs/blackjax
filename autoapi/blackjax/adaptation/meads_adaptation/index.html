@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.mclmc_lrd_adaptation" href="../mclmc_lrd_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g21c589b29" />
+  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
   </head>
   
   
@@ -610,7 +610,7 @@ the NaN collapse — but expect severe under-mixing (measured
 rhat≈5 on a rank-1 init); use a dispersed, full-rank initialization.</p></li>
 </ul>
 </p></li>
-<li><p><strong>low_rank_window_fraction</strong> – Only used when <code class="docutils literal notranslate"><span class="pre">low_rank_rank</span></code> is not <code class="docutils literal notranslate"><span class="pre">None</span></code>. Fraction of
+<li><p><strong>low_rank_window_fraction</strong> – <p>Only used when <code class="docutils literal notranslate"><span class="pre">low_rank_rank</span></code> is not <code class="docutils literal notranslate"><span class="pre">None</span></code>. Fraction of
 warmup steps, counted from the end, over which the low-rank metric’s
 covariance is accumulated (default <code class="docutils literal notranslate"><span class="pre">0.5</span></code>: the last half of
 warmup). A single <code class="docutils literal notranslate"><span class="pre">num_chains</span></code>-sized ensemble snapshot is
@@ -639,7 +639,16 @@ all, matching <code class="docutils literal notranslate"><span class="pre">low_r
 low-rank estimate from too little data.
 Must be in <code class="docutils literal notranslate"><span class="pre">[0.0,</span> <span class="pre">1.0]</span></code>; <code class="docutils literal notranslate"><span class="pre">0.0</span></code> accumulates from step 0, <code class="docutils literal notranslate"><span class="pre">1.0</span></code>
 disables accumulation entirely (falls back to the purely diagonal
-momentum metric throughout the run).</p></li>
+momentum metric throughout the run).</p>
+<p>At GPU scale (independent re-validation, num_chains up to 1024 on a
+d≈390 hierarchical target): the low-rank metric’s de-biasing reproduces
+(num_chains ≥ 256 with adequate warmup — cutting warmup at high
+num_chains under-accumulates the metric and re-introduces bias via
+step-size collapse) and holds as num_chains grows, but residual mean-error
+stabilizes slightly above strict certification thresholds; treat the
+low-rank metric as a robust improvement over the diagonal rather than a
+guarantee of unbiased means on such targets.</p>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>

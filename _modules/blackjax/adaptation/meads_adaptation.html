@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g21c589b29" />
+  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
   </head>
   
   
@@ -913,6 +913,15 @@
 <span class="sd">        Must be in ``[0.0, 1.0]``; ``0.0`` accumulates from step 0, ``1.0``</span>
 <span class="sd">        disables accumulation entirely (falls back to the purely diagonal</span>
 <span class="sd">        momentum metric throughout the run).</span>
+
+<span class="sd">        At GPU scale (independent re-validation, num_chains up to 1024 on a</span>
+<span class="sd">        d≈390 hierarchical target): the low-rank metric&#39;s de-biasing reproduces</span>
+<span class="sd">        (num_chains ≥ 256 with adequate warmup — cutting warmup at high</span>
+<span class="sd">        num_chains under-accumulates the metric and re-introduces bias via</span>
+<span class="sd">        step-size collapse) and holds as num_chains grows, but residual mean-error</span>
+<span class="sd">        stabilizes slightly above strict certification thresholds; treat the</span>
+<span class="sd">        low-rank metric as a robust improvement over the diagonal rather than a</span>
+<span class="sd">        guarantee of unbiased means on such targets.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
