@@ -924,8 +924,8 @@ class EnsembleMeadsParityX64Test(BlackJAXTest):
                 state = update(state, batch)
             block = get_moments(state)
 
-            # Pre-refactor frozen accumulator (reference implementation, not
-            # imported — embedded below in section 16 to prevent silent aliasing)
+            # Pre-refactor frozen accumulator (reference golden, defined in
+            # section 16 below — not imported, to prevent silent aliasing)
             acc = _frozen_lrd_accumulator_init(d)
             for batch in batches:
                 acc = _frozen_lrd_accumulator_update(acc, batch)
@@ -1961,13 +1961,13 @@ class EnsembleBatchShapeGuardTest(BlackJAXTest):
 
 
 # ---------------------------------------------------------------------------
-# 16. MEADS end-to-end parity: old accumulator vs ensemble_batch_buffer
+# 16. Frozen pre-refactor MEADS accumulator (reference used by EnsembleMeadsParityX64Test)
 # ---------------------------------------------------------------------------
 
 # Frozen copy of the bespoke Chan/Welford accumulator that lived in
 # meads_adaptation.py before the buffer-layer refactor.  Embedded here (not
 # imported) so that any future mutation to the production module cannot alias
-# the golden.
+# the golden used by EnsembleMeadsParityX64Test (§5b).
 
 
 class _FrozenLRDAccumulatorState(NamedTuple):
@@ -1997,61 +1997,6 @@ def _frozen_lrd_accumulator_update(
     mean_ab = mean_a + delta * (n_b / n_ab)
     m2_ab = m2_a + m2_b + jnp.outer(delta, delta) * (n_a * n_b / n_ab)
     return _FrozenLRDAccumulatorState(mean=mean_ab, m2=m2_ab, count=n_ab)
-
-
-class MeadsBufferEndToEndParityTest(BlackJAXTest):
-    """Old Chan/Welford accumulator matches ensemble_batch_buffer at the LRD output level.
-
-    Path A: frozen pre-refactor accumulator → sample_covariance_eigh_low_rank
-    Path B: ensemble_batch_buffer → get_moments → sample_covariance_eigh_low_rank
-
-    Both paths must produce bit-identical (sigma, U, lam) under x64.
-    The frozen inline copy prevents silent aliasing: if the production code
-    changes, path A still reflects the original math.
-    """
-
-    def test_end_to_end_lrd_parity_x64(self):
-        """ensemble_batch_buffer matches old Chan/Welford at LRD output under x64."""
-        d, n_chains, k = 12, 16, 1
-        n_steps = 30
-        window_start = n_steps // 2  # MEADS-like: skip first half
-
-        key = self.next_key()
-        keys = jax.random.split(key, n_steps)
-        batches = [
-            np.array(jax.random.normal(keys[i], (n_chains, d))) for i in range(n_steps)
-        ]
-
-        with jax.enable_x64():
-            # Path A: frozen inline Chan/Welford (the original bespoke math)
-            acc = _frozen_lrd_accumulator_init(d)
-            for i in range(window_start, n_steps):
-                acc = _frozen_lrd_accumulator_update(acc, jnp.asarray(batches[i]))
-            metric_a = sample_covariance_eigh_low_rank(acc.m2, acc.count, k)
-
-            # Path B: ensemble_batch_buffer (the new D-layer path)
-            init, update, _, get_moments, _, _ = ensemble_batch_buffer(d, n_chains, k)
-            state = init()
-            for i in range(window_start, n_steps):
-                state = update(state, jnp.asarray(batches[i]))
-            block = get_moments(state)
-            metric_b = sample_covariance_eigh_low_rank(block.m2, block.count, k)
-
-        np.testing.assert_array_equal(
-            np.array(metric_a.sigma),
-            np.array(metric_b.sigma),
-            err_msg="MEADS parity: sigma differs (old accumulator vs ensemble_batch_buffer)",
-        )
-        np.testing.assert_array_equal(
-            np.array(metric_a.U),
-            np.array(metric_b.U),
-            err_msg="MEADS parity: U differs (old accumulator vs ensemble_batch_buffer)",
-        )
-        np.testing.assert_array_equal(
-            np.array(metric_a.lam),
-            np.array(metric_b.lam),
-            err_msg="MEADS parity: lam differs (old accumulator vs ensemble_batch_buffer)",
-        )
 
 
 if __name__ == "__main__":
