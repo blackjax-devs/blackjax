@@ -39,6 +39,8 @@ Coverage plan
   f32 Chan-merged moments vs f64 reference at d≈400, n≈64k.
 """
 
+from typing import NamedTuple
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -1959,6 +1961,99 @@ class EnsembleBatchShapeGuardTest(BlackJAXTest):
         state = update(state, batch)
         total, _ = get_support(state)
         self.assertAlmostEqual(float(total), float(n_chains), places=5)
+
+
+# ---------------------------------------------------------------------------
+# 16. MEADS end-to-end parity: old accumulator vs ensemble_batch_buffer
+# ---------------------------------------------------------------------------
+
+# Frozen copy of the bespoke Chan/Welford accumulator that lived in
+# meads_adaptation.py before R3-final.  Embedded here (not imported) so that
+# any future mutation to the production module cannot alias the golden.
+
+
+class _FrozenLRDAccumulatorState(NamedTuple):
+    """Pre-R3-final Chan/Welford state: (mean, m2, count)."""
+
+    mean: jnp.ndarray
+    m2: jnp.ndarray
+    count: jnp.ndarray
+
+
+def _frozen_lrd_accumulator_init(d: int) -> _FrozenLRDAccumulatorState:
+    return _FrozenLRDAccumulatorState(
+        mean=jnp.zeros((d,)), m2=jnp.zeros((d, d)), count=jnp.zeros(())
+    )
+
+
+def _frozen_lrd_accumulator_update(
+    acc: _FrozenLRDAccumulatorState, batch: jnp.ndarray
+) -> _FrozenLRDAccumulatorState:
+    mean_a, m2_a, n_a = acc
+    n_b = batch.shape[0]
+    mean_b = jnp.mean(batch, axis=0)
+    centered_b = batch - mean_b[None, :]
+    m2_b = centered_b.T @ centered_b
+    delta = mean_b - mean_a
+    n_ab = n_a + n_b
+    mean_ab = mean_a + delta * (n_b / n_ab)
+    m2_ab = m2_a + m2_b + jnp.outer(delta, delta) * (n_a * n_b / n_ab)
+    return _FrozenLRDAccumulatorState(mean=mean_ab, m2=m2_ab, count=n_ab)
+
+
+class MeadsBufferEndToEndParityTest(BlackJAXTest):
+    """Old Chan/Welford accumulator matches ensemble_batch_buffer at the LRD output level.
+
+    Path A: frozen pre-R3-final accumulator → sample_covariance_eigh_low_rank
+    Path B: ensemble_batch_buffer → get_moments → sample_covariance_eigh_low_rank
+
+    Both paths must produce bit-identical (sigma, U, lam) under x64.
+    The frozen inline copy prevents silent aliasing: if the production code
+    changes, path A still reflects the original math.
+    """
+
+    def test_end_to_end_lrd_parity_x64(self):
+        """ensemble_batch_buffer matches old Chan/Welford at LRD output under x64."""
+        d, n_chains, k = 12, 16, 1
+        n_steps = 30
+        window_start = n_steps // 2  # MEADS-like: skip first half
+
+        key = self.next_key()
+        keys = jax.random.split(key, n_steps)
+        batches = [
+            np.array(jax.random.normal(keys[i], (n_chains, d))) for i in range(n_steps)
+        ]
+
+        with jax.enable_x64():
+            # Path A: frozen inline Chan/Welford (the pre-R3-final math)
+            acc = _frozen_lrd_accumulator_init(d)
+            for i in range(window_start, n_steps):
+                acc = _frozen_lrd_accumulator_update(acc, jnp.asarray(batches[i]))
+            metric_a = sample_covariance_eigh_low_rank(acc.m2, acc.count, k)
+
+            # Path B: ensemble_batch_buffer (the new D-layer path)
+            init, update, _, get_moments, _, _ = ensemble_batch_buffer(d, n_chains, k)
+            state = init()
+            for i in range(window_start, n_steps):
+                state = update(state, jnp.asarray(batches[i]))
+            block = get_moments(state)
+            metric_b = sample_covariance_eigh_low_rank(block.m2, block.count, k)
+
+        np.testing.assert_array_equal(
+            np.array(metric_a.sigma),
+            np.array(metric_b.sigma),
+            err_msg="MEADS parity: sigma differs (old accumulator vs ensemble_batch_buffer)",
+        )
+        np.testing.assert_array_equal(
+            np.array(metric_a.U),
+            np.array(metric_b.U),
+            err_msg="MEADS parity: U differs (old accumulator vs ensemble_batch_buffer)",
+        )
+        np.testing.assert_array_equal(
+            np.array(metric_a.lam),
+            np.array(metric_b.lam),
+            err_msg="MEADS parity: lam differs (old accumulator vs ensemble_batch_buffer)",
+        )
 
 
 if __name__ == "__main__":
