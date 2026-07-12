@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g1cacf87fa" />
+  <meta name="docsearch:version" content="0.1.dev1+g5ac41b57a" />
   </head>
   
   
@@ -571,7 +571,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Running Chan/Welford full covariance accumulator for the slow-</span>
 <span class="sd">    direction trajectory-length floor&#39;s ``lambda_max`` estimate.</span>
 
-<span class="sd">    Mirrors ``meads_adaptation``&#39;s ``_LowRankAccumulatorState`` (identical</span>
+<span class="sd">    Mirrors :class:`~blackjax.adaptation.metric_buffers.MomentBlock` (identical</span>
 <span class="sd">    mean/M2/count recurrence) -- mirrored here rather than imported, to keep</span>
 <span class="sd">    this feature&#39;s diff self-contained to ``chees_adaptation.py``</span>
 <span class="sd">    (``meads_adaptation.py`` is out of scope for this change). Accumulated</span>
@@ -601,7 +601,7 @@
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge a batch of samples, shape ``(n_b, num_dim)`` (one step&#39;s</span>
 <span class="sd">    ensemble of ``num_chains`` positions), into the running accumulator via</span>
 <span class="sd">    Chan et al.&#39;s parallel/batch generalization of Welford&#39;s algorithm --</span>
-<span class="sd">    the same recurrence ``meads_adaptation._lrd_accumulator_update`` uses.</span>
+<span class="sd">    the same recurrence :func:`~blackjax.adaptation.metric_buffers.cgl_update_batch` uses.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mean_a</span><span class="p">,</span> <span class="n">m2_a</span><span class="p">,</span> <span class="n">n_a</span> <span class="o">=</span> <span class="n">acc</span>
     <span class="n">n_b</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
