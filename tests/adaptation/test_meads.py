@@ -9,10 +9,9 @@ import blackjax
 from blackjax.adaptation.meads_adaptation import (
     _LRD_EIGENVALUE_FLOOR,
     MEADSAdaptationState,
-    _lrd_accumulator_init,
-    _lrd_accumulator_update,
     base,
 )
+from blackjax.adaptation.metric_buffers import MomentBlock, cgl_update_batch
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.fixtures import BlackJAXTest
 
@@ -416,9 +415,11 @@ class TestMEADSLowRankHighDimFixes(BlackJAXTest):
         d, n_b, num_batches = 5, 8, 4
         batches = jax.random.normal(key, (num_batches, n_b, d))
 
-        acc = _lrd_accumulator_init(d)
+        acc = MomentBlock(
+            count=jnp.zeros(()), mean=jnp.zeros((d,)), m2=jnp.zeros((d, d))
+        )
         for b in range(num_batches):
-            acc = _lrd_accumulator_update(acc, batches[b])
+            acc = cgl_update_batch(acc, batches[b])
 
         self.assertEqual(float(acc.count), n_b * num_batches)
         self.assertGreater(float(acc.count), n_b)  # eff n > a single snapshot
@@ -545,3 +546,50 @@ class TestMEADSLowRankHighDimFixes(BlackJAXTest):
         expected_k = min(7, num_chains - 1, dim)
         self.assertEqual(mis.U.shape, (dim, expected_k))
         self.assertTrue(jnp.all(jnp.isfinite(last_states.position)))
+
+
+class TestMEADSLRDX64Sanity(BlackJAXTest):
+    """x64 sanity test for the MEADS-LRD run() path after the buffer-layer swap.
+
+    Not a cross-dtype output comparison (adaptive sampler divergence makes
+    such comparisons meaningless at 20 steps -- measured rtol ~120%). The
+    correct test class for adaptive samplers is sanity bounds: the output must
+    be finite, the step size must be positive, and eigenvalues must respect the
+    floor.
+    """
+
+    def test_meads_lrd_run_x64_sanity(self):
+        """Full run() under x64: step_size positive, lam finite ≥ floor, positions finite."""
+        with jax.enable_x64():
+            dim, num_chains, num_folds, low_rank_rank, num_steps = 6, 16, 4, 3, 20
+            logdensity = make_correlated_pair_logdensity(dim, rho=0.9)
+            positions = jax.random.normal(self.next_key(), (num_chains, dim))
+
+            warmup = blackjax.meads_adaptation(
+                logdensity,
+                num_chains=num_chains,
+                num_folds=num_folds,
+                low_rank_rank=low_rank_rank,
+            )
+            (last_states, params), _ = warmup.run(
+                self.next_key(), positions, num_steps=num_steps
+            )
+
+            mis = params["momentum_inverse_scale"]
+            self.assertGreater(
+                float(params["step_size"]),
+                0.0,
+                "step_size must be positive after warmup",
+            )
+            self.assertTrue(
+                jnp.all(jnp.isfinite(mis.lam)),
+                "lam must be finite",
+            )
+            self.assertTrue(
+                jnp.all(mis.lam >= _LRD_EIGENVALUE_FLOOR),
+                f"lam must be ≥ eigenvalue floor {_LRD_EIGENVALUE_FLOOR}",
+            )
+            self.assertTrue(
+                jnp.all(jnp.isfinite(last_states.position)),
+                "positions must be finite after warmup",
+            )

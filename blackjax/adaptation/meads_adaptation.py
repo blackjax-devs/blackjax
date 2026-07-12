@@ -19,6 +19,7 @@ from jax.flatten_util import ravel_pytree
 
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
+from blackjax.adaptation.metric_buffers import MomentBlock, cgl_update_batch
 from blackjax.adaptation.metric_estimators import sample_covariance_eigh_low_rank
 from blackjax.base import AdaptationAlgorithm
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
@@ -238,52 +239,8 @@ def _low_rank_precondition_pos(pos: Array, sigma: Array, U: Array, lam: Array) -
     return _low_rank_apply(pos, U, 1.0 / jnp.sqrt(lam)) / sigma
 
 
-class _LowRankAccumulatorState(NamedTuple):
-    """Running Chan/Welford covariance accumulator for MEADS-LRD's window
-    accumulation (high-d fix: see ``low_rank_rank``'s docstring).
-
-    Carries the mean, the Chan "M2" sum-of-outer-products, and the effective
-    sample count pooled across *all* ``num_chains`` chains and every
-    accumulated window step, so the low-rank metric can eventually be
-    estimated from effective ``n = num_chains * window_steps`` rather than a
-    single ``num_chains``-sized ensemble snapshot.
-    """
-
-    mean: Array
-    m2: Array
-    count: Array
-
-
-def _lrd_accumulator_init(d: int) -> _LowRankAccumulatorState:
-    return _LowRankAccumulatorState(
-        mean=jnp.zeros((d,)), m2=jnp.zeros((d, d)), count=jnp.zeros(())
-    )
-
-
-def _lrd_accumulator_update(
-    acc: _LowRankAccumulatorState, batch: Array
-) -> _LowRankAccumulatorState:
-    """Merge a batch of ``n_b`` samples, shape ``(n_b, d)``, into the running
-    accumulator via Chan et al.'s parallel/batch generalization of Welford's
-    algorithm -- the same recurrence
-    :func:`~blackjax.adaptation.mass_matrix.welford_algorithm` applies one
-    sample at a time, applied here to a whole ensemble at once.
-    """
-    mean_a, m2_a, n_a = acc
-    n_b = batch.shape[0]
-    mean_b = jnp.mean(batch, axis=0)
-    centered_b = batch - mean_b[None, :]
-    m2_b = centered_b.T @ centered_b
-
-    delta = mean_b - mean_a
-    n_ab = n_a + n_b
-    mean_ab = mean_a + delta * (n_b / n_ab)
-    m2_ab = m2_a + m2_b + jnp.outer(delta, delta) * (n_a * n_b / n_ab)
-    return _LowRankAccumulatorState(mean=mean_ab, m2=m2_ab, count=n_ab)
-
-
 def _lrd_from_accumulated_covariance(
-    acc: _LowRankAccumulatorState, k: int
+    acc: MomentBlock, k: int
 ) -> tuple[Array, Array, Array]:
     """Extract ``(sigma, U, lam)`` from a window-accumulated covariance
     (effective ``n = num_chains * window_steps``) via ``eigh`` of the
@@ -596,7 +553,7 @@ def meads_adaptation(
 
             updated_lrd_accum = jax.lax.cond(
                 in_window,
-                lambda a: _lrd_accumulator_update(a, flat_all_pos),
+                lambda a: cgl_update_batch(a, flat_all_pos),
                 lambda a: a,
                 lrd_accum,
             )
@@ -771,7 +728,9 @@ def meads_adaptation(
             # equals the full dense metric, so this clamp is lossless.
             nonlocal low_rank_k
             low_rank_k = min(low_rank_k, d)
-            init_lrd_accum = _lrd_accumulator_init(d)
+            init_lrd_accum = MomentBlock(
+                count=jnp.zeros(()), mean=jnp.zeros((d,)), m2=jnp.zeros((d, d))
+            )
         else:
             window_start = num_steps
             init_lrd_accum = None

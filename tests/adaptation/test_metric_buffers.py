@@ -39,15 +39,13 @@ Coverage plan
   f32 Chan-merged moments vs f64 reference at d≈400, n≈64k.
 """
 
+from typing import NamedTuple
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 
-from blackjax.adaptation.meads_adaptation import (
-    _lrd_accumulator_init,
-    _lrd_accumulator_update,
-)
 from blackjax.adaptation.metric_buffers import (
     AccumulatingSplitPopState,
     LateStartState,
@@ -926,10 +924,11 @@ class EnsembleMeadsParityX64Test(BlackJAXTest):
                 state = update(state, batch)
             block = get_moments(state)
 
-            # MEADS in-tree accumulator (reference implementation)
-            acc = _lrd_accumulator_init(d)
+            # Pre-refactor frozen accumulator (reference golden, defined in
+            # section 16 below — not imported, to prevent silent aliasing)
+            acc = _frozen_lrd_accumulator_init(d)
             for batch in batches:
-                acc = _lrd_accumulator_update(acc, batch)
+                acc = _frozen_lrd_accumulator_update(acc, batch)
 
             # Bit-exact parity: 0.0 difference, not just small difference
             np.testing.assert_array_equal(
@@ -1959,6 +1958,45 @@ class EnsembleBatchShapeGuardTest(BlackJAXTest):
         state = update(state, batch)
         total, _ = get_support(state)
         self.assertAlmostEqual(float(total), float(n_chains), places=5)
+
+
+# ---------------------------------------------------------------------------
+# 16. Frozen pre-refactor MEADS accumulator (reference used by EnsembleMeadsParityX64Test)
+# ---------------------------------------------------------------------------
+
+# Frozen copy of the bespoke Chan/Welford accumulator that lived in
+# meads_adaptation.py before the buffer-layer refactor.  Embedded here (not
+# imported) so that any future mutation to the production module cannot alias
+# the golden used by EnsembleMeadsParityX64Test (§5b).
+
+
+class _FrozenLRDAccumulatorState(NamedTuple):
+    """Bespoke pre-refactor Chan/Welford state: (mean, m2, count)."""
+
+    mean: jnp.ndarray
+    m2: jnp.ndarray
+    count: jnp.ndarray
+
+
+def _frozen_lrd_accumulator_init(d: int) -> _FrozenLRDAccumulatorState:
+    return _FrozenLRDAccumulatorState(
+        mean=jnp.zeros((d,)), m2=jnp.zeros((d, d)), count=jnp.zeros(())
+    )
+
+
+def _frozen_lrd_accumulator_update(
+    acc: _FrozenLRDAccumulatorState, batch: jnp.ndarray
+) -> _FrozenLRDAccumulatorState:
+    mean_a, m2_a, n_a = acc
+    n_b = batch.shape[0]
+    mean_b = jnp.mean(batch, axis=0)
+    centered_b = batch - mean_b[None, :]
+    m2_b = centered_b.T @ centered_b
+    delta = mean_b - mean_a
+    n_ab = n_a + n_b
+    mean_ab = mean_a + delta * (n_b / n_ab)
+    m2_ab = m2_a + m2_b + jnp.outer(delta, delta) * (n_a * n_b / n_ab)
+    return _FrozenLRDAccumulatorState(mean=mean_ab, m2=m2_ab, count=n_ab)
 
 
 if __name__ == "__main__":
