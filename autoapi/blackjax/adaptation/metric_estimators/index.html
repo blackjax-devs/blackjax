@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.meads_adaptation" href="../meads_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
+  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
   </head>
   
   
@@ -424,13 +424,13 @@
                   
   <section id="module-blackjax.adaptation.metric_estimators">
 <span id="blackjax-adaptation-metric-estimators"></span><h1>blackjax.adaptation.metric_estimators<a class="headerlink" href="#module-blackjax.adaptation.metric_estimators" title="Link to this heading">#</a></h1>
-<p>E-layer: pure metric estimator functions for the low-rank unification RFC.</p>
+<p>Pure metric estimator functions for the low-rank metric adaptation layer.</p>
 <p>Each function is a <strong>pure transformation</strong>: explicit arrays in → metric
 representation out.  No buffer state, no scheduling logic, no side effects.
 All functions are JAX-traceable and safe to use inside <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> /
 <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> provided that <code class="docutils literal notranslate"><span class="pre">max_rank</span></code> (where applicable) is a static
 Python integer (required to determine output shapes).</p>
-<p><strong>Source lineage</strong> (R2a census, 2026-07-11, main &#64; 532631c1):</p>
+<p><strong>Source lineage</strong> (as of 2026-07-11, main &#64; 532631c1):</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Estimator</p></th>
@@ -469,16 +469,16 @@ Python integer (required to determine output shapes).</p>
 </tbody>
 </table>
 </div>
-<p><strong>Composition law (RFC §0 L2):</strong> estimators, data-feeding policy, and schedule
-are co-adapted package components.  The functions here are the <em>estimator</em>
+<p><strong>Composition note:</strong> estimators, data-feeding policy, and schedule are
+co-adapted package components.  The functions here are the <em>estimator</em>
 component only — callers supply the buffer view.  Gating logic (support gates,
-fraction-window checks, 2·d thresholds) belongs in the G-layer; it is
+fraction-window checks, 2·d thresholds) belongs in the caller; it is
 explicitly <em>not</em> implemented here (docstrings note the relevant gates for each
 estimator).</p>
-<p><strong>Registration (R2a phase):</strong> these functions are module-public (importable
-from <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.metric_estimators</span></code>) but are NOT exported at the
-<code class="docutils literal notranslate"><span class="pre">blackjax</span></code> top-level.  Top-level registration and consumer re-wiring happen
-in R3.</p>
+<p><strong>Registration:</strong> these functions are module-public (importable from
+<code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.metric_estimators</span></code>) but are NOT exported at the
+<code class="docutils literal notranslate"><span class="pre">blackjax</span></code> top-level.  Top-level export and consumer re-wiring are
+deliberate follow-up work.</p>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
@@ -551,8 +551,7 @@ informativeness 0.</p>
 <dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness">
 <span class="sig-name descname"><span class="pre">select_top_eigenvalues_by_informativeness</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">eigenvalues</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">eigenvectors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail_handling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'mask_pad'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'raw'</span></span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mask_pad'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#select_top_eigenvalues_by_informativeness"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness" title="Link to this definition">#</a></dt>
 <dd><p>Select the top-<code class="docutils literal notranslate"><span class="pre">max_rank</span></code> eigenpairs by <a class="reference internal" href="#blackjax.adaptation.metric_estimators.eigenvalue_informativeness" title="blackjax.adaptation.metric_estimators.eigenvalue_informativeness"><code class="xref py py-func docutils literal notranslate"><span class="pre">eigenvalue_informativeness()</span></code></a>.</p>
-<p>Two production consumers use this pattern with <strong>divergent tail handling</strong>
-(D2 in the RFC duplication map):</p>
+<p>Two production consumers use this pattern with <strong>divergent tail handling</strong>:</p>
 <dl>
 <dt><code class="docutils literal notranslate"><span class="pre">tail_handling=&quot;mask_pad&quot;</span></code> (default)</dt><dd><p>Used by <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a>.  Eigenvalues inside the
 uninformative band <span class="math notranslate nohighlight">\([1/\text{cutoff},\ \text{cutoff}]\)</span> are
@@ -673,7 +672,8 @@ matches nutpie’s <code class="docutils literal notranslate"><span class="pre">
 <p class="rubric">Notes</p>
 <p>The optimal translation <code class="docutils literal notranslate"><span class="pre">μ*</span> <span class="pre">=</span> <span class="pre">x̄</span> <span class="pre">+</span> <span class="pre">σ²</span> <span class="pre">⊙</span> <span class="pre">ᾱ</span></code> (paper §3.2) is an
 adaptation-layer output, not part of the metric.  Compute it separately
-from the per-draw means if needed by the warmup wiring (R3 concern).</p>
+from the per-draw means if needed by the warmup wiring (a warmup-wiring
+concern, deliberately outside this estimator).</p>
 </dd></dl>
 
 <dl class="py function">
@@ -695,8 +695,8 @@ eigenvalues are NOT masked to 1.  This is a deliberate design choice
 in the MCLMC-LRD pilot estimator: the raw eigenspectrum is what drives
 the effective condition number diagnostics downstream.</p></li>
 </ul>
-<p>This asymmetry is preserved faithfully here; see the RFC duplication map
-D2 for context.</p>
+<p>This asymmetry is preserved faithfully here; see the module docstring’s
+source-lineage table for context.</p>
 <p><strong>G-layer note:</strong> the Geyer-ESS support gate
 (<code class="docutils literal notranslate"><span class="pre">k_used</span> <span class="pre">=</span> <span class="pre">min(k,</span> <span class="pre">⌊n_eff/2⌋)</span></code>, <code class="docutils literal notranslate"><span class="pre">mclmc_lrd_adaptation.py:636</span></code>) and
 the <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">≥</span> <span class="pre">2·d</span></code> threshold are G-layer concerns.  Ensure <code class="docutils literal notranslate"><span class="pre">max_rank</span> <span class="pre">≤</span>
@@ -782,11 +782,11 @@ satisfy <code class="docutils literal notranslate"><span class="pre">max_rank</s
 with <code class="docutils literal notranslate"><span class="pre">is_diagonal_matrix=True</span></code>.  Computes the Bessel-corrected sample
 variance <span class="math notranslate nohighlight">\(s^2_i = \frac{1}{n-1}\sum_{j=1}^n (x_{ji} - \bar{x}_i)^2\)</span>
 for each coordinate <code class="docutils literal notranslate"><span class="pre">i</span></code>.</p>
-<p><strong>Why a wrapper instead of direct ``jnp.var``:</strong> R2b/R3 must have a
-single estimator import surface; this function ensures future callers can
-swap to streaming Welford (e.g., for online adaptation) without changing
-call sites.  The algorithm itself is NOT moved or duplicated — only the
-call site is unified here.</p>
+<p><strong>Why a wrapper instead of direct ``jnp.var``:</strong> having a single
+estimator import surface ensures future callers can swap to streaming
+Welford (e.g., for online adaptation) without changing call sites.
+The algorithm itself is NOT moved or duplicated — only the call site
+is unified here.</p>
 <p><strong>Source:</strong> <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix.welford_algorithm</span></code>
 (<code class="docutils literal notranslate"><span class="pre">is_diagonal_matrix=True</span></code>).</p>
 <dl class="field-list simple">

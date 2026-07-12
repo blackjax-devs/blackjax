@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
+  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
   </head>
   
   
@@ -420,6 +420,7 @@
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mcmc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptationResults</span><span class="p">,</span> <span class="n">return_all_adapt_info</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">sample_covariance_eigh_low_rank</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LowRankInverseMassMatrix</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
@@ -715,24 +716,13 @@
 <span class="sd">    ``p &gt;&gt; n`` noise-dominated once ``d`` exceeds ``num_chains``, but the</span>
 <span class="sd">    window-accumulated covariance&#39;s effective ``n`` can comfortably exceed</span>
 <span class="sd">    ``d`` given enough window steps.</span>
+
+<span class="sd">    Delegates to</span>
+<span class="sd">    :func:`~blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank`</span>
+<span class="sd">    (behavior-identical).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">mean</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">count</span> <span class="o">=</span> <span class="n">acc</span>
-    <span class="k">del</span> <span class="n">mean</span>  <span class="c1"># only the second moment is needed below</span>
-    <span class="n">covariance</span> <span class="o">=</span> <span class="n">m2</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">count</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
-    <span class="n">variance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">covariance</span><span class="p">)</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">variance</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sigma</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">sigma</span><span class="p">)</span>  <span class="c1"># avoid div-by-zero</span>
-
-    <span class="n">inv_sigma</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sigma</span>
-    <span class="n">correlation</span> <span class="o">=</span> <span class="n">covariance</span> <span class="o">*</span> <span class="n">inv_sigma</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">inv_sigma</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
-
-    <span class="c1"># eigh gives ascending eigenvalues of the (symmetric) correlation matrix.</span>
-    <span class="n">lam_all</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">correlation</span><span class="p">)</span>
-    <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lam_all</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">top_idx</span> <span class="o">=</span> <span class="n">sort_idx</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
-    <span class="n">lam</span> <span class="o">=</span> <span class="n">lam_all</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span>
-    <span class="n">U</span> <span class="o">=</span> <span class="n">V</span><span class="p">[:,</span> <span class="n">top_idx</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span>
+    <span class="n">lrd</span> <span class="o">=</span> <span class="n">sample_covariance_eigh_low_rank</span><span class="p">(</span><span class="n">acc</span><span class="o">.</span><span class="n">m2</span><span class="p">,</span> <span class="n">acc</span><span class="o">.</span><span class="n">count</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lrd</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">lrd</span><span class="o">.</span><span class="n">U</span><span class="p">,</span> <span class="n">lrd</span><span class="o">.</span><span class="n">lam</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_lrd_diagonal_fallback</span><span class="p">(</span><span class="n">flat_positions</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
@@ -781,6 +771,9 @@
 <span class="sd">    ``sqrt(lam)`` out of the step-size heuristic entirely): the degenerate</span>
 <span class="sd">    collapse (``rhat = inf``, NaN step size) only occurs if *both* guards</span>
 <span class="sd">    are defeated.</span>
+
+<span class="sd">    ``jnp.maximum(lam, floor)`` guards against small/negative-but-finite</span>
+<span class="sd">    eigenvalues only — NaN passes through (``maximum(NaN, floor) = NaN``).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">lam</span><span class="p">,</span> <span class="n">_LRD_EIGENVALUE_FLOOR</span><span class="p">)</span>
 

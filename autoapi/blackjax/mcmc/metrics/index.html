@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.mclmc" href="../mclmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
+  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
   </head>
   
   
@@ -680,8 +680,9 @@ representation (HMC, MCLMC, etc.).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>This function is a <strong>pure adapter</strong> — it does not alter Pathfinder’s
-internal sampling path (Phase R3 consumer migration).  In Phase R1 it
-ships as adapter + golden tests only.</p>
+internal sampling path.  Wiring this adapter into Pathfinder’s own
+sampling path is deliberate follow-up work; for now it ships as an
+adapter with parity tests only.</p>
 </div>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>

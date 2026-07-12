@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
+  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
   </head>
   
   
@@ -1055,8 +1055,9 @@
 
 <span class="sd">    .. note::</span>
 <span class="sd">        This function is a **pure adapter** — it does not alter Pathfinder&#39;s</span>
-<span class="sd">        internal sampling path (Phase R3 consumer migration).  In Phase R1 it</span>
-<span class="sd">        ships as adapter + golden tests only.</span>
+<span class="sd">        internal sampling path.  Wiring this adapter into Pathfinder&#39;s own</span>
+<span class="sd">        sampling path is deliberate follow-up work; for now it ships as an</span>
+<span class="sd">        adapter with parity tests only.</span>
 
 <span class="sd">    .. warning::</span>
 <span class="sd">        **Positive-definiteness precondition.**  The triple ``(alpha, beta, gamma)``</span>

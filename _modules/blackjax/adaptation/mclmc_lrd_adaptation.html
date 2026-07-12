@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
+  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
   </head>
   
   
@@ -532,6 +532,9 @@
     <span class="n">MCLMCAdaptationState</span><span class="p">,</span>
     <span class="n">mclmc_find_L_and_step_size</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_estimators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">select_top_eigenvalues_by_informativeness</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.diagnostics</span><span class="w"> </span><span class="kn">import</span> <span class="n">effective_sample_size</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LowRankInverseMassMatrix</span>
 
@@ -683,13 +686,20 @@
     <span class="n">V</span> <span class="o">=</span> <span class="n">Vt</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># (d, min(n,d))</span>
     <span class="n">lam</span> <span class="o">=</span> <span class="p">(</span><span class="n">S</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">n</span>  <span class="c1"># (min(n,d),)</span>
 
-    <span class="c1"># Select top-k by |λ - 1| (directions that deviate most from isotropic).</span>
-    <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="n">top_idx</span> <span class="o">=</span> <span class="n">sort_idx</span><span class="p">[:</span><span class="n">k</span><span class="p">]</span>
+    <span class="c1"># Top-k selection via select_top_eigenvalues_by_informativeness</span>
+    <span class="c1"># (tail_handling=&quot;raw&quot; — no masking to 1, no padding).</span>
+    <span class="c1"># Using draws_singular_value_low_rank directly would require a second SVD</span>
+    <span class="c1"># pass to produce lam_all_sorted (that wrapper returns only (sigma, U_k,</span>
+    <span class="c1"># lam_k), not the full spectrum); keeping the single SVD here avoids the</span>
+    <span class="c1"># redundancy.  See metric_estimators.draws_singular_value_low_rank for</span>
+    <span class="c1"># the array-based wrapper.</span>
+    <span class="n">U_k</span><span class="p">,</span> <span class="n">lam_k</span> <span class="o">=</span> <span class="n">select_top_eigenvalues_by_informativeness</span><span class="p">(</span>
+        <span class="n">lam</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">tail_handling</span><span class="o">=</span><span class="s2">&quot;raw&quot;</span>
+    <span class="p">)</span>
 
-    <span class="n">lam_k</span> <span class="o">=</span> <span class="n">lam</span><span class="p">[</span><span class="n">top_idx</span><span class="p">]</span>  <span class="c1"># (k,)</span>
-    <span class="n">U_k</span> <span class="o">=</span> <span class="n">V</span><span class="p">[:,</span> <span class="n">top_idx</span><span class="p">]</span>  <span class="c1"># (d, k)</span>
-    <span class="n">lam_all_sorted</span> <span class="o">=</span> <span class="n">lam</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">]</span>  <span class="c1"># full spectrum, ordered by |λ-1| desc</span>
+    <span class="c1"># Full spectrum sorted by |λ-1|, needed by _kappa_eff_pilot (G-layer concern).</span>
+    <span class="n">sort_idx</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lam</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">))[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">lam_all_sorted</span> <span class="o">=</span> <span class="n">lam</span><span class="p">[</span><span class="n">sort_idx</span><span class="p">]</span>  <span class="c1"># shape (min(n,d),), ordered by |λ-1| desc</span>
     <span class="k">return</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">U_k</span><span class="p">,</span> <span class="n">lam_k</span><span class="p">,</span> <span class="n">lam_all_sorted</span>
 
 

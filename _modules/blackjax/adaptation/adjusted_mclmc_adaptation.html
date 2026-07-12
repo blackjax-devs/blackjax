@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
+  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
   </head>
   
   
@@ -784,6 +784,11 @@
         <span class="n">eigenvector</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">num_steps2</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
             <span class="n">x_average</span><span class="p">,</span> <span class="n">x_squared_average</span> <span class="o">=</span> <span class="n">average</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">average</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="c1"># See metric_estimators.sample_variance_diagonal for the array-based</span>
+            <span class="c1"># equivalent (E[x^2] - E[x]^2 on raw draws).  Not usable here:</span>
+            <span class="c1"># x_average/x_squared_average are step-size-weighted streaming</span>
+            <span class="c1"># aggregates, not a raw draws array — materializing a draws buffer</span>
+            <span class="c1"># at this call site would change semantics.</span>
             <span class="n">variances</span> <span class="o">=</span> <span class="n">x_squared_average</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">x_average</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="nb">max</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>

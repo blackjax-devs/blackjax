@@ -229,8 +229,9 @@ Module Contents
 
    .. note::
        This function is a **pure adapter** — it does not alter Pathfinder's
-       internal sampling path (Phase R3 consumer migration).  In Phase R1 it
-       ships as adapter + golden tests only.
+       internal sampling path.  Wiring this adapter into Pathfinder's own
+       sampling path is deliberate follow-up work; for now it ships as an
+       adapter with parity tests only.
 
    .. warning::
        **Positive-definiteness precondition.**  The triple ``(alpha, beta, gamma)``

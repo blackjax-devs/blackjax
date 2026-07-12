@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g44eac39e7" />
+  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
   </head>
   
   
@@ -412,7 +412,7 @@
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;E-layer: pure metric estimator functions for the low-rank unification RFC.</span>
+<span class="sd">&quot;&quot;&quot;Pure metric estimator functions for the low-rank metric adaptation layer.</span>
 
 <span class="sd">Each function is a **pure transformation**: explicit arrays in → metric</span>
 <span class="sd">representation out.  No buffer state, no scheduling logic, no side effects.</span>
@@ -420,7 +420,7 @@
 <span class="sd">``jax.vmap`` provided that ``max_rank`` (where applicable) is a static</span>
 <span class="sd">Python integer (required to determine output shapes).</span>
 
-<span class="sd">**Source lineage** (R2a census, 2026-07-11, main @ 532631c1):</span>
+<span class="sd">**Source lineage** (as of 2026-07-11, main @ 532631c1):</span>
 
 <span class="sd">+--------------------------------------+--------------------------------------------+</span>
 <span class="sd">| Estimator                            | Extracted from                             |</span>
@@ -446,17 +446,17 @@
 <span class="sd">|                                      | (verbatim duplicate; one function here)    |</span>
 <span class="sd">+--------------------------------------+--------------------------------------------+</span>
 
-<span class="sd">**Composition law (RFC §0 L2):** estimators, data-feeding policy, and schedule</span>
-<span class="sd">are co-adapted package components.  The functions here are the *estimator*</span>
+<span class="sd">**Composition note:** estimators, data-feeding policy, and schedule are</span>
+<span class="sd">co-adapted package components.  The functions here are the *estimator*</span>
 <span class="sd">component only — callers supply the buffer view.  Gating logic (support gates,</span>
-<span class="sd">fraction-window checks, 2·d thresholds) belongs in the G-layer; it is</span>
+<span class="sd">fraction-window checks, 2·d thresholds) belongs in the caller; it is</span>
 <span class="sd">explicitly *not* implemented here (docstrings note the relevant gates for each</span>
 <span class="sd">estimator).</span>
 
-<span class="sd">**Registration (R2a phase):** these functions are module-public (importable</span>
-<span class="sd">from ``blackjax.adaptation.metric_estimators``) but are NOT exported at the</span>
-<span class="sd">``blackjax`` top-level.  Top-level registration and consumer re-wiring happen</span>
-<span class="sd">in R3.</span>
+<span class="sd">**Registration:** these functions are module-public (importable from</span>
+<span class="sd">``blackjax.adaptation.metric_estimators``) but are NOT exported at the</span>
+<span class="sd">``blackjax`` top-level.  Top-level export and consumer re-wiring are</span>
+<span class="sd">deliberate follow-up work.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Literal</span>
@@ -464,10 +464,82 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.low_rank_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">_relative_pd_floor</span><span class="p">,</span> <span class="n">_spd_mean</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.mass_matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">welford_algorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LowRankInverseMassMatrix</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># SPD utilities (moved from low_rank_adaptation; it imports from here)</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_relative_pd_floor</span><span class="p">(</span><span class="n">vals</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Machine-epsilon floor, SCALED to ``vals``&#39; own magnitude.</span>
+
+<span class="sd">    An absolute floor (e.g. a bare ``jnp.finfo(dtype).eps``) is wrong here:</span>
+<span class="sd">    this module&#39;s SPD matrices routinely span many orders of magnitude --</span>
+<span class="sd">    e.g. ``C_a = P_a P_a^T / gamma + I`` scales like ``O(n / gamma)``</span>
+<span class="sd">    (``~1e10`` at ``n=50_000`` draws, default ``gamma=1e-5``), so</span>
+<span class="sd">    ``inv(C_a)``&#39;s eigenvalues legitimately live around ``~1e-10`` -- an</span>
+<span class="sd">    absolute ``eps`` (``~1.2e-7`` for float32) would incorrectly clamp that</span>
+<span class="sd">    perfectly-conditioned small eigenvalue UP by several orders of</span>
+<span class="sd">    magnitude, corrupting the result (caught by</span>
+<span class="sd">    ``LowRankDiagonalConsistencyTest``: a bare absolute floor turned the 1D</span>
+<span class="sd">    case&#39;s correct ``lam=1.0`` into ``lam=34.6``). Flooring relative to the</span>
+<span class="sd">    largest eigenvalue IN THE SAME SPECTRUM correctly leaves a</span>
+<span class="sd">    uniformly-small-but-well-conditioned spectrum untouched while still</span>
+<span class="sd">    catching a genuinely near-zero-relative-to-its-own-scale eigenvalue</span>
+<span class="sd">    (the actual rounding-noise failure mode the PD guard targets).</span>
+
+<span class="sd">    **Moved from** ``blackjax.adaptation.low_rank_adaptation``;</span>
+<span class="sd">    ``low_rank_adaptation`` now imports from here.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">vals</span><span class="p">)),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">vals</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">tiny</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">vals</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span> <span class="o">*</span> <span class="n">scale</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_spd_mean</span><span class="p">(</span><span class="n">A</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">B</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Symmetric positive-definite (AIRM) geometric mean of A and B.</span>
+
+<span class="sd">    Computes :math:`A \\#_{1/2} B = B^{1/2}(B^{-1/2}AB^{-1/2})^{1/2}B^{1/2}`</span>
+<span class="sd">    via the eigendecomposition of B (the gradient covariance), following the</span>
+<span class="sd">    nutpie convention.  Both matrices must be SPD with shape ``(k, k)``.</span>
+
+<span class="sd">    **PD guard** (round-9 schedule-port audit, GAP-2): both intermediate</span>
+<span class="sd">    eigenspectra are floored at :func:`_relative_pd_floor` rather than</span>
+<span class="sd">    ``0.0``. nuts-rs&#39;s own unit test (``low_rank.rs::test_estimate_mass_matrix``)</span>
+<span class="sd">    *asserts* this pipeline returns strictly-positive eigenvalues -- it is</span>
+<span class="sd">    PD by construction in exact arithmetic, since ``A``/``B`` are each</span>
+<span class="sd">    ``P P^T / gamma + I``. The float32 audit found that rounding in this</span>
+<span class="sd">    eigendecomposition-heavy pipeline (condition number up to ``~1/gamma``)</span>
+<span class="sd">    can nonetheless produce small negative eigenvalues that silently make</span>
+<span class="sd">    the whole geometric mean indefinite; a *scale-relative* floor (see</span>
+<span class="sd">    :func:`_relative_pd_floor`&#39;s docstring for why an absolute one is wrong</span>
+<span class="sd">    here) fixes this without perturbing legitimately-informative</span>
+<span class="sd">    eigenvalues, matching nuts-rs&#39;s own PD-by-construction invariant.</span>
+
+<span class="sd">    **Moved from** ``blackjax.adaptation.low_rank_adaptation``;</span>
+<span class="sd">    ``low_rank_adaptation`` now imports from here.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Eigendecompose B: B = V_b D_b V_b^T</span>
+    <span class="n">vals_b</span><span class="p">,</span> <span class="n">vecs_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">B</span><span class="p">)</span>
+    <span class="n">vals_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">vals_b</span><span class="p">,</span> <span class="n">_relative_pd_floor</span><span class="p">(</span><span class="n">vals_b</span><span class="p">))</span>
+    <span class="n">sqrt_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vals_b</span><span class="p">)</span>
+    <span class="n">inv_sqrt_b</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">sqrt_b</span>  <span class="c1"># vals_b &gt; 0 (floored), so this never divides by 0</span>
+
+    <span class="c1"># M = B^{-1/2} A B^{-1/2} in B&#39;s eigenbasis</span>
+    <span class="n">tmp</span> <span class="o">=</span> <span class="n">vecs_b</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">A</span> <span class="o">@</span> <span class="n">vecs_b</span>  <span class="c1"># (k, k)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">inv_sqrt_b</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">tmp</span> <span class="o">*</span> <span class="n">inv_sqrt_b</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+
+    <span class="n">vals_m</span><span class="p">,</span> <span class="n">vecs_m</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">M</span><span class="p">)</span>
+    <span class="n">vals_m</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">vals_m</span><span class="p">,</span> <span class="n">_relative_pd_floor</span><span class="p">(</span><span class="n">vals_m</span><span class="p">))</span>
+    <span class="n">sqrt_m</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">vals_m</span><span class="p">)</span>
+
+    <span class="c1"># A # B = B^{1/2} M^{1/2} B^{1/2}</span>
+    <span class="c1"># = (V_b diag(sqrt_b) V_m) diag(sqrt_m) (V_b diag(sqrt_b) V_m)^T</span>
+    <span class="n">W</span> <span class="o">=</span> <span class="n">vecs_b</span> <span class="o">@</span> <span class="p">(</span><span class="n">sqrt_b</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">vecs_m</span><span class="p">)</span>  <span class="c1"># (k, k)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">W</span> <span class="o">*</span> <span class="n">sqrt_m</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">@</span> <span class="n">W</span><span class="o">.</span><span class="n">T</span>
+
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;eigenvalue_informativeness&quot;</span><span class="p">,</span>
@@ -533,8 +605,7 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
 <span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Select the top-``max_rank`` eigenpairs by :func:`eigenvalue_informativeness`.</span>
 
-<span class="sd">    Two production consumers use this pattern with **divergent tail handling**</span>
-<span class="sd">    (D2 in the RFC duplication map):</span>
+<span class="sd">    Two production consumers use this pattern with **divergent tail handling**:</span>
 
 <span class="sd">    ``tail_handling=&quot;mask_pad&quot;`` (default)</span>
 <span class="sd">        Used by :func:`fisher_score_low_rank`.  Eigenvalues inside the</span>
@@ -731,7 +802,8 @@
 <span class="sd">    -----</span>
 <span class="sd">    The optimal translation ``μ* = x̄ + σ² ⊙ ᾱ`` (paper §3.2) is an</span>
 <span class="sd">    adaptation-layer output, not part of the metric.  Compute it separately</span>
-<span class="sd">    from the per-draw means if needed by the warmup wiring (R3 concern).</span>
+<span class="sd">    from the per-draw means if needed by the warmup wiring (a warmup-wiring</span>
+<span class="sd">    concern, deliberately outside this estimator).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">orig_dtype</span> <span class="o">=</span> <span class="n">draws</span><span class="o">.</span><span class="n">dtype</span>
     <span class="n">compute_dtype</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">float64</span> <span class="k">if</span> <span class="n">jax</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">jax_enable_x64</span> <span class="k">else</span> <span class="n">orig_dtype</span>
@@ -826,8 +898,8 @@
 <span class="sd">      in the MCLMC-LRD pilot estimator: the raw eigenspectrum is what drives</span>
 <span class="sd">      the effective condition number diagnostics downstream.</span>
 
-<span class="sd">    This asymmetry is preserved faithfully here; see the RFC duplication map</span>
-<span class="sd">    D2 for context.</span>
+<span class="sd">    This asymmetry is preserved faithfully here; see the module docstring&#39;s</span>
+<span class="sd">    source-lineage table for context.</span>
 
 <span class="sd">    **G-layer note:** the Geyer-ESS support gate</span>
 <span class="sd">    (``k_used = min(k, ⌊n_eff/2⌋)``, ``mclmc_lrd_adaptation.py:636``) and</span>
@@ -972,11 +1044,11 @@
 <span class="sd">    variance :math:`s^2_i = \frac{1}{n-1}\sum_{j=1}^n (x_{ji} - \bar{x}_i)^2`</span>
 <span class="sd">    for each coordinate ``i``.</span>
 
-<span class="sd">    **Why a wrapper instead of direct ``jnp.var``:** R2b/R3 must have a</span>
-<span class="sd">    single estimator import surface; this function ensures future callers can</span>
-<span class="sd">    swap to streaming Welford (e.g., for online adaptation) without changing</span>
-<span class="sd">    call sites.  The algorithm itself is NOT moved or duplicated — only the</span>
-<span class="sd">    call site is unified here.</span>
+<span class="sd">    **Why a wrapper instead of direct ``jnp.var``:** having a single</span>
+<span class="sd">    estimator import surface ensures future callers can swap to streaming</span>
+<span class="sd">    Welford (e.g., for online adaptation) without changing call sites.</span>
+<span class="sd">    The algorithm itself is NOT moved or duplicated — only the call site</span>
+<span class="sd">    is unified here.</span>
 
 <span class="sd">    **Source:** ``blackjax.adaptation.mass_matrix.welford_algorithm``</span>
 <span class="sd">    (``is_diagonal_matrix=True``).</span>
