@@ -30,21 +30,21 @@ rather than raw draws.  Merging blocks gives the current estimate inputs;
 dropping the oldest block and re-merging the rest implements exact
 split-granular forgetting with no raw-draw ring.
 
-**D-layer contract (A1 — ensemble split semantics).** For ``(nc, d)``-block
-consumers a "split" is a **draw-axis partition** (step-ranges; all chains
-fold into the block via Chan merge) — NEVER a chain-subset.  This is
-enforced by the ``ensemble_batch_buffer`` factory and documented on every
-``push_split`` operation.
+**Ensemble split semantics.** For ``(nc, d)``-block consumers a "split" is
+a **draw-axis partition** (step-ranges; all chains fold into the block via
+Chan merge) — NEVER a chain-subset.  This is enforced by the
+``ensemble_batch_buffer`` factory and documented on every ``push_split``
+operation.
 
-**D-layer contract (A2 — diag_reference).** The running diagonal is
-derivable from block moments: ``diag_ref = diag(M2_merged) / max(n-1, 1)``.
-A single accumulator serves both the adapted metric and the ε-proxy
-diagonal channel; step-size proxies read ``get_diag_reference``, not the
-adapted low-rank metric (L3 decoupling contract).
+**Diagonal-reference contract.** The running diagonal is derivable from
+block moments: ``diag_ref = diag(M2_merged) / max(n-1, 1)``.  A single
+accumulator serves both the adapted metric and the step-size proxy channel;
+step-size proxies read ``get_diag_reference``, never the adapted low-rank
+metric directly.
 
-**``requires_draws`` is opt-in, default OFF (A4).** Raw draws exist only
-behind a ``requires_draws`` capability flag needed by the draws-SVD
-estimator family.  Allocating an ``(n_chains, steps, d)`` raw-draw ring is
+**``requires_draws`` is opt-in, default off.** Raw draws exist only behind
+a ``requires_draws`` capability flag needed by the draws-SVD estimator
+family.  Allocating an ``(n_chains, steps, d)`` raw-draw ring is
 prohibitive for ensemble consumers.  All four policies default to
 ``requires_draws=False``; passing ``True`` raises ``NotImplementedError``
 (the draw-ring variant is a follow-up work item).
@@ -235,7 +235,7 @@ def chan_update_batch(block: MomentBlock, batch: Array) -> MomentBlock:
 
     **Ensemble (nc, d) feeds**: when ``batch`` is a ``(n_chains, d)``
     ensemble snapshot, all chains fold into the block's Chan merge — this
-    is how :func:`ensemble_batch_buffer` satisfies the A1 draw-axis
+    is how :func:`ensemble_batch_buffer` satisfies the draw-axis split
     semantics: a "split" is a time-range partition across all chains, not a
     chain-subset partition.
 
@@ -281,9 +281,7 @@ def chan_update_batch(block: MomentBlock, batch: Array) -> MomentBlock:
     return MomentBlock(count=n_ab, mean=mean_ab, m2=m2_ab)
 
 
-def merge_block_ring(
-    counts: Array, means: Array, m2s: Array
-) -> MomentBlock:
+def merge_block_ring(counts: Array, means: Array, m2s: Array) -> MomentBlock:
     """Reduce a ring of ``k`` moment blocks into a single merged block.
 
     Iterates through the ring with :func:`~jax.lax.scan`, Chan-merging
@@ -336,10 +334,9 @@ def merge_block_ring(
 def diag_from_moment_block(block: MomentBlock) -> Array:
     """Bessel-corrected per-coordinate variance from a :class:`MomentBlock`.
 
-    Implements the A2 diagonal-reference contract: one accumulator serves
-    both the adapted metric and the ε-proxy diagonal channel.  Step-size
-    proxies read this diagonal view; they never read the adapted low-rank
-    metric directly (L3 decoupling).
+    One accumulator serves both the adapted metric and the step-size proxy
+    channel.  Step-size proxies read this diagonal view; they never read
+    the adapted low-rank metric directly.
 
     The formula is ``diag_ref = diag(M2) / max(count - 1, 1)``.  For an
     empty block (``count=0``), returns ones (isotropic default).
@@ -424,7 +421,7 @@ class AccumulatingSplitPopState(NamedTuple):
 
     Notes
     -----
-    Split semantics (A1 for ensemble consumers): a "split" is always a
+    Split semantics (for ensemble consumers): a "split" is always a
     **draw-axis time partition** — all chains in a batch fold into the
     active block's Chan merge.  Splits are never chain-subset partitions.
     """
@@ -475,7 +472,7 @@ def reset_window_buffer(
     requires_draws
         If ``True``, attach a raw-draw ring to the state for draw-SVD
         estimators.  **Currently not implemented** (raises
-        ``NotImplementedError``); default ``False`` is the A4 contract.
+        ``NotImplementedError``); default ``False`` (opt-in, off by default).
 
     Returns
     -------
@@ -514,15 +511,13 @@ def reset_window_buffer(
         batch
             New draws, shape ``(n_b, d)`` or ``(d,)`` (reshaped to ``(1, d)``
             internally).  For ensemble consumers ``batch`` is ``(n_chains, d)``
-            and all chains fold into the block via Chan merge (A1).
+            and all chains fold into the block via Chan merge (draw-axis split).
         """
         if batch.ndim == 1:
             batch = batch[None, :]  # (1, d)
         block = MomentBlock(count=state.count, mean=state.mean, m2=state.m2)
         updated = chan_update_batch(block, batch)
-        return ResetWindowState(
-            count=updated.count, mean=updated.mean, m2=updated.m2
-        )
+        return ResetWindowState(count=updated.count, mean=updated.mean, m2=updated.m2)
 
     def push_split(state: ResetWindowState) -> ResetWindowState:
         """Zero the accumulator (Stan-style hard reset at window boundary)."""
@@ -542,10 +537,10 @@ def reset_window_buffer(
         return state.count, per_block
 
     def get_diag_reference(state: ResetWindowState) -> Array:
-        """Bessel-corrected per-coordinate variance (A2 diagonal channel).
+        """Bessel-corrected per-coordinate variance for the step-size proxy.
 
         Step-size proxies read this; they do not read the adapted low-rank
-        metric (L3 decoupling contract).
+        metric directly.
         """
         return diag_from_moment_block(get_moments(state))
 
@@ -600,7 +595,7 @@ def _make_split_pop_fns(
         :func:`chan_update_batch`.  For ensemble consumers, ``batch`` is
         ``(n_chains, d)`` and all chains are treated as a single temporal
         batch — a "split" is a time-range partition, not a chain-subset
-        partition (A1 semantics).
+        partition (draw-axis split semantics).
 
         Parameters
         ----------
@@ -651,21 +646,20 @@ def _make_split_pop_fns(
         overwritten — exact "pop oldest split" semantics with O(d²)
         memory rather than a raw-draw ring.
 
-        **A1 clarification**: the split here is a time-range boundary
-        (a "step count" partition).  For ensemble consumers all chains
-        participated in the now-completed block; the split never partitions
-        chains into subsets.
+        The split here is a time-range boundary (a "step count" partition).
+        For ensemble consumers all chains participated in the now-completed
+        block; the split never partitions chains into subsets.
         """
         old_wp = state.write_pos
         new_wp = (old_wp + 1) % k
 
         # Zero the newly-active slot (overwriting the oldest when the ring
         # has wrapped k times).
-        new_counts = state.counts.at[new_wp].set(jnp.zeros((), dtype=state.counts.dtype))
-        new_means = state.means.at[new_wp].set(jnp.zeros((d,), dtype=state.means.dtype))
-        new_m2s = state.m2s.at[new_wp].set(
-            jnp.zeros(_m2_shape, dtype=state.m2s.dtype)
+        new_counts = state.counts.at[new_wp].set(
+            jnp.zeros((), dtype=state.counts.dtype)
         )
+        new_means = state.means.at[new_wp].set(jnp.zeros((d,), dtype=state.means.dtype))
+        new_m2s = state.m2s.at[new_wp].set(jnp.zeros(_m2_shape, dtype=state.m2s.dtype))
 
         # When we overwrite slot new_wp and it was previously valid (has data
         # from a full wrap-around), num_valid decreases by 1 before the
@@ -708,10 +702,10 @@ def _make_split_pop_fns(
         return total, state.counts
 
     def get_diag_reference(state: AccumulatingSplitPopState) -> Array:
-        """Bessel-corrected per-coordinate variance (A2 diagonal channel).
+        """Bessel-corrected per-coordinate variance for the step-size proxy.
 
-        Derived from the MERGED moments across all blocks; step-size
-        proxies read this, never the adapted low-rank metric (L3).
+        Derived from the merged moments across all blocks; step-size
+        proxies read this, never the adapted low-rank metric directly.
         """
         return diag_from_moment_block(get_moments(state))
 
@@ -739,10 +733,10 @@ def accumulating_split_pop_buffer(
     the rest of the buffer is retained.  That is exactly what
     ``push_split`` does here, at the block-granularity level.
 
-    **Split semantics (A1)**: for this policy a "split" is a time-range
+    **Split semantics**: for this policy a "split" is a time-range
     partition — the caller decides when to call ``push_split`` (e.g., at
     each adaptation window boundary).  For ensemble consumers all chains in
-    each update batch fold into the SAME active block (A1 contract); use
+    each update batch fold into the same active block; use
     :func:`ensemble_batch_buffer` which documents this explicitly.
 
     Parameters
@@ -757,7 +751,8 @@ def accumulating_split_pop_buffer(
         If ``True``, M2 fields are shape ``(d,)`` (diagonal); if ``False``
         (default), shape ``(d, d)``.
     requires_draws
-        Default ``False`` (A4).  ``True`` raises ``NotImplementedError``.
+        Default ``False`` (raw-draw ring is opt-in).  ``True`` raises
+        ``NotImplementedError``.
 
     Returns
     -------
@@ -765,7 +760,11 @@ def accumulating_split_pop_buffer(
         Six callables with the shared buffer-policy interface.
     """
     return _make_split_pop_fns(
-        d=d, k=k, diagonal=diagonal, n_chains_per_update=None, requires_draws=requires_draws
+        d=d,
+        k=k,
+        diagonal=diagonal,
+        n_chains_per_update=None,
+        requires_draws=requires_draws,
     )
 
 
@@ -780,10 +779,9 @@ def ensemble_batch_buffer(
     """Rolling-window buffer for ensemble (multi-chain) consumers.
 
     A specialisation of :func:`accumulating_split_pop_buffer` for
-    ``(n_chains, d)`` batch inputs, with explicit A1-semantics
-    documentation.
+    ``(n_chains, d)`` batch inputs, with explicit draw-axis split semantics.
 
-    **A1 — ensemble split semantics**: for ``(nc, d)``-block consumers a
+    **Ensemble split semantics**: for ``(nc, d)``-block consumers a
     "split" is a **draw-axis partition** (step-ranges; all chains fold into
     the active block via Chan merge) — NEVER a chain-subset.  Concretely,
     calling ``update(state, batch)`` with ``batch`` shape ``(n_chains, d)``
@@ -808,7 +806,8 @@ def ensemble_batch_buffer(
         If ``True``, M2 fields are shape ``(d,)``; if ``False`` (default),
         shape ``(d, d)``.
     requires_draws
-        Default ``False`` (A4).  ``True`` raises ``NotImplementedError``.
+        Default ``False`` (raw-draw ring is opt-in).  ``True`` raises
+        ``NotImplementedError``.
 
     Returns
     -------
