@@ -483,6 +483,15 @@ def meads_adaptation(
         disables accumulation entirely (falls back to the purely diagonal
         momentum metric throughout the run).
 
+        At GPU scale (independent re-validation, num_chains up to 1024 on a
+        d≈390 hierarchical target): the low-rank metric's de-biasing reproduces
+        (num_chains ≥ 256 with adequate warmup — cutting warmup at high
+        num_chains under-accumulates the metric and re-introduces bias via
+        step-size collapse) and holds as num_chains grows, but residual mean-error
+        stabilizes slightly above strict certification thresholds; treat the
+        low-rank metric as a robust improvement over the diagonal rather than a
+        guarantee of unbiased means on such targets.
+
     Returns
     -------
     A function that returns the last cross-chain state, a sampling kernel with the
