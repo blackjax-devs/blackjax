@@ -44,6 +44,10 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 
+from blackjax.adaptation.meads_adaptation import (
+    _lrd_accumulator_init,
+    _lrd_accumulator_update,
+)
 from blackjax.adaptation.metric_buffers import (
     AccumulatingSplitPopState,
     LateStartState,
@@ -58,6 +62,7 @@ from blackjax.adaptation.metric_buffers import (
     merge_block_ring,
     reset_window_buffer,
 )
+from blackjax.adaptation.metric_estimators import sample_covariance_eigh_low_rank
 from tests.fixtures import BlackJAXTest
 
 # ---------------------------------------------------------------------------
@@ -275,6 +280,44 @@ class ChanMergeTwoTest(BlackJAXTest):
         _assert_allclose_dtype(np.array(merged.mean), ref_mean.astype(dtype), dtype)
         _assert_allclose_dtype(np.array(merged.m2), ref_m2_diag.astype(dtype), dtype)
 
+    def test_merge_equals_single_pass_x64(self):
+        """chan_merge_two agrees with single-pass moments at f64 tight tolerance.
+
+        Explicitly enables x64 via context manager so that the atol=1e-9 path
+        exercises even when JAX is running in f32-default mode (the default CI
+        environment).
+        """
+        with jax.enable_x64():
+            dtype = np.float64
+            d, n_a, n_b = 10, 20, 30
+            key_a, key_b = jax.random.split(self.next_key(), 2)
+            draws_a = _make_draws(key_a, n_a, d).astype(dtype)
+            draws_b = _make_draws(key_b, n_b, d).astype(dtype)
+
+            all_draws = np.concatenate([draws_a, draws_b], axis=0)
+            ref_n, ref_mean, ref_m2 = _ref_single_pass_moments(all_draws)
+
+            na_f, mean_a, m2_a = _ref_single_pass_moments(draws_a)
+            nb_f, mean_b, m2_b = _ref_single_pass_moments(draws_b)
+            block_a = _make_block(na_f, mean_a, m2_a, dtype=dtype)
+            block_b = _make_block(nb_f, mean_b, m2_b, dtype=dtype)
+            merged = chan_merge_two(block_a, block_b)
+
+            np.testing.assert_allclose(
+                np.array(merged.mean),
+                ref_mean.astype(dtype),
+                atol=1e-9,
+                rtol=0.0,
+                err_msg="x64: merged mean != single-pass mean",
+            )
+            np.testing.assert_allclose(
+                np.array(merged.m2),
+                ref_m2.astype(dtype),
+                atol=1e-9,
+                rtol=0.0,
+                err_msg="x64: merged M2 != single-pass M2",
+            )
+
 
 class ChanUpdateBatchTest(BlackJAXTest):
     """chan_update_batch(block, batch) == chan_merge_two(block, single_pass(batch))."""
@@ -387,6 +430,50 @@ class MergeBlockRingTest(BlackJAXTest):
         _assert_allclose_dtype(np.array(merged.mean), mean_.astype(dtype), dtype)
         _assert_allclose_dtype(np.array(merged.m2), m2_.astype(dtype), dtype)
         self.assertAlmostEqual(float(merged.count), n_f, places=5)
+
+    def test_ring_merge_equals_single_pass_x64(self):
+        """merge_block_ring agrees with single-pass moments at f64 tight tolerance.
+
+        Explicitly enables x64 via context manager so that atol=1e-9 exercises
+        even in f32-default CI.
+        """
+        with jax.enable_x64():
+            dtype = np.float64
+            k, d, n_per_block = 4, 10, 30
+            keys = jax.random.split(self.next_key(), k)
+            draws_list = [
+                _make_draws(keys[i], n_per_block, d).astype(dtype) for i in range(k)
+            ]
+
+            counts, means, m2s = [], [], []
+            for draws in draws_list:
+                n, mean, m2 = _ref_single_pass_moments(draws)
+                counts.append(n)
+                means.append(mean)
+                m2s.append(m2)
+
+            counts_arr = jnp.asarray(counts, dtype=dtype)
+            means_arr = jnp.asarray(means, dtype=dtype)
+            m2s_arr = jnp.asarray(m2s, dtype=dtype)
+            merged = merge_block_ring(counts_arr, means_arr, m2s_arr)
+
+            all_draws = np.concatenate(draws_list, axis=0)
+            ref_n, ref_mean, ref_m2 = _ref_single_pass_moments(all_draws)
+
+            np.testing.assert_allclose(
+                np.array(merged.mean),
+                ref_mean.astype(dtype),
+                atol=1e-9,
+                rtol=0.0,
+                err_msg="x64: ring merge mean != single-pass mean",
+            )
+            np.testing.assert_allclose(
+                np.array(merged.m2),
+                ref_m2.astype(dtype),
+                atol=1e-9,
+                rtol=0.0,
+                err_msg="x64: ring merge M2 != single-pass M2",
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -576,10 +663,53 @@ class AccumulatingSplitPopTest(BlackJAXTest):
         np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4)
         self.assertAlmostEqual(float(block.count), ref_n, places=5)
 
-    def test_pop_oldest_exactness(self):
-        """Merge of k-1 remaining blocks == recomputation from scratch (k+1 splits, k=3)."""
-        k, d, n_per_split = 3, 8, 20
-        n_splits_total = k + 1  # one extra so the ring wraps and oldest is dropped
+    @parameterized.named_parameters(
+        # k=3 single-wrap: one extra split causes first block to be dropped
+        {
+            "testcase_name": "k3_d8_n20_nwraps1",
+            "k": 3,
+            "d": 8,
+            "n_per_split": 20,
+            "n_extra_wraps": 1,
+        },
+        # k=4 single-wrap: catches stride-2 ring-pointer aliasing invisible at k=3
+        {
+            "testcase_name": "k4_d6_n15_nwraps1",
+            "k": 4,
+            "d": 6,
+            "n_per_split": 15,
+            "n_extra_wraps": 1,
+        },
+        # k=4 double-wrap (n_splits = 2k+1): ring wraps twice; oldest is dropped twice
+        {
+            "testcase_name": "k4_d6_n15_nwraps2",
+            "k": 4,
+            "d": 6,
+            "n_per_split": 15,
+            "n_extra_wraps": 2,
+        },
+        # k=5 double-wrap
+        {
+            "testcase_name": "k5_d5_n10_nwraps2",
+            "k": 5,
+            "d": 5,
+            "n_per_split": 10,
+            "n_extra_wraps": 2,
+        },
+    )
+    def test_pop_oldest_exactness(self, k, d, n_per_split, n_extra_wraps):
+        """Merge of the k retained blocks == recomputation from scratch after multi-wrap.
+
+        After n_extra_wraps complete ring passes, the retained window is the LAST
+        k splits; older splits have been overwritten.  We verify that the buffer's
+        merged moments exactly match single-pass recomputation on those k splits.
+
+        Parameterized at k=4 (catches stride-2 ring-pointer aliasing invisible at k=3
+        due to mod-3 aliasing) and with n_extra_wraps=2 (multi-wrap exercise).
+        """
+        n_splits_total = (
+            k * n_extra_wraps + 1
+        )  # one more than a full n_extra_wraps passes
 
         keys = jax.random.split(self.next_key(), n_splits_total)
         draws_list = [
@@ -605,9 +735,9 @@ class AccumulatingSplitPopTest(BlackJAXTest):
 
         block = get_moments(state)
 
-        # After k+1 splits the ring has wrapped: the first split (draws_list[0])
-        # has been overwritten.  The valid blocks should cover draws_list[1..k].
-        remaining_draws = np.concatenate(draws_list[1:], axis=0)
+        # After n_splits_total splits the ring retains exactly the last k splits.
+        retained = draws_list[-k:]
+        remaining_draws = np.concatenate(retained, axis=0)
         ref_n, ref_mean, ref_m2 = _ref_single_pass_moments(remaining_draws)
 
         np.testing.assert_allclose(
@@ -752,6 +882,63 @@ class EnsembleBatchBufferTest(BlackJAXTest):
         """n_chains < 1 raises ValueError."""
         with self.assertRaises(ValueError):
             ensemble_batch_buffer(5, 0, 3)
+
+
+# ---------------------------------------------------------------------------
+# 5b. Exact parity: ensemble_batch_buffer == _lrd_accumulator_update under x64
+# ---------------------------------------------------------------------------
+
+
+class EnsembleMeadsParityX64Test(BlackJAXTest):
+    """Under x64, ensemble_batch_buffer == _lrd_accumulator_update at exact (0.0) parity.
+
+    Pinned after the dtype bug fix: with count/counts using the ambient float
+    dtype (not hardcoded float32), the Chan merge weights are computed at f64
+    precision, giving bit-identical results with the MEADS in-tree accumulator
+    on the same data.  This test is the canary — if it fails, the dtype bug
+    has been reintroduced.
+    """
+
+    def test_exact_parity_x64(self):
+        """ensemble_batch_buffer == _lrd_accumulator_update, bit-exact under x64."""
+        with jax.enable_x64():
+            d, n_chains, n_steps = 8, 12, 20
+            key = self.next_key()
+            keys = jax.random.split(key, n_steps)
+            # Cast to f64 inside x64 context so JAX promotes arithmetic to f64.
+            batches = [
+                jax.random.normal(keys[i], (n_chains, d)).astype(jnp.float64)
+                for i in range(n_steps)
+            ]
+
+            # ensemble_batch_buffer with k=1 (single accumulating block, no ring)
+            init, update, _, get_moments, _, _ = ensemble_batch_buffer(d, n_chains, k=1)
+            state = init()
+            for batch in batches:
+                state = update(state, batch)
+            block = get_moments(state)
+
+            # MEADS in-tree accumulator (reference implementation)
+            acc = _lrd_accumulator_init(d)
+            for batch in batches:
+                acc = _lrd_accumulator_update(acc, batch)
+
+            # Bit-exact parity: 0.0 difference, not just small difference
+            np.testing.assert_array_equal(
+                np.array(block.count),
+                np.array(acc.count),
+                err_msg="count differs: dtype bug reintroduced?",
+            )
+            np.testing.assert_array_equal(
+                np.array(block.mean),
+                np.array(acc.mean),
+                err_msg="mean differs: Chan weight precision mismatch",
+            )
+            np.testing.assert_array_equal(
+                np.array(block.m2),
+                np.array(acc.m2),
+                err_msg="M2 differs: Chan weight precision mismatch",
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -1047,18 +1234,18 @@ class ScanCarryShapeTest(BlackJAXTest):
 # This test is computationally heavy (d≈400, n≈64k) and is positioned last
 # in the test file so that lighter tests run first.
 #
-# Tolerance derivation:
-#   Chan-merge is subject to catastrophic cancellation in the M2 terms at
-#   large n. The worst-case error bound for the Chan M2 formula is:
-#     |ΔM2| ≤ O(n · ε_mach · ||x||²)
-#   For f32 (ε_mach ≈ 1.2e-7), d=400, n=64000, scale~1:
-#     per-entry error ~ n · ε_mach · d ~ 64000 · 1.2e-7 · 400 ≈ 3.1
-#   In practice the ring-merge adds multiple Chan steps, so absolute entry
-#   error up to ~10.0 is credible. We measure the ACTUAL observed error
-#   (in f32 vs f64 reference) and state it here for transparency.
+# Tolerance derivation (relative):
+#   Each Chan merge step introduces relative floating-point error O(ε_mach) into M2.
+#   With k merges (k=8), the cumulative relative error is O(k · ε_mach):
+#     8 × 1.2e-7 ≈ 1e-6 per entry, relative to |M2[i,j]|.
+#   Absolute error per M2 entry ~ 1e-6 × |M2| ~ 1e-6 × n × σ² ≈ 0.06
+#   for this test (n=64k, scale~1).  Observed max absolute error ~0.013.
 #
-#   Stated tolerance: absolute entry-wise error ≤ 15.0 (conservative bound).
-#   Observed error during implementation: reported in the test output.
+#   An absolute tolerance of ≤ 15.0 would be ~1135× too conservative: a
+#   structurally broken merge (e.g., dropped cross-terms) can score ~13.95
+#   absolute and still pass.  We instead use RELATIVE tolerance (rtol ≈ 1e-4)
+#   and anchor downstream: feed f32 vs f64 moments through
+#   sample_covariance_eigh_low_rank and assert eigenvalue rtol ≤ 1e-3.
 # ---------------------------------------------------------------------------
 
 
@@ -1071,10 +1258,16 @@ class F32MergeAccuracyGoldenTest(BlackJAXTest):
         Merges k=8 blocks, each with n_per_block=8000 draws (total n=64000)
         at d=400.
 
-        Tolerance: derived from O(n · ε_mach · d) error bound for the
-        Chan formula; the OBSERVED per-entry absolute error is printed for
-        transparency.  The stated pass criterion is max|f32_M2 - f64_M2| ≤ 15.0
-        (conservative; tighter than the theoretical worst case).
+        Pass criteria:
+        1. RELATIVE M2 tolerance: max|f32 - f64| / max|f64| ≤ 1e-4.
+           This is ~O(k · ε_mach) = ~8×1.2e-7 with ~3 orders of slack.
+           Unlike the former absolute ≤15.0 bound, a dropped-cross structural
+           bug (scoring ~13.95 absolute, ~2e-4 relative) FAILS this check.
+        2. Downstream eigenvalue tolerance: eigenvalues from f32-promoted M2
+           vs f64 M2, fed through sample_covariance_eigh_low_rank, agree to
+           rtol ≤ 1e-3.
+        3. Mean tolerance: max|f32_mean - f64_mean| ≤ 1e-3 (mean is a linear
+           statistic, far less sensitive to cancellation than M2).
         """
         k, d, n_per_block = 8, 400, 8000
         keys = jax.random.split(self.next_key(), k)
@@ -1090,9 +1283,7 @@ class F32MergeAccuracyGoldenTest(BlackJAXTest):
         ref_n, ref_mean_f64, ref_m2_f64 = _ref_single_pass_moments(all_draws_f64)
 
         # f32 Chan-merge via the production merge_block_ring
-        counts_f32 = []
-        means_f32 = []
-        m2s_f32 = []
+        counts_f32, means_f32, m2s_f32 = [], [], []
         for draws in draws_list_f32:
             n, mean, m2 = _ref_single_pass_moments(draws)
             counts_f32.append(np.float32(n))
@@ -1105,46 +1296,65 @@ class F32MergeAccuracyGoldenTest(BlackJAXTest):
 
         merged_f32 = merge_block_ring(counts_arr, means_arr, m2s_arr)
 
-        m2_f32 = np.array(merged_f32.m2, dtype=np.float64)  # upcast for comparison
+        m2_f32_promoted = np.array(
+            merged_f32.m2, dtype=np.float64
+        )  # upcast for comparison
         m2_f64 = ref_m2_f64
+        n_total = k * n_per_block
 
-        abs_err = np.abs(m2_f32 - m2_f64)
+        abs_err = np.abs(m2_f32_promoted - m2_f64)
         max_abs_err = float(np.max(abs_err))
         mean_abs_err = float(np.mean(abs_err))
+        m2_scale = float(np.max(np.abs(m2_f64)))
+        rel_err = max_abs_err / max(m2_scale, 1.0)
 
         # Report observed error for transparency (visible in verbose test output)
-        max_err_s = format(max_abs_err, ".4g")
-        mean_err_s = format(mean_abs_err, ".4g")
-        n_total = k * n_per_block
         print(
             f"\nf32 merge-accuracy golden (d={d}, n={n_total}, k={k}):\n"  # noqa: E231
-            f"  max |f32 - f64| M2 entry: {max_err_s}\n"
-            f"  mean |f32 - f64| M2 entry: {mean_err_s}\n"
-            f"  Stated tolerance: <= 15.0 (derived from O(n*eps_mach*d) bound)"
+            f"  max |f32 - f64| M2 entry: {format(max_abs_err, '.4g')}\n"
+            f"  max relative error: {format(rel_err, '.4g')} (pass criterion: <= 1e-4)\n"
+            f"  mean |f32 - f64| M2 entry: {format(mean_abs_err, '.4g')}\n"
+            f"  M2 scale (max |f64| entry): {format(m2_scale, '.4g')}"
         )
 
-        # Stated tolerance <= 15.0 (catastrophic-cancellation bound for Chan M2 at this scale)
+        # Criterion 1: relative M2 bound (~O(k · eps_mach) with 3 orders of slack)
         self.assertLessEqual(
-            max_abs_err,
-            15.0,
-            msg=f"f32 Chan-merge max entry error {max_err_s} > 15.0 (d={d}, n={n_total}, k={k})",
+            rel_err,
+            1e-4,
+            msg=(
+                f"f32 Chan-merge relative error {format(rel_err, '.4g')} > 1e-4 "
+                f"(d={d}, n={n_total}, k={k}) -- may indicate dropped cross-terms"
+            ),
         )
 
-        # The mean should be much smaller than the max (the error is sparse)
-        self.assertLessEqual(
-            mean_abs_err,
-            1.0,
-            msg=f"mean per-entry error {mean_err_s} > 1.0 (unexpected bulk error)",
+        # Criterion 2: downstream eigenvalue tolerance under x64
+        max_rank = 10
+        with jax.enable_x64():
+            metric_f32 = sample_covariance_eigh_low_rank(
+                jnp.asarray(m2_f32_promoted),
+                jnp.asarray(float(merged_f32.count)),
+                max_rank,
+            )
+            metric_f64 = sample_covariance_eigh_low_rank(
+                jnp.asarray(m2_f64), jnp.asarray(ref_n), max_rank
+            )
+        np.testing.assert_allclose(
+            np.array(metric_f32.lam),
+            np.array(metric_f64.lam),
+            rtol=1e-3,
+            err_msg=(
+                f"downstream eigenvalues from f32-merged M2 diverge from f64 reference "
+                f"(d={d}, n={n_total}, k={k}, max_rank={max_rank})"
+            ),
         )
 
-        # Mean comparison is tight (mean is a linear statistic, less cancellation)
+        # Criterion 3: mean tolerance (linear statistic, far less cancellation)
         mean_f32 = np.array(merged_f32.mean, dtype=np.float64)
         mean_err = float(np.max(np.abs(mean_f32 - ref_mean_f64)))
-        mean_err_s2 = format(mean_err, ".4g")
         self.assertLessEqual(
             mean_err,
             1e-3,
-            msg=f"f32 mean error {mean_err_s2} > 1e-3 (mean should be much tighter than M2)",
+            msg=f"f32 mean error {format(mean_err, '.4g')} > 1e-3",
         )
 
 

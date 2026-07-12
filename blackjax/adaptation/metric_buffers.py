@@ -49,7 +49,27 @@ prohibitive for ensemble consumers.  All four policies default to
 ``requires_draws=False``; passing ``True`` raises ``NotImplementedError``
 (the draw-ring variant is a follow-up work item).
 
-**Fisher estimator block-moments handoff.** The current Fisher E-layer
+**Read-before-push ordering.** Callers MUST read ``get_moments`` (and
+``get_diag_reference``) BEFORE calling ``push_split``.  For
+``reset_window_buffer`` a ``push_split`` call zeroes the accumulator
+immediately, so any subsequent ``get_moments`` call sees an empty block
+(count=0, ones diagonal).  The ordering contract is::
+
+    block   = get_moments(state)           # read first
+    diag    = get_diag_reference(state)    # read first
+    state   = push_split(state)            # then advance
+
+**``reset_window_buffer`` scope.** This policy replaces the
+sample-covariance estimator path (``sample_covariance_eigh_low_rank``).
+It is NOT a drop-in for the Fisher-score path (``fisher_score_low_rank``),
+which still takes raw draws; that wiring is deliberate follow-up work.
+Additionally, in the current in-tree ``window_adaptation`` the wrap-buffer
+normalizes by the full ``n`` even when ``n > B`` (buffer size); this
+module's accumulate-all semantics is the correct Stan-reset behavior —
+a future consumer swap is behavior-improving (not bit-identical) in
+the wrap regime.
+
+**Fisher estimator block-moments handoff.** The current Fisher estimator
 function (``fisher_score_low_rank``) takes raw draws and gradients.
 ``FisherMomentBlock`` below accumulates the gradient moments that a
 future moments-consuming Fisher variant would need.  The call-site wiring
@@ -351,7 +371,17 @@ def diag_from_moment_block(block: MomentBlock) -> Array:
     Returns
     -------
     Array, shape ``(d,)``
-        Per-coordinate Bessel-corrected variance.
+        Per-coordinate Bessel-corrected variance (denominator ``count - 1``).
+
+    Notes
+    -----
+    This returns the **Bessel-corrected** (unbiased) sample variance with
+    denominator ``count - 1``.  This matches the convention of
+    :func:`~blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank`.
+    Consumers expecting **population variance** (denominator ``count``) will
+    observe an upward shift of ``count / (count - 1)`` relative to their
+    expectation; callers using this output as a population-variance proxy
+    must account for that factor.
     """
     m2 = block.m2
     n = block.count
@@ -417,7 +447,10 @@ class AccumulatingSplitPopState(NamedTuple):
         Index of the currently-active (in-progress) block, scalar ``()``.
     num_valid
         Number of blocks with ``count > 0`` (includes the active block),
-        scalar ``()``.  Saturates at ``k``.
+        scalar ``()``.  Saturates at ``k``.  Carried for diagnostic / support
+        reporting; ``get_moments`` merges all ``k`` slots unconditionally (empty
+        slots contribute nothing via the zero-count guard), so ``num_valid`` does
+        not gate the merge path.
 
     Notes
     -----
@@ -495,8 +528,10 @@ def reset_window_buffer(
     _m2_shape = (d,) if diagonal else (d, d)
 
     def init() -> ResetWindowState:
+        # count uses the ambient float dtype (matches mean/m2) so Chan merge
+        # weights (n_b/n_ab, etc.) are computed at full available precision.
         return ResetWindowState(
-            count=jnp.zeros((), dtype=jnp.float32),
+            count=jnp.zeros(()),
             mean=jnp.zeros((d,)),
             m2=jnp.zeros(_m2_shape),
         )
@@ -578,8 +613,11 @@ def _make_split_pop_fns(
     _m2_shape = (d,) if diagonal else (d, d)
 
     def init() -> AccumulatingSplitPopState:
+        # counts uses the ambient float dtype (matches means/m2s) so Chan
+        # merge weights (n_b/n_ab) are computed at full available precision.
+        # write_pos and num_valid are always int32 (array index / counter).
         return AccumulatingSplitPopState(
-            counts=jnp.zeros((k,), dtype=jnp.float32),
+            counts=jnp.zeros((k,)),
             means=jnp.zeros((k, d)),
             m2s=jnp.zeros((k,) + _m2_shape),
             write_pos=jnp.zeros((), dtype=jnp.int32),
@@ -797,9 +835,10 @@ def ensemble_batch_buffer(
     d
         Dimension of the position space.
     n_chains
-        Number of chains per ensemble update.  This parameter is used for
-        documentation and precondition checking only; the actual Chan merge
-        is shape-agnostic.
+        Number of chains per ensemble update.  This parameter is checked
+        to be ≥ 1 at factory-creation time but is NOT used to validate
+        the batch shape at ``update`` call time; the Chan merge is
+        shape-agnostic (accepts any ``(n, d)`` batch).
     k
         Number of splits (moment blocks) in the rolling window.
     diagonal
