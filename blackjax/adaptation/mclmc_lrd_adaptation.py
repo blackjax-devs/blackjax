@@ -270,12 +270,13 @@ def _extract_lrd_from_samples(
     V = Vt.T  # (d, min(n,d))
     lam = (S**2) / n  # (min(n,d),)
 
-    # R3a E-layer: top-k selection by |λ-1| via select_top_eigenvalues_by_informativeness
-    # (tail_handling="raw" matches the source convention — no masking to 1, no padding).
-    # Full draws_singular_value_low_rank would require a second SVD pass to produce
-    # lam_all_sorted (the E-layer returns only (sigma, U_k, lam_k), not the full
-    # spectrum); keeping the single SVD here avoids that redundancy.
-    # E-layer: see metric_estimators.draws_singular_value_low_rank
+    # Top-k selection via select_top_eigenvalues_by_informativeness
+    # (tail_handling="raw" — no masking to 1, no padding).
+    # Using draws_singular_value_low_rank directly would require a second SVD
+    # pass to produce lam_all_sorted (that wrapper returns only (sigma, U_k,
+    # lam_k), not the full spectrum); keeping the single SVD here avoids the
+    # redundancy.  See metric_estimators.draws_singular_value_low_rank for
+    # the array-based wrapper.
     U_k, lam_k = select_top_eigenvalues_by_informativeness(
         lam, V, k, tail_handling="raw"
     )

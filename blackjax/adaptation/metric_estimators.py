@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""E-layer: pure metric estimator functions for the low-rank unification RFC.
+"""Pure metric estimator functions for the low-rank metric adaptation layer.
 
 Each function is a **pure transformation**: explicit arrays in → metric
 representation out.  No buffer state, no scheduling logic, no side effects.
@@ -19,7 +19,7 @@ All functions are JAX-traceable and safe to use inside ``jax.lax.scan`` /
 ``jax.vmap`` provided that ``max_rank`` (where applicable) is a static
 Python integer (required to determine output shapes).
 
-**Source lineage** (R2a census, 2026-07-11, main @ 532631c1):
+**Source lineage** (as of 2026-07-11, main @ 532631c1):
 
 +--------------------------------------+--------------------------------------------+
 | Estimator                            | Extracted from                             |
@@ -45,17 +45,17 @@ Python integer (required to determine output shapes).
 |                                      | (verbatim duplicate; one function here)    |
 +--------------------------------------+--------------------------------------------+
 
-**Composition law (RFC §0 L2):** estimators, data-feeding policy, and schedule
-are co-adapted package components.  The functions here are the *estimator*
+**Composition note:** estimators, data-feeding policy, and schedule are
+co-adapted package components.  The functions here are the *estimator*
 component only — callers supply the buffer view.  Gating logic (support gates,
-fraction-window checks, 2·d thresholds) belongs in the G-layer; it is
+fraction-window checks, 2·d thresholds) belongs in the caller; it is
 explicitly *not* implemented here (docstrings note the relevant gates for each
 estimator).
 
-**Registration (R2a phase):** these functions are module-public (importable
-from ``blackjax.adaptation.metric_estimators``) but are NOT exported at the
-``blackjax`` top-level.  Top-level registration and consumer re-wiring happen
-in R3.
+**Registration:** these functions are module-public (importable from
+``blackjax.adaptation.metric_estimators``) but are NOT exported at the
+``blackjax`` top-level.  Top-level export and consumer re-wiring are
+deliberate follow-up work.
 """
 
 from typing import Literal
@@ -68,7 +68,7 @@ from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from blackjax.types import Array
 
 # ---------------------------------------------------------------------------
-# SPD utilities (moved here in R3a; low_rank_adaptation imports from here)
+# SPD utilities (moved from low_rank_adaptation; it imports from here)
 # ---------------------------------------------------------------------------
 
 
@@ -90,8 +90,8 @@ def _relative_pd_floor(vals: Array) -> Array:
     catching a genuinely near-zero-relative-to-its-own-scale eigenvalue
     (the actual rounding-noise failure mode the PD guard targets).
 
-    **Moved from** ``blackjax.adaptation.low_rank_adaptation`` (R3a
-    dependency flip; ``low_rank_adaptation`` now imports from here).
+    **Moved from** ``blackjax.adaptation.low_rank_adaptation``;
+    ``low_rank_adaptation`` now imports from here.
     """
     scale = jnp.maximum(jnp.max(jnp.abs(vals)), jnp.finfo(vals.dtype).tiny)
     return jnp.finfo(vals.dtype).eps * scale
@@ -117,8 +117,8 @@ def _spd_mean(A: Array, B: Array) -> Array:
     here) fixes this without perturbing legitimately-informative
     eigenvalues, matching nuts-rs's own PD-by-construction invariant.
 
-    **Moved from** ``blackjax.adaptation.low_rank_adaptation`` (R3a
-    dependency flip; ``low_rank_adaptation`` now imports from here).
+    **Moved from** ``blackjax.adaptation.low_rank_adaptation``;
+    ``low_rank_adaptation`` now imports from here.
     """
     # Eigendecompose B: B = V_b D_b V_b^T
     vals_b, vecs_b = jnp.linalg.eigh(B)
@@ -199,8 +199,7 @@ def select_top_eigenvalues_by_informativeness(
 ) -> tuple[Array, Array]:
     r"""Select the top-``max_rank`` eigenpairs by :func:`eigenvalue_informativeness`.
 
-    Two production consumers use this pattern with **divergent tail handling**
-    (D2 in the RFC duplication map):
+    Two production consumers use this pattern with **divergent tail handling**:
 
     ``tail_handling="mask_pad"`` (default)
         Used by :func:`fisher_score_low_rank`.  Eigenvalues inside the
@@ -394,7 +393,8 @@ def fisher_score_low_rank(
     -----
     The optimal translation ``μ* = x̄ + σ² ⊙ ᾱ`` (paper §3.2) is an
     adaptation-layer output, not part of the metric.  Compute it separately
-    from the per-draw means if needed by the warmup wiring (R3 concern).
+    from the per-draw means if needed by the warmup wiring (a warmup-wiring
+    concern, deliberately outside this estimator).
     """
     orig_dtype = draws.dtype
     compute_dtype = jnp.float64 if jax.config.jax_enable_x64 else orig_dtype
@@ -486,8 +486,8 @@ def draws_singular_value_low_rank(
       in the MCLMC-LRD pilot estimator: the raw eigenspectrum is what drives
       the effective condition number diagnostics downstream.
 
-    This asymmetry is preserved faithfully here; see the RFC duplication map
-    D2 for context.
+    This asymmetry is preserved faithfully here; see the module docstring's
+    source-lineage table for context.
 
     **G-layer note:** the Geyer-ESS support gate
     (``k_used = min(k, ⌊n_eff/2⌋)``, ``mclmc_lrd_adaptation.py:636``) and
@@ -626,11 +626,11 @@ def welford_diagonal(draws: Array) -> Array:
     variance :math:`s^2_i = \frac{1}{n-1}\sum_{j=1}^n (x_{ji} - \bar{x}_i)^2`
     for each coordinate ``i``.
 
-    **Why a wrapper instead of direct ``jnp.var``:** R2b/R3 must have a
-    single estimator import surface; this function ensures future callers can
-    swap to streaming Welford (e.g., for online adaptation) without changing
-    call sites.  The algorithm itself is NOT moved or duplicated — only the
-    call site is unified here.
+    **Why a wrapper instead of direct ``jnp.var``:** having a single
+    estimator import surface ensures future callers can swap to streaming
+    Welford (e.g., for online adaptation) without changing call sites.
+    The algorithm itself is NOT moved or duplicated — only the call site
+    is unified here.
 
     **Source:** ``blackjax.adaptation.mass_matrix.welford_algorithm``
     (``is_diagonal_matrix=True``).

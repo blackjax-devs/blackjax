@@ -11,14 +11,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Parity golden tests for blackjax.adaptation.metric_estimators (E-layer).
+"""Parity golden tests for blackjax.adaptation.metric_estimators.
 
-Each test class follows the RFC R2a pattern: a **frozen inline reference** of
-the original implementation is embedded directly in the test (not imported, to
-prevent any module-level mutation from silencing the golden — see
-worklog/lessons/code-patterns/2026-07-11-monkeypatch-mutation-restore-before-call.md).
-The E-layer function must produce the same result as the inline reference on
-the same structured test inputs.
+Each test class follows the **frozen-inline-reference pattern**: the original
+implementation is embedded directly in the test (not imported), to prevent any
+module-level mutation from silencing the golden.  The module function must
+produce the same result as the inline reference on the same structured test
+inputs.
 
 Test data strategy
 ------------------
@@ -28,7 +27,8 @@ Test data strategy
   mean μ and covariance Σ, ∇ log p(x) = -Σ^{-1}(x - μ)).
 - n > d AND n < d shapes tested for SVD/eigh estimators.
 - max_rank ∈ {0-equivalent (k=1), 1, d//2, d} tested where meaningful.
-  (k=d is tested since it earned its own case in R1's adversarial review.)
+  (k=d is tested since it is reachable via the L-BFGS adapter, where
+  k = min(d, 2m).)
 - f32 atol 1e-5 / f64 atol 1e-9.
 - Degenerate-support shapes (n small vs d) are included; parity must hold
   on the MASKED / raw behavior in those shapes too.
@@ -363,7 +363,7 @@ class SelectTopEigenvaluesTest(BlackJAXTest):
         np.testing.assert_allclose(U_out[:, q:], jnp.zeros((d, k - q)), atol=1e-9)
 
     def test_mask_pad_k_equals_d(self):
-        """k=d: all eigenvectors selected (edge case from R1 adversarial review)."""
+        """k=d: all eigenvectors selected (k=d is reachable via the L-BFGS adapter)."""
         d = 5
         V, lam = self._make_random_eigenpairs(d, d)
         U_out, lam_out = select_top_eigenvalues_by_informativeness(

@@ -339,12 +339,11 @@ def make_L_step_size_adaptation(
         inverse_mass_matrix = params.inverse_mass_matrix
         if num_steps2 > 1:
             x_average, x_squared_average = average[0], average[1]
-            # R3a E-layer cross-reference: metric_estimators.sample_variance_diagonal
-            # implements the same formula (E[x^2] - E[x]^2) on raw draws.
-            # Body swap SKIPPED: x_average/x_squared_average are streaming
-            # incremental-value-update aggregates (not a raw draws array), so
-            # calling sample_variance_diagonal(draws) would require materializing
-            # the full draws buffer — state not available at this call site.
+            # See metric_estimators.sample_variance_diagonal for the array-based
+            # equivalent (E[x^2] - E[x]^2 on raw draws).  Not usable here:
+            # x_average/x_squared_average are step-size-weighted streaming
+            # aggregates, not a raw draws array — materializing a draws buffer
+            # at this call site would change semantics.
             variances = x_squared_average - jnp.square(x_average)
             L = jnp.sqrt(jnp.sum(variances))
 

@@ -93,10 +93,7 @@ import numpy as np
 
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
-from blackjax.adaptation.metric_estimators import (  # R3a: dependency flip
-    _relative_pd_floor,
-    _spd_mean,
-)
+from blackjax.adaptation.metric_estimators import _relative_pd_floor, _spd_mean
 from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
@@ -216,12 +213,10 @@ def _default_low_rank_adaptation_info_fn(
 # ---------------------------------------------------------------------------
 
 
-# _relative_pd_floor and _spd_mean have been moved to metric_estimators (R3a
-# dependency flip) and are imported above.  They remain accessible from this
-# module's namespace for backward-compatibility (tests import _spd_mean from
-# here; low_rank_adaptation._compute_low_rank_metric still calls both).
-# E-layer: see blackjax.adaptation.metric_estimators._relative_pd_floor
-# E-layer: see blackjax.adaptation.metric_estimators._spd_mean
+# _relative_pd_floor and _spd_mean are defined in metric_estimators and
+# imported above.  They remain accessible from this module's namespace for
+# backward-compatibility (existing callers that import from low_rank_adaptation
+# continue to work).  Canonical location: blackjax.adaptation.metric_estimators.
 
 
 def _shift_buffer_left(buf: Array, shift: Array) -> Array:
@@ -336,19 +331,19 @@ def _compute_low_rank_metric(
     for ``buffer_policy="accumulating"``/nutpie-schedule low-rank warmup,
     matching nuts-rs's own dtype and the shipped sampling-book example.
 
-    **R3a E-layer cross-reference:** the pure-array form of this estimator
-    (all-valid rows, no masking) lives in
-    :func:`blackjax.adaptation.metric_estimators.fisher_score_low_rank`.
-    This buffer-masked variant is NOT expressible as a direct call to that
-    function because ``n`` is a traced JAX integer (inside ``jax.lax.scan``
-    closures from :func:`slow_final` / :func:`slow_switch` /
+    **Array-based equivalent:**
+    :func:`blackjax.adaptation.metric_estimators.fisher_score_low_rank`
+    implements the same estimator on a plain draws array (all-valid rows, no
+    masking).  This buffer-masked variant cannot delegate to that function
+    because ``n`` is a traced JAX integer (inside ``jax.lax.scan`` closures
+    from :func:`slow_final` / :func:`slow_switch` /
     :func:`slow_recompute_only`): dynamic slicing to ``draws_buffer[:n]``
     changes the array shape at trace time (not supported under JAX's
     static-shape rule), so the masking pattern is necessary and integral to
     ALL computation steps (masked mean, masked variance, masked covariance),
     not just a pre-processing trim before the pure math.
-    ``_spd_mean`` and ``_relative_pd_floor`` have been moved to the E-layer
-    (R3a dependency flip) and are imported above from metric_estimators.
+    ``_spd_mean`` and ``_relative_pd_floor`` are defined in
+    ``blackjax.adaptation.metric_estimators`` and imported above.
     """
     orig_dtype = draws_buffer.dtype
     compute_dtype = jnp.float64 if jax.config.jax_enable_x64 else orig_dtype

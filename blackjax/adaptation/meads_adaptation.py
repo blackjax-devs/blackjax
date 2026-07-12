@@ -295,11 +295,10 @@ def _lrd_from_accumulated_covariance(
     window-accumulated covariance's effective ``n`` can comfortably exceed
     ``d`` given enough window steps.
 
-    **R3a E-layer swap:** body delegates to
+    Delegates to
     :func:`~blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank`
-    (behavior-identical; inline math removed, 8 LOC net reduction).
+    (behavior-identical).
     """
-    # E-layer: metric_estimators.sample_covariance_eigh_low_rank
     lrd = sample_covariance_eigh_low_rank(acc.m2, acc.count, k)
     return lrd.sigma, lrd.U, lrd.lam
 
