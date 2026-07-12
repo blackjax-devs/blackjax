@@ -116,7 +116,6 @@ __all__ = [
     "cgl_update_batch",
     "merge_block_ring",
     "diag_from_moment_block",
-    "ResetWindowState",
     "AccumulatingSplitPopState",
     "LateStartState",
     "reset_window_buffer",
@@ -474,29 +473,6 @@ def diag_from_moment_block(block: MomentBlock) -> Array:
 # ---------------------------------------------------------------------------
 
 
-class ResetWindowState(NamedTuple):
-    """Legacy state type for the hard-reset window buffer.
-
-    Kept for import compatibility.  ``reset_window_buffer`` now returns
-    :class:`AccumulatingSplitPopState` (via the ``k=1`` ring path), so
-    ``isinstance(state, ResetWindowState)`` will be ``False`` for states
-    returned by the current factory.
-
-    Parameters
-    ----------
-    count
-        Number of samples accumulated in the current window, scalar ``()``.
-    mean
-        Running mean, shape ``(d,)``.
-    m2
-        Running M2 matrix, shape ``(d, d)`` (dense) or ``(d,)`` (diagonal).
-    """
-
-    count: Array  # ()
-    mean: Array  # (d,)
-    m2: Array  # (d, d) or (d,)
-
-
 class AccumulatingSplitPopState(NamedTuple):
     """State for the split-based rolling-window buffer (``k >= 1``).
 
@@ -753,9 +729,7 @@ def reset_window_buffer(
     :func:`merge_block_ring` ensures no scan is compiled (no overhead vs
     the former single-accumulator implementation).
 
-    State returned by ``init`` is :class:`AccumulatingSplitPopState` (not
-    :class:`ResetWindowState`).  The former ``ResetWindowState`` is kept
-    as a legacy export for import compatibility.
+    State returned by ``init`` is :class:`AccumulatingSplitPopState`.
 
     The estimator call at window-end::
 

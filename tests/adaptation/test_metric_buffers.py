@@ -585,9 +585,7 @@ class ResetWindowBufferTest(BlackJAXTest):
         """Default state carries no raw-draw ring (opt-in capability, off by default).
 
         reset_window_buffer is a thin wrapper over the k=1 split-pop path, so
-        the returned state is AccumulatingSplitPopState (4 fields) not a separate
-        ResetWindowState class.  ResetWindowState is kept in __all__ for import
-        compatibility only.
+        the returned state is AccumulatingSplitPopState (4 fields).
         """
         d = 6
         init, _, _, _, _, _ = reset_window_buffer(d, requires_draws=False)
@@ -1015,7 +1013,7 @@ class DiagReferenceTest(BlackJAXTest):
         )
 
     def test_diag_reference_from_reset_window(self):
-        """get_diag_reference works on ResetWindowState too."""
+        """get_diag_reference works for reset_window_buffer (k=1 path)."""
         d, n = 8, 30
         key = self.next_key()
         draws = _make_draws(key, n, d)
