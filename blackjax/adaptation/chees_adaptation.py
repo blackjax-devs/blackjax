@@ -919,6 +919,12 @@ def chees_adaptation(
         init_states = batch_init(positions)
         init_adaptation_state = init(init_random_arg, step_size)
         init_mm_accum = wc_init(num_dim) if estimate_mass_matrix else None
+        # Full-covariance moment block for the trajectory-length floor's
+        # lambda_max estimate: accumulated over the SAME late-warmup window,
+        # from the SAME per-step ensemble batch, as the diagonal mass-matrix
+        # Welford accumulator (mm_accum) -- but tracking the full
+        # num_dim x num_dim second moment, since the floor needs the
+        # ensemble's cross-dimension structure, not just per-dimension scale.
         init_cov_accum = (
             MomentBlock(
                 count=jnp.zeros(()),
