@@ -19,6 +19,7 @@ from jax.flatten_util import ravel_pytree
 
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
+from blackjax.adaptation.metric_estimators import sample_covariance_eigh_low_rank
 from blackjax.base import AdaptationAlgorithm
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
@@ -293,24 +294,13 @@ def _lrd_from_accumulated_covariance(
     ``p >> n`` noise-dominated once ``d`` exceeds ``num_chains``, but the
     window-accumulated covariance's effective ``n`` can comfortably exceed
     ``d`` given enough window steps.
+
+    Delegates to
+    :func:`~blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank`
+    (behavior-identical).
     """
-    mean, m2, count = acc
-    del mean  # only the second moment is needed below
-    covariance = m2 / jnp.maximum(count - 1.0, 1.0)
-    variance = jnp.diag(covariance)
-    sigma = jnp.sqrt(jnp.maximum(variance, 0.0))
-    sigma = jnp.where(sigma <= 0.0, 1.0, sigma)  # avoid div-by-zero
-
-    inv_sigma = 1.0 / sigma
-    correlation = covariance * inv_sigma[:, None] * inv_sigma[None, :]
-
-    # eigh gives ascending eigenvalues of the (symmetric) correlation matrix.
-    lam_all, V = jnp.linalg.eigh(correlation)
-    sort_idx = jnp.argsort(jnp.abs(lam_all - 1.0))[::-1]
-    top_idx = sort_idx[:k]
-    lam = lam_all[top_idx]
-    U = V[:, top_idx]
-    return sigma, U, lam
+    lrd = sample_covariance_eigh_low_rank(acc.m2, acc.count, k)
+    return lrd.sigma, lrd.U, lrd.lam
 
 
 def _lrd_diagonal_fallback(flat_positions: Array, k: int) -> tuple[Array, Array, Array]:
@@ -359,6 +349,9 @@ def _floor_lrd_eigenvalues(lam: Array) -> Array:
     ``sqrt(lam)`` out of the step-size heuristic entirely): the degenerate
     collapse (``rhat = inf``, NaN step size) only occurs if *both* guards
     are defeated.
+
+    ``jnp.maximum(lam, floor)`` guards against small/negative-but-finite
+    eigenvalues only — NaN passes through (``maximum(NaN, floor) = NaN``).
     """
     return jnp.maximum(lam, _LRD_EIGENVALUE_FLOOR)
 

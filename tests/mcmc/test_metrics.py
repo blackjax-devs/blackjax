@@ -429,7 +429,7 @@ class GaussianEuclideanLowRankTest(chex.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# R1 Golden Tests — representation-layer consolidation, zero behaviour change
+# Golden parity tests — representation-layer consolidation, zero behaviour change
 # ---------------------------------------------------------------------------
 # These tests act as a "golden" gate: they compare the new helper-based
 # implementations against frozen reference expressions (the original inline

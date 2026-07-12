@@ -131,6 +131,9 @@ from blackjax.adaptation.mclmc_adaptation import (
     MCLMCAdaptationState,
     mclmc_find_L_and_step_size,
 )
+from blackjax.adaptation.metric_estimators import (
+    select_top_eigenvalues_by_informativeness,
+)
 from blackjax.diagnostics import effective_sample_size
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 
@@ -267,13 +270,20 @@ def _extract_lrd_from_samples(
     V = Vt.T  # (d, min(n,d))
     lam = (S**2) / n  # (min(n,d),)
 
-    # Select top-k by |λ - 1| (directions that deviate most from isotropic).
-    sort_idx = jnp.argsort(jnp.abs(lam - 1.0))[::-1]
-    top_idx = sort_idx[:k]
+    # Top-k selection via select_top_eigenvalues_by_informativeness
+    # (tail_handling="raw" — no masking to 1, no padding).
+    # Using draws_singular_value_low_rank directly would require a second SVD
+    # pass to produce lam_all_sorted (that wrapper returns only (sigma, U_k,
+    # lam_k), not the full spectrum); keeping the single SVD here avoids the
+    # redundancy.  See metric_estimators.draws_singular_value_low_rank for
+    # the array-based wrapper.
+    U_k, lam_k = select_top_eigenvalues_by_informativeness(
+        lam, V, k, tail_handling="raw"
+    )
 
-    lam_k = lam[top_idx]  # (k,)
-    U_k = V[:, top_idx]  # (d, k)
-    lam_all_sorted = lam[sort_idx]  # full spectrum, ordered by |λ-1| desc
+    # Full spectrum sorted by |λ-1|, needed by _kappa_eff_pilot (G-layer concern).
+    sort_idx = jnp.argsort(jnp.abs(lam - 1.0))[::-1]
+    lam_all_sorted = lam[sort_idx]  # shape (min(n,d),), ordered by |λ-1| desc
     return sigma, U_k, lam_k, lam_all_sorted
 
 

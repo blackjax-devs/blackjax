@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""E-layer: pure metric estimator functions for the low-rank unification RFC.
+"""Pure metric estimator functions for the low-rank metric adaptation layer.
 
 Each function is a **pure transformation**: explicit arrays in → metric
 representation out.  No buffer state, no scheduling logic, no side effects.
@@ -19,7 +19,7 @@ All functions are JAX-traceable and safe to use inside ``jax.lax.scan`` /
 ``jax.vmap`` provided that ``max_rank`` (where applicable) is a static
 Python integer (required to determine output shapes).
 
-**Source lineage** (R2a census, 2026-07-11, main @ 532631c1):
+**Source lineage** (as of 2026-07-11, main @ 532631c1):
 
 +--------------------------------------+--------------------------------------------+
 | Estimator                            | Extracted from                             |
@@ -45,17 +45,17 @@ Python integer (required to determine output shapes).
 |                                      | (verbatim duplicate; one function here)    |
 +--------------------------------------+--------------------------------------------+
 
-**Composition law (RFC §0 L2):** estimators, data-feeding policy, and schedule
-are co-adapted package components.  The functions here are the *estimator*
+**Composition note:** estimators, data-feeding policy, and schedule are
+co-adapted package components.  The functions here are the *estimator*
 component only — callers supply the buffer view.  Gating logic (support gates,
-fraction-window checks, 2·d thresholds) belongs in the G-layer; it is
+fraction-window checks, 2·d thresholds) belongs in the caller; it is
 explicitly *not* implemented here (docstrings note the relevant gates for each
 estimator).
 
-**Registration (R2a phase):** these functions are module-public (importable
-from ``blackjax.adaptation.metric_estimators``) but are NOT exported at the
-``blackjax`` top-level.  Top-level registration and consumer re-wiring happen
-in R3.
+**Registration:** these functions are module-public (importable from
+``blackjax.adaptation.metric_estimators``) but are NOT exported at the
+``blackjax`` top-level.  Top-level export and consumer re-wiring are
+deliberate follow-up work.
 """
 
 from typing import Literal
@@ -63,10 +63,82 @@ from typing import Literal
 import jax
 import jax.numpy as jnp
 
-from blackjax.adaptation.low_rank_adaptation import _relative_pd_floor, _spd_mean
 from blackjax.adaptation.mass_matrix import welford_algorithm
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from blackjax.types import Array
+
+# ---------------------------------------------------------------------------
+# SPD utilities (moved from low_rank_adaptation; it imports from here)
+# ---------------------------------------------------------------------------
+
+
+def _relative_pd_floor(vals: Array) -> Array:
+    """Machine-epsilon floor, SCALED to ``vals``' own magnitude.
+
+    An absolute floor (e.g. a bare ``jnp.finfo(dtype).eps``) is wrong here:
+    this module's SPD matrices routinely span many orders of magnitude --
+    e.g. ``C_a = P_a P_a^T / gamma + I`` scales like ``O(n / gamma)``
+    (``~1e10`` at ``n=50_000`` draws, default ``gamma=1e-5``), so
+    ``inv(C_a)``'s eigenvalues legitimately live around ``~1e-10`` -- an
+    absolute ``eps`` (``~1.2e-7`` for float32) would incorrectly clamp that
+    perfectly-conditioned small eigenvalue UP by several orders of
+    magnitude, corrupting the result (caught by
+    ``LowRankDiagonalConsistencyTest``: a bare absolute floor turned the 1D
+    case's correct ``lam=1.0`` into ``lam=34.6``). Flooring relative to the
+    largest eigenvalue IN THE SAME SPECTRUM correctly leaves a
+    uniformly-small-but-well-conditioned spectrum untouched while still
+    catching a genuinely near-zero-relative-to-its-own-scale eigenvalue
+    (the actual rounding-noise failure mode the PD guard targets).
+
+    **Moved from** ``blackjax.adaptation.low_rank_adaptation``;
+    ``low_rank_adaptation`` now imports from here.
+    """
+    scale = jnp.maximum(jnp.max(jnp.abs(vals)), jnp.finfo(vals.dtype).tiny)
+    return jnp.finfo(vals.dtype).eps * scale
+
+
+def _spd_mean(A: Array, B: Array) -> Array:
+    """Symmetric positive-definite (AIRM) geometric mean of A and B.
+
+    Computes :math:`A \\#_{1/2} B = B^{1/2}(B^{-1/2}AB^{-1/2})^{1/2}B^{1/2}`
+    via the eigendecomposition of B (the gradient covariance), following the
+    nutpie convention.  Both matrices must be SPD with shape ``(k, k)``.
+
+    **PD guard** (round-9 schedule-port audit, GAP-2): both intermediate
+    eigenspectra are floored at :func:`_relative_pd_floor` rather than
+    ``0.0``. nuts-rs's own unit test (``low_rank.rs::test_estimate_mass_matrix``)
+    *asserts* this pipeline returns strictly-positive eigenvalues -- it is
+    PD by construction in exact arithmetic, since ``A``/``B`` are each
+    ``P P^T / gamma + I``. The float32 audit found that rounding in this
+    eigendecomposition-heavy pipeline (condition number up to ``~1/gamma``)
+    can nonetheless produce small negative eigenvalues that silently make
+    the whole geometric mean indefinite; a *scale-relative* floor (see
+    :func:`_relative_pd_floor`'s docstring for why an absolute one is wrong
+    here) fixes this without perturbing legitimately-informative
+    eigenvalues, matching nuts-rs's own PD-by-construction invariant.
+
+    **Moved from** ``blackjax.adaptation.low_rank_adaptation``;
+    ``low_rank_adaptation`` now imports from here.
+    """
+    # Eigendecompose B: B = V_b D_b V_b^T
+    vals_b, vecs_b = jnp.linalg.eigh(B)
+    vals_b = jnp.maximum(vals_b, _relative_pd_floor(vals_b))
+    sqrt_b = jnp.sqrt(vals_b)
+    inv_sqrt_b = 1.0 / sqrt_b  # vals_b > 0 (floored), so this never divides by 0
+
+    # M = B^{-1/2} A B^{-1/2} in B's eigenbasis
+    tmp = vecs_b.T @ A @ vecs_b  # (k, k)
+    M = inv_sqrt_b[:, None] * tmp * inv_sqrt_b[None, :]
+
+    vals_m, vecs_m = jnp.linalg.eigh(M)
+    vals_m = jnp.maximum(vals_m, _relative_pd_floor(vals_m))
+    sqrt_m = jnp.sqrt(vals_m)
+
+    # A # B = B^{1/2} M^{1/2} B^{1/2}
+    # = (V_b diag(sqrt_b) V_m) diag(sqrt_m) (V_b diag(sqrt_b) V_m)^T
+    W = vecs_b @ (sqrt_b[:, None] * vecs_m)  # (k, k)
+    return (W * sqrt_m[None, :]) @ W.T
+
 
 __all__ = [
     "eigenvalue_informativeness",
@@ -127,8 +199,7 @@ def select_top_eigenvalues_by_informativeness(
 ) -> tuple[Array, Array]:
     r"""Select the top-``max_rank`` eigenpairs by :func:`eigenvalue_informativeness`.
 
-    Two production consumers use this pattern with **divergent tail handling**
-    (D2 in the RFC duplication map):
+    Two production consumers use this pattern with **divergent tail handling**:
 
     ``tail_handling="mask_pad"`` (default)
         Used by :func:`fisher_score_low_rank`.  Eigenvalues inside the
@@ -322,7 +393,8 @@ def fisher_score_low_rank(
     -----
     The optimal translation ``μ* = x̄ + σ² ⊙ ᾱ`` (paper §3.2) is an
     adaptation-layer output, not part of the metric.  Compute it separately
-    from the per-draw means if needed by the warmup wiring (R3 concern).
+    from the per-draw means if needed by the warmup wiring (a warmup-wiring
+    concern, deliberately outside this estimator).
     """
     orig_dtype = draws.dtype
     compute_dtype = jnp.float64 if jax.config.jax_enable_x64 else orig_dtype
@@ -414,8 +486,8 @@ def draws_singular_value_low_rank(
       in the MCLMC-LRD pilot estimator: the raw eigenspectrum is what drives
       the effective condition number diagnostics downstream.
 
-    This asymmetry is preserved faithfully here; see the RFC duplication map
-    D2 for context.
+    This asymmetry is preserved faithfully here; see the module docstring's
+    source-lineage table for context.
 
     **G-layer note:** the Geyer-ESS support gate
     (``k_used = min(k, ⌊n_eff/2⌋)``, ``mclmc_lrd_adaptation.py:636``) and
@@ -554,11 +626,11 @@ def welford_diagonal(draws: Array) -> Array:
     variance :math:`s^2_i = \frac{1}{n-1}\sum_{j=1}^n (x_{ji} - \bar{x}_i)^2`
     for each coordinate ``i``.
 
-    **Why a wrapper instead of direct ``jnp.var``:** R2b/R3 must have a
-    single estimator import surface; this function ensures future callers can
-    swap to streaming Welford (e.g., for online adaptation) without changing
-    call sites.  The algorithm itself is NOT moved or duplicated — only the
-    call site is unified here.
+    **Why a wrapper instead of direct ``jnp.var``:** having a single
+    estimator import surface ensures future callers can swap to streaming
+    Welford (e.g., for online adaptation) without changing call sites.
+    The algorithm itself is NOT moved or duplicated — only the call site
+    is unified here.
 
     **Source:** ``blackjax.adaptation.mass_matrix.welford_algorithm``
     (``is_diagonal_matrix=True``).
