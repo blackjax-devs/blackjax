@@ -1,0 +1,1217 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>blackjax.adaptation.metric_buffers</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/adaptation/metric_buffers/index';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.adaptation.metric_estimators" href="../metric_estimators/index.html" />
+    <link rel="prev" title="blackjax.adaptation.meads_adaptation" href="../meads_adaptation/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g1cacf87fa" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">blackjax.adaptation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.adaptation.metric_buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>blackjax.adaptation.metric_buffers</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer"><code class="docutils literal notranslate"><span class="pre">MetricBuffer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.init"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.init</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.update"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.update</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.push_split"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.push_split</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.get_moments"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.get_moments</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.get_support"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.get_support</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.get_diag_reference"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.get_diag_reference</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MomentBlock"><code class="docutils literal notranslate"><span class="pre">MomentBlock</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MomentBlock.count"><code class="docutils literal notranslate"><span class="pre">MomentBlock.count</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MomentBlock.mean"><code class="docutils literal notranslate"><span class="pre">MomentBlock.mean</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MomentBlock.m2"><code class="docutils literal notranslate"><span class="pre">MomentBlock.m2</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.cgl_merge_two"><code class="docutils literal notranslate"><span class="pre">cgl_merge_two()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.cgl_update_batch"><code class="docutils literal notranslate"><span class="pre">cgl_update_batch()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.merge_block_ring"><code class="docutils literal notranslate"><span class="pre">merge_block_ring()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.diag_from_moment_block"><code class="docutils literal notranslate"><span class="pre">diag_from_moment_block()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.counts"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState.counts</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.means"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState.means</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.m2s"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState.m2s</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.write_pos"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState.write_pos</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.LateStartState"><code class="docutils literal notranslate"><span class="pre">LateStartState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.LateStartState.inner"><code class="docutils literal notranslate"><span class="pre">LateStartState.inner</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.LateStartState.num_skipped"><code class="docutils literal notranslate"><span class="pre">LateStartState.num_skipped</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.reset_window_buffer"><code class="docutils literal notranslate"><span class="pre">reset_window_buffer()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer"><code class="docutils literal notranslate"><span class="pre">accumulating_split_pop_buffer()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.ensemble_batch_buffer"><code class="docutils literal notranslate"><span class="pre">ensemble_batch_buffer()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.late_start"><code class="docutils literal notranslate"><span class="pre">late_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-blackjax.adaptation.metric_buffers">
+<span id="blackjax-adaptation-metric-buffers"></span><h1>blackjax.adaptation.metric_buffers<a class="headerlink" href="#module-blackjax.adaptation.metric_buffers" title="Link to this heading">#</a></h1>
+<p>Data-feeding (buffer) layer for metric adaptation.</p>
+<p>Each of the four policies below is a state machine with <strong>fixed-shape,
+scan-carry-safe state</strong> that feeds CGL-mergeable moment blocks to metric
+estimators.  The shared interface across all policies is returned as a
+<a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricBuffer</span></code></a> (a NamedTuple of callables, house-style):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">buf</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>                    <span class="o">-&gt;</span> <span class="n">PolicyState</span>
+<span class="n">buf</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">batch</span><span class="p">)</span>         <span class="o">-&gt;</span> <span class="n">PolicyState</span>   <span class="c1"># batch: (d,) or (nc, d)</span>
+<span class="n">buf</span><span class="o">.</span><span class="n">push_split</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>            <span class="o">-&gt;</span> <span class="n">PolicyState</span>   <span class="c1"># finalise current accumulation</span>
+<span class="n">buf</span><span class="o">.</span><span class="n">get_moments</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>           <span class="o">-&gt;</span> <span class="n">MomentBlock</span>   <span class="c1"># merged sufficient stats</span>
+<span class="n">buf</span><span class="o">.</span><span class="n">get_diag_reference</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>    <span class="o">-&gt;</span> <span class="n">Array</span>         <span class="c1"># (d,) diagonal for ε-proxy</span>
+<span class="n">buf</span><span class="o">.</span><span class="n">get_support</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>           <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]</span>  <span class="c1"># (total, per_block)</span>
+</pre></div>
+</div>
+<p><strong>Block representation.</strong> Buffers store per-split CGL-mergeable <em>moment
+blocks</em> — O(d) or O(d²) sufficient statistics (count, mean, M2 matrix)
+rather than raw draws <span id="id1">[<a class="reference internal" href="../../../../bib.html#id2" title="Tony F. Chan, Gene H. Golub, and Randall J. LeVeque. Algorithms for computing the sample variance: analysis and recommendations. The American Statistician, 37(3):242–247, 1983.">CGL83</a>]</span>.  Merging blocks gives
+the current estimate inputs; dropping the oldest block and re-merging the
+rest implements exact split-granular forgetting with no raw-draw ring.</p>
+<p><strong>Memory tradeoff.</strong> O(k·d²) blocks win when <code class="docutils literal notranslate"><span class="pre">n_per_split</span> <span class="pre">&gt;</span> <span class="pre">d</span></code> (ensemble
+folding almost always satisfies this; with 128 chains and any <code class="docutils literal notranslate"><span class="pre">d</span></code>, each
+push accumulates 128 draws, far exceeding <code class="docutils literal notranslate"><span class="pre">d</span></code> for <code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">&lt;</span> <span class="pre">128</span></code>).  For
+single-chain adaptation with <code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">&gt;</span> <span class="pre">n_per_split</span></code> a raw-draw ring is more
+memory-efficient — the opt-in draw ring is the intended design for high-d
+single-chain use, not an optional optimization.</p>
+<p><strong>Ensemble split semantics.</strong> For <code class="docutils literal notranslate"><span class="pre">(nc,</span> <span class="pre">d)</span></code>-block consumers a “split” is
+a <strong>draw-axis partition</strong> (step-ranges; all chains fold into the block via
+CGL merge) — NEVER a chain-subset.  This is enforced by the
+<code class="docutils literal notranslate"><span class="pre">ensemble_batch_buffer</span></code> factory and documented on every <code class="docutils literal notranslate"><span class="pre">push_split</span></code>
+operation.</p>
+<p><strong>Ensemble pooling note.</strong> Moments are POOLED across chains and steps —
+between-chain dispersion enters the covariance by design (unconverged
+ensembles inflate it by a factor of roughly <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">between/within</span></code>).  A
+between/within decomposition is NOT recoverable from the folded blocks;
+callers should be aware of this when the ensemble has not yet converged.</p>
+<p><strong>Diagonal-reference contract.</strong> The running diagonal is derivable from
+block moments: <code class="docutils literal notranslate"><span class="pre">diag_ref</span> <span class="pre">=</span> <span class="pre">diag(M2_merged)</span> <span class="pre">/</span> <span class="pre">max(n-1,</span> <span class="pre">1)</span></code>.  A single
+accumulator serves both the adapted metric and the step-size proxy channel;
+step-size proxies read <code class="docutils literal notranslate"><span class="pre">get_diag_reference</span></code>, never the adapted low-rank
+metric directly.</p>
+<p><strong>``requires_draws`` is opt-in, default off.</strong> Raw draws exist only behind
+a <code class="docutils literal notranslate"><span class="pre">requires_draws</span></code> capability flag needed by the draws-SVD estimator
+family.  Allocating an <code class="docutils literal notranslate"><span class="pre">(n_chains,</span> <span class="pre">steps,</span> <span class="pre">d)</span></code> raw-draw ring is
+prohibitive for ensemble consumers.  All four policies default to
+<code class="docutils literal notranslate"><span class="pre">requires_draws=False</span></code>; passing <code class="docutils literal notranslate"><span class="pre">True</span></code> raises <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>
+(the draw-ring variant is a follow-up work item).</p>
+<p><strong>Read-before-push ordering.</strong> Callers MUST read <code class="docutils literal notranslate"><span class="pre">get_moments</span></code> (and
+<code class="docutils literal notranslate"><span class="pre">get_diag_reference</span></code>) BEFORE calling <code class="docutils literal notranslate"><span class="pre">push_split</span></code>.  The ordering
+contract is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">block</span>   <span class="o">=</span> <span class="n">buf</span><span class="o">.</span><span class="n">get_moments</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>           <span class="c1"># read first</span>
+<span class="n">diag</span>    <span class="o">=</span> <span class="n">buf</span><span class="o">.</span><span class="n">get_diag_reference</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>    <span class="c1"># read first</span>
+<span class="n">state</span>   <span class="o">=</span> <span class="n">buf</span><span class="o">.</span><span class="n">push_split</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>            <span class="c1"># then advance</span>
+</pre></div>
+</div>
+<p>Violation consequences differ by policy — see <code class="docutils literal notranslate"><span class="pre">push_split</span></code> docstrings.</p>
+<p><strong>``reset_window_buffer`` scope.</strong> This policy replaces the
+sample-covariance estimator path (<code class="docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank</span></code>).
+It is NOT a drop-in for the Fisher-score path (<code class="docutils literal notranslate"><span class="pre">fisher_score_low_rank</span></code>),
+which still takes raw draws; that wiring is deliberate follow-up work.
+Additionally, in the current in-tree <code class="docutils literal notranslate"><span class="pre">window_adaptation</span></code> the wrap-buffer
+normalizes by the full <code class="docutils literal notranslate"><span class="pre">n</span></code> even when <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">&gt;</span> <span class="pre">B</span></code> (buffer size); this
+module’s accumulate-all semantics is the correct Stan-reset behavior —
+a future consumer swap is behavior-improving (not bit-identical) in
+the wrap regime.</p>
+<p><strong>Cross-context dtype.</strong> Create buffer state in the same x64 regime you
+sample in.  Calling <code class="docutils literal notranslate"><span class="pre">init</span></code> outside a <code class="docutils literal notranslate"><span class="pre">jax.enable_x64()</span></code> context and
+then calling <code class="docutils literal notranslate"><span class="pre">update</span></code> inside one silently degrades merge weights to f32
+precision (eager mode) or raises a shape-mismatch error under <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>
+(the scan carries the original dtype from init).</p>
+<p><strong>f32 accuracy for far-from-origin positions.</strong> The CGL recurrence is
+subject to catastrophic cancellation when <code class="docutils literal notranslate"><span class="pre">|mean|</span> <span class="pre">≳</span> <span class="pre">1e5</span></code>; accuracy
+degrades to <code class="docutils literal notranslate"><span class="pre">O(ε_mach</span> <span class="pre">×</span> <span class="pre">|mean|²)</span></code> absolute.  Prefer x64 or centering
+positions when working at large scales in f32.</p>
+<p><strong>Fisher estimator block-moments handoff.</strong> The current Fisher estimator
+function (<code class="docutils literal notranslate"><span class="pre">fisher_score_low_rank</span></code>) takes raw draws and gradients.
+<code class="docutils literal notranslate"><span class="pre">_FisherMomentBlock</span></code> below accumulates the gradient moments that a
+future moments-consuming Fisher variant would need.  The call-site wiring
+is a follow-up work item; the data type is here so the D-layer can
+accumulate gradient moments alongside position moments when needed.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MetricBuffer</span></code></a></p></td>
+<td><p>Buffer policy as a NamedTuple of callables (house-style).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MomentBlock</span></code></a></p></td>
+<td><p>CGL-mergeable sufficient statistics for covariance estimation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState" title="blackjax.adaptation.metric_buffers.AccumulatingSplitPopState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AccumulatingSplitPopState</span></code></a></p></td>
+<td><p>State for the split-based rolling-window buffer (<code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.LateStartState" title="blackjax.adaptation.metric_buffers.LateStartState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LateStartState</span></code></a></p></td>
+<td><p>State for the late-start offset policy.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.cgl_merge_two" title="blackjax.adaptation.metric_buffers.cgl_merge_two"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cgl_merge_two</span></code></a>(→ MomentBlock)</p></td>
+<td><p>CGL-merge two pre-accumulated moment blocks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.cgl_update_batch" title="blackjax.adaptation.metric_buffers.cgl_update_batch"><code class="xref py py-obj docutils literal notranslate"><span class="pre">cgl_update_batch</span></code></a>(→ MomentBlock)</p></td>
+<td><p>CGL-merge an existing moment block with a new batch of raw draws.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.merge_block_ring" title="blackjax.adaptation.metric_buffers.merge_block_ring"><code class="xref py py-obj docutils literal notranslate"><span class="pre">merge_block_ring</span></code></a>(→ MomentBlock)</p></td>
+<td><p>Reduce a ring of <code class="docutils literal notranslate"><span class="pre">k</span></code> moment blocks into a single merged block.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.diag_from_moment_block" title="blackjax.adaptation.metric_buffers.diag_from_moment_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">diag_from_moment_block</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Bessel-corrected per-coordinate variance from a <a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MomentBlock</span></code></a>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.reset_window_buffer" title="blackjax.adaptation.metric_buffers.reset_window_buffer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_window_buffer</span></code></a>(→ MetricBuffer)</p></td>
+<td><p>Stan-style hard-reset window adaptation buffer.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer" title="blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">accumulating_split_pop_buffer</span></code></a>(→ MetricBuffer)</p></td>
+<td><p>Rolling-window buffer with exact oldest-split forgetting.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.ensemble_batch_buffer" title="blackjax.adaptation.metric_buffers.ensemble_batch_buffer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ensemble_batch_buffer</span></code></a>(→ MetricBuffer)</p></td>
+<td><p>Rolling-window buffer for ensemble (multi-chain) consumers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.late_start" title="blackjax.adaptation.metric_buffers.late_start"><code class="xref py py-obj docutils literal notranslate"><span class="pre">late_start</span></code></a>(→ MetricBuffer)</p></td>
+<td><p>Offset policy: skip the first <code class="docutils literal notranslate"><span class="pre">offset_steps</span></code> update calls, then accumulate.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MetricBuffer">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MetricBuffer</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MetricBuffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="Link to this definition">#</a></dt>
+<dd><p>Buffer policy as a NamedTuple of callables (house-style).</p>
+<p>Follows the <code class="xref py py-class docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> convention of
+bundling a policy’s callables into a named container so consumers can
+access them by name (<code class="docutils literal notranslate"><span class="pre">buf.get_moments(state)</span></code>) rather than by
+positional destructuring.  Still positionally compatible with tuple
+unpacking (<code class="docutils literal notranslate"><span class="pre">NamedTuple</span></code> IS a <code class="docutils literal notranslate"><span class="pre">tuple</span></code>).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>init</strong> – <code class="docutils literal notranslate"><span class="pre">()</span> <span class="pre">-&gt;</span> <span class="pre">PolicyState</span></code></p></li>
+<li><p><strong>update</strong> – <code class="docutils literal notranslate"><span class="pre">(state,</span> <span class="pre">batch)</span> <span class="pre">-&gt;</span> <span class="pre">PolicyState</span></code></p></li>
+<li><p><strong>push_split</strong> – <code class="docutils literal notranslate"><span class="pre">(state)</span> <span class="pre">-&gt;</span> <span class="pre">PolicyState</span></code></p></li>
+<li><p><strong>get_moments</strong> – <code class="docutils literal notranslate"><span class="pre">(state)</span> <span class="pre">-&gt;</span> <span class="pre">MomentBlock</span></code></p></li>
+<li><p><strong>get_support</strong> – <code class="docutils literal notranslate"><span class="pre">(state)</span> <span class="pre">-&gt;</span> <span class="pre">tuple[Array,</span> <span class="pre">Array]</span></code></p></li>
+<li><p><strong>get_diag_reference</strong> – <code class="docutils literal notranslate"><span class="pre">(state)</span> <span class="pre">-&gt;</span> <span class="pre">Array</span></code></p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MetricBuffer.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MetricBuffer.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MetricBuffer.init" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MetricBuffer.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MetricBuffer.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MetricBuffer.update" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MetricBuffer.push_split">
+<span class="sig-name descname"><span class="pre">push_split</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MetricBuffer.push_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MetricBuffer.push_split" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MetricBuffer.get_moments">
+<span class="sig-name descname"><span class="pre">get_moments</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MetricBuffer.get_moments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MetricBuffer.get_moments" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MetricBuffer.get_support">
+<span class="sig-name descname"><span class="pre">get_support</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MetricBuffer.get_support"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MetricBuffer.get_support" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MetricBuffer.get_diag_reference">
+<span class="sig-name descname"><span class="pre">get_diag_reference</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MetricBuffer.get_diag_reference"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MetricBuffer.get_diag_reference" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MomentBlock">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MomentBlock</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MomentBlock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="Link to this definition">#</a></dt>
+<dd><p>CGL-mergeable sufficient statistics for covariance estimation.</p>
+<p>Carries exactly the fields consumed by
+<a class="reference internal" href="../metric_estimators/index.html#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank" title="blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">metric</span> <span class="o">=</span> <span class="n">sample_covariance_eigh_low_rank</span><span class="p">(</span><span class="n">m2</span><span class="o">=</span><span class="n">block</span><span class="o">.</span><span class="n">m2</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">block</span><span class="o">.</span><span class="n">count</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">m2</span></code> field is the <strong>accumulated sum of squared deviations</strong> (CGL’s
+M₂ matrix), NOT the covariance.  For a dense block <code class="docutils literal notranslate"><span class="pre">m2</span></code> has shape
+<code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code>; for a diagonal block it has shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code> (the diagonal).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>count</strong> – Number of samples accumulated, scalar <code class="docutils literal notranslate"><span class="pre">()</span></code>.</p></li>
+<li><p><strong>mean</strong> – Sample mean, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.</p></li>
+<li><p><strong>m2</strong> – Sum of squared deviations, shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> (dense) or <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>
+(diagonal).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>An empty (zero-initialised) block has <code class="docutils literal notranslate"><span class="pre">count=0</span></code>.  The CGL merge
+formula is safe for empty blocks — the result equals the non-empty
+partner when one block is empty.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MomentBlock.count">
+<span class="sig-name descname"><span class="pre">count</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MomentBlock.count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MomentBlock.count" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MomentBlock.mean">
+<span class="sig-name descname"><span class="pre">mean</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MomentBlock.mean"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MomentBlock.mean" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.MomentBlock.m2">
+<span class="sig-name descname"><span class="pre">m2</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#MomentBlock.m2"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.MomentBlock.m2" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.cgl_merge_two">
+<span class="sig-name descname"><span class="pre">cgl_merge_two</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block_a</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><span class="pre">MomentBlock</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_b</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><span class="pre">MomentBlock</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><span class="pre">MomentBlock</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#cgl_merge_two"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.cgl_merge_two" title="Link to this definition">#</a></dt>
+<dd><p>CGL-merge two pre-accumulated moment blocks.</p>
+<p>Combines <code class="docutils literal notranslate"><span class="pre">(n_a,</span> <span class="pre">mean_a,</span> <span class="pre">M2_a)</span></code> and <code class="docutils literal notranslate"><span class="pre">(n_b,</span> <span class="pre">mean_b,</span> <span class="pre">M2_b)</span></code> into
+<code class="docutils literal notranslate"><span class="pre">(n_ab,</span> <span class="pre">mean_ab,</span> <span class="pre">M2_ab)</span></code> using the parallel Chan–Golub–LeVeque
+recurrence <span id="id2">[<a class="reference internal" href="../../../../bib.html#id2" title="Tony F. Chan, Gene H. Golub, and Randall J. LeVeque. Algorithms for computing the sample variance: analysis and recommendations. The American Statistician, 37(3):242–247, 1983.">CGL83</a>]</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}n_{ab} &amp;= n_a + n_b \\
+\delta &amp;= \bar{x}_b - \bar{x}_a \\
+\bar{x}_{ab} &amp;= \bar{x}_a + \delta \cdot \frac{n_b}{n_{ab}} \\
+M2_{ab} &amp;= M2_a + M2_b + \delta\delta^\top \cdot \frac{n_a n_b}{n_{ab}}\end{split}\]</div>
+<p>This is exact in exact arithmetic.  When either block is empty
+(<code class="docutils literal notranslate"><span class="pre">count=0</span></code>), the result equals the non-empty partner — the <code class="docutils literal notranslate"><span class="pre">n_ab=0</span></code>
+division is guarded via <code class="docutils literal notranslate"><span class="pre">jnp.where</span></code>.</p>
+<p>This is the building block for every pop/merge operation in the buffer
+layer.  For merging a NEW batch (raw draws) into an existing block, use
+<a class="reference internal" href="#blackjax.adaptation.metric_buffers.cgl_update_batch" title="blackjax.adaptation.metric_buffers.cgl_update_batch"><code class="xref py py-func docutils literal notranslate"><span class="pre">cgl_update_batch()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>block_a</strong> – Two <a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MomentBlock</span></code></a> instances to merge.  Must have the same
+<code class="docutils literal notranslate"><span class="pre">m2</span></code> shape (both dense <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> or both diagonal <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>).</p></li>
+<li><p><strong>block_b</strong> – Two <a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MomentBlock</span></code></a> instances to merge.  Must have the same
+<code class="docutils literal notranslate"><span class="pre">m2</span></code> shape (both dense <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code> or both diagonal <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Merged block with combined statistics.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock">MomentBlock</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.cgl_update_batch">
+<span class="sig-name descname"><span class="pre">cgl_update_batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><span class="pre">MomentBlock</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">batch</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><span class="pre">MomentBlock</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#cgl_update_batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.cgl_update_batch" title="Link to this definition">#</a></dt>
+<dd><p>CGL-merge an existing moment block with a new batch of raw draws.</p>
+<p>Equivalent to computing a temporary block from <code class="docutils literal notranslate"><span class="pre">batch</span></code> and calling
+<a class="reference internal" href="#blackjax.adaptation.metric_buffers.cgl_merge_two" title="blackjax.adaptation.metric_buffers.cgl_merge_two"><code class="xref py py-func docutils literal notranslate"><span class="pre">cgl_merge_two()</span></code></a>, but avoids the intermediate allocation by
+computing the batch statistics inline.</p>
+<p><code class="docutils literal notranslate"><span class="pre">batch</span></code> has shape <code class="docutils literal notranslate"><span class="pre">(n_b,</span> <span class="pre">d)</span></code> — a batch of <code class="docutils literal notranslate"><span class="pre">n_b</span></code> draw vectors.
+Single draws should be reshaped to <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">d)</span></code> before calling.</p>
+<p><strong>Ensemble (nc, d) feeds</strong>: when <code class="docutils literal notranslate"><span class="pre">batch</span></code> is a <code class="docutils literal notranslate"><span class="pre">(n_chains,</span> <span class="pre">d)</span></code>
+ensemble snapshot, all chains fold into the block’s CGL merge — this
+is how <a class="reference internal" href="#blackjax.adaptation.metric_buffers.ensemble_batch_buffer" title="blackjax.adaptation.metric_buffers.ensemble_batch_buffer"><code class="xref py py-func docutils literal notranslate"><span class="pre">ensemble_batch_buffer()</span></code></a> satisfies the draw-axis split
+semantics: a “split” is a time-range partition across all chains, not a
+chain-subset partition.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>block</strong> – Existing <a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MomentBlock</span></code></a> (may be empty, <code class="docutils literal notranslate"><span class="pre">count=0</span></code>).</p></li>
+<li><p><strong>batch</strong> – New raw draws, shape <code class="docutils literal notranslate"><span class="pre">(n_b,</span> <span class="pre">d)</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated block merging the previous statistics with the new batch.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock">MomentBlock</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.merge_block_ring">
+<span class="sig-name descname"><span class="pre">merge_block_ring</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">counts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">means</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m2s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><span class="pre">MomentBlock</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#merge_block_ring"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.merge_block_ring" title="Link to this definition">#</a></dt>
+<dd><p>Reduce a ring of <code class="docutils literal notranslate"><span class="pre">k</span></code> moment blocks into a single merged block.</p>
+<p>For <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">==</span> <span class="pre">1</span></code> uses a direct-slice short-circuit (no <code class="docutils literal notranslate"><span class="pre">lax.scan</span></code>
+compiled) that is bit-identical to the scan path while avoiding the
+~1.6× compile overhead at large <code class="docutils literal notranslate"><span class="pre">d</span></code>.  For <code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">&gt;</span> <span class="pre">1</span></code> iterates with
+<a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.lax.scan.html#jax.lax.scan" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scan()</span></code></a>, CGL-merging each slot in turn.  Empty slots
+(<code class="docutils literal notranslate"><span class="pre">count=0</span></code>) contribute nothing to the merged result — the CGL merge
+formula handles them correctly via the zero-count guard in
+<a class="reference internal" href="#blackjax.adaptation.metric_buffers.cgl_merge_two" title="blackjax.adaptation.metric_buffers.cgl_merge_two"><code class="xref py py-func docutils literal notranslate"><span class="pre">cgl_merge_two()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>counts</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(k,)</span></code>.  Per-block sample counts.  Zero entries indicate
+empty (unfilled) slots.</p></li>
+<li><p><strong>means</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(k,</span> <span class="pre">d)</span></code>.</p></li>
+<li><p><strong>m2s</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(k,</span> <span class="pre">d,</span> <span class="pre">d)</span></code> or <code class="docutils literal notranslate"><span class="pre">(k,</span> <span class="pre">d)</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>CGL-merged result across all <code class="docutils literal notranslate"><span class="pre">k</span></code> blocks (or the zero block if
+all slots are empty).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock">MomentBlock</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.diag_from_moment_block">
+<span class="sig-name descname"><span class="pre">diag_from_moment_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><span class="pre">MomentBlock</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#diag_from_moment_block"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.diag_from_moment_block" title="Link to this definition">#</a></dt>
+<dd><p>Bessel-corrected per-coordinate variance from a <a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MomentBlock</span></code></a>.</p>
+<p>One accumulator serves both the adapted metric and the step-size proxy
+channel.  Step-size proxies read this diagonal view; they never read
+the adapted low-rank metric directly.</p>
+<p>The formula is <code class="docutils literal notranslate"><span class="pre">diag_ref</span> <span class="pre">=</span> <span class="pre">diag(M2)</span> <span class="pre">/</span> <span class="pre">max(count</span> <span class="pre">-</span> <span class="pre">1,</span> <span class="pre">1)</span></code>, returning
+ones (isotropic default) when <code class="docutils literal notranslate"><span class="pre">count</span> <span class="pre">&lt;</span> <span class="pre">2</span></code>.  This guards two
+degenerate cases: <code class="docutils literal notranslate"><span class="pre">count=0</span></code> (empty block, M2=0) and <code class="docutils literal notranslate"><span class="pre">count=1</span></code>
+(single point, M2=0 by definition — dividing by <code class="docutils literal notranslate"><span class="pre">max(0,1)=1</span></code> would
+return zeros, which is wrong as a step-size proxy).  The in-tree Welford
+accumulator returns NaN at <code class="docutils literal notranslate"><span class="pre">count=1</span></code> (<code class="docutils literal notranslate"><span class="pre">M2/(n-1)</span> <span class="pre">=</span> <span class="pre">0/0</span></code>); neither
+zero nor NaN is useful for a step-size proxy, so ones is the correct
+isotropic fallback.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>block</strong> – A <a class="reference internal" href="#blackjax.adaptation.metric_buffers.MomentBlock" title="blackjax.adaptation.metric_buffers.MomentBlock"><code class="xref py py-class docutils literal notranslate"><span class="pre">MomentBlock</span></code></a>.  Dense blocks (<code class="docutils literal notranslate"><span class="pre">m2</span></code> shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code>)
+extract the diagonal; diagonal blocks (<code class="docutils literal notranslate"><span class="pre">m2</span></code> shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>) use
+<code class="docutils literal notranslate"><span class="pre">m2</span></code> directly.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Per-coordinate Bessel-corrected variance (denominator <code class="docutils literal notranslate"><span class="pre">count</span> <span class="pre">-</span> <span class="pre">1</span></code>),
+or ones when <code class="docutils literal notranslate"><span class="pre">count</span> <span class="pre">&lt;</span> <span class="pre">2</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code></p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This returns the <strong>Bessel-corrected</strong> (unbiased) sample variance with
+denominator <code class="docutils literal notranslate"><span class="pre">count</span> <span class="pre">-</span> <span class="pre">1</span></code>.  This matches the convention of
+<a class="reference internal" href="../metric_estimators/index.html#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank" title="blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a>.
+Consumers expecting <strong>population variance</strong> (denominator <code class="docutils literal notranslate"><span class="pre">count</span></code>) will
+observe an upward shift of <code class="docutils literal notranslate"><span class="pre">count</span> <span class="pre">/</span> <span class="pre">(count</span> <span class="pre">-</span> <span class="pre">1)</span></code> relative to their
+expectation; callers using this output as a population-variance proxy
+must account for that factor.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.AccumulatingSplitPopState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">AccumulatingSplitPopState</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#AccumulatingSplitPopState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState" title="Link to this definition">#</a></dt>
+<dd><p>State for the split-based rolling-window buffer (<code class="docutils literal notranslate"><span class="pre">k</span> <span class="pre">&gt;=</span> <span class="pre">1</span></code>).</p>
+<p>Maintains a ring of <code class="docutils literal notranslate"><span class="pre">k</span></code> moment blocks (one active + up to <code class="docutils literal notranslate"><span class="pre">k-1</span></code>
+completed).  At each <code class="docutils literal notranslate"><span class="pre">push_split</span></code>, the ring pointer advances to a
+freshly-zeroed slot; when the ring wraps, the oldest slot is zeroed
+(overwritten by the new active slot, implementing exact
+split-granular forgetting).</p>
+<p>This state type is shared by all ring-based policies:
+<a class="reference internal" href="#blackjax.adaptation.metric_buffers.reset_window_buffer" title="blackjax.adaptation.metric_buffers.reset_window_buffer"><code class="xref py py-func docutils literal notranslate"><span class="pre">reset_window_buffer()</span></code></a> (<code class="docutils literal notranslate"><span class="pre">k=1</span></code>), <a class="reference internal" href="#blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer" title="blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer"><code class="xref py py-func docutils literal notranslate"><span class="pre">accumulating_split_pop_buffer()</span></code></a>,
+and <a class="reference internal" href="#blackjax.adaptation.metric_buffers.ensemble_batch_buffer" title="blackjax.adaptation.metric_buffers.ensemble_batch_buffer"><code class="xref py py-func docutils literal notranslate"><span class="pre">ensemble_batch_buffer()</span></code></a>.  For <code class="docutils literal notranslate"><span class="pre">k=1</span></code> the ring trivially
+implements hard-reset semantics: <code class="docutils literal notranslate"><span class="pre">push_split</span></code> advances <code class="docutils literal notranslate"><span class="pre">write_pos</span></code>
+from 0 to <code class="docutils literal notranslate"><span class="pre">(0+1)%1</span> <span class="pre">=</span> <span class="pre">0</span></code> and zeroes slot 0, leaving the block empty.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>counts</strong> – Per-block sample counts, shape <code class="docutils literal notranslate"><span class="pre">(k,)</span></code>.  Zero entries are empty.</p></li>
+<li><p><strong>means</strong> – Per-block running means, shape <code class="docutils literal notranslate"><span class="pre">(k,</span> <span class="pre">d)</span></code>.</p></li>
+<li><p><strong>m2s</strong> – Per-block M2 matrices, shape <code class="docutils literal notranslate"><span class="pre">(k,</span> <span class="pre">d,</span> <span class="pre">d)</span></code> or <code class="docutils literal notranslate"><span class="pre">(k,</span> <span class="pre">d)</span></code>.</p></li>
+<li><p><strong>write_pos</strong> – Index of the currently-active (in-progress) block, scalar <code class="docutils literal notranslate"><span class="pre">()</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The number of non-empty slots is recomputable as
+<code class="docutils literal notranslate"><span class="pre">jnp.sum(counts</span> <span class="pre">&gt;</span> <span class="pre">0)</span></code> and is not stored as a carried field —
+storing it would risk staleness under consecutive empty pushes.</p>
+<p>Split semantics (for ensemble consumers): a “split” is always a
+<strong>draw-axis time partition</strong> — all chains in a batch fold into the
+active block’s CGL merge.  Splits are never chain-subset partitions.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.counts">
+<span class="sig-name descname"><span class="pre">counts</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#AccumulatingSplitPopState.counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.counts" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.means">
+<span class="sig-name descname"><span class="pre">means</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#AccumulatingSplitPopState.means"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.means" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.m2s">
+<span class="sig-name descname"><span class="pre">m2s</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#AccumulatingSplitPopState.m2s"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.m2s" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.write_pos">
+<span class="sig-name descname"><span class="pre">write_pos</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#AccumulatingSplitPopState.write_pos"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.write_pos" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.LateStartState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">LateStartState</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#LateStartState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.LateStartState" title="Link to this definition">#</a></dt>
+<dd><p>State for the late-start offset policy.</p>
+<p>Wraps an inner policy state (any of the three ring-based policies) and
+suppresses updates for the first <code class="docutils literal notranslate"><span class="pre">offset_steps</span></code> calls to <code class="docutils literal notranslate"><span class="pre">update</span></code>.
+After <code class="docutils literal notranslate"><span class="pre">offset_steps</span></code> calls have been skipped the inner policy receives
+all subsequent updates normally.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inner</strong> – The wrapped policy state (e.g., <a class="reference internal" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState" title="blackjax.adaptation.metric_buffers.AccumulatingSplitPopState"><code class="xref py py-class docutils literal notranslate"><span class="pre">AccumulatingSplitPopState</span></code></a>).</p></li>
+<li><p><strong>num_skipped</strong> – Number of update calls that have been skipped so far, scalar <code class="docutils literal notranslate"><span class="pre">()</span></code>.
+Saturates at <code class="docutils literal notranslate"><span class="pre">offset_steps</span></code> (so the carry never grows unboundedly
+and the shape is static).  Reset to zero on every <code class="docutils literal notranslate"><span class="pre">push_split</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.LateStartState.inner">
+<span class="sig-name descname"><span class="pre">inner</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">NamedTuple</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#LateStartState.inner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.LateStartState.inner" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.LateStartState.num_skipped">
+<span class="sig-name descname"><span class="pre">num_skipped</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#LateStartState.num_skipped"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.LateStartState.num_skipped" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.reset_window_buffer">
+<span class="sig-name descname"><span class="pre">reset_window_buffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagonal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires_draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer"><span class="pre">MetricBuffer</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#reset_window_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.reset_window_buffer" title="Link to this definition">#</a></dt>
+<dd><p>Stan-style hard-reset window adaptation buffer.</p>
+<p>Implemented as <code class="xref py py-func docutils literal notranslate"><span class="pre">_make_split_pop_fns()</span></code> with <code class="docutils literal notranslate"><span class="pre">k=1</span></code>.  With a ring
+of size 1, <code class="docutils literal notranslate"><span class="pre">push_split</span></code> advances <code class="docutils literal notranslate"><span class="pre">write_pos</span></code> from 0 to
+<code class="docutils literal notranslate"><span class="pre">(0+1)</span> <span class="pre">%</span> <span class="pre">1</span> <span class="pre">=</span> <span class="pre">0</span></code> and zeroes slot 0 — exactly the hard-reset semantics
+of the Stan default.  The <code class="docutils literal notranslate"><span class="pre">k=1</span></code> short-circuit in
+<a class="reference internal" href="#blackjax.adaptation.metric_buffers.merge_block_ring" title="blackjax.adaptation.metric_buffers.merge_block_ring"><code class="xref py py-func docutils literal notranslate"><span class="pre">merge_block_ring()</span></code></a> ensures no scan is compiled (no overhead vs
+the former single-accumulator implementation).</p>
+<p>State returned by <code class="docutils literal notranslate"><span class="pre">init</span></code> is <a class="reference internal" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState" title="blackjax.adaptation.metric_buffers.AccumulatingSplitPopState"><code class="xref py py-class docutils literal notranslate"><span class="pre">AccumulatingSplitPopState</span></code></a>.</p>
+<p>The estimator call at window-end:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">metric</span> <span class="o">=</span> <span class="n">sample_covariance_eigh_low_rank</span><span class="p">(</span>
+    <span class="n">m2</span><span class="o">=</span><span class="n">buf</span><span class="o">.</span><span class="n">get_moments</span><span class="p">(</span><span class="n">state</span><span class="p">)</span><span class="o">.</span><span class="n">m2</span><span class="p">,</span>
+    <span class="n">count</span><span class="o">=</span><span class="n">buf</span><span class="o">.</span><span class="n">get_moments</span><span class="p">(</span><span class="n">state</span><span class="p">)</span><span class="o">.</span><span class="n">count</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d</strong> – Dimension of the position space.</p></li>
+<li><p><strong>diagonal</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the M2 field has shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code> (diagonal sufficient
+statistics); if <code class="docutils literal notranslate"><span class="pre">False</span></code> (default), shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code>.</p></li>
+<li><p><strong>requires_draws</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, attach a raw-draw ring to the state for draw-SVD
+estimators.  <strong>Currently not implemented</strong> (raises
+<code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>); default <code class="docutils literal notranslate"><span class="pre">False</span></code> (opt-in, off by default).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Named bundle of <code class="docutils literal notranslate"><span class="pre">(init,</span> <span class="pre">update,</span> <span class="pre">push_split,</span> <span class="pre">get_moments,</span>
+<span class="pre">get_support,</span> <span class="pre">get_diag_reference)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer">MetricBuffer</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer">
+<span class="sig-name descname"><span class="pre">accumulating_split_pop_buffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagonal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires_draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer"><span class="pre">MetricBuffer</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#accumulating_split_pop_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer" title="Link to this definition">#</a></dt>
+<dd><p>Rolling-window buffer with exact oldest-split forgetting.</p>
+<p>Maintains <code class="docutils literal notranslate"><span class="pre">k</span></code> CGL-mergeable moment blocks in a ring.  Each call to
+<code class="docutils literal notranslate"><span class="pre">push_split</span></code> finalises the currently-active block and advances the
+ring pointer to a fresh slot; when the ring is full the advance
+overwrites the oldest completed block.  This gives exact
+<strong>split-granular forgetting</strong> with O(k·d²) moment memory rather than
+O(k·n_per_split·d) raw draws.</p>
+<p>This is the nuts-rs-faithful forgetting policy: in nuts-rs, the
+<code class="docutils literal notranslate"><span class="pre">background_split</span></code> (oldest split) is popped at each window switch and
+the rest of the buffer is retained.  That is exactly what
+<code class="docutils literal notranslate"><span class="pre">push_split</span></code> does here, at the block-granularity level.</p>
+<p><strong>Split semantics</strong>: for this policy a “split” is a time-range
+partition — the caller decides when to call <code class="docutils literal notranslate"><span class="pre">push_split</span></code> (e.g., at
+each adaptation window boundary).  For ensemble consumers all chains in
+each update batch fold into the same active block; use
+<a class="reference internal" href="#blackjax.adaptation.metric_buffers.ensemble_batch_buffer" title="blackjax.adaptation.metric_buffers.ensemble_batch_buffer"><code class="xref py py-func docutils literal notranslate"><span class="pre">ensemble_batch_buffer()</span></code></a> which documents this explicitly.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d</strong> – Dimension of the position space.</p></li>
+<li><p><strong>k</strong> – Number of splits (moment blocks) in the rolling window.  The oldest
+block is dropped when more than <code class="docutils literal notranslate"><span class="pre">k</span></code> blocks have accumulated.
+Must be ≥ 1.</p></li>
+<li><p><strong>diagonal</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, M2 fields are shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code> (diagonal); if <code class="docutils literal notranslate"><span class="pre">False</span></code>
+(default), shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code>.</p></li>
+<li><p><strong>requires_draws</strong> – Default <code class="docutils literal notranslate"><span class="pre">False</span></code> (raw-draw ring is opt-in).  <code class="docutils literal notranslate"><span class="pre">True</span></code> raises
+<code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Named bundle of <code class="docutils literal notranslate"><span class="pre">(init,</span> <span class="pre">update,</span> <span class="pre">push_split,</span> <span class="pre">get_moments,</span>
+<span class="pre">get_support,</span> <span class="pre">get_diag_reference)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer">MetricBuffer</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.ensemble_batch_buffer">
+<span class="sig-name descname"><span class="pre">ensemble_batch_buffer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">d</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_chains</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagonal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requires_draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer"><span class="pre">MetricBuffer</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#ensemble_batch_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.ensemble_batch_buffer" title="Link to this definition">#</a></dt>
+<dd><p>Rolling-window buffer for ensemble (multi-chain) consumers.</p>
+<p>A specialisation of <a class="reference internal" href="#blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer" title="blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer"><code class="xref py py-func docutils literal notranslate"><span class="pre">accumulating_split_pop_buffer()</span></code></a> for
+<code class="docutils literal notranslate"><span class="pre">(n_chains,</span> <span class="pre">d)</span></code> batch inputs, with explicit draw-axis split semantics
+and a trace-time shape guard on <code class="docutils literal notranslate"><span class="pre">update</span></code>.</p>
+<p><strong>Ensemble split semantics</strong>: for <code class="docutils literal notranslate"><span class="pre">(nc,</span> <span class="pre">d)</span></code>-block consumers a
+“split” is a <strong>draw-axis partition</strong> (step-ranges; all chains fold into
+the active block via CGL merge) — NEVER a chain-subset.  Concretely,
+calling <code class="docutils literal notranslate"><span class="pre">update(state,</span> <span class="pre">batch)</span></code> with <code class="docutils literal notranslate"><span class="pre">batch</span></code> shape <code class="docutils literal notranslate"><span class="pre">(n_chains,</span> <span class="pre">d)</span></code>
+folds all <code class="docutils literal notranslate"><span class="pre">n_chains</span></code> positions into the single active block’s
+sufficient statistics; calling <code class="docutils literal notranslate"><span class="pre">push_split</span></code> advances the ring pointer
+to start a new time-range block (all chains still folded together).</p>
+<p><strong>Pooling note</strong>: moments are pooled across all chains and steps.
+Between-chain dispersion enters the covariance by design — unconverged
+ensembles inflate the estimated covariance by a factor of roughly
+<code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">between/within</span></code>.  A between/within decomposition is NOT
+recoverable from the folded blocks.</p>
+<p><strong>Shape guard</strong>: <code class="docutils literal notranslate"><span class="pre">n_chains</span></code> is checked to be ≥ 1 at factory-creation
+time.  A trace-time guard in <code class="docutils literal notranslate"><span class="pre">update</span></code> raises <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> if
+<code class="docutils literal notranslate"><span class="pre">batch.shape[0]</span> <span class="pre">!=</span> <span class="pre">n_chains</span></code> (fires at JIT trace time, free at
+runtime), turning the shape contract from decorative to enforced.</p>
+<p>This policy is the intended feeding backend for MEADS-LRD and
+ChEES-metric consumers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>d</strong> – Dimension of the position space.</p></li>
+<li><p><strong>n_chains</strong> – Number of chains per ensemble update.  Checked ≥ 1 at factory
+creation; enforced at trace time on each <code class="docutils literal notranslate"><span class="pre">update</span></code> call.</p></li>
+<li><p><strong>k</strong> – Number of splits (moment blocks) in the rolling window.</p></li>
+<li><p><strong>diagonal</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, M2 fields are shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>; if <code class="docutils literal notranslate"><span class="pre">False</span></code> (default),
+shape <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">d)</span></code>.</p></li>
+<li><p><strong>requires_draws</strong> – Default <code class="docutils literal notranslate"><span class="pre">False</span></code> (raw-draw ring is opt-in).  <code class="docutils literal notranslate"><span class="pre">True</span></code> raises
+<code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Named bundle of <code class="docutils literal notranslate"><span class="pre">(init,</span> <span class="pre">update,</span> <span class="pre">push_split,</span> <span class="pre">get_moments,</span>
+<span class="pre">get_support,</span> <span class="pre">get_diag_reference)</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer">MetricBuffer</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_buffers.late_start">
+<span class="sig-name descname"><span class="pre">late_start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inner_fns</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer"><span class="pre">MetricBuffer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">offset_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer"><span class="pre">MetricBuffer</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_buffers.html#late_start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_buffers.late_start" title="Link to this definition">#</a></dt>
+<dd><p>Offset policy: skip the first <code class="docutils literal notranslate"><span class="pre">offset_steps</span></code> update calls, then accumulate.</p>
+<p>Wraps any of the three ring-based policies (or another <code class="docutils literal notranslate"><span class="pre">late_start</span></code>)
+with a transient-skip period.  The first <code class="docutils literal notranslate"><span class="pre">offset_steps</span></code> calls to
+<code class="docutils literal notranslate"><span class="pre">update</span></code> are suppressed; all subsequent calls delegate to the inner
+policy.</p>
+<p><code class="docutils literal notranslate"><span class="pre">offset_steps</span></code> counts <strong>update calls</strong>, not individual draws.  For
+ensemble consumers (<code class="docutils literal notranslate"><span class="pre">ensemble_batch_buffer</span></code>) each call feeds
+<code class="docutils literal notranslate"><span class="pre">n_chains</span></code> draws, so <code class="docutils literal notranslate"><span class="pre">offset_steps</span></code> skips
+<code class="docutils literal notranslate"><span class="pre">offset_steps</span> <span class="pre">×</span> <span class="pre">n_chains</span></code> individual draws.</p>
+<p>The skip counter (<code class="docutils literal notranslate"><span class="pre">num_skipped</span></code> in <a class="reference internal" href="#blackjax.adaptation.metric_buffers.LateStartState" title="blackjax.adaptation.metric_buffers.LateStartState"><code class="xref py py-class docutils literal notranslate"><span class="pre">LateStartState</span></code></a>) resets to
+zero on every <code class="docutils literal notranslate"><span class="pre">push_split</span></code> call, so each adaptation window has its
+own independent <code class="docutils literal notranslate"><span class="pre">offset_steps</span></code> skip period — the late-start is NOT
+cumulative across windows.</p>
+<p>This implements the MEADS-style late-window accumulation — in MEADS,
+only draws in the second half of each adaptation window are accumulated
+into the covariance estimate (<code class="docutils literal notranslate"><span class="pre">low_rank_window_fraction=0.5</span></code>, so
+<code class="docutils literal notranslate"><span class="pre">offset_steps</span> <span class="pre">=</span> <span class="pre">window_size</span> <span class="pre">//</span> <span class="pre">2</span></code>).</p>
+<p><strong>Composability</strong>: <code class="docutils literal notranslate"><span class="pre">late_start</span></code> can wrap any of the four policies.
+It delegates <code class="docutils literal notranslate"><span class="pre">push_split</span></code>, <code class="docutils literal notranslate"><span class="pre">get_moments</span></code>, <code class="docutils literal notranslate"><span class="pre">get_support</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">get_diag_reference</span></code> directly to the inner policy; only <code class="docutils literal notranslate"><span class="pre">update</span></code> has
+the skip logic.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inner_fns</strong> – A <a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricBuffer</span></code></a> (or legacy 6-tuple) as returned by one of
+the three policy factories.</p></li>
+<li><p><strong>offset_steps</strong> – Number of update calls to skip before starting accumulation.
+Must be ≥ 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Named bundle with <a class="reference internal" href="#blackjax.adaptation.metric_buffers.LateStartState" title="blackjax.adaptation.metric_buffers.LateStartState"><code class="xref py py-class docutils literal notranslate"><span class="pre">LateStartState</span></code></a> as the state type.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_buffers.MetricBuffer" title="blackjax.adaptation.metric_buffers.MetricBuffer">MetricBuffer</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../meads_adaptation/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">blackjax.adaptation.meads_adaptation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../metric_estimators/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">blackjax.adaptation.metric_estimators</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer"><code class="docutils literal notranslate"><span class="pre">MetricBuffer</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.init"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.init</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.update"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.update</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.push_split"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.push_split</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.get_moments"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.get_moments</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.get_support"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.get_support</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MetricBuffer.get_diag_reference"><code class="docutils literal notranslate"><span class="pre">MetricBuffer.get_diag_reference</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MomentBlock"><code class="docutils literal notranslate"><span class="pre">MomentBlock</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MomentBlock.count"><code class="docutils literal notranslate"><span class="pre">MomentBlock.count</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MomentBlock.mean"><code class="docutils literal notranslate"><span class="pre">MomentBlock.mean</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.MomentBlock.m2"><code class="docutils literal notranslate"><span class="pre">MomentBlock.m2</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.cgl_merge_two"><code class="docutils literal notranslate"><span class="pre">cgl_merge_two()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.cgl_update_batch"><code class="docutils literal notranslate"><span class="pre">cgl_update_batch()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.merge_block_ring"><code class="docutils literal notranslate"><span class="pre">merge_block_ring()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.diag_from_moment_block"><code class="docutils literal notranslate"><span class="pre">diag_from_moment_block()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.counts"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState.counts</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.means"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState.means</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.m2s"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState.m2s</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.write_pos"><code class="docutils literal notranslate"><span class="pre">AccumulatingSplitPopState.write_pos</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.LateStartState"><code class="docutils literal notranslate"><span class="pre">LateStartState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.LateStartState.inner"><code class="docutils literal notranslate"><span class="pre">LateStartState.inner</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.LateStartState.num_skipped"><code class="docutils literal notranslate"><span class="pre">LateStartState.num_skipped</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.reset_window_buffer"><code class="docutils literal notranslate"><span class="pre">reset_window_buffer()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.accumulating_split_pop_buffer"><code class="docutils literal notranslate"><span class="pre">accumulating_split_pop_buffer()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.ensemble_batch_buffer"><code class="docutils literal notranslate"><span class="pre">ensemble_batch_buffer()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_buffers.late_start"><code class="docutils literal notranslate"><span class="pre">late_start()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.laps_burn_in" href="../laps_burn_in/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
+  <meta name="docsearch:version" content="0.1.dev1+g1cacf87fa" />
   </head>
   
   
@@ -191,6 +191,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../step_size/index.html">blackjax.adaptation.step_size</a></li>
@@ -434,7 +435,7 @@
   <section id="module-blackjax.adaptation.low_rank_adaptation">
 <span id="blackjax-adaptation-low-rank-adaptation"></span><h1>blackjax.adaptation.low_rank_adaptation<a class="headerlink" href="#module-blackjax.adaptation.low_rank_adaptation" title="Link to this heading">#</a></h1>
 <p>Adaptation of the low-rank-modified mass matrix for HMC-family samplers.</p>
-<p>Implements Algorithm 1 of <span id="id1">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following the
+<p>Implements Algorithm 1 of <span id="id1">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following the
 nutpie reference implementation.  The mass matrix has the form</p>
 <div class="math notranslate nohighlight">
 \[M^{-1} = \operatorname{diag}(\sigma)
@@ -455,10 +456,10 @@ directly, with no <code class="docutils literal notranslate"><span class="pre">n
 regularisation therefore only matters when the projected subspace is
 rank-deficient (few draws relative to <code class="docutils literal notranslate"><span class="pre">2·max_rank</span></code>); it fades away as
 the number of draws grows, consistent with Theorem 2.4 of
-<span id="id2">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span> (exact recovery once draws exceed
+<span id="id2">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span> (exact recovery once draws exceed
 <code class="docutils literal notranslate"><span class="pre">d+1</span></code>).</p></li>
 <li><p><strong>SPD mean of the draw covariance and the *inverse* score covariance</strong>:
-Theorem 2.3 / Eq. 9 of <span id="id3">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span> give the
+Theorem 2.3 / Eq. 9 of <span id="id3">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span> give the
 (regularised) optimal inverse mass matrix as
 <code class="docutils literal notranslate"><span class="pre">M_γ⁻¹</span> <span class="pre">=</span> <span class="pre">(cov(x)+γI)</span> <span class="pre">#</span> <span class="pre">(cov(∇log</span> <span class="pre">p)+γI)⁻¹</span></code> — the AIRM geometric mean of
 the draw covariance with the <em>inverse</em> of the score/gradient covariance.
@@ -709,7 +710,7 @@ switch in the main phase. Default <code class="docutils literal notranslate"><sp
 <dd><p>Warmup scheme using the low-rank mass matrix adaptation.</p>
 <p>Mirrors Stan’s three-phase schedule but replaces Welford covariance
 estimation with the Fisher-divergence-minimising low-rank metric of
-<span id="id4">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following nutpie’s implementation.</p>
+<span id="id4">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following nutpie’s implementation.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -786,7 +787,7 @@ tied solely to <code class="docutils literal notranslate"><span class="pre">is_w
 <dd><p>Adapt step size and a low-rank mass matrix for HMC-family samplers.</p>
 <p>Uses the three-phase Stan-style warmup schedule while replacing Welford
 covariance estimation with the Fisher-divergence-minimising low-rank
-metric of <span id="id5">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
+metric of <span id="id5">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
 <p>The returned <code class="docutils literal notranslate"><span class="pre">AdaptationAlgorithm</span></code> has a single <code class="docutils literal notranslate"><span class="pre">run</span></code> method:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 <span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>

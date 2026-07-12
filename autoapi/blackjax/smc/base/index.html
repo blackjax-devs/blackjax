@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.smc.adaptive_tempered" href="../adaptive_tempered/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
+  <meta name="docsearch:version" content="0.1.dev1+g1cacf87fa" />
   </head>
   
   
@@ -191,6 +191,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
@@ -617,7 +618,7 @@ new particles.</p></li>
 <li><p><strong>weight_fn</strong> (<em>Callable</em>) – Function that assigns a weight to the particles.</p></li>
 <li><p><strong>resample_fn</strong> (<em>Callable</em>) – Function that resamples the particles.</p></li>
 <li><p><strong>num_resampled</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><em>int</em></a><em>, </em><em>optional</em>) – The number of particles to resample. This can be used to implement
-Waste-Free SMC <span id="id1">[<a class="reference internal" href="../../../../bib.html#id34" title="Hai-Dang Dau and Nicolas Chopin. Waste-free sequential monte carlo. arXiv preprint arXiv:2011.02328, 2020.">DC20</a>]</span>, in which case we resample a number
+Waste-Free SMC <span id="id1">[<a class="reference internal" href="../../../../bib.html#id35" title="Hai-Dang Dau and Nicolas Chopin. Waste-free sequential monte carlo. arXiv preprint arXiv:2011.02328, 2020.">DC20</a>]</span>, in which case we resample a number
 <span class="math notranslate nohighlight">\(M&lt;N\)</span> of particles, and the update function is in charge of returning
 <span class="math notranslate nohighlight">\(N\)</span> samples.</p></li>
 </ul>

@@ -53,10 +53,10 @@
     <link rel="index" title="Index" href="../../../../genindex.html" />
     <link rel="search" title="Search" href="../../../../search.html" />
     <link rel="next" title="blackjax.adaptation.pathfinder_adaptation" href="../pathfinder_adaptation/index.html" />
-    <link rel="prev" title="blackjax.adaptation.meads_adaptation" href="../meads_adaptation/index.html" />
+    <link rel="prev" title="blackjax.adaptation.metric_buffers" href="../metric_buffers/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc1daf7d3c" />
+  <meta name="docsearch:version" content="0.1.dev1+g1cacf87fa" />
   </head>
   
   
@@ -191,6 +191,7 @@
 <li class="toctree-l3"><a class="reference internal" href="../mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
 <li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.adaptation.metric_estimators</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../step_size/index.html">blackjax.adaptation.step_size</a></li>
@@ -611,7 +612,7 @@ Default <code class="docutils literal notranslate"><span class="pre">2.0</span><
 <span class="sig-name descname"><span class="pre">fisher_score_low_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><span class="pre">blackjax.mcmc.metrics.LowRankInverseMassMatrix</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#fisher_score_low_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="Link to this definition">#</a></dt>
 <dd><p>Fisher-divergence-minimising low-rank inverse mass matrix.</p>
 <p>Implements Steps 1–9 of Algorithm 1 of
-<span id="id3">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following the nutpie reference
+<span id="id3">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following the nutpie reference
 implementation (<code class="docutils literal notranslate"><span class="pre">nuts-rs</span></code> <code class="docutils literal notranslate"><span class="pre">src/transform/adapt/low_rank.rs</span></code>
 <code class="docutils literal notranslate"><span class="pre">estimate_mass_matrix</span></code>).</p>
 <p>The inverse mass matrix has the form</p>
@@ -633,7 +634,7 @@ per-coordinate optimal scale (paper §3.1); clipped to <code class="docutils lit
 (nutpie range).</p>
 <p><strong>AIRM geometric mean</strong> <code class="docutils literal notranslate"><span class="pre">Σ</span> <span class="pre">=</span> <span class="pre">C_x</span> <span class="pre">#</span> <span class="pre">C_a^{-1}</span></code> (AIRM = affine-invariant
 Riemannian metric): Theorem 2.3 / Eq. 9 of
-<span id="id4">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span> — the regularised optimal inverse
+<span id="id4">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span> — the regularised optimal inverse
 mass matrix is the geometric mean of the draw covariance with the
 <em>inverse</em> score covariance.</p>
 <p><strong>γ-regularisation</strong> <code class="docutils literal notranslate"><span class="pre">C</span> <span class="pre">=</span> <span class="pre">P</span> <span class="pre">P^T</span> <span class="pre">/</span> <span class="pre">γ</span> <span class="pre">+</span> <span class="pre">I</span></code> (nutpie convention: the
@@ -831,7 +832,7 @@ covariance matrix.</p>
 <dd><p>Fisher-divergence-minimising diagonal inverse mass matrix.</p>
 <p>Computes <span class="math notranslate nohighlight">\(\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla
 \log p]}\)</span>, the per-coordinate diagonal estimator of
-<span id="id5">[<a class="reference internal" href="../../../../bib.html#id2" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
+<span id="id5">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
 <p>This is the <strong>diagonal-only</strong> analogue of <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a>:
 that function’s diagonal scale <span class="math notranslate nohighlight">\(\sigma =
 (\mathrm{Var}[x] / \mathrm{Var}[\nabla \log p])^{1/4}\)</span> gives the
@@ -919,12 +920,12 @@ uniform weights, not the unbiased <span class="math notranslate nohighlight">\(n
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../meads_adaptation/index.html"
+       href="../metric_buffers/index.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">blackjax.adaptation.meads_adaptation</p>
+        <p class="prev-next-title">blackjax.adaptation.metric_buffers</p>
       </div>
     </a>
     <a class="right-next"
