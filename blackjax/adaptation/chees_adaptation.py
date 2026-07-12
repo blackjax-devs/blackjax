@@ -130,7 +130,7 @@ class _ChEESCovAccumulatorState(NamedTuple):
     """Running Chan/Welford full covariance accumulator for the slow-
     direction trajectory-length floor's ``lambda_max`` estimate.
 
-    Mirrors ``meads_adaptation``'s ``_LowRankAccumulatorState`` (identical
+    Mirrors :class:`~blackjax.adaptation.metric_buffers.MomentBlock` (identical
     mean/M2/count recurrence) -- mirrored here rather than imported, to keep
     this feature's diff self-contained to ``chees_adaptation.py``
     (``meads_adaptation.py`` is out of scope for this change). Accumulated
@@ -160,7 +160,7 @@ def _cov_accumulator_update(
     """Merge a batch of samples, shape ``(n_b, num_dim)`` (one step's
     ensemble of ``num_chains`` positions), into the running accumulator via
     Chan et al.'s parallel/batch generalization of Welford's algorithm --
-    the same recurrence ``meads_adaptation._lrd_accumulator_update`` uses.
+    the same recurrence :func:`~blackjax.adaptation.metric_buffers.cgl_update_batch` uses.
     """
     mean_a, m2_a, n_a = acc
     n_b = batch.shape[0]

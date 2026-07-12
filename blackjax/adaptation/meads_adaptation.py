@@ -239,28 +239,6 @@ def _low_rank_precondition_pos(pos: Array, sigma: Array, U: Array, lam: Array) -
     return _low_rank_apply(pos, U, 1.0 / jnp.sqrt(lam)) / sigma
 
 
-def _lrd_accumulator_init(d: int) -> MomentBlock:
-    """Initialise an empty :class:`~blackjax.adaptation.metric_buffers.MomentBlock`
-    for MEADS-LRD's window accumulator.
-
-    Returns a zero-count :class:`~blackjax.adaptation.metric_buffers.MomentBlock`
-    with shape ``(d,)`` mean and ``(d, d)`` M2.  Thin wrapper kept for backward
-    compatibility with tests that import this helper directly.
-    """
-    return MomentBlock(count=jnp.zeros(()), mean=jnp.zeros((d,)), m2=jnp.zeros((d, d)))
-
-
-def _lrd_accumulator_update(acc: MomentBlock, batch: Array) -> MomentBlock:
-    """Merge a batch of ``n_b`` samples, shape ``(n_b, d)``, into the running
-    :class:`~blackjax.adaptation.metric_buffers.MomentBlock` via the
-    CGL (Chan–Golub–LeVeque) batch recurrence.
-
-    Delegates to :func:`~blackjax.adaptation.metric_buffers.cgl_update_batch`.
-    Kept for backward compatibility with tests that import this helper directly.
-    """
-    return cgl_update_batch(acc, batch)
-
-
 def _lrd_from_accumulated_covariance(
     acc: MomentBlock, k: int
 ) -> tuple[Array, Array, Array]:
@@ -575,7 +553,7 @@ def meads_adaptation(
 
             updated_lrd_accum = jax.lax.cond(
                 in_window,
-                lambda a: _lrd_accumulator_update(a, flat_all_pos),
+                lambda a: cgl_update_batch(a, flat_all_pos),
                 lambda a: a,
                 lrd_accum,
             )
@@ -750,7 +728,9 @@ def meads_adaptation(
             # equals the full dense metric, so this clamp is lossless.
             nonlocal low_rank_k
             low_rank_k = min(low_rank_k, d)
-            init_lrd_accum = _lrd_accumulator_init(d)
+            init_lrd_accum = MomentBlock(
+                count=jnp.zeros(()), mean=jnp.zeros((d,)), m2=jnp.zeros((d, d))
+            )
         else:
             window_start = num_steps
             init_lrd_accum = None

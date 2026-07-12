@@ -46,10 +46,6 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 
-from blackjax.adaptation.meads_adaptation import (
-    _lrd_accumulator_init,
-    _lrd_accumulator_update,
-)
 from blackjax.adaptation.metric_buffers import (
     AccumulatingSplitPopState,
     LateStartState,
@@ -928,10 +924,11 @@ class EnsembleMeadsParityX64Test(BlackJAXTest):
                 state = update(state, batch)
             block = get_moments(state)
 
-            # MEADS in-tree accumulator (reference implementation)
-            acc = _lrd_accumulator_init(d)
+            # Pre-refactor frozen accumulator (reference implementation, not
+            # imported — embedded below in section 16 to prevent silent aliasing)
+            acc = _frozen_lrd_accumulator_init(d)
             for batch in batches:
-                acc = _lrd_accumulator_update(acc, batch)
+                acc = _frozen_lrd_accumulator_update(acc, batch)
 
             # Bit-exact parity: 0.0 difference, not just small difference
             np.testing.assert_array_equal(
