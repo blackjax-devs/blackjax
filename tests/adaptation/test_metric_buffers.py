@@ -1968,12 +1968,13 @@ class EnsembleBatchShapeGuardTest(BlackJAXTest):
 # ---------------------------------------------------------------------------
 
 # Frozen copy of the bespoke Chan/Welford accumulator that lived in
-# meads_adaptation.py before R3-final.  Embedded here (not imported) so that
-# any future mutation to the production module cannot alias the golden.
+# meads_adaptation.py before the buffer-layer refactor.  Embedded here (not
+# imported) so that any future mutation to the production module cannot alias
+# the golden.
 
 
 class _FrozenLRDAccumulatorState(NamedTuple):
-    """Pre-R3-final Chan/Welford state: (mean, m2, count)."""
+    """Bespoke pre-refactor Chan/Welford state: (mean, m2, count)."""
 
     mean: jnp.ndarray
     m2: jnp.ndarray
@@ -2004,7 +2005,7 @@ def _frozen_lrd_accumulator_update(
 class MeadsBufferEndToEndParityTest(BlackJAXTest):
     """Old Chan/Welford accumulator matches ensemble_batch_buffer at the LRD output level.
 
-    Path A: frozen pre-R3-final accumulator → sample_covariance_eigh_low_rank
+    Path A: frozen pre-refactor accumulator → sample_covariance_eigh_low_rank
     Path B: ensemble_batch_buffer → get_moments → sample_covariance_eigh_low_rank
 
     Both paths must produce bit-identical (sigma, U, lam) under x64.
@@ -2025,7 +2026,7 @@ class MeadsBufferEndToEndParityTest(BlackJAXTest):
         ]
 
         with jax.enable_x64():
-            # Path A: frozen inline Chan/Welford (the pre-R3-final math)
+            # Path A: frozen inline Chan/Welford (the original bespoke math)
             acc = _frozen_lrd_accumulator_init(d)
             for i in range(window_start, n_steps):
                 acc = _frozen_lrd_accumulator_update(acc, jnp.asarray(batches[i]))
