@@ -31,9 +31,7 @@ outputs.  The shim parity guarantee is enforced by the existing adaptation
 tests (``test_adaptation.py``, ``test_window_adaptation_fisher_diag.py``)
 which now run through the shim path.
 """
-import jax
 import jax.numpy as jnp
-import numpy as np
 
 import blackjax
 from blackjax.adaptation.metric_recipes import REGISTRY, lookup_recipe
@@ -42,12 +40,11 @@ from blackjax.adaptation.staged_adaptation import (
     build_schedule,
     staged_adaptation,
 )
+from blackjax.adaptation.window_adaptation import WindowAdaptationState
 from blackjax.adaptation.window_adaptation import (
-    WindowAdaptationState,
     build_schedule as window_build_schedule,
 )
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
-
 
 # ---------------------------------------------------------------------------
 # Alias identity tests
@@ -67,6 +64,7 @@ class StagedAdaptationStateAliasTest(BlackJAXTest):
         core = lookup_recipe("welford_diag").build_core()
         state_0 = core.init(3)
         from blackjax.adaptation.step_size import dual_averaging_adaptation
+
         da_init, _, _ = dual_averaging_adaptation(0.8)
         ss_state = da_init(1.0)
         sa_state = StagedAdaptationState(
@@ -105,9 +103,7 @@ class StagedAdaptationMetricArgPathTest(BlackJAXTest):
             metric=metric_arg,
             initial_step_size=0.5,
         )
-        (state, params), _ = warmup.run(
-            self.next_key(), jnp.zeros(3), num_steps=200
-        )
+        (state, params), _ = warmup.run(self.next_key(), jnp.zeros(3), num_steps=200)
         return state, params
 
     def test_string_metric_arg(self):
@@ -174,9 +170,7 @@ class StagedAdaptationDtypeTest(BlackJAXTest):
             metric="welford_diag",
             initial_step_size=1.0,
         )
-        (state, params), _ = warmup.run(
-            self.next_key(), initial_pos, num_steps=300
-        )
+        (state, params), _ = warmup.run(self.next_key(), initial_pos, num_steps=300)
         self.assertTrue(
             bool(jnp.isfinite(params["step_size"])),
             f"step_size not finite for dtype={position_dtype}",
@@ -304,8 +298,6 @@ class BlackjaxTopLevelStagedAdaptationTest(BlackJAXTest):
             metric="welford_diag",
             initial_step_size=0.5,
         )
-        (state, params), _ = warmup.run(
-            self.next_key(), jnp.zeros(3), num_steps=100
-        )
+        (state, params), _ = warmup.run(self.next_key(), jnp.zeros(3), num_steps=100)
         self.assertTrue(bool(jnp.isfinite(params["step_size"])))
         self.assertGreater(float(params["step_size"]), 0.0)

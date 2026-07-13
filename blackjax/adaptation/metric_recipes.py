@@ -356,7 +356,9 @@ def _build_fisher_diag_core(
     ) -> FisherMassMatrixAdaptationState:
         return mm_update(state, position, grad)
 
-    def final(state: FisherMassMatrixAdaptationState) -> FisherMassMatrixAdaptationState:
+    def final(
+        state: FisherMassMatrixAdaptationState,
+    ) -> FisherMassMatrixAdaptationState:
         # Stitch #1 of 2: Fisher IMM computation + block reset.
         # Twin copy: window_adaptation.base()'s slow_final (fisher path).
         # Consolidation deferred until base() disposition is decided.
@@ -417,16 +419,21 @@ REGISTRY: dict[str, MetricRecipe] = {
         provides=frozenset({"positions", "gradients"}),
         emits="diag",
         provenance=(
-            "Fisher-divergence-minimising diagonal estimator "
-            "(Seyboldt 2026, arXiv:2603.18845, §3.1). "
-            "Inverse mass matrix: sigma^2 = sqrt(Var[x] / Var[grad log p]) per coordinate. "
-            "Situational benefit for concentrated-anisotropy hierarchical geometry "
-            "(~1.3-1.7x min-ESS/grad improvement measured 2026-07-13); "
-            "degrades on well-conditioned GLM and diffuse AR(1) geometry "
-            "(~0.6-0.7x). Not a default. "
-            "Operational warning: degradation carries no R-hat/divergence signature "
-            "(healthy flags while effective-samples-per-gradient halves) — gate "
-            "estimator swaps on ESS-per-gradient, not health flags."
+            "Situational estimator, not a default. "
+            "Helps concentrated-anisotropy hierarchical geometry "
+            "(~1.3–1.7x effective-samples-per-gradient); "
+            "degrades well-conditioned targets with correlated coordinate blocks "
+            "(~0.6–0.7x). "
+            "Mechanism: for near-Gaussian posteriors this estimator equals the "
+            "Welford diagonal shrunk by sqrt(1 - R_i^2) per coordinate "
+            "(the marginal-to-conditional precision pull); without an off-diagonal "
+            "correction the shrink under-explores correlated coordinates, raising "
+            "the slowest-mode variance. "
+            "Risk boundary: correlated blocks (R^2 >= ~0.5) on an already "
+            "well-conditioned target with no rank-k correction. "
+            "Degradation carries no R-hat/divergence signature — gate estimator "
+            "choices on effective-samples-per-gradient, not health flags. "
+            "Validated 2026-07-13."
         ),
     ),
 }
@@ -462,6 +469,6 @@ def lookup_recipe(name: str) -> MetricRecipe:
             f"Unknown metric recipe {name!r}. "
             f"Known registry names: {known}. "
             f"Pass a MetricRecipe or MetricCore constructor directly for "
-            f"custom recipes not yet in the registry."
+            f"custom recipes that have not been registered."
         )
     return REGISTRY[name]

@@ -483,8 +483,8 @@ def staged_adaptation(
         metric_core = metric
     else:
         raise TypeError(
-            f"staged_adaptation: metric must be a str, MetricRecipe, or MetricCore; "
-            f"got {type(metric).__name__}. "
+            f"staged_adaptation: metric must be a str, MetricRecipe, or MetricCore "
+            f"(got {type(metric).__name__}). "
             f"Pass a registry name (e.g. 'welford_diag') or construct a "
             f"MetricRecipe or MetricCore directly."
         )
