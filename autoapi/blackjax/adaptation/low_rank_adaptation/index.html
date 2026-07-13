@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.laps_burn_in" href="../laps_burn_in/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdbe43b69e" />
+  <meta name="docsearch:version" content="0.1.dev1+g2dcea81d9" />
   </head>
   
   
@@ -193,7 +193,9 @@
 <li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_recipes/index.html">blackjax.adaptation.metric_recipes</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../step_size/index.html">blackjax.adaptation.step_size</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
 </ul>
@@ -629,7 +631,7 @@ gates the <code class="docutils literal notranslate"><span class="pre">recompute
 <dt class="sig sig-object py" id="blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule">
 <span class="sig-name descname"><span class="pre">build_growing_window_schedule</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size_window</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.15</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">early_window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">80</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">window_growth</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/low_rank_adaptation.html#build_growing_window_schedule"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule" title="Link to this definition">#</a></dt>
 <dd><p>Proportional-to-tune, geometrically-growing-window warmup schedule.</p>
-<p>An alternate to <a class="reference internal" href="../window_adaptation/index.html#blackjax.adaptation.window_adaptation.build_schedule" title="blackjax.adaptation.window_adaptation.build_schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_schedule()</span></code></a>
+<p>An alternate to <code class="xref py py-func docutils literal notranslate"><span class="pre">build_schedule()</span></code>
 (Stan’s fixed-absolute, 2x-doubling schedule) that instead sizes windows
 <em>proportionally to</em> <code class="docutils literal notranslate"><span class="pre">num_steps</span></code> and grows them by <code class="docutils literal notranslate"><span class="pre">window_growth</span></code>
 (1.5x) rather than doubling, matching nutpie’s window-sizing and
@@ -696,7 +698,7 @@ switch in the main phase. Default <code class="docutils literal notranslate"><sp
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p>A <code class="docutils literal notranslate"><span class="pre">(num_steps,</span> <span class="pre">2)</span></code> array of <code class="docutils literal notranslate"><span class="pre">(stage,</span> <span class="pre">is_window_end)</span></code> pairs, in the</p></li>
-<li><p>same format as <a class="reference internal" href="../window_adaptation/index.html#blackjax.adaptation.window_adaptation.build_schedule" title="blackjax.adaptation.window_adaptation.build_schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_schedule()</span></code></a></p></li>
+<li><p>same format as <code class="xref py py-func docutils literal notranslate"><span class="pre">build_schedule()</span></code></p></li>
 <li><p>(stage <code class="docutils literal notranslate"><span class="pre">0</span></code> = fast/step-size-only, stage <code class="docutils literal notranslate"><span class="pre">1</span></code> = slow/mass-matrix-adapting).</p></li>
 </ul>
 </p>
@@ -822,7 +824,7 @@ identity, matching nutpie’s own initialisation (see <a class="reference intern
 Default <code class="docutils literal notranslate"><span class="pre">False</span></code> reproduces the original behaviour exactly.</p></li>
 <li><p><strong>schedule_fn</strong> – Schedule-generator function <code class="docutils literal notranslate"><span class="pre">num_steps</span> <span class="pre">-&gt;</span> <span class="pre">(num_steps,</span> <span class="pre">2)</span></code> array of
 <code class="docutils literal notranslate"><span class="pre">(stage,</span> <span class="pre">is_window_end)</span></code> pairs. Default is Stan’s fixed-absolute,
-2x-doubling <a class="reference internal" href="../window_adaptation/index.html#blackjax.adaptation.window_adaptation.build_schedule" title="blackjax.adaptation.window_adaptation.build_schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_schedule()</span></code></a>
+2x-doubling <code class="xref py py-func docutils literal notranslate"><span class="pre">build_schedule()</span></code>
 (unchanged default behaviour). Pass
 <a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule" title="blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_growing_window_schedule()</span></code></a> for nutpie’s proportional-to-tune,
 1.5x-growing-window schedule – see that function’s docstring for

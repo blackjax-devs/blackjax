@@ -22,7 +22,9 @@ Submodules
    /autoapi/blackjax/adaptation/meads_adaptation/index
    /autoapi/blackjax/adaptation/metric_buffers/index
    /autoapi/blackjax/adaptation/metric_estimators/index
+   /autoapi/blackjax/adaptation/metric_recipes/index
    /autoapi/blackjax/adaptation/pathfinder_adaptation/index
+   /autoapi/blackjax/adaptation/staged_adaptation/index
    /autoapi/blackjax/adaptation/step_size/index
    /autoapi/blackjax/adaptation/window_adaptation/index
 

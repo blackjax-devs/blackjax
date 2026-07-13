@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.low_rank_adaptation" href="../low_rank_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdbe43b69e" />
+  <meta name="docsearch:version" content="0.1.dev1+g2dcea81d9" />
   </head>
   
   
@@ -193,7 +193,9 @@
 <li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_recipes/index.html">blackjax.adaptation.metric_recipes</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../step_size/index.html">blackjax.adaptation.step_size</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
 </ul>
@@ -552,7 +554,8 @@ statistics for the current window.  Reset to zeros at each
 This state type accumulates the moments needed to compute those per-window
 variances without storing raw draw arrays.  The IMM computation is
 deliberately NOT performed inside <code class="docutils literal notranslate"><span class="pre">mass_matrix_adaptation</span></code>’s <code class="docutils literal notranslate"><span class="pre">final()</span></code>
-— it is composed by the consumer (<a class="reference internal" href="../window_adaptation/index.html#blackjax.adaptation.window_adaptation.base" title="blackjax.adaptation.window_adaptation.base"><code class="xref py py-func docutils literal notranslate"><span class="pre">base()</span></code></a>)
+— it is composed by the consumer
+(<code class="xref py py-func docutils literal notranslate"><span class="pre">_build_fisher_diag_core()</span></code>)
 to avoid a circular import between this module and <code class="docutils literal notranslate"><span class="pre">metric_estimators</span></code>.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.inverse_mass_matrix">

@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gdbe43b69e" />
+  <meta name="docsearch:version" content="0.1.dev1+g2dcea81d9" />
   </head>
   
   
@@ -191,7 +191,9 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html">blackjax.adaptation.metric_recipes</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
 </ul>
@@ -524,7 +526,8 @@
 <span class="sd">    This state type accumulates the moments needed to compute those per-window</span>
 <span class="sd">    variances without storing raw draw arrays.  The IMM computation is</span>
 <span class="sd">    deliberately NOT performed inside ``mass_matrix_adaptation``&#39;s ``final()``</span>
-<span class="sd">    — it is composed by the consumer (:func:`~blackjax.adaptation.window_adaptation.base`)</span>
+<span class="sd">    — it is composed by the consumer</span>
+<span class="sd">    (:func:`~blackjax.adaptation.metric_recipes._build_fisher_diag_core`)</span>
 <span class="sd">    to avoid a circular import between this module and ``metric_estimators``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -741,8 +744,9 @@
 <span class="sd">        This separation avoids a circular import</span>
 <span class="sd">        (``metric_estimators`` imports ``welford_algorithm`` from this module,</span>
 <span class="sd">        so this module must not import from ``metric_estimators``).</span>
-<span class="sd">        :func:`~blackjax.adaptation.window_adaptation.base` composes the</span>
-<span class="sd">        estimator call in its ``slow_final`` closure for the Fisher path.</span>
+<span class="sd">        :func:`~blackjax.adaptation.metric_recipes._build_fisher_diag_core`</span>
+<span class="sd">        composes the estimator call in its ``final`` closure for the Fisher</span>
+<span class="sd">        path.</span>
 
 <span class="sd">        **Welford path**: the IMM is regularized as a convex combination of</span>
 <span class="sd">        this window&#39;s empirical covariance (weight: ``count / denom``), the</span>
@@ -755,7 +759,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mm_state</span><span class="p">,</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">):</span>
             <span class="c1"># Reset the block for the next window; pass the existing IMM through</span>
-            <span class="c1"># unchanged (the consumer — window_adaptation.base&#39;s slow_final —</span>
+            <span class="c1"># unchanged (the consumer — metric_recipes._build_fisher_diag_core.final —</span>
             <span class="c1"># reads the block variances BEFORE this call and stitches in the</span>
             <span class="c1"># new IMM after the reset).</span>
             <span class="n">ndims</span> <span class="o">=</span> <span class="n">mm_state</span><span class="o">.</span><span class="n">fisher_block</span><span class="o">.</span><span class="n">m2_x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>

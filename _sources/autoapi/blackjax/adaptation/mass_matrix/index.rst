@@ -111,7 +111,8 @@ Module Contents
    This state type accumulates the moments needed to compute those per-window
    variances without storing raw draw arrays.  The IMM computation is
    deliberately NOT performed inside ``mass_matrix_adaptation``'s ``final()``
-   — it is composed by the consumer (:func:`~blackjax.adaptation.window_adaptation.base`)
+   — it is composed by the consumer
+   (:func:`~blackjax.adaptation.metric_recipes._build_fisher_diag_core`)
    to avoid a circular import between this module and ``metric_estimators``.
 
 

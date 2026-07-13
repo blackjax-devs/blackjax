@@ -1,0 +1,862 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>blackjax.adaptation.metric_recipes</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/adaptation/metric_recipes/index';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.adaptation.pathfinder_adaptation" href="../pathfinder_adaptation/index.html" />
+    <link rel="prev" title="blackjax.adaptation.metric_estimators" href="../metric_estimators/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g2dcea81d9" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">blackjax.adaptation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.adaptation.metric_recipes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>blackjax.adaptation.metric_recipes</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-recipes">Available recipes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design">Design</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore"><code class="docutils literal notranslate"><span class="pre">MetricCore</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore.init"><code class="docutils literal notranslate"><span class="pre">MetricCore.init</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore.update"><code class="docutils literal notranslate"><span class="pre">MetricCore.update</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore.final"><code class="docutils literal notranslate"><span class="pre">MetricCore.final</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe"><code class="docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.representation"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.representation</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.estimator"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.estimator</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.buffer"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.support_gate"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.support_gate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.needs"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.needs</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provides"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.provides</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.emits"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.emits</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provenance"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.provenance</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.build_core"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.build_core()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.REGISTRY"><code class="docutils literal notranslate"><span class="pre">REGISTRY</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.lookup_recipe"><code class="docutils literal notranslate"><span class="pre">lookup_recipe()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-blackjax.adaptation.metric_recipes">
+<span id="blackjax-adaptation-metric-recipes"></span><h1>blackjax.adaptation.metric_recipes<a class="headerlink" href="#module-blackjax.adaptation.metric_recipes" title="Link to this heading">#</a></h1>
+<p>Metric recipes and the embeddable MetricCore protocol for staged_adaptation.</p>
+<section id="available-recipes">
+<h2>Available recipes<a class="headerlink" href="#available-recipes" title="Link to this heading">#</a></h2>
+<p>Pass any of the following string names as the <code class="docutils literal notranslate"><span class="pre">metric=</span></code> argument to
+<a class="reference internal" href="../staged_adaptation/index.html#blackjax.adaptation.staged_adaptation.staged_adaptation" title="blackjax.adaptation.staged_adaptation.staged_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">staged_adaptation()</span></code></a>:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;welford_diag&quot;</span></code> — Stan-default diagonal Welford estimator; reproduces
+<a class="reference internal" href="../window_adaptation/index.html#blackjax.adaptation.window_adaptation.window_adaptation" title="blackjax.adaptation.window_adaptation.window_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation()</span></code></a> exactly.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;welford_dense&quot;</span></code> — Dense Welford covariance, same Stan schedule.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;fisher_diag&quot;</span></code> — Fisher-divergence-minimising diagonal estimator
+(situational; requires position <em>and</em> gradient samples; see registry
+provenance note for operational guidance).</p></li>
+</ul>
+<p>Usage:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># String sugar (registry lookup):</span>
+<span class="n">wu</span> <span class="o">=</span> <span class="n">staged_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;welford_diag&quot;</span><span class="p">)</span>
+
+<span class="c1"># Recipe constructor (testability / custom configuration):</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_recipes</span><span class="w"> </span><span class="kn">import</span> <span class="n">REGISTRY</span>
+<span class="n">core</span> <span class="o">=</span> <span class="n">REGISTRY</span><span class="p">[</span><span class="s2">&quot;welford_diag&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">build_core</span><span class="p">(</span><span class="n">imm_shrinkage_to_previous</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
+<span class="n">wu</span> <span class="o">=</span> <span class="n">staged_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">core</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="design">
+<h2>Design<a class="headerlink" href="#design" title="Link to this heading">#</a></h2>
+<p>A <a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a> declares an (estimator, buffer, representation,
+support_gate) tuple with construction-time validation of the coupling
+contract (<code class="docutils literal notranslate"><span class="pre">needs</span> <span class="pre">⊆</span> <span class="pre">provides</span></code> and <code class="docutils literal notranslate"><span class="pre">emits</span> <span class="pre">==</span> <span class="pre">representation</span></code>): incompatible
+combos fail at Python level with a clear message, never inside traced code.</p>
+<p>A <a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a> is the embeddable mass-matrix adaptation component —
+the separable piece that the staged_adaptation engine hosts.  Step-size
+dual averaging and the stage schedule are HOST-layer concerns; this core
+handles only the inverse-mass-matrix estimation.</p>
+<p>Layer doctrine:</p>
+<ul class="simple">
+<li><p>The METRIC CORE (<a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a>) handles mass-matrix tuning only.</p></li>
+<li><p>Step-size adaptation and the stage schedule live in the HOST
+(<a class="reference internal" href="../staged_adaptation/index.html#module-blackjax.adaptation.staged_adaptation" title="blackjax.adaptation.staged_adaptation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">staged_adaptation</span></code></a>).</p></li>
+<li><p>Step-size proxy independence: for diag/dense representations (this slice),
+the dual-averaging acceptance-rate proxy is not an eigenvalue proxy of the
+adapted metric, so the step-size and metric adaptation are decoupled.  A
+<code class="docutils literal notranslate"><span class="pre">diag_reference</span></code> accessor will be added in the low-rank slice where this
+independence no longer holds.</p></li>
+</ul>
+<p class="rubric">Notes</p>
+<p>The <a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a> schema (field types) is provisional:
+estimator/buffer/support_gate are currently string tags.  Future slices will
+replace these with proper constructor objects once the schema is stable across
+all recipe families.  Import directly from <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.metric_recipes</span></code>
+— <a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a> is not exported at the <code class="docutils literal notranslate"><span class="pre">blackjax</span></code> top level.</p>
+</section>
+<section id="attributes">
+<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.REGISTRY" title="blackjax.adaptation.metric_recipes.REGISTRY"><code class="xref py py-obj docutils literal notranslate"><span class="pre">REGISTRY</span></code></a></p></td>
+<td><p></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MetricCore</span></code></a></p></td>
+<td><p>Embeddable mass-matrix adaptation core: init/update/final protocol.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a></p></td>
+<td><p>Configuration bundle for a mass-matrix adaptation recipe.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.lookup_recipe" title="blackjax.adaptation.metric_recipes.lookup_recipe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lookup_recipe</span></code></a>(→ MetricRecipe)</p></td>
+<td><p>Look up a named recipe from the <a class="reference internal" href="#blackjax.adaptation.metric_recipes.REGISTRY" title="blackjax.adaptation.metric_recipes.REGISTRY"><code class="xref py py-data docutils literal notranslate"><span class="pre">REGISTRY</span></code></a>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricCore">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MetricCore</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricCore"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricCore" title="Link to this definition">#</a></dt>
+<dd><p>Embeddable mass-matrix adaptation core: init/update/final protocol.</p>
+<p>A NamedTuple-of-callables (house style) bundling the three operations that
+together constitute mass-matrix adaptation.  The engine hosts this core;
+step-size adaptation and the stage schedule remain in the host layer.</p>
+<p>This core is hostable by warmups that declare no intrinsic metric adaptation
+scheme (i.e. the metric core can be swapped without changing the host’s step-
+size or schedule logic).  It is NOT wired into MEADS, whose fold-based metric
+is co-designed with its damping and step rules and cannot be factored out.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>init</strong> (<em>Callable</em>) – <code class="docutils literal notranslate"><span class="pre">(n_dims:</span> <span class="pre">int)</span> <span class="pre">-&gt;</span> <span class="pre">MetricCoreState</span></code>.  Creates the initial mass-matrix
+adaptation state.  Closes over <code class="docutils literal notranslate"><span class="pre">initial_inverse_mass_matrix</span></code> and
+<code class="docutils literal notranslate"><span class="pre">imm_shrinkage_to_previous</span></code> when constructed via
+<a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe.build_core" title="blackjax.adaptation.metric_recipes.MetricRecipe.build_core"><code class="xref py py-meth docutils literal notranslate"><span class="pre">MetricRecipe.build_core()</span></code></a>.</p></li>
+<li><p><strong>update</strong> (<em>Callable</em>) – <code class="docutils literal notranslate"><span class="pre">(state,</span> <span class="pre">position:</span> <span class="pre">ArrayLikeTree,</span> <span class="pre">grad:</span> <span class="pre">ArrayLikeTree</span> <span class="pre">|</span> <span class="pre">None)</span> <span class="pre">-&gt;</span> <span class="pre">MetricCoreState</span></code>.
+Accumulates one sample.  For welford-path recipes <code class="docutils literal notranslate"><span class="pre">grad</span></code> is accepted
+(interface uniformity) but ignored.</p></li>
+<li><p><strong>final</strong> (<em>Callable</em>) – <code class="docutils literal notranslate"><span class="pre">(state)</span> <span class="pre">-&gt;</span> <span class="pre">MetricCoreState</span></code>.  Called at each slow-window boundary:
+computes the new inverse mass matrix, writes it to
+<code class="docutils literal notranslate"><span class="pre">state.inverse_mass_matrix</span></code>, resets the accumulator.  The host
+reads <code class="docutils literal notranslate"><span class="pre">new_state.inverse_mass_matrix</span></code> for the next window.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal notranslate"><span class="pre">MetricCoreState</span></code> is one of
+<a class="reference internal" href="../mass_matrix/index.html#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState" title="blackjax.adaptation.mass_matrix.MassMatrixAdaptationState"><code class="xref py py-class docutils literal notranslate"><span class="pre">MassMatrixAdaptationState</span></code></a> or
+<a class="reference internal" href="../mass_matrix/index.html#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState" title="blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState"><code class="xref py py-class docutils literal notranslate"><span class="pre">FisherMassMatrixAdaptationState</span></code></a> —
+the existing in-tree types; this core is a thin protocol wrapper, not a
+re-implementation.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricCore.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricCore.init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricCore.init" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricCore.update">
+<span class="sig-name descname"><span class="pre">update</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricCore.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricCore.update" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricCore.final">
+<span class="sig-name descname"><span class="pre">final</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricCore.final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricCore.final" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MetricRecipe</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="Link to this definition">#</a></dt>
+<dd><p>Configuration bundle for a mass-matrix adaptation recipe.</p>
+<p>Declares an (estimator, buffer, representation, support_gate) tuple with
+construction-time validation of the coupling contract (<code class="docutils literal notranslate"><span class="pre">needs</span> <span class="pre">⊆</span> <span class="pre">provides</span></code>
+and <code class="docutils literal notranslate"><span class="pre">emits</span> <span class="pre">==</span> <span class="pre">representation</span></code>): incompatible combos fail at Python level
+with a clear message, never inside traced code.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p><strong>Schema is provisional.</strong>  The field types for <code class="docutils literal notranslate"><span class="pre">estimator</span></code>,
+<code class="docutils literal notranslate"><span class="pre">buffer</span></code>, and <code class="docutils literal notranslate"><span class="pre">support_gate</span></code> are string tags; future slices will
+replace these with proper constructor objects once the schema is stable
+across all recipe families.  This class is not exported at the
+<code class="docutils literal notranslate"><span class="pre">blackjax</span></code> top level — import directly from
+<code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.metric_recipes</span></code>.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>representation</strong> – The inverse-mass-matrix representation this recipe produces.
+Slice-1 values: <code class="docutils literal notranslate"><span class="pre">&quot;diag&quot;</span></code> (1D array) or <code class="docutils literal notranslate"><span class="pre">&quot;dense&quot;</span></code> (2D array).</p></li>
+<li><p><strong>estimator</strong> – String tag for the estimator function family.
+Slice-1 values: <code class="docutils literal notranslate"><span class="pre">&quot;welford&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;fisher_diag&quot;</span></code>.</p></li>
+<li><p><strong>buffer</strong> – String tag for the buffer/data-feeding policy.
+Slice-1 value: <code class="docutils literal notranslate"><span class="pre">&quot;reset_window&quot;</span></code>.</p></li>
+<li><p><strong>support_gate</strong> – String tag for the support gate, or <code class="docutils literal notranslate"><span class="pre">None</span></code> (slice-1 default — no
+gating beyond the estimator’s intrinsic validation).</p></li>
+<li><p><strong>needs</strong> – <code class="docutils literal notranslate"><span class="pre">frozenset[str]</span></code> declaring what data the estimator requires from the
+buffer.  Validated at construction: <code class="docutils literal notranslate"><span class="pre">needs</span> <span class="pre">⊆</span> <span class="pre">provides</span></code>.
+Slice-1 values: <code class="docutils literal notranslate"><span class="pre">frozenset({&quot;positions&quot;})</span></code> or
+<code class="docutils literal notranslate"><span class="pre">frozenset({&quot;positions&quot;,</span> <span class="pre">&quot;gradients&quot;})</span></code>.</p></li>
+<li><p><strong>provides</strong> – <code class="docutils literal notranslate"><span class="pre">frozenset[str]</span></code> declaring what data the buffer provides.</p></li>
+<li><p><strong>emits</strong> – Representation tag this estimator emits.  Validated at construction:
+<code class="docutils literal notranslate"><span class="pre">emits</span> <span class="pre">==</span> <span class="pre">representation</span></code>.</p></li>
+<li><p><strong>provenance</strong> – Human-readable guidance string, stamped with benchmark evidence where
+available.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.representation">
+<span class="sig-name descname"><span class="pre">representation</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.representation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.representation" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.estimator">
+<span class="sig-name descname"><span class="pre">estimator</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.estimator"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.estimator" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.buffer">
+<span class="sig-name descname"><span class="pre">buffer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.buffer" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.support_gate">
+<span class="sig-name descname"><span class="pre">support_gate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.support_gate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.support_gate" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.needs">
+<span class="sig-name descname"><span class="pre">needs</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#frozenset" title="(in Python v3.14)"><span class="pre">frozenset</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.needs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.needs" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.provides">
+<span class="sig-name descname"><span class="pre">provides</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#frozenset" title="(in Python v3.14)"><span class="pre">frozenset</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.provides"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provides" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.emits">
+<span class="sig-name descname"><span class="pre">emits</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.emits"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.emits" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.provenance">
+<span class="sig-name descname"><span class="pre">provenance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.provenance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provenance" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.build_core">
+<span class="sig-name descname"><span class="pre">build_core</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">imm_shrinkage_to_previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><span class="pre">MetricCore</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.build_core"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.build_core" title="Link to this definition">#</a></dt>
+<dd><p>Build an embeddable <a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a> from this recipe.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>imm_shrinkage_to_previous</strong> – Pseudo-count controlling shrinkage of the per-window IMM toward the
+previous window’s IMM.  Default <code class="docutils literal notranslate"><span class="pre">0.0</span></code> (Stan vanilla, no
+persistence).  Forwarded to
+<a class="reference internal" href="../mass_matrix/index.html#blackjax.adaptation.mass_matrix.mass_matrix_adaptation" title="blackjax.adaptation.mass_matrix.mass_matrix_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">mass_matrix_adaptation()</span></code></a>.
+Not supported for <code class="docutils literal notranslate"><span class="pre">&quot;fisher_diag&quot;</span></code> (<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> there per
+<code class="docutils literal notranslate"><span class="pre">mass_matrix_adaptation</span></code>’s validation).</p></li>
+<li><p><strong>initial_inverse_mass_matrix</strong> – Optional seed array for the initial inverse mass matrix.  <code class="docutils literal notranslate"><span class="pre">None</span></code>
+(default) uses the standard identity initialisation (<code class="docutils literal notranslate"><span class="pre">ones(d)</span></code>
+for diagonal, <code class="docutils literal notranslate"><span class="pre">identity(d)</span></code> for dense).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Embeddable init/update/final bundle ready for the engine.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore">MetricCore</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the estimator tag is not supported by this slice.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py data">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.REGISTRY">
+<span class="sig-name descname"><span class="pre">REGISTRY</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><span class="pre">MetricRecipe</span></a><span class="p"><span class="pre">]</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#REGISTRY"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.REGISTRY" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.lookup_recipe">
+<span class="sig-name descname"><span class="pre">lookup_recipe</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><span class="pre">MetricRecipe</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#lookup_recipe"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.lookup_recipe" title="Link to this definition">#</a></dt>
+<dd><p>Look up a named recipe from the <a class="reference internal" href="#blackjax.adaptation.metric_recipes.REGISTRY" title="blackjax.adaptation.metric_recipes.REGISTRY"><code class="xref py py-data docutils literal notranslate"><span class="pre">REGISTRY</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> – <p>Registry key.  Current slice-1 names:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;welford_diag&quot;</span></code> (default; reproduces <code class="docutils literal notranslate"><span class="pre">window_adaptation</span></code> exactly)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;welford_dense&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;fisher_diag&quot;</span></code></p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The registered recipe for <code class="docutils literal notranslate"><span class="pre">name</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe">MetricRecipe</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">name</span></code> is not in the registry, with a sorted list of known names.
+Pass a <a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a> or <a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a> directly for
+custom or experimental recipes that are not registry-stamped.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../metric_estimators/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">blackjax.adaptation.metric_estimators</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../pathfinder_adaptation/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">blackjax.adaptation.pathfinder_adaptation</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-recipes">Available recipes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design">Design</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore"><code class="docutils literal notranslate"><span class="pre">MetricCore</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore.init"><code class="docutils literal notranslate"><span class="pre">MetricCore.init</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore.update"><code class="docutils literal notranslate"><span class="pre">MetricCore.update</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore.final"><code class="docutils literal notranslate"><span class="pre">MetricCore.final</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe"><code class="docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.representation"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.representation</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.estimator"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.estimator</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.buffer"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.support_gate"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.support_gate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.needs"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.needs</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provides"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.provides</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.emits"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.emits</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provenance"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.provenance</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.build_core"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.build_core()</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.REGISTRY"><code class="docutils literal notranslate"><span class="pre">REGISTRY</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.lookup_recipe"><code class="docutils literal notranslate"><span class="pre">lookup_recipe()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

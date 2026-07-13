@@ -1,0 +1,989 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.adaptation.metric_recipes</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/metric_recipes';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g2dcea81d9" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html">blackjax.adaptation.metric_recipes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blackjax.adaptation.metric_recipes</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;Metric recipes and the embeddable MetricCore protocol for staged_adaptation.</span>
+
+<span class="sd">Available recipes</span>
+<span class="sd">-----------------</span>
+<span class="sd">Pass any of the following string names as the ``metric=`` argument to</span>
+<span class="sd">:func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`:</span>
+
+<span class="sd">- ``&quot;welford_diag&quot;`` — Stan-default diagonal Welford estimator; reproduces</span>
+<span class="sd">  :func:`~blackjax.adaptation.window_adaptation.window_adaptation` exactly.</span>
+<span class="sd">- ``&quot;welford_dense&quot;`` — Dense Welford covariance, same Stan schedule.</span>
+<span class="sd">- ``&quot;fisher_diag&quot;`` — Fisher-divergence-minimising diagonal estimator</span>
+<span class="sd">  (situational; requires position *and* gradient samples; see registry</span>
+<span class="sd">  provenance note for operational guidance).</span>
+
+<span class="sd">Usage::</span>
+
+<span class="sd">    # String sugar (registry lookup):</span>
+<span class="sd">    wu = staged_adaptation(nuts, logdensity_fn, metric=&quot;welford_diag&quot;)</span>
+
+<span class="sd">    # Recipe constructor (testability / custom configuration):</span>
+<span class="sd">    from blackjax.adaptation.metric_recipes import REGISTRY</span>
+<span class="sd">    core = REGISTRY[&quot;welford_diag&quot;].build_core(imm_shrinkage_to_previous=5.0)</span>
+<span class="sd">    wu = staged_adaptation(nuts, logdensity_fn, metric=core)</span>
+
+<span class="sd">Design</span>
+<span class="sd">------</span>
+<span class="sd">A :class:`MetricRecipe` declares an (estimator, buffer, representation,</span>
+<span class="sd">support_gate) tuple with construction-time validation of the coupling</span>
+<span class="sd">contract (``needs ⊆ provides`` and ``emits == representation``): incompatible</span>
+<span class="sd">combos fail at Python level with a clear message, never inside traced code.</span>
+
+<span class="sd">A :class:`MetricCore` is the embeddable mass-matrix adaptation component —</span>
+<span class="sd">the separable piece that the staged_adaptation engine hosts.  Step-size</span>
+<span class="sd">dual averaging and the stage schedule are HOST-layer concerns; this core</span>
+<span class="sd">handles only the inverse-mass-matrix estimation.</span>
+
+<span class="sd">Layer doctrine:</span>
+
+<span class="sd">- The METRIC CORE (:class:`MetricCore`) handles mass-matrix tuning only.</span>
+<span class="sd">- Step-size adaptation and the stage schedule live in the HOST</span>
+<span class="sd">  (:mod:`~blackjax.adaptation.staged_adaptation`).</span>
+<span class="sd">- Step-size proxy independence: for diag/dense representations (this slice),</span>
+<span class="sd">  the dual-averaging acceptance-rate proxy is not an eigenvalue proxy of the</span>
+<span class="sd">  adapted metric, so the step-size and metric adaptation are decoupled.  A</span>
+<span class="sd">  ``diag_reference`` accessor will be added in the low-rank slice where this</span>
+<span class="sd">  independence no longer holds.</span>
+
+<span class="sd">Notes</span>
+<span class="sd">-----</span>
+<span class="sd">The :class:`MetricRecipe` schema (field types) is provisional:</span>
+<span class="sd">estimator/buffer/support_gate are currently string tags.  Future slices will</span>
+<span class="sd">replace these with proper constructor objects once the schema is stable across</span>
+<span class="sd">all recipe families.  Import directly from ``blackjax.adaptation.metric_recipes``</span>
+<span class="sd">— :class:`MetricRecipe` is not exported at the ``blackjax`` top level.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">dataclasses</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.mass_matrix</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FisherMassMatrixAdaptationState</span><span class="p">,</span>
+    <span class="n">MassMatrixAdaptationState</span><span class="p">,</span>
+    <span class="n">mass_matrix_adaptation</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">fisher_score_diagonal_from_moments</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MetricCore&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MetricRecipe&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;REGISTRY&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;lookup_recipe&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># MetricCore — the embeddable init/update/final protocol</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="MetricCore">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetricCore</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Embeddable mass-matrix adaptation core: init/update/final protocol.</span>
+
+<span class="sd">    A NamedTuple-of-callables (house style) bundling the three operations that</span>
+<span class="sd">    together constitute mass-matrix adaptation.  The engine hosts this core;</span>
+<span class="sd">    step-size adaptation and the stage schedule remain in the host layer.</span>
+
+<span class="sd">    This core is hostable by warmups that declare no intrinsic metric adaptation</span>
+<span class="sd">    scheme (i.e. the metric core can be swapped without changing the host&#39;s step-</span>
+<span class="sd">    size or schedule logic).  It is NOT wired into MEADS, whose fold-based metric</span>
+<span class="sd">    is co-designed with its damping and step rules and cannot be factored out.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    init : Callable</span>
+<span class="sd">        ``(n_dims: int) -&gt; MetricCoreState``.  Creates the initial mass-matrix</span>
+<span class="sd">        adaptation state.  Closes over ``initial_inverse_mass_matrix`` and</span>
+<span class="sd">        ``imm_shrinkage_to_previous`` when constructed via</span>
+<span class="sd">        :meth:`MetricRecipe.build_core`.</span>
+<span class="sd">    update : Callable</span>
+<span class="sd">        ``(state, position: ArrayLikeTree, grad: ArrayLikeTree | None) -&gt; MetricCoreState``.</span>
+<span class="sd">        Accumulates one sample.  For welford-path recipes ``grad`` is accepted</span>
+<span class="sd">        (interface uniformity) but ignored.</span>
+<span class="sd">    final : Callable</span>
+<span class="sd">        ``(state) -&gt; MetricCoreState``.  Called at each slow-window boundary:</span>
+<span class="sd">        computes the new inverse mass matrix, writes it to</span>
+<span class="sd">        ``state.inverse_mass_matrix``, resets the accumulator.  The host</span>
+<span class="sd">        reads ``new_state.inverse_mass_matrix`` for the next window.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    ``MetricCoreState`` is one of</span>
+<span class="sd">    :class:`~blackjax.adaptation.mass_matrix.MassMatrixAdaptationState` or</span>
+<span class="sd">    :class:`~blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState` —</span>
+<span class="sd">    the existing in-tree types; this core is a thin protocol wrapper, not a</span>
+<span class="sd">    re-implementation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MetricCore.init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore.init">[docs]</a>
+    <span class="n">init</span><span class="p">:</span> <span class="n">Callable</span></div>
+
+<div class="viewcode-block" id="MetricCore.update">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore.update">[docs]</a>
+    <span class="n">update</span><span class="p">:</span> <span class="n">Callable</span></div>
+
+<div class="viewcode-block" id="MetricCore.final">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore.final">[docs]</a>
+    <span class="n">final</span><span class="p">:</span> <span class="n">Callable</span></div>
+</div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># MetricRecipe — frozen dataclass with construction-time validation</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="nd">@dataclasses</span><span class="o">.</span><span class="n">dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<div class="viewcode-block" id="MetricRecipe">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetricRecipe</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration bundle for a mass-matrix adaptation recipe.</span>
+
+<span class="sd">    Declares an (estimator, buffer, representation, support_gate) tuple with</span>
+<span class="sd">    construction-time validation of the coupling contract (``needs ⊆ provides``</span>
+<span class="sd">    and ``emits == representation``): incompatible combos fail at Python level</span>
+<span class="sd">    with a clear message, never inside traced code.</span>
+
+<span class="sd">    .. note::</span>
+
+<span class="sd">        **Schema is provisional.**  The field types for ``estimator``,</span>
+<span class="sd">        ``buffer``, and ``support_gate`` are string tags; future slices will</span>
+<span class="sd">        replace these with proper constructor objects once the schema is stable</span>
+<span class="sd">        across all recipe families.  This class is not exported at the</span>
+<span class="sd">        ``blackjax`` top level — import directly from</span>
+<span class="sd">        ``blackjax.adaptation.metric_recipes``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    representation</span>
+<span class="sd">        The inverse-mass-matrix representation this recipe produces.</span>
+<span class="sd">        Slice-1 values: ``&quot;diag&quot;`` (1D array) or ``&quot;dense&quot;`` (2D array).</span>
+<span class="sd">    estimator</span>
+<span class="sd">        String tag for the estimator function family.</span>
+<span class="sd">        Slice-1 values: ``&quot;welford&quot;``, ``&quot;fisher_diag&quot;``.</span>
+<span class="sd">    buffer</span>
+<span class="sd">        String tag for the buffer/data-feeding policy.</span>
+<span class="sd">        Slice-1 value: ``&quot;reset_window&quot;``.</span>
+<span class="sd">    support_gate</span>
+<span class="sd">        String tag for the support gate, or ``None`` (slice-1 default — no</span>
+<span class="sd">        gating beyond the estimator&#39;s intrinsic validation).</span>
+<span class="sd">    needs</span>
+<span class="sd">        ``frozenset[str]`` declaring what data the estimator requires from the</span>
+<span class="sd">        buffer.  Validated at construction: ``needs ⊆ provides``.</span>
+<span class="sd">        Slice-1 values: ``frozenset({&quot;positions&quot;})`` or</span>
+<span class="sd">        ``frozenset({&quot;positions&quot;, &quot;gradients&quot;})``.</span>
+<span class="sd">    provides</span>
+<span class="sd">        ``frozenset[str]`` declaring what data the buffer provides.</span>
+<span class="sd">    emits</span>
+<span class="sd">        Representation tag this estimator emits.  Validated at construction:</span>
+<span class="sd">        ``emits == representation``.</span>
+<span class="sd">    provenance</span>
+<span class="sd">        Human-readable guidance string, stamped with benchmark evidence where</span>
+<span class="sd">        available.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MetricRecipe.representation">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe.representation">[docs]</a>
+    <span class="n">representation</span><span class="p">:</span> <span class="nb">str</span></div>
+
+<div class="viewcode-block" id="MetricRecipe.estimator">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe.estimator">[docs]</a>
+    <span class="n">estimator</span><span class="p">:</span> <span class="nb">str</span></div>
+
+<div class="viewcode-block" id="MetricRecipe.buffer">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe.buffer">[docs]</a>
+    <span class="n">buffer</span><span class="p">:</span> <span class="nb">str</span></div>
+
+<div class="viewcode-block" id="MetricRecipe.support_gate">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe.support_gate">[docs]</a>
+    <span class="n">support_gate</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="MetricRecipe.needs">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe.needs">[docs]</a>
+    <span class="n">needs</span><span class="p">:</span> <span class="nb">frozenset</span></div>
+
+<div class="viewcode-block" id="MetricRecipe.provides">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe.provides">[docs]</a>
+    <span class="n">provides</span><span class="p">:</span> <span class="nb">frozenset</span></div>
+
+<div class="viewcode-block" id="MetricRecipe.emits">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe.emits">[docs]</a>
+    <span class="n">emits</span><span class="p">:</span> <span class="nb">str</span></div>
+
+<div class="viewcode-block" id="MetricRecipe.provenance">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe.provenance">[docs]</a>
+    <span class="n">provenance</span><span class="p">:</span> <span class="nb">str</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">__post_init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Validate coupling contract at construction time.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">needs</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">provides</span><span class="p">:</span>
+            <span class="n">missing</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">needs</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">provides</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;MetricRecipe coupling violation: estimator needs </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;but the buffer only provides </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">provides</span><span class="p">)</span><span class="si">}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Choose a buffer that provides the missing data, or choose a &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;compatible estimator that does not need </span><span class="si">{</span><span class="n">missing</span><span class="si">}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">emits</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">representation</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;MetricRecipe coupling violation: estimator emits </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">emits</span><span class="si">!r}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;but recipe declares representation </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">representation</span><span class="si">!r}</span><span class="s2">. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Choose an estimator whose emits tag matches the declared &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;representation, or update representation to </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">emits</span><span class="si">!r}</span><span class="s2">.&quot;</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="MetricRecipe.build_core">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe.build_core">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">build_core</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">imm_shrinkage_to_previous</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">initial_inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricCore</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Build an embeddable :class:`MetricCore` from this recipe.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        imm_shrinkage_to_previous</span>
+<span class="sd">            Pseudo-count controlling shrinkage of the per-window IMM toward the</span>
+<span class="sd">            previous window&#39;s IMM.  Default ``0.0`` (Stan vanilla, no</span>
+<span class="sd">            persistence).  Forwarded to</span>
+<span class="sd">            :func:`~blackjax.adaptation.mass_matrix.mass_matrix_adaptation`.</span>
+<span class="sd">            Not supported for ``&quot;fisher_diag&quot;`` (``ValueError`` there per</span>
+<span class="sd">            ``mass_matrix_adaptation``&#39;s validation).</span>
+<span class="sd">        initial_inverse_mass_matrix</span>
+<span class="sd">            Optional seed array for the initial inverse mass matrix.  ``None``</span>
+<span class="sd">            (default) uses the standard identity initialisation (``ones(d)``</span>
+<span class="sd">            for diagonal, ``identity(d)`` for dense).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        MetricCore</span>
+<span class="sd">            Embeddable init/update/final bundle ready for the engine.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If the estimator tag is not supported by this slice.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span> <span class="o">==</span> <span class="s2">&quot;welford&quot;</span><span class="p">:</span>
+            <span class="n">is_diagonal</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">representation</span> <span class="o">==</span> <span class="s2">&quot;diag&quot;</span>
+            <span class="k">return</span> <span class="n">_build_welford_core</span><span class="p">(</span>
+                <span class="n">is_diagonal</span><span class="o">=</span><span class="n">is_diagonal</span><span class="p">,</span>
+                <span class="n">imm_shrinkage_to_previous</span><span class="o">=</span><span class="n">imm_shrinkage_to_previous</span><span class="p">,</span>
+                <span class="n">initial_inverse_mass_matrix</span><span class="o">=</span><span class="n">initial_inverse_mass_matrix</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimator</span> <span class="o">==</span> <span class="s2">&quot;fisher_diag&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_build_fisher_diag_core</span><span class="p">(</span>
+                <span class="n">initial_inverse_mass_matrix</span><span class="o">=</span><span class="n">initial_inverse_mass_matrix</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown estimator tag </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">estimator</span><span class="si">!r}</span><span class="s2"> in MetricRecipe.build_core. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Slice-1 supports &#39;welford&#39; and &#39;fisher_diag&#39;.&quot;</span>
+            <span class="p">)</span></div>
+</div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Private core builders</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_welford_core</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">is_diagonal</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">imm_shrinkage_to_previous</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">initial_inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricCore</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a MetricCore wrapping the Welford (Stan-default) estimator path.</span>
+
+<span class="sd">    Delegates to :func:`~blackjax.adaptation.mass_matrix.mass_matrix_adaptation`</span>
+<span class="sd">    with ``diagonal_estimator=&#39;welford&#39;``.  The MetricCore ``final()`` calls</span>
+<span class="sd">    ``mm_final`` directly — same reduction order, same arithmetic, bit-exact.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    is_diagonal</span>
+<span class="sd">        ``True`` for diagonal (``welford_diag``), ``False`` for dense</span>
+<span class="sd">        (``welford_dense``).</span>
+<span class="sd">    imm_shrinkage_to_previous</span>
+<span class="sd">        Forwarded to ``mass_matrix_adaptation``.</span>
+<span class="sd">    initial_inverse_mass_matrix</span>
+<span class="sd">        Optional seed IMM; closed over in ``init``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mm_init</span><span class="p">,</span> <span class="n">mm_update</span><span class="p">,</span> <span class="n">mm_final</span> <span class="o">=</span> <span class="n">mass_matrix_adaptation</span><span class="p">(</span>
+        <span class="n">is_diagonal_matrix</span><span class="o">=</span><span class="n">is_diagonal</span><span class="p">,</span>
+        <span class="n">imm_shrinkage_to_previous</span><span class="o">=</span><span class="n">imm_shrinkage_to_previous</span><span class="p">,</span>
+        <span class="n">diagonal_estimator</span><span class="o">=</span><span class="s2">&quot;welford&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MassMatrixAdaptationState</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mm_init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">initial_inverse_mass_matrix</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">MassMatrixAdaptationState</span><span class="p">,</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MassMatrixAdaptationState</span><span class="p">:</span>
+        <span class="c1"># grad is accepted for interface uniformity but ignored by mm_update</span>
+        <span class="c1"># on the welford path (mm_update only reads grad for</span>
+        <span class="c1"># FisherMassMatrixAdaptationState — checked via isinstance at trace time).</span>
+        <span class="k">return</span> <span class="n">mm_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">MassMatrixAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MassMatrixAdaptationState</span><span class="p">:</span>
+        <span class="c1"># Directly calls mm_final: same Welford reduction, same regularization</span>
+        <span class="c1"># formula as window_adaptation.base()&#39;s slow_final (welford path).</span>
+        <span class="k">return</span> <span class="n">mm_final</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">MetricCore</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_fisher_diag_core</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">initial_inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricCore</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a MetricCore wrapping the Fisher-diagonal estimator path.</span>
+
+<span class="sd">    Delegates to :func:`~blackjax.adaptation.mass_matrix.mass_matrix_adaptation`</span>
+<span class="sd">    with ``diagonal_estimator=&#39;fisher&#39;`` for ``init`` and ``update``.  The</span>
+<span class="sd">    ``final()`` below composes the IMM computation and block reset — logic</span>
+<span class="sd">    that cannot live inside ``mass_matrix_adaptation.final()`` due to a</span>
+<span class="sd">    circular import (``metric_estimators`` imports ``welford_algorithm``</span>
+<span class="sd">    from ``mass_matrix``).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    initial_inverse_mass_matrix</span>
+<span class="sd">        Optional seed IMM; closed over in ``init``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">mm_init</span><span class="p">,</span> <span class="n">mm_update</span><span class="p">,</span> <span class="n">mm_final</span> <span class="o">=</span> <span class="n">mass_matrix_adaptation</span><span class="p">(</span>
+        <span class="n">is_diagonal_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">imm_shrinkage_to_previous</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">diagonal_estimator</span><span class="o">=</span><span class="s2">&quot;fisher&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mm_init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">initial_inverse_mass_matrix</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">,</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mm_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">:</span>
+        <span class="c1"># Fisher IMM computation + block reset: the only stitch site.</span>
+        <span class="n">block</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">fisher_block</span>
+        <span class="n">denom</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">count</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">var_x</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">m2_x</span> <span class="o">/</span> <span class="n">denom</span>  <span class="c1"># (d,) Bessel-corrected position variance</span>
+        <span class="n">var_g</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">m2_g</span> <span class="o">/</span> <span class="n">denom</span>  <span class="c1"># (d,) Bessel-corrected gradient variance</span>
+        <span class="n">new_inverse_mass_matrix</span> <span class="o">=</span> <span class="n">fisher_score_diagonal_from_moments</span><span class="p">(</span><span class="n">var_x</span><span class="p">,</span> <span class="n">var_g</span><span class="p">)</span>
+        <span class="c1"># mm_final resets the block for the next window.</span>
+        <span class="n">reset_state</span> <span class="o">=</span> <span class="n">mm_final</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">(</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">new_inverse_mass_matrix</span><span class="p">,</span>
+            <span class="n">fisher_block</span><span class="o">=</span><span class="n">reset_state</span><span class="o">.</span><span class="n">fisher_block</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">MetricCore</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Registry</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<div class="viewcode-block" id="REGISTRY">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.REGISTRY">[docs]</a>
+<span class="n">REGISTRY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MetricRecipe</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;welford_diag&quot;</span><span class="p">:</span> <span class="n">MetricRecipe</span><span class="p">(</span>
+        <span class="n">representation</span><span class="o">=</span><span class="s2">&quot;diag&quot;</span><span class="p">,</span>
+        <span class="n">estimator</span><span class="o">=</span><span class="s2">&quot;welford&quot;</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="o">=</span><span class="s2">&quot;reset_window&quot;</span><span class="p">,</span>
+        <span class="n">support_gate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">needs</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;positions&quot;</span><span class="p">}),</span>
+        <span class="n">provides</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;positions&quot;</span><span class="p">}),</span>
+        <span class="n">emits</span><span class="o">=</span><span class="s2">&quot;diag&quot;</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Stan-default diagonal Welford covariance estimator. &quot;</span>
+            <span class="s2">&quot;Reproduces window_adaptation exact behavior (bit-exact via the same &quot;</span>
+            <span class="s2">&quot;mass_matrix.welford_algorithm reduction). Use as the baseline recipe.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;welford_dense&quot;</span><span class="p">:</span> <span class="n">MetricRecipe</span><span class="p">(</span>
+        <span class="n">representation</span><span class="o">=</span><span class="s2">&quot;dense&quot;</span><span class="p">,</span>
+        <span class="n">estimator</span><span class="o">=</span><span class="s2">&quot;welford&quot;</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="o">=</span><span class="s2">&quot;reset_window&quot;</span><span class="p">,</span>
+        <span class="n">support_gate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">needs</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;positions&quot;</span><span class="p">}),</span>
+        <span class="n">provides</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;positions&quot;</span><span class="p">}),</span>
+        <span class="n">emits</span><span class="o">=</span><span class="s2">&quot;dense&quot;</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Dense Welford covariance estimator (Stan-style reset-window schedule, &quot;</span>
+            <span class="s2">&quot;no low-rank compression). Appropriate when d is small enough to afford &quot;</span>
+            <span class="s2">&quot;O(d^2) storage and the full correlation structure matters.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;fisher_diag&quot;</span><span class="p">:</span> <span class="n">MetricRecipe</span><span class="p">(</span>
+        <span class="n">representation</span><span class="o">=</span><span class="s2">&quot;diag&quot;</span><span class="p">,</span>
+        <span class="n">estimator</span><span class="o">=</span><span class="s2">&quot;fisher_diag&quot;</span><span class="p">,</span>
+        <span class="n">buffer</span><span class="o">=</span><span class="s2">&quot;reset_window&quot;</span><span class="p">,</span>
+        <span class="n">support_gate</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">needs</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;positions&quot;</span><span class="p">,</span> <span class="s2">&quot;gradients&quot;</span><span class="p">}),</span>
+        <span class="n">provides</span><span class="o">=</span><span class="nb">frozenset</span><span class="p">({</span><span class="s2">&quot;positions&quot;</span><span class="p">,</span> <span class="s2">&quot;gradients&quot;</span><span class="p">}),</span>
+        <span class="n">emits</span><span class="o">=</span><span class="s2">&quot;diag&quot;</span><span class="p">,</span>
+        <span class="n">provenance</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;Situational estimator, not a default. &quot;</span>
+            <span class="s2">&quot;Helps concentrated-anisotropy hierarchical geometry &quot;</span>
+            <span class="s2">&quot;(~1.3–1.7x effective-samples-per-gradient); &quot;</span>
+            <span class="s2">&quot;degrades well-conditioned targets with correlated coordinate blocks &quot;</span>
+            <span class="s2">&quot;(~0.6–0.7x). &quot;</span>
+            <span class="s2">&quot;Mechanism: for near-Gaussian posteriors this estimator equals the &quot;</span>
+            <span class="s2">&quot;Welford diagonal shrunk by sqrt(1 - R_i^2) per coordinate &quot;</span>
+            <span class="s2">&quot;(the marginal-to-conditional precision pull); without an off-diagonal &quot;</span>
+            <span class="s2">&quot;correction the shrink under-explores correlated coordinates, raising &quot;</span>
+            <span class="s2">&quot;the slowest-mode variance. &quot;</span>
+            <span class="s2">&quot;Risk boundary: correlated blocks (R^2 &gt;= ~0.5) on an already &quot;</span>
+            <span class="s2">&quot;well-conditioned target with no rank-k correction. &quot;</span>
+            <span class="s2">&quot;Degradation carries no R-hat/divergence signature — gate estimator &quot;</span>
+            <span class="s2">&quot;choices on effective-samples-per-gradient, not health flags. &quot;</span>
+            <span class="s2">&quot;Validated 2026-07-13.&quot;</span>
+        <span class="p">),</span>
+    <span class="p">),</span>
+<span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="lookup_recipe">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.lookup_recipe">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">lookup_recipe</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricRecipe</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Look up a named recipe from the :data:`REGISTRY`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    name</span>
+<span class="sd">        Registry key.  Current slice-1 names:</span>
+
+<span class="sd">        - ``&quot;welford_diag&quot;`` (default; reproduces ``window_adaptation`` exactly)</span>
+<span class="sd">        - ``&quot;welford_dense&quot;``</span>
+<span class="sd">        - ``&quot;fisher_diag&quot;``</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    MetricRecipe</span>
+<span class="sd">        The registered recipe for ``name``.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        If ``name`` is not in the registry, with a sorted list of known names.</span>
+<span class="sd">        Pass a :class:`MetricRecipe` or :class:`MetricCore` directly for</span>
+<span class="sd">        custom or experimental recipes that are not registry-stamped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">REGISTRY</span><span class="p">:</span>
+        <span class="n">known</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">REGISTRY</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Unknown metric recipe </span><span class="si">{</span><span class="n">name</span><span class="si">!r}</span><span class="s2">. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Known registry names: </span><span class="si">{</span><span class="n">known</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Pass a MetricRecipe or MetricCore constructor directly for &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;custom recipes that have not been registered.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">REGISTRY</span><span class="p">[</span><span class="n">name</span><span class="p">]</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

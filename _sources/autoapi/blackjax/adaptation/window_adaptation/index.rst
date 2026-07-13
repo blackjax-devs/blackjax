@@ -7,10 +7,26 @@ blackjax.adaptation.window_adaptation
 
    Implementation of the Stan warmup for the HMC family of sampling algorithms.
 
+   The public surface of this module is unchanged.  Internally, :func:`window_adaptation`
+   is now a thin compatibility shim over :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`;
+   :func:`build_schedule` is defined in :mod:`blackjax.adaptation.staged_adaptation` and
+   re-exported here for backward compatibility.
+
+   :data:`WindowAdaptationState` is an alias for
+   :class:`~blackjax.adaptation.staged_adaptation.StagedAdaptationState`; both names
+   refer to the same class object so ``isinstance`` checks using either name continue
+   to work without modification.
+
+   The :func:`base` function is retained at its released API for downstream code that
+   calls it directly.  It is not exercised by the :func:`window_adaptation` shim (which
+   delegates to :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`).
+   Fisher-diagonal adaptation is accessible via
+   ``staged_adaptation(metric="fisher_diag")`` only.
 
 
-Classes
--------
+
+Attributes
+----------
 
 .. autoapisummary::
 
@@ -24,33 +40,14 @@ Functions
 
    blackjax.adaptation.window_adaptation.base
    blackjax.adaptation.window_adaptation.window_adaptation
-   blackjax.adaptation.window_adaptation.build_schedule
 
 
 Module Contents
 ---------------
 
-.. py:class:: WindowAdaptationState
+.. py:data:: WindowAdaptationState
 
-
-
-   .. py:attribute:: ss_state
-      :type:  blackjax.adaptation.step_size.DualAveragingAdaptationState
-
-
-   .. py:attribute:: imm_state
-      :type:  blackjax.adaptation.mass_matrix.MassMatrixAdaptationState | blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState
-
-
-   .. py:attribute:: step_size
-      :type:  float
-
-
-   .. py:attribute:: inverse_mass_matrix
-      :type:  blackjax.types.Array
-
-
-.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, diagonal_estimator: str = 'welford') -> tuple[Callable, Callable, Callable]
+.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0) -> tuple[Callable, Callable, Callable]
 
    Warmup scheme for sampling procedures based on euclidean manifold HMC.
    The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -95,12 +92,6 @@ Module Contents
    :param imm_shrinkage_to_previous: Pseudo-count controlling shrinkage of the IMM toward the previous
                                      window's IMM. Default 0.0 gives the current Stan behavior. Passed
                                      through to ``mass_matrix_adaptation``.
-   :param diagonal_estimator: Which diagonal-variance estimator to use.  ``"welford"`` (default)
-                              reproduces all pre-existing behavior exactly.  ``"fisher"`` uses the
-                              Fisher-divergence-minimising diagonal estimator; see
-                              ``mass_matrix_adaptation`` for constraints (diagonal-only, no
-                              ``imm_shrinkage_to_previous``).  Passed through to
-                              ``mass_matrix_adaptation``.
 
    :returns: * *init* -- Function that initializes the warmup.
              * *update* -- Function that moves the warmup one step.
@@ -108,7 +99,7 @@ Module Contents
                state.
 
 
-.. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, diagonal_estimator: str = 'welford', initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the value of the inverse mass matrix and step size parameters of
    algorithms in the HMC fmaily. See Blackjax.hmc_family
@@ -166,16 +157,6 @@ Module Contents
 
                                      Validated at construction time — negative values raise
                                      ``ValueError`` before any JIT tracing.
-   :param diagonal_estimator: Which diagonal-variance estimator to use for the (window-local)
-                              inverse mass matrix.  ``"welford"`` (default) is Stan's classic
-                              online-covariance estimator and reproduces all pre-existing behavior
-                              exactly.  ``"fisher"`` uses the Fisher-divergence-minimising diagonal
-                              estimator of :cite:p:`seyboldt2026preconditioning` (the same formula
-                              underlying the diagonal-scaling step of the low-rank adaptation):
-                              ``inverse_mass_matrix = sqrt(Var[position] / Var[logdensity_grad])``
-                              per coordinate.  Only valid with ``is_mass_matrix_diagonal=True`` and
-                              ``imm_shrinkage_to_previous=0.0``; both are validated at construction
-                              time (``ValueError`` before any JIT tracing).
    :param initial_step_size: The initial step size used in the algorithm.
    :param target_acceptance_rate: The acceptance rate that we target during step size adaptation.
    :param adaptation_info_fn: Function to select the adaptation info returned. See return_all_adapt_info
@@ -189,50 +170,12 @@ Module Contents
 
    .. rubric:: Notes
 
+   This function is a thin compatibility shim over
+   :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`.  The
+   public interface and return type are frozen; no breaking changes will be
+   made in this module.
+
    Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a
    progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.
-
-
-.. py:function:: build_schedule(num_steps: int, initial_buffer_size: int = 75, final_buffer_size: int = 50, first_window_size: int = 25) -> list[tuple[int, bool]]
-
-   Return the schedule for Stan's warmup.
-
-   The schedule below is intended to be as close as possible to Stan's :cite:p:`stan_hmc_param`.
-   The warmup period is split into three stages:
-
-   1. An initial fast interval to reach the typical set. Only the step size is
-   adapted in this window.
-   2. "Slow" parameters that require global information (typically covariance)
-   are estimated in a series of expanding intervals with no memory; the step
-   size is re-initialized at the end of each window. Each window is twice the
-   size of the preceding window.
-   3. A final fast interval during which the step size is adapted using the
-   computed mass matrix.
-
-   Schematically:
-
-   ```
-   +---------+---+------+------------+------------------------+------+
-   |  fast   | s | slow |   slow     |        slow            | fast |
-   +---------+---+------+------------+------------------------+------+
-   ```
-
-   The distinction slow/fast comes from the speed at which the algorithms
-   converge to a stable value; in the common case, estimation of covariance
-   requires more steps than dual averaging to give an accurate value. See :cite:p:`stan_hmc_param`
-   for a more detailed explanation.
-
-   Fast intervals are given the label 0 and slow intervals the label 1.
-
-   :param num_steps: The number of warmup steps to perform.
-   :type num_steps: int
-   :param initial_buffer: The width of the initial fast adaptation interval.
-   :type initial_buffer: int
-   :param first_window_size: The width of the first slow adaptation interval.
-   :type first_window_size: int
-   :param final_buffer_size: The width of the final fast adaptation interval.
-   :type final_buffer_size: int
-
-   :rtype: A list of tuples (window_label, is_middle_window_end).
 
 
