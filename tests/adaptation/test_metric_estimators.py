@@ -43,6 +43,7 @@ from blackjax.adaptation.metric_estimators import (
     draws_singular_value_low_rank,
     eigenvalue_informativeness,
     fisher_score_diagonal,
+    fisher_score_diagonal_from_moments,
     fisher_score_low_rank,
     sample_covariance_eigh_low_rank,
     sample_variance_diagonal,
@@ -790,6 +791,111 @@ class SampleVarianceDiagonalParityTest(BlackJAXTest):
         n, d = 30, 7
         draws = jax.random.normal(self.next_key(), (n, d))
         self.assertEqual(sample_variance_diagonal(draws).shape, (d,))
+
+
+class FisherScoreDiagonalFromMomentsTest(BlackJAXTest):
+    """Tests for fisher_score_diagonal_from_moments.
+
+    The from-moments entry point holds the core math that was formerly inlined
+    in fisher_score_diagonal.  After the bridge removal the adaption pipeline
+    (window_adaptation.base.slow_final) calls this function directly with
+    Bessel-corrected variances from _FisherMomentBlock rather than going through
+    a raw-draws wrapper.
+
+    Structural contracts:
+    - Thin-wrapper parity: fisher_score_diagonal_from_moments(var_x, var_g) must
+      agree with fisher_score_diagonal(draws, grads) when var_x and var_g are the
+      Welford-Bessel variances of the same draws/grads.
+    - Near-zero gradient variance: gradient_variance floored at 1e-10 → output finite
+      and positive.
+    - Zero position variance: output should be near 0 (but still finite/positive
+      thanks to floor and clip).
+    - Output shape and positivity.
+    """
+
+    def test_agrees_with_fisher_score_diagonal_on_same_draws(self):
+        """Pins the delegation invariant: fisher_score_diagonal must delegate to
+        fisher_score_diagonal_from_moments with the correct Welford variances.
+
+        This is a refactor-safety gate for the delegation chain, not an
+        arithmetic-identity test — both sides call the same underlying function
+        so the result is identical by construction once delegation is wired
+        correctly.  The value of this test is catching a future re-inlining of
+        the math in fisher_score_diagonal (which would break the extension
+        contract documented in fisher_score_diagonal_from_moments).
+        """
+        n, d = 80, 5
+        draws, _, cov = _make_correlated_draws(
+            self.next_key(), n, d, scale=jnp.linspace(0.3, 2.0, d)
+        )
+        grads = _analytic_score_grads(draws, cov)
+
+        # Compute variances the same way the block accumulator would expose them.
+        var_x = welford_diagonal(draws)  # (d,) Bessel-corrected
+        var_g = welford_diagonal(grads)  # (d,)
+
+        result_from_moments = fisher_score_diagonal_from_moments(var_x, var_g)
+        result_from_draws = fisher_score_diagonal(draws, grads)
+
+        np.testing.assert_allclose(result_from_moments, result_from_draws, atol=1e-6)
+
+    def test_zero_gradient_variance_is_finite_and_positive(self):
+        """gradient_variance == 0 triggers the 1e-10 floor; output must be finite
+        and positive.  This is the near-stationary-point guard test that was
+        previously tested via _fisher_diagonal_inverse_mass directly (dropped
+        from the old branch b197f1e2 test file because that private helper was
+        deleted; re-instated here at the correct abstraction level)."""
+        d = 4
+        var_x = jnp.array([0.5, 1.0, 2.0, 0.1])
+        var_g = jnp.zeros(d)
+        result = fisher_score_diagonal_from_moments(var_x, var_g)
+        self.assertEqual(result.shape, (d,))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(result))))
+        self.assertTrue(bool(jnp.all(result > 0)))
+
+    def test_mixed_zero_and_nonzero_gradient_variance(self):
+        """Per-coordinate floor: coordinates with zero gradient variance get the
+        floor-clipped output; coordinates with nonzero gradient variance get the
+        correct ratio.  This is the mixed-coordinate guard test from b197f1e2
+        (also re-instated here at the correct abstraction level)."""
+        d = 3
+        var_x = jnp.array([1.0, 4.0, 9.0])
+        var_g = jnp.array([0.0, 1.0, 0.0])  # coordinates 0 and 2 have zero grad var
+        result = fisher_score_diagonal_from_moments(var_x, var_g)
+        self.assertEqual(result.shape, (d,))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(result))))
+        self.assertTrue(bool(jnp.all(result > 0)))
+        # Coordinate 1 has nonzero grad var: var_x/var_g = 4 → sigma^4 = 4 → imm = 2.0
+        np.testing.assert_allclose(float(result[1]), 2.0, atol=1e-5)
+
+    def test_known_isotropic_gaussian(self):
+        """For var_x = var_g = c, the ratio is 1 → sigma=1 → IMM=1 for all coords."""
+        d = 5
+        c = jnp.array([0.5, 1.0, 2.0, 0.1, 3.0])
+        result = fisher_score_diagonal_from_moments(c, c)
+        np.testing.assert_allclose(result, jnp.ones(d), atol=1e-6)
+
+    def test_output_shape_and_positive(self):
+        d = 7
+        var_x = jax.random.uniform(self.next_key(), (d,), minval=0.1, maxval=3.0)
+        var_g = jax.random.uniform(self.next_key(), (d,), minval=0.1, maxval=3.0)
+        result = fisher_score_diagonal_from_moments(var_x, var_g)
+        self.assertEqual(result.shape, (d,))
+        self.assertTrue(bool(jnp.all(result > 0)))
+
+    def test_extreme_ratio_stays_finite(self):
+        """Large var_x with var_g at the 1e-10 floor must produce a finite
+        positive result (clip to [1e-20, 1e20] prevents overflow).
+
+        Uses float32-safe inputs (float32 max ~3.4e38; ratio up to ~3e48
+        would overflow, so we use var_x within safe range and let the 1e-10
+        floor handle the near-zero denominator).
+        """
+        var_x = jnp.array([1e20, 1.0], dtype=jnp.float32)
+        var_g = jnp.array([0.0, 1.0], dtype=jnp.float32)  # floored at 1e-10
+        result = fisher_score_diagonal_from_moments(var_x, var_g)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(result))))
+        self.assertTrue(bool(jnp.all(result > 0)))
 
 
 if __name__ == "__main__":
