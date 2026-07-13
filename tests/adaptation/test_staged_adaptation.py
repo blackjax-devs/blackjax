@@ -31,6 +31,7 @@ outputs.  The shim parity guarantee is enforced by the existing adaptation
 tests (``test_adaptation.py``, ``test_window_adaptation_fisher_diag.py``)
 which now run through the shim path.
 """
+import jax
 import jax.numpy as jnp
 
 import blackjax
@@ -40,7 +41,10 @@ from blackjax.adaptation.staged_adaptation import (
     build_schedule,
     staged_adaptation,
 )
-from blackjax.adaptation.window_adaptation import WindowAdaptationState
+from blackjax.adaptation.window_adaptation import (
+    WindowAdaptationState,
+    _pick_recipe_name,
+)
 from blackjax.adaptation.window_adaptation import (
     build_schedule as window_build_schedule,
 )
@@ -301,3 +305,141 @@ class BlackjaxTopLevelStagedAdaptationTest(BlackJAXTest):
         (state, params), _ = warmup.run(self.next_key(), jnp.zeros(3), num_steps=100)
         self.assertTrue(bool(jnp.isfinite(params["step_size"])))
         self.assertGreater(float(params["step_size"]), 0.0)
+
+
+# ---------------------------------------------------------------------------
+# Fold-in 1: structural fast-window test
+# ---------------------------------------------------------------------------
+
+
+class StagedAdaptationFastWindowTest(BlackJAXTest):
+    """With num_steps=19 (< initial_buffer_size=75) the schedule is all-fast.
+    The Welford accumulator must never increment."""
+
+    def test_all_fast_schedule_does_not_accumulate(self):
+        """19 steps < initial_buffer_size (75) → all fast stages.
+
+        Catch-site: if the stage-dispatch accidentally calls wc.update in the
+        fast phase, sample_size would be > 0; this test detects that leak.
+        """
+        warmup = staged_adaptation(
+            blackjax.nuts,
+            std_normal_logdensity,
+            metric="welford_diag",
+            initial_step_size=1.0,
+        )
+        _, info = warmup.run(self.next_key(), jnp.zeros(3), num_steps=19)
+
+        # info is stacked AdaptationInfo; .adaptation_state is stacked StagedAdaptationState.
+        # imm_state.wc_state.sample_size is a (19,) array of per-step accumulators.
+        sample_size = info.adaptation_state.imm_state.wc_state.sample_size
+        self.assertEqual(
+            int(sample_size[-1]),
+            0,
+            "Welford accumulator must stay at 0 in the all-fast schedule",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Fold-in 3a: _pick_recipe_name unit tests (all three param-to-name mappings)
+# ---------------------------------------------------------------------------
+
+
+class PickRecipeNameTest(BlackJAXTest):
+    """Direct unit tests for the private ``_pick_recipe_name`` helper."""
+
+    def test_fisher_mapping(self):
+        """diagonal_estimator='fisher' → 'fisher_diag' (diagonal flag ignored)."""
+        self.assertEqual(
+            _pick_recipe_name(
+                is_mass_matrix_diagonal=True, diagonal_estimator="fisher"
+            ),
+            "fisher_diag",
+        )
+
+    def test_welford_diag_mapping(self):
+        """is_mass_matrix_diagonal=True + non-fisher estimator → 'welford_diag'."""
+        self.assertEqual(
+            _pick_recipe_name(
+                is_mass_matrix_diagonal=True, diagonal_estimator="welford"
+            ),
+            "welford_diag",
+        )
+
+    def test_welford_dense_mapping(self):
+        """is_mass_matrix_diagonal=False + non-fisher estimator → 'welford_dense'."""
+        self.assertEqual(
+            _pick_recipe_name(
+                is_mass_matrix_diagonal=False, diagonal_estimator="welford"
+            ),
+            "welford_dense",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Fold-in 4: real x64 e2e smoke (per-recipe, finite/positive only)
+# ---------------------------------------------------------------------------
+
+
+class StagedAdaptationX64SmokeTest(BlackJAXTest):
+    """All three recipes must produce finite/positive outputs in x64 mode.
+
+    All JAX operations — both the warmup run and the assertion comparisons —
+    execute inside the ``jax.enable_x64()`` context manager.  Moving the
+    assertions outside the context would trigger a UserWarning from float64
+    dtype promotion against Python literals, which pytest.ini turns into an
+    error.
+    """
+
+    def _smoke_recipe_x64(self, recipe_name, n_dims=3):
+        """Run the given recipe in x64 mode and check finite/positive results.
+
+        For diagonal recipes the IMM is a 1-D array of positive marginal
+        variances — element-wise ``> 0`` is correct.  For the dense recipe the
+        IMM is a full covariance matrix whose off-diagonal entries can be
+        negative, so we only assert finiteness (not element-wise positivity).
+        """
+        recipe = lookup_recipe(recipe_name)
+        is_diag = recipe.representation == "diag"
+
+        with jax.enable_x64():
+            warmup = staged_adaptation(
+                blackjax.nuts,
+                std_normal_logdensity,
+                metric=recipe_name,
+                initial_step_size=0.5,
+            )
+            (_, params), _ = warmup.run(
+                self.next_key(),
+                jnp.zeros(n_dims, dtype=jnp.float64),
+                num_steps=300,
+            )
+            # Assertions inside the context: float64 dtype promotion is valid here.
+            self.assertTrue(
+                bool(jnp.isfinite(params["step_size"])),
+                f"x64 {recipe_name}: step_size not finite",
+            )
+            self.assertGreater(
+                float(params["step_size"]),
+                0.0,
+                f"x64 {recipe_name}: step_size not positive",
+            )
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(params["inverse_mass_matrix"]))),
+                f"x64 {recipe_name}: inverse_mass_matrix has non-finite entries",
+            )
+            if is_diag:
+                # Diagonal IMM: every element is a marginal variance — must be > 0.
+                self.assertTrue(
+                    bool(jnp.all(params["inverse_mass_matrix"] > 0)),
+                    f"x64 {recipe_name}: diagonal IMM has non-positive entries",
+                )
+
+    def test_welford_diag_x64(self):
+        self._smoke_recipe_x64("welford_diag")
+
+    def test_welford_dense_x64(self):
+        self._smoke_recipe_x64("welford_dense")
+
+    def test_fisher_diag_x64(self):
+        self._smoke_recipe_x64("fisher_diag")

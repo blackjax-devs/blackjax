@@ -23,10 +23,11 @@ re-exported here for backward compatibility.
 refer to the same class object so ``isinstance`` checks using either name continue
 to work without modification.
 
-The :func:`base` function is retained unchanged for downstream code that calls it
-directly.  It is dead inside the :func:`window_adaptation` entry point
-(the shim goes through :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`
-instead) but remains exported and tested.
+The :func:`base` function is retained for downstream code that calls it directly.
+It is not exercised by the :func:`window_adaptation` shim (which delegates to
+:func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`), but it is
+exported and covered by ``BaseFisherStitchDirectTest`` in
+``tests/adaptation/test_window_adaptation_fisher_diag.py``.
 """
 from typing import Callable, cast
 

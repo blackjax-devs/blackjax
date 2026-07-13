@@ -67,6 +67,7 @@ from blackjax.adaptation.mass_matrix import (
     mass_matrix_adaptation,
 )
 from blackjax.adaptation.metric_estimators import fisher_score_diagonal_from_moments
+from blackjax.adaptation.window_adaptation import base as window_adaptation_base
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
@@ -429,3 +430,62 @@ class FisherDiagEndToEndSmokeTest(BlackJAXTest):
         mean_acceptance = jnp.mean(infos.acceptance_rate)
         self.assertTrue(bool(jnp.isfinite(mean_acceptance)))
         self.assertGreater(float(mean_acceptance), 0.3)
+
+
+# ---------------------------------------------------------------------------
+# (e) Direct stitch #2 test: base(diagonal_estimator='fisher') path
+# ---------------------------------------------------------------------------
+
+
+class BaseFisherStitchDirectTest(BlackJAXTest):
+    """Direct test of ``window_adaptation.base`` with
+    ``diagonal_estimator='fisher'``.
+
+    The ``base()`` function contains Fisher stitch #2 — the slow_final closure
+    that computes the Fisher-diagonal IMM from accumulated Fisher block state.
+    This test exercises that stitch directly (not via the MetricCore path) and
+    is the canonical coverage for stitch #2.
+
+    Catch-site: if someone removes the MetricCore fallback in ``slow_final``
+    while ``base()`` still delegates to ``staged_adaptation``, only this test
+    would catch the regression — the existing MetricCore-path tests would pass.
+    """
+
+    def test_base_fisher_diag_gives_finite_positive_imm(self):
+        """base(diagonal_estimator='fisher') produces finite/positive IMM.
+
+        This exercises stitch #2 directly: the ``slow_final`` closure in
+        ``window_adaptation.base`` that reads the Fisher block state and writes
+        the IMM.  Stitch #1 lives in ``metric_recipes._build_fisher_diag_core``
+        and is tested separately by ``MetricCoreContractFisherDiagTest``.
+        """
+        n = 3
+        init_fn, update_fn, final_fn = window_adaptation_base(
+            is_mass_matrix_diagonal=True,
+            diagonal_estimator="fisher",
+        )
+        # base().init takes (position: ArrayLikeTree, initial_step_size: float)
+        position = jnp.zeros(n)
+        state = init_fn(position, 1.0)
+
+        key = self.next_key()
+        draws = jax.random.normal(key, (200, n))
+        grads = -draws  # gradient of std-normal log density: -x
+
+        # Run in slow-window mode (stage=1) without triggering end-of-window
+        def body(st, xs):
+            pos, g = xs
+            # stage=1 (slow), is_middle_window_end=False
+            return update_fn(st, (jnp.array(1), jnp.array(False)), pos, g, 0.8), None
+
+        state, _ = jax.lax.scan(body, state, (draws, grads))
+
+        # Trigger slow_final: end-of-slow-window update that stitches in new IMM
+        state = update_fn(
+            state, (jnp.array(1), jnp.array(True)), draws[0], grads[0], 0.8
+        )
+        step_size, imm = final_fn(state)
+
+        self.assertEqual(imm.shape, (n,))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm))))
+        self.assertTrue(bool(jnp.all(imm > 0)))

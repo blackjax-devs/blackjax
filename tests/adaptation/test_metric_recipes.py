@@ -37,7 +37,6 @@ from blackjax.adaptation.metric_recipes import (
 )
 from tests.fixtures import BlackJAXTest
 
-
 # ---------------------------------------------------------------------------
 # MetricRecipe coupling-contract validation
 # ---------------------------------------------------------------------------
@@ -55,7 +54,9 @@ class MetricRecipeCouplingContractTest(BlackJAXTest):
                 estimator="welford",
                 buffer="reset_window",
                 support_gate=None,
-                needs=frozenset({"positions", "gradients"}),  # gradients NOT in provides
+                needs=frozenset(
+                    {"positions", "gradients"}
+                ),  # gradients NOT in provides
                 provides=frozenset({"positions"}),
                 emits="diag",
                 provenance="test",
@@ -142,22 +143,6 @@ class MetricRecipeRegistryTest(BlackJAXTest):
         for name, recipe in REGISTRY.items():
             with self.subTest(name=name):
                 self.assertIsInstance(recipe, MetricRecipe)
-
-    def test_registry_passes_own_coupling_contract(self):
-        """Every registered recipe satisfies needs ⊆ provides and emits == representation.
-        (Existence of the registry without raises at module-load time already proves this,
-        but we also check the invariant explicitly for documentation value.)"""
-        for name, recipe in REGISTRY.items():
-            with self.subTest(name=name):
-                self.assertTrue(
-                    recipe.needs <= recipe.provides,
-                    f"{name}: needs={recipe.needs} not subset of provides={recipe.provides}",
-                )
-                self.assertEqual(
-                    recipe.emits,
-                    recipe.representation,
-                    f"{name}: emits={recipe.emits} != representation={recipe.representation}",
-                )
 
 
 # ---------------------------------------------------------------------------
@@ -247,12 +232,31 @@ class MetricCoreContractWelfordDenseTest(BlackJAXTest):
         state = core.init(self.n_dims)
         self.assertEqual(state.inverse_mass_matrix.shape, (self.n_dims, self.n_dims))
 
-    def test_final_returns_finite_imm(self):
+    def test_final_returns_genuinely_dense_imm(self):
+        """After accumulating CORRELATED samples, final() must produce a matrix
+        with non-zero off-diagonals — not just the right shape.
+
+        Catch-site: mapping welford_dense→welford_diag via a recipe-name bug
+        would broadcast a 1-D welford estimate to (d,d) via the initial seed,
+        leaving shape correct but off-diagonals zero.  This test detects that.
+        """
         core = self._make_core()
         state = core.init(self.n_dims)
+
+        # Correlated samples: Cholesky factor with rho_{0,1} ≈ 0.87.
+        # Welford dense estimate of the covariance must have imm[0,1] ≠ 0.
+        L = jnp.array(
+            [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.87, 0.49, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ]
+        )
         key = self.next_key()
-        positions = jax.random.normal(key, (100, self.n_dims))
-        grads = jnp.zeros((100, self.n_dims))
+        z = jax.random.normal(key, (200, self.n_dims))
+        positions = z @ L.T  # correlated, shape (200, 4)
+        grads = jnp.zeros((200, self.n_dims))
 
         def body(st, xs):
             pos, g = xs
@@ -264,6 +268,11 @@ class MetricCoreContractWelfordDenseTest(BlackJAXTest):
         imm = final_state.inverse_mass_matrix
         self.assertEqual(imm.shape, (self.n_dims, self.n_dims))
         self.assertTrue(bool(jnp.all(jnp.isfinite(imm))))
+        # Must be genuinely dense: off-diagonal [0,1] must differ from zero.
+        self.assertFalse(
+            bool(jnp.allclose(imm, jnp.diag(jnp.diag(imm)))),
+            "welford_dense IMM should have non-zero off-diagonals with correlated samples",
+        )
 
 
 class MetricCoreContractFisherDiagTest(BlackJAXTest):
@@ -298,15 +307,23 @@ class MetricCoreContractFisherDiagTest(BlackJAXTest):
         self.assertEqual(int(final_state.fisher_block.count), 0)
 
     def test_final_returns_finite_positive_imm(self):
-        """After accumulating samples, final() gives finite+positive diagonal IMM."""
+        """After accumulating samples, final() gives finite+positive diagonal IMM.
+
+        Catch-site: a var_x / var_g swap in the Fisher stitch would produce
+        IMM_i = 1 / true_var_i instead of true_var_i.  The assert_allclose with
+        rtol=1e-3 catches that swap, whereas a shape+sign check would not.
+        """
         core = self._make_core()
         state = core.init(self.n_dims)
 
-        # Anisotropic: true_var = [4, 1, 0.25]
+        # Anisotropic: true_var = [4, 1, 0.25].
+        # Draws ~ N(0, true_var) => grad_i = -draw_i / true_var_i.
+        # Fisher estimator: IMM_i = Var[draw_i] / Var[grad_i]
+        #                          = true_var_i / (1 / true_var_i) = true_var_i.
         true_var = jnp.array([4.0, 1.0, 0.25])
         key = self.next_key()
-        draws = jax.random.normal(key, (200, self.n_dims)) * jnp.sqrt(true_var)
-        grads = -draws / true_var  # gradient of isotropic normal: -x / true_var
+        draws = jax.random.normal(key, (500, self.n_dims)) * jnp.sqrt(true_var)
+        grads = -draws / true_var  # gradient of diagonal normal: -x / true_var
 
         def body(st, xs):
             pos, g = xs
@@ -319,6 +336,12 @@ class MetricCoreContractFisherDiagTest(BlackJAXTest):
         self.assertEqual(imm.shape, (self.n_dims,))
         self.assertTrue(bool(jnp.all(jnp.isfinite(imm))))
         self.assertTrue(bool(jnp.all(imm > 0)))
+        np.testing.assert_allclose(
+            np.asarray(imm),
+            np.asarray(true_var),
+            rtol=1e-3,
+            err_msg="Fisher IMM should equal true_var; a var_x/var_g swap would invert it",
+        )
 
 
 class MetricCoreBuildCoreParamsTest(BlackJAXTest):
@@ -333,7 +356,9 @@ class MetricCoreBuildCoreParamsTest(BlackJAXTest):
     def test_welford_diag_accepts_initial_imm(self):
         """build_core with initial_inverse_mass_matrix should seed the IMM."""
         seed_imm = jnp.array([2.0, 3.0, 4.0])
-        core = lookup_recipe("welford_diag").build_core(initial_inverse_mass_matrix=seed_imm)
+        core = lookup_recipe("welford_diag").build_core(
+            initial_inverse_mass_matrix=seed_imm
+        )
         state = core.init(3)
         # The initial IMM (before any updates) should be the seed.
         np.testing.assert_array_equal(
