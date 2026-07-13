@@ -427,16 +427,24 @@ class SampleCovLowRankCoreContractTest(BlackJAXTest):
         self.assertTrue(bool(jnp.all(imm.sigma > 0)))
 
     def test_grads_buffer_unused(self):
-        """grads_buffer must remain zeros after update() (draws-only core)."""
+        """grads_buffer must remain zeros even when a real gradient is passed.
+
+        Passing a non-None gradient catches the errant-grad-write mutation
+        (a sample_cov update that writes grad to grads_buffer): with grad=None
+        the mutation is a no-op because None cannot be stored; with a real
+        gradient array the mutation would write non-zero values and the
+        assertion would fail.
+        """
         core = self._make_core()
         state = core.init(self.n_dims)
-        key = self.next_key()
-        draws = jax.random.normal(key, (10, self.n_dims))
+        draws = jax.random.normal(self.next_key(), (10, self.n_dims))
+        grads = jax.random.normal(self.next_key(), (10, self.n_dims))
 
         def body(s, xs):
-            return core.update(s, xs, None), None
+            pos, grad = xs
+            return core.update(s, pos, grad), None
 
-        final_state, _ = jax.lax.scan(body, state, draws)
+        final_state, _ = jax.lax.scan(body, state, (draws, grads))
         np.testing.assert_array_equal(
             np.asarray(final_state.grads_buffer),
             np.zeros((self.buffer_size, self.n_dims)),
@@ -502,6 +510,154 @@ class LowRankRegistryTest(BlackJAXTest):
         for name in ("fisher_low_rank", "sample_cov_low_rank"):
             with self.subTest(name=name):
                 self.assertIn(name, REGISTRY)
+
+    def test_construction_low_rank_max_rank_none_raises(self):
+        """MetricRecipe with representation='low_rank' and max_rank=None must
+        raise ValueError at construction time (not deferred to build_core)."""
+        with self.assertRaises(ValueError):
+            MetricRecipe(
+                representation="low_rank",
+                estimator="sample_cov_low_rank",
+                buffer="reset_window",
+                support_gate=None,
+                needs=frozenset({"positions"}),
+                provides=frozenset({"positions"}),
+                emits="low_rank",
+                provenance="test — construction must raise",
+                max_rank=None,
+            )
+
+
+# ---------------------------------------------------------------------------
+# Estimator correctness: condition-number reduction invariant
+# ---------------------------------------------------------------------------
+
+
+def _reconstruct_imm_matrix(
+    sigma: "np.ndarray", U: "np.ndarray", lam: "np.ndarray"
+) -> "np.ndarray":
+    """Reconstruct the d×d inverse mass matrix from (sigma, U, lam).
+
+    M^{-1} = diag(sigma) @ (I + U @ diag(lam - 1) @ U^T) @ diag(sigma)
+
+    This matches the formula in :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`.
+    """
+    sigma = np.asarray(sigma, dtype=np.float64)
+    U = np.asarray(U, dtype=np.float64)
+    lam = np.asarray(lam, dtype=np.float64)
+    d = sigma.shape[0]
+    low_rank = U @ np.diag(lam - 1.0) @ U.T
+    return np.diag(sigma) @ (np.eye(d) + low_rank) @ np.diag(sigma)
+
+
+class EstimatorCorrectnessInvariantTest(BlackJAXTest):
+    """Basis-free condition-number-reduction invariant for low-rank estimators.
+
+    For an ill-conditioned diagonal Gaussian target with covariance Σ, the
+    fitted inverse mass matrix M^{-1} must satisfy:
+
+        cond(M^{-1} Σ^{-1}) << cond(Σ^{-1})
+
+    This is the standard HMC dynamics condition number: a good metric (M^{-1} ≈ Σ)
+    makes M^{-1} Σ^{-1} ≈ I and the condition number ≈ 1.  The test is
+    basis-free (no golden values; the comparison is relative to cond_before)
+    and catches two bug classes:
+
+    - Inversion-drop: without inverting the score covariance in the geometric
+      mean, eigenvalues blow up to ~B/gamma ≈ 2e7, making cond_after >> cond_before.
+    - Gamma-drop (gamma → 0): division by zero produces NaN lam values, caught
+      by the finiteness assertion before the condition-number check.
+    """
+
+    _N_DIMS = 6
+    # stds = [50, 1, 1, 1, 1, 0.1] → cond(Σ) = (50 / 0.1)^2 = 250 000
+    _STDS = np.array([50.0, 1.0, 1.0, 1.0, 1.0, 0.1])
+    _BUFFER_SIZE = 400
+
+    def _fill_fisher_core(self, core):
+        """Fill buffer with draws + gradients from the ill-conditioned diagonal target."""
+        target_cov = np.diag(self._STDS**2)
+        rng = np.random.default_rng(42)
+        draws = rng.multivariate_normal(
+            np.zeros(self._N_DIMS), target_cov, self._BUFFER_SIZE
+        )
+        # grad log p(x) = -x / stds^2 for N(0, diag(stds^2))
+        grads = -draws / (self._STDS**2)[None, :]
+        state = core.init(self._N_DIMS)
+
+        def body(s, xs):
+            return core.update(s, xs[0], xs[1]), None
+
+        state, _ = jax.lax.scan(
+            body,
+            state,
+            (jnp.array(draws), jnp.array(grads)),
+        )
+        return core.final(state)
+
+    def _fill_sample_cov_core(self, core):
+        """Fill buffer with draws from the ill-conditioned diagonal target."""
+        target_cov = np.diag(self._STDS**2)
+        rng = np.random.default_rng(42)
+        draws = rng.multivariate_normal(
+            np.zeros(self._N_DIMS), target_cov, self._BUFFER_SIZE
+        )
+        state = core.init(self._N_DIMS)
+
+        def body(s, xs):
+            return core.update(s, xs, None), None
+
+        state, _ = jax.lax.scan(body, state, jnp.array(draws))
+        return core.final(state)
+
+    def _assert_cond_reduced(self, imm, label):
+        """Assert all metric fields are finite and condition number is reduced."""
+        self.assertTrue(
+            bool(jnp.all(jnp.isfinite(imm.sigma))), f"{label}: sigma not finite"
+        )
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.U))), f"{label}: U not finite")
+        self.assertTrue(
+            bool(jnp.all(jnp.isfinite(imm.lam))), f"{label}: lam not finite"
+        )
+        self.assertTrue(bool(jnp.all(imm.lam > 0)), f"{label}: lam not positive")
+        target_cov = np.diag(self._STDS**2)
+        cond_before = np.linalg.cond(target_cov)  # ≈ 250 000
+        M_inv = _reconstruct_imm_matrix(
+            np.asarray(imm.sigma), np.asarray(imm.U), np.asarray(imm.lam)
+        )
+        target_prec = np.linalg.inv(target_cov)
+        cond_after = np.linalg.cond(M_inv @ target_prec)
+        self.assertLess(
+            cond_after,
+            cond_before / 100,
+            f"{label}: metric did not reduce condition number "
+            f"(cond_before={round(cond_before)}, cond_after={round(cond_after, 1)})",
+        )
+
+    def test_fisher_low_rank_reduces_condition_number(self):
+        """Fisher low-rank metric must significantly reduce the target's condition number.
+
+        Uses x64 for stable SVD/QR (recommended for this estimator).
+        """
+        with jax.enable_x64():
+            core = _build_fisher_low_rank_core(
+                buffer_size=self._BUFFER_SIZE, max_rank=4, gamma=1e-5, cutoff=2.0
+            )
+            final_state = self._fill_fisher_core(core)
+            self._assert_cond_reduced(
+                final_state.inverse_mass_matrix, "fisher_low_rank"
+            )
+
+    def test_sample_cov_low_rank_reduces_condition_number(self):
+        """Sample-cov low-rank metric must significantly reduce the target's condition number."""
+        with jax.enable_x64():
+            core = _build_sample_cov_low_rank_core(
+                buffer_size=self._BUFFER_SIZE, max_rank=4
+            )
+            final_state = self._fill_sample_cov_core(core)
+            self._assert_cond_reduced(
+                final_state.inverse_mass_matrix, "sample_cov_low_rank"
+            )
 
 
 # ---------------------------------------------------------------------------
@@ -614,6 +770,85 @@ class FisherLowRankStagedAdaptationTest(BlackJAXTest):
         self.assertTrue(bool(jnp.all(jnp.isfinite(imm.sigma))))
         self.assertTrue(bool(jnp.all(jnp.isfinite(imm.U))))
         self.assertTrue(bool(jnp.all(jnp.isfinite(imm.lam))))
+
+
+# ---------------------------------------------------------------------------
+# Integration: staged_adaptation with sample_cov_low_rank core on std normal
+# ---------------------------------------------------------------------------
+
+
+class SampleCovLowRankStagedAdaptationTest(BlackJAXTest):
+    """staged_adaptation with the sample_cov_low_rank MetricCore on std normal."""
+
+    def test_runs_to_completion(self):
+        """staged_adaptation with a pre-built sample_cov_low_rank core must complete."""
+        n_dims = 5
+        num_steps = 200
+        buffer_size = min(2 * max(num_steps // 5, 128), max(num_steps, 1))
+
+        core = _build_sample_cov_low_rank_core(buffer_size=buffer_size, max_rank=4)
+        wu = staged_adaptation(
+            blackjax.nuts,
+            std_normal_logdensity,
+            metric=core,
+        )
+        key = self.next_key()
+        pos = jnp.zeros(n_dims)
+        (state, params), _ = wu.run(key, pos, num_steps=num_steps)
+        self.assertEqual(state.position.shape, (n_dims,))
+        self.assertIsInstance(params["inverse_mass_matrix"], LowRankInverseMassMatrix)
+        self.assertEqual(params["inverse_mass_matrix"].sigma.shape, (n_dims,))
+        self.assertEqual(params["inverse_mass_matrix"].U.shape, (n_dims, 4))
+
+    def test_returns_finite_metric(self):
+        """All sample_cov_low_rank metric components must be finite after adaptation."""
+        n_dims = 4
+        num_steps = 150
+        buffer_size = min(2 * max(num_steps // 5, 128), max(num_steps, 1))
+
+        core = _build_sample_cov_low_rank_core(buffer_size=buffer_size, max_rank=4)
+        wu = staged_adaptation(
+            blackjax.nuts,
+            std_normal_logdensity,
+            metric=core,
+        )
+        key = self.next_key()
+        pos = jnp.zeros(n_dims)
+        (_, params), _ = wu.run(key, pos, num_steps=num_steps)
+        imm = params["inverse_mass_matrix"]
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.sigma))))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.U))))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.lam))))
+
+    def test_grads_buffer_stays_zero_through_engine(self):
+        """sample_cov_low_rank through the engine must never write to grads_buffer.
+
+        Verifies that the sample_cov update does not write to grads_buffer even
+        when an adaptation_info_fn exposes the raw buffer (bypassing the default
+        buffer-drop).
+        """
+        n_dims = 4
+        num_steps = 50
+        buffer_size = 64
+
+        core = _build_sample_cov_low_rank_core(buffer_size=buffer_size, max_rank=4)
+        wu = staged_adaptation(
+            blackjax.nuts,
+            std_normal_logdensity,
+            metric=core,
+            # Use return_all_adapt_info so draws_buffer / grads_buffer are stacked.
+            adaptation_info_fn=return_all_adapt_info,
+        )
+        key = self.next_key()
+        pos = jnp.zeros(n_dims)
+        _, info = wu.run(key, pos, num_steps=num_steps)
+        # The engine stacks grads_buffer over all steps: shape (num_steps, B, d).
+        # For sample_cov_low_rank it must remain all-zeros at every step.
+        grads_trace = info.adaptation_state.imm_state.grads_buffer
+        np.testing.assert_array_equal(
+            np.asarray(grads_trace),
+            np.zeros_like(np.asarray(grads_trace)),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -811,26 +1046,6 @@ class WindowAdaptationLowRankShimTest(BlackJAXTest):
     _N_DIMS = 5
     _NUM_STEPS = 200
 
-    def _run(self, **kwargs):
-        wu = window_adaptation_low_rank(
-            blackjax.nuts,
-            std_normal_logdensity,
-            **{
-                "max_rank": 4,
-                "num_steps": self._NUM_STEPS,
-                **kwargs,
-            },
-        )
-        # window_adaptation_low_rank doesn't take num_steps in constructor;
-        # pass to run instead.
-        num_steps = kwargs.pop("num_steps", self._NUM_STEPS)
-        wu = window_adaptation_low_rank(
-            blackjax.nuts,
-            std_normal_logdensity,
-            max_rank=4,
-        )
-        return wu.run(self.next_key(), jnp.zeros(self._N_DIMS), num_steps=num_steps)
-
     def test_reset_path_runs(self):
         """buffer_policy='reset' (default) must complete and return finite metric."""
         wu = window_adaptation_low_rank(
@@ -964,6 +1179,147 @@ class WindowAdaptationLowRankShimTest(BlackJAXTest):
             window_adaptation_low_rank(
                 blackjax.nuts, std_normal_logdensity, recompute_every=0
             )
+
+    def test_gradient_based_init_seeds_sigma_at_first_step(self):
+        """With gradient_based_init=True, the sigma at step 0 in the info must
+        differ from the default ones-initialization.
+
+        The initial sigma is seeded from the gradient at the starting position
+        before the scan begins.  Step 0 is in the fast phase (no metric update),
+        so the sigma in info[0].adaptation_state reflects the initial value —
+        seeded vs ones for True vs False.  Catches h_shim_seed (shim silently
+        ignores the gradient_based_init flag).
+
+        Uses pos=2 (non-zero) so the gradient is non-zero and the seeding does
+        not fall back to identity (which happens when |grad| < 1e-10, e.g. at
+        the mode of std_normal_logdensity at x=0).
+        """
+        pos = jnp.ones(self._N_DIMS) * 2.0
+        key = self.next_key()
+        wu_true = window_adaptation_low_rank(
+            blackjax.nuts, std_normal_logdensity, max_rank=4, gradient_based_init=True
+        )
+        wu_false = window_adaptation_low_rank(
+            blackjax.nuts, std_normal_logdensity, max_rank=4, gradient_based_init=False
+        )
+        _, info_true = wu_true.run(key, pos, num_steps=self._NUM_STEPS)
+        _, info_false = wu_false.run(key, pos, num_steps=self._NUM_STEPS)
+        sigma_true_0 = info_true.adaptation_state.sigma[0]
+        sigma_false_0 = info_false.adaptation_state.sigma[0]
+        self.assertFalse(
+            bool(jnp.allclose(sigma_true_0, sigma_false_0)),
+            "sigma at step 0 must differ between gradient_based_init=True and False",
+        )
+
+    def test_accumulating_dispatch_background_split(self):
+        """background_split must be nonzero after at least one accumulating step,
+        and always zero on the reset path.
+
+        background_split is set at each slow-window switch in the accumulating
+        scan loop (marking old draws as "background" for the next partial-forget).
+        On the reset path it is always 0 (inert).  Catches b_dispatch (accumulating
+        silently routed to the reset engine, which never sets background_split).
+        """
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+
+        wu_reset = window_adaptation_low_rank(
+            blackjax.nuts, std_normal_logdensity, max_rank=4, buffer_policy="reset"
+        )
+        _, info_reset = wu_reset.run(key, pos, num_steps=self._NUM_STEPS)
+        # Reset path: background_split is always 0 at every step.
+        bg_reset = np.asarray(info_reset.adaptation_state.background_split)
+        self.assertTrue(
+            np.all(bg_reset == 0),
+            f"reset path: background_split must be all-zero, got max={bg_reset.max()}",
+        )
+
+        wu_acc = window_adaptation_low_rank(
+            blackjax.nuts,
+            std_normal_logdensity,
+            max_rank=4,
+            buffer_policy="accumulating",
+        )
+        _, info_acc = wu_acc.run(key, pos, num_steps=self._NUM_STEPS)
+        # Accumulating path: background_split must be nonzero after the first switch.
+        bg_acc = np.asarray(info_acc.adaptation_state.background_split)
+        self.assertTrue(
+            np.any(bg_acc != 0),
+            "accumulating path: background_split must be nonzero after at least one switch",
+        )
+
+
+# ---------------------------------------------------------------------------
+# x64 end-to-end smoke tests (float-promotion path)
+# ---------------------------------------------------------------------------
+
+
+class LowRankX64SmokeTest(BlackJAXTest):
+    """End-to-end smoke under x64 mode for both low-rank recipes.
+
+    The float64-promotion path inside _compute_low_rank_metric is only
+    exercised when jax_enable_x64 is True.  These tests verify the full
+    window_adaptation_low_rank pipeline produces finite, positive metric
+    components under x64.  The chain dtype follows core.init (float64
+    under x64); we do not mix float32 chains with x64 (out of scope).
+    """
+
+    _N_DIMS = 5
+    _NUM_STEPS = 200
+
+    def test_x64_smoke_fisher_low_rank(self):
+        """Full reset-path e2e under x64: all metric fields must be finite and positive."""
+        with jax.enable_x64():
+            wu = window_adaptation_low_rank(
+                blackjax.nuts, std_normal_logdensity, max_rank=4
+            )
+            (_, params), _ = wu.run(
+                self.next_key(),
+                jnp.zeros(self._N_DIMS),
+                num_steps=self._NUM_STEPS,
+            )
+            imm = params["inverse_mass_matrix"]
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(imm.sigma))), "sigma not finite under x64"
+            )
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(imm.U))), "U not finite under x64"
+            )
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(imm.lam))), "lam not finite under x64"
+            )
+            self.assertTrue(
+                bool(jnp.all(imm.sigma > 0)), "sigma not positive under x64"
+            )
+            self.assertTrue(bool(jnp.all(imm.lam > 0)), "lam not positive under x64")
+
+    def test_x64_smoke_sample_cov_low_rank(self):
+        """sample_cov_low_rank full e2e under x64: metric must be finite and positive."""
+        with jax.enable_x64():
+            num_steps = self._NUM_STEPS
+            buffer_size = min(2 * max(num_steps // 5, 128), max(num_steps, 1))
+            core = _build_sample_cov_low_rank_core(buffer_size=buffer_size, max_rank=4)
+            wu = staged_adaptation(
+                blackjax.nuts,
+                std_normal_logdensity,
+                metric=core,
+            )
+            (_, params), _ = wu.run(
+                self.next_key(),
+                jnp.zeros(self._N_DIMS),
+                num_steps=num_steps,
+            )
+            imm = params["inverse_mass_matrix"]
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(imm.sigma))), "sigma not finite under x64"
+            )
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(imm.lam))), "lam not finite under x64"
+            )
+            self.assertTrue(
+                bool(jnp.all(imm.sigma > 0)), "sigma not positive under x64"
+            )
+            self.assertTrue(bool(jnp.all(imm.lam > 0)), "lam not positive under x64")
 
 
 # ---------------------------------------------------------------------------

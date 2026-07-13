@@ -385,6 +385,12 @@ class MetricRecipe:
                 f"Choose an estimator whose emits tag matches the declared "
                 f"representation, or update representation to {self.emits!r}."
             )
+        if self.representation == "low_rank" and self.max_rank is None:
+            raise ValueError(
+                "MetricRecipe: max_rank is required for low-rank representations "
+                f"(representation={self.representation!r}).  "
+                "Set max_rank to a positive integer."
+            )
 
     def build_core(
         self,
@@ -449,11 +455,12 @@ class MetricRecipe:
                     "the 'fisher_low_rank' estimator.  Pass buffer_size=<int> "
                     "or build the core directly via _build_fisher_low_rank_core()."
                 )
-            # max_rank/gamma/cutoff are guaranteed non-None by the registry
-            # constructor; the Optional typing is for the dataclass default.
-            assert (
-                self.max_rank is not None
-            ), "fisher_low_rank recipe must have max_rank"
+            # max_rank/gamma/cutoff are non-None here: __post_init__ raises
+            # ValueError for low_rank representations with max_rank=None, and
+            # the registry always supplies gamma/cutoff for fisher_low_rank entries.
+            # The three asserts below are for mypy narrowing only — the runtime
+            # guard is in __post_init__ (ValueError, not stripped by -O).
+            assert self.max_rank is not None  # narrowing: enforced by __post_init__
             assert self.gamma is not None, "fisher_low_rank recipe must have gamma"
             assert self.cutoff is not None, "fisher_low_rank recipe must have cutoff"
             return _build_fisher_low_rank_core(
@@ -469,9 +476,9 @@ class MetricRecipe:
                     "the 'sample_cov_low_rank' estimator.  Pass buffer_size=<int> "
                     "or build the core directly via _build_sample_cov_low_rank_core()."
                 )
-            assert (
-                self.max_rank is not None
-            ), "sample_cov_low_rank recipe must have max_rank"
+            # max_rank is non-None: __post_init__ raises ValueError for
+            # low_rank representations with max_rank=None.
+            assert self.max_rank is not None  # narrowing: enforced by __post_init__
             return _build_sample_cov_low_rank_core(
                 buffer_size=buffer_size,
                 max_rank=self.max_rank,
