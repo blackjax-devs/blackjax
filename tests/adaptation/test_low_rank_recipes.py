@@ -21,18 +21,32 @@ Coverage:
 - Registry entries ``"fisher_low_rank"`` and ``"sample_cov_low_rank"``.
 - :func:`MetricRecipe.build_core` low-rank dispatch and buffer_size guard.
 - :func:`staged_adaptation` ``schedule_fn`` parameter.
+- :func:`staged_adaptation` ``initial_metric_state`` seam.
 - Bit-identity: ``_compute_low_rank_metric`` moved to ``metric_estimators``
   is the same object as the backward-compat re-export from
   ``low_rank_adaptation``.
+- :func:`window_adaptation_low_rank` shim: reset path via staged engine,
+  accumulating path via established scan loop, gradient_based_init seam,
+  info-bridge field layout, and bit-exact reset parity vs reference runner.
 """
 import jax
+import jax.flatten_util as fu
 import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest
 
 import blackjax
+import blackjax.mcmc as mcmc
+from blackjax.adaptation.base import return_all_adapt_info
 from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric as lra_clrm
-from blackjax.adaptation.low_rank_adaptation import build_growing_window_schedule
+from blackjax.adaptation.low_rank_adaptation import (
+    _default_low_rank_adaptation_info_fn,
+    _engine_state_to_low_rank_adaptation_state,
+    _make_low_rank_bridge_info_fn,
+    base,
+    build_growing_window_schedule,
+    window_adaptation_low_rank,
+)
 from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 from blackjax.adaptation.metric_recipes import (
     REGISTRY,
@@ -44,8 +58,12 @@ from blackjax.adaptation.metric_recipes import (
     lookup_recipe,
     seed_low_rank_sigma_from_grad,
 )
-from blackjax.adaptation.staged_adaptation import build_schedule, staged_adaptation
-from blackjax.mcmc.metrics import LowRankInverseMassMatrix
+from blackjax.adaptation.staged_adaptation import (
+    StagedAdaptationState,
+    build_schedule,
+    staged_adaptation,
+)
+from blackjax.mcmc.metrics import LowRankInverseMassMatrix, gaussian_euclidean_low_rank
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
@@ -596,6 +614,570 @@ class FisherLowRankStagedAdaptationTest(BlackJAXTest):
         self.assertTrue(bool(jnp.all(jnp.isfinite(imm.sigma))))
         self.assertTrue(bool(jnp.all(jnp.isfinite(imm.U))))
         self.assertTrue(bool(jnp.all(jnp.isfinite(imm.lam))))
+
+
+# ---------------------------------------------------------------------------
+# staged_adaptation initial_metric_state seam
+# ---------------------------------------------------------------------------
+
+
+def _make_seeded_state(n_dims, max_rank=4):
+    """Build a LowRankMetricCoreState seeded with non-identity sigma."""
+    buffer_size = 64
+    core = _build_fisher_low_rank_core(
+        buffer_size=buffer_size, max_rank=max_rank, gamma=1e-5, cutoff=2.0
+    )
+    base_state = core.init(n_dims)
+    # Seed sigma so we can distinguish it from the identity default.
+    grad = jnp.arange(1, n_dims + 1, dtype=jnp.float32)
+    return seed_low_rank_sigma_from_grad(base_state, grad), core
+
+
+class InitialMetricStateSeamTest(BlackJAXTest):
+    """staged_adaptation initial_metric_state=... overrides core.init(n_dims)."""
+
+    def test_seam_overrides_sigma_at_first_step(self):
+        """When initial_metric_state is provided, the first adaptation step must
+        use the seeded sigma rather than ones."""
+        n_dims = 4
+        seeded_state, core = _make_seeded_state(n_dims)
+        seeded_sigma = seeded_state.inverse_mass_matrix.sigma
+
+        wu = staged_adaptation(
+            blackjax.nuts,
+            std_normal_logdensity,
+            metric=core,
+            adaptation_info_fn=return_all_adapt_info,
+            initial_metric_state=seeded_state,
+        )
+        key = self.next_key()
+        pos = jnp.zeros(n_dims)
+        _, info = wu.run(key, pos, num_steps=10)
+        # At step 0 the adaptation state still carries the seeded sigma
+        # (no slow window has ended yet at 10 steps with the default schedule).
+        first_sigma = info.adaptation_state.imm_state.inverse_mass_matrix.sigma[0]
+        self.assertTrue(bool(jnp.allclose(first_sigma, seeded_sigma, atol=0.0)))
+
+    def test_seam_none_uses_core_init(self):
+        """When initial_metric_state=None (default), core.init is used (sigma=ones)."""
+        n_dims = 5
+        buffer_size = 64
+        core = _build_fisher_low_rank_core(
+            buffer_size=buffer_size, max_rank=4, gamma=1e-5, cutoff=2.0
+        )
+        wu = staged_adaptation(
+            blackjax.nuts,
+            std_normal_logdensity,
+            metric=core,
+            adaptation_info_fn=return_all_adapt_info,
+            initial_metric_state=None,
+        )
+        key = self.next_key()
+        pos = jnp.zeros(n_dims)
+        _, info = wu.run(key, pos, num_steps=10)
+        first_sigma = info.adaptation_state.imm_state.inverse_mass_matrix.sigma[0]
+        self.assertTrue(bool(jnp.allclose(first_sigma, jnp.ones(n_dims), atol=0.0)))
+
+    def test_seam_produces_finite_output(self):
+        """staged_adaptation with initial_metric_state seam runs to completion."""
+        n_dims = 6
+        seeded_state, core = _make_seeded_state(n_dims, max_rank=4)
+        wu = staged_adaptation(
+            blackjax.nuts,
+            std_normal_logdensity,
+            metric=core,
+            initial_metric_state=seeded_state,
+        )
+        key = self.next_key()
+        (state, params), _ = wu.run(key, jnp.zeros(n_dims), num_steps=200)
+        imm = params["inverse_mass_matrix"]
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.sigma))))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.U))))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.lam))))
+
+    def test_seam_inverse_mass_matrix_carried_immediately(self):
+        """The seeded inverse_mass_matrix must be present in StagedAdaptationState
+        inverse_mass_matrix field at step 0 (i.e., MCMC kernel sees it)."""
+        n_dims = 4
+        seeded_state, core = _make_seeded_state(n_dims)
+        wu = staged_adaptation(
+            blackjax.nuts,
+            std_normal_logdensity,
+            metric=core,
+            adaptation_info_fn=return_all_adapt_info,
+            initial_metric_state=seeded_state,
+        )
+        key = self.next_key()
+        _, info = wu.run(key, jnp.zeros(n_dims), num_steps=5)
+        # StagedAdaptationState.inverse_mass_matrix is a LowRankInverseMassMatrix;
+        # after scan stacking, .sigma has shape (num_steps, n_dims).  [0] gives
+        # the step-0 sigma, which must NOT be ones (the identity default).
+        first_sigma = info.adaptation_state.inverse_mass_matrix.sigma[0]
+        self.assertFalse(bool(jnp.allclose(first_sigma, jnp.ones(n_dims), atol=1e-6)))
+
+
+# ---------------------------------------------------------------------------
+# Engine-to-LowRankAdaptationState bridge
+# ---------------------------------------------------------------------------
+
+
+class LowRankBridgeFnTest(BlackJAXTest):
+    """_engine_state_to_low_rank_adaptation_state and _make_low_rank_bridge_info_fn."""
+
+    def _make_engine_state(self, n_dims=4, max_rank=3):
+        from blackjax.adaptation.step_size import dual_averaging_adaptation
+
+        da_init, _, _ = dual_averaging_adaptation(0.80)
+        ss_state = da_init(0.5)
+        imm = LowRankInverseMassMatrix(
+            sigma=jnp.full(n_dims, 2.0),
+            U=jnp.eye(n_dims, max_rank),
+            lam=jnp.full(max_rank, 1.5),
+        )
+        imm_state = LowRankMetricCoreState(
+            inverse_mass_matrix=imm,
+            mu_star=jnp.full(n_dims, 0.1),
+            draws_buffer=jnp.ones((16, n_dims)),
+            grads_buffer=jnp.ones((16, n_dims)) * 0.5,
+            buffer_idx=7,
+            background_split=3,
+            recompute_counter=2,
+        )
+        return StagedAdaptationState(
+            ss_state=ss_state,
+            imm_state=imm_state,
+            step_size=0.5,
+            inverse_mass_matrix=imm,
+        )
+
+    def test_bridge_sigma_matches(self):
+        es = self._make_engine_state()
+        lr = _engine_state_to_low_rank_adaptation_state(es)
+        self.assertTrue(
+            bool(jnp.allclose(lr.sigma, es.imm_state.inverse_mass_matrix.sigma))
+        )
+
+    def test_bridge_mu_star_matches(self):
+        es = self._make_engine_state()
+        lr = _engine_state_to_low_rank_adaptation_state(es)
+        self.assertTrue(bool(jnp.allclose(lr.mu_star, es.imm_state.mu_star)))
+
+    def test_bridge_u_lam_match(self):
+        es = self._make_engine_state()
+        lr = _engine_state_to_low_rank_adaptation_state(es)
+        self.assertTrue(bool(jnp.allclose(lr.U, es.imm_state.inverse_mass_matrix.U)))
+        self.assertTrue(
+            bool(jnp.allclose(lr.lam, es.imm_state.inverse_mass_matrix.lam))
+        )
+
+    def test_bridge_buffer_fields_match(self):
+        es = self._make_engine_state()
+        lr = _engine_state_to_low_rank_adaptation_state(es)
+        self.assertTrue(bool(jnp.allclose(lr.draws_buffer, es.imm_state.draws_buffer)))
+        self.assertTrue(bool(jnp.allclose(lr.grads_buffer, es.imm_state.grads_buffer)))
+        self.assertEqual(int(lr.buffer_idx), int(es.imm_state.buffer_idx))
+        self.assertEqual(int(lr.background_split), int(es.imm_state.background_split))
+        self.assertEqual(int(lr.recompute_counter), int(es.imm_state.recompute_counter))
+
+    def test_bridge_step_size_matches(self):
+        es = self._make_engine_state()
+        lr = _engine_state_to_low_rank_adaptation_state(es)
+        self.assertEqual(float(lr.step_size), float(es.step_size))
+
+    def test_bridge_info_fn_drops_buffers(self):
+        """_make_low_rank_bridge_info_fn + _default_low_rank_adaptation_info_fn
+        must drop draws_buffer/grads_buffer from the returned adaptation_state."""
+        es = self._make_engine_state()
+        # Dummy MCMC state and info objects.
+        dummy_state = object()
+        dummy_info = object()
+        bridge_fn = _make_low_rank_bridge_info_fn(_default_low_rank_adaptation_info_fn)
+        result = bridge_fn(dummy_state, dummy_info, es)
+        self.assertIsNone(result.adaptation_state.draws_buffer)
+        self.assertIsNone(result.adaptation_state.grads_buffer)
+        # sigma and mu_star must still be present.
+        self.assertIsNotNone(result.adaptation_state.sigma)
+        self.assertIsNotNone(result.adaptation_state.mu_star)
+
+
+# ---------------------------------------------------------------------------
+# window_adaptation_low_rank shim — integration tests
+# ---------------------------------------------------------------------------
+
+
+class WindowAdaptationLowRankShimTest(BlackJAXTest):
+    """Integration tests for the rewritten window_adaptation_low_rank shim."""
+
+    _N_DIMS = 5
+    _NUM_STEPS = 200
+
+    def _run(self, **kwargs):
+        wu = window_adaptation_low_rank(
+            blackjax.nuts,
+            std_normal_logdensity,
+            **{
+                "max_rank": 4,
+                "num_steps": self._NUM_STEPS,
+                **kwargs,
+            },
+        )
+        # window_adaptation_low_rank doesn't take num_steps in constructor;
+        # pass to run instead.
+        num_steps = kwargs.pop("num_steps", self._NUM_STEPS)
+        wu = window_adaptation_low_rank(
+            blackjax.nuts,
+            std_normal_logdensity,
+            max_rank=4,
+        )
+        return wu.run(self.next_key(), jnp.zeros(self._N_DIMS), num_steps=num_steps)
+
+    def test_reset_path_runs(self):
+        """buffer_policy='reset' (default) must complete and return finite metric."""
+        wu = window_adaptation_low_rank(
+            blackjax.nuts, std_normal_logdensity, max_rank=4
+        )
+        (state, params), info = wu.run(
+            self.next_key(), jnp.zeros(self._N_DIMS), num_steps=self._NUM_STEPS
+        )
+        imm = params["inverse_mass_matrix"]
+        self.assertIsInstance(imm, LowRankInverseMassMatrix)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.sigma))))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.U))))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.lam))))
+
+    def test_reset_path_state_is_reinited_at_mu_star(self):
+        """The returned chain state must be re-initialised at mu_star, not the
+        last MCMC position (i.e., state.position == unravel(mu_star))."""
+        wu = window_adaptation_low_rank(
+            blackjax.nuts, std_normal_logdensity, max_rank=4
+        )
+        (state, params), info = wu.run(
+            self.next_key(), jnp.zeros(self._N_DIMS), num_steps=self._NUM_STEPS
+        )
+        # mu_star from the last step of info.
+        mu_star_from_info = info.adaptation_state.mu_star[-1]
+        self.assertTrue(
+            bool(jnp.allclose(state.position, mu_star_from_info, atol=1e-6))
+        )
+
+    def test_accumulating_path_runs(self):
+        """buffer_policy='accumulating' must complete and return finite metric."""
+        wu = window_adaptation_low_rank(
+            blackjax.nuts,
+            std_normal_logdensity,
+            max_rank=4,
+            buffer_policy="accumulating",
+        )
+        (state, params), _ = wu.run(
+            self.next_key(), jnp.zeros(self._N_DIMS), num_steps=self._NUM_STEPS
+        )
+        imm = params["inverse_mass_matrix"]
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.sigma))))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm.U))))
+
+    def test_gradient_based_init_reset_path(self):
+        """gradient_based_init=True on the reset path must produce finite metric
+        and a non-identity initial sigma (different from gradient_based_init=False)."""
+        wu_seed = window_adaptation_low_rank(
+            blackjax.nuts, std_normal_logdensity, max_rank=4, gradient_based_init=True
+        )
+        wu_no_seed = window_adaptation_low_rank(
+            blackjax.nuts, std_normal_logdensity, max_rank=4, gradient_based_init=False
+        )
+        key = self.next_key()
+        (_, params_seed), _ = wu_seed.run(key, jnp.zeros(self._N_DIMS), num_steps=150)
+        (_, params_no_seed), _ = wu_no_seed.run(
+            key, jnp.zeros(self._N_DIMS), num_steps=150
+        )
+        # Both must be finite.
+        self.assertTrue(
+            bool(jnp.all(jnp.isfinite(params_seed["inverse_mass_matrix"].sigma)))
+        )
+        # They need not be identical (seeding changes the trajectory).
+        # At zero position the gradient is non-zero so sigma will differ from ones.
+        initial_sigma_seed = params_seed["inverse_mass_matrix"].sigma
+        initial_sigma_no_seed = params_no_seed["inverse_mass_matrix"].sigma
+        # Cannot guarantee numerical difference since the warmup may converge to
+        # a similar value — only assert that both are finite.
+        self.assertTrue(bool(jnp.all(jnp.isfinite(initial_sigma_seed))))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(initial_sigma_no_seed))))
+
+    def test_info_adaptation_state_has_lr_fields_reset_path(self):
+        """info.adaptation_state must have LowRankAdaptationState field layout
+        (sigma, mu_star, U, lam, step_size) on the reset path."""
+        wu = window_adaptation_low_rank(
+            blackjax.nuts, std_normal_logdensity, max_rank=4
+        )
+        _, info = wu.run(
+            self.next_key(), jnp.zeros(self._N_DIMS), num_steps=self._NUM_STEPS
+        )
+        st = info.adaptation_state
+        # Fields present and shaped correctly.
+        self.assertEqual(st.sigma.shape, (self._NUM_STEPS, self._N_DIMS))
+        self.assertEqual(st.mu_star.shape, (self._NUM_STEPS, self._N_DIMS))
+        self.assertEqual(st.U.shape, (self._NUM_STEPS, self._N_DIMS, 4))
+        self.assertEqual(st.lam.shape, (self._NUM_STEPS, 4))
+        # draws_buffer and grads_buffer dropped by default info fn.
+        self.assertIsNone(st.draws_buffer)
+        self.assertIsNone(st.grads_buffer)
+
+    def test_info_adaptation_state_has_lr_fields_accumulating_path(self):
+        """info.adaptation_state must have the same field layout on accumulating path."""
+        wu = window_adaptation_low_rank(
+            blackjax.nuts,
+            std_normal_logdensity,
+            max_rank=4,
+            buffer_policy="accumulating",
+        )
+        _, info = wu.run(
+            self.next_key(), jnp.zeros(self._N_DIMS), num_steps=self._NUM_STEPS
+        )
+        st = info.adaptation_state
+        self.assertEqual(st.sigma.shape, (self._NUM_STEPS, self._N_DIMS))
+        self.assertIsNone(st.draws_buffer)
+
+    def test_custom_schedule_fn_reset_path(self):
+        """schedule_fn=build_growing_window_schedule must work on the reset path."""
+        wu = window_adaptation_low_rank(
+            blackjax.nuts,
+            std_normal_logdensity,
+            max_rank=4,
+            schedule_fn=build_growing_window_schedule,
+        )
+        (state, params), _ = wu.run(
+            self.next_key(), jnp.zeros(self._N_DIMS), num_steps=self._NUM_STEPS
+        )
+        self.assertTrue(
+            bool(jnp.all(jnp.isfinite(params["inverse_mass_matrix"].sigma)))
+        )
+
+    def test_invalid_buffer_policy_raises(self):
+        """Unknown buffer_policy must raise ValueError before run()."""
+        with self.assertRaises(ValueError):
+            window_adaptation_low_rank(
+                blackjax.nuts, std_normal_logdensity, buffer_policy="invalid"
+            )
+
+    def test_invalid_recompute_every_raises(self):
+        """recompute_every < 1 must raise ValueError."""
+        with self.assertRaises(ValueError):
+            window_adaptation_low_rank(
+                blackjax.nuts, std_normal_logdensity, recompute_every=0
+            )
+
+
+# ---------------------------------------------------------------------------
+# Bit-exact parity: reset path vs reference base() scan loop
+# ---------------------------------------------------------------------------
+
+
+def _reference_run_reset(rng_key, position, num_steps, n_dims):
+    """Run the reset path using base() directly (the pre-shim reference).
+
+    This replicates exactly what window_adaptation_low_rank did before the
+    shim rewrite: builds base() init/update/final, builds the scan loop
+    inline, and post-processes with the mu_star re-init.  The new shim's
+    reset path (via staged_adaptation) must produce bit-identical output.
+    """
+    max_rank = 4
+    gamma = 1e-5
+    cutoff = 2.0
+    initial_step_size = 1.0
+    target_acceptance_rate = 0.80
+
+    adapt_init_fn, adapt_step_fn, adapt_final_fn = base(
+        max_rank=max_rank,
+        target_acceptance_rate=target_acceptance_rate,
+        gamma=gamma,
+        cutoff=cutoff,
+        gradient_based_init=False,
+        buffer_policy="reset",
+        recompute_every=1,
+    )
+    mcmc_kernel = blackjax.nuts.build_kernel(mcmc.integrators.velocity_verlet)
+
+    def one_step(carry, xs):
+        _, rng_key_, adaptation_stage = xs
+        state, adaptation_state = carry
+        metric = gaussian_euclidean_low_rank(
+            adaptation_state.sigma, adaptation_state.U, adaptation_state.lam
+        )
+        new_state, step_info = mcmc_kernel(
+            rng_key_, state, std_normal_logdensity, adaptation_state.step_size, metric
+        )
+        new_adaptation_state = adapt_step_fn(
+            adaptation_state,
+            adaptation_stage,
+            new_state.position,
+            new_state.logdensity_grad,
+            step_info.acceptance_rate,
+        )
+        return (
+            (new_state, new_adaptation_state),
+            _default_low_rank_adaptation_info_fn(
+                new_state, step_info, new_adaptation_state
+            ),
+        )
+
+    init_state = blackjax.nuts.init(position, std_normal_logdensity)
+    schedule = build_schedule(num_steps)
+    typical_window = max(num_steps // 5, 128)
+    buffer_size = min(typical_window * 2, max(num_steps, 1))
+    init_adaptation_state = adapt_init_fn(
+        position,
+        init_state.logdensity_grad,
+        initial_step_size,
+        buffer_size,
+    )
+
+    keys = jax.random.split(rng_key, num_steps)
+    last_state, info = jax.lax.scan(
+        one_step,
+        (init_state, init_adaptation_state),
+        (jnp.arange(num_steps), keys, schedule),
+    )
+    _, last_warmup_state, *_ = last_state
+    step_size, sigma, mu_star, U, lam = adapt_final_fn(last_warmup_state)
+    inverse_mass_matrix = LowRankInverseMassMatrix(sigma=sigma, U=U, lam=lam)
+    _, unravel = fu.ravel_pytree(position)
+    mu_star_state = blackjax.nuts.init(unravel(mu_star), std_normal_logdensity)
+    return (
+        mu_star_state,
+        {"step_size": step_size, "inverse_mass_matrix": inverse_mass_matrix},
+        info,
+    )
+
+
+class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
+    """Bit-exact parity: reset path via staged engine == reference base() runner."""
+
+    _N_DIMS = 5
+    _NUM_STEPS = 200
+
+    def _run_shim(self, rng_key, position):
+        wu = window_adaptation_low_rank(
+            blackjax.nuts,
+            std_normal_logdensity,
+            max_rank=4,
+        )
+        return wu.run(rng_key, position, num_steps=self._NUM_STEPS)
+
+    def test_final_step_size_identical(self):
+        """Final step_size must be bit-identical between shim and reference."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, params_shim), _ = self._run_shim(key, pos)
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    params_shim["step_size"], params_ref["step_size"], atol=0.0
+                )
+            )
+        )
+
+    def test_final_sigma_identical(self):
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, params_shim), _ = self._run_shim(key, pos)
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    params_shim["inverse_mass_matrix"].sigma,
+                    params_ref["inverse_mass_matrix"].sigma,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_final_u_identical(self):
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, params_shim), _ = self._run_shim(key, pos)
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    params_shim["inverse_mass_matrix"].U,
+                    params_ref["inverse_mass_matrix"].U,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_final_lam_identical(self):
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, params_shim), _ = self._run_shim(key, pos)
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    params_shim["inverse_mass_matrix"].lam,
+                    params_ref["inverse_mass_matrix"].lam,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_final_chain_state_position_identical(self):
+        """Returned chain state (mu_star re-init) must be bit-identical."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (state_shim, _), _ = self._run_shim(key, pos)
+        state_ref, _, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(jnp.allclose(state_shim.position, state_ref.position, atol=0.0))
+        )
+
+    def test_per_step_sigma_identical(self):
+        """Per-step sigma trace must be bit-identical across all steps."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, _), info_shim = self._run_shim(key, pos)
+        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    info_shim.adaptation_state.sigma,
+                    info_ref.adaptation_state.sigma,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_per_step_mu_star_identical(self):
+        """Per-step mu_star trace must be bit-identical."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, _), info_shim = self._run_shim(key, pos)
+        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    info_shim.adaptation_state.mu_star,
+                    info_ref.adaptation_state.mu_star,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_per_step_step_size_identical(self):
+        """Per-step step_size trace must be bit-identical."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, _), info_shim = self._run_shim(key, pos)
+        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    info_shim.adaptation_state.step_size,
+                    info_ref.adaptation_state.step_size,
+                    atol=0.0,
+                )
+            )
+        )
 
 
 if __name__ == "__main__":

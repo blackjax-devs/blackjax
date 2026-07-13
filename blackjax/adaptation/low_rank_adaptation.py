@@ -98,6 +98,14 @@ from blackjax.adaptation.metric_estimators import (  # noqa: F401 — backward-c
     _relative_pd_floor,
     _spd_mean,
 )
+from blackjax.adaptation.metric_recipes import (
+    _build_fisher_low_rank_core,
+    seed_low_rank_sigma_from_grad,
+)
+from blackjax.adaptation.staged_adaptation import (
+    StagedAdaptationState,
+    staged_adaptation,
+)
 from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
@@ -210,6 +218,57 @@ def _default_low_rank_adaptation_info_fn(
         draws_buffer=None, grads_buffer=None
     )
     return AdaptationInfo(state, info, trimmed_adaptation_state)
+
+
+def _engine_state_to_low_rank_adaptation_state(
+    engine_state: StagedAdaptationState,
+) -> "LowRankAdaptationState":
+    """Convert a :class:`~blackjax.adaptation.staged_adaptation.StagedAdaptationState`
+    (whose ``imm_state`` is a :class:`~blackjax.adaptation.metric_recipes
+    .LowRankMetricCoreState`) to a :class:`LowRankAdaptationState`.
+
+    Used by the reset-path info bridge in :func:`window_adaptation_low_rank`
+    to expose the same ``adaptation_state`` field layout as the legacy
+    :func:`base` scan loop.  Downstream code that inspects
+    ``info[-1].adaptation_state.sigma``, ``.mu_star``, ``.U``, etc. continues
+    to work without change across both buffer policies.
+    """
+    imm = engine_state.imm_state  # LowRankMetricCoreState
+    return LowRankAdaptationState(
+        ss_state=engine_state.ss_state,
+        sigma=imm.inverse_mass_matrix.sigma,
+        mu_star=imm.mu_star,
+        U=imm.inverse_mass_matrix.U,
+        lam=imm.inverse_mass_matrix.lam,
+        step_size=engine_state.step_size,
+        draws_buffer=imm.draws_buffer,
+        grads_buffer=imm.grads_buffer,
+        buffer_idx=imm.buffer_idx,
+        background_split=imm.background_split,
+        recompute_counter=imm.recompute_counter,
+    )
+
+
+def _make_low_rank_bridge_info_fn(user_fn: Callable) -> Callable:
+    """Wrap a :class:`LowRankAdaptationState`-expecting info fn for use
+    with the staged-adaptation engine.
+
+    :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation` produces
+    :class:`~blackjax.adaptation.staged_adaptation.StagedAdaptationState` as
+    its per-step adaptation state.  :func:`window_adaptation_low_rank`'s
+    ``adaptation_info_fn`` parameter (including the default
+    :func:`_default_low_rank_adaptation_info_fn`) expects a
+    :class:`LowRankAdaptationState`.  This factory bridges the two: the engine's
+    state is converted via :func:`_engine_state_to_low_rank_adaptation_state`
+    before ``user_fn`` is called, so the returned ``info`` pytree has the same
+    structure whether the reset or accumulating path is active.
+    """
+
+    def _wrapped(state, info, engine_state: StagedAdaptationState) -> AdaptationInfo:
+        lr_state = _engine_state_to_low_rank_adaptation_state(engine_state)
+        return user_fn(state, info, lr_state)
+
+    return _wrapped
 
 
 # ---------------------------------------------------------------------------
@@ -898,76 +957,146 @@ def window_adaptation_low_rank(
 
     Notes
     -----
+    The default (reset) buffer policy runs on the staged-adaptation engine;
+    the accumulating policy uses the established low-rank scan loop, which it
+    shares with earlier releases.
+
     Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a
     progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.
     """
-    if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
-        mcmc_kernel = algorithm.build_kernel(integrator)
-    else:
-        mcmc_kernel = algorithm.build_kernel()
-
-    adapt_init, adapt_step, adapt_final = base(
-        max_rank=max_rank,
-        target_acceptance_rate=target_acceptance_rate,
-        gamma=gamma,
-        cutoff=cutoff,
-        gradient_based_init=gradient_based_init,
-        buffer_policy=buffer_policy,
-        recompute_every=recompute_every,
-    )
-
-    def one_step(carry, xs):
-        _, rng_key, adaptation_stage = xs
-        state, adaptation_state = carry
-
-        metric = gaussian_euclidean_low_rank(
-            adaptation_state.sigma,
-            adaptation_state.U,
-            adaptation_state.lam,
+    if buffer_policy not in ("reset", "accumulating"):
+        raise ValueError(
+            f"buffer_policy must be 'reset' or 'accumulating', got {buffer_policy!r}"
         )
-        new_state, info = mcmc_kernel(
-            rng_key,
-            state,
+    if recompute_every < 1:
+        raise ValueError(f"recompute_every must be >= 1, got {recompute_every!r}")
+
+    def _run_reset(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int) -> tuple:
+        """Reset policy: run via the staged-adaptation engine (default path).
+
+        The buffer is hard-reset to empty at every slow-window boundary.
+        Bit-exact with the pre-engine implementation for all default parameters.
+        """
+        # Size the buffer to the expected largest slow window rather than the
+        # full warmup length.  Modular indexing in the core's update() means
+        # that if a window exceeds buffer_size only the most recent buffer_size
+        # draws are kept -- matching nutpie's fixed-buffer behaviour and
+        # avoiding O(num_steps × d) allocations for large d.
+        typical_window = max(num_steps // 5, 128)
+        buffer_size = min(typical_window * 2, max(num_steps, 1))
+
+        core = _build_fisher_low_rank_core(
+            buffer_size=buffer_size,
+            max_rank=max_rank,
+            gamma=gamma,
+            cutoff=cutoff,
+        )
+
+        seeded_imm_state = None
+        if gradient_based_init:
+            # Call algorithm.init once to get the initial gradient for sigma
+            # seeding.  staged_adaptation().run() will call algorithm.init
+            # again internally (deterministic -- same result, negligible cost).
+            _init_state = algorithm.init(position, logdensity_fn)
+            n_dims = pytree_size(position)
+            seeded_imm_state = seed_low_rank_sigma_from_grad(
+                core.init(n_dims), _init_state.logdensity_grad
+            )
+
+        engine = staged_adaptation(
+            algorithm,
             logdensity_fn,
-            adaptation_state.step_size,
-            metric,
+            metric=core,
+            initial_step_size=initial_step_size,
+            target_acceptance_rate=target_acceptance_rate,
+            # Bridge: engine produces StagedAdaptationState; user's info fn
+            # expects LowRankAdaptationState -- _make_low_rank_bridge_info_fn
+            # converts between the two so that info field access is unchanged.
+            adaptation_info_fn=_make_low_rank_bridge_info_fn(adaptation_info_fn),
+            integrator=integrator,
+            schedule_fn=schedule_fn,
+            initial_metric_state=seeded_imm_state,
             **extra_parameters,
         )
-        new_adaptation_state = adapt_step(
-            adaptation_state,
-            adaptation_stage,
-            new_state.position,
-            new_state.logdensity_grad,
-            info.acceptance_rate,
-        )
-        return (
-            (new_state, new_adaptation_state),
-            adaptation_info_fn(new_state, info, new_adaptation_state),
+
+        results, info = engine.run(rng_key, position, num_steps)  # type: ignore[call-arg]
+
+        # Re-initialise chain at mu* = x̄ + σ²⊙ᾱ (optimal translation, §3.2).
+        # mu_star is preserved per-step in the bridged adaptation_state;
+        # [-1] gives the final warmup step's value.
+        mu_star = info.adaptation_state.mu_star[-1]
+        _, unravel = fu.ravel_pytree(position)
+        mu_star_state = algorithm.init(unravel(mu_star), logdensity_fn)
+
+        return AdaptationResults(mu_star_state, results.parameters), info
+
+    def _run_accumulating(
+        rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int
+    ) -> tuple:
+        """Accumulating policy: use the established low-rank scan loop.
+
+        The default (reset) buffer policy runs on the staged-adaptation engine;
+        the accumulating policy uses the established low-rank scan loop, which
+        it shares with earlier releases.  Migrating the accumulating policy onto
+        the staged-adaptation engine is future work; it must NOT be done via an
+        ``is_window_end`` kwarg on ``MetricCore.update()`` — the clean approach
+        is for the core to own its recompute cadence from a step index, or for
+        periodic recompute to fold into the engine's ``final`` contract.
+        """
+        adapt_init_fn, adapt_step_fn, adapt_final_fn = base(
+            max_rank=max_rank,
+            target_acceptance_rate=target_acceptance_rate,
+            gamma=gamma,
+            cutoff=cutoff,
+            gradient_based_init=gradient_based_init,
+            buffer_policy="accumulating",
+            recompute_every=recompute_every,
         )
 
-    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
+        if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
+            mcmc_kernel = algorithm.build_kernel(integrator)
+        else:
+            mcmc_kernel = algorithm.build_kernel()
+
+        def one_step(carry, xs):
+            _, rng_key_, adaptation_stage = xs
+            state, adaptation_state = carry
+            metric = gaussian_euclidean_low_rank(
+                adaptation_state.sigma,
+                adaptation_state.U,
+                adaptation_state.lam,
+            )
+            new_state, step_info = mcmc_kernel(
+                rng_key_,
+                state,
+                logdensity_fn,
+                adaptation_state.step_size,
+                metric,
+                **extra_parameters,
+            )
+            new_adaptation_state = adapt_step_fn(
+                adaptation_state,
+                adaptation_stage,
+                new_state.position,
+                new_state.logdensity_grad,
+                step_info.acceptance_rate,
+            )
+            return (
+                (new_state, new_adaptation_state),
+                adaptation_info_fn(new_state, step_info, new_adaptation_state),
+            )
+
         init_state = algorithm.init(position, logdensity_fn)
         # `schedule` must be computed before sizing the buffer under
         # "accumulating" (its capacity is schedule-derived); `num_steps` is
         # already required to be a concrete Python int here regardless (it
-        # sizes `jax.random.split` and the scan length below), so `schedule`
-        # is a concrete array too -- safe to inspect with plain numpy.
+        # sizes jax.random.split and the scan length below), so `schedule` is a
+        # concrete array too -- safe to inspect with plain numpy.
         schedule = schedule_fn(num_steps)
-        if buffer_policy == "accumulating":
-            # Capacity = the accumulating policy's own worst-case buffer
-            # content (previous + current window), not the "reset" policy's
-            # heuristic below -- see _accumulating_buffer_capacity.
-            buffer_size = max(_accumulating_buffer_capacity(schedule), 1)
-        else:
-            # Size the buffer to the expected largest slow window rather than
-            # the full warmup length.  The modular indexing in slow_update
-            # means that if a window exceeds buffer_size only the most
-            # recent buffer_size draws are kept — matching nutpie's
-            # fixed-buffer behaviour and avoiding O(num_steps × d)
-            # allocations for large d.
-            typical_window = max(num_steps // 5, 128)
-            buffer_size = min(typical_window * 2, max(num_steps, 1))
-        init_adaptation_state = adapt_init(
+        # Capacity = the accumulating policy's own worst-case buffer content
+        # (previous + current window) -- see _accumulating_buffer_capacity.
+        buffer_size = max(_accumulating_buffer_capacity(schedule), 1)
+        init_adaptation_state = adapt_init_fn(
             position,
             init_state.logdensity_grad,
             initial_step_size,
@@ -981,10 +1110,10 @@ def window_adaptation_low_rank(
             (jnp.arange(num_steps), keys, schedule),
         )
         _, last_warmup_state, *_ = last_state
-        step_size, sigma, mu_star, U, lam = adapt_final(last_warmup_state)
+        step_size, sigma, mu_star, U, lam = adapt_final_fn(last_warmup_state)
         # Return the inverse mass matrix as a pure-array NamedTuple so that the
-        # warmup composes with `jax.vmap` over chains. The kernel layer expands
-        # this into a full `Metric` via `default_metric` at call time. See #916.
+        # warmup composes with jax.vmap over chains.  The kernel layer expands
+        # this into a full Metric via default_metric at call time.  See #916.
         inverse_mass_matrix = LowRankInverseMassMatrix(sigma=sigma, U=U, lam=lam)
         parameters = {
             "step_size": step_size,
@@ -997,5 +1126,12 @@ def window_adaptation_low_rank(
         _, unravel = fu.ravel_pytree(position)
         mu_star_state = algorithm.init(unravel(mu_star), logdensity_fn)
         return AdaptationResults(mu_star_state, parameters), info
+
+    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
+        if buffer_policy == "accumulating":
+            # Accumulating path: see _run_accumulating docstring for the
+            # architectural rationale for the split.
+            return _run_accumulating(rng_key, position, num_steps)
+        return _run_reset(rng_key, position, num_steps)
 
     return AdaptationAlgorithm(run)
