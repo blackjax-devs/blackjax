@@ -11,8 +11,6 @@ from blackjax.adaptation.chees_adaptation import (
     _LENGTH_FLOOR_POWER_ITERATIONS,
     CHEES_LENGTH_FLOOR_FACTOR,
     _apply_length_floor,
-    _cov_accumulator_init,
-    _cov_accumulator_update,
     _diagonal_mass_matrix_or_fallback,
     _eig_state_init,
     _mass_matrix_engagement_threshold,
@@ -21,6 +19,7 @@ from blackjax.adaptation.chees_adaptation import (
 )
 from blackjax.adaptation.chees_adaptation import base as chees_base
 from blackjax.adaptation.mass_matrix import WelfordAlgorithmState, welford_algorithm
+from blackjax.adaptation.metric_buffers import MomentBlock, cgl_update_batch
 from blackjax.diagnostics import effective_sample_size
 from blackjax.util import run_inference_algorithm
 
@@ -456,12 +455,10 @@ def test_length_floor_accumulator_and_power_iteration_recover_planted_eigenvalue
     key = jax.random.key(0)
     samples = jax.random.multivariate_normal(key, jnp.zeros(d), C, shape=(20_000,))
 
-    acc = _cov_accumulator_init(d)
+    acc = MomentBlock(count=jnp.zeros(()), mean=jnp.zeros((d,)), m2=jnp.zeros((d, d)))
     batch_size = 200
     for i in range(samples.shape[0] // batch_size):
-        acc = _cov_accumulator_update(
-            acc, samples[i * batch_size : (i + 1) * batch_size]
-        )
+        acc = cgl_update_batch(acc, samples[i * batch_size : (i + 1) * batch_size])
     # The accumulator must reproduce the naive batch covariance (same check
     # as meads_adaptation's test_accumulator_matches_naive_batch_covariance).
     naive_cov = jnp.cov(samples, rowvar=False)
