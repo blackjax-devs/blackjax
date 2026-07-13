@@ -798,9 +798,9 @@ class FisherScoreDiagonalFromMomentsTest(BlackJAXTest):
 
     The from-moments entry point holds the core math that was formerly inlined
     in fisher_score_diagonal.  After the bridge removal the adaption pipeline
-    (window_adaptation.base.slow_final) calls this function directly with
-    Bessel-corrected variances from _FisherMomentBlock rather than going through
-    a raw-draws wrapper.
+    (metric_recipes._build_fisher_diag_core.final) calls this function directly
+    with Bessel-corrected variances from _FisherMomentBlock rather than going
+    through a raw-draws wrapper.
 
     Structural contracts:
     - Thin-wrapper parity: fisher_score_diagonal_from_moments(var_x, var_g) must

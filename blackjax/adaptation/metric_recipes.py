@@ -312,7 +312,7 @@ def _build_welford_core(
 
     def final(state: MassMatrixAdaptationState) -> MassMatrixAdaptationState:
         # Directly calls mm_final: same Welford reduction, same regularization
-        # formula — bit-exact vs the current window_adaptation.base() path.
+        # formula as window_adaptation.base()'s slow_final (welford path).
         return mm_final(state)
 
     return MetricCore(init=init, update=update, final=final)
@@ -330,16 +330,6 @@ def _build_fisher_diag_core(
     that cannot live inside ``mass_matrix_adaptation.final()`` due to a
     circular import (``metric_estimators`` imports ``welford_algorithm``
     from ``mass_matrix``).
-
-    .. note::
-
-        **Twin implementation alert (stitch #1 of 2).**  The Fisher IMM
-        computation + block-reset stitch in ``final()`` is also present in
-        :func:`~blackjax.adaptation.window_adaptation.base`'s ``slow_final``
-        closure (fisher path).  These two copies must stay in sync until
-        ``base()``'s disposition is decided (retire or rewire through the
-        engine).  See the comment at the matching site in
-        ``window_adaptation.base``.
 
     Parameters
     ----------
@@ -365,9 +355,7 @@ def _build_fisher_diag_core(
     def final(
         state: FisherMassMatrixAdaptationState,
     ) -> FisherMassMatrixAdaptationState:
-        # Stitch #1 of 2: Fisher IMM computation + block reset.
-        # Twin copy: window_adaptation.base()'s slow_final (fisher path).
-        # Consolidation deferred until base() disposition is decided.
+        # Fisher IMM computation + block reset: the only stitch site.
         block = state.fisher_block
         denom = jnp.maximum(block.count - 1.0, 1.0)
         var_x = block.m2_x / denom  # (d,) Bessel-corrected position variance
