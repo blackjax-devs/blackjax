@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g5ac41b57a" />
+  <meta name="docsearch:version" content="0.1.dev1+g9c203305c" />
   </head>
   
   
@@ -414,6 +414,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.optimizers.dual_averaging</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dual_averaging</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptationResults</span><span class="p">,</span> <span class="n">return_all_adapt_info</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.mass_matrix</span><span class="w"> </span><span class="kn">import</span> <span class="n">welford_algorithm</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_buffers</span><span class="w"> </span><span class="kn">import</span> <span class="n">MomentBlock</span><span class="p">,</span> <span class="n">cgl_update_batch</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">pytree_size</span>
@@ -567,55 +568,6 @@
 <span class="n">_LENGTH_FLOOR_LAMBDA_EPS</span> <span class="o">=</span> <span class="mf">1e-6</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">_ChEESCovAccumulatorState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Running Chan/Welford full covariance accumulator for the slow-</span>
-<span class="sd">    direction trajectory-length floor&#39;s ``lambda_max`` estimate.</span>
-
-<span class="sd">    Mirrors :class:`~blackjax.adaptation.metric_buffers.MomentBlock` (identical</span>
-<span class="sd">    mean/M2/count recurrence) -- mirrored here rather than imported, to keep</span>
-<span class="sd">    this feature&#39;s diff self-contained to ``chees_adaptation.py``</span>
-<span class="sd">    (``meads_adaptation.py`` is out of scope for this change). Accumulated</span>
-<span class="sd">    over the SAME late-warmup window, from the SAME per-step ensemble batch,</span>
-<span class="sd">    as the diagonal mass-matrix Welford accumulator (``mm_accum``) -- but</span>
-<span class="sd">    tracks the full ``num_dim x num_dim`` second moment (not just the</span>
-<span class="sd">    diagonal), since the floor needs the ensemble&#39;s cross-dimension</span>
-<span class="sd">    structure, not just its per-dimension scale.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">mean</span><span class="p">:</span> <span class="n">Array</span>
-    <span class="n">m2</span><span class="p">:</span> <span class="n">Array</span>
-    <span class="n">count</span><span class="p">:</span> <span class="n">Array</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_cov_accumulator_init</span><span class="p">(</span><span class="n">num_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">(</span>
-        <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_dim</span><span class="p">,)),</span>
-        <span class="n">m2</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_dim</span><span class="p">,</span> <span class="n">num_dim</span><span class="p">)),</span>
-        <span class="n">count</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
-    <span class="p">)</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_cov_accumulator_update</span><span class="p">(</span>
-    <span class="n">acc</span><span class="p">:</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Array</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Merge a batch of samples, shape ``(n_b, num_dim)`` (one step&#39;s</span>
-<span class="sd">    ensemble of ``num_chains`` positions), into the running accumulator via</span>
-<span class="sd">    Chan et al.&#39;s parallel/batch generalization of Welford&#39;s algorithm --</span>
-<span class="sd">    the same recurrence :func:`~blackjax.adaptation.metric_buffers.cgl_update_batch` uses.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">mean_a</span><span class="p">,</span> <span class="n">m2_a</span><span class="p">,</span> <span class="n">n_a</span> <span class="o">=</span> <span class="n">acc</span>
-    <span class="n">n_b</span> <span class="o">=</span> <span class="n">batch</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">mean_b</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">centered_b</span> <span class="o">=</span> <span class="n">batch</span> <span class="o">-</span> <span class="n">mean_b</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
-    <span class="n">m2_b</span> <span class="o">=</span> <span class="n">centered_b</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">centered_b</span>
-
-    <span class="n">delta</span> <span class="o">=</span> <span class="n">mean_b</span> <span class="o">-</span> <span class="n">mean_a</span>
-    <span class="n">n_ab</span> <span class="o">=</span> <span class="n">n_a</span> <span class="o">+</span> <span class="n">n_b</span>
-    <span class="n">mean_ab</span> <span class="o">=</span> <span class="n">mean_a</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_b</span> <span class="o">/</span> <span class="n">n_ab</span><span class="p">)</span>
-    <span class="n">m2_ab</span> <span class="o">=</span> <span class="n">m2_a</span> <span class="o">+</span> <span class="n">m2_b</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">delta</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">n_a</span> <span class="o">*</span> <span class="n">n_b</span> <span class="o">/</span> <span class="n">n_ab</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">(</span><span class="n">mean</span><span class="o">=</span><span class="n">mean_ab</span><span class="p">,</span> <span class="n">m2</span><span class="o">=</span><span class="n">m2_ab</span><span class="p">,</span> <span class="n">count</span><span class="o">=</span><span class="n">n_ab</span><span class="p">)</span>
-
-
 <span class="k">class</span><span class="w"> </span><span class="nc">_ChEESEigState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Warm-startable top-eigenvector/eigenvalue estimate of the WHITENED</span>
 <span class="sd">    ensemble covariance (``D^{-1/2} C_hat D^{-1/2}``, ``D`` = the currently</span>
@@ -656,7 +608,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_recompute_eig_state</span><span class="p">(</span>
-    <span class="n">cov_accum</span><span class="p">:</span> <span class="n">_ChEESCovAccumulatorState</span><span class="p">,</span>
+    <span class="n">cov_accum</span><span class="p">:</span> <span class="n">MomentBlock</span><span class="p">,</span>
     <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="n">eig_state</span><span class="p">:</span> <span class="n">_ChEESEigState</span><span class="p">,</span>
     <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_LENGTH_FLOOR_POWER_ITERATIONS</span><span class="p">,</span>
@@ -1388,7 +1340,7 @@
                 <span class="c1"># implies estimate_mass_matrix (see its derivation above).</span>
                 <span class="n">new_cov_accum</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
                     <span class="n">in_window</span><span class="p">,</span>
-                    <span class="k">lambda</span> <span class="n">acc</span><span class="p">:</span> <span class="n">_cov_accumulator_update</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="n">flat_positions</span><span class="p">),</span>
+                    <span class="k">lambda</span> <span class="n">acc</span><span class="p">:</span> <span class="n">cgl_update_batch</span><span class="p">(</span><span class="n">acc</span><span class="p">,</span> <span class="n">flat_positions</span><span class="p">),</span>
                     <span class="k">lambda</span> <span class="n">acc</span><span class="p">:</span> <span class="n">acc</span><span class="p">,</span>
                     <span class="n">cov_accum</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -1416,7 +1368,21 @@
         <span class="n">init_states</span> <span class="o">=</span> <span class="n">batch_init</span><span class="p">(</span><span class="n">positions</span><span class="p">)</span>
         <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">init</span><span class="p">(</span><span class="n">init_random_arg</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
         <span class="n">init_mm_accum</span> <span class="o">=</span> <span class="n">wc_init</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">estimate_mass_matrix</span> <span class="k">else</span> <span class="kc">None</span>
-        <span class="n">init_cov_accum</span> <span class="o">=</span> <span class="n">_cov_accumulator_init</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">enable_length_floor</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="c1"># Full-covariance moment block for the trajectory-length floor&#39;s</span>
+        <span class="c1"># lambda_max estimate: accumulated over the SAME late-warmup window,</span>
+        <span class="c1"># from the SAME per-step ensemble batch, as the diagonal mass-matrix</span>
+        <span class="c1"># Welford accumulator (mm_accum) -- but tracking the full</span>
+        <span class="c1"># num_dim x num_dim second moment, since the floor needs the</span>
+        <span class="c1"># ensemble&#39;s cross-dimension structure, not just per-dimension scale.</span>
+        <span class="n">init_cov_accum</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">MomentBlock</span><span class="p">(</span>
+                <span class="n">count</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
+                <span class="n">mean</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_dim</span><span class="p">,)),</span>
+                <span class="n">m2</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">num_dim</span><span class="p">,</span> <span class="n">num_dim</span><span class="p">)),</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">enable_length_floor</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
         <span class="n">init_eig_state</span> <span class="o">=</span> <span class="n">_eig_state_init</span><span class="p">(</span><span class="n">num_dim</span><span class="p">)</span> <span class="k">if</span> <span class="n">enable_length_floor</span> <span class="k">else</span> <span class="kc">None</span>
 
         <span class="n">keys_step</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
