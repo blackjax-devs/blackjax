@@ -148,6 +148,7 @@ __all__ = [
     "sample_covariance_eigh_low_rank",
     "welford_diagonal",
     "welford_dense",
+    "fisher_score_diagonal_from_moments",
     "fisher_score_diagonal",
     "sample_variance_diagonal",
 ]
@@ -688,6 +689,59 @@ def welford_dense(draws: Array) -> Array:
     return covariance
 
 
+def fisher_score_diagonal_from_moments(
+    variance: Array,
+    gradient_variance: Array,
+) -> Array:
+    r"""Core math of the Fisher-diagonal estimator from pre-computed variances.
+
+    Computes :math:`\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla
+    \log p]}` per coordinate — the same formula as :func:`fisher_score_diagonal`
+    but operating on **already-computed** per-coordinate variances rather than
+    raw draw arrays.
+
+    This entry point is intended for callers that accumulate moments online
+    (e.g. via :class:`~blackjax.adaptation.metric_buffers._FisherMomentBlock`)
+    and want to avoid materialising the full draw array.  The caller is
+    responsible for supplying Bessel-corrected (or otherwise normalised)
+    variances; the ratio is invariant to a shared ``n`` vs ``n-1`` factor so
+    either convention is acceptable for the diagonal estimator.
+
+    **Near-zero gradient protection** (identical to :func:`fisher_score_low_rank`
+    and :func:`fisher_score_diagonal`): ``gradient_variance`` is floored at
+    ``1e-10`` before division, and the result is clipped to nutpie's
+    ``[1e-20, 1e20]`` range before squaring.
+
+    **Planned extension note:** this entry point is intentionally separate so
+    that future updates to the estimator (e.g. adding draw-grad cross moments)
+    can extend the *from_moments* signature without changing the *raw-draws*
+    wrapper :func:`fisher_score_diagonal`.
+
+    Parameters
+    ----------
+    variance
+        Shape ``(d,)``.  Per-coordinate position variance
+        :math:`\mathrm{Var}[x]`.  Must be non-negative; typically
+        Bessel-corrected.
+    gradient_variance
+        Shape ``(d,)``.  Per-coordinate log-density-gradient variance
+        :math:`\mathrm{Var}[\nabla \log p]`.  Must be non-negative; floored
+        at ``1e-10`` internally.
+
+    Returns
+    -------
+    Array, shape ``(d,)``
+        Diagonal inverse mass matrix :math:`\sigma^2 =
+        \sqrt{\mathrm{Var}[x] / \max(\mathrm{Var}[\nabla \log p],\, 10^{-10})}`,
+        clipped to ``[1e-20, 1e20]``.
+    """
+    sigma = jnp.power(
+        jnp.clip(variance / jnp.maximum(gradient_variance, 1e-10), 0.0, None), 0.25
+    )
+    sigma = jnp.clip(sigma, 1e-20, 1e20)  # nutpie range
+    return sigma**2
+
+
 def fisher_score_diagonal(
     draws: Array,
     grads: Array,
@@ -707,9 +761,6 @@ def fisher_score_diagonal(
 
     **Extracted from:** branch ``b197f1e2`` (``feat/window-adaptation-fisher-diag``,
     2026-07-04), ``blackjax.adaptation.mass_matrix._fisher_diagonal_inverse_mass``.
-    The branch is DORMANT — its ``window_adaptation`` wiring (the diagonal
-    estimator opt-in in ``mass_matrix_adaptation``) is NOT reproduced here and
-    stays dormant.  Only the pure estimator math is extracted.
 
     **Near-zero gradient protection** (same as :func:`fisher_score_low_rank`):
     ``Var[∇ log p]`` is floored at ``1e-10`` before division, and the result
@@ -719,6 +770,11 @@ def fisher_score_diagonal(
     computed with the same normalisation (Bessel-corrected, ``n-1`` divisor,
     via :func:`welford_diagonal`); the ratio is invariant to a shared
     ``n`` vs ``n-1`` factor (branch ``b197f1e2`` commit message, verified).
+
+    **Implementation:** thin wrapper over
+    :func:`fisher_score_diagonal_from_moments` — computes Bessel-corrected
+    per-coordinate variances via two :func:`welford_diagonal` scans, then
+    delegates all arithmetic to the from-moments entry point.
 
     Parameters
     ----------
@@ -734,10 +790,7 @@ def fisher_score_diagonal(
     """
     var_x = welford_diagonal(draws)  # (d,)  Bessel-corrected
     var_g = welford_diagonal(grads)  # (d,)
-
-    sigma = jnp.power(jnp.clip(var_x / jnp.maximum(var_g, 1e-10), 0.0, None), 0.25)
-    sigma = jnp.clip(sigma, 1e-20, 1e20)  # nutpie range
-    return sigma**2
+    return fisher_score_diagonal_from_moments(var_x, var_g)
 
 
 def sample_variance_diagonal(draws: Array) -> Array:

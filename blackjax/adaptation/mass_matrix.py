@@ -94,9 +94,13 @@ class FisherMassMatrixAdaptationState(NamedTuple):
     Notes
     -----
     The Fisher-diagonal IMM is ``sqrt(Var[x] / Var[∇ log p])`` per coordinate
-    (see :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal`).
+    (see
+    :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments`).
     This state type accumulates the moments needed to compute those per-window
-    variances without storing raw draw arrays.
+    variances without storing raw draw arrays.  The IMM computation is
+    deliberately NOT performed inside ``mass_matrix_adaptation``'s ``final()``
+    — it is composed by the consumer (:func:`~blackjax.adaptation.window_adaptation.base`)
+    to avoid a circular import between this module and ``metric_estimators``.
     """
 
     inverse_mass_matrix: Array  # (d,)
@@ -290,50 +294,39 @@ def mass_matrix_adaptation(
     ) -> MassMatrixAdaptationState | FisherMassMatrixAdaptationState:
         """Final iteration of the mass matrix adaptation.
 
-        Computes the inverse mass matrix from the current window's accumulated
-        statistics, then resets the accumulator for the next window.
+        For the Welford path, computes the regularised inverse mass matrix
+        from the current window's accumulated statistics, then resets the
+        accumulator for the next window.
 
-        **Welford path** (default): the IMM is regularized as a convex
-        combination of this window's empirical covariance (weight:
-        ``count / denom``), the previous window's IMM (weight:
-        ``imm_shrinkage_to_previous / denom``), and a small identity matrix
-        (weight: ``5 / denom``), where ``denom = count + 5 +
-        imm_shrinkage_to_previous``.  When ``imm_shrinkage_to_previous=0.0``
-        (default) this reduces to the standard Stan formula.
+        For the Fisher path, resets the :class:`_FisherMomentBlock` accumulator
+        for the next window and passes the previous window's IMM through
+        unchanged.  **The caller is responsible for computing the new IMM**
+        from the block's accumulated moments before calling ``final()`` — the
+        from-moments entry point is
+        :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments`.
+        This separation avoids a circular import
+        (``metric_estimators`` imports ``welford_algorithm`` from this module,
+        so this module must not import from ``metric_estimators``).
+        :func:`~blackjax.adaptation.window_adaptation.base` composes the
+        estimator call in its ``slow_final`` closure for the Fisher path.
 
-        **Fisher path** (``diagonal_estimator='fisher'``): the IMM is
-        ``sqrt(Var[x] / Var[∇ log p])`` per coordinate, computed via
-        :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal`
-        from the window's accumulated position and gradient moment statistics.
-        The Welford regularization does NOT apply on the Fisher path.
+        **Welford path**: the IMM is regularized as a convex combination of
+        this window's empirical covariance (weight: ``count / denom``), the
+        previous window's IMM (weight: ``imm_shrinkage_to_previous / denom``),
+        and a small identity matrix (weight: ``5 / denom``), where
+        ``denom = count + 5 + imm_shrinkage_to_previous``.  When
+        ``imm_shrinkage_to_previous=0.0`` (default) this reduces to the
+        standard Stan formula.
 
         """
         if isinstance(mm_state, FisherMassMatrixAdaptationState):
-            # Lazy import avoids a circular dependency: metric_estimators imports
-            # welford_algorithm from this module; importing at top level would
-            # form a cycle (mass_matrix → metric_estimators → mass_matrix).
-            from blackjax.adaptation.metric_estimators import fisher_score_diagonal
-
-            block = mm_state.fisher_block
-            # Bessel-corrected per-coordinate variances from the moment block.
-            denom = jnp.maximum(block.count - 1.0, 1.0)
-            var_x = block.m2_x / denom  # (d,)
-            var_g = block.m2_g / denom  # (d,)
-            # Call the canonical estimator via a 2-row synthetic batch.
-            # For n=2 draws [h, -h] (centered at 0, h = sqrt(var/2)), Welford
-            # gives exactly var as the Bessel-corrected variance — so
-            # fisher_score_diagonal recovers var_x and var_g without raw draws.
-            # This preserves the constraint "estimator math lives only in
-            # metric_estimators.fisher_score_diagonal" while working with the
-            # CGL moment-block accumulation (no raw draw storage).
-            half_x = jnp.sqrt(jnp.maximum(var_x, 0.0) / 2)
-            half_g = jnp.sqrt(jnp.maximum(var_g, 0.0) / 2)
-            draws = jnp.stack([half_x, -half_x])  # (2, d)
-            grads = jnp.stack([half_g, -half_g])  # (2, d)
-            inverse_mass_matrix = fisher_score_diagonal(draws, grads)
-            ndims = inverse_mass_matrix.shape[-1]
+            # Reset the block for the next window; pass the existing IMM through
+            # unchanged (the consumer — window_adaptation.base's slow_final —
+            # reads the block variances BEFORE this call and stitches in the
+            # new IMM after the reset).
+            ndims = mm_state.fisher_block.m2_x.shape[0]
             return FisherMassMatrixAdaptationState(
-                inverse_mass_matrix=inverse_mass_matrix,
+                inverse_mass_matrix=mm_state.inverse_mass_matrix,
                 fisher_block=_fisher_block_init(ndims),
             )
 

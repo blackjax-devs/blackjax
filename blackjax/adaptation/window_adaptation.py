@@ -13,7 +13,7 @@
 # limitations under the License.
 """Implementation of the Stan warmup for the HMC family of sampling algorithms."""
 import inspect
-from typing import Callable, NamedTuple
+from typing import Callable, NamedTuple, cast
 
 import jax
 import jax.numpy as jnp
@@ -21,6 +21,7 @@ import jax.numpy as jnp
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
 from blackjax.adaptation.mass_matrix import (
+    FisherMassMatrixAdaptationState,
     MassMatrixAdaptationState,
     mass_matrix_adaptation,
 )
@@ -37,7 +38,7 @@ __all__ = ["WindowAdaptationState", "base", "build_schedule", "window_adaptation
 
 class WindowAdaptationState(NamedTuple):
     ss_state: DualAveragingAdaptationState  # step size
-    imm_state: MassMatrixAdaptationState  # inverse mass matrix
+    imm_state: MassMatrixAdaptationState | FisherMassMatrixAdaptationState  # inverse mass matrix
     step_size: float
     inverse_mass_matrix: Array
 
@@ -228,23 +229,77 @@ def base(
                 warmup_state.inverse_mass_matrix,
             )
 
-    def slow_final(warmup_state: WindowAdaptationState) -> WindowAdaptationState:
-        """Update the parameters at the end of a slow adaptation window.
+    if diagonal_estimator == "welford":
 
-        We compute the value of the mass matrix and reset the mass matrix
-        adapation's internal state since middle windows are "memoryless".
+        def slow_final(warmup_state: WindowAdaptationState) -> WindowAdaptationState:
+            """Update the parameters at the end of a slow adaptation window.
 
-        """
-        new_imm_state = mm_final(warmup_state.imm_state)
-        new_ss_state = da_init(da_final(warmup_state.ss_state))
-        new_step_size = jnp.exp(new_ss_state.log_step_size)
+            We compute the value of the mass matrix and reset the mass matrix
+            adaptation's internal state since middle windows are "memoryless".
 
-        return WindowAdaptationState(
-            new_ss_state,
-            new_imm_state,
-            new_step_size,
-            new_imm_state.inverse_mass_matrix,
+            """
+            new_imm_state = mm_final(warmup_state.imm_state)
+            new_ss_state = da_init(da_final(warmup_state.ss_state))
+            new_step_size = jnp.exp(new_ss_state.log_step_size)
+
+            return WindowAdaptationState(
+                new_ss_state,
+                new_imm_state,
+                new_step_size,
+                new_imm_state.inverse_mass_matrix,
+            )
+
+    else:  # diagonal_estimator == "fisher"
+        from blackjax.adaptation.metric_estimators import (  # noqa: PLC0415
+            fisher_score_diagonal_from_moments,
         )
+
+        def slow_final(  # type: ignore[no-redef]
+            warmup_state: WindowAdaptationState,
+        ) -> WindowAdaptationState:
+            """Update the parameters at the end of a slow adaptation window.
+
+            On the Fisher path, the IMM is computed here (not inside
+            ``mm_final``) to respect the dependency order:
+            ``metric_estimators`` imports from ``mass_matrix``, so
+            ``mass_matrix.final()`` must not import from ``metric_estimators``.
+            This closure composes both layers:
+
+            1. Extract Bessel-corrected per-coordinate variances from the
+               accumulated :class:`~blackjax.adaptation.metric_buffers._FisherMomentBlock`
+               BEFORE the reset.
+            2. Call :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments`
+               to compute the new IMM.
+            3. Call ``mm_final`` to reset the block for the next window.
+            4. Stitch the new IMM into the reset state.
+
+            """
+            # This closure is only constructed on the Fisher path (Python-level
+            # dispatch in base()); the state is always FisherMassMatrixAdaptationState
+            # at this point.  The cast is a static hint only — zero runtime cost.
+            fisher_state = cast(FisherMassMatrixAdaptationState, warmup_state.imm_state)
+            block = fisher_state.fisher_block
+            denom = jnp.maximum(block.count - 1.0, 1.0)
+            var_x = block.m2_x / denom  # (d,)  Bessel-corrected position variance
+            var_g = block.m2_g / denom  # (d,)  Bessel-corrected gradient variance
+            new_inverse_mass_matrix = fisher_score_diagonal_from_moments(var_x, var_g)
+
+            # mm_final resets the block; we stitch the newly computed IMM in.
+            reset_state = cast(FisherMassMatrixAdaptationState, mm_final(fisher_state))
+            new_imm_state = FisherMassMatrixAdaptationState(
+                inverse_mass_matrix=new_inverse_mass_matrix,
+                fisher_block=reset_state.fisher_block,
+            )
+
+            new_ss_state = da_init(da_final(warmup_state.ss_state))
+            new_step_size = jnp.exp(new_ss_state.log_step_size)
+
+            return WindowAdaptationState(
+                new_ss_state,
+                new_imm_state,
+                new_step_size,
+                new_imm_state.inverse_mass_matrix,
+            )
 
     def update(
         adaptation_state: WindowAdaptationState,

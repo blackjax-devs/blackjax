@@ -46,6 +46,15 @@ Both behaviors are now covered indirectly by
   ``state.fisher_block.count == 0`` instead of ``state.wc_state.sample_size``
   and ``state.grad_wc_state.sample_size`` (internal accumulator changed from
   two Welford states to :class:`_FisherMomentBlock`).
+- ``FisherDiagRecoveryTest.test_recovers_known_diagonal_gaussian_exactly``:
+  updated to compose the estimator call explicitly via
+  ``fisher_score_diagonal_from_moments`` instead of reading from the state
+  after ``final()``.  After the bridge removal, ``mass_matrix_adaptation``'s
+  ``final()`` only resets the block; the IMM computation is the consumer's
+  responsibility (done by ``window_adaptation.base``'s ``slow_final``).
+- ``FisherDiagNearZeroGradientTest.test_window_with_stationary_point_does_not_produce_nan``:
+  same: IMM checked via explicit ``fisher_score_diagonal_from_moments`` call
+  rather than via ``final()`` read-back.
 """
 import jax
 import jax.numpy as jnp
@@ -57,6 +66,7 @@ from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
     mass_matrix_adaptation,
 )
+from blackjax.adaptation.metric_estimators import fisher_score_diagonal_from_moments
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
@@ -118,7 +128,9 @@ class FisherDiagValidationTest(BlackJAXTest):
 
     def test_fisher_requires_diagonal_matrix(self):
         with self.assertRaisesRegex(ValueError, "requires is_diagonal_matrix=True"):
-            mass_matrix_adaptation(is_diagonal_matrix=False, diagonal_estimator="fisher")
+            mass_matrix_adaptation(
+                is_diagonal_matrix=False, diagonal_estimator="fisher"
+            )
 
     def test_fisher_rejects_imm_shrinkage(self):
         with self.assertRaisesRegex(
@@ -132,7 +144,9 @@ class FisherDiagValidationTest(BlackJAXTest):
         def logdensity_fn(x):
             return std_normal_logdensity(x)
 
-        with self.assertRaisesRegex(ValueError, "requires is_mass_matrix_diagonal=True"):
+        with self.assertRaisesRegex(
+            ValueError, "requires is_mass_matrix_diagonal=True"
+        ):
             blackjax.window_adaptation(
                 blackjax.nuts,
                 logdensity_fn,
@@ -168,7 +182,14 @@ class FisherDiagRecoveryTest(BlackJAXTest):
         expectation), sqrt(Var[x] / Var[grad]) == true_var exactly for any
         finite sample -- no Monte-Carlo tolerance needed (verified
         empirically at n in {2_000, 5_000, 10_000} across 6 seeds: relative
-        error ~0 in every case, not a marginal/noise-limited statistic)."""
+        error ~0 in every case, not a marginal/noise-limited statistic).
+
+        NOTE: ``mass_matrix_adaptation``'s ``final()`` only resets the block;
+        it does NOT compute the new IMM.  The IMM computation is the consumer's
+        responsibility (performed by ``window_adaptation.base``'s ``slow_final``
+        on the live pipeline).  This test exercises the accumulation + estimator
+        directly via ``fisher_score_diagonal_from_moments``.
+        """
         d = 4
         true_var = jnp.array([0.1, 1.0, 4.0, 25.0])
         n = 500
@@ -176,7 +197,7 @@ class FisherDiagRecoveryTest(BlackJAXTest):
         draws = jax.random.normal(key1, (n, d)) * jnp.sqrt(true_var)
         grads = -draws / true_var
 
-        init, update, final = mass_matrix_adaptation(
+        init, update, _ = mass_matrix_adaptation(
             is_diagonal_matrix=True, diagonal_estimator="fisher"
         )
         state = init(d)
@@ -186,11 +207,15 @@ class FisherDiagRecoveryTest(BlackJAXTest):
             return update(state, x, g), None
 
         state, _ = jax.lax.scan(body, state, (draws, grads))
-        state = final(state)
 
-        np.testing.assert_allclose(
-            np.asarray(state.inverse_mass_matrix), np.asarray(true_var), rtol=1e-3
-        )
+        # Compose the estimator call explicitly (mirrors window_adaptation's slow_final).
+        block = state.fisher_block
+        denom = jnp.maximum(block.count - 1.0, 1.0)
+        var_x = block.m2_x / denom
+        var_g = block.m2_g / denom
+        imm = fisher_score_diagonal_from_moments(var_x, var_g)
+
+        np.testing.assert_allclose(np.asarray(imm), np.asarray(true_var), rtol=1e-3)
 
     def test_final_resets_accumulators(self):
         """final() must re-initialize the FisherMomentBlock so a subsequent
@@ -228,9 +253,15 @@ class FisherDiagNearZeroGradientTest(BlackJAXTest):
         """A window in which the gradient is exactly zero throughout (e.g. a
         chain sitting at a stationary point of the target, such as the
         origin of any centered/standardised density) must not poison the
-        final inverse mass matrix with NaN/Inf."""
+        final inverse mass matrix with NaN/Inf.
+
+        NOTE: ``mass_matrix_adaptation``'s ``final()`` only resets the block;
+        this test exercises the estimator path directly via
+        ``fisher_score_diagonal_from_moments`` with zero gradient variance,
+        mirroring what ``window_adaptation``'s ``slow_final`` does.
+        """
         d = 3
-        init, update, final = mass_matrix_adaptation(
+        init, update, _ = mass_matrix_adaptation(
             is_diagonal_matrix=True, diagonal_estimator="fisher"
         )
         state = init(d)
@@ -241,10 +272,16 @@ class FisherDiagNearZeroGradientTest(BlackJAXTest):
 
         positions = jax.random.normal(self.next_key(), (50, d))
         state, _ = jax.lax.scan(body, state, positions)
-        state = final(state)
 
-        self.assertTrue(bool(jnp.all(jnp.isfinite(state.inverse_mass_matrix))))
-        self.assertTrue(bool(jnp.all(state.inverse_mass_matrix > 0)))
+        # Compose the estimator call explicitly (mirrors window_adaptation's slow_final).
+        block = state.fisher_block
+        denom = jnp.maximum(block.count - 1.0, 1.0)
+        var_x = block.m2_x / denom
+        var_g = block.m2_g / denom  # zero throughout: gradient variance is zero
+        imm = fisher_score_diagonal_from_moments(var_x, var_g)
+
+        self.assertTrue(bool(jnp.all(jnp.isfinite(imm))))
+        self.assertTrue(bool(jnp.all(imm > 0)))
 
 
 # ---------------------------------------------------------------------------
@@ -273,9 +310,7 @@ class FisherDiagEndToEndSmokeTest(BlackJAXTest):
         warmup = blackjax.window_adaptation(
             blackjax.nuts, logdensity_fn, diagonal_estimator="fisher"
         )
-        (state, parameters), _ = warmup.run(
-            warmup_key, jnp.zeros(2), num_steps=1_000
-        )
+        (state, parameters), _ = warmup.run(warmup_key, jnp.zeros(2), num_steps=1_000)
 
         self.assertTrue(bool(jnp.all(jnp.isfinite(parameters["inverse_mass_matrix"]))))
         self.assertTrue(bool(jnp.all(parameters["inverse_mass_matrix"] > 0)))
