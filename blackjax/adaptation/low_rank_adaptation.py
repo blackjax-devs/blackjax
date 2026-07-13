@@ -93,7 +93,11 @@ import numpy as np
 
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
-from blackjax.adaptation.metric_estimators import _relative_pd_floor, _spd_mean
+from blackjax.adaptation.metric_estimators import (  # noqa: F401 — backward-compat re-export; callers import from here
+    _compute_low_rank_metric,
+    _relative_pd_floor,
+    _spd_mean,
+)
 from blackjax.adaptation.step_size import (
     DualAveragingAdaptationState,
     dual_averaging_adaptation,
@@ -213,10 +217,11 @@ def _default_low_rank_adaptation_info_fn(
 # ---------------------------------------------------------------------------
 
 
-# _relative_pd_floor and _spd_mean are defined in metric_estimators and
-# imported above.  They remain accessible from this module's namespace for
-# backward-compatibility (existing callers that import from low_rank_adaptation
-# continue to work).  Canonical location: blackjax.adaptation.metric_estimators.
+# _relative_pd_floor, _spd_mean, and _compute_low_rank_metric are defined in
+# metric_estimators and imported above.  They remain accessible from this
+# module's namespace for backward-compatibility (existing callers that import
+# from low_rank_adaptation continue to work).
+# Canonical location: blackjax.adaptation.metric_estimators.
 
 
 def _shift_buffer_left(buf: Array, shift: Array) -> Array:
@@ -260,199 +265,6 @@ def _accumulating_buffer_capacity(schedule: Array) -> int:
         return int(window_sizes[0])
     pair_sums = window_sizes[1:] + window_sizes[:-1]
     return int(max(window_sizes[0], pair_sums.max()))
-
-
-def _compute_low_rank_metric(
-    draws_buffer: Array,
-    grads_buffer: Array,
-    n: int,
-    max_rank: int,
-    gamma: float,
-    cutoff: float,
-) -> tuple[Array, Array, Array, Array]:
-    """Compute the low-rank metric from a buffer of draws and gradients.
-
-    Implements Algorithm 1 of :cite:p:`seyboldt2026preconditioning`, following
-    the nutpie reference implementation.
-
-    Parameters
-    ----------
-    draws_buffer
-        Shape ``(B, d)``.  The first ``n`` rows are valid; remaining rows are
-        zero-padded and masked out.
-    grads_buffer
-        Shape ``(B, d)``.  Log-density gradients corresponding to each draw.
-    n
-        Number of valid samples in the buffer (may be a traced integer).
-    max_rank
-        Maximum number of eigenvectors to retain.
-    gamma
-        Regularisation scale.  The projected covariance is divided by ``gamma``
-        (not scaled by ``n``) before adding the identity, following nutpie's
-        convention.  Smaller values → weaker regularisation (the identity term
-        matters less relative to the data term); the influence of the
-        regularisation fades as the number of draws grows.
-    cutoff
-        Eigenvectors whose eigenvalue falls in ``[1/cutoff, cutoff]`` are
-        masked (eigenvalue set to 1), as they provide no useful preconditioning.
-
-    Returns
-    -------
-    sigma
-        Shape ``(d,)``.  Diagonal scaling.
-    mu_star
-        Shape ``(d,)``.  Optimal translation ``x̄ + σ² ⊙ ᾱ``.
-    U
-        Shape ``(d, max_rank)``.  Low-rank eigenvectors (orthonormal columns).
-    lam
-        Shape ``(max_rank,)``.  Eigenvalues (1 for masked components).
-
-    Notes
-    -----
-    **Dtype promotion** (round-9 schedule-port audit, GAP-1). nuts-rs runs
-    this whole estimator in ``f64`` unconditionally; blackjax chains
-    typically run in ``float32`` (JAX's default), and the audit found that
-    running THIS pipeline specifically (inverting + AIRM-geometric-meaning
-    matrices whose condition number can reach ``~1/gamma``, e.g. ``1e5`` at
-    the default ``gamma=1e-5``) in float32 produces small negative
-    eigenvalues ~98% of the time on the models tested, silently making the
-    returned metric indefinite. If the caller has enabled JAX's ``x64``
-    mode (``jax.config.update("jax_enable_x64", True)``), this function
-    promotes its inputs to ``float64`` internally regardless of the
-    incoming (possibly ``float32``) chain dtype, then casts the result back
-    -- decoupling the metric estimate's numerical precision from the
-    sampler's own working dtype, at zero cost to any other part of the
-    chain. If ``x64`` is not enabled, a cast to ``float64`` would silently
-    be truncated back to ``float32`` by JAX (there is no per-call way to
-    opt into ``float64`` without the global flag), so this function instead
-    proceeds in the input's native dtype and relies on the PD guard in
-    :func:`_spd_mean` (and the floor below) to keep the returned metric
-    positive-definite regardless. **Enabling x64 is strongly recommended**
-    for ``buffer_policy="accumulating"``/nutpie-schedule low-rank warmup,
-    matching nuts-rs's own dtype and the shipped sampling-book example.
-
-    **Array-based equivalent:**
-    :func:`blackjax.adaptation.metric_estimators.fisher_score_low_rank`
-    implements the same estimator on a plain draws array (all-valid rows, no
-    masking).  This buffer-masked variant cannot delegate to that function
-    because ``n`` is a traced JAX integer (inside ``jax.lax.scan`` closures
-    from :func:`slow_final` / :func:`slow_switch` /
-    :func:`slow_recompute_only`): dynamic slicing to ``draws_buffer[:n]``
-    changes the array shape at trace time (not supported under JAX's
-    static-shape rule), so the masking pattern is necessary and integral to
-    ALL computation steps (masked mean, masked variance, masked covariance),
-    not just a pre-processing trim before the pure math.
-    ``_spd_mean`` and ``_relative_pd_floor`` are defined in
-    ``blackjax.adaptation.metric_estimators`` and imported above.
-    """
-    orig_dtype = draws_buffer.dtype
-    compute_dtype = jnp.float64 if jax.config.jax_enable_x64 else orig_dtype
-    draws_buffer = draws_buffer.astype(compute_dtype)
-    grads_buffer = grads_buffer.astype(compute_dtype)
-
-    B, d = draws_buffer.shape
-
-    # Mask valid rows
-    mask = (jnp.arange(B) < n).astype(draws_buffer.dtype)  # (B,)
-    n_safe = jnp.maximum(n, 2).astype(draws_buffer.dtype)  # avoid div-by-zero
-
-    # --- Step 1: diagonal scaling  σ = (Var[x] / Var[∇log p])^{1/4} ---
-    mean_x = (mask[:, None] * draws_buffer).sum(0) / n_safe  # (d,)
-    mean_g = (mask[:, None] * grads_buffer).sum(0) / n_safe  # (d,)
-
-    diff_x = mask[:, None] * (draws_buffer - mean_x[None, :])  # (B, d)
-    diff_g = mask[:, None] * (grads_buffer - mean_g[None, :])  # (B, d)
-
-    # Population variance (n not n-1), matching nutpie
-    var_x = (diff_x**2).sum(0) / n_safe  # (d,)
-    var_g = (diff_g**2).sum(0) / n_safe  # (d,)
-
-    sigma = jnp.power(jnp.clip(var_x / jnp.maximum(var_g, 1e-10), 0.0, None), 0.25)
-    sigma = jnp.clip(sigma, 1e-20, 1e20)  # nutpie range
-
-    # Optimal translation μ* = x̄ + σ² ⊙ ᾱ  (paper §3.2)
-    mu_star = mean_x + sigma**2 * mean_g
-
-    # --- Step 2: scale draws and gradients ---
-    X = diff_x / sigma[None, :]  # (B, d)  scaled centered draws
-    A = diff_g * sigma[None, :]  # (B, d)  scaled centered gradients
-
-    # --- Step 3: principal subspaces via thin SVD ---
-    _, _, Vt_x = jnp.linalg.svd(X, full_matrices=False)  # Vt_x: (min(B,d), d)
-    _, _, Vt_a = jnp.linalg.svd(A, full_matrices=False)
-    U_x = Vt_x[:max_rank].T  # (d, max_rank)
-    U_a = Vt_a[:max_rank].T  # (d, max_rank)
-
-    # --- Step 4: combined orthonormal basis Q ∈ R^{d × q}, q = min(d, 2k) ---
-    combined = jnp.concatenate([U_x, U_a], axis=1)  # (d, 2*max_rank)
-    Q, _ = jnp.linalg.qr(combined)  # Q: (d, min(d, 2*max_rank))
-    q = Q.shape[1]  # actual subspace dimension
-
-    # --- Step 5: project onto Q ---
-    P_x = Q.T @ X.T  # (q, B)
-    P_a = Q.T @ A.T  # (q, B)
-
-    # --- Step 6: projected covariance matrices ---
-    # nutpie: C = P P^T / gamma + I  (raw gamma, NOT scaled by n -- nuts-rs
-    # estimate_mass_matrix divides the unnormalised sum-of-outer-products by
-    # gamma directly; there is no /n anywhere in that pipeline).
-    C_x = (P_x @ P_x.T) / gamma + jnp.eye(q)
-    C_a = (P_a @ P_a.T) / gamma + jnp.eye(q)
-
-    # --- Step 7: SPD geometric mean Σ = C_x # C_a^{-1} ---
-    # Theorem 2.3 / Eq. 9 (arXiv:2603.18845): the regularized optimal inverse
-    # mass matrix is M_gamma^{-1} = (cov(x)+gamma*I) # (cov(alpha)+gamma*I)^{-1}
-    # -- the score/gradient covariance must be INVERTED before the geometric
-    # mean. Cross-validated against nutpie's own `spd_mean` (nuts-rs
-    # src/transform/adapt/low_rank.rs), whose own unit test confirms
-    # spd_mean(cov_draws, cov_grads) == cov_draws # cov_grads^{-1}.
-    Sigma = _spd_mean(C_x, jnp.linalg.inv(C_a))
-
-    # --- Step 8: eigendecompose Σ in the projected subspace ---
-    vals, vecs = jnp.linalg.eigh(Sigma)  # vals ascending, (2k,)
-    # PD guard (round-9 audit, GAP-2): Sigma is PD by construction in exact
-    # arithmetic (both C_x, C_a are `P P^T / gamma + I`, hence PD, and
-    # _spd_mean itself is now floored -- see its docstring), but float32
-    # rounding through this eigendecomposition-heavy pipeline can still tip
-    # a near-zero eigenvalue negative. Flooring here is the same
-    # scale-relative guard as _spd_mean's (see _relative_pd_floor -- an
-    # ABSOLUTE eps floor is wrong for this pipeline's wide dynamic range),
-    # applied to the metric's OWN final eigenvalues (belt-and-suspenders,
-    # matching nuts-rs's own `vals.all(|x| x > 0.)` assertion in
-    # `test_estimate_mass_matrix`).
-    vals = jnp.maximum(vals, _relative_pd_floor(vals))
-    U_full = Q @ vecs  # (d, 2k) back to original space
-
-    # --- Step 9: select top max_rank by |λ-1|; mask near-unity eigenvalues ---
-    # nutpie keeps λ < 1/cutoff or λ > cutoff; others carry no preconditioning
-    # benefit.  In JAX (fixed shapes) we retain the slots but set λ=1 to
-    # effectively zero out those directions in the metric.
-    # When q < max_rank (i.e. d < 2k), only q eigenvectors exist; pad the
-    # remainder with zero columns (λ=1 → no effect on the metric).
-    actual_rank = min(max_rank, q)  # static: both are Python ints at trace time
-    distances = jnp.abs(vals - 1.0)
-    order = jnp.argsort(-distances)[:actual_rank]  # (actual_rank,) indices
-    U_out = U_full[:, order]  # (d, actual_rank)
-    lam_raw = vals[order]
-    is_informative = (lam_raw < 1.0 / cutoff) | (lam_raw > cutoff)
-    lam_out = jnp.where(is_informative, lam_raw, 1.0)
-
-    if actual_rank < max_rank:
-        pad = max_rank - actual_rank
-        U_out = jnp.concatenate([U_out, jnp.zeros((d, pad))], axis=1)
-        lam_out = jnp.concatenate([lam_out, jnp.ones(pad)])
-
-    # Cast back to the caller's original dtype -- the metric's INTERNAL
-    # computation may have been promoted to float64 above, but the returned
-    # state fields (sigma/mu_star/U/lam, folded into LowRankAdaptationState)
-    # must stay in the chain's own working dtype so the rest of the warmup
-    # loop's pytree structure is unaffected.
-    return (
-        sigma.astype(orig_dtype),
-        mu_star.astype(orig_dtype),
-        U_out.astype(orig_dtype),
-        lam_out.astype(orig_dtype),
-    )
 
 
 # ---------------------------------------------------------------------------

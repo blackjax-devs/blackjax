@@ -386,6 +386,7 @@ def staged_adaptation(
     target_acceptance_rate: float = 0.80,
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
+    schedule_fn: Callable = build_schedule,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the step size and inverse mass matrix for HMC-family algorithms.
@@ -440,6 +441,13 @@ def staged_adaptation(
         The symplectic integrator passed to ``algorithm.build_kernel``; only
         used if ``build_kernel`` accepts arguments.  Defaults to
         :func:`~blackjax.mcmc.integrators.velocity_verlet`.
+    schedule_fn
+        Callable ``(num_steps: int) -> Array`` that returns a
+        ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs.
+        Default :func:`build_schedule` (Stan's fixed-absolute, 2×-doubling
+        schedule).  Pass
+        :func:`~blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule`
+        for nutpie's proportional-to-tune, 1.5×-growing-window schedule.
     **extra_parameters
         Additional parameters forwarded to the MCMC kernel at every step, e.g.
         ``num_integration_steps`` for HMC.
@@ -530,7 +538,7 @@ def staged_adaptation(
 
         start_state = (init_state, init_adaptation_state)
         keys = jax.random.split(rng_key, num_steps)
-        schedule = build_schedule(num_steps)
+        schedule = schedule_fn(num_steps)
         last_state, info = jax.lax.scan(
             one_step,
             start_state,
