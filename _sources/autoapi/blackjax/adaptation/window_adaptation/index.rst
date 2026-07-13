@@ -39,7 +39,7 @@ Module Contents
 
 
    .. py:attribute:: imm_state
-      :type:  blackjax.adaptation.mass_matrix.MassMatrixAdaptationState
+      :type:  blackjax.adaptation.mass_matrix.MassMatrixAdaptationState | blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState
 
 
    .. py:attribute:: step_size
@@ -50,7 +50,7 @@ Module Contents
       :type:  blackjax.types.Array
 
 
-.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0) -> tuple[Callable, Callable, Callable]
+.. py:function:: base(is_mass_matrix_diagonal: bool, target_acceptance_rate: float = 0.8, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, diagonal_estimator: str = 'welford') -> tuple[Callable, Callable, Callable]
 
    Warmup scheme for sampling procedures based on euclidean manifold HMC.
    The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -95,6 +95,12 @@ Module Contents
    :param imm_shrinkage_to_previous: Pseudo-count controlling shrinkage of the IMM toward the previous
                                      window's IMM. Default 0.0 gives the current Stan behavior. Passed
                                      through to ``mass_matrix_adaptation``.
+   :param diagonal_estimator: Which diagonal-variance estimator to use.  ``"welford"`` (default)
+                              reproduces all pre-existing behavior exactly.  ``"fisher"`` uses the
+                              Fisher-divergence-minimising diagonal estimator; see
+                              ``mass_matrix_adaptation`` for constraints (diagonal-only, no
+                              ``imm_shrinkage_to_previous``).  Passed through to
+                              ``mass_matrix_adaptation``.
 
    :returns: * *init* -- Function that initializes the warmup.
              * *update* -- Function that moves the warmup one step.
@@ -102,7 +108,7 @@ Module Contents
                state.
 
 
-.. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, diagonal_estimator: str = 'welford', initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the value of the inverse mass matrix and step size parameters of
    algorithms in the HMC fmaily. See Blackjax.hmc_family
@@ -160,6 +166,16 @@ Module Contents
 
                                      Validated at construction time — negative values raise
                                      ``ValueError`` before any JIT tracing.
+   :param diagonal_estimator: Which diagonal-variance estimator to use for the (window-local)
+                              inverse mass matrix.  ``"welford"`` (default) is Stan's classic
+                              online-covariance estimator and reproduces all pre-existing behavior
+                              exactly.  ``"fisher"`` uses the Fisher-divergence-minimising diagonal
+                              estimator of :cite:p:`seyboldt2026preconditioning` (the same formula
+                              underlying the diagonal-scaling step of the low-rank adaptation):
+                              ``inverse_mass_matrix = sqrt(Var[position] / Var[logdensity_grad])``
+                              per coordinate.  Only valid with ``is_mass_matrix_diagonal=True`` and
+                              ``imm_shrinkage_to_previous=0.0``; both are validated at construction
+                              time (``ValueError`` before any JIT tracing).
    :param initial_step_size: The initial step size used in the algorithm.
    :param target_acceptance_rate: The acceptance rate that we target during step size adaptation.
    :param adaptation_info_fn: Function to select the adaptation info returned. See return_all_adapt_info

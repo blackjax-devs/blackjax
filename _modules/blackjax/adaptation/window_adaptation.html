@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g9c203305c" />
+  <meta name="docsearch:version" content="0.1.dev1+gdbe43b69e" />
   </head>
   
   
@@ -415,7 +415,7 @@
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;Implementation of the Stan warmup for the HMC family of sampling algorithms.&quot;&quot;&quot;</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">cast</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
@@ -423,6 +423,7 @@
 <span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">mcmc</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptationResults</span><span class="p">,</span> <span class="n">return_all_adapt_info</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.mass_matrix</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FisherMassMatrixAdaptationState</span><span class="p">,</span>
     <span class="n">MassMatrixAdaptationState</span><span class="p">,</span>
     <span class="n">mass_matrix_adaptation</span><span class="p">,</span>
 <span class="p">)</span>
@@ -446,7 +447,7 @@
 
 <div class="viewcode-block" id="WindowAdaptationState.imm_state">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html#blackjax.adaptation.window_adaptation.WindowAdaptationState.imm_state">[docs]</a>
-    <span class="n">imm_state</span><span class="p">:</span> <span class="n">MassMatrixAdaptationState</span>  <span class="c1"># inverse mass matrix</span></div>
+    <span class="n">imm_state</span><span class="p">:</span> <span class="n">MassMatrixAdaptationState</span> <span class="o">|</span> <span class="n">FisherMassMatrixAdaptationState</span>  <span class="c1"># inverse mass matrix</span></div>
 
 <div class="viewcode-block" id="WindowAdaptationState.step_size">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html#blackjax.adaptation.window_adaptation.WindowAdaptationState.step_size">[docs]</a>
@@ -466,6 +467,7 @@
     <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span><span class="p">,</span>
     <span class="n">initial_inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">imm_shrinkage_to_previous</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">diagonal_estimator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;welford&quot;</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Warmup scheme for sampling procedures based on euclidean manifold HMC.</span>
 <span class="sd">    The schedule and algorithms used match Stan&#39;s :cite:p:`stan_hmc_param` as closely as possible.</span>
@@ -516,6 +518,13 @@
 <span class="sd">        Pseudo-count controlling shrinkage of the IMM toward the previous</span>
 <span class="sd">        window&#39;s IMM. Default 0.0 gives the current Stan behavior. Passed</span>
 <span class="sd">        through to ``mass_matrix_adaptation``.</span>
+<span class="sd">    diagonal_estimator</span>
+<span class="sd">        Which diagonal-variance estimator to use.  ``&quot;welford&quot;`` (default)</span>
+<span class="sd">        reproduces all pre-existing behavior exactly.  ``&quot;fisher&quot;`` uses the</span>
+<span class="sd">        Fisher-divergence-minimising diagonal estimator; see</span>
+<span class="sd">        ``mass_matrix_adaptation`` for constraints (diagonal-only, no</span>
+<span class="sd">        ``imm_shrinkage_to_previous``).  Passed through to</span>
+<span class="sd">        ``mass_matrix_adaptation``.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -529,7 +538,7 @@
 
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">mm_init</span><span class="p">,</span> <span class="n">mm_update</span><span class="p">,</span> <span class="n">mm_final</span> <span class="o">=</span> <span class="n">mass_matrix_adaptation</span><span class="p">(</span>
-        <span class="n">is_mass_matrix_diagonal</span><span class="p">,</span> <span class="n">imm_shrinkage_to_previous</span>
+        <span class="n">is_mass_matrix_diagonal</span><span class="p">,</span> <span class="n">imm_shrinkage_to_previous</span><span class="p">,</span> <span class="n">diagonal_estimator</span>
     <span class="p">)</span>
     <span class="n">da_init</span><span class="p">,</span> <span class="n">da_update</span><span class="p">,</span> <span class="n">da_final</span> <span class="o">=</span> <span class="n">dual_averaging_adaptation</span><span class="p">(</span><span class="n">target_acceptance_rate</span><span class="p">)</span>
 
@@ -557,6 +566,7 @@
 
     <span class="k">def</span><span class="w"> </span><span class="nf">fast_update</span><span class="p">(</span>
         <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">warmup_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowAdaptationState</span><span class="p">:</span>
@@ -567,7 +577,7 @@
 <span class="sd">        compared to the covariance estimation with Welford&#39;s algorithm</span>
 
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">del</span> <span class="n">position</span>
+        <span class="k">del</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span>
 
         <span class="n">new_ss_state</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
         <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
@@ -579,51 +589,142 @@
             <span class="n">warmup_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">slow_update</span><span class="p">(</span>
-        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">warmup_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the adaptation state when in a &quot;slow&quot; window.</span>
+    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">&quot;welford&quot;</span><span class="p">:</span>
 
-<span class="sd">        Both the mass matrix adaptation *state* and the step size state are</span>
-<span class="sd">        adapted in slow windows. The value of the step size is updated as well,</span>
-<span class="sd">        but the new value of the inverse mass matrix is only computed at the end</span>
-<span class="sd">        of the slow window. &quot;Slow&quot; refers to the fact that we need many samples</span>
-<span class="sd">        to get a reliable estimation of the covariance matrix used to update the</span>
-<span class="sd">        value of the mass matrix.</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">slow_update</span><span class="p">(</span>
+            <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+            <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+            <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">warmup_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowAdaptationState</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Update the adaptation state when in a &quot;slow&quot; window (Welford path).</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">new_imm_state</span> <span class="o">=</span> <span class="n">mm_update</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">imm_state</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
-        <span class="n">new_ss_state</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
-        <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
+<span class="sd">            Both the mass matrix adaptation *state* and the step size state are</span>
+<span class="sd">            adapted in slow windows. The value of the step size is updated as well,</span>
+<span class="sd">            but the new value of the inverse mass matrix is only computed at the end</span>
+<span class="sd">            of the slow window. &quot;Slow&quot; refers to the fact that we need many samples</span>
+<span class="sd">            to get a reliable estimation of the covariance matrix used to update the</span>
+<span class="sd">            value of the mass matrix.</span>
 
-        <span class="k">return</span> <span class="n">WindowAdaptationState</span><span class="p">(</span>
-            <span class="n">new_ss_state</span><span class="p">,</span> <span class="n">new_imm_state</span><span class="p">,</span> <span class="n">new_step_size</span><span class="p">,</span> <span class="n">warmup_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
+<span class="sd">            On the default Welford path, ``grad`` is not consumed by the IMM</span>
+<span class="sd">            accumulator and is explicitly deleted here so it is dead on this path.</span>
+
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">del</span> <span class="n">grad</span>
+            <span class="n">new_imm_state</span> <span class="o">=</span> <span class="n">mm_update</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">imm_state</span><span class="p">,</span> <span class="n">position</span><span class="p">)</span>
+            <span class="n">new_ss_state</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
+            <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">WindowAdaptationState</span><span class="p">(</span>
+                <span class="n">new_ss_state</span><span class="p">,</span>
+                <span class="n">new_imm_state</span><span class="p">,</span>
+                <span class="n">new_step_size</span><span class="p">,</span>
+                <span class="n">warmup_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># diagonal_estimator == &quot;fisher&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">slow_update</span><span class="p">(</span>  <span class="c1"># type: ignore[no-redef]</span>
+            <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+            <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+            <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+            <span class="n">warmup_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowAdaptationState</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Update the adaptation state when in a &quot;slow&quot; window (Fisher path).</span>
+
+<span class="sd">            Both the mass matrix adaptation *state* and the step size state are</span>
+<span class="sd">            adapted in slow windows.  On the Fisher path, ``grad`` is forwarded</span>
+<span class="sd">            to the IMM accumulator so it can track gradient variance.</span>
+
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">new_imm_state</span> <span class="o">=</span> <span class="n">mm_update</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">imm_state</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span>
+            <span class="n">new_ss_state</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
+            <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">WindowAdaptationState</span><span class="p">(</span>
+                <span class="n">new_ss_state</span><span class="p">,</span>
+                <span class="n">new_imm_state</span><span class="p">,</span>
+                <span class="n">new_step_size</span><span class="p">,</span>
+                <span class="n">warmup_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">&quot;welford&quot;</span><span class="p">:</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">slow_final</span><span class="p">(</span><span class="n">warmup_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowAdaptationState</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Update the parameters at the end of a slow adaptation window.</span>
+
+<span class="sd">            We compute the value of the mass matrix and reset the mass matrix</span>
+<span class="sd">            adaptation&#39;s internal state since middle windows are &quot;memoryless&quot;.</span>
+
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">new_imm_state</span> <span class="o">=</span> <span class="n">mm_final</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">imm_state</span><span class="p">)</span>
+            <span class="n">new_ss_state</span> <span class="o">=</span> <span class="n">da_init</span><span class="p">(</span><span class="n">da_final</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">))</span>
+            <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">WindowAdaptationState</span><span class="p">(</span>
+                <span class="n">new_ss_state</span><span class="p">,</span>
+                <span class="n">new_imm_state</span><span class="p">,</span>
+                <span class="n">new_step_size</span><span class="p">,</span>
+                <span class="n">new_imm_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>  <span class="c1"># diagonal_estimator == &quot;fisher&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_estimators</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">fisher_score_diagonal_from_moments</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">slow_final</span><span class="p">(</span><span class="n">warmup_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the parameters at the end of a slow adaptation window.</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">slow_final</span><span class="p">(</span>  <span class="c1"># type: ignore[no-redef]</span>
+            <span class="n">warmup_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">,</span>
+        <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowAdaptationState</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Update the parameters at the end of a slow adaptation window.</span>
 
-<span class="sd">        We compute the value of the mass matrix and reset the mass matrix</span>
-<span class="sd">        adapation&#39;s internal state since middle windows are &quot;memoryless&quot;.</span>
+<span class="sd">            On the Fisher path, the IMM is computed here (not inside</span>
+<span class="sd">            ``mm_final``) to respect the dependency order:</span>
+<span class="sd">            ``metric_estimators`` imports from ``mass_matrix``, so</span>
+<span class="sd">            ``mass_matrix.final()`` must not import from ``metric_estimators``.</span>
+<span class="sd">            This closure composes both layers:</span>
 
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">new_imm_state</span> <span class="o">=</span> <span class="n">mm_final</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">imm_state</span><span class="p">)</span>
-        <span class="n">new_ss_state</span> <span class="o">=</span> <span class="n">da_init</span><span class="p">(</span><span class="n">da_final</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">))</span>
-        <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
+<span class="sd">            1. Extract Bessel-corrected per-coordinate variances from the</span>
+<span class="sd">               accumulated :class:`~blackjax.adaptation.metric_buffers._FisherMomentBlock`</span>
+<span class="sd">               BEFORE the reset.</span>
+<span class="sd">            2. Call :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments`</span>
+<span class="sd">               to compute the new IMM.</span>
+<span class="sd">            3. Call ``mm_final`` to reset the block for the next window.</span>
+<span class="sd">            4. Stitch the new IMM into the reset state.</span>
 
-        <span class="k">return</span> <span class="n">WindowAdaptationState</span><span class="p">(</span>
-            <span class="n">new_ss_state</span><span class="p">,</span>
-            <span class="n">new_imm_state</span><span class="p">,</span>
-            <span class="n">new_step_size</span><span class="p">,</span>
-            <span class="n">new_imm_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
-        <span class="p">)</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="c1"># This closure is only constructed on the Fisher path (Python-level</span>
+            <span class="c1"># dispatch in base()); the state is always FisherMassMatrixAdaptationState</span>
+            <span class="c1"># at this point.  The cast is a static hint only — zero runtime cost.</span>
+            <span class="n">fisher_state</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">FisherMassMatrixAdaptationState</span><span class="p">,</span> <span class="n">warmup_state</span><span class="o">.</span><span class="n">imm_state</span><span class="p">)</span>
+            <span class="n">block</span> <span class="o">=</span> <span class="n">fisher_state</span><span class="o">.</span><span class="n">fisher_block</span>
+            <span class="n">denom</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">block</span><span class="o">.</span><span class="n">count</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">var_x</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">m2_x</span> <span class="o">/</span> <span class="n">denom</span>  <span class="c1"># (d,)  Bessel-corrected position variance</span>
+            <span class="n">var_g</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">m2_g</span> <span class="o">/</span> <span class="n">denom</span>  <span class="c1"># (d,)  Bessel-corrected gradient variance</span>
+            <span class="n">new_inverse_mass_matrix</span> <span class="o">=</span> <span class="n">fisher_score_diagonal_from_moments</span><span class="p">(</span><span class="n">var_x</span><span class="p">,</span> <span class="n">var_g</span><span class="p">)</span>
+
+            <span class="c1"># mm_final resets the block; we stitch the newly computed IMM in.</span>
+            <span class="n">reset_state</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">FisherMassMatrixAdaptationState</span><span class="p">,</span> <span class="n">mm_final</span><span class="p">(</span><span class="n">fisher_state</span><span class="p">))</span>
+            <span class="n">new_imm_state</span> <span class="o">=</span> <span class="n">FisherMassMatrixAdaptationState</span><span class="p">(</span>
+                <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">new_inverse_mass_matrix</span><span class="p">,</span>
+                <span class="n">fisher_block</span><span class="o">=</span><span class="n">reset_state</span><span class="o">.</span><span class="n">fisher_block</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">new_ss_state</span> <span class="o">=</span> <span class="n">da_init</span><span class="p">(</span><span class="n">da_final</span><span class="p">(</span><span class="n">warmup_state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">))</span>
+            <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss_state</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">WindowAdaptationState</span><span class="p">(</span>
+                <span class="n">new_ss_state</span><span class="p">,</span>
+                <span class="n">new_imm_state</span><span class="p">,</span>
+                <span class="n">new_step_size</span><span class="p">,</span>
+                <span class="n">new_imm_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
         <span class="n">adaptation_state</span><span class="p">:</span> <span class="n">WindowAdaptationState</span><span class="p">,</span>
         <span class="n">adaptation_stage</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
         <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">WindowAdaptationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the adaptation state and parameter values.</span>
@@ -637,6 +738,11 @@
 <span class="sd">            a fast window and if we are at the last step of a slow window.</span>
 <span class="sd">        position</span>
 <span class="sd">            Current value of the model parameters.</span>
+<span class="sd">        grad</span>
+<span class="sd">            Log-density gradient at ``position``.  Forwarded to the IMM</span>
+<span class="sd">            accumulator on the ``diagonal_estimator=&#39;fisher&#39;`` path; dead</span>
+<span class="sd">            (explicitly deleted in ``fast_update`` and ``slow_update``) on the</span>
+<span class="sd">            default ``&quot;welford&quot;`` path.</span>
 <span class="sd">        acceptance_rate</span>
 <span class="sd">            Value of the acceptance rate for the last mcmc step.</span>
 
@@ -651,6 +757,7 @@
             <span class="n">stage</span><span class="p">,</span>
             <span class="p">(</span><span class="n">fast_update</span><span class="p">,</span> <span class="n">slow_update</span><span class="p">),</span>
             <span class="n">position</span><span class="p">,</span>
+            <span class="n">grad</span><span class="p">,</span>
             <span class="n">acceptance_rate</span><span class="p">,</span>
             <span class="n">adaptation_state</span><span class="p">,</span>
         <span class="p">)</span>
@@ -682,6 +789,7 @@
     <span class="n">is_mass_matrix_diagonal</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">initial_inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">imm_shrinkage_to_previous</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="n">diagonal_estimator</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;welford&quot;</span><span class="p">,</span>
     <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
     <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span><span class="p">,</span>
     <span class="n">adaptation_info_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">return_all_adapt_info</span><span class="p">,</span>
@@ -751,6 +859,17 @@
 
 <span class="sd">        Validated at construction time — negative values raise</span>
 <span class="sd">        ``ValueError`` before any JIT tracing.</span>
+<span class="sd">    diagonal_estimator</span>
+<span class="sd">        Which diagonal-variance estimator to use for the (window-local)</span>
+<span class="sd">        inverse mass matrix.  ``&quot;welford&quot;`` (default) is Stan&#39;s classic</span>
+<span class="sd">        online-covariance estimator and reproduces all pre-existing behavior</span>
+<span class="sd">        exactly.  ``&quot;fisher&quot;`` uses the Fisher-divergence-minimising diagonal</span>
+<span class="sd">        estimator of :cite:p:`seyboldt2026preconditioning` (the same formula</span>
+<span class="sd">        underlying the diagonal-scaling step of the low-rank adaptation):</span>
+<span class="sd">        ``inverse_mass_matrix = sqrt(Var[position] / Var[logdensity_grad])``</span>
+<span class="sd">        per coordinate.  Only valid with ``is_mass_matrix_diagonal=True`` and</span>
+<span class="sd">        ``imm_shrinkage_to_previous=0.0``; both are validated at construction</span>
+<span class="sd">        time (``ValueError`` before any JIT tracing).</span>
 <span class="sd">    initial_step_size</span>
 <span class="sd">        The initial step size used in the algorithm.</span>
 <span class="sd">    target_acceptance_rate</span>
@@ -799,6 +918,21 @@
             <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="n">imm_shrinkage_to_previous</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
 
+    <span class="c1"># Fisher-estimator constraints (mirrors mass_matrix_adaptation validation).</span>
+    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">&quot;fisher&quot;</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_mass_matrix_diagonal</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;diagonal_estimator=&#39;fisher&#39; requires is_mass_matrix_diagonal=True &quot;</span>
+            <span class="s2">&quot;(the Fisher-divergence estimator only produces a diagonal metric); &quot;</span>
+            <span class="s2">&quot;got is_mass_matrix_diagonal=False&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">diagonal_estimator</span> <span class="o">==</span> <span class="s2">&quot;fisher&quot;</span> <span class="ow">and</span> <span class="n">imm_shrinkage_to_previous</span> <span class="o">!=</span> <span class="mf">0.0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;diagonal_estimator=&#39;fisher&#39; does not support &quot;</span>
+            <span class="s2">&quot;imm_shrinkage_to_previous != 0.0: the Fisher estimator does not &quot;</span>
+            <span class="s2">&quot;blend with the previous window&#39;s IMM or an identity target; &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;got imm_shrinkage_to_previous=</span><span class="si">{</span><span class="n">imm_shrinkage_to_previous</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">mcmc_kernel</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
@@ -809,6 +943,7 @@
         <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="n">target_acceptance_rate</span><span class="p">,</span>
         <span class="n">initial_inverse_mass_matrix</span><span class="o">=</span><span class="n">initial_inverse_mass_matrix</span><span class="p">,</span>
         <span class="n">imm_shrinkage_to_previous</span><span class="o">=</span><span class="n">imm_shrinkage_to_previous</span><span class="p">,</span>
+        <span class="n">diagonal_estimator</span><span class="o">=</span><span class="n">diagonal_estimator</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
@@ -827,6 +962,7 @@
             <span class="n">adaptation_state</span><span class="p">,</span>
             <span class="n">adaptation_stage</span><span class="p">,</span>
             <span class="n">new_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
+            <span class="n">new_state</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
             <span class="n">info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
         <span class="p">)</span>
 

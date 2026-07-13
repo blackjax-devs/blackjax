@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.low_rank_adaptation" href="../low_rank_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g9c203305c" />
+  <meta name="docsearch:version" content="0.1.dev1+gdbe43b69e" />
   </head>
   
   
@@ -413,6 +413,11 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState.wc_state"><code class="docutils literal notranslate"><span class="pre">MassMatrixAdaptationState.wc_state</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState"><code class="docutils literal notranslate"><span class="pre">FisherMassMatrixAdaptationState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">FisherMassMatrixAdaptationState.inverse_mass_matrix</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.fisher_block"><code class="docutils literal notranslate"><span class="pre">FisherMassMatrixAdaptationState.fisher_block</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.mass_matrix_adaptation"><code class="docutils literal notranslate"><span class="pre">mass_matrix_adaptation()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.welford_algorithm"><code class="docutils literal notranslate"><span class="pre">welford_algorithm()</span></code></a></li>
 </ul>
@@ -443,6 +448,9 @@ parameters used in Hamiltonian Monte Carlo.</p>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState" title="blackjax.adaptation.mass_matrix.MassMatrixAdaptationState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MassMatrixAdaptationState</span></code></a></p></td>
 <td><p>State carried through the mass matrix adaptation.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState" title="blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FisherMassMatrixAdaptationState</span></code></a></p></td>
+<td><p>State for the Fisher-diagonal mass matrix adaptation.</p></td>
 </tr>
 </tbody>
 </table>
@@ -517,9 +525,50 @@ also the current number of iterations of the algorithm.</p>
 
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">FisherMassMatrixAdaptationState</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mass_matrix.html#FisherMassMatrixAdaptationState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState" title="Link to this definition">#</a></dt>
+<dd><p>State for the Fisher-diagonal mass matrix adaptation.</p>
+<p>Used when <code class="docutils literal notranslate"><span class="pre">diagonal_estimator=&quot;fisher&quot;</span></code> is passed to
+<a class="reference internal" href="#blackjax.adaptation.mass_matrix.mass_matrix_adaptation" title="blackjax.adaptation.mass_matrix.mass_matrix_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">mass_matrix_adaptation()</span></code></a>.  Replaces the single Welford state in
+<a class="reference internal" href="#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState" title="blackjax.adaptation.mass_matrix.MassMatrixAdaptationState"><code class="xref py py-class docutils literal notranslate"><span class="pre">MassMatrixAdaptationState</span></code></a> with a
+<code class="xref py py-class docutils literal notranslate"><span class="pre">_FisherMomentBlock</span></code> that
+accumulates per-coordinate position AND gradient variance in CGL-mergeable
+diagonal form.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inverse_mass_matrix</strong> – Current value of the (diagonal) inverse mass matrix, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.</p></li>
+<li><p><strong>fisher_block</strong> – CGL-mergeable moment block accumulating diagonal position and gradient
+statistics for the current window.  Reset to zeros at each
+<a class="reference internal" href="#blackjax.adaptation.mass_matrix.mass_matrix_adaptation" title="blackjax.adaptation.mass_matrix.mass_matrix_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">mass_matrix_adaptation()</span></code></a> <code class="docutils literal notranslate"><span class="pre">final()</span></code> call (window boundary).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The Fisher-diagonal IMM is <code class="docutils literal notranslate"><span class="pre">sqrt(Var[x]</span> <span class="pre">/</span> <span class="pre">Var[∇</span> <span class="pre">log</span> <span class="pre">p])</span></code> per coordinate
+(see
+<a class="reference internal" href="../metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_diagonal_from_moments()</span></code></a>).
+This state type accumulates the moments needed to compute those per-window
+variances without storing raw draw arrays.  The IMM computation is
+deliberately NOT performed inside <code class="docutils literal notranslate"><span class="pre">mass_matrix_adaptation</span></code>’s <code class="docutils literal notranslate"><span class="pre">final()</span></code>
+— it is composed by the consumer (<a class="reference internal" href="../window_adaptation/index.html#blackjax.adaptation.window_adaptation.base" title="blackjax.adaptation.window_adaptation.base"><code class="xref py py-func docutils literal notranslate"><span class="pre">base()</span></code></a>)
+to avoid a circular import between this module and <code class="docutils literal notranslate"><span class="pre">metric_estimators</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.inverse_mass_matrix">
+<span class="sig-name descname"><span class="pre">inverse_mass_matrix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mass_matrix.html#FisherMassMatrixAdaptationState.inverse_mass_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.inverse_mass_matrix" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.fisher_block">
+<span class="sig-name descname"><span class="pre">fisher_block</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.adaptation.metric_buffers._FisherMomentBlock</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mass_matrix.html#FisherMassMatrixAdaptationState.fisher_block"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.fisher_block" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.mass_matrix.mass_matrix_adaptation">
-<span class="sig-name descname"><span class="pre">mass_matrix_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_diagonal_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imm_shrinkage_to_previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mass_matrix.html#mass_matrix_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mass_matrix.mass_matrix_adaptation" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">mass_matrix_adaptation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_diagonal_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">imm_shrinkage_to_previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">diagonal_estimator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'welford'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/mass_matrix.html#mass_matrix_adaptation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.mass_matrix.mass_matrix_adaptation" title="Link to this definition">#</a></dt>
 <dd><p>Adapts the values in the mass matrix by computing the covariance
 between parameters.</p>
 <dl class="field-list simple">
@@ -527,6 +576,24 @@ between parameters.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>is_diagonal_matrix</strong> – When True the algorithm adapts and returns a diagonal mass matrix
 (default), otherwise adaps and returns a dense mass matrix.</p></li>
+<li><p><strong>diagonal_estimator</strong> – <p>Which diagonal-variance estimator to use for the (window-local)
+inverse mass matrix.  <code class="docutils literal notranslate"><span class="pre">&quot;welford&quot;</span></code> (default) is Stan’s classic
+online-covariance estimator and reproduces all pre-existing behavior
+exactly.  <code class="docutils literal notranslate"><span class="pre">&quot;fisher&quot;</span></code> instead uses the Fisher-divergence-minimising
+diagonal estimator of <span id="id2">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span> (see
+<a class="reference internal" href="../metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_diagonal()</span></code></a>),
+which additionally requires the log-density gradient at each
+accumulated position (passed to <code class="docutils literal notranslate"><span class="pre">update</span></code> as <code class="docutils literal notranslate"><span class="pre">grad</span></code>).</p>
+<p>Constraints for <code class="docutils literal notranslate"><span class="pre">&quot;fisher&quot;</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">is_diagonal_matrix=True</span></code> is required (the Fisher-diagonal
+estimator only produces a diagonal metric).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">imm_shrinkage_to_previous=0.0</span></code> is required (the Fisher estimator
+does not blend with a previous IMM or an identity target).</p></li>
+</ul>
+<p>Both constraints are validated at construction time with a
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> before any JIT tracing.</p>
+</p></li>
 <li><p><strong>imm_shrinkage_to_previous</strong> – <p>Bayesian pseudo-count controlling shrinkage of the per-window adapted
 IMM toward the previous window’s IMM. Interpretable as “the number of
 imaginary additional samples in the current window’s accumulator that
@@ -662,6 +729,11 @@ but this covariance estimator is used in other parts of the library.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState"><code class="docutils literal notranslate"><span class="pre">MassMatrixAdaptationState</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">MassMatrixAdaptationState.inverse_mass_matrix</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.MassMatrixAdaptationState.wc_state"><code class="docutils literal notranslate"><span class="pre">MassMatrixAdaptationState.wc_state</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState"><code class="docutils literal notranslate"><span class="pre">FisherMassMatrixAdaptationState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">FisherMassMatrixAdaptationState.inverse_mass_matrix</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.fisher_block"><code class="docutils literal notranslate"><span class="pre">FisherMassMatrixAdaptationState.fisher_block</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.mass_matrix.mass_matrix_adaptation"><code class="docutils literal notranslate"><span class="pre">mass_matrix_adaptation()</span></code></a></li>

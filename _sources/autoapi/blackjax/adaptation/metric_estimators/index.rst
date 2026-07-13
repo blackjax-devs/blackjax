@@ -65,6 +65,7 @@ Functions
    blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank
    blackjax.adaptation.metric_estimators.welford_diagonal
    blackjax.adaptation.metric_estimators.welford_dense
+   blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments
    blackjax.adaptation.metric_estimators.fisher_score_diagonal
    blackjax.adaptation.metric_estimators.sample_variance_diagonal
 
@@ -360,6 +361,63 @@ Module Contents
    :rtype: Array, shape ``(d, d)``
 
 
+.. py:function:: fisher_score_diagonal_from_moments(variance: blackjax.types.Array, gradient_variance: blackjax.types.Array) -> blackjax.types.Array
+
+   Core math of the Fisher-diagonal estimator from pre-computed variances.
+
+   Computes :math:`\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla
+   \log p]}` per coordinate — the same formula as :func:`fisher_score_diagonal`
+   but operating on **already-computed** per-coordinate variances rather than
+   raw draw arrays.
+
+   This entry point is intended for callers that accumulate moments online
+   (e.g. via :class:`~blackjax.adaptation.metric_buffers._FisherMomentBlock`)
+   and want to avoid materialising the full draw array.  The caller is
+   responsible for supplying Bessel-corrected (or otherwise normalised)
+   variances; the ratio is invariant to a shared ``n`` vs ``n-1`` factor so
+   either convention is acceptable for the diagonal estimator.
+
+   **Near-zero gradient protection** (identical to :func:`fisher_score_low_rank`
+   and :func:`fisher_score_diagonal`): ``gradient_variance`` is floored at
+   ``1e-10`` before division, and the result is clipped to nutpie's
+   ``[1e-20, 1e20]`` range **before squaring**.
+
+   **Pairing insensitivity:** this function consumes only the marginal variances
+   ``Var[x_i]`` and ``Var[∇log p_i]`` per coordinate.  The estimator is
+   therefore insensitive to which draw is paired with which gradient within a
+   batch — any per-batch pairing permutation produces the same ``variance`` and
+   ``gradient_variance`` inputs and hence the same output.  If cross-moment
+   information (e.g. draw-grad covariance) is required, a future extension to
+   this signature must add those moments explicitly.
+
+   **Planned extension note:** this entry point is intentionally separate so
+   that future updates to the estimator (e.g. adding draw-grad cross moments)
+   can extend the *from_moments* signature without changing the *raw-draws*
+   wrapper :func:`fisher_score_diagonal`.
+
+   :param variance: Shape ``(d,)``.  Per-coordinate position variance
+                    :math:`\mathrm{Var}[x]`.  Must be non-negative; typically
+                    Bessel-corrected.
+   :param gradient_variance: Shape ``(d,)``.  Per-coordinate log-density-gradient variance
+                             :math:`\mathrm{Var}[\nabla \log p]`.  Must be non-negative; floored
+                             at ``1e-10`` internally.
+
+   :returns: Diagonal inverse mass matrix :math:`\sigma^2 = \sigma_{\text{clip}}^2`
+             where :math:`\sigma_{\text{clip}} = \operatorname{clip}(\sigma,\,
+             10^{-20},\, 10^{20})` and :math:`\sigma = (\mathrm{Var}[x] /
+             \max(\mathrm{Var}[\nabla \log p],\, 10^{-10}))^{1/4}`.
+
+             The clip is on the **scale** :math:`\sigma`, not on :math:`\sigma^2`,
+             so the returned values span :math:`[10^{-40}, 10^{40}]`.  Under
+             float32, :math:`\sigma^2` overflows to ``inf`` when :math:`\sigma
+             \approx 10^{20}` (float32 max :math:`\approx 3.4 \times 10^{38}`, so
+             :math:`10^{40}` overflows); the caller must handle this if float32
+             inputs can drive :math:`\sigma` to its clip boundary.  This matches
+             :func:`fisher_score_low_rank`'s ``sigma`` clip and is not changed here
+             to preserve numerical consistency between the two estimators.
+   :rtype: Array, shape ``(d,)``
+
+
 .. py:function:: fisher_score_diagonal(draws: blackjax.types.Array, grads: blackjax.types.Array) -> blackjax.types.Array
 
    Fisher-divergence-minimising diagonal inverse mass matrix.
@@ -377,9 +435,6 @@ Module Contents
 
    **Extracted from:** branch ``b197f1e2`` (``feat/window-adaptation-fisher-diag``,
    2026-07-04), ``blackjax.adaptation.mass_matrix._fisher_diagonal_inverse_mass``.
-   The branch is DORMANT — its ``window_adaptation`` wiring (the diagonal
-   estimator opt-in in ``mass_matrix_adaptation``) is NOT reproduced here and
-   stays dormant.  Only the pure estimator math is extracted.
 
    **Near-zero gradient protection** (same as :func:`fisher_score_low_rank`):
    ``Var[∇ log p]`` is floored at ``1e-10`` before division, and the result
@@ -389,6 +444,11 @@ Module Contents
    computed with the same normalisation (Bessel-corrected, ``n-1`` divisor,
    via :func:`welford_diagonal`); the ratio is invariant to a shared
    ``n`` vs ``n-1`` factor (branch ``b197f1e2`` commit message, verified).
+
+   **Implementation:** thin wrapper over
+   :func:`fisher_score_diagonal_from_moments` — computes Bessel-corrected
+   per-coordinate variances via two :func:`welford_diagonal` scans, then
+   delegates all arithmetic to the from-moments entry point.
 
    :param draws: Shape ``(n, d)``.  Chain positions.
    :param grads: Shape ``(n, d)``.  Log-density gradients at the corresponding draws.

@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.metric_buffers" href="../metric_buffers/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g9c203305c" />
+  <meta name="docsearch:version" content="0.1.dev1+gdbe43b69e" />
   </head>
   
   
@@ -408,6 +408,7 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.welford_diagonal"><code class="docutils literal notranslate"><span class="pre">welford_diagonal()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.welford_dense"><code class="docutils literal notranslate"><span class="pre">welford_dense()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments"><code class="docutils literal notranslate"><span class="pre">fisher_score_diagonal_from_moments()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="docutils literal notranslate"><span class="pre">fisher_score_diagonal()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.sample_variance_diagonal"><code class="docutils literal notranslate"><span class="pre">sample_variance_diagonal()</span></code></a></li>
 </ul>
@@ -505,10 +506,13 @@ deliberate follow-up work.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.welford_dense" title="blackjax.adaptation.metric_estimators.welford_dense"><code class="xref py py-obj docutils literal notranslate"><span class="pre">welford_dense</span></code></a>(→ blackjax.types.Array)</p></td>
 <td><p>Dense sample covariance via Welford's algorithm.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fisher_score_diagonal</span></code></a>(→ blackjax.types.Array)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fisher_score_diagonal_from_moments</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Core math of the Fisher-diagonal estimator from pre-computed variances.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fisher_score_diagonal</span></code></a>(→ blackjax.types.Array)</p></td>
 <td><p>Fisher-divergence-minimising diagonal inverse mass matrix.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.sample_variance_diagonal" title="blackjax.adaptation.metric_estimators.sample_variance_diagonal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_variance_diagonal</span></code></a>(→ blackjax.types.Array)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.sample_variance_diagonal" title="blackjax.adaptation.metric_estimators.sample_variance_diagonal"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sample_variance_diagonal</span></code></a>(→ blackjax.types.Array)</p></td>
 <td><p>Coordinate-wise population variance from raw draws.</p></td>
 </tr>
 </tbody>
@@ -827,6 +831,67 @@ covariance matrix.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments">
+<span class="sig-name descname"><span class="pre">fisher_score_diagonal_from_moments</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">variance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gradient_variance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#fisher_score_diagonal_from_moments"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments" title="Link to this definition">#</a></dt>
+<dd><p>Core math of the Fisher-diagonal estimator from pre-computed variances.</p>
+<p>Computes <span class="math notranslate nohighlight">\(\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla
+\log p]}\)</span> per coordinate — the same formula as <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_diagonal()</span></code></a>
+but operating on <strong>already-computed</strong> per-coordinate variances rather than
+raw draw arrays.</p>
+<p>This entry point is intended for callers that accumulate moments online
+(e.g. via <code class="xref py py-class docutils literal notranslate"><span class="pre">_FisherMomentBlock</span></code>)
+and want to avoid materialising the full draw array.  The caller is
+responsible for supplying Bessel-corrected (or otherwise normalised)
+variances; the ratio is invariant to a shared <code class="docutils literal notranslate"><span class="pre">n</span></code> vs <code class="docutils literal notranslate"><span class="pre">n-1</span></code> factor so
+either convention is acceptable for the diagonal estimator.</p>
+<p><strong>Near-zero gradient protection</strong> (identical to <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a>
+and <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_diagonal()</span></code></a>): <code class="docutils literal notranslate"><span class="pre">gradient_variance</span></code> is floored at
+<code class="docutils literal notranslate"><span class="pre">1e-10</span></code> before division, and the result is clipped to nutpie’s
+<code class="docutils literal notranslate"><span class="pre">[1e-20,</span> <span class="pre">1e20]</span></code> range <strong>before squaring</strong>.</p>
+<p><strong>Pairing insensitivity:</strong> this function consumes only the marginal variances
+<code class="docutils literal notranslate"><span class="pre">Var[x_i]</span></code> and <code class="docutils literal notranslate"><span class="pre">Var[∇log</span> <span class="pre">p_i]</span></code> per coordinate.  The estimator is
+therefore insensitive to which draw is paired with which gradient within a
+batch — any per-batch pairing permutation produces the same <code class="docutils literal notranslate"><span class="pre">variance</span></code> and
+<code class="docutils literal notranslate"><span class="pre">gradient_variance</span></code> inputs and hence the same output.  If cross-moment
+information (e.g. draw-grad covariance) is required, a future extension to
+this signature must add those moments explicitly.</p>
+<p><strong>Planned extension note:</strong> this entry point is intentionally separate so
+that future updates to the estimator (e.g. adding draw-grad cross moments)
+can extend the <em>from_moments</em> signature without changing the <em>raw-draws</em>
+wrapper <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_diagonal()</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>variance</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.  Per-coordinate position variance
+<span class="math notranslate nohighlight">\(\mathrm{Var}[x]\)</span>.  Must be non-negative; typically
+Bessel-corrected.</p></li>
+<li><p><strong>gradient_variance</strong> – Shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.  Per-coordinate log-density-gradient variance
+<span class="math notranslate nohighlight">\(\mathrm{Var}[\nabla \log p]\)</span>.  Must be non-negative; floored
+at <code class="docutils literal notranslate"><span class="pre">1e-10</span></code> internally.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p>Diagonal inverse mass matrix <span class="math notranslate nohighlight">\(\sigma^2 = \sigma_{\text{clip}}^2\)</span>
+where <span class="math notranslate nohighlight">\(\sigma_{\text{clip}} = \operatorname{clip}(\sigma,\,
+10^{-20},\, 10^{20})\)</span> and <span class="math notranslate nohighlight">\(\sigma = (\mathrm{Var}[x] /
+\max(\mathrm{Var}[\nabla \log p],\, 10^{-10}))^{1/4}\)</span>.</p>
+<p>The clip is on the <strong>scale</strong> <span class="math notranslate nohighlight">\(\sigma\)</span>, not on <span class="math notranslate nohighlight">\(\sigma^2\)</span>,
+so the returned values span <span class="math notranslate nohighlight">\([10^{-40}, 10^{40}]\)</span>.  Under
+float32, <span class="math notranslate nohighlight">\(\sigma^2\)</span> overflows to <code class="docutils literal notranslate"><span class="pre">inf</span></code> when <span class="math notranslate nohighlight">\(\sigma
+\approx 10^{20}\)</span> (float32 max <span class="math notranslate nohighlight">\(\approx 3.4 \times 10^{38}\)</span>, so
+<span class="math notranslate nohighlight">\(10^{40}\)</span> overflows); the caller must handle this if float32
+inputs can drive <span class="math notranslate nohighlight">\(\sigma\)</span> to its clip boundary.  This matches
+<a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a>’s <code class="docutils literal notranslate"><span class="pre">sigma</span></code> clip and is not changed here
+to preserve numerical consistency between the two estimators.</p>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Array, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.metric_estimators.fisher_score_diagonal">
 <span class="sig-name descname"><span class="pre">fisher_score_diagonal</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grads</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_estimators.html#fisher_score_diagonal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal" title="Link to this definition">#</a></dt>
 <dd><p>Fisher-divergence-minimising diagonal inverse mass matrix.</p>
@@ -840,10 +905,7 @@ corresponding inverse mass matrix as
 <span class="math notranslate nohighlight">\(\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla \log p]}\)</span>
 when the low-rank correction <code class="docutils literal notranslate"><span class="pre">(U,</span> <span class="pre">lam)</span></code> is dropped.</p>
 <p><strong>Extracted from:</strong> branch <code class="docutils literal notranslate"><span class="pre">b197f1e2</span></code> (<code class="docutils literal notranslate"><span class="pre">feat/window-adaptation-fisher-diag</span></code>,
-2026-07-04), <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix._fisher_diagonal_inverse_mass</span></code>.
-The branch is DORMANT — its <code class="docutils literal notranslate"><span class="pre">window_adaptation</span></code> wiring (the diagonal
-estimator opt-in in <code class="docutils literal notranslate"><span class="pre">mass_matrix_adaptation</span></code>) is NOT reproduced here and
-stays dormant.  Only the pure estimator math is extracted.</p>
+2026-07-04), <code class="docutils literal notranslate"><span class="pre">blackjax.adaptation.mass_matrix._fisher_diagonal_inverse_mass</span></code>.</p>
 <p><strong>Near-zero gradient protection</strong> (same as <a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a>):
 <code class="docutils literal notranslate"><span class="pre">Var[∇</span> <span class="pre">log</span> <span class="pre">p]</span></code> is floored at <code class="docutils literal notranslate"><span class="pre">1e-10</span></code> before division, and the result
 is clipped to nutpie’s <code class="docutils literal notranslate"><span class="pre">[1e-20,</span> <span class="pre">1e20]</span></code> range before squaring.</p>
@@ -851,6 +913,10 @@ is clipped to nutpie’s <code class="docutils literal notranslate"><span class=
 computed with the same normalisation (Bessel-corrected, <code class="docutils literal notranslate"><span class="pre">n-1</span></code> divisor,
 via <a class="reference internal" href="#blackjax.adaptation.metric_estimators.welford_diagonal" title="blackjax.adaptation.metric_estimators.welford_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">welford_diagonal()</span></code></a>); the ratio is invariant to a shared
 <code class="docutils literal notranslate"><span class="pre">n</span></code> vs <code class="docutils literal notranslate"><span class="pre">n-1</span></code> factor (branch <code class="docutils literal notranslate"><span class="pre">b197f1e2</span></code> commit message, verified).</p>
+<p><strong>Implementation:</strong> thin wrapper over
+<a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments" title="blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_diagonal_from_moments()</span></code></a> — computes Bessel-corrected
+per-coordinate variances via two <a class="reference internal" href="#blackjax.adaptation.metric_estimators.welford_diagonal" title="blackjax.adaptation.metric_estimators.welford_diagonal"><code class="xref py py-func docutils literal notranslate"><span class="pre">welford_diagonal()</span></code></a> scans, then
+delegates all arithmetic to the from-moments entry point.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -964,6 +1030,7 @@ uniform weights, not the unbiased <span class="math notranslate nohighlight">\(n
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.welford_diagonal"><code class="docutils literal notranslate"><span class="pre">welford_diagonal()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.welford_dense"><code class="docutils literal notranslate"><span class="pre">welford_dense()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments"><code class="docutils literal notranslate"><span class="pre">fisher_score_diagonal_from_moments()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.fisher_score_diagonal"><code class="docutils literal notranslate"><span class="pre">fisher_score_diagonal()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_estimators.sample_variance_diagonal"><code class="docutils literal notranslate"><span class="pre">sample_variance_diagonal()</span></code></a></li>
 </ul>

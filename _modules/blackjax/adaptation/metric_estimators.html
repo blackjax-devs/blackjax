@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g9c203305c" />
+  <meta name="docsearch:version" content="0.1.dev1+gdbe43b69e" />
   </head>
   
   
@@ -550,6 +550,7 @@
     <span class="s2">&quot;sample_covariance_eigh_low_rank&quot;</span><span class="p">,</span>
     <span class="s2">&quot;welford_diagonal&quot;</span><span class="p">,</span>
     <span class="s2">&quot;welford_dense&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fisher_score_diagonal_from_moments&quot;</span><span class="p">,</span>
     <span class="s2">&quot;fisher_score_diagonal&quot;</span><span class="p">,</span>
     <span class="s2">&quot;sample_variance_diagonal&quot;</span><span class="p">,</span>
 <span class="p">]</span>
@@ -1111,6 +1112,80 @@
 
 
 
+<div class="viewcode-block" id="fisher_score_diagonal_from_moments">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">fisher_score_diagonal_from_moments</span><span class="p">(</span>
+    <span class="n">variance</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">gradient_variance</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sa">r</span><span class="sd">&quot;&quot;&quot;Core math of the Fisher-diagonal estimator from pre-computed variances.</span>
+
+<span class="sd">    Computes :math:`\sigma^2 = \sqrt{\mathrm{Var}[x] / \mathrm{Var}[\nabla</span>
+<span class="sd">    \log p]}` per coordinate — the same formula as :func:`fisher_score_diagonal`</span>
+<span class="sd">    but operating on **already-computed** per-coordinate variances rather than</span>
+<span class="sd">    raw draw arrays.</span>
+
+<span class="sd">    This entry point is intended for callers that accumulate moments online</span>
+<span class="sd">    (e.g. via :class:`~blackjax.adaptation.metric_buffers._FisherMomentBlock`)</span>
+<span class="sd">    and want to avoid materialising the full draw array.  The caller is</span>
+<span class="sd">    responsible for supplying Bessel-corrected (or otherwise normalised)</span>
+<span class="sd">    variances; the ratio is invariant to a shared ``n`` vs ``n-1`` factor so</span>
+<span class="sd">    either convention is acceptable for the diagonal estimator.</span>
+
+<span class="sd">    **Near-zero gradient protection** (identical to :func:`fisher_score_low_rank`</span>
+<span class="sd">    and :func:`fisher_score_diagonal`): ``gradient_variance`` is floored at</span>
+<span class="sd">    ``1e-10`` before division, and the result is clipped to nutpie&#39;s</span>
+<span class="sd">    ``[1e-20, 1e20]`` range **before squaring**.</span>
+
+<span class="sd">    **Pairing insensitivity:** this function consumes only the marginal variances</span>
+<span class="sd">    ``Var[x_i]`` and ``Var[∇log p_i]`` per coordinate.  The estimator is</span>
+<span class="sd">    therefore insensitive to which draw is paired with which gradient within a</span>
+<span class="sd">    batch — any per-batch pairing permutation produces the same ``variance`` and</span>
+<span class="sd">    ``gradient_variance`` inputs and hence the same output.  If cross-moment</span>
+<span class="sd">    information (e.g. draw-grad covariance) is required, a future extension to</span>
+<span class="sd">    this signature must add those moments explicitly.</span>
+
+<span class="sd">    **Planned extension note:** this entry point is intentionally separate so</span>
+<span class="sd">    that future updates to the estimator (e.g. adding draw-grad cross moments)</span>
+<span class="sd">    can extend the *from_moments* signature without changing the *raw-draws*</span>
+<span class="sd">    wrapper :func:`fisher_score_diagonal`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    variance</span>
+<span class="sd">        Shape ``(d,)``.  Per-coordinate position variance</span>
+<span class="sd">        :math:`\mathrm{Var}[x]`.  Must be non-negative; typically</span>
+<span class="sd">        Bessel-corrected.</span>
+<span class="sd">    gradient_variance</span>
+<span class="sd">        Shape ``(d,)``.  Per-coordinate log-density-gradient variance</span>
+<span class="sd">        :math:`\mathrm{Var}[\nabla \log p]`.  Must be non-negative; floored</span>
+<span class="sd">        at ``1e-10`` internally.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array, shape ``(d,)``</span>
+<span class="sd">        Diagonal inverse mass matrix :math:`\sigma^2 = \sigma_{\text{clip}}^2`</span>
+<span class="sd">        where :math:`\sigma_{\text{clip}} = \operatorname{clip}(\sigma,\,</span>
+<span class="sd">        10^{-20},\, 10^{20})` and :math:`\sigma = (\mathrm{Var}[x] /</span>
+<span class="sd">        \max(\mathrm{Var}[\nabla \log p],\, 10^{-10}))^{1/4}`.</span>
+
+<span class="sd">        The clip is on the **scale** :math:`\sigma`, not on :math:`\sigma^2`,</span>
+<span class="sd">        so the returned values span :math:`[10^{-40}, 10^{40}]`.  Under</span>
+<span class="sd">        float32, :math:`\sigma^2` overflows to ``inf`` when :math:`\sigma</span>
+<span class="sd">        \approx 10^{20}` (float32 max :math:`\approx 3.4 \times 10^{38}`, so</span>
+<span class="sd">        :math:`10^{40}` overflows); the caller must handle this if float32</span>
+<span class="sd">        inputs can drive :math:`\sigma` to its clip boundary.  This matches</span>
+<span class="sd">        :func:`fisher_score_low_rank`&#39;s ``sigma`` clip and is not changed here</span>
+<span class="sd">        to preserve numerical consistency between the two estimators.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">variance</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">gradient_variance</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="mf">0.25</span>
+    <span class="p">)</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="mf">1e-20</span><span class="p">,</span> <span class="mf">1e20</span><span class="p">)</span>  <span class="c1"># nutpie range</span>
+    <span class="k">return</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span></div>
+
+
+
 <div class="viewcode-block" id="fisher_score_diagonal">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_diagonal">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">fisher_score_diagonal</span><span class="p">(</span>
@@ -1132,9 +1207,6 @@
 
 <span class="sd">    **Extracted from:** branch ``b197f1e2`` (``feat/window-adaptation-fisher-diag``,</span>
 <span class="sd">    2026-07-04), ``blackjax.adaptation.mass_matrix._fisher_diagonal_inverse_mass``.</span>
-<span class="sd">    The branch is DORMANT — its ``window_adaptation`` wiring (the diagonal</span>
-<span class="sd">    estimator opt-in in ``mass_matrix_adaptation``) is NOT reproduced here and</span>
-<span class="sd">    stays dormant.  Only the pure estimator math is extracted.</span>
 
 <span class="sd">    **Near-zero gradient protection** (same as :func:`fisher_score_low_rank`):</span>
 <span class="sd">    ``Var[∇ log p]`` is floored at ``1e-10`` before division, and the result</span>
@@ -1144,6 +1216,11 @@
 <span class="sd">    computed with the same normalisation (Bessel-corrected, ``n-1`` divisor,</span>
 <span class="sd">    via :func:`welford_diagonal`); the ratio is invariant to a shared</span>
 <span class="sd">    ``n`` vs ``n-1`` factor (branch ``b197f1e2`` commit message, verified).</span>
+
+<span class="sd">    **Implementation:** thin wrapper over</span>
+<span class="sd">    :func:`fisher_score_diagonal_from_moments` — computes Bessel-corrected</span>
+<span class="sd">    per-coordinate variances via two :func:`welford_diagonal` scans, then</span>
+<span class="sd">    delegates all arithmetic to the from-moments entry point.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1159,10 +1236,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">var_x</span> <span class="o">=</span> <span class="n">welford_diagonal</span><span class="p">(</span><span class="n">draws</span><span class="p">)</span>  <span class="c1"># (d,)  Bessel-corrected</span>
     <span class="n">var_g</span> <span class="o">=</span> <span class="n">welford_diagonal</span><span class="p">(</span><span class="n">grads</span><span class="p">)</span>  <span class="c1"># (d,)</span>
-
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">var_x</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">var_g</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="mf">0.25</span><span class="p">)</span>
-    <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="mf">1e-20</span><span class="p">,</span> <span class="mf">1e20</span><span class="p">)</span>  <span class="c1"># nutpie range</span>
-    <span class="k">return</span> <span class="n">sigma</span><span class="o">**</span><span class="mi">2</span></div>
+    <span class="k">return</span> <span class="n">fisher_score_diagonal_from_moments</span><span class="p">(</span><span class="n">var_x</span><span class="p">,</span> <span class="n">var_g</span><span class="p">)</span></div>
 
 
 

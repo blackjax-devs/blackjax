@@ -20,6 +20,7 @@ Classes
 
    blackjax.adaptation.mass_matrix.WelfordAlgorithmState
    blackjax.adaptation.mass_matrix.MassMatrixAdaptationState
+   blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState
 
 
 Functions
@@ -84,13 +85,69 @@ Module Contents
       :type:  WelfordAlgorithmState
 
 
-.. py:function:: mass_matrix_adaptation(is_diagonal_matrix: bool = True, imm_shrinkage_to_previous: float = 0.0) -> tuple[Callable, Callable, Callable]
+.. py:class:: FisherMassMatrixAdaptationState
+
+
+
+   State for the Fisher-diagonal mass matrix adaptation.
+
+   Used when ``diagonal_estimator="fisher"`` is passed to
+   :func:`mass_matrix_adaptation`.  Replaces the single Welford state in
+   :class:`MassMatrixAdaptationState` with a
+   :class:`~blackjax.adaptation.metric_buffers._FisherMomentBlock` that
+   accumulates per-coordinate position AND gradient variance in CGL-mergeable
+   diagonal form.
+
+   :param inverse_mass_matrix: Current value of the (diagonal) inverse mass matrix, shape ``(d,)``.
+   :param fisher_block: CGL-mergeable moment block accumulating diagonal position and gradient
+                        statistics for the current window.  Reset to zeros at each
+                        :func:`mass_matrix_adaptation` ``final()`` call (window boundary).
+
+   .. rubric:: Notes
+
+   The Fisher-diagonal IMM is ``sqrt(Var[x] / Var[∇ log p])`` per coordinate
+   (see
+   :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments`).
+   This state type accumulates the moments needed to compute those per-window
+   variances without storing raw draw arrays.  The IMM computation is
+   deliberately NOT performed inside ``mass_matrix_adaptation``'s ``final()``
+   — it is composed by the consumer (:func:`~blackjax.adaptation.window_adaptation.base`)
+   to avoid a circular import between this module and ``metric_estimators``.
+
+
+   .. py:attribute:: inverse_mass_matrix
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: fisher_block
+      :type:  blackjax.adaptation.metric_buffers._FisherMomentBlock
+
+
+.. py:function:: mass_matrix_adaptation(is_diagonal_matrix: bool = True, imm_shrinkage_to_previous: float = 0.0, diagonal_estimator: str = 'welford') -> tuple[Callable, Callable, Callable]
 
    Adapts the values in the mass matrix by computing the covariance
    between parameters.
 
    :param is_diagonal_matrix: When True the algorithm adapts and returns a diagonal mass matrix
                               (default), otherwise adaps and returns a dense mass matrix.
+   :param diagonal_estimator: Which diagonal-variance estimator to use for the (window-local)
+                              inverse mass matrix.  ``"welford"`` (default) is Stan's classic
+                              online-covariance estimator and reproduces all pre-existing behavior
+                              exactly.  ``"fisher"`` instead uses the Fisher-divergence-minimising
+                              diagonal estimator of :cite:p:`seyboldt2026preconditioning` (see
+                              :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal`),
+                              which additionally requires the log-density gradient at each
+                              accumulated position (passed to ``update`` as ``grad``).
+
+                              Constraints for ``"fisher"``:
+
+                              * ``is_diagonal_matrix=True`` is required (the Fisher-diagonal
+                                estimator only produces a diagonal metric).
+                              * ``imm_shrinkage_to_previous=0.0`` is required (the Fisher estimator
+                                does not blend with a previous IMM or an identity target).
+
+                              Both constraints are validated at construction time with a
+                              ``ValueError`` before any JIT tracing.
    :param imm_shrinkage_to_previous: Bayesian pseudo-count controlling shrinkage of the per-window adapted
                                      IMM toward the previous window's IMM. Interpretable as "the number of
                                      imaginary additional samples in the current window's accumulator that

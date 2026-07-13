@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g9c203305c" />
+  <meta name="docsearch:version" content="0.1.dev1+gdbe43b69e" />
   </head>
   
   
@@ -640,33 +640,125 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">_FisherMomentBlock</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;CGL-mergeable sufficient statistics for a future moments-consuming</span>
-<span class="sd">    Fisher estimator (position + gradient moments).</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;CGL-mergeable sufficient statistics for the diagonal Fisher estimator</span>
+<span class="sd">    (position + gradient moments, diagonal variant).</span>
 
-<span class="sd">    Companion type for a moments-based Fisher variant that would replace</span>
-<span class="sd">    ``fisher_score_low_rank``&#39;s raw-array signature.  The call-site wiring</span>
-<span class="sd">    is deliberate follow-up work; use :class:`MomentBlock` for currently-wired</span>
-<span class="sd">    consumers (``sample_covariance_eigh_low_rank``).</span>
+<span class="sd">    Accumulation state for</span>
+<span class="sd">    :class:`~blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState`.</span>
+<span class="sd">    The diagonal variant stores O(d) gradient moments — no d×d cross-moment</span>
+<span class="sd">    matrix, no raw draw ring.</span>
+
+<span class="sd">    The ``count`` field uses the **ambient float dtype** (``jnp.zeros(())``</span>
+<span class="sd">    with no explicit dtype specification) so that CGL merge weights are</span>
+<span class="sd">    computed at the full precision available in the calling x64 context.</span>
+<span class="sd">    Calling :func:`_fisher_block_init` inside a ``jax.enable_x64()`` context</span>
+<span class="sd">    gives an f64 count; outside gives f32 — consistent with the x64 parity</span>
+<span class="sd">    contract of this module.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
 <span class="sd">    count</span>
-<span class="sd">        Number of samples accumulated, scalar ``()``.</span>
+<span class="sd">        Number of samples accumulated, scalar ``()``.  Ambient float dtype.</span>
 <span class="sd">    mean_x</span>
 <span class="sd">        Position mean, shape ``(d,)``.</span>
 <span class="sd">    m2_x</span>
-<span class="sd">        Position sum of squared deviations, shape ``(d, d)``.</span>
+<span class="sd">        Position sum of squared deviations (diagonal), shape ``(d,)``.</span>
 <span class="sd">    mean_g</span>
 <span class="sd">        Gradient mean, shape ``(d,)``.</span>
 <span class="sd">    m2_g</span>
-<span class="sd">        Gradient sum of squared deviations, shape ``(d, d)``.</span>
+<span class="sd">        Gradient sum of squared deviations (diagonal), shape ``(d,)``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Diagonal-only: ``m2_x`` and ``m2_g`` have shape ``(d,)`` (not ``(d, d)``).</span>
+<span class="sd">    This matches the Fisher-diagonal estimator requirement — only per-coordinate</span>
+<span class="sd">    gradient variance is needed; no d×d cross-moment is accumulated.</span>
+
+<span class="sd">    See :func:`_fisher_block_init`, :func:`_fisher_block_update_one`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">count</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># ()</span>
+    <span class="n">count</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># ()  ambient float dtype</span>
     <span class="n">mean_x</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (d,)</span>
-    <span class="n">m2_x</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (d, d)</span>
+    <span class="n">m2_x</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (d,)  diagonal, sum of squared deviations</span>
     <span class="n">mean_g</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (d,)</span>
-    <span class="n">m2_g</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (d, d)</span>
+    <span class="n">m2_g</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (d,)  diagonal, sum of squared deviations</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fisher_block_init</span><span class="p">(</span><span class="n">d</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_FisherMomentBlock</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a zero-initialised :class:`_FisherMomentBlock` for dimension ``d``.</span>
+
+<span class="sd">    The ``count`` field uses the ambient float dtype (``jnp.zeros(())`` with</span>
+<span class="sd">    no explicit ``dtype=`` argument) so that CGL merge weights are computed at</span>
+<span class="sd">    the full precision available in the calling context.  Call inside</span>
+<span class="sd">    ``jax.enable_x64()`` to get f64 counts.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    d</span>
+<span class="sd">        Dimension of the position and gradient vectors.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    _FisherMomentBlock</span>
+<span class="sd">        All-zero block ready for :func:`_fisher_block_update_one`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_FisherMomentBlock</span><span class="p">(</span>
+        <span class="n">count</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(()),</span>
+        <span class="n">mean_x</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,)),</span>
+        <span class="n">m2_x</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,)),</span>
+        <span class="n">mean_g</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,)),</span>
+        <span class="n">m2_g</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,)),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_fisher_block_update_one</span><span class="p">(</span>
+    <span class="n">block</span><span class="p">:</span> <span class="n">_FisherMomentBlock</span><span class="p">,</span>
+    <span class="n">position_flat</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">grad_flat</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_FisherMomentBlock</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Welford (single-draw CGL) update of a :class:`_FisherMomentBlock`.</span>
+
+<span class="sd">    Incorporates one new ``(position, gradient)`` pair into the running</span>
+<span class="sd">    diagonal moment statistics via the online Welford recurrence.  Equivalent</span>
+<span class="sd">    to a CGL merge of the existing block with a size-1 block for the new draw,</span>
+<span class="sd">    but avoids the intermediate allocation.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    block</span>
+<span class="sd">        Existing block (may be empty, ``count=0``).</span>
+<span class="sd">    position_flat</span>
+<span class="sd">        Flat position vector, shape ``(d,)``.  Must already be ravelled.</span>
+<span class="sd">    grad_flat</span>
+<span class="sd">        Flat log-density gradient vector, shape ``(d,)``.  Must already be</span>
+<span class="sd">        ravelled.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    _FisherMomentBlock</span>
+<span class="sd">        Updated block with the new draw incorporated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">count</span> <span class="o">+</span> <span class="mf">1.0</span>
+
+    <span class="c1"># Welford update for position</span>
+    <span class="n">delta_x</span> <span class="o">=</span> <span class="n">position_flat</span> <span class="o">-</span> <span class="n">block</span><span class="o">.</span><span class="n">mean_x</span>
+    <span class="n">mean_x</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">mean_x</span> <span class="o">+</span> <span class="n">delta_x</span> <span class="o">/</span> <span class="n">count</span>
+    <span class="n">updated_delta_x</span> <span class="o">=</span> <span class="n">position_flat</span> <span class="o">-</span> <span class="n">mean_x</span>
+    <span class="n">m2_x</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">m2_x</span> <span class="o">+</span> <span class="n">delta_x</span> <span class="o">*</span> <span class="n">updated_delta_x</span>  <span class="c1"># diagonal: element-wise product</span>
+
+    <span class="c1"># Welford update for gradient</span>
+    <span class="n">delta_g</span> <span class="o">=</span> <span class="n">grad_flat</span> <span class="o">-</span> <span class="n">block</span><span class="o">.</span><span class="n">mean_g</span>
+    <span class="n">mean_g</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">mean_g</span> <span class="o">+</span> <span class="n">delta_g</span> <span class="o">/</span> <span class="n">count</span>
+    <span class="n">updated_delta_g</span> <span class="o">=</span> <span class="n">grad_flat</span> <span class="o">-</span> <span class="n">mean_g</span>
+    <span class="n">m2_g</span> <span class="o">=</span> <span class="n">block</span><span class="o">.</span><span class="n">m2_g</span> <span class="o">+</span> <span class="n">delta_g</span> <span class="o">*</span> <span class="n">updated_delta_g</span>  <span class="c1"># diagonal: element-wise product</span>
+
+    <span class="k">return</span> <span class="n">_FisherMomentBlock</span><span class="p">(</span>
+        <span class="n">count</span><span class="o">=</span><span class="n">count</span><span class="p">,</span>
+        <span class="n">mean_x</span><span class="o">=</span><span class="n">mean_x</span><span class="p">,</span>
+        <span class="n">m2_x</span><span class="o">=</span><span class="n">m2_x</span><span class="p">,</span>
+        <span class="n">mean_g</span><span class="o">=</span><span class="n">mean_g</span><span class="p">,</span>
+        <span class="n">m2_g</span><span class="o">=</span><span class="n">m2_g</span><span class="p">,</span>
+    <span class="p">)</span>
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
