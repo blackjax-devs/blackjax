@@ -99,7 +99,8 @@ class FisherMassMatrixAdaptationState(NamedTuple):
     This state type accumulates the moments needed to compute those per-window
     variances without storing raw draw arrays.  The IMM computation is
     deliberately NOT performed inside ``mass_matrix_adaptation``'s ``final()``
-    — it is composed by the consumer (:func:`~blackjax.adaptation.window_adaptation.base`)
+    — it is composed by the consumer
+    (:func:`~blackjax.adaptation.metric_recipes._build_fisher_diag_core`)
     to avoid a circular import between this module and ``metric_estimators``.
     """
 
@@ -307,8 +308,9 @@ def mass_matrix_adaptation(
         This separation avoids a circular import
         (``metric_estimators`` imports ``welford_algorithm`` from this module,
         so this module must not import from ``metric_estimators``).
-        :func:`~blackjax.adaptation.window_adaptation.base` composes the
-        estimator call in its ``slow_final`` closure for the Fisher path.
+        :func:`~blackjax.adaptation.metric_recipes._build_fisher_diag_core`
+        composes the estimator call in its ``final`` closure for the Fisher
+        path.
 
         **Welford path**: the IMM is regularized as a convex combination of
         this window's empirical covariance (weight: ``count / denom``), the
@@ -321,7 +323,7 @@ def mass_matrix_adaptation(
         """
         if isinstance(mm_state, FisherMassMatrixAdaptationState):
             # Reset the block for the next window; pass the existing IMM through
-            # unchanged (the consumer — window_adaptation.base's slow_final —
+            # unchanged (the consumer — metric_recipes._build_fisher_diag_core.final —
             # reads the block variances BEFORE this call and stitches in the
             # new IMM after the reset).
             ndims = mm_state.fisher_block.m2_x.shape[0]
