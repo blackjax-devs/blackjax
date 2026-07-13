@@ -23,11 +23,17 @@ from typing import Callable, NamedTuple
 import jax
 import jax.numpy as jnp
 
+from blackjax.adaptation.metric_buffers import (
+    _fisher_block_init,
+    _fisher_block_update_one,
+    _FisherMomentBlock,
+)
 from blackjax.types import Array, ArrayLike
 
 __all__ = [
     "WelfordAlgorithmState",
     "MassMatrixAdaptationState",
+    "FisherMassMatrixAdaptationState",
     "mass_matrix_adaptation",
     "welford_algorithm",
 ]
@@ -66,9 +72,41 @@ class MassMatrixAdaptationState(NamedTuple):
     wc_state: WelfordAlgorithmState
 
 
+class FisherMassMatrixAdaptationState(NamedTuple):
+    """State for the Fisher-diagonal mass matrix adaptation.
+
+    Used when ``diagonal_estimator="fisher"`` is passed to
+    :func:`mass_matrix_adaptation`.  Replaces the single Welford state in
+    :class:`MassMatrixAdaptationState` with a
+    :class:`~blackjax.adaptation.metric_buffers._FisherMomentBlock` that
+    accumulates per-coordinate position AND gradient variance in CGL-mergeable
+    diagonal form.
+
+    Parameters
+    ----------
+    inverse_mass_matrix
+        Current value of the (diagonal) inverse mass matrix, shape ``(d,)``.
+    fisher_block
+        CGL-mergeable moment block accumulating diagonal position and gradient
+        statistics for the current window.  Reset to zeros at each
+        :func:`mass_matrix_adaptation` ``final()`` call (window boundary).
+
+    Notes
+    -----
+    The Fisher-diagonal IMM is ``sqrt(Var[x] / Var[∇ log p])`` per coordinate
+    (see :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal`).
+    This state type accumulates the moments needed to compute those per-window
+    variances without storing raw draw arrays.
+    """
+
+    inverse_mass_matrix: Array  # (d,)
+    fisher_block: _FisherMomentBlock
+
+
 def mass_matrix_adaptation(
     is_diagonal_matrix: bool = True,
     imm_shrinkage_to_previous: float = 0.0,
+    diagonal_estimator: str = "welford",
 ) -> tuple[Callable, Callable, Callable]:
     """Adapts the values in the mass matrix by computing the covariance
     between parameters.
@@ -78,6 +116,25 @@ def mass_matrix_adaptation(
     is_diagonal_matrix
         When True the algorithm adapts and returns a diagonal mass matrix
         (default), otherwise adaps and returns a dense mass matrix.
+    diagonal_estimator
+        Which diagonal-variance estimator to use for the (window-local)
+        inverse mass matrix.  ``"welford"`` (default) is Stan's classic
+        online-covariance estimator and reproduces all pre-existing behavior
+        exactly.  ``"fisher"`` instead uses the Fisher-divergence-minimising
+        diagonal estimator of :cite:p:`seyboldt2026preconditioning` (see
+        :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal`),
+        which additionally requires the log-density gradient at each
+        accumulated position (passed to ``update`` as ``grad``).
+
+        Constraints for ``"fisher"``:
+
+        * ``is_diagonal_matrix=True`` is required (the Fisher-diagonal
+          estimator only produces a diagonal metric).
+        * ``imm_shrinkage_to_previous=0.0`` is required (the Fisher estimator
+          does not blend with a previous IMM or an identity target).
+
+        Both constraints are validated at construction time with a
+        ``ValueError`` before any JIT tracing.
     imm_shrinkage_to_previous
         Bayesian pseudo-count controlling shrinkage of the per-window adapted
         IMM toward the previous window's IMM. Interpretable as "the number of
@@ -127,10 +184,28 @@ def mass_matrix_adaptation(
         state.
 
     """
+    if diagonal_estimator not in ("welford", "fisher"):
+        raise ValueError(
+            f"diagonal_estimator must be 'welford' or 'fisher', "
+            f"got {diagonal_estimator!r}"
+        )
+    if diagonal_estimator == "fisher" and not is_diagonal_matrix:
+        raise ValueError(
+            "diagonal_estimator='fisher' requires is_diagonal_matrix=True "
+            "(the Fisher-divergence estimator only produces a diagonal metric); "
+            "got is_diagonal_matrix=False"
+        )
     if imm_shrinkage_to_previous < 0.0:
         raise ValueError(
             f"imm_shrinkage_to_previous must be >= 0.0, "
             f"got {imm_shrinkage_to_previous}"
+        )
+    if diagonal_estimator == "fisher" and imm_shrinkage_to_previous != 0.0:
+        raise ValueError(
+            "diagonal_estimator='fisher' does not support "
+            "imm_shrinkage_to_previous != 0.0: the Fisher estimator does not "
+            "blend with the previous window's IMM or an identity target; "
+            f"got imm_shrinkage_to_previous={imm_shrinkage_to_previous}"
         )
 
     wc_init, wc_update, wc_final = welford_algorithm(is_diagonal_matrix)
@@ -138,7 +213,7 @@ def mass_matrix_adaptation(
     def init(
         n_dims: int,
         initial_inverse_mass_matrix: Array | None = None,
-    ) -> MassMatrixAdaptationState:
+    ) -> MassMatrixAdaptationState | FisherMassMatrixAdaptationState:
         """Initialize the matrix adaptation.
 
         Parameters
@@ -166,45 +241,102 @@ def mass_matrix_adaptation(
         else:
             inverse_mass_matrix = jnp.asarray(initial_inverse_mass_matrix)
 
-        wc_state = wc_init(n_dims)
+        if diagonal_estimator == "fisher":
+            return FisherMassMatrixAdaptationState(
+                inverse_mass_matrix=inverse_mass_matrix,
+                fisher_block=_fisher_block_init(n_dims),
+            )
 
+        wc_state = wc_init(n_dims)
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
     def update(
-        mm_state: MassMatrixAdaptationState, position: ArrayLike
-    ) -> MassMatrixAdaptationState:
+        mm_state: MassMatrixAdaptationState | FisherMassMatrixAdaptationState,
+        position: ArrayLike,
+        grad: ArrayLike | None = None,
+    ) -> MassMatrixAdaptationState | FisherMassMatrixAdaptationState:
         """Update the algorithm's state.
 
         Parameters
         ----------
-        state:
-            The current state of the mass matrix adapation.
-        position:
+        mm_state
+            The current state of the mass matrix adaptation.
+        position
             The current position of the chain.
+        grad
+            The log-density gradient at ``position``.  Required when
+            ``diagonal_estimator='fisher'`` (ignored and may be ``None``
+            otherwise).
 
         """
+        if isinstance(mm_state, FisherMassMatrixAdaptationState):
+            position_flat, _ = jax.flatten_util.ravel_pytree(position)
+            grad_flat, _ = jax.flatten_util.ravel_pytree(grad)
+            new_block = _fisher_block_update_one(
+                mm_state.fisher_block, position_flat, grad_flat
+            )
+            return FisherMassMatrixAdaptationState(
+                inverse_mass_matrix=mm_state.inverse_mass_matrix,
+                fisher_block=new_block,
+            )
+
         inverse_mass_matrix, wc_state = mm_state
         position, _ = jax.flatten_util.ravel_pytree(position)
         wc_state = wc_update(wc_state, position)
         return MassMatrixAdaptationState(inverse_mass_matrix, wc_state)
 
-    def final(mm_state: MassMatrixAdaptationState) -> MassMatrixAdaptationState:
+    def final(
+        mm_state: MassMatrixAdaptationState | FisherMassMatrixAdaptationState,
+    ) -> MassMatrixAdaptationState | FisherMassMatrixAdaptationState:
         """Final iteration of the mass matrix adaptation.
 
-        In this step we compute the mass matrix from the covariance matrix computed
-        by the Welford algorithm, and re-initialize the later.
+        Computes the inverse mass matrix from the current window's accumulated
+        statistics, then resets the accumulator for the next window.
 
-        The IMM is regularized as a convex combination of three terms:
-        1. This window's empirical covariance (weight: count / denom)
-        2. The previous window's IMM (weight: imm_shrinkage_to_previous / denom)
-        3. A small identity matrix 1e-3·I (weight: 5 / denom)
+        **Welford path** (default): the IMM is regularized as a convex
+        combination of this window's empirical covariance (weight:
+        ``count / denom``), the previous window's IMM (weight:
+        ``imm_shrinkage_to_previous / denom``), and a small identity matrix
+        (weight: ``5 / denom``), where ``denom = count + 5 +
+        imm_shrinkage_to_previous``.  When ``imm_shrinkage_to_previous=0.0``
+        (default) this reduces to the standard Stan formula.
 
-        where denom = count + 5 + imm_shrinkage_to_previous.
-
-        When imm_shrinkage_to_previous = 0.0 (default), this reduces to the
-        standard Stan formula with only the first and third terms.
+        **Fisher path** (``diagonal_estimator='fisher'``): the IMM is
+        ``sqrt(Var[x] / Var[∇ log p])`` per coordinate, computed via
+        :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal`
+        from the window's accumulated position and gradient moment statistics.
+        The Welford regularization does NOT apply on the Fisher path.
 
         """
+        if isinstance(mm_state, FisherMassMatrixAdaptationState):
+            # Lazy import avoids a circular dependency: metric_estimators imports
+            # welford_algorithm from this module; importing at top level would
+            # form a cycle (mass_matrix → metric_estimators → mass_matrix).
+            from blackjax.adaptation.metric_estimators import fisher_score_diagonal
+
+            block = mm_state.fisher_block
+            # Bessel-corrected per-coordinate variances from the moment block.
+            denom = jnp.maximum(block.count - 1.0, 1.0)
+            var_x = block.m2_x / denom  # (d,)
+            var_g = block.m2_g / denom  # (d,)
+            # Call the canonical estimator via a 2-row synthetic batch.
+            # For n=2 draws [h, -h] (centered at 0, h = sqrt(var/2)), Welford
+            # gives exactly var as the Bessel-corrected variance — so
+            # fisher_score_diagonal recovers var_x and var_g without raw draws.
+            # This preserves the constraint "estimator math lives only in
+            # metric_estimators.fisher_score_diagonal" while working with the
+            # CGL moment-block accumulation (no raw draw storage).
+            half_x = jnp.sqrt(jnp.maximum(var_x, 0.0) / 2)
+            half_g = jnp.sqrt(jnp.maximum(var_g, 0.0) / 2)
+            draws = jnp.stack([half_x, -half_x])  # (2, d)
+            grads = jnp.stack([half_g, -half_g])  # (2, d)
+            inverse_mass_matrix = fisher_score_diagonal(draws, grads)
+            ndims = inverse_mass_matrix.shape[-1]
+            return FisherMassMatrixAdaptationState(
+                inverse_mass_matrix=inverse_mass_matrix,
+                fisher_block=_fisher_block_init(ndims),
+            )
+
         previous_imm, wc_state = mm_state
         covariance, count, mean = wc_final(wc_state)
 

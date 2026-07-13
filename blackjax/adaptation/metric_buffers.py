@@ -205,33 +205,180 @@ class MomentBlock(NamedTuple):
 
 
 class _FisherMomentBlock(NamedTuple):
-    """CGL-mergeable sufficient statistics for a future moments-consuming
-    Fisher estimator (position + gradient moments).
+    """CGL-mergeable sufficient statistics for the diagonal Fisher estimator
+    (position + gradient moments, diagonal variant).
 
-    Companion type for a moments-based Fisher variant that would replace
-    ``fisher_score_low_rank``'s raw-array signature.  The call-site wiring
-    is deliberate follow-up work; use :class:`MomentBlock` for currently-wired
-    consumers (``sample_covariance_eigh_low_rank``).
+    Accumulation state for
+    :class:`~blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState`.
+    The diagonal variant stores O(d) gradient moments — no d×d cross-moment
+    matrix, no raw draw ring.
+
+    The ``count`` field uses the **ambient float dtype** (``jnp.zeros(())``
+    with no explicit dtype specification) so that CGL merge weights are
+    computed at the full precision available in the calling x64 context.
+    Calling :func:`_fisher_block_init` inside a ``jax.enable_x64()`` context
+    gives an f64 count; outside gives f32 — consistent with the x64 parity
+    contract of this module.
 
     Parameters
     ----------
     count
-        Number of samples accumulated, scalar ``()``.
+        Number of samples accumulated, scalar ``()``.  Ambient float dtype.
     mean_x
         Position mean, shape ``(d,)``.
     m2_x
-        Position sum of squared deviations, shape ``(d, d)``.
+        Position sum of squared deviations (diagonal), shape ``(d,)``.
     mean_g
         Gradient mean, shape ``(d,)``.
     m2_g
-        Gradient sum of squared deviations, shape ``(d, d)``.
+        Gradient sum of squared deviations (diagonal), shape ``(d,)``.
+
+    Notes
+    -----
+    Diagonal-only: ``m2_x`` and ``m2_g`` have shape ``(d,)`` (not ``(d, d)``).
+    This matches the Fisher-diagonal estimator requirement — only per-coordinate
+    gradient variance is needed; no d×d cross-moment is accumulated.
+
+    See :func:`_fisher_block_init`, :func:`_fisher_block_update_one`,
+    :func:`_fisher_block_merge`.
     """
 
-    count: Array  # ()
+    count: Array  # ()  ambient float dtype
     mean_x: Array  # (d,)
-    m2_x: Array  # (d, d)
+    m2_x: Array  # (d,)  diagonal, sum of squared deviations
     mean_g: Array  # (d,)
-    m2_g: Array  # (d, d)
+    m2_g: Array  # (d,)  diagonal, sum of squared deviations
+
+
+def _fisher_block_init(d: int) -> _FisherMomentBlock:
+    """Return a zero-initialised :class:`_FisherMomentBlock` for dimension ``d``.
+
+    The ``count`` field uses the ambient float dtype (``jnp.zeros(())`` with
+    no explicit ``dtype=`` argument) so that CGL merge weights are computed at
+    the full precision available in the calling context.  Call inside
+    ``jax.enable_x64()`` to get f64 counts.
+
+    Parameters
+    ----------
+    d
+        Dimension of the position and gradient vectors.
+
+    Returns
+    -------
+    _FisherMomentBlock
+        All-zero block ready for :func:`_fisher_block_update_one`.
+    """
+    return _FisherMomentBlock(
+        count=jnp.zeros(()),
+        mean_x=jnp.zeros((d,)),
+        m2_x=jnp.zeros((d,)),
+        mean_g=jnp.zeros((d,)),
+        m2_g=jnp.zeros((d,)),
+    )
+
+
+def _fisher_block_update_one(
+    block: _FisherMomentBlock,
+    position_flat: Array,
+    grad_flat: Array,
+) -> _FisherMomentBlock:
+    """Welford (single-draw CGL) update of a :class:`_FisherMomentBlock`.
+
+    Incorporates one new ``(position, gradient)`` pair into the running
+    diagonal moment statistics via the online Welford recurrence.  Equivalent
+    to a CGL merge of the existing block with a size-1 block for the new draw,
+    but avoids the intermediate allocation.
+
+    Parameters
+    ----------
+    block
+        Existing block (may be empty, ``count=0``).
+    position_flat
+        Flat position vector, shape ``(d,)``.  Must already be ravelled.
+    grad_flat
+        Flat log-density gradient vector, shape ``(d,)``.  Must already be
+        ravelled.
+
+    Returns
+    -------
+    _FisherMomentBlock
+        Updated block with the new draw incorporated.
+    """
+    count = block.count + 1.0
+
+    # Welford update for position
+    delta_x = position_flat - block.mean_x
+    mean_x = block.mean_x + delta_x / count
+    updated_delta_x = position_flat - mean_x
+    m2_x = block.m2_x + delta_x * updated_delta_x  # diagonal: element-wise product
+
+    # Welford update for gradient
+    delta_g = grad_flat - block.mean_g
+    mean_g = block.mean_g + delta_g / count
+    updated_delta_g = grad_flat - mean_g
+    m2_g = block.m2_g + delta_g * updated_delta_g  # diagonal: element-wise product
+
+    return _FisherMomentBlock(
+        count=count,
+        mean_x=mean_x,
+        m2_x=m2_x,
+        mean_g=mean_g,
+        m2_g=m2_g,
+    )
+
+
+def _fisher_block_merge(
+    a: _FisherMomentBlock,
+    b: _FisherMomentBlock,
+) -> _FisherMomentBlock:
+    """CGL-merge two :class:`_FisherMomentBlock` instances.
+
+    Applies the parallel Chan–Golub–LeVeque recurrence
+    :cite:p:`chan1983algorithms` independently to the position and gradient
+    moment fields.  Semantics match :func:`cgl_merge_two` for each of the two
+    ``(count, mean, m2)`` pairs stored in the block.
+
+    Parameters
+    ----------
+    a, b
+        Two :class:`_FisherMomentBlock` instances to merge.
+
+    Returns
+    -------
+    _FisherMomentBlock
+        Merged block with combined statistics.  When both inputs are empty
+        (``count=0``), returns an all-zero block.
+    """
+    n_a = a.count
+    n_b = b.count
+    n_ab = n_a + n_b
+    safe_n = jnp.where(n_ab > 0, n_ab, jnp.ones_like(n_ab))
+
+    # Position CGL merge (diagonal)
+    delta_x = b.mean_x - a.mean_x
+    mean_x = a.mean_x + delta_x * (n_b / safe_n)
+    cross_x = delta_x * delta_x * (n_a * n_b / safe_n)
+    m2_x = a.m2_x + b.m2_x + cross_x
+
+    # Gradient CGL merge (diagonal)
+    delta_g = b.mean_g - a.mean_g
+    mean_g = a.mean_g + delta_g * (n_b / safe_n)
+    cross_g = delta_g * delta_g * (n_a * n_b / safe_n)
+    m2_g = a.m2_g + b.m2_g + cross_g
+
+    # Zero-guard: when both inputs are empty, return an all-zero block.
+    mean_x = jnp.where(n_ab > 0, mean_x, jnp.zeros_like(mean_x))
+    m2_x = jnp.where(n_ab > 0, m2_x, jnp.zeros_like(m2_x))
+    mean_g = jnp.where(n_ab > 0, mean_g, jnp.zeros_like(mean_g))
+    m2_g = jnp.where(n_ab > 0, m2_g, jnp.zeros_like(m2_g))
+
+    return _FisherMomentBlock(
+        count=n_ab,
+        mean_x=mean_x,
+        m2_x=m2_x,
+        mean_g=mean_g,
+        m2_g=m2_g,
+    )
 
 
 # ---------------------------------------------------------------------------
