@@ -64,14 +64,15 @@ Layer doctrine:
 - The METRIC CORE (:class:`MetricCore`) handles mass-matrix tuning only.
 - Step-size adaptation and the stage schedule live in the HOST
   (:mod:`~blackjax.adaptation.staged_adaptation`).
-- L3 step-size proxy independence (RFC §4.3): for HMC/NUTS, the dual-averaging
-  step-size proxy is the scalar Metropolis acceptance rate — NOT an eigenvalue
-  quantity of the adapted metric.  This differs from MCLMC-LRD where
-  step_size ∝ 1/√λ_max caused a 20.6×→1.27× effective-sample collapse (the
-  "ε-collapse" RFC finding).  For HMC/NUTS the full low-rank metric feeds the
-  MCMC kernel (correct coupling), and dual averaging reads only acceptance_rate
-  — L3 is naturally satisfied; no diagonal-reference split is needed.  This
-  analysis applies to ALL recipes in this module, including the low-rank slice.
+- Step-size/metric decoupling: for HMC/NUTS, the dual-averaging step-size proxy
+  is the scalar Metropolis acceptance rate — NOT an eigenvalue quantity of the
+  adapted metric.  This matters because in MCLMC-LRD, where step_size ∝ 1/√λ_max,
+  feeding the full low-rank metric to the proxy caused a previously observed
+  step-size collapse (effective-sample rate dropped 20.6×→1.27×).  For HMC/NUTS
+  the full low-rank metric feeds the MCMC kernel (correct coupling), and dual
+  averaging reads only acceptance_rate — the step-size/metric decoupling
+  principle is naturally satisfied; no diagonal-reference split is needed.  This
+  analysis applies to ALL recipes in this module.
 
 Notes
 -----
@@ -611,10 +612,11 @@ def _build_fisher_low_rank_core(
        ._compute_low_rank_metric` on the buffer, stores new sigma/mu_star/U/lam
        in ``inverse_mass_matrix`` and ``mu_star``, resets the buffer to zeros.
 
-    **L3 note** (RFC §4.3): the dual-averaging step-size proxy reads only the
-    scalar Metropolis acceptance rate, NOT an eigenvalue quantity — L3 is
-    naturally satisfied for HMC/NUTS regardless of metric rank.  See module
-    docstring for the full analysis.
+    **Step-size/metric decoupling**: the dual-averaging step-size proxy reads
+    only the scalar Metropolis acceptance rate, NOT an eigenvalue quantity of
+    the adapted metric — the decoupling principle is naturally satisfied for
+    HMC/NUTS regardless of metric rank.  See module docstring for the full
+    analysis.
 
     Parameters
     ----------
@@ -854,8 +856,9 @@ REGISTRY: dict[str, MetricRecipe] = {
             "Uses position AND gradient samples; requires x64 for float32 chains "
             "(see _compute_low_rank_metric dtype note).  Composes with any "
             "schedule_fn; pair with build_growing_window_schedule for the nutpie "
-            "schedule.  L3 is naturally satisfied for HMC/NUTS (acceptance rate "
-            "proxy is not an eigenvalue quantity — see module docstring)."
+            "schedule.  Step-size/metric decoupling is naturally satisfied for "
+            "HMC/NUTS (acceptance-rate proxy is not an eigenvalue quantity — "
+            "see module docstring)."
         ),
     ),
     "sample_cov_low_rank": MetricRecipe(

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for the slice-2 low-rank MetricCore recipes.
+"""Tests for the low-rank MetricCore recipes.
 
 Coverage:
 - :class:`LowRankMetricCoreState` field contract.
@@ -498,7 +498,7 @@ class LowRankRegistryTest(BlackJAXTest):
                 core = recipe.build_core(buffer_size=50)
                 self.assertIsInstance(core, MetricCore)
 
-    def test_all_slice2_names_present(self):
+    def test_all_low_rank_recipe_names_present(self):
         for name in ("fisher_low_rank", "sample_cov_low_rank"):
             with self.subTest(name=name):
                 self.assertIn(name, REGISTRY)
