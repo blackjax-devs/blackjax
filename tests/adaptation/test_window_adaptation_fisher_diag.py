@@ -237,6 +237,76 @@ class FisherDiagRecoveryTest(BlackJAXTest):
         self.assertIsInstance(state, FisherMassMatrixAdaptationState)
         self.assertEqual(int(state.fisher_block.count), 0)
 
+    def test_gradient_wire_accumulates_into_m2_g_not_m2_x(self):
+        """The gradient plumbing must feed grad into m2_g and position into
+        m2_x -- not the same buffer.  Failure mode: if grad is silently
+        replaced by position (e.g. ``update(state, position, position)``), the
+        block would hold Var[x] in BOTH m2_x and m2_g, so the ratio would be
+        identically 1.0 and the test would still pass -- this test closes that
+        gap by constructing a batch where Var[x] ≠ Var[g] by a known factor
+        and asserting the accumulated m2_g matches Var[g], not Var[x].
+
+        Failure modes caught:
+        - Severed gradient wire (grads := draws) → m2_g == m2_x → ratio = 1.
+        - Inverted ratio (m2_x used as m2_g) → imm ≈ 1/true_var instead of
+          true_var.
+        - Read-after-reset (m2_g = 0 from a reset block) → ratio = inf/max(0,
+          1e-10) → clipped constant, not true_var.
+        """
+        d = 3
+        # Use Var[x] = 4 * Var[g] so the ratio Var[x]/Var[g] = 4 per coordinate
+        # and IMM = sqrt(4) = 2 per coordinate -- distinct from 1 and from 1/2.
+        n = 1_000
+        key = self.next_key()
+        base = jax.random.normal(key, (n, d))
+        draws = base * 2.0  # Var[x] ≈ 4 per coord
+        grads = base * 1.0  # Var[g] ≈ 1 per coord  (same base → ratio exact = 4)
+
+        init, update, _ = mass_matrix_adaptation(
+            is_diagonal_matrix=True, diagonal_estimator="fisher"
+        )
+        state = init(d)
+
+        def body(state, xs):
+            x, g = xs
+            return update(state, x, g), None
+
+        state, _ = jax.lax.scan(body, state, (draws, grads))
+
+        block = state.fisher_block
+        denom = jnp.maximum(block.count - 1.0, 1.0)
+        var_x_acc = block.m2_x / denom
+        var_g_acc = block.m2_g / denom
+
+        # Since draws = 2 * base and grads = 1 * base (same base), the
+        # sample variance ratio is ALGEBRAICALLY exact: var_x = 4 * var_g
+        # regardless of the realised sample variance of base.
+        np.testing.assert_allclose(
+            np.asarray(var_x_acc / var_g_acc),
+            np.ones(d) * 4.0,
+            rtol=1e-4,
+            err_msg="var_x / var_g must be exactly 4 (draws = 2 * grads)",
+        )
+
+        # Confirm the gradient buffer is the smaller one (~1), not the larger
+        # one (~4).  rtol=0.2 handles n=1_000 sampling noise (std error ~0.045)
+        # while excluding the wrong-buffer failure (which would give ~4 here).
+        np.testing.assert_allclose(
+            np.asarray(var_g_acc),
+            np.ones(d),
+            rtol=0.2,
+            err_msg="m2_g must accumulate gradient variance (≈1), not position variance (≈4)",
+        )
+
+        # The IMM must be sqrt(var_x/var_g) = sqrt(4) = 2 exactly.
+        imm = fisher_score_diagonal_from_moments(var_x_acc, var_g_acc)
+        np.testing.assert_allclose(
+            np.asarray(imm),
+            np.ones(d) * 2.0,
+            rtol=1e-4,
+            err_msg="IMM should be sqrt(Var[x]/Var[g]) = sqrt(4) = 2.0 exactly",
+        )
+
 
 # ---------------------------------------------------------------------------
 # (c) Near-zero-gradient robustness -- system-level test via mass_matrix_adaptation.
@@ -293,15 +363,34 @@ class FisherDiagNearZeroGradientTest(BlackJAXTest):
 class FisherDiagEndToEndSmokeTest(BlackJAXTest):
     def test_nuts_with_fisher_diag_on_correlated_gaussian(self):
         """2-D correlated Gaussian (var 4/1, rho=0.7 -- same control target
-        as the low-rank adaptation tests). The Fisher-diagonal estimator
-        only ever produces a *diagonal* metric, so it cannot capture the
-        correlation -- that is expected, not a bug. This test only checks
-        that warmup + sampling run to completion with finite output and a
-        sane acceptance rate, and that the (marginal) diagonal variances
-        recovered are in the right ballpark."""
+        as the low-rank adaptation tests).
+
+        The Fisher-diagonal estimator converges to
+            IMM[i] = sqrt(Var[x_i] / Var[∇log p_i])
+        For X ~ N(0, cov) with precision = cov^{-1}:
+            Var[x_i] = cov[i,i]
+            Var[(precision @ x)[i]] = (precision @ cov @ precision)[i,i] = precision[i,i]
+            → IMM[i] = sqrt(cov[i,i] / precision[i,i])
+
+        For rho=0.7: cov=[[4, 1.4],[1.4, 1]], det=2.04,
+        precision[0,0]=1/2.04≈0.490, precision[1,1]=4/2.04≈1.961.
+        Analytic target: [sqrt(4/0.490), sqrt(1/1.961)] ≈ [2.857, 0.714].
+
+        **Why not diag(cov)=[4,1]:** the Fisher estimator minimises the
+        Fisher divergence between the true density and a Gaussian with the
+        given diagonal metric, which is NOT the same as matching marginal
+        variances. Asserting against diag(cov) is wrong and vacuous (the
+        rtol=2.0 band covers [1,12] × [0.33, 3] -- too wide to catch
+        severed gradient wires, inverted ratios, or read-after-reset).
+        """
         rho = 0.7
         cov = jnp.array([[4.0, rho * 2.0], [rho * 2.0, 1.0]])
         precision = jnp.linalg.inv(cov)
+
+        # Analytic Fisher-diagonal target: sqrt(diag(cov) / diag(precision)).
+        # For symmetric precision matrix P: Var[Px]_i = (P cov P)[i,i] = P[i,i]
+        # (since P·cov = I → P·cov·P = P), so the analytic target is below.
+        analytic_imm = jnp.sqrt(jnp.diag(cov) / jnp.diag(precision))
 
         def logdensity_fn(x):
             return -0.5 * x @ precision @ x
@@ -317,13 +406,14 @@ class FisherDiagEndToEndSmokeTest(BlackJAXTest):
         self.assertTrue(bool(jnp.isfinite(parameters["step_size"])))
         self.assertGreater(float(parameters["step_size"]), 0.0)
 
-        # Marginal variances (diag(cov) = [4.0, 1.0]) recovered within a
-        # generous factor-of-3 band -- a diagonal-only estimator on a
-        # correlated target is not expected to be precise, only sane.
+        # Assert against the correct analytic target with rtol=0.3.
+        # This band is tight enough to catch: grads:=draws (gives [1,1]),
+        # inverted ratio (gives [0.35,1.4]), and read-after-reset (gives a
+        # clipped constant) — all of which lie outside [0.7×analytic, 1.3×analytic].
         np.testing.assert_allclose(
             np.asarray(parameters["inverse_mass_matrix"]),
-            np.array([4.0, 1.0]),
-            rtol=2.0,
+            np.asarray(analytic_imm),
+            rtol=0.3,
         )
 
         nuts = blackjax.nuts(logdensity_fn, **parameters)

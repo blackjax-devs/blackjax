@@ -710,7 +710,15 @@ def fisher_score_diagonal_from_moments(
     **Near-zero gradient protection** (identical to :func:`fisher_score_low_rank`
     and :func:`fisher_score_diagonal`): ``gradient_variance`` is floored at
     ``1e-10`` before division, and the result is clipped to nutpie's
-    ``[1e-20, 1e20]`` range before squaring.
+    ``[1e-20, 1e20]`` range **before squaring**.
+
+    **Pairing insensitivity:** this function consumes only the marginal variances
+    ``Var[x_i]`` and ``Var[∇log p_i]`` per coordinate.  The estimator is
+    therefore insensitive to which draw is paired with which gradient within a
+    batch — any per-batch pairing permutation produces the same ``variance`` and
+    ``gradient_variance`` inputs and hence the same output.  If cross-moment
+    information (e.g. draw-grad covariance) is required, a future extension to
+    this signature must add those moments explicitly.
 
     **Planned extension note:** this entry point is intentionally separate so
     that future updates to the estimator (e.g. adding draw-grad cross moments)
@@ -731,9 +739,19 @@ def fisher_score_diagonal_from_moments(
     Returns
     -------
     Array, shape ``(d,)``
-        Diagonal inverse mass matrix :math:`\sigma^2 =
-        \sqrt{\mathrm{Var}[x] / \max(\mathrm{Var}[\nabla \log p],\, 10^{-10})}`,
-        clipped to ``[1e-20, 1e20]``.
+        Diagonal inverse mass matrix :math:`\sigma^2 = \sigma_{\text{clip}}^2`
+        where :math:`\sigma_{\text{clip}} = \operatorname{clip}(\sigma,\,
+        10^{-20},\, 10^{20})` and :math:`\sigma = (\mathrm{Var}[x] /
+        \max(\mathrm{Var}[\nabla \log p],\, 10^{-10}))^{1/4}`.
+
+        The clip is on the **scale** :math:`\sigma`, not on :math:`\sigma^2`,
+        so the returned values span :math:`[10^{-40}, 10^{40}]`.  Under
+        float32, :math:`\sigma^2` overflows to ``inf`` when :math:`\sigma
+        \approx 10^{20}` (float32 max :math:`\approx 3.4 \times 10^{38}`, so
+        :math:`10^{40}` overflows); the caller must handle this if float32
+        inputs can drive :math:`\sigma` to its clip boundary.  This matches
+        :func:`fisher_score_low_rank`'s ``sigma`` clip and is not changed here
+        to preserve numerical consistency between the two estimators.
     """
     sigma = jnp.power(
         jnp.clip(variance / jnp.maximum(gradient_variance, 1e-10), 0.0, None), 0.25

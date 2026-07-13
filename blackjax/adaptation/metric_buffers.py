@@ -239,8 +239,7 @@ class _FisherMomentBlock(NamedTuple):
     This matches the Fisher-diagonal estimator requirement — only per-coordinate
     gradient variance is needed; no d×d cross-moment is accumulated.
 
-    See :func:`_fisher_block_init`, :func:`_fisher_block_update_one`,
-    :func:`_fisher_block_merge`.
+    See :func:`_fisher_block_init`, :func:`_fisher_block_update_one`.
     """
 
     count: Array  # ()  ambient float dtype
@@ -320,60 +319,6 @@ def _fisher_block_update_one(
 
     return _FisherMomentBlock(
         count=count,
-        mean_x=mean_x,
-        m2_x=m2_x,
-        mean_g=mean_g,
-        m2_g=m2_g,
-    )
-
-
-def _fisher_block_merge(
-    a: _FisherMomentBlock,
-    b: _FisherMomentBlock,
-) -> _FisherMomentBlock:
-    """CGL-merge two :class:`_FisherMomentBlock` instances.
-
-    Applies the parallel Chan–Golub–LeVeque recurrence
-    :cite:p:`chan1983algorithms` independently to the position and gradient
-    moment fields.  Semantics match :func:`cgl_merge_two` for each of the two
-    ``(count, mean, m2)`` pairs stored in the block.
-
-    Parameters
-    ----------
-    a, b
-        Two :class:`_FisherMomentBlock` instances to merge.
-
-    Returns
-    -------
-    _FisherMomentBlock
-        Merged block with combined statistics.  When both inputs are empty
-        (``count=0``), returns an all-zero block.
-    """
-    n_a = a.count
-    n_b = b.count
-    n_ab = n_a + n_b
-    safe_n = jnp.where(n_ab > 0, n_ab, jnp.ones_like(n_ab))
-
-    # Position CGL merge (diagonal)
-    delta_x = b.mean_x - a.mean_x
-    mean_x = a.mean_x + delta_x * (n_b / safe_n)
-    cross_x = delta_x * delta_x * (n_a * n_b / safe_n)
-    m2_x = a.m2_x + b.m2_x + cross_x
-
-    # Gradient CGL merge (diagonal)
-    delta_g = b.mean_g - a.mean_g
-    mean_g = a.mean_g + delta_g * (n_b / safe_n)
-    cross_g = delta_g * delta_g * (n_a * n_b / safe_n)
-    m2_g = a.m2_g + b.m2_g + cross_g
-
-    # Zero-guard: when both inputs are empty, return an all-zero block.
-    mean_x = jnp.where(n_ab > 0, mean_x, jnp.zeros_like(mean_x))
-    m2_x = jnp.where(n_ab > 0, m2_x, jnp.zeros_like(m2_x))
-    mean_g = jnp.where(n_ab > 0, mean_g, jnp.zeros_like(mean_g))
-    m2_g = jnp.where(n_ab > 0, m2_g, jnp.zeros_like(m2_g))
-
-    return _FisherMomentBlock(
-        count=n_ab,
         mean_x=mean_x,
         m2_x=m2_x,
         mean_g=mean_g,

@@ -814,10 +814,15 @@ class FisherScoreDiagonalFromMomentsTest(BlackJAXTest):
     """
 
     def test_agrees_with_fisher_score_diagonal_on_same_draws(self):
-        """from_moments with Welford variances must match fisher_score_diagonal.
+        """Pins the delegation invariant: fisher_score_diagonal must delegate to
+        fisher_score_diagonal_from_moments with the correct Welford variances.
 
-        This is the refactor-safety gate: the wrapper must be a thin pass-through
-        and the arithmetic must be identical (same formula, same clipping, same floor).
+        This is a refactor-safety gate for the delegation chain, not an
+        arithmetic-identity test — both sides call the same underlying function
+        so the result is identical by construction once delegation is wired
+        correctly.  The value of this test is catching a future re-inlining of
+        the math in fisher_score_diagonal (which would break the extension
+        contract documented in fisher_score_diagonal_from_moments).
         """
         n, d = 80, 5
         draws, _, cov = _make_correlated_draws(
