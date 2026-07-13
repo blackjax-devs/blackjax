@@ -624,13 +624,6 @@ def _compute_low_rank_metric(
 ) -> tuple[Array, Array, Array, Array]:
     """Compute the low-rank metric from a buffer of draws and gradients.
 
-    Buffer-masked variant of :func:`fisher_score_low_rank` for use inside
-    ``jax.lax.scan`` closures where ``n`` is a **traced** JAX integer (the
-    number of valid rows in the buffer).  Unlike the plain-array
-    :func:`fisher_score_low_rank`, this function cannot slice to
-    ``draws_buffer[:n]`` at trace time (dynamic shapes are disallowed); it
-    instead zero-masks the first ``n`` rows.
-
     Implements Algorithm 1 of :cite:p:`seyboldt2026preconditioning`, following
     the nutpie reference implementation.
 
@@ -648,7 +641,9 @@ def _compute_low_rank_metric(
     gamma
         Regularisation scale.  The projected covariance is divided by ``gamma``
         (not scaled by ``n``) before adding the identity, following nutpie's
-        convention.
+        convention.  Smaller values → weaker regularisation (the identity term
+        matters less relative to the data term); the influence of the
+        regularisation fades as the number of draws grows.
     cutoff
         Eigenvectors whose eigenvalue falls in ``[1/cutoff, cutoff]`` are
         masked (eigenvalue set to 1), as they provide no useful preconditioning.
@@ -666,18 +661,41 @@ def _compute_low_rank_metric(
 
     Notes
     -----
-    **Dtype promotion** (round-9 schedule-port audit, GAP-1): when JAX's
-    ``jax_enable_x64`` mode is enabled, promotes all computation to
-    ``float64`` regardless of the chain's working dtype, then casts the result
-    back — decoupling the metric estimate's numerical precision from the
-    sampler's own dtype.  Without ``x64``, proceeds in the input's native
-    dtype and relies on the PD guard in :func:`_spd_mean` and the eigenvalue
-    floor below.  Enabling x64 is strongly recommended for the Fisher
-    low-rank warmup, matching nuts-rs's own f64-throughout estimator.
+    **Dtype promotion** (round-9 schedule-port audit, GAP-1). nuts-rs runs
+    this whole estimator in ``f64`` unconditionally; blackjax chains
+    typically run in ``float32`` (JAX's default), and the audit found that
+    running THIS pipeline specifically (inverting + AIRM-geometric-meaning
+    matrices whose condition number can reach ``~1/gamma``, e.g. ``1e5`` at
+    the default ``gamma=1e-5``) in float32 produces small negative
+    eigenvalues ~98% of the time on the models tested, silently making the
+    returned metric indefinite. If the caller has enabled JAX's ``x64``
+    mode (``jax.config.update("jax_enable_x64", True)``), this function
+    promotes its inputs to ``float64`` internally regardless of the
+    incoming (possibly ``float32``) chain dtype, then casts the result back
+    -- decoupling the metric estimate's numerical precision from the
+    sampler's own working dtype, at zero cost to any other part of the
+    chain. If ``x64`` is not enabled, a cast to ``float64`` would silently
+    be truncated back to ``float32`` by JAX (there is no per-call way to
+    opt into ``float64`` without the global flag), so this function instead
+    proceeds in the input's native dtype and relies on the PD guard in
+    :func:`_spd_mean` (and the floor below) to keep the returned metric
+    positive-definite regardless. **Enabling x64 is strongly recommended**
+    for ``buffer_policy="accumulating"``/nutpie-schedule low-rank warmup,
+    matching nuts-rs's own dtype and the shipped sampling-book example.
 
-    **Canonical location:** moved from
-    ``blackjax.adaptation.low_rank_adaptation``; that module re-exports from
-    here for backward compatibility.
+    **Array-based equivalent:**
+    :func:`blackjax.adaptation.metric_estimators.fisher_score_low_rank`
+    implements the same estimator on a plain draws array (all-valid rows, no
+    masking).  This buffer-masked variant cannot delegate to that function
+    because ``n`` is a traced JAX integer (inside ``jax.lax.scan`` closures
+    from :func:`slow_final` / :func:`slow_switch` /
+    :func:`slow_recompute_only`): dynamic slicing to ``draws_buffer[:n]``
+    changes the array shape at trace time (not supported under JAX's
+    static-shape rule), so the masking pattern is necessary and integral to
+    ALL computation steps (masked mean, masked variance, masked covariance),
+    not just a pre-processing trim before the pure math.
+    ``_spd_mean`` and ``_relative_pd_floor`` are defined in
+    ``blackjax.adaptation.metric_estimators`` and imported above.
     """
     orig_dtype = draws_buffer.dtype
     compute_dtype = jnp.float64 if jax.config.jax_enable_x64 else orig_dtype
@@ -745,9 +763,15 @@ def _compute_low_rank_metric(
     # --- Step 8: eigendecompose Σ in the projected subspace ---
     vals, vecs = jnp.linalg.eigh(Sigma)  # vals ascending, (2k,)
     # PD guard (round-9 audit, GAP-2): Sigma is PD by construction in exact
-    # arithmetic, but float32 rounding through this eigendecomposition-heavy
-    # pipeline can tip a near-zero eigenvalue negative.  Scale-relative floor
-    # matches nuts-rs's own PD-by-construction invariant.
+    # arithmetic (both C_x, C_a are `P P^T / gamma + I`, hence PD, and
+    # _spd_mean itself is now floored -- see its docstring), but float32
+    # rounding through this eigendecomposition-heavy pipeline can still tip
+    # a near-zero eigenvalue negative. Flooring here is the same
+    # scale-relative guard as _spd_mean's (see _relative_pd_floor -- an
+    # ABSOLUTE eps floor is wrong for this pipeline's wide dynamic range),
+    # applied to the metric's OWN final eigenvalues (belt-and-suspenders,
+    # matching nuts-rs's own `vals.all(|x| x > 0.)` assertion in
+    # `test_estimate_mass_matrix`).
     vals = jnp.maximum(vals, _relative_pd_floor(vals))
     U_full = Q @ vecs  # (d, 2k) back to original space
 
@@ -772,7 +796,9 @@ def _compute_low_rank_metric(
 
     # Cast back to the caller's original dtype -- the metric's INTERNAL
     # computation may have been promoted to float64 above, but the returned
-    # state fields must stay in the chain's own working dtype.
+    # state fields (sigma/mu_star/U/lam, folded into LowRankAdaptationState)
+    # must stay in the chain's own working dtype so the rest of the warmup
+    # loop's pytree structure is unaffected.
     return (
         sigma.astype(orig_dtype),
         mu_star.astype(orig_dtype),

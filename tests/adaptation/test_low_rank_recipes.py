@@ -31,25 +31,22 @@ import numpy as np
 from absl.testing import absltest
 
 import blackjax
-from blackjax.adaptation.low_rank_adaptation import (
-    _compute_low_rank_metric as lra_clrm,
-    build_growing_window_schedule,
-)
+from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric as lra_clrm
+from blackjax.adaptation.low_rank_adaptation import build_growing_window_schedule
 from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 from blackjax.adaptation.metric_recipes import (
+    REGISTRY,
     LowRankMetricCoreState,
     MetricCore,
     MetricRecipe,
-    REGISTRY,
-    lookup_recipe,
-    seed_low_rank_sigma_from_grad,
     _build_fisher_low_rank_core,
     _build_sample_cov_low_rank_core,
+    lookup_recipe,
+    seed_low_rank_sigma_from_grad,
 )
 from blackjax.adaptation.staged_adaptation import build_schedule, staged_adaptation
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
-
 
 # ---------------------------------------------------------------------------
 # Backward-compat object-identity test
@@ -278,10 +275,12 @@ class FisherLowRankCoreContractTest(BlackJAXTest):
         final_state = core.final(state)
         self.assertEqual(int(final_state.buffer_idx), 0)
         np.testing.assert_array_equal(
-            np.asarray(final_state.draws_buffer), np.zeros((self.buffer_size, self.n_dims))
+            np.asarray(final_state.draws_buffer),
+            np.zeros((self.buffer_size, self.n_dims)),
         )
         np.testing.assert_array_equal(
-            np.asarray(final_state.grads_buffer), np.zeros((self.buffer_size, self.n_dims))
+            np.asarray(final_state.grads_buffer),
+            np.zeros((self.buffer_size, self.n_dims)),
         )
 
     def test_final_produces_finite_metric(self):
