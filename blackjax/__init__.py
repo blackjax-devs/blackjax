@@ -11,6 +11,7 @@ from .adaptation.mclmc_adaptation import mclmc_find_L_and_step_size
 from .adaptation.mclmc_lrd_adaptation import mclmc_lrd_warmup
 from .adaptation.meads_adaptation import meads_adaptation
 from .adaptation.pathfinder_adaptation import pathfinder_adaptation
+from .adaptation.staged_adaptation import staged_adaptation
 from .adaptation.window_adaptation import window_adaptation
 from .base import SamplingAlgorithm, VIAlgorithm
 from .diagnostics import effective_sample_size as ess
@@ -280,6 +281,7 @@ __all__ = [
     "multinomial_hmc",  # backward-compatible alias for mhmc
     "dynamic_hmc",  # backward-compatible alias for dhmc
     "barker_proposal",  # backward-compatible alias for barker
+    "staged_adaptation",  # composable staged warmup engine
     "window_adaptation",  # mcmc adaptation
     "window_adaptation_low_rank",
     "meads_adaptation",

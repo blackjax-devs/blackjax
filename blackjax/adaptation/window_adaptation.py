@@ -11,36 +11,53 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Implementation of the Stan warmup for the HMC family of sampling algorithms."""
-import inspect
-from typing import Callable, NamedTuple, cast
+"""Implementation of the Stan warmup for the HMC family of sampling algorithms.
+
+The public surface of this module is unchanged.  Internally, :func:`window_adaptation`
+is now a thin compatibility shim over :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`;
+:func:`build_schedule` is defined in :mod:`blackjax.adaptation.staged_adaptation` and
+re-exported here for backward compatibility.
+
+:data:`WindowAdaptationState` is an alias for
+:class:`~blackjax.adaptation.staged_adaptation.StagedAdaptationState`; both names
+refer to the same class object so ``isinstance`` checks using either name continue
+to work without modification.
+
+The :func:`base` function is retained unchanged for downstream code that calls it
+directly.  It is dead inside the :func:`window_adaptation` entry point
+(the shim goes through :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`
+instead) but remains exported and tested.
+"""
+from typing import Callable, cast
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc as mcmc
-from blackjax.adaptation.base import AdaptationResults, return_all_adapt_info
+from blackjax.adaptation.base import return_all_adapt_info
 from blackjax.adaptation.mass_matrix import (
     FisherMassMatrixAdaptationState,
-    MassMatrixAdaptationState,
     mass_matrix_adaptation,
 )
-from blackjax.adaptation.step_size import (
-    DualAveragingAdaptationState,
-    dual_averaging_adaptation,
+from blackjax.adaptation.metric_recipes import lookup_recipe
+from blackjax.adaptation.staged_adaptation import (
+    build_schedule,  # canonical definition in staged_adaptation; re-exported here
 )
+from blackjax.adaptation.staged_adaptation import (
+    StagedAdaptationState,
+    staged_adaptation,
+)
+from blackjax.adaptation.step_size import dual_averaging_adaptation
 from blackjax.base import AdaptationAlgorithm
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import Array, ArrayLikeTree
 from blackjax.util import pytree_size
 
 __all__ = ["WindowAdaptationState", "base", "build_schedule", "window_adaptation"]
 
-
-class WindowAdaptationState(NamedTuple):
-    ss_state: DualAveragingAdaptationState  # step size
-    imm_state: MassMatrixAdaptationState | FisherMassMatrixAdaptationState  # inverse mass matrix
-    step_size: float
-    inverse_mass_matrix: Array
+# WindowAdaptationState is the canonical name for StagedAdaptationState in this
+# module.  They are the SAME class object: isinstance(x, WindowAdaptationState)
+# is identical to isinstance(x, StagedAdaptationState).
+WindowAdaptationState = StagedAdaptationState
 
 
 def base(
@@ -73,7 +90,7 @@ def base(
     Schematically:
 
     +---------+---+------+------------+------------------------+------+
-    |  fast   | s | slow |   slow     |        slow            | fast |
+    |  fast   | s | slow |   slow     |        slow            |  fast |
     +---------+---+------+------------+------------------------+------+
     |1        |2  |3     |3           |3                       |3     |
     +---------+---+------+------------+------------------------+------+
@@ -273,6 +290,15 @@ def base(
             3. Call ``mm_final`` to reset the block for the next window.
             4. Stitch the new IMM into the reset state.
 
+            .. note::
+
+                **Twin implementation alert (stitch #2 of 2).**  This Fisher
+                stitch is also present in
+                :func:`~blackjax.adaptation.metric_recipes._build_fisher_diag_core`'s
+                ``final()`` closure (MetricCore path).  These two copies must
+                stay in sync until ``base()``'s disposition is decided (retire
+                or rewire through the engine).
+
             """
             # This closure is only constructed on the Fisher path (Python-level
             # dispatch in base()); the state is always FisherMassMatrixAdaptationState
@@ -359,6 +385,17 @@ def base(
         return step_size, inverse_mass_matrix
 
     return init, update, final
+
+
+def _pick_recipe_name(*, is_mass_matrix_diagonal: bool, diagonal_estimator: str) -> str:
+    """Map the old (is_mass_matrix_diagonal, diagonal_estimator) params to a
+    metric recipe registry name.  Used by the :func:`window_adaptation` shim."""
+    if diagonal_estimator == "fisher":
+        return "fisher_diag"
+    elif is_mass_matrix_diagonal:
+        return "welford_diag"
+    else:
+        return "welford_dense"
 
 
 def window_adaptation(
@@ -467,6 +504,11 @@ def window_adaptation(
 
     Notes
     -----
+    This function is a thin compatibility shim over
+    :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`.  The
+    public interface and return type are frozen; no breaking changes will be
+    made in this module.
+
     Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a
     progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.
 
@@ -511,165 +553,25 @@ def window_adaptation(
             f"got imm_shrinkage_to_previous={imm_shrinkage_to_previous}"
         )
 
-    if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
-        mcmc_kernel = algorithm.build_kernel(integrator)
-    else:
-        mcmc_kernel = algorithm.build_kernel()
-
-    adapt_init, adapt_step, adapt_final = base(
-        is_mass_matrix_diagonal,
-        target_acceptance_rate=target_acceptance_rate,
-        initial_inverse_mass_matrix=initial_inverse_mass_matrix,
-        imm_shrinkage_to_previous=imm_shrinkage_to_previous,
+    # Map the old parameter names to a registered MetricRecipe and build
+    # a MetricCore (pre-builds the core so staged_adaptation sees a MetricCore
+    # directly and skips the lookup step).
+    recipe_name = _pick_recipe_name(
+        is_mass_matrix_diagonal=is_mass_matrix_diagonal,
         diagonal_estimator=diagonal_estimator,
     )
+    metric_core = lookup_recipe(recipe_name).build_core(
+        imm_shrinkage_to_previous=imm_shrinkage_to_previous,
+        initial_inverse_mass_matrix=initial_inverse_mass_matrix,
+    )
 
-    def one_step(carry, xs):
-        _, rng_key, adaptation_stage = xs
-        state, adaptation_state = carry
-
-        new_state, info = mcmc_kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            adaptation_state.step_size,
-            adaptation_state.inverse_mass_matrix,
-            **extra_parameters,
-        )
-        new_adaptation_state = adapt_step(
-            adaptation_state,
-            adaptation_stage,
-            new_state.position,
-            new_state.logdensity_grad,
-            info.acceptance_rate,
-        )
-
-        return (
-            (new_state, new_adaptation_state),
-            adaptation_info_fn(new_state, info, new_adaptation_state),
-        )
-
-    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
-        init_state = algorithm.init(position, logdensity_fn)
-        init_adaptation_state = adapt_init(position, initial_step_size)
-
-        start_state = (init_state, init_adaptation_state)
-        keys = jax.random.split(rng_key, num_steps)
-        schedule = build_schedule(num_steps)
-        last_state, info = jax.lax.scan(
-            one_step,
-            start_state,
-            (jnp.arange(num_steps), keys, schedule),
-        )
-
-        last_chain_state, last_warmup_state, *_ = last_state
-
-        step_size, inverse_mass_matrix = adapt_final(last_warmup_state)
-        parameters = {
-            "step_size": step_size,
-            "inverse_mass_matrix": inverse_mass_matrix,
-            **extra_parameters,
-        }
-
-        return (
-            AdaptationResults(
-                last_chain_state,
-                parameters,
-            ),
-            info,
-        )
-
-    return AdaptationAlgorithm(run)
-
-
-def build_schedule(
-    num_steps: int,
-    initial_buffer_size: int = 75,
-    final_buffer_size: int = 50,
-    first_window_size: int = 25,
-) -> list[tuple[int, bool]]:
-    """Return the schedule for Stan's warmup.
-
-    The schedule below is intended to be as close as possible to Stan's :cite:p:`stan_hmc_param`.
-    The warmup period is split into three stages:
-
-    1. An initial fast interval to reach the typical set. Only the step size is
-    adapted in this window.
-    2. "Slow" parameters that require global information (typically covariance)
-    are estimated in a series of expanding intervals with no memory; the step
-    size is re-initialized at the end of each window. Each window is twice the
-    size of the preceding window.
-    3. A final fast interval during which the step size is adapted using the
-    computed mass matrix.
-
-    Schematically:
-
-    ```
-    +---------+---+------+------------+------------------------+------+
-    |  fast   | s | slow |   slow     |        slow            | fast |
-    +---------+---+------+------------+------------------------+------+
-    ```
-
-    The distinction slow/fast comes from the speed at which the algorithms
-    converge to a stable value; in the common case, estimation of covariance
-    requires more steps than dual averaging to give an accurate value. See :cite:p:`stan_hmc_param`
-    for a more detailed explanation.
-
-    Fast intervals are given the label 0 and slow intervals the label 1.
-
-    Parameters
-    ----------
-    num_steps: int
-        The number of warmup steps to perform.
-    initial_buffer: int
-        The width of the initial fast adaptation interval.
-    first_window_size: int
-        The width of the first slow adaptation interval.
-    final_buffer_size: int
-        The width of the final fast adaptation interval.
-
-    Returns
-    -------
-    A list of tuples (window_label, is_middle_window_end).
-
-    """
-    schedule = []
-
-    # Give up on mass matrix adaptation when the number of warmup steps is too small.
-    if num_steps < 20:
-        schedule += [(0, False)] * num_steps
-    else:
-        # When the number of warmup steps is smaller that the sum of the provided (or default)
-        # window sizes we need to resize the different windows.
-        if initial_buffer_size + first_window_size + final_buffer_size > num_steps:
-            initial_buffer_size = int(0.15 * num_steps)
-            final_buffer_size = int(0.1 * num_steps)
-            first_window_size = num_steps - initial_buffer_size - final_buffer_size
-
-        # First stage: adaptation of fast parameters
-        schedule += [(0, False)] * (initial_buffer_size - 1)
-        schedule.append((0, False))
-
-        # Second stage: adaptation of slow parameters in successive windows
-        # doubling in size.
-        final_buffer_start = num_steps - final_buffer_size
-
-        next_window_size = first_window_size
-        next_window_start = initial_buffer_size
-        while next_window_start < final_buffer_start:
-            current_start, current_size = next_window_start, next_window_size
-            if 3 * current_size <= final_buffer_start - current_start:
-                next_window_size = 2 * current_size
-            else:
-                current_size = final_buffer_start - current_start
-            next_window_start = current_start + current_size
-            schedule += [(1, False)] * (next_window_start - 1 - current_start)
-            schedule.append((1, True))
-
-        # Last stage: adaptation of fast parameters
-        schedule += [(0, False)] * (num_steps - 1 - final_buffer_start)
-        schedule.append((0, False))
-
-    schedule = jnp.array(schedule)
-
-    return schedule
+    return staged_adaptation(
+        algorithm,
+        logdensity_fn,
+        metric=metric_core,
+        initial_step_size=initial_step_size,
+        target_acceptance_rate=target_acceptance_rate,
+        adaptation_info_fn=adaptation_info_fn,
+        integrator=integrator,
+        **extra_parameters,
+    )
