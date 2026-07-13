@@ -33,6 +33,7 @@ which now run through the shim path.
 """
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 import blackjax
 from blackjax.adaptation.metric_recipes import REGISTRY, lookup_recipe
@@ -430,3 +431,298 @@ class StagedAdaptationX64SmokeTest(BlackJAXTest):
 
     def test_fisher_diag_x64(self):
         self._smoke_recipe_x64("fisher_diag")
+
+
+# ---------------------------------------------------------------------------
+# Migrated behavioral tests from test_window_adaptation_imm_seed.py
+# (targeting staged_adaptation instead of window_adaptation)
+# ---------------------------------------------------------------------------
+
+
+class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
+    """Behavioral/numeric tests for initial_inverse_mass_matrix and
+    imm_shrinkage_to_previous, migrated from window_adaptation to staged_adaptation."""
+
+    def _setup_target(self):
+        """Anisotropic 3-D Gaussian target — wide per-dim variance range makes the
+        IMM-seed effect on early-warmup step-size adaptation measurable."""
+        target_std = jnp.array([0.1, 1.0, 10.0])
+
+        def logdensity_fn(x):
+            return jax.scipy.stats.norm.logpdf(
+                x / target_std, loc=0.0, scale=1.0
+            ).sum() - jnp.sum(jnp.log(target_std))
+
+        return logdensity_fn, target_std
+
+    def _run_warmup_staged(
+        self, rng_key, logdensity_fn, metric, imm=None, num_steps=200
+    ):
+        """Helper: run staged_adaptation and return (step_size, inverse_mass_matrix)."""
+        # For tests with custom initial_inverse_mass_matrix, we need to construct
+        # the core explicitly via lookup_recipe
+        if imm is not None:
+            from blackjax.adaptation.metric_recipes import lookup_recipe
+
+            if metric == "welford_diag" and imm.ndim == 1:
+                # Diagonal metric with seed
+                core = lookup_recipe("welford_diag").build_core(
+                    initial_inverse_mass_matrix=imm
+                )
+                metric_arg = core
+            elif metric == "welford_dense" and imm.ndim == 2:
+                # Dense metric with seed
+                core = lookup_recipe("welford_dense").build_core(
+                    initial_inverse_mass_matrix=imm
+                )
+                metric_arg = core
+            else:
+                metric_arg = metric
+        else:
+            metric_arg = metric
+
+        warmup = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric=metric_arg,
+            initial_step_size=0.5,
+        )
+        dim = 3
+        init_pos = jnp.zeros(dim)
+        (state, params), _ = warmup.run(rng_key, init_pos, num_steps=num_steps)
+        return params["step_size"], params["inverse_mass_matrix"]
+
+    def test_backward_compat_no_imm(self):
+        """staged_adaptation with no initial_inverse_mass_matrix runs without error."""
+        logdensity_fn, _ = self._setup_target()
+        rng_key = self.next_key()
+        step_size, imm = self._run_warmup_staged(rng_key, logdensity_fn, "welford_diag")
+        self.assertGreater(float(step_size), 0)
+        self.assertEqual(imm.shape, (3,))
+        self.assertTrue(bool(jnp.all(imm > 0)))
+
+    def test_diagonal_seed_runs(self):
+        """Diagonal seed IMM does not crash and returns well-shaped outputs."""
+        logdensity_fn, _ = self._setup_target()
+        rng_key = self.next_key()
+        seed_imm = jnp.array([0.1, 1.0, 10.0])  # matches true covariance diagonal
+        step_size, imm = self._run_warmup_staged(
+            rng_key, logdensity_fn, "welford_diag", imm=seed_imm
+        )
+        self.assertGreater(float(step_size), 0)
+        self.assertEqual(imm.shape, (3,))
+
+    def test_diagonal_seed_differs_from_default(self):
+        """First-window step-size adaptation differs when seeded vs default IMM.
+
+        The seed IMM is very different from identity, so the adapted step sizes
+        after a short warmup should differ between the two conditions.
+        """
+        logdensity_fn, _ = self._setup_target()
+        rng_key = self.next_key()
+        # Use a very short warmup so the seed has more influence
+        step_default, _ = self._run_warmup_staged(
+            rng_key, logdensity_fn, "welford_diag", imm=None, num_steps=100
+        )
+        # Extreme seed that strongly scales the geometry
+        extreme_seed = jnp.array([100.0, 100.0, 100.0])
+        step_seeded, _ = self._run_warmup_staged(
+            rng_key, logdensity_fn, "welford_diag", imm=extreme_seed, num_steps=100
+        )
+        # They should differ — the seed changes the step size adaptation
+        self.assertFalse(bool(jnp.allclose(step_default, step_seeded, atol=1e-6)))
+
+    def test_dense_seed_runs(self):
+        """Dense seed IMM (metric='welford_dense') runs without error."""
+        logdensity_fn, _ = self._setup_target()
+        rng_key = self.next_key()
+        # Use a diagonal PD matrix as the dense seed
+        seed_imm = jnp.diag(jnp.array([0.1, 1.0, 10.0]))
+        step_size, imm = self._run_warmup_staged(
+            rng_key, logdensity_fn, "welford_dense", imm=seed_imm
+        )
+        self.assertGreater(float(step_size), 0)
+        self.assertEqual(imm.shape, (3, 3))
+
+    def test_welford_convergence_seed_does_not_poison(self):
+        """Final adapted IMM should be close regardless of seed when warmup is long.
+
+        With enough steps, Welford's algorithm overwrites the seed.  We verify that
+        both the default-seeded and the truth-seeded adaptations end up with similar
+        final IMMs on a 3-D Gaussian where the true diagonal is known.
+        """
+        logdensity_fn, target_std = self._setup_target()
+        rng_key = self.next_key()
+        _, imm_default = self._run_warmup_staged(
+            rng_key, logdensity_fn, "welford_diag", imm=None, num_steps=1000
+        )
+        # Seed with the true covariance diagonal (variance = std^2)
+        seed_imm = target_std**2
+        _, imm_seeded = self._run_warmup_staged(
+            rng_key, logdensity_fn, "welford_diag", imm=seed_imm, num_steps=1000
+        )
+
+        # Both should be positive
+        self.assertTrue(bool(jnp.all(imm_default > 0)))
+        self.assertTrue(bool(jnp.all(imm_seeded > 0)))
+
+        # With 1000 steps the Welford estimator dominates; the two IMMs should be
+        # in the same ballpark (within 50% of each other)
+        ratio = imm_seeded / imm_default
+        np.testing.assert_allclose(ratio, jnp.ones_like(ratio), atol=0.5)
+
+    def test_imm_shrinkage_backward_compat_default_zero(self):
+        """Default imm_shrinkage_to_previous=0.0 produces Stan-identical output.
+
+        With the new kwarg defaulting to 0.0, the behavior must be identical to
+        the pre-P2 code. We verify that calling with explicit 0.0 and implicit
+        default produce the same warmup result.
+        """
+        logdensity_fn, _ = self._setup_target()
+        rng_key = self.next_key()
+
+        # For staged_adaptation with shrinkage, construct the core
+        from blackjax.adaptation.metric_recipes import lookup_recipe
+
+        # Explicit 0.0
+        core_explicit = lookup_recipe("welford_diag").build_core(
+            imm_shrinkage_to_previous=0.0
+        )
+        warmup_explicit = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric=core_explicit,
+            initial_step_size=0.5,
+        )
+        (_, params_explicit), _ = warmup_explicit.run(
+            rng_key, jnp.zeros(3), num_steps=300
+        )
+
+        # Implicit default (no shrinkage kwarg)
+        warmup_default = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="welford_diag",
+            initial_step_size=0.5,
+        )
+        (_, params_default), _ = warmup_default.run(
+            rng_key, jnp.zeros(3), num_steps=300
+        )
+
+        # Should be bit-identical (or at least very close due to JAX numerical reproducibility)
+        np.testing.assert_allclose(
+            params_explicit["inverse_mass_matrix"],
+            params_default["inverse_mass_matrix"],
+            rtol=1e-6,
+        )
+
+    def test_imm_shrinkage_seed_influence_persists_diagonal(self):
+        """With non-zero pseudo-count, seed IMM influence persists longer.
+
+        Compare two diagonal cases: one with imm_shrinkage_to_previous=0.0 (seed
+        loses influence quickly) and one with a large pseudo-count (seed sticky).
+        With a deliberately-wrong seed, the sticky version's final IMM should be
+        closer to the seed than the non-sticky version's.
+        """
+        logdensity_fn, _ = self._setup_target()
+        rng_key = self.next_key()
+        # Seed that is 100x larger than optimal — will bias the result
+        wrong_seed = jnp.array([100.0, 100.0, 100.0])
+
+        from blackjax.adaptation.metric_recipes import lookup_recipe
+
+        # No shrinkage: seed is quickly overwritten by Welford
+        core_no_shrink = lookup_recipe("welford_diag").build_core(
+            initial_inverse_mass_matrix=wrong_seed, imm_shrinkage_to_previous=0.0
+        )
+        warmup_no_shrink = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric=core_no_shrink,
+            initial_step_size=0.5,
+        )
+        (_, params_no_shrink), _ = warmup_no_shrink.run(
+            rng_key, jnp.zeros(3), num_steps=300
+        )
+        imm_no_shrink = params_no_shrink["inverse_mass_matrix"]
+
+        # Large shrinkage: seed's influence persists
+        core_with_shrink = lookup_recipe("welford_diag").build_core(
+            initial_inverse_mass_matrix=wrong_seed, imm_shrinkage_to_previous=20.0
+        )
+        warmup_with_shrink = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric=core_with_shrink,
+            initial_step_size=0.5,
+        )
+        (_, params_with_shrink), _ = warmup_with_shrink.run(
+            rng_key, jnp.zeros(3), num_steps=300
+        )
+        imm_with_shrink = params_with_shrink["inverse_mass_matrix"]
+
+        # With shrinkage, the final IMM should be closer to the (wrong) seed
+        # than the no-shrinkage case.
+        dist_no_shrink = jnp.mean((imm_no_shrink - wrong_seed) ** 2)
+        dist_with_shrink = jnp.mean((imm_with_shrink - wrong_seed) ** 2)
+        error_msg = (
+            f"Expected shrinkage to keep IMM closer to seed: "
+            f"got dist_no_shrink={dist_no_shrink: .6f}, "
+            f"dist_with_shrink={dist_with_shrink: .6f}"
+        )
+        self.assertLess(dist_with_shrink, dist_no_shrink, error_msg)
+
+    def test_imm_shrinkage_dense_matrix_mirrors_diagonal(self):
+        """Dense case with shrinkage applies the formula symmetrically.
+
+        Test that imm_shrinkage_to_previous works correctly for dense matrices
+        (metric='welford_dense'), confirming the shrinkage term is applied
+        to the full matrix, not just the diagonal.
+        """
+        logdensity_fn, _ = self._setup_target()
+        rng_key = self.next_key()
+        # Use a diagonal PD matrix as the dense seed
+        wrong_seed = jnp.diag(jnp.array([100.0, 100.0, 100.0]))
+
+        from blackjax.adaptation.metric_recipes import lookup_recipe
+
+        # No shrinkage: dense case
+        core_dense_no_shrink = lookup_recipe("welford_dense").build_core(
+            initial_inverse_mass_matrix=wrong_seed, imm_shrinkage_to_previous=0.0
+        )
+        warmup_dense_no_shrink = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric=core_dense_no_shrink,
+            initial_step_size=0.5,
+        )
+        (_, params_dense_no_shrink), _ = warmup_dense_no_shrink.run(
+            rng_key, jnp.zeros(3), num_steps=300
+        )
+        imm_dense_no_shrink = params_dense_no_shrink["inverse_mass_matrix"]
+
+        # With shrinkage: dense case
+        core_dense_with_shrink = lookup_recipe("welford_dense").build_core(
+            initial_inverse_mass_matrix=wrong_seed, imm_shrinkage_to_previous=20.0
+        )
+        warmup_dense_with_shrink = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric=core_dense_with_shrink,
+            initial_step_size=0.5,
+        )
+        (_, params_dense_with_shrink), _ = warmup_dense_with_shrink.run(
+            rng_key, jnp.zeros(3), num_steps=300
+        )
+        imm_dense_with_shrink = params_dense_with_shrink["inverse_mass_matrix"]
+
+        # Same logic as the diagonal test: shrinkage should keep the final IMM
+        # closer to the (wrong) seed.
+        dist_no_shrink = jnp.mean((imm_dense_no_shrink - wrong_seed) ** 2)
+        dist_with_shrink = jnp.mean((imm_dense_with_shrink - wrong_seed) ** 2)
+        error_msg = (
+            f"Expected dense shrinkage to keep IMM closer to seed: "
+            f"got dist_no_shrink={dist_no_shrink: .6f}, "
+            f"dist_with_shrink={dist_with_shrink: .6f}"
+        )
+        self.assertLess(dist_with_shrink, dist_no_shrink, error_msg)
