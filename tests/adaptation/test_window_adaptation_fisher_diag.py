@@ -130,9 +130,10 @@ class FisherDiagRecoveryTest(BlackJAXTest):
 
         NOTE: ``mass_matrix_adaptation``'s ``final()`` only resets the block;
         it does NOT compute the new IMM.  The IMM computation is the consumer's
-        responsibility (performed by ``window_adaptation.base``'s ``slow_final``
-        on the live pipeline).  This test exercises the accumulation + estimator
-        directly via ``fisher_score_diagonal_from_moments``.
+        responsibility (performed by
+        ``metric_recipes._build_fisher_diag_core``'s ``final`` on the live
+        pipeline).  This test exercises the accumulation + estimator directly
+        via ``fisher_score_diagonal_from_moments``.
         """
         d = 4
         true_var = jnp.array([0.1, 1.0, 4.0, 25.0])
@@ -152,7 +153,7 @@ class FisherDiagRecoveryTest(BlackJAXTest):
 
         state, _ = jax.lax.scan(body, state, (draws, grads))
 
-        # Compose the estimator call explicitly (mirrors window_adaptation's slow_final).
+        # Compose the estimator call explicitly (mirrors metric_recipes final).
         block = state.fisher_block
         denom = jnp.maximum(block.count - 1.0, 1.0)
         var_x = block.m2_x / denom
@@ -272,7 +273,8 @@ class FisherDiagNearZeroGradientTest(BlackJAXTest):
         NOTE: ``mass_matrix_adaptation``'s ``final()`` only resets the block;
         this test exercises the estimator path directly via
         ``fisher_score_diagonal_from_moments`` with zero gradient variance,
-        mirroring what ``window_adaptation``'s ``slow_final`` does.
+        mirroring what ``metric_recipes._build_fisher_diag_core``'s
+        ``final`` does.
         """
         d = 3
         init, update, _ = mass_matrix_adaptation(
@@ -287,7 +289,7 @@ class FisherDiagNearZeroGradientTest(BlackJAXTest):
         positions = jax.random.normal(self.next_key(), (50, d))
         state, _ = jax.lax.scan(body, state, positions)
 
-        # Compose the estimator call explicitly (mirrors window_adaptation's slow_final).
+        # Compose the estimator call explicitly (mirrors metric_recipes final).
         block = state.fisher_block
         denom = jnp.maximum(block.count - 1.0, 1.0)
         var_x = block.m2_x / denom
