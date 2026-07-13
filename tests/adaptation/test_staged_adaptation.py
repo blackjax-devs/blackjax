@@ -348,30 +348,17 @@ class StagedAdaptationFastWindowTest(BlackJAXTest):
 class PickRecipeNameTest(BlackJAXTest):
     """Direct unit tests for the private ``_pick_recipe_name`` helper."""
 
-    def test_fisher_mapping(self):
-        """diagonal_estimator='fisher' → 'fisher_diag' (diagonal flag ignored)."""
-        self.assertEqual(
-            _pick_recipe_name(
-                is_mass_matrix_diagonal=True, diagonal_estimator="fisher"
-            ),
-            "fisher_diag",
-        )
-
     def test_welford_diag_mapping(self):
-        """is_mass_matrix_diagonal=True + non-fisher estimator → 'welford_diag'."""
+        """is_mass_matrix_diagonal=True → 'welford_diag'."""
         self.assertEqual(
-            _pick_recipe_name(
-                is_mass_matrix_diagonal=True, diagonal_estimator="welford"
-            ),
+            _pick_recipe_name(is_mass_matrix_diagonal=True),
             "welford_diag",
         )
 
     def test_welford_dense_mapping(self):
-        """is_mass_matrix_diagonal=False + non-fisher estimator → 'welford_dense'."""
+        """is_mass_matrix_diagonal=False → 'welford_dense'."""
         self.assertEqual(
-            _pick_recipe_name(
-                is_mass_matrix_diagonal=False, diagonal_estimator="welford"
-            ),
+            _pick_recipe_name(is_mass_matrix_diagonal=False),
             "welford_dense",
         )
 

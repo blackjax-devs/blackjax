@@ -23,23 +23,20 @@ re-exported here for backward compatibility.
 refer to the same class object so ``isinstance`` checks using either name continue
 to work without modification.
 
-The :func:`base` function is retained for downstream code that calls it directly.
-It is not exercised by the :func:`window_adaptation` shim (which delegates to
-:func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`), but it is
-exported and covered by ``BaseFisherStitchDirectTest`` in
-``tests/adaptation/test_window_adaptation_fisher_diag.py``.
+The :func:`base` function is retained at its released API for downstream code that
+calls it directly.  It is not exercised by the :func:`window_adaptation` shim (which
+delegates to :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`).
+Fisher-diagonal adaptation is accessible via
+``staged_adaptation(metric="fisher_diag")`` only.
 """
-from typing import Callable, cast
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
 
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import return_all_adapt_info
-from blackjax.adaptation.mass_matrix import (
-    FisherMassMatrixAdaptationState,
-    mass_matrix_adaptation,
-)
+from blackjax.adaptation.mass_matrix import mass_matrix_adaptation
 from blackjax.adaptation.metric_recipes import lookup_recipe
 from blackjax.adaptation.staged_adaptation import (
     build_schedule,  # canonical definition in staged_adaptation; re-exported here
@@ -66,7 +63,6 @@ def base(
     target_acceptance_rate: float = 0.80,
     initial_inverse_mass_matrix: Array | None = None,
     imm_shrinkage_to_previous: float = 0.0,
-    diagonal_estimator: str = "welford",
 ) -> tuple[Callable, Callable, Callable]:
     """Warmup scheme for sampling procedures based on euclidean manifold HMC.
     The schedule and algorithms used match Stan's :cite:p:`stan_hmc_param` as closely as possible.
@@ -91,7 +87,7 @@ def base(
     Schematically:
 
     +---------+---+------+------------+------------------------+------+
-    |  fast   | s | slow |   slow     |        slow            |  fast |
+    |  fast   | s | slow |   slow     |        slow            | fast |
     +---------+---+------+------------+------------------------+------+
     |1        |2  |3     |3           |3                       |3     |
     +---------+---+------+------------+------------------------+------+
@@ -117,13 +113,6 @@ def base(
         Pseudo-count controlling shrinkage of the IMM toward the previous
         window's IMM. Default 0.0 gives the current Stan behavior. Passed
         through to ``mass_matrix_adaptation``.
-    diagonal_estimator
-        Which diagonal-variance estimator to use.  ``"welford"`` (default)
-        reproduces all pre-existing behavior exactly.  ``"fisher"`` uses the
-        Fisher-divergence-minimising diagonal estimator; see
-        ``mass_matrix_adaptation`` for constraints (diagonal-only, no
-        ``imm_shrinkage_to_previous``).  Passed through to
-        ``mass_matrix_adaptation``.
 
     Returns
     -------
@@ -137,7 +126,7 @@ def base(
 
     """
     mm_init, mm_update, mm_final = mass_matrix_adaptation(
-        is_mass_matrix_diagonal, imm_shrinkage_to_previous, diagonal_estimator
+        is_mass_matrix_diagonal, imm_shrinkage_to_previous
     )
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
 
@@ -165,7 +154,6 @@ def base(
 
     def fast_update(
         position: ArrayLikeTree,
-        grad: ArrayLikeTree,
         acceptance_rate: float,
         warmup_state: WindowAdaptationState,
     ) -> WindowAdaptationState:
@@ -176,7 +164,7 @@ def base(
         compared to the covariance estimation with Welford's algorithm
 
         """
-        del position, grad
+        del position
 
         new_ss_state = da_update(warmup_state.ss_state, acceptance_rate)
         new_step_size = jnp.exp(new_ss_state.log_step_size)
@@ -188,151 +176,51 @@ def base(
             warmup_state.inverse_mass_matrix,
         )
 
-    if diagonal_estimator == "welford":
+    def slow_update(
+        position: ArrayLikeTree,
+        acceptance_rate: float,
+        warmup_state: WindowAdaptationState,
+    ) -> WindowAdaptationState:
+        """Update the adaptation state when in a "slow" window.
 
-        def slow_update(
-            position: ArrayLikeTree,
-            grad: ArrayLikeTree,
-            acceptance_rate: float,
-            warmup_state: WindowAdaptationState,
-        ) -> WindowAdaptationState:
-            """Update the adaptation state when in a "slow" window (Welford path).
+        Both the mass matrix adaptation *state* and the step size state are
+        adapted in slow windows. The value of the step size is updated as well,
+        but the new value of the inverse mass matrix is only computed at the end
+        of the slow window. "Slow" refers to the fact that we need many samples
+        to get a reliable estimation of the covariance matrix used to update the
+        value of the mass matrix.
 
-            Both the mass matrix adaptation *state* and the step size state are
-            adapted in slow windows. The value of the step size is updated as well,
-            but the new value of the inverse mass matrix is only computed at the end
-            of the slow window. "Slow" refers to the fact that we need many samples
-            to get a reliable estimation of the covariance matrix used to update the
-            value of the mass matrix.
+        """
+        new_imm_state = mm_update(warmup_state.imm_state, position)
+        new_ss_state = da_update(warmup_state.ss_state, acceptance_rate)
+        new_step_size = jnp.exp(new_ss_state.log_step_size)
 
-            On the default Welford path, ``grad`` is not consumed by the IMM
-            accumulator and is explicitly deleted here so it is dead on this path.
-
-            """
-            del grad
-            new_imm_state = mm_update(warmup_state.imm_state, position)
-            new_ss_state = da_update(warmup_state.ss_state, acceptance_rate)
-            new_step_size = jnp.exp(new_ss_state.log_step_size)
-
-            return WindowAdaptationState(
-                new_ss_state,
-                new_imm_state,
-                new_step_size,
-                warmup_state.inverse_mass_matrix,
-            )
-
-    else:  # diagonal_estimator == "fisher"
-
-        def slow_update(  # type: ignore[no-redef]
-            position: ArrayLikeTree,
-            grad: ArrayLikeTree,
-            acceptance_rate: float,
-            warmup_state: WindowAdaptationState,
-        ) -> WindowAdaptationState:
-            """Update the adaptation state when in a "slow" window (Fisher path).
-
-            Both the mass matrix adaptation *state* and the step size state are
-            adapted in slow windows.  On the Fisher path, ``grad`` is forwarded
-            to the IMM accumulator so it can track gradient variance.
-
-            """
-            new_imm_state = mm_update(warmup_state.imm_state, position, grad)
-            new_ss_state = da_update(warmup_state.ss_state, acceptance_rate)
-            new_step_size = jnp.exp(new_ss_state.log_step_size)
-
-            return WindowAdaptationState(
-                new_ss_state,
-                new_imm_state,
-                new_step_size,
-                warmup_state.inverse_mass_matrix,
-            )
-
-    if diagonal_estimator == "welford":
-
-        def slow_final(warmup_state: WindowAdaptationState) -> WindowAdaptationState:
-            """Update the parameters at the end of a slow adaptation window.
-
-            We compute the value of the mass matrix and reset the mass matrix
-            adaptation's internal state since middle windows are "memoryless".
-
-            """
-            new_imm_state = mm_final(warmup_state.imm_state)
-            new_ss_state = da_init(da_final(warmup_state.ss_state))
-            new_step_size = jnp.exp(new_ss_state.log_step_size)
-
-            return WindowAdaptationState(
-                new_ss_state,
-                new_imm_state,
-                new_step_size,
-                new_imm_state.inverse_mass_matrix,
-            )
-
-    else:  # diagonal_estimator == "fisher"
-        from blackjax.adaptation.metric_estimators import (  # noqa: PLC0415
-            fisher_score_diagonal_from_moments,
+        return WindowAdaptationState(
+            new_ss_state, new_imm_state, new_step_size, warmup_state.inverse_mass_matrix
         )
 
-        def slow_final(  # type: ignore[no-redef]
-            warmup_state: WindowAdaptationState,
-        ) -> WindowAdaptationState:
-            """Update the parameters at the end of a slow adaptation window.
+    def slow_final(warmup_state: WindowAdaptationState) -> WindowAdaptationState:
+        """Update the parameters at the end of a slow adaptation window.
 
-            On the Fisher path, the IMM is computed here (not inside
-            ``mm_final``) to respect the dependency order:
-            ``metric_estimators`` imports from ``mass_matrix``, so
-            ``mass_matrix.final()`` must not import from ``metric_estimators``.
-            This closure composes both layers:
+        We compute the value of the mass matrix and reset the mass matrix
+        adapation's internal state since middle windows are "memoryless".
 
-            1. Extract Bessel-corrected per-coordinate variances from the
-               accumulated :class:`~blackjax.adaptation.metric_buffers._FisherMomentBlock`
-               BEFORE the reset.
-            2. Call :func:`~blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments`
-               to compute the new IMM.
-            3. Call ``mm_final`` to reset the block for the next window.
-            4. Stitch the new IMM into the reset state.
+        """
+        new_imm_state = mm_final(warmup_state.imm_state)
+        new_ss_state = da_init(da_final(warmup_state.ss_state))
+        new_step_size = jnp.exp(new_ss_state.log_step_size)
 
-            .. note::
-
-                **Twin implementation alert (stitch #2 of 2).**  This Fisher
-                stitch is also present in
-                :func:`~blackjax.adaptation.metric_recipes._build_fisher_diag_core`'s
-                ``final()`` closure (MetricCore path).  These two copies must
-                stay in sync until ``base()``'s disposition is decided (retire
-                or rewire through the engine).
-
-            """
-            # This closure is only constructed on the Fisher path (Python-level
-            # dispatch in base()); the state is always FisherMassMatrixAdaptationState
-            # at this point.  The cast is a static hint only — zero runtime cost.
-            fisher_state = cast(FisherMassMatrixAdaptationState, warmup_state.imm_state)
-            block = fisher_state.fisher_block
-            denom = jnp.maximum(block.count - 1.0, 1.0)
-            var_x = block.m2_x / denom  # (d,)  Bessel-corrected position variance
-            var_g = block.m2_g / denom  # (d,)  Bessel-corrected gradient variance
-            new_inverse_mass_matrix = fisher_score_diagonal_from_moments(var_x, var_g)
-
-            # mm_final resets the block; we stitch the newly computed IMM in.
-            reset_state = cast(FisherMassMatrixAdaptationState, mm_final(fisher_state))
-            new_imm_state = FisherMassMatrixAdaptationState(
-                inverse_mass_matrix=new_inverse_mass_matrix,
-                fisher_block=reset_state.fisher_block,
-            )
-
-            new_ss_state = da_init(da_final(warmup_state.ss_state))
-            new_step_size = jnp.exp(new_ss_state.log_step_size)
-
-            return WindowAdaptationState(
-                new_ss_state,
-                new_imm_state,
-                new_step_size,
-                new_imm_state.inverse_mass_matrix,
-            )
+        return WindowAdaptationState(
+            new_ss_state,
+            new_imm_state,
+            new_step_size,
+            new_imm_state.inverse_mass_matrix,
+        )
 
     def update(
         adaptation_state: WindowAdaptationState,
         adaptation_stage: tuple,
         position: ArrayLikeTree,
-        grad: ArrayLikeTree,
         acceptance_rate: float,
     ) -> WindowAdaptationState:
         """Update the adaptation state and parameter values.
@@ -346,11 +234,6 @@ def base(
             a fast window and if we are at the last step of a slow window.
         position
             Current value of the model parameters.
-        grad
-            Log-density gradient at ``position``.  Forwarded to the IMM
-            accumulator on the ``diagonal_estimator='fisher'`` path; dead
-            (explicitly deleted in ``fast_update`` and ``slow_update``) on the
-            default ``"welford"`` path.
         acceptance_rate
             Value of the acceptance rate for the last mcmc step.
 
@@ -365,7 +248,6 @@ def base(
             stage,
             (fast_update, slow_update),
             position,
-            grad,
             acceptance_rate,
             adaptation_state,
         )
@@ -388,12 +270,10 @@ def base(
     return init, update, final
 
 
-def _pick_recipe_name(*, is_mass_matrix_diagonal: bool, diagonal_estimator: str) -> str:
-    """Map the old (is_mass_matrix_diagonal, diagonal_estimator) params to a
-    metric recipe registry name.  Used by the :func:`window_adaptation` shim."""
-    if diagonal_estimator == "fisher":
-        return "fisher_diag"
-    elif is_mass_matrix_diagonal:
+def _pick_recipe_name(*, is_mass_matrix_diagonal: bool) -> str:
+    """Map the is_mass_matrix_diagonal flag to a metric recipe registry name.
+    Used by the :func:`window_adaptation` shim."""
+    if is_mass_matrix_diagonal:
         return "welford_diag"
     else:
         return "welford_dense"
@@ -405,7 +285,6 @@ def window_adaptation(
     is_mass_matrix_diagonal: bool = True,
     initial_inverse_mass_matrix: Array | None = None,
     imm_shrinkage_to_previous: float = 0.0,
-    diagonal_estimator: str = "welford",
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     adaptation_info_fn: Callable = return_all_adapt_info,
@@ -475,17 +354,6 @@ def window_adaptation(
 
         Validated at construction time — negative values raise
         ``ValueError`` before any JIT tracing.
-    diagonal_estimator
-        Which diagonal-variance estimator to use for the (window-local)
-        inverse mass matrix.  ``"welford"`` (default) is Stan's classic
-        online-covariance estimator and reproduces all pre-existing behavior
-        exactly.  ``"fisher"`` uses the Fisher-divergence-minimising diagonal
-        estimator of :cite:p:`seyboldt2026preconditioning` (the same formula
-        underlying the diagonal-scaling step of the low-rank adaptation):
-        ``inverse_mass_matrix = sqrt(Var[position] / Var[logdensity_grad])``
-        per coordinate.  Only valid with ``is_mass_matrix_diagonal=True`` and
-        ``imm_shrinkage_to_previous=0.0``; both are validated at construction
-        time (``ValueError`` before any JIT tracing).
     initial_step_size
         The initial step size used in the algorithm.
     target_acceptance_rate
@@ -539,27 +407,11 @@ def window_adaptation(
             f"got {imm_shrinkage_to_previous}"
         )
 
-    # Fisher-estimator constraints (mirrors mass_matrix_adaptation validation).
-    if diagonal_estimator == "fisher" and not is_mass_matrix_diagonal:
-        raise ValueError(
-            "diagonal_estimator='fisher' requires is_mass_matrix_diagonal=True "
-            "(the Fisher-divergence estimator only produces a diagonal metric); "
-            "got is_mass_matrix_diagonal=False"
-        )
-    if diagonal_estimator == "fisher" and imm_shrinkage_to_previous != 0.0:
-        raise ValueError(
-            "diagonal_estimator='fisher' does not support "
-            "imm_shrinkage_to_previous != 0.0: the Fisher estimator does not "
-            "blend with the previous window's IMM or an identity target; "
-            f"got imm_shrinkage_to_previous={imm_shrinkage_to_previous}"
-        )
-
     # Map the old parameter names to a registered MetricRecipe and build
     # a MetricCore (pre-builds the core so staged_adaptation sees a MetricCore
     # directly and skips the lookup step).
     recipe_name = _pick_recipe_name(
         is_mass_matrix_diagonal=is_mass_matrix_diagonal,
-        diagonal_estimator=diagonal_estimator,
     )
     metric_core = lookup_recipe(recipe_name).build_core(
         imm_shrinkage_to_previous=imm_shrinkage_to_previous,

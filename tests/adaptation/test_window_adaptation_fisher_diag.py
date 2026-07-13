@@ -11,16 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for window_adaptation's opt-in Fisher-diagonal estimator
-(``diagonal_estimator="fisher"``).
+"""Tests for the Fisher-diagonal metric estimator and routing from window_adaptation.
 
-The Fisher-diagonal estimator replaces Welford's online covariance with the
-Fisher-divergence-minimising diagonal scale of
-:cite:p:`seyboldt2026preconditioning` (the same formula underlying Step 1 of
-``blackjax.adaptation.low_rank_adaptation._compute_low_rank_metric``):
+The Fisher-diagonal estimator produces the Fisher-divergence-minimising diagonal
+scale of :cite:p:`seyboldt2026preconditioning`:
 ``inverse_mass_matrix = sqrt(Var[position] / Var[logdensity_grad])``.
 
-Ported from branch ``b197f1e2`` (``feat/window-adaptation-fisher-diag``).
+Fisher-diagonal adaptation is available via
+``staged_adaptation(metric="fisher_diag")``.  The ``window_adaptation`` shim
+does not expose a ``diagonal_estimator`` kwarg; it routes only to Welford
+recipes.
 
 **Dropped tests (noted here per brief):**
 
@@ -51,7 +51,7 @@ Both behaviors are now covered indirectly by
   ``fisher_score_diagonal_from_moments`` instead of reading from the state
   after ``final()``.  After the bridge removal, ``mass_matrix_adaptation``'s
   ``final()`` only resets the block; the IMM computation is the consumer's
-  responsibility (done by ``window_adaptation.base``'s ``slow_final``).
+  responsibility (done by the MetricCore path in ``metric_recipes``).
 - ``FisherDiagNearZeroGradientTest.test_window_with_stationary_point_does_not_produce_nan``:
   same: IMM checked via explicit ``fisher_score_diagonal_from_moments`` call
   rather than via ``final()`` read-back.
@@ -61,13 +61,13 @@ import jax.numpy as jnp
 import numpy as np
 
 import blackjax
+import blackjax.adaptation.window_adaptation as _wa_module
 from blackjax.adaptation.mass_matrix import (
     FisherMassMatrixAdaptationState,
     MassMatrixAdaptationState,
     mass_matrix_adaptation,
 )
 from blackjax.adaptation.metric_estimators import fisher_score_diagonal_from_moments
-from blackjax.adaptation.window_adaptation import base as window_adaptation_base
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
@@ -86,35 +86,6 @@ class FisherDiagDefaultInvarianceTest(BlackJAXTest):
         state = init(3)
         self.assertIsInstance(state, MassMatrixAdaptationState)
         self.assertNotIsInstance(state, FisherMassMatrixAdaptationState)
-
-    def test_explicit_welford_matches_implicit_default(self):
-        """diagonal_estimator='welford' explicitly must be bit-identical to
-        omitting the kwarg entirely (mirrors the imm_shrinkage_to_previous
-        default-invariance test)."""
-
-        def logdensity_fn(x):
-            return std_normal_logdensity(x, scale=jnp.array([0.5, 1.0, 2.0]))
-
-        rng_key = jax.random.key(0)
-        warmup_default = blackjax.window_adaptation(blackjax.nuts, logdensity_fn)
-        warmup_explicit = blackjax.window_adaptation(
-            blackjax.nuts, logdensity_fn, diagonal_estimator="welford"
-        )
-
-        (_, params_default), _ = warmup_default.run(
-            rng_key, jnp.zeros(3), num_steps=200
-        )
-        (_, params_explicit), _ = warmup_explicit.run(
-            rng_key, jnp.zeros(3), num_steps=200
-        )
-
-        np.testing.assert_array_equal(
-            params_default["step_size"], params_explicit["step_size"]
-        )
-        np.testing.assert_array_equal(
-            params_default["inverse_mass_matrix"],
-            params_explicit["inverse_mass_matrix"],
-        )
 
 
 # ---------------------------------------------------------------------------
@@ -139,34 +110,6 @@ class FisherDiagValidationTest(BlackJAXTest):
         ):
             mass_matrix_adaptation(
                 diagonal_estimator="fisher", imm_shrinkage_to_previous=5.0
-            )
-
-    def test_window_adaptation_propagates_dense_validation(self):
-        def logdensity_fn(x):
-            return std_normal_logdensity(x)
-
-        with self.assertRaisesRegex(
-            ValueError, "requires is_mass_matrix_diagonal=True"
-        ):
-            blackjax.window_adaptation(
-                blackjax.nuts,
-                logdensity_fn,
-                is_mass_matrix_diagonal=False,
-                diagonal_estimator="fisher",
-            )
-
-    def test_window_adaptation_propagates_shrinkage_validation(self):
-        def logdensity_fn(x):
-            return std_normal_logdensity(x)
-
-        with self.assertRaisesRegex(
-            ValueError, "does not support imm_shrinkage_to_previous"
-        ):
-            blackjax.window_adaptation(
-                blackjax.nuts,
-                logdensity_fn,
-                diagonal_estimator="fisher",
-                imm_shrinkage_to_previous=10.0,
             )
 
 
@@ -356,7 +299,7 @@ class FisherDiagNearZeroGradientTest(BlackJAXTest):
 
 
 # ---------------------------------------------------------------------------
-# (d) End-to-end smoke: NUTS + window_adaptation(diagonal_estimator="fisher")
+# (d) End-to-end smoke: NUTS + staged_adaptation(metric="fisher_diag")
 #     on a small correlated Gaussian.
 # ---------------------------------------------------------------------------
 
@@ -397,8 +340,8 @@ class FisherDiagEndToEndSmokeTest(BlackJAXTest):
             return -0.5 * x @ precision @ x
 
         warmup_key, inference_key = jax.random.split(self.next_key())
-        warmup = blackjax.window_adaptation(
-            blackjax.nuts, logdensity_fn, diagonal_estimator="fisher"
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts, logdensity_fn, metric="fisher_diag"
         )
         (state, parameters), _ = warmup.run(warmup_key, jnp.zeros(2), num_steps=1_000)
 
@@ -433,59 +376,39 @@ class FisherDiagEndToEndSmokeTest(BlackJAXTest):
 
 
 # ---------------------------------------------------------------------------
-# (e) Direct stitch #2 test: base(diagonal_estimator='fisher') path
+# (e) Routing test: window_adaptation shim routes to welford_diag / welford_dense
 # ---------------------------------------------------------------------------
 
 
-class BaseFisherStitchDirectTest(BlackJAXTest):
-    """Direct test of ``window_adaptation.base`` with
-    ``diagonal_estimator='fisher'``.
+class WindowAdaptationShimRoutingTest(BlackJAXTest):
+    """Assert that window_adaptation routes to the correct Welford recipe.
 
-    The ``base()`` function contains Fisher stitch #2 — the slow_final closure
-    that computes the Fisher-diagonal IMM from accumulated Fisher block state.
-    This test exercises that stitch directly (not via the MetricCore path) and
-    is the canonical coverage for stitch #2.
-
-    Catch-site: if someone removes the MetricCore fallback in ``slow_final``
-    while ``base()`` still delegates to ``staged_adaptation``, only this test
-    would catch the regression — the existing MetricCore-path tests would pass.
+    Patches the module-level ``lookup_recipe`` binding in
+    ``blackjax.adaptation.window_adaptation`` (Variant 2 — from-import
+    binding) to spy on the recipe name passed through.
     """
 
-    def test_base_fisher_diag_gives_finite_positive_imm(self):
-        """base(diagonal_estimator='fisher') produces finite/positive IMM.
+    def _capture_recipe_name(self, is_mass_matrix_diagonal: bool) -> str:
+        captured: dict = {}
+        original = _wa_module.lookup_recipe
 
-        This exercises stitch #2 directly: the ``slow_final`` closure in
-        ``window_adaptation.base`` that reads the Fisher block state and writes
-        the IMM.  Stitch #1 lives in ``metric_recipes._build_fisher_diag_core``
-        and is tested separately by ``MetricCoreContractFisherDiagTest``.
-        """
-        n = 3
-        init_fn, update_fn, final_fn = window_adaptation_base(
-            is_mass_matrix_diagonal=True,
-            diagonal_estimator="fisher",
-        )
-        # base().init takes (position: ArrayLikeTree, initial_step_size: float)
-        position = jnp.zeros(n)
-        state = init_fn(position, 1.0)
+        def spy(name):
+            captured["name"] = name
+            return original(name)
 
-        key = self.next_key()
-        draws = jax.random.normal(key, (200, n))
-        grads = -draws  # gradient of std-normal log density: -x
+        _wa_module.lookup_recipe = spy
+        try:
+            blackjax.window_adaptation(
+                blackjax.nuts,
+                std_normal_logdensity,
+                is_mass_matrix_diagonal=is_mass_matrix_diagonal,
+            )
+        finally:
+            _wa_module.lookup_recipe = original
+        return captured["name"]
 
-        # Run in slow-window mode (stage=1) without triggering end-of-window
-        def body(st, xs):
-            pos, g = xs
-            # stage=1 (slow), is_middle_window_end=False
-            return update_fn(st, (jnp.array(1), jnp.array(False)), pos, g, 0.8), None
+    def test_diagonal_true_routes_to_welford_diag(self):
+        self.assertEqual(self._capture_recipe_name(True), "welford_diag")
 
-        state, _ = jax.lax.scan(body, state, (draws, grads))
-
-        # Trigger slow_final: end-of-slow-window update that stitches in new IMM
-        state = update_fn(
-            state, (jnp.array(1), jnp.array(True)), draws[0], grads[0], 0.8
-        )
-        step_size, imm = final_fn(state)
-
-        self.assertEqual(imm.shape, (n,))
-        self.assertTrue(bool(jnp.all(jnp.isfinite(imm))))
-        self.assertTrue(bool(jnp.all(imm > 0)))
+    def test_diagonal_false_routes_to_welford_dense(self):
+        self.assertEqual(self._capture_recipe_name(False), "welford_dense")

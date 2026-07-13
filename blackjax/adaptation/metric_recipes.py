@@ -13,6 +13,30 @@
 # limitations under the License.
 """Metric recipes and the embeddable MetricCore protocol for staged_adaptation.
 
+Available recipes
+-----------------
+Pass any of the following string names as the ``metric=`` argument to
+:func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`:
+
+- ``"welford_diag"`` — Stan-default diagonal Welford estimator; reproduces
+  :func:`~blackjax.adaptation.window_adaptation.window_adaptation` exactly.
+- ``"welford_dense"`` — Dense Welford covariance, same Stan schedule.
+- ``"fisher_diag"`` — Fisher-divergence-minimising diagonal estimator
+  (situational; requires position *and* gradient samples; see registry
+  provenance note for operational guidance).
+
+Usage::
+
+    # String sugar (registry lookup):
+    wu = staged_adaptation(nuts, logdensity_fn, metric="welford_diag")
+
+    # Recipe constructor (testability / custom configuration):
+    from blackjax.adaptation.metric_recipes import REGISTRY
+    core = REGISTRY["welford_diag"].build_core(imm_shrinkage_to_previous=5.0)
+    wu = staged_adaptation(nuts, logdensity_fn, metric=core)
+
+Design
+------
 A :class:`MetricRecipe` declares an (estimator, buffer, representation,
 support_gate) tuple with construction-time validation of the coupling
 contract (``needs ⊆ provides`` and ``emits == representation``): incompatible
@@ -33,24 +57,6 @@ Layer doctrine:
   adapted metric, so the step-size and metric adaptation are decoupled.  A
   ``diag_reference`` accessor will be added in the low-rank slice where this
   independence no longer holds.
-
-Registry (this slice):
-
-- ``"welford_diag"`` — Stan-default; reproduces :func:`window_adaptation`
-  exactly.
-- ``"welford_dense"`` — dense covariance, same Stan schedule.
-- ``"fisher_diag"`` — Fisher-divergence-minimising diagonal estimator;
-  situational; see registry provenance note for operational guidance.
-
-Usage::
-
-    # String sugar (registry lookup):
-    wu = staged_adaptation(nuts, logdensity_fn, metric="welford_diag")
-
-    # Recipe constructor (testability / custom configuration):
-    from blackjax.adaptation.metric_recipes import REGISTRY
-    core = REGISTRY["welford_diag"].build_core(imm_shrinkage_to_previous=5.0)
-    wu = staged_adaptation(nuts, logdensity_fn, metric=core)
 
 Notes
 -----
