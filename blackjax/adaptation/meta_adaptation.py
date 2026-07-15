@@ -364,7 +364,11 @@ def build_meta_adaptation_core(
     max_budget_steps: int = max(max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP, 1)
 
     def init(n_dims: int) -> MetaAdaptationCoreState:
-        buf = min(max(max_budget_steps // 5, 128), max_budget_steps)
+        # Buffer sized to half the budget so the growing-window schedule's largest
+        # window (≈ max_budget_steps * 0.4–0.5) does not overflow the buffer.
+        # With the cap n=min(buffer_idx, B) in final(), overflow is still safe
+        # (RESET policy keeps the most-recent B draws = the more-stationary tail).
+        buf = min(max(max_budget_steps // 2, 256), max_budget_steps)
         buf = max(buf, 2 * (_max_rank + 1) * _MIN_TRAIN_K_RATIO)
         buf = min(buf, max_budget_steps)
         actual_rank = min(_max_rank, max(n_dims // 2, 1), _MAX_RANK_CAP)
