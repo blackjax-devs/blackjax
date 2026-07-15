@@ -607,9 +607,8 @@ def _build_fisher_low_rank_core(
 ) -> MetricCore:
     """Build a MetricCore for the Fisher-score low-rank estimator (reset policy).
 
-    Implements the same window-end recompute as
-    :func:`~blackjax.adaptation.low_rank_adaptation.base`'s ``slow_final``
-    under ``buffer_policy="reset"``:
+    Implements the reset-policy window-end recompute (hard-reset buffer at
+    each slow-window boundary):
 
     1. ``init(n_dims)`` — creates a zero-filled draw/gradient buffer of shape
        ``(buffer_size, n_dims)`` with identity sigma, zero U, ones lam.
@@ -695,6 +694,176 @@ def _build_fisher_low_rank_core(
             grads_buffer=jnp.zeros((B, d)),
             buffer_idx=0,
             background_split=0,
+            recompute_counter=0,
+        )
+
+    return MetricCore(init=init, update=update, final=final)
+
+
+def _build_fisher_low_rank_accumulating_core(
+    *,
+    buffer_size: int,
+    max_rank: int,
+    gamma: float,
+    cutoff: float,
+    recompute_every: int = 1,
+) -> MetricCore:
+    """Build a MetricCore for the Fisher-score low-rank estimator (accumulating policy).
+
+    Implements nutpie's partial-forget buffer (``nuts-rs``
+    ``src/transform/adapt/low_rank.rs::switch``):
+
+    1. ``init(n_dims)`` — same layout as the reset core (identity sigma, zero U/lam,
+       zero buffers, ``buffer_idx=0``, ``background_split=0``, ``recompute_counter=0``).
+    2. ``update(state, position, grad)`` — writes (position, grad) into the circular
+       buffer, increments ``recompute_counter``, then periodically recomputes the
+       metric when ``recompute_counter % recompute_every == 0`` and at least 3 draws
+       are in the buffer. The recompute is a **pure function** of the current buffer
+       content: it writes *only* ``sigma``, ``mu_star``, ``U``, ``lam`` — consuming
+       no PRNG and leaving ``draws_buffer``, ``grads_buffer``, ``buffer_idx``, and
+       ``background_split`` unchanged. At slow-window-end steps the engine calls
+       ``update()`` first and then ``final()``; if the periodic recompute fires in
+       ``update()`` at that step it is a spurious extra SVD (cost note: one additional
+       ``_compute_low_rank_metric`` call per window boundary at ``recompute_every=1``,
+       acceptable because the accumulating policy already recomputes on every slow step)
+       whose sigma/mu_star/U/lam values are **unconditionally overwritten** by
+       ``final()``'s force-recompute from the shifted buffer — the spurious recompute
+       cannot perturb any field that ``final()`` does not reset.  This is the key
+       purity invariant that makes the engine path bit-exact with the legacy scan loop.
+    3. ``final(state)`` — nutpie's ``switch()``: pops the ``background_split`` oldest
+       rows from the front of the buffer (``_shift_buffer_left``), sets
+       ``new_n_valid = buffer_idx - background_split``, force-recomputes the metric
+       if ``new_n_valid >= 3`` (else keeps), resets ``recompute_counter = 0``, and
+       sets ``background_split = new_n_valid``.  Called by the engine at every
+       slow-window boundary.
+
+    **Bit-exactness with the legacy base()-backed scan loop.**  At non-window-end slow
+    steps both paths do the same work (accumulate → periodic recompute if due → keep
+    counter management consistent).  At window-end slow steps the engine calls
+    ``update()`` then ``final()`` whereas the legacy loop called ``slow_update()`` then
+    ``slow_switch()`` without an intervening periodic recompute.  The spurious
+    periodic-recompute in ``update()`` (if it fires) only modifies sigma/mu_star/U/lam,
+    and ``final()`` overwrites exactly those fields from the shifted buffer.  Every
+    other field (buffers, buffer_idx, background_split, recompute_counter) is set
+    identically by both paths after the window-end step.
+
+    Parameters
+    ----------
+    buffer_size
+        Number of rows in the circular draw/gradient buffer.  Use
+        :func:`~blackjax.adaptation.low_rank_adaptation._accumulating_buffer_capacity`
+        to derive the tight worst-case bound from the warmup schedule.
+    max_rank
+        Maximum number of eigenvectors retained in the low-rank correction.
+    gamma
+        Regularisation scale (nutpie convention — projected covariance divided by
+        ``gamma`` before adding identity, no ``n`` scaling).
+    cutoff
+        Eigenvalues in ``[1/cutoff, cutoff]`` are masked to 1.
+    recompute_every
+        Number of slow-stage steps between mid-window metric recomputes.  Default 1
+        matches nutpie's ``mass_matrix_update_freq=1`` (recompute every slow step).
+    """
+
+    def init(n_dims: int) -> LowRankMetricCoreState:
+        return LowRankMetricCoreState(
+            inverse_mass_matrix=LowRankInverseMassMatrix(
+                sigma=jnp.ones(n_dims),
+                U=jnp.zeros((n_dims, max_rank)),
+                lam=jnp.ones(max_rank),
+            ),
+            mu_star=jnp.zeros(n_dims),
+            draws_buffer=jnp.zeros((buffer_size, n_dims)),
+            grads_buffer=jnp.zeros((buffer_size, n_dims)),
+            buffer_idx=0,
+            background_split=0,
+            recompute_counter=0,
+        )
+
+    def update(
+        state: LowRankMetricCoreState,
+        position: ArrayLikeTree,
+        grad: ArrayLikeTree | None = None,
+    ) -> LowRankMetricCoreState:
+        pos_flat, _ = fu.ravel_pytree(position)
+        grad_flat, _ = fu.ravel_pytree(grad)
+        B = state.draws_buffer.shape[0]
+        idx = state.buffer_idx % B
+        new_draws = jax.lax.dynamic_update_slice(
+            state.draws_buffer, pos_flat[None, :], (idx, 0)
+        )
+        new_grads = jax.lax.dynamic_update_slice(
+            state.grads_buffer, grad_flat[None, :], (idx, 0)
+        )
+        new_buffer_idx = state.buffer_idx + 1
+        new_recompute_counter = state.recompute_counter + 1
+
+        # Periodic mid-window metric recompute.  This pure function writes only
+        # sigma/mu_star/U/lam; it does NOT touch the buffers or the bookkeeping
+        # counters other than resetting recompute_counter to 0 when it fires.
+        # At window-end steps the engine calls final() after update(), and final()
+        # unconditionally overwrites sigma/mu_star/U/lam from the shifted buffer —
+        # so any recompute here at a window boundary is harmless (see class docstring).
+        due = jnp.logical_and(
+            new_recompute_counter % recompute_every == 0, new_buffer_idx >= 3
+        )
+
+        def _recompute():
+            return _compute_low_rank_metric(
+                new_draws, new_grads, new_buffer_idx, max_rank, gamma, cutoff
+            )
+
+        def _keep():
+            imm = state.inverse_mass_matrix
+            return imm.sigma, state.mu_star, imm.U, imm.lam
+
+        sigma, mu_star, U, lam = jax.lax.cond(due, _recompute, _keep)
+        # Reset the counter only when a recompute fires, matching base()'s
+        # slow_recompute_only (counter = 0 on recompute, unchanged otherwise).
+        next_counter = jax.lax.cond(
+            due,
+            lambda: jnp.zeros_like(new_recompute_counter),
+            lambda: new_recompute_counter,
+        )
+
+        return LowRankMetricCoreState(
+            inverse_mass_matrix=LowRankInverseMassMatrix(sigma=sigma, U=U, lam=lam),
+            mu_star=mu_star,
+            draws_buffer=new_draws,
+            grads_buffer=new_grads,
+            buffer_idx=new_buffer_idx,
+            background_split=state.background_split,
+            recompute_counter=next_counter,
+        )
+
+    def final(state: LowRankMetricCoreState) -> LowRankMetricCoreState:
+        # Nutpie's switch(): pop background_split oldest rows, keep the rest
+        # as the new background for the next window.
+        shift = state.background_split
+        new_draws = _shift_buffer_left(state.draws_buffer, shift)
+        new_grads = _shift_buffer_left(state.grads_buffer, shift)
+        new_n_valid = state.buffer_idx - shift
+
+        # Force-recompute from shifted buffer.  Overwrites sigma/mu_star/U/lam
+        # unconditionally (including any values written by update()'s spurious
+        # periodic recompute at this same window-end step — see class docstring).
+        def _recompute():
+            return _compute_low_rank_metric(
+                new_draws, new_grads, new_n_valid, max_rank, gamma, cutoff
+            )
+
+        def _keep():
+            imm = state.inverse_mass_matrix
+            return imm.sigma, state.mu_star, imm.U, imm.lam
+
+        sigma, mu_star, U, lam = jax.lax.cond(new_n_valid >= 3, _recompute, _keep)
+        return LowRankMetricCoreState(
+            inverse_mass_matrix=LowRankInverseMassMatrix(sigma=sigma, U=U, lam=lam),
+            mu_star=mu_star,
+            draws_buffer=new_draws,
+            grads_buffer=new_grads,
+            buffer_idx=new_n_valid,
+            background_split=new_n_valid,
             recompute_counter=0,
         )
 
