@@ -576,26 +576,40 @@ def window_adaptation_low_rank(
     if recompute_every < 1:
         raise ValueError(f"recompute_every must be >= 1, got {recompute_every!r}")
 
-    def _run_reset(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int) -> tuple:
-        """Reset policy: run via the staged-adaptation engine (default path).
+    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
+        # Build the MetricCore: policy-specific buffer sizing + core builder.
+        if buffer_policy == "accumulating":
+            # Pre-compute schedule to derive the tight worst-case buffer
+            # capacity from the window boundaries.  The partial-forget switch
+            # keeps the just-completed window's draws as the new background, so
+            # the tight bound is max(window[i] + window[i-1]) over all pairs.
+            schedule = schedule_fn(num_steps)
+            buffer_size = max(_accumulating_buffer_capacity(schedule), 1)
 
-        The buffer is hard-reset to empty at every slow-window boundary.
-        Bit-exact with the pre-engine implementation for all default parameters.
-        """
-        # Size the buffer to the expected largest slow window rather than the
-        # full warmup length.  Modular indexing in the core's update() means
-        # that if a window exceeds buffer_size only the most recent buffer_size
-        # draws are kept -- matching nutpie's fixed-buffer behaviour and
-        # avoiding O(num_steps × d) allocations for large d.
-        typical_window = max(num_steps // 5, 128)
-        buffer_size = min(typical_window * 2, max(num_steps, 1))
+            def _schedule_fn(n):
+                return schedule  # reuse the pre-computed array
 
-        core = _build_fisher_low_rank_core(
-            buffer_size=buffer_size,
-            max_rank=max_rank,
-            gamma=gamma,
-            cutoff=cutoff,
-        )
+            core = _build_fisher_low_rank_accumulating_core(
+                buffer_size=buffer_size,
+                max_rank=max_rank,
+                gamma=gamma,
+                cutoff=cutoff,
+                recompute_every=recompute_every,
+            )
+        else:
+            # Size the buffer to the expected largest slow window rather than
+            # the full warmup length.  Modular indexing in the core's update()
+            # keeps only the most recent buffer_size draws when a window exceeds
+            # buffer_size -- avoiding O(num_steps × d) allocations for large d.
+            typical_window = max(num_steps // 5, 128)
+            buffer_size = min(typical_window * 2, max(num_steps, 1))
+            _schedule_fn = schedule_fn
+            core = _build_fisher_low_rank_core(
+                buffer_size=buffer_size,
+                max_rank=max_rank,
+                gamma=gamma,
+                cutoff=cutoff,
+            )
 
         seeded_imm_state = None
         if gradient_based_init:
@@ -619,7 +633,7 @@ def window_adaptation_low_rank(
             # converts between the two so that info field access is unchanged.
             adaptation_info_fn=_make_low_rank_bridge_info_fn(adaptation_info_fn),
             integrator=integrator,
-            schedule_fn=schedule_fn,
+            schedule_fn=_schedule_fn,
             initial_metric_state=seeded_imm_state,
             **extra_parameters,
         )
@@ -634,65 +648,5 @@ def window_adaptation_low_rank(
         mu_star_state = algorithm.init(unravel(mu_star), logdensity_fn)
 
         return AdaptationResults(mu_star_state, results.parameters), info
-
-    def _run_accumulating(
-        rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int
-    ) -> tuple:
-        """Accumulating policy: run via the staged-adaptation engine.
-
-        Pre-computes the schedule to derive the tight worst-case buffer capacity
-        (``_accumulating_buffer_capacity``), then delegates to the engine via
-        ``_build_fisher_low_rank_accumulating_core``.  Buffer, counter, and
-        sigma/mu_star/U/lam state are managed entirely inside the core.
-        """
-        # Pre-compute schedule before building the core so we can derive the
-        # exact accumulating buffer capacity from the window boundaries.
-        schedule = schedule_fn(num_steps)
-        buffer_size = max(_accumulating_buffer_capacity(schedule), 1)
-
-        core = _build_fisher_low_rank_accumulating_core(
-            buffer_size=buffer_size,
-            max_rank=max_rank,
-            gamma=gamma,
-            cutoff=cutoff,
-            recompute_every=recompute_every,
-        )
-
-        seeded_imm_state = None
-        if gradient_based_init:
-            _init_state = algorithm.init(position, logdensity_fn)
-            n_dims = pytree_size(position)
-            seeded_imm_state = seed_low_rank_sigma_from_grad(
-                core.init(n_dims), _init_state.logdensity_grad
-            )
-
-        engine = staged_adaptation(
-            algorithm,
-            logdensity_fn,
-            metric=core,
-            initial_step_size=initial_step_size,
-            target_acceptance_rate=target_acceptance_rate,
-            adaptation_info_fn=_make_low_rank_bridge_info_fn(adaptation_info_fn),
-            integrator=integrator,
-            schedule_fn=lambda n: schedule,  # reuse pre-computed schedule
-            initial_metric_state=seeded_imm_state,
-            **extra_parameters,
-        )
-
-        results, info = engine.run(rng_key, position, num_steps)  # type: ignore[call-arg]
-
-        # Re-initialise chain at mu* = x̄ + σ²⊙ᾱ (optimal translation, §3.2).
-        mu_star = info.adaptation_state.mu_star[-1]
-        _, unravel = fu.ravel_pytree(position)
-        mu_star_state = algorithm.init(unravel(mu_star), logdensity_fn)
-
-        return AdaptationResults(mu_star_state, results.parameters), info
-
-    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
-        if buffer_policy == "accumulating":
-            # Accumulating path: see _run_accumulating docstring for the
-            # architectural rationale for the split.
-            return _run_accumulating(rng_key, position, num_steps)
-        return _run_reset(rng_key, position, num_steps)
 
     return AdaptationAlgorithm(run)
