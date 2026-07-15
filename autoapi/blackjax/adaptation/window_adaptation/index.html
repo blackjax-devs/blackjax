@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.step_size" href="../step_size/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g7e7a8769c" />
+  <meta name="docsearch:version" content="0.1.dev1+g0df2fe07f" />
   </head>
   
   
@@ -531,6 +531,9 @@ through to <code class="docutils literal notranslate"><span class="pre">mass_mat
 <li><p><em>update</em> – Function that moves the warmup one step.</p></li>
 <li><p><em>final</em> – Function that returns the step size and mass matrix given a warmup
 state.</p></li>
+<li><p><em>.. deprecated::</em> – This function is deprecated and will be removed in a future release.
+Use <code class="xref py py-func docutils literal notranslate"><span class="pre">blackjax.window_adaptation()</span></code> for the standard warmup, or
+<code class="xref py py-func docutils literal notranslate"><span class="pre">blackjax.staged_adaptation()</span></code> for custom metric recipes.</p></li>
 </ul>
 </p>
 </dd>

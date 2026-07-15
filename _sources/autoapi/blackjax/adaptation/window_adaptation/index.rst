@@ -97,6 +97,9 @@ Module Contents
              * *update* -- Function that moves the warmup one step.
              * *final* -- Function that returns the step size and mass matrix given a warmup
                state.
+             * *.. deprecated::* -- This function is deprecated and will be removed in a future release.
+               Use :func:`blackjax.window_adaptation` for the standard warmup, or
+               :func:`blackjax.staged_adaptation` for custom metric recipes.
 
 
 .. py:function:: window_adaptation(algorithm, logdensity_fn: Callable, is_mass_matrix_diagonal: bool = True, initial_inverse_mass_matrix: blackjax.types.Array | None = None, imm_shrinkage_to_previous: float = 0.0, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
