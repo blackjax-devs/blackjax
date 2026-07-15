@@ -510,9 +510,19 @@ def build_meta_adaptation_core(
         )
 
         # ---- AIRM velocity proxy + advisory convergence step ----
-        lam_diff = jnp.linalg.norm(lam_lr - state.prev_lam)
-        new_airm_vel_prev = state.airm_vel_curr
-        new_airm_vel_curr = jnp.where(new_has_escalated, lam_diff, state.airm_vel_curr)
+        # Cast prev_lam to lam_lr dtype for the norm so the subtraction is
+        # numerically sound; then cast back to float32 before storing.
+        lam_diff = jnp.linalg.norm(lam_lr - state.prev_lam.astype(lam_lr.dtype))
+        # Controller-signal scalars are always stored as float32: they are gate
+        # comparisons and AIRM velocities that don't benefit from float64 precision.
+        # Explicit casts here are required so that both branches of the
+        # jax.lax.cond in staged_adaptation produce identical types under x64
+        # (the false branch returns the init-time float32 carry unchanged).
+        lam_diff_f32 = lam_diff.astype(jnp.float32)
+        new_airm_vel_prev = state.airm_vel_curr  # already float32
+        new_airm_vel_curr = jnp.where(
+            new_has_escalated, lam_diff_f32, state.airm_vel_curr
+        )
         # Set converged_at_step once (monotone, like has_escalated) when AIRM criterion fires.
         airm_converged_now = (
             new_has_escalated
@@ -535,13 +545,13 @@ def build_meta_adaptation_core(
             recompute_counter=jnp.zeros_like(state.recompute_counter),
             has_escalated=new_has_escalated,
             escalation_rank=new_escalation_rank,
-            s_gap_prev=state.s_gap_curr,
-            s_gap_curr=s_gap_new,
-            r2_latest=r2_new,
+            s_gap_prev=state.s_gap_curr,  # float32, propagated from prior window
+            s_gap_curr=s_gap_new.astype(jnp.float32),
+            r2_latest=r2_new.astype(jnp.float32),
             r2_mode=mode_new,
             budget_used=state.budget_used,
             converged_at_step=new_converged_at,
-            prev_lam=lam_lr,
+            prev_lam=lam_lr.astype(jnp.float32),
             airm_vel_prev=new_airm_vel_prev,
             airm_vel_curr=new_airm_vel_curr,
             is_slow_mixing=is_slow,
