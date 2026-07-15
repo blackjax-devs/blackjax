@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.laps_burn_in" href="../laps_burn_in/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0df2fe07f" />
+  <meta name="docsearch:version" content="0.1.dev1+g4d4027f90" />
   </head>
   
   
@@ -419,7 +419,6 @@
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule"><code class="docutils literal notranslate"><span class="pre">build_growing_window_schedule()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.low_rank_adaptation.base"><code class="docutils literal notranslate"><span class="pre">base()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a></li>
 </ul>
 </li>
@@ -484,7 +483,7 @@ accumulates in the next one – and it recomputes the metric up to every draw
 (<code class="docutils literal notranslate"><span class="pre">mass_matrix_update_freq=1</span></code> in <code class="docutils literal notranslate"><span class="pre">nuts-rs</span></code>), not just at window ends
 (<code class="docutils literal notranslate"><span class="pre">nuts-rs</span></code> <code class="docutils literal notranslate"><span class="pre">src/transform/adapt/low_rank.rs::switch</span></code> /
 <code class="docutils literal notranslate"><span class="pre">src/adapt_strategy.rs</span></code>). Passing <code class="docutils literal notranslate"><span class="pre">buffer_policy=&quot;accumulating&quot;</span></code> to
-<a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.base" title="blackjax.adaptation.low_rank_adaptation.base"><code class="xref py py-func docutils literal notranslate"><span class="pre">base()</span></code></a> / <a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a> enables this; the default
+<a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a> enables this; the default
 <code class="docutils literal notranslate"><span class="pre">&quot;reset&quot;</span></code> reproduces the original hard-reset behaviour exactly.</p>
 <p><strong>Numerical robustness</strong> (round-9 schedule-port audit). <code class="docutils literal notranslate"><span class="pre">_compute_low_rank_metric</span></code>
 opportunistically promotes its internal computation to <code class="docutils literal notranslate"><span class="pre">float64</span></code> when JAX’s
@@ -517,10 +516,7 @@ explicitly to keep them.</p>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule" title="blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_growing_window_schedule</span></code></a>(→ blackjax.types.Array)</p></td>
 <td><p>Proportional-to-tune, geometrically-growing-window warmup schedule.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.base" title="blackjax.adaptation.low_rank_adaptation.base"><code class="xref py py-obj docutils literal notranslate"><span class="pre">base</span></code></a>(→ tuple[Callable, Callable, Callable])</p></td>
-<td><p>Warmup scheme using the low-rank mass matrix adaptation.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">window_adaptation_low_rank</span></code></a>(...)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-obj docutils literal notranslate"><span class="pre">window_adaptation_low_rank</span></code></a>(...)</p></td>
 <td><p>Adapt step size and a low-rank mass matrix for HMC-family samplers.</p></td>
 </tr>
 </tbody>
@@ -646,11 +642,11 @@ rescaled when they don’t fit the budget.</p></li>
 (<code class="docutils literal notranslate"><span class="pre">mass_matrix_window_growth</span></code> in nutpie’s receipts).</p></li>
 </ul>
 <p><strong>Scope note.</strong> This function (together with the <code class="docutils literal notranslate"><span class="pre">gradient_based_init</span></code>
-option on <a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.base" title="blackjax.adaptation.low_rank_adaptation.base"><code class="xref py py-func docutils literal notranslate"><span class="pre">base()</span></code></a> / <a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a>) implements
+option on <a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a>) implements
 the window-sizing and gradient-based-init components of nutpie’s warmup;
-pair it with <code class="docutils literal notranslate"><span class="pre">buffer_policy=&quot;accumulating&quot;</span></code> (see <a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.base" title="blackjax.adaptation.low_rank_adaptation.base"><code class="xref py py-func docutils literal notranslate"><span class="pre">base()</span></code></a>) for the
-partial-forget buffer and continuous recompute cadence, matching
-nutpie’s other main pieces.</p>
+pair it with <code class="docutils literal notranslate"><span class="pre">buffer_policy=&quot;accumulating&quot;</span></code> on
+<a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a> for the partial-forget buffer and
+continuous recompute cadence, matching nutpie’s other main pieces.</p>
 <p>nutpie’s actual schedule is an <em>online</em>, per-draw decision
 (<code class="docutils literal notranslate"><span class="pre">adapt_strategy.rs</span></code>’s <code class="docutils literal notranslate"><span class="pre">is_late</span></code> look-ahead + a partial-forget
 circular buffer + up-to-every-draw metric recomputation,
@@ -707,89 +703,12 @@ switch in the main phase. Default <code class="docutils literal notranslate"><sp
 </dd></dl>
 
 <dl class="py function">
-<dt class="sig sig-object py" id="blackjax.adaptation.low_rank_adaptation.base">
-<span class="sig-name descname"><span class="pre">base</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gradient_based_init</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_policy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'reset'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute_every</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.14)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/low_rank_adaptation.html#base"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.low_rank_adaptation.base" title="Link to this definition">#</a></dt>
-<dd><p>Warmup scheme using the low-rank mass matrix adaptation.</p>
-<p>Mirrors Stan’s three-phase schedule but replaces Welford covariance
-estimation with the Fisher-divergence-minimising low-rank metric of
-<span id="id4">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>, following nutpie’s implementation.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>max_rank</strong> – Maximum number of eigenvectors retained in the low-rank correction.</p></li>
-<li><p><strong>target_acceptance_rate</strong> – Target acceptance rate for dual-averaging step-size adaptation.</p></li>
-<li><p><strong>gamma</strong> – Regularisation scale.  The projected covariance is divided by <code class="docutils literal notranslate"><span class="pre">gamma</span></code>
-(nutpie convention – no <code class="docutils literal notranslate"><span class="pre">n</span></code> scaling).  Default <code class="docutils literal notranslate"><span class="pre">1e-5</span></code> matches
-nutpie’s <code class="docutils literal notranslate"><span class="pre">LowRankSettings::default</span></code>.</p></li>
-<li><p><strong>cutoff</strong> – Eigenvectors with eigenvalue in <code class="docutils literal notranslate"><span class="pre">[1/cutoff,</span> <span class="pre">cutoff]</span></code> are masked
-(eigenvalue set to 1).  Default <code class="docutils literal notranslate"><span class="pre">2.0</span></code> matches nutpie’s <code class="docutils literal notranslate"><span class="pre">c=2</span></code>.</p></li>
-<li><p><strong>gradient_based_init</strong> – If <code class="docutils literal notranslate"><span class="pre">True</span></code>, seed the diagonal scale from the initial gradient
-instead of the identity: nutpie’s own <code class="docutils literal notranslate"><span class="pre">init</span></code> calls
-<code class="docutils literal notranslate"><span class="pre">update_from_grad</span></code> on the very first observed point (<code class="docutils literal notranslate"><span class="pre">nuts-rs</span></code>
-<code class="docutils literal notranslate"><span class="pre">src/transform/adapt/low_rank.rs::init</span></code>), which the paper’s §3.1
-motivates as <code class="docutils literal notranslate"><span class="pre">M</span> <span class="pre">=</span> <span class="pre">diag(|alpha^(0)|)</span></code> – a regularised diagonal of
-the gradient outer-product, a common Hessian approximation at the
-starting point (cf. L-BFGS). Since blackjax’s <code class="docutils literal notranslate"><span class="pre">sigma**2</span></code> is the
-<em>inverse</em>-mass-matrix diagonal, this sets
-<code class="docutils literal notranslate"><span class="pre">sigma</span> <span class="pre">=</span> <span class="pre">1/sqrt(clip(|grad|,</span> <span class="pre">1e-20,</span> <span class="pre">1e20))</span></code> so that
-<code class="docutils literal notranslate"><span class="pre">M^{-1}_diag</span> <span class="pre">=</span> <span class="pre">sigma**2</span> <span class="pre">=</span> <span class="pre">1/|grad|</span></code>, matching <code class="docutils literal notranslate"><span class="pre">M</span> <span class="pre">=</span> <span class="pre">diag(|grad|)</span></code>
-– <strong>except per-coordinate where</strong> <code class="docutils literal notranslate"><span class="pre">|grad_i|</span> <span class="pre">&lt;</span> <span class="pre">1e-10</span></code>, <strong>where
-sigma_i falls back to 1.0</strong> (the identity) instead of propagating
-the <code class="docutils literal notranslate"><span class="pre">1e-20</span></code> clip floor into an astronomically loose <code class="docutils literal notranslate"><span class="pre">sigma_i</span> <span class="pre">=</span>
-<span class="pre">1e10</span></code>. This defends the real edge case of initialising at (or very
-near) a stationary point of the target – e.g. <code class="docutils literal notranslate"><span class="pre">x=0</span></code> on any
-centered/standardised density – where the gradient is exactly (or
-near-)zero and an extreme initial scale causes near-certain
-divergence on the very first trajectory (see the fisher-2x2
-calibration study’s root-caused finding). Only the diagonal scale
-changes; <code class="docutils literal notranslate"><span class="pre">U</span></code>/<code class="docutils literal notranslate"><span class="pre">lam</span></code> still start at no-correction (<code class="docutils literal notranslate"><span class="pre">U=0</span></code>,
-<code class="docutils literal notranslate"><span class="pre">lam=1</span></code>), same as the default. Default <code class="docutils literal notranslate"><span class="pre">False</span></code> reproduces the
-original identity/zero initialisation exactly (see also
-<a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule" title="blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_growing_window_schedule()</span></code></a>, which implements the
-companion window-sizing piece of nutpie’s warmup).</p></li>
-<li><p><strong>buffer_policy</strong> – <code class="docutils literal notranslate"><span class="pre">&quot;reset&quot;</span></code> (default) hard-resets the draw/gradient buffer to empty
-at every window switch, matching the original Stan-schedule
-behaviour exactly – zero default-behavior change.
-<code class="docutils literal notranslate"><span class="pre">&quot;accumulating&quot;</span></code> instead ports nutpie’s partial-forget buffer
-(<code class="docutils literal notranslate"><span class="pre">nuts-rs</span></code> <code class="docutils literal notranslate"><span class="pre">src/transform/adapt/low_rank.rs::switch</span></code>): at a
-window switch, only the draws that were already “background” (the
-window before last) are dropped, so the buffer keeps the
-just-completed window’s draws in addition to the next window’s, and
-the metric is recomputed both at every switch (unconditionally,
-nutpie’s <code class="docutils literal notranslate"><span class="pre">force_update</span></code>) and periodically in between per
-<code class="docutils literal notranslate"><span class="pre">recompute_every</span></code> (nutpie’s <code class="docutils literal notranslate"><span class="pre">mass_matrix_update_freq</span></code>). Composes
-with any <code class="docutils literal notranslate"><span class="pre">schedule_fn</span></code> – the buffer policy only changes what
-happens <em>at</em> a window boundary the schedule already defines, not
-when those boundaries occur.</p></li>
-<li><p><strong>recompute_every</strong> – Only used when <code class="docutils literal notranslate"><span class="pre">buffer_policy=&quot;accumulating&quot;</span></code>. Number of
-slow-stage steps between metric recomputes <em>between</em> window
-switches (switches themselves always force a recompute,
-independent of this cadence). Default <code class="docutils literal notranslate"><span class="pre">1</span></code> recomputes on every
-slow-stage step, matching nutpie’s default
-<code class="docutils literal notranslate"><span class="pre">mass_matrix_update_freq=1</span></code> (the fully faithful port). Raising
-this trades fidelity for compute: an SVD-based recompute every
-single step can be costly in JAX for large <code class="docutils literal notranslate"><span class="pre">d</span></code>/buffer size; see
-the PR description for measured timings before deviating from the
-default. Ignored under <code class="docutils literal notranslate"><span class="pre">buffer_policy=&quot;reset&quot;</span></code> (recompute there is
-tied solely to <code class="docutils literal notranslate"><span class="pre">is_window_end</span></code>, as before).</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The three adaptation primitives expected by the window-adaptation loop.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">(init,</span> <span class="pre">update,</span> <span class="pre">final)</span></code></p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
 <dt class="sig sig-object py" id="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank">
 <span class="sig-name descname"><span class="pre">window_adaptation_low_rank</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">algorithm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">10</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_acceptance_rate</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.8</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation_info_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">_default_low_rank_adaptation_info_fn</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">mcmc.integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gradient_based_init</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.14)"><span class="pre">bool</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">schedule_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">build_schedule</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_policy</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'reset'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute_every</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">extra_parameters</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.AdaptationAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/low_rank_adaptation.html#window_adaptation_low_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="Link to this definition">#</a></dt>
 <dd><p>Adapt step size and a low-rank mass matrix for HMC-family samplers.</p>
 <p>Uses the three-phase Stan-style warmup schedule while replacing Welford
 covariance estimation with the Fisher-divergence-minimising low-rank
-metric of <span id="id5">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
+metric of <span id="id4">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span>.</p>
 <p>The returned <code class="docutils literal notranslate"><span class="pre">AdaptationAlgorithm</span></code> has a single <code class="docutils literal notranslate"><span class="pre">run</span></code> method:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">params</span><span class="p">),</span> <span class="n">info</span> <span class="o">=</span> <span class="n">warmup</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">num_steps</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
 <span class="n">nuts</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">nuts</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
@@ -820,7 +739,7 @@ docstring). Pass <code class="docutils literal notranslate"><span class="pre">bl
 explicitly to keep the raw per-step buffer trace.</p></li>
 <li><p><strong>integrator</strong> – Integrator to pass to <code class="docutils literal notranslate"><span class="pre">algorithm.build_kernel</span></code>.</p></li>
 <li><p><strong>gradient_based_init</strong> – Seed the diagonal scale from the initial gradient instead of the
-identity, matching nutpie’s own initialisation (see <a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.base" title="blackjax.adaptation.low_rank_adaptation.base"><code class="xref py py-func docutils literal notranslate"><span class="pre">base()</span></code></a>).
+identity, matching nutpie’s own initialisation.
 Default <code class="docutils literal notranslate"><span class="pre">False</span></code> reproduces the original behaviour exactly.</p></li>
 <li><p><strong>schedule_fn</strong> – Schedule-generator function <code class="docutils literal notranslate"><span class="pre">num_steps</span> <span class="pre">-&gt;</span> <span class="pre">(num_steps,</span> <span class="pre">2)</span></code> array of
 <code class="docutils literal notranslate"><span class="pre">(stage,</span> <span class="pre">is_window_end)</span></code> pairs. Default is Stan’s fixed-absolute,
@@ -831,9 +750,11 @@ Default <code class="docutils literal notranslate"><span class="pre">False</span
 exactly what it does and does not capture relative to nutpie’s own
 (online, per-draw) schedule.</p></li>
 <li><p><strong>buffer_policy</strong> – <code class="docutils literal notranslate"><span class="pre">&quot;reset&quot;</span></code> (default, unchanged behaviour) or <code class="docutils literal notranslate"><span class="pre">&quot;accumulating&quot;</span></code>
-(nutpie’s partial-forget buffer) – see <a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.base" title="blackjax.adaptation.low_rank_adaptation.base"><code class="xref py py-func docutils literal notranslate"><span class="pre">base()</span></code></a> for the exact
-semantics. Composes with any <code class="docutils literal notranslate"><span class="pre">schedule_fn</span></code>.</p></li>
-<li><p><strong>recompute_every</strong> – Only used when <code class="docutils literal notranslate"><span class="pre">buffer_policy=&quot;accumulating&quot;</span></code>; see <a class="reference internal" href="#blackjax.adaptation.low_rank_adaptation.base" title="blackjax.adaptation.low_rank_adaptation.base"><code class="xref py py-func docutils literal notranslate"><span class="pre">base()</span></code></a>.</p></li>
+(nutpie’s partial-forget buffer, <code class="docutils literal notranslate"><span class="pre">nuts-rs</span></code> <code class="docutils literal notranslate"><span class="pre">switch()</span></code>).
+Composes with any <code class="docutils literal notranslate"><span class="pre">schedule_fn</span></code>.</p></li>
+<li><p><strong>recompute_every</strong> – Only used when <code class="docutils literal notranslate"><span class="pre">buffer_policy=&quot;accumulating&quot;</span></code>: number of slow-stage
+steps between mid-window metric recomputes.  Default 1 matches
+nutpie’s <code class="docutils literal notranslate"><span class="pre">mass_matrix_update_freq=1</span></code>.</p></li>
 <li><p><strong>**extra_parameters</strong> – Additional keyword arguments forwarded to the kernel at every step
 (e.g. <code class="docutils literal notranslate"><span class="pre">num_integration_steps</span></code> for HMC).</p></li>
 </ul>
@@ -860,9 +781,11 @@ semantics. Composes with any <code class="docutils literal notranslate"><span cl
 </dd>
 </dl>
 <p class="rubric">Notes</p>
-<p>The default (reset) buffer policy runs on the staged-adaptation engine;
-the accumulating policy uses the established low-rank scan loop, which it
-shares with earlier releases.</p>
+<p>Both buffer policies run on the staged-adaptation engine.  The reset
+policy hard-clears the draw/gradient buffer at each slow-window boundary;
+the accumulating policy retains the previous window’s draws as background
+(nutpie partial-forget) and recomputes the metric mid-window according to
+<code class="docutils literal notranslate"><span class="pre">recompute_every</span></code>.</p>
 <p>Wrap <code class="docutils literal notranslate"><span class="pre">warmup.run(...)</span></code> in <code class="xref py py-func docutils literal notranslate"><span class="pre">blackjax.progress_bar()</span></code> to display a
 progress bar, e.g. <code class="docutils literal notranslate"><span class="pre">with</span> <span class="pre">blackjax.progress_bar():</span> <span class="pre">warmup.run(...)</span></code>.</p>
 </dd></dl>
@@ -935,7 +858,6 @@ progress bar, e.g. <code class="docutils literal notranslate"><span class="pre">
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule"><code class="docutils literal notranslate"><span class="pre">build_growing_window_schedule()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.low_rank_adaptation.base"><code class="docutils literal notranslate"><span class="pre">base()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a></li>
 </ul>
 </li>

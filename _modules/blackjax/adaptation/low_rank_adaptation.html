@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0df2fe07f" />
+  <meta name="docsearch:version" content="0.1.dev1+g4d4027f90" />
   </head>
   
   
@@ -469,7 +469,7 @@
 <span class="sd">(``mass_matrix_update_freq=1`` in ``nuts-rs``), not just at window ends</span>
 <span class="sd">(``nuts-rs`` ``src/transform/adapt/low_rank.rs::switch`` /</span>
 <span class="sd">``src/adapt_strategy.rs``). Passing ``buffer_policy=&quot;accumulating&quot;`` to</span>
-<span class="sd">:func:`base` / :func:`window_adaptation_low_rank` enables this; the default</span>
+<span class="sd">:func:`window_adaptation_low_rank` enables this; the default</span>
 <span class="sd">``&quot;reset&quot;`` reproduces the original hard-reset behaviour exactly.</span>
 
 <span class="sd">**Numerical robustness** (round-9 schedule-port audit). ``_compute_low_rank_metric``</span>
@@ -487,10 +487,8 @@
 <span class="sd">``adaptation_info_fn=blackjax.adaptation.base.return_all_adapt_info``</span>
 <span class="sd">explicitly to keep them.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fu</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -503,6 +501,7 @@
     <span class="n">_spd_mean</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_recipes</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_build_fisher_low_rank_accumulating_core</span><span class="p">,</span>
     <span class="n">_build_fisher_low_rank_core</span><span class="p">,</span>
     <span class="n">seed_low_rank_sigma_from_grad</span><span class="p">,</span>
 <span class="p">)</span>
@@ -510,19 +509,14 @@
     <span class="n">StagedAdaptationState</span><span class="p">,</span>
     <span class="n">staged_adaptation</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.step_size</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-    <span class="n">DualAveragingAdaptationState</span><span class="p">,</span>
-    <span class="n">dual_averaging_adaptation</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.step_size</span><span class="w"> </span><span class="kn">import</span> <span class="n">DualAveragingAdaptationState</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.window_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_schedule</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdaptationAlgorithm</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">,</span> <span class="n">gaussian_euclidean_low_rank</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.util</span><span class="w"> </span><span class="kn">import</span> <span class="n">pytree_size</span>
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;LowRankAdaptationState&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;base&quot;</span><span class="p">,</span>
     <span class="s2">&quot;build_growing_window_schedule&quot;</span><span class="p">,</span>
     <span class="s2">&quot;window_adaptation_low_rank&quot;</span><span class="p">,</span>
 <span class="p">]</span>
@@ -667,9 +661,9 @@
 <span class="sd">    (whose ``imm_state`` is a :class:`~blackjax.adaptation.metric_recipes</span>
 <span class="sd">    .LowRankMetricCoreState`) to a :class:`LowRankAdaptationState`.</span>
 
-<span class="sd">    Used by the reset-path info bridge in :func:`window_adaptation_low_rank`</span>
-<span class="sd">    to expose the same ``adaptation_state`` field layout as the legacy</span>
-<span class="sd">    :func:`base` scan loop.  Downstream code that inspects</span>
+<span class="sd">    Used by the engine-path info bridge in :func:`window_adaptation_low_rank`</span>
+<span class="sd">    to expose the same ``adaptation_state`` field layout for both buffer policies.</span>
+<span class="sd">    Downstream code that inspects</span>
 <span class="sd">    ``info[-1].adaptation_state.sigma``, ``.mu_star``, ``.U``, etc. continues</span>
 <span class="sd">    to work without change across both buffer policies.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -721,24 +715,6 @@
 <span class="c1"># module&#39;s namespace for backward-compatibility (existing callers that import</span>
 <span class="c1"># from low_rank_adaptation continue to work).</span>
 <span class="c1"># Canonical location: blackjax.adaptation.metric_estimators.</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">_shift_buffer_left</span><span class="p">(</span><span class="n">buf</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">shift</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Drop the first ``shift`` rows of ``buf``, shifting the remainder to</span>
-<span class="sd">    the front and zero-filling the newly-vacated tail.</span>
-
-<span class="sd">    Implements nutpie&#39;s partial-forget buffer pop under JAX&#39;s static-shape</span>
-<span class="sd">    constraint (``nuts-rs`` ``src/transform/adapt/low_rank.rs::switch``:</span>
-<span class="sd">    ``for _ in 0..background_split { draws.pop_front() }``): pad the buffer</span>
-<span class="sd">    with its own capacity in zeros, then take a single dynamic-length-free</span>
-<span class="sd">    ``dynamic_slice`` starting at ``shift`` (a traced integer is fine here,</span>
-<span class="sd">    only the slice *size* -- the static ``capacity`` -- needs to be a</span>
-<span class="sd">    concrete Python int).</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">capacity</span> <span class="o">=</span> <span class="n">buf</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="n">shift</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">shift</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">capacity</span><span class="p">)</span>
-    <span class="n">padded</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">buf</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">buf</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_slice_in_dim</span><span class="p">(</span><span class="n">padded</span><span class="p">,</span> <span class="n">shift</span><span class="p">,</span> <span class="n">capacity</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_accumulating_buffer_capacity</span><span class="p">(</span><span class="n">schedule</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
@@ -798,11 +774,11 @@
 <span class="sd">      (``mass_matrix_window_growth`` in nutpie&#39;s receipts).</span>
 
 <span class="sd">    **Scope note.** This function (together with the ``gradient_based_init``</span>
-<span class="sd">    option on :func:`base` / :func:`window_adaptation_low_rank`) implements</span>
+<span class="sd">    option on :func:`window_adaptation_low_rank`) implements</span>
 <span class="sd">    the window-sizing and gradient-based-init components of nutpie&#39;s warmup;</span>
-<span class="sd">    pair it with ``buffer_policy=&quot;accumulating&quot;`` (see :func:`base`) for the</span>
-<span class="sd">    partial-forget buffer and continuous recompute cadence, matching</span>
-<span class="sd">    nutpie&#39;s other main pieces.</span>
+<span class="sd">    pair it with ``buffer_policy=&quot;accumulating&quot;`` on</span>
+<span class="sd">    :func:`window_adaptation_low_rank` for the partial-forget buffer and</span>
+<span class="sd">    continuous recompute cadence, matching nutpie&#39;s other main pieces.</span>
 
 <span class="sd">    nutpie&#39;s actual schedule is an *online*, per-draw decision</span>
 <span class="sd">    (``adapt_strategy.rs``&#39;s ``is_late`` look-ahead + a partial-forget</span>
@@ -918,384 +894,6 @@
 
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Warmup primitives  (init / update / final)</span>
-<span class="c1"># ---------------------------------------------------------------------------</span>
-
-
-<div class="viewcode-block" id="base">
-<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.base">[docs]</a>
-<span class="k">def</span><span class="w"> </span><span class="nf">base</span><span class="p">(</span>
-    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
-    <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.80</span><span class="p">,</span>
-    <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
-    <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
-    <span class="n">gradient_based_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">buffer_policy</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;reset&quot;</span><span class="p">,</span>
-    <span class="n">recompute_every</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Warmup scheme using the low-rank mass matrix adaptation.</span>
-
-<span class="sd">    Mirrors Stan&#39;s three-phase schedule but replaces Welford covariance</span>
-<span class="sd">    estimation with the Fisher-divergence-minimising low-rank metric of</span>
-<span class="sd">    :cite:p:`seyboldt2026preconditioning`, following nutpie&#39;s implementation.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    max_rank</span>
-<span class="sd">        Maximum number of eigenvectors retained in the low-rank correction.</span>
-<span class="sd">    target_acceptance_rate</span>
-<span class="sd">        Target acceptance rate for dual-averaging step-size adaptation.</span>
-<span class="sd">    gamma</span>
-<span class="sd">        Regularisation scale.  The projected covariance is divided by ``gamma``</span>
-<span class="sd">        (nutpie convention -- no ``n`` scaling).  Default ``1e-5`` matches</span>
-<span class="sd">        nutpie&#39;s ``LowRankSettings::default``.</span>
-<span class="sd">    cutoff</span>
-<span class="sd">        Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked</span>
-<span class="sd">        (eigenvalue set to 1).  Default ``2.0`` matches nutpie&#39;s ``c=2``.</span>
-<span class="sd">    gradient_based_init</span>
-<span class="sd">        If ``True``, seed the diagonal scale from the initial gradient</span>
-<span class="sd">        instead of the identity: nutpie&#39;s own ``init`` calls</span>
-<span class="sd">        ``update_from_grad`` on the very first observed point (``nuts-rs``</span>
-<span class="sd">        ``src/transform/adapt/low_rank.rs::init``), which the paper&#39;s §3.1</span>
-<span class="sd">        motivates as ``M = diag(|alpha^(0)|)`` -- a regularised diagonal of</span>
-<span class="sd">        the gradient outer-product, a common Hessian approximation at the</span>
-<span class="sd">        starting point (cf. L-BFGS). Since blackjax&#39;s ``sigma**2`` is the</span>
-<span class="sd">        *inverse*-mass-matrix diagonal, this sets</span>
-<span class="sd">        ``sigma = 1/sqrt(clip(|grad|, 1e-20, 1e20))`` so that</span>
-<span class="sd">        ``M^{-1}_diag = sigma**2 = 1/|grad|``, matching ``M = diag(|grad|)``</span>
-<span class="sd">        -- **except per-coordinate where** ``|grad_i| &lt; 1e-10``, **where</span>
-<span class="sd">        sigma_i falls back to 1.0** (the identity) instead of propagating</span>
-<span class="sd">        the ``1e-20`` clip floor into an astronomically loose ``sigma_i =</span>
-<span class="sd">        1e10``. This defends the real edge case of initialising at (or very</span>
-<span class="sd">        near) a stationary point of the target -- e.g. ``x=0`` on any</span>
-<span class="sd">        centered/standardised density -- where the gradient is exactly (or</span>
-<span class="sd">        near-)zero and an extreme initial scale causes near-certain</span>
-<span class="sd">        divergence on the very first trajectory (see the fisher-2x2</span>
-<span class="sd">        calibration study&#39;s root-caused finding). Only the diagonal scale</span>
-<span class="sd">        changes; ``U``/``lam`` still start at no-correction (``U=0``,</span>
-<span class="sd">        ``lam=1``), same as the default. Default ``False`` reproduces the</span>
-<span class="sd">        original identity/zero initialisation exactly (see also</span>
-<span class="sd">        :func:`build_growing_window_schedule`, which implements the</span>
-<span class="sd">        companion window-sizing piece of nutpie&#39;s warmup).</span>
-<span class="sd">    buffer_policy</span>
-<span class="sd">        ``&quot;reset&quot;`` (default) hard-resets the draw/gradient buffer to empty</span>
-<span class="sd">        at every window switch, matching the original Stan-schedule</span>
-<span class="sd">        behaviour exactly -- zero default-behavior change.</span>
-<span class="sd">        ``&quot;accumulating&quot;`` instead ports nutpie&#39;s partial-forget buffer</span>
-<span class="sd">        (``nuts-rs`` ``src/transform/adapt/low_rank.rs::switch``): at a</span>
-<span class="sd">        window switch, only the draws that were already &quot;background&quot; (the</span>
-<span class="sd">        window before last) are dropped, so the buffer keeps the</span>
-<span class="sd">        just-completed window&#39;s draws in addition to the next window&#39;s, and</span>
-<span class="sd">        the metric is recomputed both at every switch (unconditionally,</span>
-<span class="sd">        nutpie&#39;s ``force_update``) and periodically in between per</span>
-<span class="sd">        ``recompute_every`` (nutpie&#39;s ``mass_matrix_update_freq``). Composes</span>
-<span class="sd">        with any ``schedule_fn`` -- the buffer policy only changes what</span>
-<span class="sd">        happens *at* a window boundary the schedule already defines, not</span>
-<span class="sd">        when those boundaries occur.</span>
-<span class="sd">    recompute_every</span>
-<span class="sd">        Only used when ``buffer_policy=&quot;accumulating&quot;``. Number of</span>
-<span class="sd">        slow-stage steps between metric recomputes *between* window</span>
-<span class="sd">        switches (switches themselves always force a recompute,</span>
-<span class="sd">        independent of this cadence). Default ``1`` recomputes on every</span>
-<span class="sd">        slow-stage step, matching nutpie&#39;s default</span>
-<span class="sd">        ``mass_matrix_update_freq=1`` (the fully faithful port). Raising</span>
-<span class="sd">        this trades fidelity for compute: an SVD-based recompute every</span>
-<span class="sd">        single step can be costly in JAX for large ``d``/buffer size; see</span>
-<span class="sd">        the PR description for measured timings before deviating from the</span>
-<span class="sd">        default. Ignored under ``buffer_policy=&quot;reset&quot;`` (recompute there is</span>
-<span class="sd">        tied solely to ``is_window_end``, as before).</span>
-
-<span class="sd">    Returns</span>
-<span class="sd">    -------</span>
-<span class="sd">    ``(init, update, final)``</span>
-<span class="sd">        The three adaptation primitives expected by the window-adaptation loop.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">buffer_policy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;reset&quot;</span><span class="p">,</span> <span class="s2">&quot;accumulating&quot;</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">&quot;buffer_policy must be &#39;reset&#39; or &#39;accumulating&#39;, got </span><span class="si">{</span><span class="n">buffer_policy</span><span class="si">!r}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
-    <span class="k">if</span> <span class="n">recompute_every</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recompute_every must be &gt;= 1, got </span><span class="si">{</span><span class="n">recompute_every</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">da_init</span><span class="p">,</span> <span class="n">da_update</span><span class="p">,</span> <span class="n">da_final</span> <span class="o">=</span> <span class="n">dual_averaging_adaptation</span><span class="p">(</span><span class="n">target_acceptance_rate</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span>
-        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankAdaptationState</span><span class="p">:</span>
-        <span class="n">d</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">gradient_based_init</span><span class="p">:</span>
-            <span class="n">grad_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">grad</span><span class="p">)</span>
-            <span class="n">abs_grad</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">grad_flat</span><span class="p">)</span>
-            <span class="c1"># Per-coordinate fallback to the identity (sigma_i=1.0) below a</span>
-            <span class="c1"># near-zero-gradient threshold, rather than propagating the</span>
-            <span class="c1"># 1e-20 clip floor into sigma_i=1e10. A real user-facing edge:</span>
-            <span class="c1"># x=0 initialisation on any centered/standardised target gives</span>
-            <span class="c1"># an EXACTLY zero gradient, and nuts-rs&#39;s own</span>
-            <span class="c1"># array_update_var_inv_std_grad has no formula-level defense for</span>
-            <span class="c1"># this either (clamp(0, 1e-20, 1e20).recip() = 1e20 is finite,</span>
-            <span class="c1"># so its `fill_invalid` branch -- reserved for non-finite results</span>
-            <span class="c1"># -- never fires); nutpie avoids this in practice purely by</span>
-            <span class="c1"># jittering the initial position elsewhere in its pipeline, not</span>
-            <span class="c1"># via this formula. sigma=1e10 at every dimension mistunes the</span>
-            <span class="c1"># metric so severely relative to initial_step_size that the</span>
-            <span class="c1"># first trajectory diverges immediately, freezing the chain for</span>
-            <span class="c1"># the whole first window and collapsing the subsequent estimate</span>
-            <span class="c1"># -- root-caused via the Fisher 2x2 calibration study&#39;s</span>
-            <span class="c1"># instrumented re-run (design doc &quot;Calibration verdict&quot; section).</span>
-            <span class="c1"># Threshold 1e-10 is a defensible, disclosed choice (no nuts-rs</span>
-            <span class="c1"># precedent to cite at this exact boundary).</span>
-            <span class="n">near_zero_grad_threshold</span> <span class="o">=</span> <span class="mf">1e-10</span>
-            <span class="n">safe_sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">abs_grad</span><span class="p">,</span> <span class="mf">1e-20</span><span class="p">,</span> <span class="mf">1e20</span><span class="p">),</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">)</span>
-            <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">abs_grad</span> <span class="o">&lt;</span> <span class="n">near_zero_grad_threshold</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">safe_sigma</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">sigma</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-        <span class="n">mu_star</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
-        <span class="n">U</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,</span> <span class="n">max_rank</span><span class="p">))</span>
-        <span class="n">lam</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">max_rank</span><span class="p">)</span>
-        <span class="n">ss_state</span> <span class="o">=</span> <span class="n">da_init</span><span class="p">(</span><span class="n">initial_step_size</span><span class="p">)</span>
-        <span class="n">draws_buffer</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
-        <span class="n">grads_buffer</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">LowRankAdaptationState</span><span class="p">(</span>
-            <span class="n">ss_state</span><span class="p">,</span>
-            <span class="n">sigma</span><span class="p">,</span>
-            <span class="n">mu_star</span><span class="p">,</span>
-            <span class="n">U</span><span class="p">,</span>
-            <span class="n">lam</span><span class="p">,</span>
-            <span class="n">initial_step_size</span><span class="p">,</span>
-            <span class="n">draws_buffer</span><span class="p">,</span>
-            <span class="n">grads_buffer</span><span class="p">,</span>
-            <span class="mi">0</span><span class="p">,</span>
-            <span class="mi">0</span><span class="p">,</span>
-            <span class="mi">0</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">fast_update</span><span class="p">(</span>
-        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">LowRankAdaptationState</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fast window: only adapt step size.&quot;&quot;&quot;</span>
-        <span class="k">del</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span>
-        <span class="n">new_ss</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">LowRankAdaptationState</span><span class="p">(</span>
-            <span class="n">new_ss</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">mu_star</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">U</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">),</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">background_split</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">recompute_counter</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">slow_update</span><span class="p">(</span>
-        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">LowRankAdaptationState</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Slow window: adapt step size and accumulate draws/grads in buffer.&quot;&quot;&quot;</span>
-        <span class="n">pos_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">grad_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">grad</span><span class="p">)</span>
-        <span class="n">B</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">idx</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">%</span> <span class="n">B</span>  <span class="c1"># wrap to avoid out-of-bounds during trace</span>
-        <span class="n">new_draws</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_update_slice</span><span class="p">(</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">pos_flat</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">new_grads</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_update_slice</span><span class="p">(</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span> <span class="n">grad_flat</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="n">new_ss</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
-        <span class="c1"># Only accumulate under &quot;accumulating&quot; -- keeps the field genuinely</span>
-        <span class="c1"># inert (always 0) rather than merely unread under &quot;reset&quot;, so state</span>
-        <span class="c1"># inspection under the default policy is unambiguous.</span>
-        <span class="n">new_recompute_counter</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">recompute_counter</span> <span class="o">+</span> <span class="mi">1</span>
-            <span class="k">if</span> <span class="n">buffer_policy</span> <span class="o">==</span> <span class="s2">&quot;accumulating&quot;</span>
-            <span class="k">else</span> <span class="n">state</span><span class="o">.</span><span class="n">recompute_counter</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="n">LowRankAdaptationState</span><span class="p">(</span>
-            <span class="n">new_ss</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">mu_star</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">U</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">),</span>
-            <span class="n">new_draws</span><span class="p">,</span>
-            <span class="n">new_grads</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">background_split</span><span class="p">,</span>
-            <span class="n">new_recompute_counter</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">slow_final</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">LowRankAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;End of slow window under ``buffer_policy=&quot;reset&quot;``: recompute</span>
-<span class="sd">        metric and hard-reset the buffer to empty. Unchanged from the</span>
-<span class="sd">        original (pre-``buffer_policy``) behaviour -- ``background_split``/</span>
-<span class="sd">        ``recompute_counter`` are inert under this policy, zeroed here to</span>
-<span class="sd">        match the buffer&#39;s own reset for cleanliness.&quot;&quot;&quot;</span>
-        <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_star</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span> <span class="o">=</span> <span class="n">_compute_low_rank_metric</span><span class="p">(</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span><span class="p">,</span>
-            <span class="n">max_rank</span><span class="p">,</span>
-            <span class="n">gamma</span><span class="p">,</span>
-            <span class="n">cutoff</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="c1"># Re-initialise dual averaging at the current averaged step size</span>
-        <span class="n">new_ss</span> <span class="o">=</span> <span class="n">da_init</span><span class="p">(</span><span class="n">da_final</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">))</span>
-        <span class="n">B</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span>
-        <span class="k">return</span> <span class="n">LowRankAdaptationState</span><span class="p">(</span>
-            <span class="n">new_ss</span><span class="p">,</span>
-            <span class="n">sigma</span><span class="p">,</span>
-            <span class="n">mu_star</span><span class="p">,</span>
-            <span class="n">U</span><span class="p">,</span>
-            <span class="n">lam</span><span class="p">,</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">),</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">B</span><span class="p">,</span> <span class="n">d</span><span class="p">)),</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">B</span><span class="p">,</span> <span class="n">d</span><span class="p">)),</span>
-            <span class="mi">0</span><span class="p">,</span>
-            <span class="mi">0</span><span class="p">,</span>
-            <span class="mi">0</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">slow_switch</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">LowRankAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;End of slow window under ``buffer_policy=&quot;accumulating&quot;``: nutpie&#39;s</span>
-<span class="sd">        partial-forget ``switch()`` -- drop only the ``background_split``</span>
-<span class="sd">        oldest rows (shift the rest to the front), then the *entire*</span>
-<span class="sd">        surviving buffer (the just-completed window) becomes the new</span>
-<span class="sd">        background, matching ``nuts-rs``&#39;s</span>
-<span class="sd">        ``self.background_split = self.draws.len()`` (set *after* the pop).</span>
-<span class="sd">        The recompute is unconditional here (nutpie&#39;s ``force_update=true``</span>
-<span class="sd">        on every switch), guarded only by the same ``n&gt;=3`` minimum ``adapt()``</span>
-<span class="sd">        floor nuts-rs itself uses (``current_count() &lt; 3 =&gt; return false``)</span>
-<span class="sd">        to avoid fitting a metric from a near-empty buffer.&quot;&quot;&quot;</span>
-        <span class="n">shift</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">background_split</span>
-        <span class="n">new_draws</span> <span class="o">=</span> <span class="n">_shift_buffer_left</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
-        <span class="n">new_grads</span> <span class="o">=</span> <span class="n">_shift_buffer_left</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
-        <span class="n">new_n_valid</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">-</span> <span class="n">shift</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">_recompute</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">_compute_low_rank_metric</span><span class="p">(</span>
-                <span class="n">new_draws</span><span class="p">,</span> <span class="n">new_grads</span><span class="p">,</span> <span class="n">new_n_valid</span><span class="p">,</span> <span class="n">max_rank</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">cutoff</span>
-            <span class="p">)</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">_keep</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">U</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">lam</span>
-
-        <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_star</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">new_n_valid</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">_recompute</span><span class="p">,</span> <span class="n">_keep</span><span class="p">)</span>
-        <span class="c1"># Re-initialise dual averaging at the current averaged step size --</span>
-        <span class="c1"># unchanged Stan-schedule convention, orthogonal to the buffer</span>
-        <span class="c1"># question (nuts-rs restarts step size only once, on the *first*</span>
-        <span class="c1"># successful mass-matrix change; porting that is out of this task&#39;s</span>
-        <span class="c1"># scope, see the module docstring / PR description).</span>
-        <span class="n">new_ss</span> <span class="o">=</span> <span class="n">da_init</span><span class="p">(</span><span class="n">da_final</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">))</span>
-        <span class="k">return</span> <span class="n">LowRankAdaptationState</span><span class="p">(</span>
-            <span class="n">new_ss</span><span class="p">,</span>
-            <span class="n">sigma</span><span class="p">,</span>
-            <span class="n">mu_star</span><span class="p">,</span>
-            <span class="n">U</span><span class="p">,</span>
-            <span class="n">lam</span><span class="p">,</span>
-            <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">),</span>
-            <span class="n">new_draws</span><span class="p">,</span>
-            <span class="n">new_grads</span><span class="p">,</span>
-            <span class="n">new_n_valid</span><span class="p">,</span>
-            <span class="n">new_n_valid</span><span class="p">,</span>
-            <span class="mi">0</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">slow_recompute_only</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">LowRankAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Continuous (mid-window) metric recompute under</span>
-<span class="sd">        ``buffer_policy=&quot;accumulating&quot;``: reuses whatever is currently in</span>
-<span class="sd">        the buffer (the retained previous window plus the partial current</span>
-<span class="sd">        window), matching nuts-rs&#39;s ``adapt()`` firing on (up to) every draw</span>
-<span class="sd">        independent of the window-end ``switch()`` event</span>
-<span class="sd">        (``mass_matrix_update_freq=1``, gated here by ``recompute_every``).</span>
-<span class="sd">        Buffer contents, ``background_split``, and the step-size</span>
-<span class="sd">        dual-averaging state are left untouched -- only the mass-matrix</span>
-<span class="sd">        factors change.&quot;&quot;&quot;</span>
-        <span class="n">n</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">_recompute</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">_compute_low_rank_metric</span><span class="p">(</span>
-                <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">max_rank</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">cutoff</span>
-            <span class="p">)</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">_keep</span><span class="p">():</span>
-            <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">U</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">lam</span>
-
-        <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_star</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">n</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">_recompute</span><span class="p">,</span> <span class="n">_keep</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">LowRankAdaptationState</span><span class="p">(</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span>
-            <span class="n">sigma</span><span class="p">,</span>
-            <span class="n">mu_star</span><span class="p">,</span>
-            <span class="n">U</span><span class="p">,</span>
-            <span class="n">lam</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span><span class="p">,</span>
-            <span class="n">state</span><span class="o">.</span><span class="n">background_split</span><span class="p">,</span>
-            <span class="mi">0</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">LowRankAdaptationState</span><span class="p">,</span>
-        <span class="n">adaptation_stage</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">,</span>
-        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankAdaptationState</span><span class="p">:</span>
-        <span class="n">stage</span><span class="p">,</span> <span class="n">is_window_end</span> <span class="o">=</span> <span class="n">adaptation_stage</span>
-
-        <span class="n">new_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">switch</span><span class="p">(</span>
-            <span class="n">stage</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">fast_update</span><span class="p">,</span> <span class="n">slow_update</span><span class="p">),</span>
-            <span class="n">position</span><span class="p">,</span>
-            <span class="n">grad</span><span class="p">,</span>
-            <span class="n">acceptance_rate</span><span class="p">,</span>
-            <span class="n">state</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="n">buffer_policy</span> <span class="o">==</span> <span class="s2">&quot;accumulating&quot;</span><span class="p">:</span>
-
-            <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_periodic_recompute</span><span class="p">(</span><span class="n">s</span><span class="p">:</span> <span class="n">LowRankAdaptationState</span><span class="p">):</span>
-                <span class="n">due</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
-                    <span class="n">stage</span> <span class="o">==</span> <span class="mi">1</span><span class="p">,</span> <span class="n">s</span><span class="o">.</span><span class="n">recompute_counter</span> <span class="o">%</span> <span class="n">recompute_every</span> <span class="o">==</span> <span class="mi">0</span>
-                <span class="p">)</span>
-                <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">due</span><span class="p">,</span> <span class="n">slow_recompute_only</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
-
-            <span class="n">new_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
-                <span class="n">is_window_end</span><span class="p">,</span>
-                <span class="n">slow_switch</span><span class="p">,</span>
-                <span class="n">_maybe_periodic_recompute</span><span class="p">,</span>
-                <span class="n">new_state</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">new_state</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
-                <span class="n">is_window_end</span><span class="p">,</span>
-                <span class="n">slow_final</span><span class="p">,</span>
-                <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="n">s</span><span class="p">,</span>
-                <span class="n">new_state</span><span class="p">,</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">new_state</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">LowRankAdaptationState</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
-        <span class="n">step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">ss_state</span><span class="o">.</span><span class="n">log_step_size_avg</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">U</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">lam</span>
-
-    <span class="k">return</span> <span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="p">,</span> <span class="n">final</span></div>
-
-
-
-<span class="c1"># ---------------------------------------------------------------------------</span>
 <span class="c1"># High-level API</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
@@ -1363,7 +961,7 @@
 <span class="sd">        Integrator to pass to ``algorithm.build_kernel``.</span>
 <span class="sd">    gradient_based_init</span>
 <span class="sd">        Seed the diagonal scale from the initial gradient instead of the</span>
-<span class="sd">        identity, matching nutpie&#39;s own initialisation (see :func:`base`).</span>
+<span class="sd">        identity, matching nutpie&#39;s own initialisation.</span>
 <span class="sd">        Default ``False`` reproduces the original behaviour exactly.</span>
 <span class="sd">    schedule_fn</span>
 <span class="sd">        Schedule-generator function ``num_steps -&gt; (num_steps, 2)`` array of</span>
@@ -1376,10 +974,12 @@
 <span class="sd">        (online, per-draw) schedule.</span>
 <span class="sd">    buffer_policy</span>
 <span class="sd">        ``&quot;reset&quot;`` (default, unchanged behaviour) or ``&quot;accumulating&quot;``</span>
-<span class="sd">        (nutpie&#39;s partial-forget buffer) -- see :func:`base` for the exact</span>
-<span class="sd">        semantics. Composes with any ``schedule_fn``.</span>
+<span class="sd">        (nutpie&#39;s partial-forget buffer, ``nuts-rs`` ``switch()``).</span>
+<span class="sd">        Composes with any ``schedule_fn``.</span>
 <span class="sd">    recompute_every</span>
-<span class="sd">        Only used when ``buffer_policy=&quot;accumulating&quot;``; see :func:`base`.</span>
+<span class="sd">        Only used when ``buffer_policy=&quot;accumulating&quot;``: number of slow-stage</span>
+<span class="sd">        steps between mid-window metric recomputes.  Default 1 matches</span>
+<span class="sd">        nutpie&#39;s ``mass_matrix_update_freq=1``.</span>
 <span class="sd">    **extra_parameters</span>
 <span class="sd">        Additional keyword arguments forwarded to the kernel at every step</span>
 <span class="sd">        (e.g. ``num_integration_steps`` for HMC).</span>
@@ -1405,9 +1005,11 @@
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    The default (reset) buffer policy runs on the staged-adaptation engine;</span>
-<span class="sd">    the accumulating policy uses the established low-rank scan loop, which it</span>
-<span class="sd">    shares with earlier releases.</span>
+<span class="sd">    Both buffer policies run on the staged-adaptation engine.  The reset</span>
+<span class="sd">    policy hard-clears the draw/gradient buffer at each slow-window boundary;</span>
+<span class="sd">    the accumulating policy retains the previous window&#39;s draws as background</span>
+<span class="sd">    (nutpie partial-forget) and recomputes the metric mid-window according to</span>
+<span class="sd">    ``recompute_every``.</span>
 
 <span class="sd">    Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a</span>
 <span class="sd">    progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.</span>
@@ -1419,26 +1021,40 @@
     <span class="k">if</span> <span class="n">recompute_every</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;recompute_every must be &gt;= 1, got </span><span class="si">{</span><span class="n">recompute_every</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_run_reset</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset policy: run via the staged-adaptation engine (default path).</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
+        <span class="c1"># Build the MetricCore: policy-specific buffer sizing + core builder.</span>
+        <span class="k">if</span> <span class="n">buffer_policy</span> <span class="o">==</span> <span class="s2">&quot;accumulating&quot;</span><span class="p">:</span>
+            <span class="c1"># Pre-compute schedule to derive the tight worst-case buffer</span>
+            <span class="c1"># capacity from the window boundaries.  The partial-forget switch</span>
+            <span class="c1"># keeps the just-completed window&#39;s draws as the new background, so</span>
+            <span class="c1"># the tight bound is max(window[i] + window[i-1]) over all pairs.</span>
+            <span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+            <span class="n">buffer_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">_accumulating_buffer_capacity</span><span class="p">(</span><span class="n">schedule</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
 
-<span class="sd">        The buffer is hard-reset to empty at every slow-window boundary.</span>
-<span class="sd">        Bit-exact with the pre-engine implementation for all default parameters.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># Size the buffer to the expected largest slow window rather than the</span>
-        <span class="c1"># full warmup length.  Modular indexing in the core&#39;s update() means</span>
-        <span class="c1"># that if a window exceeds buffer_size only the most recent buffer_size</span>
-        <span class="c1"># draws are kept -- matching nutpie&#39;s fixed-buffer behaviour and</span>
-        <span class="c1"># avoiding O(num_steps × d) allocations for large d.</span>
-        <span class="n">typical_window</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">//</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
-        <span class="n">buffer_size</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">typical_window</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_steps</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="k">def</span><span class="w"> </span><span class="nf">_schedule_fn</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">schedule</span>  <span class="c1"># reuse the pre-computed array</span>
 
-        <span class="n">core</span> <span class="o">=</span> <span class="n">_build_fisher_low_rank_core</span><span class="p">(</span>
-            <span class="n">buffer_size</span><span class="o">=</span><span class="n">buffer_size</span><span class="p">,</span>
-            <span class="n">max_rank</span><span class="o">=</span><span class="n">max_rank</span><span class="p">,</span>
-            <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span>
-            <span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span>
-        <span class="p">)</span>
+            <span class="n">core</span> <span class="o">=</span> <span class="n">_build_fisher_low_rank_accumulating_core</span><span class="p">(</span>
+                <span class="n">buffer_size</span><span class="o">=</span><span class="n">buffer_size</span><span class="p">,</span>
+                <span class="n">max_rank</span><span class="o">=</span><span class="n">max_rank</span><span class="p">,</span>
+                <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span>
+                <span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span>
+                <span class="n">recompute_every</span><span class="o">=</span><span class="n">recompute_every</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Size the buffer to the expected largest slow window rather than</span>
+            <span class="c1"># the full warmup length.  Modular indexing in the core&#39;s update()</span>
+            <span class="c1"># keeps only the most recent buffer_size draws when a window exceeds</span>
+            <span class="c1"># buffer_size -- avoiding O(num_steps × d) allocations for large d.</span>
+            <span class="n">typical_window</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_steps</span> <span class="o">//</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
+            <span class="n">buffer_size</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">typical_window</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">num_steps</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+            <span class="n">_schedule_fn</span> <span class="o">=</span> <span class="n">schedule_fn</span>
+            <span class="n">core</span> <span class="o">=</span> <span class="n">_build_fisher_low_rank_core</span><span class="p">(</span>
+                <span class="n">buffer_size</span><span class="o">=</span><span class="n">buffer_size</span><span class="p">,</span>
+                <span class="n">max_rank</span><span class="o">=</span><span class="n">max_rank</span><span class="p">,</span>
+                <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span>
+                <span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span>
+            <span class="p">)</span>
 
         <span class="n">seeded_imm_state</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="n">gradient_based_init</span><span class="p">:</span>
@@ -1462,7 +1078,7 @@
             <span class="c1"># converts between the two so that info field access is unchanged.</span>
             <span class="n">adaptation_info_fn</span><span class="o">=</span><span class="n">_make_low_rank_bridge_info_fn</span><span class="p">(</span><span class="n">adaptation_info_fn</span><span class="p">),</span>
             <span class="n">integrator</span><span class="o">=</span><span class="n">integrator</span><span class="p">,</span>
-            <span class="n">schedule_fn</span><span class="o">=</span><span class="n">schedule_fn</span><span class="p">,</span>
+            <span class="n">schedule_fn</span><span class="o">=</span><span class="n">_schedule_fn</span><span class="p">,</span>
             <span class="n">initial_metric_state</span><span class="o">=</span><span class="n">seeded_imm_state</span><span class="p">,</span>
             <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
         <span class="p">)</span>
@@ -1477,110 +1093,6 @@
         <span class="n">mu_star_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">unravel</span><span class="p">(</span><span class="n">mu_star</span><span class="p">),</span> <span class="n">logdensity_fn</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">mu_star_state</span><span class="p">,</span> <span class="n">results</span><span class="o">.</span><span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_run_accumulating</span><span class="p">(</span>
-        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Accumulating policy: use the established low-rank scan loop.</span>
-
-<span class="sd">        The default (reset) buffer policy runs on the staged-adaptation engine;</span>
-<span class="sd">        the accumulating policy uses the established low-rank scan loop, which</span>
-<span class="sd">        it shares with earlier releases.  Migrating the accumulating policy onto</span>
-<span class="sd">        the staged-adaptation engine is future work; it must NOT be done via an</span>
-<span class="sd">        ``is_window_end`` kwarg on ``MetricCore.update()`` — the clean approach</span>
-<span class="sd">        is for the core to own its recompute cadence from a step index, or for</span>
-<span class="sd">        periodic recompute to fold into the engine&#39;s ``final`` contract.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">adapt_init_fn</span><span class="p">,</span> <span class="n">adapt_step_fn</span><span class="p">,</span> <span class="n">adapt_final_fn</span> <span class="o">=</span> <span class="n">base</span><span class="p">(</span>
-            <span class="n">max_rank</span><span class="o">=</span><span class="n">max_rank</span><span class="p">,</span>
-            <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="n">target_acceptance_rate</span><span class="p">,</span>
-            <span class="n">gamma</span><span class="o">=</span><span class="n">gamma</span><span class="p">,</span>
-            <span class="n">cutoff</span><span class="o">=</span><span class="n">cutoff</span><span class="p">,</span>
-            <span class="n">gradient_based_init</span><span class="o">=</span><span class="n">gradient_based_init</span><span class="p">,</span>
-            <span class="n">buffer_policy</span><span class="o">=</span><span class="s2">&quot;accumulating&quot;</span><span class="p">,</span>
-            <span class="n">recompute_every</span><span class="o">=</span><span class="n">recompute_every</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">mcmc_kernel</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">(</span><span class="n">integrator</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">mcmc_kernel</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
-
-        <span class="k">def</span><span class="w"> </span><span class="nf">one_step</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
-            <span class="n">_</span><span class="p">,</span> <span class="n">rng_key_</span><span class="p">,</span> <span class="n">adaptation_stage</span> <span class="o">=</span> <span class="n">xs</span>
-            <span class="n">state</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
-            <span class="n">metric</span> <span class="o">=</span> <span class="n">gaussian_euclidean_low_rank</span><span class="p">(</span>
-                <span class="n">adaptation_state</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span>
-                <span class="n">adaptation_state</span><span class="o">.</span><span class="n">U</span><span class="p">,</span>
-                <span class="n">adaptation_state</span><span class="o">.</span><span class="n">lam</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">new_state</span><span class="p">,</span> <span class="n">step_info</span> <span class="o">=</span> <span class="n">mcmc_kernel</span><span class="p">(</span>
-                <span class="n">rng_key_</span><span class="p">,</span>
-                <span class="n">state</span><span class="p">,</span>
-                <span class="n">logdensity_fn</span><span class="p">,</span>
-                <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
-                <span class="n">metric</span><span class="p">,</span>
-                <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_step_fn</span><span class="p">(</span>
-                <span class="n">adaptation_state</span><span class="p">,</span>
-                <span class="n">adaptation_stage</span><span class="p">,</span>
-                <span class="n">new_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span>
-                <span class="n">new_state</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
-                <span class="n">step_info</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="p">,</span>
-            <span class="p">)</span>
-            <span class="k">return</span> <span class="p">(</span>
-                <span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
-                <span class="n">adaptation_info_fn</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="n">step_info</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
-            <span class="p">)</span>
-
-        <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
-        <span class="c1"># `schedule` must be computed before sizing the buffer under</span>
-        <span class="c1"># &quot;accumulating&quot; (its capacity is schedule-derived); `num_steps` is</span>
-        <span class="c1"># already required to be a concrete Python int here regardless (it</span>
-        <span class="c1"># sizes jax.random.split and the scan length below), so `schedule` is a</span>
-        <span class="c1"># concrete array too -- safe to inspect with plain numpy.</span>
-        <span class="n">schedule</span> <span class="o">=</span> <span class="n">schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
-        <span class="c1"># Capacity = the accumulating policy&#39;s own worst-case buffer content</span>
-        <span class="c1"># (previous + current window) -- see _accumulating_buffer_capacity.</span>
-        <span class="n">buffer_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">_accumulating_buffer_capacity</span><span class="p">(</span><span class="n">schedule</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
-        <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_init_fn</span><span class="p">(</span>
-            <span class="n">position</span><span class="p">,</span>
-            <span class="n">init_state</span><span class="o">.</span><span class="n">logdensity_grad</span><span class="p">,</span>
-            <span class="n">initial_step_size</span><span class="p">,</span>
-            <span class="n">buffer_size</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-        <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-            <span class="n">one_step</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">),</span>
-            <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">),</span>
-        <span class="p">)</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
-        <span class="n">step_size</span><span class="p">,</span> <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_star</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span> <span class="o">=</span> <span class="n">adapt_final_fn</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
-        <span class="c1"># Return the inverse mass matrix as a pure-array NamedTuple so that the</span>
-        <span class="c1"># warmup composes with jax.vmap over chains.  The kernel layer expands</span>
-        <span class="c1"># this into a full Metric via default_metric at call time.  See #916.</span>
-        <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">)</span>
-        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="n">step_size</span><span class="p">,</span>
-            <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">:</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
-        <span class="p">}</span>
-        <span class="c1"># Re-initialise chain state at the optimal translation μ* = x̄ + σ²⊙ᾱ.</span>
-        <span class="c1"># mu_star is flat (d,); unravel to the original position pytree structure</span>
-        <span class="c1"># before passing to algorithm.init.</span>
-        <span class="n">_</span><span class="p">,</span> <span class="n">unravel</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-        <span class="n">mu_star_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">unravel</span><span class="p">(</span><span class="n">mu_star</span><span class="p">),</span> <span class="n">logdensity_fn</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">AdaptationResults</span><span class="p">(</span><span class="n">mu_star_state</span><span class="p">,</span> <span class="n">parameters</span><span class="p">),</span> <span class="n">info</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">buffer_policy</span> <span class="o">==</span> <span class="s2">&quot;accumulating&quot;</span><span class="p">:</span>
-            <span class="c1"># Accumulating path: see _run_accumulating docstring for the</span>
-            <span class="c1"># architectural rationale for the split.</span>
-            <span class="k">return</span> <span class="n">_run_accumulating</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">_run_reset</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">AdaptationAlgorithm</span><span class="p">(</span><span class="n">run</span><span class="p">)</span></div>
 

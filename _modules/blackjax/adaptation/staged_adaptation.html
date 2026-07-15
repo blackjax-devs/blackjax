@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0df2fe07f" />
+  <meta name="docsearch:version" content="0.1.dev1+g4d4027f90" />
   </head>
   
   
@@ -610,8 +610,19 @@
         <span class="n">new_metric_st</span> <span class="o">=</span> <span class="n">metric_core</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">imm_state</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span>
         <span class="n">new_ss</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
         <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
+        <span class="c1"># Propagate the core&#39;s current inverse_mass_matrix to the MCMC kernel</span>
+        <span class="c1"># at every slow step, not just at window-end.  For all non-accumulating</span>
+        <span class="c1"># cores (welford, fisher-diag, reset-low-rank, sample-cov) update() does</span>
+        <span class="c1"># not write inverse_mass_matrix, so new_metric_st.inverse_mass_matrix ==</span>
+        <span class="c1"># ws.inverse_mass_matrix and this is bit-identical to the previous</span>
+        <span class="c1"># ws.inverse_mass_matrix return.  For the accumulating core, update() may</span>
+        <span class="c1"># recompute inverse_mass_matrix mid-window (when recompute_counter %</span>
+        <span class="c1"># recompute_every == 0), and this line surfaces that to MCMC — matching</span>
+        <span class="c1"># the legacy base() accumulating scan loop&#39;s slow_recompute_only() which</span>
+        <span class="c1"># also updated adaptation_state.sigma/U/lam immediately.  Consistent with</span>
+        <span class="c1"># slow_final(), which already reads new_metric_st.inverse_mass_matrix.</span>
         <span class="k">return</span> <span class="n">StagedAdaptationState</span><span class="p">(</span>
-            <span class="n">new_ss</span><span class="p">,</span> <span class="n">new_metric_st</span><span class="p">,</span> <span class="n">new_step_size</span><span class="p">,</span> <span class="n">ws</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
+            <span class="n">new_ss</span><span class="p">,</span> <span class="n">new_metric_st</span><span class="p">,</span> <span class="n">new_step_size</span><span class="p">,</span> <span class="n">new_metric_st</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">slow_final</span><span class="p">(</span><span class="n">ws</span><span class="p">:</span> <span class="n">StagedAdaptationState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedAdaptationState</span><span class="p">:</span>

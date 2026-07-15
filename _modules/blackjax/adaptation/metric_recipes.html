@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g0df2fe07f" />
+  <meta name="docsearch:version" content="0.1.dev1+g4d4027f90" />
   </head>
   
   
@@ -1089,9 +1089,8 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricCore</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a MetricCore for the Fisher-score low-rank estimator (reset policy).</span>
 
-<span class="sd">    Implements the same window-end recompute as</span>
-<span class="sd">    :func:`~blackjax.adaptation.low_rank_adaptation.base`&#39;s ``slow_final``</span>
-<span class="sd">    under ``buffer_policy=&quot;reset&quot;``:</span>
+<span class="sd">    Implements the reset-policy window-end recompute (hard-reset buffer at</span>
+<span class="sd">    each slow-window boundary):</span>
 
 <span class="sd">    1. ``init(n_dims)`` — creates a zero-filled draw/gradient buffer of shape</span>
 <span class="sd">       ``(buffer_size, n_dims)`` with identity sigma, zero U, ones lam.</span>
@@ -1177,6 +1176,176 @@
             <span class="n">grads_buffer</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">B</span><span class="p">,</span> <span class="n">d</span><span class="p">)),</span>
             <span class="n">buffer_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
             <span class="n">background_split</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">recompute_counter</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">MetricCore</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_fisher_low_rank_accumulating_core</span><span class="p">(</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">buffer_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">recompute_every</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricCore</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a MetricCore for the Fisher-score low-rank estimator (accumulating policy).</span>
+
+<span class="sd">    Implements nutpie&#39;s partial-forget buffer (``nuts-rs``</span>
+<span class="sd">    ``src/transform/adapt/low_rank.rs::switch``):</span>
+
+<span class="sd">    1. ``init(n_dims)`` — same layout as the reset core (identity sigma, zero U/lam,</span>
+<span class="sd">       zero buffers, ``buffer_idx=0``, ``background_split=0``, ``recompute_counter=0``).</span>
+<span class="sd">    2. ``update(state, position, grad)`` — writes (position, grad) into the circular</span>
+<span class="sd">       buffer, increments ``recompute_counter``, then periodically recomputes the</span>
+<span class="sd">       metric when ``recompute_counter % recompute_every == 0`` and at least 3 draws</span>
+<span class="sd">       are in the buffer. The recompute is a **pure function** of the current buffer</span>
+<span class="sd">       content: it writes *only* ``sigma``, ``mu_star``, ``U``, ``lam`` — consuming</span>
+<span class="sd">       no PRNG and leaving ``draws_buffer``, ``grads_buffer``, ``buffer_idx``, and</span>
+<span class="sd">       ``background_split`` unchanged. At slow-window-end steps the engine calls</span>
+<span class="sd">       ``update()`` first and then ``final()``; if the periodic recompute fires in</span>
+<span class="sd">       ``update()`` at that step it is a spurious extra SVD (cost note: one additional</span>
+<span class="sd">       ``_compute_low_rank_metric`` call per window boundary at ``recompute_every=1``,</span>
+<span class="sd">       acceptable because the accumulating policy already recomputes on every slow step)</span>
+<span class="sd">       whose sigma/mu_star/U/lam values are **unconditionally overwritten** by</span>
+<span class="sd">       ``final()``&#39;s force-recompute from the shifted buffer — the spurious recompute</span>
+<span class="sd">       cannot perturb any field that ``final()`` does not reset.  This is the key</span>
+<span class="sd">       purity invariant that makes the engine path bit-exact with the legacy scan loop.</span>
+<span class="sd">    3. ``final(state)`` — nutpie&#39;s ``switch()``: pops the ``background_split`` oldest</span>
+<span class="sd">       rows from the front of the buffer (``_shift_buffer_left``), sets</span>
+<span class="sd">       ``new_n_valid = buffer_idx - background_split``, force-recomputes the metric</span>
+<span class="sd">       if ``new_n_valid &gt;= 3`` (else keeps), resets ``recompute_counter = 0``, and</span>
+<span class="sd">       sets ``background_split = new_n_valid``.  Called by the engine at every</span>
+<span class="sd">       slow-window boundary.</span>
+
+<span class="sd">    **Bit-exactness with the legacy base()-backed scan loop.**  At non-window-end slow</span>
+<span class="sd">    steps both paths do the same work (accumulate → periodic recompute if due → keep</span>
+<span class="sd">    counter management consistent).  At window-end slow steps the engine calls</span>
+<span class="sd">    ``update()`` then ``final()`` whereas the legacy loop called ``slow_update()`` then</span>
+<span class="sd">    ``slow_switch()`` without an intervening periodic recompute.  The spurious</span>
+<span class="sd">    periodic-recompute in ``update()`` (if it fires) only modifies sigma/mu_star/U/lam,</span>
+<span class="sd">    and ``final()`` overwrites exactly those fields from the shifted buffer.  Every</span>
+<span class="sd">    other field (buffers, buffer_idx, background_split, recompute_counter) is set</span>
+<span class="sd">    identically by both paths after the window-end step.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    buffer_size</span>
+<span class="sd">        Number of rows in the circular draw/gradient buffer.  Use</span>
+<span class="sd">        :func:`~blackjax.adaptation.low_rank_adaptation._accumulating_buffer_capacity`</span>
+<span class="sd">        to derive the tight worst-case bound from the warmup schedule.</span>
+<span class="sd">    max_rank</span>
+<span class="sd">        Maximum number of eigenvectors retained in the low-rank correction.</span>
+<span class="sd">    gamma</span>
+<span class="sd">        Regularisation scale (nutpie convention — projected covariance divided by</span>
+<span class="sd">        ``gamma`` before adding identity, no ``n`` scaling).</span>
+<span class="sd">    cutoff</span>
+<span class="sd">        Eigenvalues in ``[1/cutoff, cutoff]`` are masked to 1.</span>
+<span class="sd">    recompute_every</span>
+<span class="sd">        Number of slow-stage steps between mid-window metric recomputes.  Default 1</span>
+<span class="sd">        matches nutpie&#39;s ``mass_matrix_update_freq=1`` (recompute every slow step).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankMetricCoreState</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">LowRankMetricCoreState</span><span class="p">(</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">LowRankInverseMassMatrix</span><span class="p">(</span>
+                <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_dims</span><span class="p">),</span>
+                <span class="n">U</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">max_rank</span><span class="p">)),</span>
+                <span class="n">lam</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">max_rank</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">mu_star</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_dims</span><span class="p">),</span>
+            <span class="n">draws_buffer</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">)),</span>
+            <span class="n">grads_buffer</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">)),</span>
+            <span class="n">buffer_idx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">background_split</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+            <span class="n">recompute_counter</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">LowRankMetricCoreState</span><span class="p">,</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankMetricCoreState</span><span class="p">:</span>
+        <span class="n">pos_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">grad_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">grad</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">%</span> <span class="n">B</span>
+        <span class="n">new_draws</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_update_slice</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">pos_flat</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">new_grads</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_update_slice</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span> <span class="n">grad_flat</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">new_buffer_idx</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">new_recompute_counter</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">recompute_counter</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1"># Periodic mid-window metric recompute.  This pure function writes only</span>
+        <span class="c1"># sigma/mu_star/U/lam; it does NOT touch the buffers or the bookkeeping</span>
+        <span class="c1"># counters other than resetting recompute_counter to 0 when it fires.</span>
+        <span class="c1"># At window-end steps the engine calls final() after update(), and final()</span>
+        <span class="c1"># unconditionally overwrites sigma/mu_star/U/lam from the shifted buffer —</span>
+        <span class="c1"># so any recompute here at a window boundary is harmless (see class docstring).</span>
+        <span class="n">due</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+            <span class="n">new_recompute_counter</span> <span class="o">%</span> <span class="n">recompute_every</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">new_buffer_idx</span> <span class="o">&gt;=</span> <span class="mi">3</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_recompute</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">_compute_low_rank_metric</span><span class="p">(</span>
+                <span class="n">new_draws</span><span class="p">,</span> <span class="n">new_grads</span><span class="p">,</span> <span class="n">new_buffer_idx</span><span class="p">,</span> <span class="n">max_rank</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">cutoff</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_keep</span><span class="p">():</span>
+            <span class="n">imm</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
+            <span class="k">return</span> <span class="n">imm</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">imm</span><span class="o">.</span><span class="n">U</span><span class="p">,</span> <span class="n">imm</span><span class="o">.</span><span class="n">lam</span>
+
+        <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_star</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">due</span><span class="p">,</span> <span class="n">_recompute</span><span class="p">,</span> <span class="n">_keep</span><span class="p">)</span>
+        <span class="c1"># Reset the counter only when a recompute fires, matching base()&#39;s</span>
+        <span class="c1"># slow_recompute_only (counter = 0 on recompute, unchanged otherwise).</span>
+        <span class="n">next_counter</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">due</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">new_recompute_counter</span><span class="p">),</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">new_recompute_counter</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">LowRankMetricCoreState</span><span class="p">(</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">),</span>
+            <span class="n">mu_star</span><span class="o">=</span><span class="n">mu_star</span><span class="p">,</span>
+            <span class="n">draws_buffer</span><span class="o">=</span><span class="n">new_draws</span><span class="p">,</span>
+            <span class="n">grads_buffer</span><span class="o">=</span><span class="n">new_grads</span><span class="p">,</span>
+            <span class="n">buffer_idx</span><span class="o">=</span><span class="n">new_buffer_idx</span><span class="p">,</span>
+            <span class="n">background_split</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">background_split</span><span class="p">,</span>
+            <span class="n">recompute_counter</span><span class="o">=</span><span class="n">next_counter</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">LowRankMetricCoreState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">LowRankMetricCoreState</span><span class="p">:</span>
+        <span class="c1"># Nutpie&#39;s switch(): pop background_split oldest rows, keep the rest</span>
+        <span class="c1"># as the new background for the next window.</span>
+        <span class="n">shift</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">background_split</span>
+        <span class="n">new_draws</span> <span class="o">=</span> <span class="n">_shift_buffer_left</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
+        <span class="n">new_grads</span> <span class="o">=</span> <span class="n">_shift_buffer_left</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span> <span class="n">shift</span><span class="p">)</span>
+        <span class="n">new_n_valid</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">-</span> <span class="n">shift</span>
+
+        <span class="c1"># Force-recompute from shifted buffer.  Overwrites sigma/mu_star/U/lam</span>
+        <span class="c1"># unconditionally (including any values written by update()&#39;s spurious</span>
+        <span class="c1"># periodic recompute at this same window-end step — see class docstring).</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_recompute</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">_compute_low_rank_metric</span><span class="p">(</span>
+                <span class="n">new_draws</span><span class="p">,</span> <span class="n">new_grads</span><span class="p">,</span> <span class="n">new_n_valid</span><span class="p">,</span> <span class="n">max_rank</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">cutoff</span>
+            <span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_keep</span><span class="p">():</span>
+            <span class="n">imm</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
+            <span class="k">return</span> <span class="n">imm</span><span class="o">.</span><span class="n">sigma</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">mu_star</span><span class="p">,</span> <span class="n">imm</span><span class="o">.</span><span class="n">U</span><span class="p">,</span> <span class="n">imm</span><span class="o">.</span><span class="n">lam</span>
+
+        <span class="n">sigma</span><span class="p">,</span> <span class="n">mu_star</span><span class="p">,</span> <span class="n">U</span><span class="p">,</span> <span class="n">lam</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">new_n_valid</span> <span class="o">&gt;=</span> <span class="mi">3</span><span class="p">,</span> <span class="n">_recompute</span><span class="p">,</span> <span class="n">_keep</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">LowRankMetricCoreState</span><span class="p">(</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam</span><span class="p">),</span>
+            <span class="n">mu_star</span><span class="o">=</span><span class="n">mu_star</span><span class="p">,</span>
+            <span class="n">draws_buffer</span><span class="o">=</span><span class="n">new_draws</span><span class="p">,</span>
+            <span class="n">grads_buffer</span><span class="o">=</span><span class="n">new_grads</span><span class="p">,</span>
+            <span class="n">buffer_idx</span><span class="o">=</span><span class="n">new_n_valid</span><span class="p">,</span>
+            <span class="n">background_split</span><span class="o">=</span><span class="n">new_n_valid</span><span class="p">,</span>
             <span class="n">recompute_counter</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="p">)</span>
 

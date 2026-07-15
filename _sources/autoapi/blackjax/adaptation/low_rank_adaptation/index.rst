@@ -59,7 +59,7 @@ blackjax.adaptation.low_rank_adaptation
    (``mass_matrix_update_freq=1`` in ``nuts-rs``), not just at window ends
    (``nuts-rs`` ``src/transform/adapt/low_rank.rs::switch`` /
    ``src/adapt_strategy.rs``). Passing ``buffer_policy="accumulating"`` to
-   :func:`base` / :func:`window_adaptation_low_rank` enables this; the default
+   :func:`window_adaptation_low_rank` enables this; the default
    ``"reset"`` reproduces the original hard-reset behaviour exactly.
 
    **Numerical robustness** (round-9 schedule-port audit). ``_compute_low_rank_metric``
@@ -93,7 +93,6 @@ Functions
 .. autoapisummary::
 
    blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule
-   blackjax.adaptation.low_rank_adaptation.base
    blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank
 
 
@@ -206,11 +205,11 @@ Module Contents
      (``mass_matrix_window_growth`` in nutpie's receipts).
 
    **Scope note.** This function (together with the ``gradient_based_init``
-   option on :func:`base` / :func:`window_adaptation_low_rank`) implements
+   option on :func:`window_adaptation_low_rank`) implements
    the window-sizing and gradient-based-init components of nutpie's warmup;
-   pair it with ``buffer_policy="accumulating"`` (see :func:`base`) for the
-   partial-forget buffer and continuous recompute cadence, matching
-   nutpie's other main pieces.
+   pair it with ``buffer_policy="accumulating"`` on
+   :func:`window_adaptation_low_rank` for the partial-forget buffer and
+   continuous recompute cadence, matching nutpie's other main pieces.
 
    nutpie's actual schedule is an *online*, per-draw decision
    (``adapt_strategy.rs``'s ``is_late`` look-ahead + a partial-forget
@@ -259,75 +258,6 @@ Module Contents
              * (stage ``0`` = fast/step-size-only, stage ``1`` = slow/mass-matrix-adapting).
 
 
-.. py:function:: base(max_rank: int = 10, target_acceptance_rate: float = 0.8, gamma: float = 1e-05, cutoff: float = 2.0, gradient_based_init: bool = False, buffer_policy: str = 'reset', recompute_every: int = 1) -> tuple[Callable, Callable, Callable]
-
-   Warmup scheme using the low-rank mass matrix adaptation.
-
-   Mirrors Stan's three-phase schedule but replaces Welford covariance
-   estimation with the Fisher-divergence-minimising low-rank metric of
-   :cite:p:`seyboldt2026preconditioning`, following nutpie's implementation.
-
-   :param max_rank: Maximum number of eigenvectors retained in the low-rank correction.
-   :param target_acceptance_rate: Target acceptance rate for dual-averaging step-size adaptation.
-   :param gamma: Regularisation scale.  The projected covariance is divided by ``gamma``
-                 (nutpie convention -- no ``n`` scaling).  Default ``1e-5`` matches
-                 nutpie's ``LowRankSettings::default``.
-   :param cutoff: Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked
-                  (eigenvalue set to 1).  Default ``2.0`` matches nutpie's ``c=2``.
-   :param gradient_based_init: If ``True``, seed the diagonal scale from the initial gradient
-                               instead of the identity: nutpie's own ``init`` calls
-                               ``update_from_grad`` on the very first observed point (``nuts-rs``
-                               ``src/transform/adapt/low_rank.rs::init``), which the paper's §3.1
-                               motivates as ``M = diag(|alpha^(0)|)`` -- a regularised diagonal of
-                               the gradient outer-product, a common Hessian approximation at the
-                               starting point (cf. L-BFGS). Since blackjax's ``sigma**2`` is the
-                               *inverse*-mass-matrix diagonal, this sets
-                               ``sigma = 1/sqrt(clip(|grad|, 1e-20, 1e20))`` so that
-                               ``M^{-1}_diag = sigma**2 = 1/|grad|``, matching ``M = diag(|grad|)``
-                               -- **except per-coordinate where** ``|grad_i| < 1e-10``, **where
-                               sigma_i falls back to 1.0** (the identity) instead of propagating
-                               the ``1e-20`` clip floor into an astronomically loose ``sigma_i =
-                               1e10``. This defends the real edge case of initialising at (or very
-                               near) a stationary point of the target -- e.g. ``x=0`` on any
-                               centered/standardised density -- where the gradient is exactly (or
-                               near-)zero and an extreme initial scale causes near-certain
-                               divergence on the very first trajectory (see the fisher-2x2
-                               calibration study's root-caused finding). Only the diagonal scale
-                               changes; ``U``/``lam`` still start at no-correction (``U=0``,
-                               ``lam=1``), same as the default. Default ``False`` reproduces the
-                               original identity/zero initialisation exactly (see also
-                               :func:`build_growing_window_schedule`, which implements the
-                               companion window-sizing piece of nutpie's warmup).
-   :param buffer_policy: ``"reset"`` (default) hard-resets the draw/gradient buffer to empty
-                         at every window switch, matching the original Stan-schedule
-                         behaviour exactly -- zero default-behavior change.
-                         ``"accumulating"`` instead ports nutpie's partial-forget buffer
-                         (``nuts-rs`` ``src/transform/adapt/low_rank.rs::switch``): at a
-                         window switch, only the draws that were already "background" (the
-                         window before last) are dropped, so the buffer keeps the
-                         just-completed window's draws in addition to the next window's, and
-                         the metric is recomputed both at every switch (unconditionally,
-                         nutpie's ``force_update``) and periodically in between per
-                         ``recompute_every`` (nutpie's ``mass_matrix_update_freq``). Composes
-                         with any ``schedule_fn`` -- the buffer policy only changes what
-                         happens *at* a window boundary the schedule already defines, not
-                         when those boundaries occur.
-   :param recompute_every: Only used when ``buffer_policy="accumulating"``. Number of
-                           slow-stage steps between metric recomputes *between* window
-                           switches (switches themselves always force a recompute,
-                           independent of this cadence). Default ``1`` recomputes on every
-                           slow-stage step, matching nutpie's default
-                           ``mass_matrix_update_freq=1`` (the fully faithful port). Raising
-                           this trades fidelity for compute: an SVD-based recompute every
-                           single step can be costly in JAX for large ``d``/buffer size; see
-                           the PR description for measured timings before deviating from the
-                           default. Ignored under ``buffer_policy="reset"`` (recompute there is
-                           tied solely to ``is_window_end``, as before).
-
-   :returns: The three adaptation primitives expected by the window-adaptation loop.
-   :rtype: ``(init, update, final)``
-
-
 .. py:function:: window_adaptation_low_rank(algorithm, logdensity_fn: Callable, max_rank: int = 10, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, gamma: float = 1e-05, cutoff: float = 2.0, adaptation_info_fn: Callable = _default_low_rank_adaptation_info_fn, integrator=mcmc.integrators.velocity_verlet, gradient_based_init: bool = False, schedule_fn: Callable[[int], blackjax.types.Array] = build_schedule, buffer_policy: str = 'reset', recompute_every: int = 1, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt step size and a low-rank mass matrix for HMC-family samplers.
@@ -363,7 +293,7 @@ Module Contents
                               explicitly to keep the raw per-step buffer trace.
    :param integrator: Integrator to pass to ``algorithm.build_kernel``.
    :param gradient_based_init: Seed the diagonal scale from the initial gradient instead of the
-                               identity, matching nutpie's own initialisation (see :func:`base`).
+                               identity, matching nutpie's own initialisation.
                                Default ``False`` reproduces the original behaviour exactly.
    :param schedule_fn: Schedule-generator function ``num_steps -> (num_steps, 2)`` array of
                        ``(stage, is_window_end)`` pairs. Default is Stan's fixed-absolute,
@@ -374,9 +304,11 @@ Module Contents
                        exactly what it does and does not capture relative to nutpie's own
                        (online, per-draw) schedule.
    :param buffer_policy: ``"reset"`` (default, unchanged behaviour) or ``"accumulating"``
-                         (nutpie's partial-forget buffer) -- see :func:`base` for the exact
-                         semantics. Composes with any ``schedule_fn``.
-   :param recompute_every: Only used when ``buffer_policy="accumulating"``; see :func:`base`.
+                         (nutpie's partial-forget buffer, ``nuts-rs`` ``switch()``).
+                         Composes with any ``schedule_fn``.
+   :param recompute_every: Only used when ``buffer_policy="accumulating"``: number of slow-stage
+                           steps between mid-window metric recomputes.  Default 1 matches
+                           nutpie's ``mass_matrix_update_freq=1``.
    :param \*\*extra_parameters: Additional keyword arguments forwarded to the kernel at every step
                                 (e.g. ``num_integration_steps`` for HMC).
 
@@ -398,9 +330,11 @@ Module Contents
 
    .. rubric:: Notes
 
-   The default (reset) buffer policy runs on the staged-adaptation engine;
-   the accumulating policy uses the established low-rank scan loop, which it
-   shares with earlier releases.
+   Both buffer policies run on the staged-adaptation engine.  The reset
+   policy hard-clears the draw/gradient buffer at each slow-window boundary;
+   the accumulating policy retains the previous window's draws as background
+   (nutpie partial-forget) and recomputes the metric mid-window according to
+   ``recompute_every``.
 
    Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a
    progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.
