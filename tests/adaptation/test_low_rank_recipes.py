@@ -1341,7 +1341,7 @@ def _reference_run_accumulating(
     Inline rather than importing ``base()`` so that this reference survives
     independently of the production code and cannot be silently changed.
 
-    **Must NOT be modified** after the Slice-3 migration commit.
+    **Must NOT be modified** — this is the frozen pre-migration reference used by the parity gate.
 
     Bit-exact comparison works at ANY ``recompute_every`` value (default 1,
     matching nutpie's ``mass_matrix_update_freq=1``) after the engine fix that
