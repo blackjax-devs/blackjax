@@ -851,46 +851,48 @@ class TestRecovershClassical(BlackJAXTest):
             )
 
     def test_auto_uses_growing_window_schedule(self):
-        """metric='auto' selects the nutpie growing-window schedule, not Stan doubling.
+        """metric='auto' resolves to the growing-window schedule; explicit schedule is preserved.
 
-        Regression guard for the schedule override in staged_adaptation.
-        Growing windows give +54-57% on spike geometry vs Stan doubling (optpath-B).
+        Regression guard for two bugs fixed together:
+        (1) MUT-j: the old `if schedule_fn is build_schedule` sentinel could not
+            distinguish between "user passed nothing" and "user explicitly passed
+            build_schedule", so explicit Stan was silently swapped to growing.
+        (2) vacuous assertion: the old test only checked isinstance(IMM, LRK), a
+            tautology because auto always emits LowRankInverseMassMatrix.
+
+        Both are fixed via _resolve_metric_and_schedule: the function is called
+        directly so the returned schedule identity is observable.
         """
         from blackjax.adaptation.low_rank_adaptation import (
             build_growing_window_schedule,
         )
-        from blackjax.adaptation.staged_adaptation import build_schedule
-
-        num_steps = 100
-        stan_sched = np.asarray(build_schedule(num_steps))
-        growing_sched = np.asarray(build_growing_window_schedule(num_steps))
-
-        # The two schedules must differ (otherwise the test is vacuous).
-        self.assertFalse(
-            np.allclose(stan_sched, growing_sched),
-            "Stan and growing-window schedules should differ",
+        from blackjax.adaptation.staged_adaptation import (
+            _resolve_metric_and_schedule,
+            build_schedule,
         )
 
-        # Build staged_adaptation with metric='auto' and confirm it produces the
-        # growing-window schedule by comparing the produced num-windows / last window.
-        # We confirm indirectly: building with auto and running num_steps produces
-        # a schedule consistent with build_growing_window_schedule.
-        warmup = blackjax.staged_adaptation(
-            blackjax.nuts,
-            lambda x: -0.5 * jnp.sum(x**2),
-            metric="auto",
-            max_grad_budget=5000,
+        # auto + no explicit schedule → growing window (the override).
+        _, sched_auto_default = _resolve_metric_and_schedule(
+            "auto", None, max_grad_budget=5000
         )
-        # The schedule is embedded in warmup.run; we verify via the schedule_fn
-        # attribute that staged_adaptation exposes internally. Since the function
-        # object is not directly observable at the public API level, we verify
-        # structurally: run 100 steps and confirm the final IMM is different from
-        # what Stan-schedule warmup would produce on the same target.
-        # (Structural: we just confirm the warmup completes with the growing schedule.)
-        key = jax.random.key(99)
-        results, _ = warmup.run(key, jnp.zeros(5), num_steps=num_steps)
-        imm = results.parameters["inverse_mass_matrix"]
-        self.assertIsInstance(imm, LowRankInverseMassMatrix)
+        self.assertIs(
+            sched_auto_default,
+            build_growing_window_schedule,
+            "auto+default must resolve to build_growing_window_schedule",
+        )
+
+        # Negative test: explicit Stan schedule on auto is PRESERVED (not swapped).
+        # The old sentinel `if schedule_fn is build_schedule` was the bug: it
+        # replaced explicit Stan with growing because both were the same object.
+        _, sched_auto_explicit_stan = _resolve_metric_and_schedule(
+            "auto", build_schedule, max_grad_budget=5000
+        )
+        self.assertIs(
+            sched_auto_explicit_stan,
+            build_schedule,
+            "auto+explicit-Stan must NOT be swapped to growing-window; "  # noqa: E231
+            "schedule_fn sentinel was broken (build_schedule == build_schedule always true)",
+        )
 
     def test_converged_at_step_sets_on_airm_convergence(self):
         """converged_at_step is set (≥0) and budget_returned_steps > 0 after AIRM fires.
