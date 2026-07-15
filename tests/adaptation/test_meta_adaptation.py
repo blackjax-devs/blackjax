@@ -149,6 +149,39 @@ def _make_correlated_buffer(
     return draws, grads
 
 
+def _make_marginal_sgap_curvature_buffer(
+    n_dims: int,
+    n: int,
+    seed: int = _RNG_SEED,
+):
+    """Rank-1 spike with S_gap ∈ [_S_MIN, 2·_S_MIN) = [2.0, 4.0) + random grads.
+
+    Uses lam_spike=3.5 (random non-axis-aligned direction, d=20, n=500) which
+    gives top Welford-whitened eigenvalue ≈ 2.89, k_new=1, S_gap ≈ 2.22 ∈ [2, 4).
+    Random grads (R²≈0) block escalation via the R² gate, leaving the S_gap in
+    the MARGINAL band as the only reason for staying diagonal — the correct fixture
+    for the 'stays-diag-marginal' decision row.
+
+    The rank-1 (non-axis-aligned) spike is load-bearing: an axis-aligned spike is
+    perfectly cancelled by Welford diagonal whitening (D^{-1/2} Σ D^{-1/2} = I),
+    giving S_gap=1.  A random direction leaks residual anisotropy into the whitened
+    space, producing a measurable spike with a non-trivial k_new=1 cut.
+    """
+    key = jax.random.key(seed)
+    k1, k2, k3 = jax.random.split(key, 3)
+    # Rank-1 random direction (non-axis-aligned → Welford whitening is imperfect)
+    raw = jax.random.normal(k3, (n_dims, 1))
+    U, _ = jnp.linalg.qr(raw)
+    U = U[:, :1]
+
+    z = jax.random.normal(k1, (n, n_dims))
+    z_orth = z - (z @ U) @ U.T
+    lam_spike = 3.5  # Gives Welford-whitened top eig ≈ 2.89, S_gap ≈ 2.22 ∈ [2, 4)
+    draws = z_orth + jnp.sqrt(lam_spike) * (z @ U) @ U.T
+    grads = jax.random.normal(k2, (n, n_dims))  # independent of draws → R²≈0
+    return draws, grads
+
+
 def _make_high_sgap_curvature_buffer(
     n_dims: int,
     n: int,
@@ -1008,33 +1041,108 @@ class TestRecovershClassical(BlackJAXTest):
         self.assertEqual(verdict.route, "low_rank")
 
     def test_marginal_s_gap_stays_diagonal(self):
-        """Marginal S_gap fixture (≈1.5, like stoch_vol): S_gap magnitude blocks.
+        """Marginal-band S_gap ∈ [_S_MIN, 2·_S_MIN) = [2.0, 4.0): stays diagonal.
 
-        Regression guard for the 'stays-diag-marginal' decision-table row which
-        had no fixture before the test fold-in.
+        Regression guard for the 'stays-diag-marginal' decision row.
+        The OLD fixture (lam_spike=2.0) was mislabeled: it produced S_gap=1.0
+        because top Welford-whitened eigenvalue ≈ 1.9 < cutoff=2.0 → k_new=0
+        → _compute_s_gap returns 1.0 by definition.  k_new=0 means the 'wrong
+        cut' MUT-e mutation was only caught by a 3% accident, not by design.
+
+        The NEW fixture (lam_spike=3.5, rank=1, non-axis-aligned direction):
+        - top Welford-whitened eigenvalue ≈ 2.89 > cutoff=2.0 → k_new=1
+        - S_gap = λ₁/λ₂ ≈ 2.22 ∈ [_S_MIN, 2·_S_MIN) → marginal_s_gap=True
+        - random grads → R²≈0 → R² gate blocks escalation (not S_gap gate)
+        - flagged as 'marginal_s_gap' in verdict.flags
+        - direct s_gap_curr == _compute_s_gap(eigs, k_new) assertion catches
+          MUT-e (using k instead of k_new as the spectral cut)
+
+        Why rank-1 NON-AXIS-ALIGNED: an axis-aligned spike (e.g. spike at e₁)
+        is perfectly cancelled by Welford diagonal whitening → S_gap=1.  A
+        random direction leaks residual anisotropy into the whitened space.
         """
         d, n = 20, 500
-        # S_gap ≈ 1.5: spike just below the _S_MIN=2.0 threshold.
-        # lam_spike=2.0 in Welford basis gives roughly S_gap≈1.5–1.8 < _S_MIN.
-        draws, grads = _make_correlated_buffer(d, n, rank=2, lam_spike=2.0, seed=63)
+        draws, grads = _make_marginal_sgap_curvature_buffer(d, n, seed=63)
         draws = jnp.array(draws, dtype=jnp.float32)
         grads = jnp.array(grads, dtype=jnp.float32)
 
         core = build_meta_adaptation_core(50000, max_rank=10)
         state = core.init(d)
-        for _ in range(2):
-            state = _fill_state_from_buffer(state, draws, grads)
-            state = core.final(state)
 
-        s_gap = float(np.asarray(state.s_gap_curr))
+        # First window — populates s_gap_curr; s_gap_prev is still NaN so
+        # stability gate blocks even if s_gap ≥ _S_MIN.
+        state_filled_1 = _fill_state_from_buffer(state, draws, grads)
+        state_1 = core.final(state_filled_1)
+
+        # Second window — s_gap_prev is now valid; stability check runs.
+        # R²≈0 (random grads) blocks escalation via R² gate.
+        state_filled_2 = _fill_state_from_buffer(state_1, draws, grads)
+        state_2 = core.final(state_filled_2)
+
+        s_gap = float(np.asarray(state_2.s_gap_curr))
         self.assertFalse(
-            bool(np.asarray(state.has_escalated)),
-            f"Marginal S_gap ({s_gap:.2f} < {_S_MIN}): should stay diagonal",  # noqa: E231
+            bool(np.asarray(state_2.has_escalated)),
+            "Marginal S_gap fixture should NOT escalate (R2 blocks); s_gap="
+            + format(s_gap, ".3f"),
         )
+        # S_gap must be in the REAL marginal band [_S_MIN, 2·_S_MIN) = [2, 4).
+        self.assertGreaterEqual(
+            s_gap,
+            _S_MIN,
+            "Marginal fixture s_gap="
+            + format(s_gap, ".3f")
+            + " must be >= _S_MIN="
+            + str(_S_MIN),
+        )
+        self.assertLess(
+            s_gap,
+            2.0 * _S_MIN,
+            "Marginal fixture s_gap="
+            + format(s_gap, ".3f")
+            + " must be < 2*_S_MIN="
+            + str(2.0 * _S_MIN),
+        )
+
+        # flags["marginal_s_gap"] must be True — the field exists and is set correctly.
         verdict = extract_meta_verdict(
-            state, max_grad_budget=50000, num_warmup_steps=2500
+            state_2, max_grad_budget=50000, num_warmup_steps=2500
+        )
+        self.assertTrue(
+            verdict.flags["marginal_s_gap"],
+            "Expected flags['marginal_s_gap']=True s_gap="
+            + format(s_gap, ".3f")
+            + " has_escalated="
+            + str(bool(np.asarray(state_2.has_escalated))),
         )
         self.assertIn(verdict.route, ("diagonal", "reparam_suggested"))
+
+        # Direct assertion: stored s_gap_curr == _compute_s_gap(eigenvalues, k_new).
+        # Catches MUT-e (spectral cut at wrong index, e.g. k-1 or k+1 instead of k).
+        # Uses the buffer BEFORE final() reset + Welford sigma from the post-final IMM.
+        B = state_filled_2.draws_buffer.shape[0]
+        n_buf = jnp.minimum(state_filled_2.buffer_idx, jnp.int32(B))
+        sigma_w = state_2.inverse_mass_matrix.sigma  # Welford sigma (stay-diag IMM)
+        actual_rank = state_2.inverse_mass_matrix.U.shape[1]
+        eigenvalues_direct, _ = _compute_whitened_spectrum(
+            state_filled_2.draws_buffer, sigma_w, n_buf, actual_rank
+        )
+        k_new_direct = _choose_rank(eigenvalues_direct, n_buf, actual_rank, cutoff=2.0)
+        s_gap_direct = _compute_s_gap(eigenvalues_direct, k_new_direct)
+        # k_new must be 1 (non-trivial cut) — the fixture is load-bearing.
+        self.assertGreater(
+            int(np.asarray(k_new_direct)),
+            0,
+            "Marginal fixture must have k_new >= 1 (non-trivial spectral cut)",
+        )
+        np.testing.assert_allclose(
+            float(np.asarray(state_2.s_gap_curr)),
+            float(np.asarray(s_gap_direct)),
+            rtol=1e-5,
+            err_msg=(
+                "s_gap_curr must equal _compute_s_gap(eigs, k_new); "
+                "catches MUT-e (wrong spectral cut index)"
+            ),
+        )
 
     def test_escalated_e2e_smoke_f32_and_x64(self):
         """Escalated e2e smoke: correlated target escalates under both f32 and x64.
