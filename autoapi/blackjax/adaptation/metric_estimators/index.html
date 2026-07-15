@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.metric_buffers" href="../metric_buffers/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g1be27ddb2" />
+  <meta name="docsearch:version" content="0.1.dev1+ge3d60b14f" />
   </head>
   
   
@@ -434,7 +434,9 @@ representation out.  No buffer state, no scheduling logic, no side effects.
 All functions are JAX-traceable and safe to use inside <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code> /
 <code class="docutils literal notranslate"><span class="pre">jax.vmap</span></code> provided that <code class="docutils literal notranslate"><span class="pre">max_rank</span></code> (where applicable) is a static
 Python integer (required to determine output shapes).</p>
-<p><strong>Source lineage</strong> (as of 2026-07-11, main &#64; 532631c1):</p>
+<p><strong>Source lineage</strong> (estimator extraction history; the private
+<code class="docutils literal notranslate"><span class="pre">_compute_low_rank_metric</span></code> helper shared by the fisher path now resides in
+this module, relocated from <code class="docutils literal notranslate"><span class="pre">low_rank_adaptation</span></code>):</p>
 <div class="pst-scrollable-table-container"><table class="table">
 <thead>
 <tr class="row-odd"><th class="head"><p>Estimator</p></th>
@@ -533,7 +535,7 @@ metric and benefit the most from low-rank preconditioning.</p>
 <p>This idiom is used identically in:</p>
 <ul class="simple">
 <li><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.fisher_score_low_rank" title="blackjax.adaptation.metric_estimators.fisher_score_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">fisher_score_low_rank()</span></code></a> (step 9 — top-k selection in projected
-subspace; see <code class="docutils literal notranslate"><span class="pre">low_rank_adaptation._compute_low_rank_metric</span></code> :468).</p></li>
+subspace; see <code class="docutils literal notranslate"><span class="pre">_compute_low_rank_metric</span></code> in this module).</p></li>
 <li><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank" title="blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">draws_singular_value_low_rank()</span></code></a> (top-k SVD eigenvalue selection;
 see <code class="docutils literal notranslate"><span class="pre">mclmc_lrd_adaptation._extract_lrd_from_samples</span></code> :271).</p></li>
 <li><p><a class="reference internal" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank" title="blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a> (top-k eigh eigenvalue selection;
@@ -568,8 +570,7 @@ subspace has fewer than <code class="docutils literal notranslate"><span class="
 which arises when <code class="docutils literal notranslate"><span class="pre">d</span> <span class="pre">&lt;</span> <span class="pre">2</span> <span class="pre">·</span> <span class="pre">max_rank</span></code>), the output is <strong>zero-padded</strong>
 to the requested shape — zero columns in <code class="docutils literal notranslate"><span class="pre">U</span></code> and <code class="docutils literal notranslate"><span class="pre">lam=1</span></code> entries
 — so the return shape is always <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">max_rank)</span></code> / <code class="docutils literal notranslate"><span class="pre">(max_rank,)</span></code>.
-Matches <code class="docutils literal notranslate"><span class="pre">low_rank_adaptation._compute_low_rank_metric</span></code> steps 8–9
-(:468–484).</p>
+Matches <code class="docutils literal notranslate"><span class="pre">_compute_low_rank_metric</span></code> (this module) steps 8–9.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">tail_handling=&quot;raw&quot;</span></code></dt><dd><p>Used by <a class="reference internal" href="#blackjax.adaptation.metric_estimators.draws_singular_value_low_rank" title="blackjax.adaptation.metric_estimators.draws_singular_value_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">draws_singular_value_low_rank()</span></code></a> and
 <a class="reference internal" href="#blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank" title="blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">sample_covariance_eigh_low_rank()</span></code></a>.  The top-k pairs are

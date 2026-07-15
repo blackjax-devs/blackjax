@@ -13,7 +13,9 @@ blackjax.adaptation.metric_estimators
    ``jax.vmap`` provided that ``max_rank`` (where applicable) is a static
    Python integer (required to determine output shapes).
 
-   **Source lineage** (as of 2026-07-11, main @ 532631c1):
+   **Source lineage** (estimator extraction history; the private
+   ``_compute_low_rank_metric`` helper shared by the fisher path now resides in
+   this module, relocated from ``low_rank_adaptation``):
 
    +--------------------------------------+--------------------------------------------+
    | Estimator                            | Extracted from                             |
@@ -84,7 +86,7 @@ Module Contents
    This idiom is used identically in:
 
    * :func:`fisher_score_low_rank` (step 9 — top-k selection in projected
-     subspace; see ``low_rank_adaptation._compute_low_rank_metric`` :468).
+     subspace; see ``_compute_low_rank_metric`` in this module).
    * :func:`draws_singular_value_low_rank` (top-k SVD eigenvalue selection;
      see ``mclmc_lrd_adaptation._extract_lrd_from_samples`` :271).
    * :func:`sample_covariance_eigh_low_rank` (top-k eigh eigenvalue selection;
@@ -113,8 +115,7 @@ Module Contents
        which arises when ``d < 2 · max_rank``), the output is **zero-padded**
        to the requested shape — zero columns in ``U`` and ``lam=1`` entries
        — so the return shape is always ``(d, max_rank)`` / ``(max_rank,)``.
-       Matches ``low_rank_adaptation._compute_low_rank_metric`` steps 8–9
-       (:468–484).
+       Matches ``_compute_low_rank_metric`` (this module) steps 8–9.
 
    ``tail_handling="raw"``
        Used by :func:`draws_singular_value_low_rank` and

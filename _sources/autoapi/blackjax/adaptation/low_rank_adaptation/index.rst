@@ -398,6 +398,10 @@ Module Contents
 
    .. rubric:: Notes
 
+   The default (reset) buffer policy runs on the staged-adaptation engine;
+   the accumulating policy uses the established low-rank scan loop, which it
+   shares with earlier releases.
+
    Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a
    progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.
 

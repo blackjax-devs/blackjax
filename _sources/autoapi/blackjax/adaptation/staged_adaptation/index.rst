@@ -146,7 +146,7 @@ Module Contents
    :rtype: A list of tuples (window_label, is_middle_window_end).
 
 
-.. py:function:: staged_adaptation(algorithm, logdensity_fn: Callable, metric: str | blackjax.adaptation.metric_recipes.MetricRecipe | blackjax.adaptation.metric_recipes.MetricCore = 'welford_diag', *, imm_shrinkage_to_previous: float = 0.0, initial_inverse_mass_matrix: blackjax.types.Array | None = None, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: staged_adaptation(algorithm, logdensity_fn: Callable, metric: str | blackjax.adaptation.metric_recipes.MetricRecipe | blackjax.adaptation.metric_recipes.MetricCore = 'welford_diag', *, imm_shrinkage_to_previous: float = 0.0, initial_inverse_mass_matrix: blackjax.types.Array | None = None, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, schedule_fn: Callable = build_schedule, initial_metric_state: Any = None, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the step size and inverse mass matrix for HMC-family algorithms.
 
@@ -189,6 +189,21 @@ Module Contents
    :param integrator: The symplectic integrator passed to ``algorithm.build_kernel``; only
                       used if ``build_kernel`` accepts arguments.  Defaults to
                       :func:`~blackjax.mcmc.integrators.velocity_verlet`.
+   :param schedule_fn: Callable ``(num_steps: int) -> Array`` that returns a
+                       ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs.
+                       Default :func:`build_schedule` (Stan's fixed-absolute, 2×-doubling
+                       schedule).  Pass
+                       :func:`~blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule`
+                       for nutpie's proportional-to-tune, 1.5×-growing-window schedule.
+   :param initial_metric_state: Optional pre-built mass-matrix adaptation core state.  When not
+                                ``None``, overrides the ``metric_core.init(n_dims)`` call at warmup
+                                start — the provided state is used as-is.  The object must be a
+                                valid state for the chosen ``metric`` core (its
+                                ``inverse_mass_matrix`` field is unpacked into
+                                :class:`StagedAdaptationState` immediately).  Intended for callers
+                                that seed the initial state from external data (e.g., gradient-based
+                                diagonal-scale initialisation); ``None`` (the default) reproduces
+                                the standard identity/zero initialisation.
    :param \*\*extra_parameters: Additional parameters forwarded to the MCMC kernel at every step, e.g.
                                 ``num_integration_steps`` for HMC.
 

@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.laps_burn_in" href="../laps_burn_in/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g1be27ddb2" />
+  <meta name="docsearch:version" content="0.1.dev1+ge3d60b14f" />
   </head>
   
   
@@ -860,6 +860,9 @@ semantics. Composes with any <code class="docutils literal notranslate"><span cl
 </dd>
 </dl>
 <p class="rubric">Notes</p>
+<p>The default (reset) buffer policy runs on the staged-adaptation engine;
+the accumulating policy uses the established low-rank scan loop, which it
+shares with earlier releases.</p>
 <p>Wrap <code class="docutils literal notranslate"><span class="pre">warmup.run(...)</span></code> in <code class="xref py py-func docutils literal notranslate"><span class="pre">blackjax.progress_bar()</span></code> to display a
 progress bar, e.g. <code class="docutils literal notranslate"><span class="pre">with</span> <span class="pre">blackjax.progress_bar():</span> <span class="pre">warmup.run(...)</span></code>.</p>
 </dd></dl>

@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.metric_estimators" href="../metric_estimators/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g1be27ddb2" />
+  <meta name="docsearch:version" content="0.1.dev1+ge3d60b14f" />
   </head>
   
   
@@ -412,6 +412,17 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore.final"><code class="docutils literal notranslate"><span class="pre">MetricCore.final</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.inverse_mass_matrix</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.mu_star"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.mu_star</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.draws_buffer"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.draws_buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.grads_buffer"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.grads_buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.buffer_idx"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.buffer_idx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.background_split"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.background_split</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.recompute_counter"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.recompute_counter</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.seed_low_rank_sigma_from_grad"><code class="docutils literal notranslate"><span class="pre">seed_low_rank_sigma_from_grad()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe"><code class="docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.representation"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.representation</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.estimator"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.estimator</span></code></a></li>
@@ -421,6 +432,9 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provides"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.provides</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.emits"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.emits</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provenance"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.provenance</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.max_rank"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.max_rank</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.gamma"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.gamma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.cutoff"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.cutoff</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.build_core"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.build_core()</span></code></a></li>
 </ul>
 </li>
@@ -453,14 +467,26 @@
 <li><p><code class="docutils literal notranslate"><span class="pre">&quot;fisher_diag&quot;</span></code> — Fisher-divergence-minimising diagonal estimator
 (situational; requires position <em>and</em> gradient samples; see registry
 provenance note for operational guidance).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;fisher_low_rank&quot;</span></code> — Fisher-divergence-minimising LOW-RANK estimator;
+requires position <em>and</em> gradient samples; needs a <code class="docutils literal notranslate"><span class="pre">buffer_size</span></code>
+argument in <code class="docutils literal notranslate"><span class="pre">build_core()</span></code>.  Algorithm 1 of
+<span id="id1">[<a class="reference internal" href="../../../../bib.html#id3" title="Adrian Seyboldt, Eliot L. Carlson, and Bob Carpenter. Preconditioning hamiltonian monte carlo by minimizing fisher divergence. arXiv preprint arXiv:2603.18845, 2026.">SCC26</a>]</span> / nutpie’s mass-matrix estimator.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;sample_cov_low_rank&quot;</span></code> — Sample-covariance low-rank estimator (MEADS
+/ Scheme-B form); draws only, no gradients, no regularisation.  Needs a
+<code class="docutils literal notranslate"><span class="pre">buffer_size</span></code> argument in <code class="docutils literal notranslate"><span class="pre">build_core()</span></code>.</p></li>
 </ul>
 <p>Usage:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># String sugar (registry lookup):</span>
 <span class="n">wu</span> <span class="o">=</span> <span class="n">staged_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="s2">&quot;welford_diag&quot;</span><span class="p">)</span>
 
-<span class="c1"># Recipe constructor (testability / custom configuration):</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_recipes</span><span class="w"> </span><span class="kn">import</span> <span class="n">REGISTRY</span>
-<span class="n">core</span> <span class="o">=</span> <span class="n">REGISTRY</span><span class="p">[</span><span class="s2">&quot;welford_diag&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">build_core</span><span class="p">(</span><span class="n">imm_shrinkage_to_previous</span><span class="o">=</span><span class="mf">5.0</span><span class="p">)</span>
+<span class="c1"># Low-rank: pre-build the core with buffer_size, then pass to engine:</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_recipes</span><span class="w"> </span><span class="kn">import</span> <span class="n">REGISTRY</span><span class="p">,</span> <span class="n">_build_fisher_low_rank_core</span>
+<span class="n">core</span> <span class="o">=</span> <span class="n">_build_fisher_low_rank_core</span><span class="p">(</span><span class="n">buffer_size</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">max_rank</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">gamma</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">,</span> <span class="n">cutoff</span><span class="o">=</span><span class="mf">2.0</span><span class="p">)</span>
+<span class="n">wu</span> <span class="o">=</span> <span class="n">staged_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">core</span><span class="p">,</span> <span class="n">schedule_fn</span><span class="o">=</span><span class="n">my_schedule_fn</span><span class="p">)</span>
+
+<span class="c1"># Via the recipe (also needs buffer_size):</span>
+<span class="n">recipe</span> <span class="o">=</span> <span class="n">REGISTRY</span><span class="p">[</span><span class="s2">&quot;fisher_low_rank&quot;</span><span class="p">]</span>
+<span class="n">core</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">build_core</span><span class="p">(</span><span class="n">buffer_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
 <span class="n">wu</span> <span class="o">=</span> <span class="n">staged_adaptation</span><span class="p">(</span><span class="n">nuts</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">=</span><span class="n">core</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -480,11 +506,15 @@ handles only the inverse-mass-matrix estimation.</p>
 <li><p>The METRIC CORE (<a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a>) handles mass-matrix tuning only.</p></li>
 <li><p>Step-size adaptation and the stage schedule live in the HOST
 (<a class="reference internal" href="../staged_adaptation/index.html#module-blackjax.adaptation.staged_adaptation" title="blackjax.adaptation.staged_adaptation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">staged_adaptation</span></code></a>).</p></li>
-<li><p>Step-size proxy independence: for diag/dense representations (this slice),
-the dual-averaging acceptance-rate proxy is not an eigenvalue proxy of the
-adapted metric, so the step-size and metric adaptation are decoupled.  A
-<code class="docutils literal notranslate"><span class="pre">diag_reference</span></code> accessor will be added in the low-rank slice where this
-independence no longer holds.</p></li>
+<li><p>Step-size/metric decoupling: for HMC/NUTS, the dual-averaging step-size proxy
+is the scalar Metropolis acceptance rate — NOT an eigenvalue quantity of the
+adapted metric.  This matters because in MCLMC-LRD, where step_size ∝ 1/√λ_max,
+feeding the full low-rank metric to the proxy caused a previously observed
+step-size collapse (effective-sample rate dropped 20.6×→1.27×).  For HMC/NUTS
+the full low-rank metric feeds the MCMC kernel (correct coupling), and dual
+averaging reads only acceptance_rate — the step-size/metric decoupling
+principle is naturally satisfied; no diagonal-reference split is needed.  This
+analysis applies to ALL recipes in this module.</p></li>
 </ul>
 <p class="rubric">Notes</p>
 <p>The <a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a> schema (field types) is provisional:
@@ -511,7 +541,10 @@ all recipe families.  Import directly from <code class="docutils literal notrans
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MetricCore</span></code></a></p></td>
 <td><p>Embeddable mass-matrix adaptation core: init/update/final protocol.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState" title="blackjax.adaptation.metric_recipes.LowRankMetricCoreState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LowRankMetricCoreState</span></code></a></p></td>
+<td><p>Scan-carry state for the low-rank mass-matrix MetricCore.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a></p></td>
 <td><p>Configuration bundle for a mass-matrix adaptation recipe.</p></td>
 </tr>
 </tbody>
@@ -522,7 +555,10 @@ all recipe families.  Import directly from <code class="docutils literal notrans
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.lookup_recipe" title="blackjax.adaptation.metric_recipes.lookup_recipe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lookup_recipe</span></code></a>(→ MetricRecipe)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.seed_low_rank_sigma_from_grad" title="blackjax.adaptation.metric_recipes.seed_low_rank_sigma_from_grad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">seed_low_rank_sigma_from_grad</span></code></a>(→ LowRankMetricCoreState)</p></td>
+<td><p>Seed the diagonal scale <code class="docutils literal notranslate"><span class="pre">sigma</span></code> from the initial log-density gradient.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.lookup_recipe" title="blackjax.adaptation.metric_recipes.lookup_recipe"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lookup_recipe</span></code></a>(→ MetricRecipe)</p></td>
 <td><p>Look up a named recipe from the <a class="reference internal" href="#blackjax.adaptation.metric_recipes.REGISTRY" title="blackjax.adaptation.metric_recipes.REGISTRY"><code class="xref py py-data docutils literal notranslate"><span class="pre">REGISTRY</span></code></a>.</p></td>
 </tr>
 </tbody>
@@ -580,6 +616,125 @@ re-implementation.</p>
 <span class="sig-name descname"><span class="pre">final</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">Callable</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricCore.final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricCore.final" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.LowRankMetricCoreState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">LowRankMetricCoreState</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#LowRankMetricCoreState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState" title="Link to this definition">#</a></dt>
+<dd><p>Scan-carry state for the low-rank mass-matrix MetricCore.</p>
+<p>Holds the current low-rank inverse mass matrix factors, the draw/gradient
+circular buffer, and the buffer bookkeeping counters.  The engine reads
+<code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> at each window boundary; the core’s <code class="docutils literal notranslate"><span class="pre">final()</span></code>
+updates it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>inverse_mass_matrix</strong> – Current low-rank IMM as a
+<a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a> NamedTuple
+<code class="docutils literal notranslate"><span class="pre">(sigma,</span> <span class="pre">U,</span> <span class="pre">lam)</span></code> with shapes <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>, <code class="docutils literal notranslate"><span class="pre">(d,</span> <span class="pre">max_rank)</span></code>,
+<code class="docutils literal notranslate"><span class="pre">(max_rank,)</span></code>.  This field is read by the engine at window boundaries
+(via <code class="docutils literal notranslate"><span class="pre">StagedAdaptationState.inverse_mass_matrix</span></code>) and by the MCMC
+kernel’s <code class="docutils literal notranslate"><span class="pre">default_metric</span></code> dispatch.</p></li>
+<li><p><strong>mu_star</strong> – Optimal translation <code class="docutils literal notranslate"><span class="pre">x̄</span> <span class="pre">+</span> <span class="pre">σ²</span> <span class="pre">⊙</span> <span class="pre">ᾱ</span></code>, shape <code class="docutils literal notranslate"><span class="pre">(d,)</span></code>.  Not part of the
+engine’s host protocol; the shim reads this from the last adaptation
+state to re-initialize the chain after warmup.  Always zero for the
+<code class="docutils literal notranslate"><span class="pre">&quot;sample_cov_low_rank&quot;</span></code> recipe (no optimal translation in that
+estimator).</p></li>
+<li><p><strong>draws_buffer</strong> – Circular buffer of chain positions, shape <code class="docutils literal notranslate"><span class="pre">(buffer_size,</span> <span class="pre">d)</span></code>.
+The first <code class="docutils literal notranslate"><span class="pre">buffer_idx</span></code> rows are valid; the remainder are zero-padded.
+Dropped (replaced with <code class="docutils literal notranslate"><span class="pre">None</span></code>) by the default OOM-guard
+<code class="docutils literal notranslate"><span class="pre">adaptation_info_fn</span></code> in the shim to avoid O(num_steps × buffer_size × d)
+allocations inside <code class="docutils literal notranslate"><span class="pre">jax.lax.scan</span></code>.</p></li>
+<li><p><strong>grads_buffer</strong> – Circular buffer of log-density gradients, shape <code class="docutils literal notranslate"><span class="pre">(buffer_size,</span> <span class="pre">d)</span></code>.
+Same layout and OOM-guard treatment as <code class="docutils literal notranslate"><span class="pre">draws_buffer</span></code>.  Always zeros
+for the <code class="docutils literal notranslate"><span class="pre">&quot;sample_cov_low_rank&quot;</span></code> recipe (not used by that estimator).</p></li>
+<li><p><strong>buffer_idx</strong> – Number of draws written to the buffer so far (monotonically increasing,
+NOT wrapped).  Modular indexing in <code class="docutils literal notranslate"><span class="pre">update()</span></code> handles wrap-around so
+the most recent <code class="docutils literal notranslate"><span class="pre">buffer_size</span></code> draws are always in the buffer.
+Reset to 0 by <code class="docutils literal notranslate"><span class="pre">final()</span></code> under the default <code class="docutils literal notranslate"><span class="pre">&quot;reset&quot;</span></code> buffer policy.</p></li>
+<li><p><strong>background_split</strong> – Number of the buffer’s leading rows considered “background” (for the
+accumulating buffer policy only).  Always 0 under the default
+<code class="docutils literal notranslate"><span class="pre">&quot;reset&quot;</span></code> policy.</p></li>
+<li><p><strong>recompute_counter</strong> – Steps since the last metric recompute (for accumulating periodic
+recompute only).  Always 0 under the default <code class="docutils literal notranslate"><span class="pre">&quot;reset&quot;</span></code> policy.</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.LowRankMetricCoreState.inverse_mass_matrix">
+<span class="sig-name descname"><span class="pre">inverse_mass_matrix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><span class="pre">blackjax.mcmc.metrics.LowRankInverseMassMatrix</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#LowRankMetricCoreState.inverse_mass_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.inverse_mass_matrix" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.LowRankMetricCoreState.mu_star">
+<span class="sig-name descname"><span class="pre">mu_star</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#LowRankMetricCoreState.mu_star"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.mu_star" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.LowRankMetricCoreState.draws_buffer">
+<span class="sig-name descname"><span class="pre">draws_buffer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#LowRankMetricCoreState.draws_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.draws_buffer" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.LowRankMetricCoreState.grads_buffer">
+<span class="sig-name descname"><span class="pre">grads_buffer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#LowRankMetricCoreState.grads_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.grads_buffer" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.LowRankMetricCoreState.buffer_idx">
+<span class="sig-name descname"><span class="pre">buffer_idx</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#LowRankMetricCoreState.buffer_idx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.buffer_idx" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.LowRankMetricCoreState.background_split">
+<span class="sig-name descname"><span class="pre">background_split</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#LowRankMetricCoreState.background_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.background_split" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.LowRankMetricCoreState.recompute_counter">
+<span class="sig-name descname"><span class="pre">recompute_counter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#LowRankMetricCoreState.recompute_counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.recompute_counter" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.seed_low_rank_sigma_from_grad">
+<span class="sig-name descname"><span class="pre">seed_low_rank_sigma_from_grad</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState" title="blackjax.adaptation.metric_recipes.LowRankMetricCoreState"><span class="pre">LowRankMetricCoreState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">grad</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLikeTree</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState" title="blackjax.adaptation.metric_recipes.LowRankMetricCoreState"><span class="pre">LowRankMetricCoreState</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#seed_low_rank_sigma_from_grad"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.seed_low_rank_sigma_from_grad" title="Link to this definition">#</a></dt>
+<dd><p>Seed the diagonal scale <code class="docutils literal notranslate"><span class="pre">sigma</span></code> from the initial log-density gradient.</p>
+<p>Implements nutpie’s <code class="docutils literal notranslate"><span class="pre">gradient_based_init</span></code> logic: instead of starting from
+the identity (<code class="docutils literal notranslate"><span class="pre">sigma=1</span></code> for every coordinate), set
+<code class="docutils literal notranslate"><span class="pre">sigma_i</span> <span class="pre">=</span> <span class="pre">1/sqrt(clip(|grad_i|,</span> <span class="pre">1e-20,</span> <span class="pre">1e20))</span></code> so that the initial
+diagonal inverse mass matrix equals <code class="docutils literal notranslate"><span class="pre">M^{-1}_i</span> <span class="pre">=</span> <span class="pre">sigma_i^2</span> <span class="pre">=</span> <span class="pre">1/|grad_i|</span></code>,
+matching <code class="docutils literal notranslate"><span class="pre">M</span> <span class="pre">=</span> <span class="pre">diag(|grad|)</span></code> (a diagonal Hessian approximation at the
+starting point; cf. L-BFGS and paper §3.1).</p>
+<p>Coordinates where <code class="docutils literal notranslate"><span class="pre">|grad_i|</span> <span class="pre">&lt;</span> <span class="pre">1e-10</span></code> fall back to <code class="docutils literal notranslate"><span class="pre">sigma_i</span> <span class="pre">=</span> <span class="pre">1.0</span></code>
+(identity) rather than the astronomically large <code class="docutils literal notranslate"><span class="pre">sigma_i</span> <span class="pre">=</span> <span class="pre">1e10</span></code> that the
+raw formula would give.  This defends the real edge case of initialising
+at (or very near) a stationary point of the target — e.g. <code class="docutils literal notranslate"><span class="pre">x=0</span></code> on any
+centered/standardised density — where the gradient is exactly zero and an
+extreme initial scale causes near-certain divergence on the very first
+trajectory (root-caused via the Fisher 2×2 calibration study).</p>
+<p>This function is a <strong>named seeding entry point</strong> so that any host (the
+window-adaptation shim, ChEES, etc.) can call the same code path and the
+seeding logic is independently testable.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>state</strong> – Initial <a class="reference internal" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState" title="blackjax.adaptation.metric_recipes.LowRankMetricCoreState"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankMetricCoreState</span></code></a> from <code class="docutils literal notranslate"><span class="pre">core.init(n_dims)</span></code>
+(before any gradient information).</p></li>
+<li><p><strong>grad</strong> – Log-density gradient at the initial position.  Must be the same pytree
+structure as the chain’s position.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>State with <code class="docutils literal notranslate"><span class="pre">sigma</span></code> replaced by the gradient-seeded values and
+<code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> updated accordingly (<code class="docutils literal notranslate"><span class="pre">U</span></code>/<code class="docutils literal notranslate"><span class="pre">lam</span></code> unchanged,
+<code class="docutils literal notranslate"><span class="pre">mu_star</span></code> unchanged).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState" title="blackjax.adaptation.metric_recipes.LowRankMetricCoreState">LowRankMetricCoreState</a></p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -662,9 +817,24 @@ available.</p></li>
 <span class="sig-name descname"><span class="pre">provenance</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.provenance"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provenance" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.max_rank">
+<span class="sig-name descname"><span class="pre">max_rank</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.max_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.max_rank" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.gamma">
+<span class="sig-name descname"><span class="pre">gamma</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.gamma"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.gamma" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.cutoff">
+<span class="sig-name descname"><span class="pre">cutoff</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.cutoff"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.cutoff" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 <dl class="py method">
 <dt class="sig sig-object py" id="blackjax.adaptation.metric_recipes.MetricRecipe.build_core">
-<span class="sig-name descname"><span class="pre">build_core</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">imm_shrinkage_to_previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><span class="pre">MetricCore</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.build_core"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.build_core" title="Link to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">build_core</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">imm_shrinkage_to_previous</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">initial_inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.Array</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">buffer_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><span class="pre">MetricCore</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/metric_recipes.html#MetricRecipe.build_core"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.metric_recipes.MetricRecipe.build_core" title="Link to this definition">#</a></dt>
 <dd><p>Build an embeddable <a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a> from this recipe.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -673,11 +843,20 @@ available.</p></li>
 previous window’s IMM.  Default <code class="docutils literal notranslate"><span class="pre">0.0</span></code> (Stan vanilla, no
 persistence).  Forwarded to
 <a class="reference internal" href="../mass_matrix/index.html#blackjax.adaptation.mass_matrix.mass_matrix_adaptation" title="blackjax.adaptation.mass_matrix.mass_matrix_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">mass_matrix_adaptation()</span></code></a>.
-Not supported for <code class="docutils literal notranslate"><span class="pre">&quot;fisher_diag&quot;</span></code> (<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> there per
-<code class="docutils literal notranslate"><span class="pre">mass_matrix_adaptation</span></code>’s validation).</p></li>
+Not supported for <code class="docutils literal notranslate"><span class="pre">&quot;fisher_diag&quot;</span></code> or the low-rank recipes
+(<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> there per <code class="docutils literal notranslate"><span class="pre">mass_matrix_adaptation</span></code>’s validation).</p></li>
 <li><p><strong>initial_inverse_mass_matrix</strong> – Optional seed array for the initial inverse mass matrix.  <code class="docutils literal notranslate"><span class="pre">None</span></code>
 (default) uses the standard identity initialisation (<code class="docutils literal notranslate"><span class="pre">ones(d)</span></code>
-for diagonal, <code class="docutils literal notranslate"><span class="pre">identity(d)</span></code> for dense).</p></li>
+for diagonal, <code class="docutils literal notranslate"><span class="pre">identity(d)</span></code> for dense).  Ignored for the
+low-rank estimators (<code class="docutils literal notranslate"><span class="pre">&quot;fisher_low_rank&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;sample_cov_low_rank&quot;</span></code>).</p></li>
+<li><p><strong>buffer_size</strong> – Required for low-rank recipes (<code class="docutils literal notranslate"><span class="pre">&quot;fisher_low_rank&quot;</span></code> and
+<code class="docutils literal notranslate"><span class="pre">&quot;sample_cov_low_rank&quot;</span></code>).  Size of the circular draw/gradient
+buffer (number of rows).  Use the schedule-derived heuristic in
+<a class="reference internal" href="../low_rank_adaptation/index.html#blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank" title="blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation_low_rank()</span></code></a>
+or compute it yourself:
+<code class="docutils literal notranslate"><span class="pre">min(2</span> <span class="pre">*</span> <span class="pre">max(num_steps</span> <span class="pre">//</span> <span class="pre">5,</span> <span class="pre">128),</span> <span class="pre">max(num_steps,</span> <span class="pre">1))</span></code> for the
+reset policy; <code class="xref py py-func docutils literal notranslate"><span class="pre">_accumulating_buffer_capacity()</span></code> for the accumulating policy.
+Ignored for diag/dense recipes.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -687,7 +866,8 @@ for diagonal, <code class="docutils literal notranslate"><span class="pre">ident
 <dd class="field-odd"><p><a class="reference internal" href="#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore">MetricCore</a></p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the estimator tag is not supported by this slice.</p>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the estimator tag is not supported, or if <code class="docutils literal notranslate"><span class="pre">buffer_size</span></code> is
+<code class="docutils literal notranslate"><span class="pre">None</span></code> for a low-rank estimator.</p>
 </dd>
 </dl>
 </dd></dl>
@@ -705,11 +885,13 @@ for diagonal, <code class="docutils literal notranslate"><span class="pre">ident
 <dd><p>Look up a named recipe from the <a class="reference internal" href="#blackjax.adaptation.metric_recipes.REGISTRY" title="blackjax.adaptation.metric_recipes.REGISTRY"><code class="xref py py-data docutils literal notranslate"><span class="pre">REGISTRY</span></code></a>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>name</strong> – <p>Registry key.  Current slice-1 names:</p>
+<dd class="field-odd"><p><strong>name</strong> – <p>Registry key.  Current names:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">&quot;welford_diag&quot;</span></code> (default; reproduces <code class="docutils literal notranslate"><span class="pre">window_adaptation</span></code> exactly)</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&quot;welford_dense&quot;</span></code></p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">&quot;fisher_diag&quot;</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;fisher_low_rank&quot;</span></code> (Algorithm 1, seyboldt2026; needs <code class="docutils literal notranslate"><span class="pre">buffer_size</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;sample_cov_low_rank&quot;</span></code> (MEADS/Scheme-B; needs <code class="docutils literal notranslate"><span class="pre">buffer_size</span></code>)</p></li>
 </ul>
 </p>
 </dd>
@@ -789,6 +971,17 @@ custom or experimental recipes that are not registry-stamped.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricCore.final"><code class="docutils literal notranslate"><span class="pre">MetricCore.final</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.inverse_mass_matrix</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.mu_star"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.mu_star</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.draws_buffer"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.draws_buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.grads_buffer"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.grads_buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.buffer_idx"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.buffer_idx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.background_split"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.background_split</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.recompute_counter"><code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState.recompute_counter</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.seed_low_rank_sigma_from_grad"><code class="docutils literal notranslate"><span class="pre">seed_low_rank_sigma_from_grad()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe"><code class="docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.representation"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.representation</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.estimator"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.estimator</span></code></a></li>
@@ -798,6 +991,9 @@ custom or experimental recipes that are not registry-stamped.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provides"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.provides</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.emits"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.emits</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.provenance"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.provenance</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.max_rank"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.max_rank</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.gamma"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.gamma</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.cutoff"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.cutoff</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.metric_recipes.MetricRecipe.build_core"><code class="docutils literal notranslate"><span class="pre">MetricRecipe.build_core()</span></code></a></li>
 </ul>
 </li>
