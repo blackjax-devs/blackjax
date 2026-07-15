@@ -550,8 +550,9 @@ class TestEscalationDecisionTable(BlackJAXTest):
 
         This is the load-bearing test for the R² gate: S_gap passes (proves S_gap
         gate is NOT the blocker) but R² blocks (the sole discriminator).
-        Pre-review MUT-a was green on the curvature test because S_gap also blocked;
-        this fixture ensures only R² can block.
+        An isotropic curvature fixture would let the S_gap gate block escalation,
+        masking the R² gate; this fixture uses a HIGH-S_gap target so R² is the
+        sole discriminator.
         """
         d, n = 20, 500
         # High S_gap (correlated spike) + random grads (R²≈0, curvature proxy)
@@ -562,7 +563,7 @@ class TestEscalationDecisionTable(BlackJAXTest):
         grads = jnp.array(grads, dtype=jnp.float32)
         state, _ = self._run_two_windows(draws, grads)
 
-        # S_gap gate passes (proves it is not the blocker).
+        # S_gap gate passes (proves the S_gap gate is not the blocker).
         s_gap = float(np.asarray(state.s_gap_curr))
         self.assertGreater(
             s_gap,
@@ -892,12 +893,12 @@ class TestRecovershClassical(BlackJAXTest):
     def test_auto_uses_growing_window_schedule(self):
         """metric='auto' resolves to the growing-window schedule; explicit schedule is preserved.
 
-        Regression guard for two bugs fixed together:
-        (1) MUT-j: the old `if schedule_fn is build_schedule` sentinel could not
-            distinguish between "user passed nothing" and "user explicitly passed
-            build_schedule", so explicit Stan was silently swapped to growing.
-        (2) vacuous assertion: the old test only checked isinstance(IMM, LRK), a
-            tautology because auto always emits LowRankInverseMassMatrix.
+        Regression guard: the old `is build_schedule` sentinel could not distinguish
+        between "user passed nothing" and "user explicitly passed build_schedule",
+        so an explicit Stan-on-auto request was silently swapped to growing-window.
+        The old test only checked isinstance(IMM, LowRankInverseMassMatrix), which is
+        a tautology because auto always emits that type — it never actually observed
+        which schedule was chosen.
 
         Both are fixed via _resolve_metric_and_schedule: the function is called
         directly so the returned schedule identity is observable.
@@ -1052,8 +1053,9 @@ class TestRecovershClassical(BlackJAXTest):
         Regression guard for the 'stays-diag-marginal' decision row.
         The OLD fixture (lam_spike=2.0) was mislabeled: it produced S_gap=1.0
         because top Welford-whitened eigenvalue ≈ 1.9 < cutoff=2.0 -> k_new=0
-        -> _compute_s_gap returns 1.0 by definition.  k_new=0 means the 'wrong
-        cut' MUT-e mutation was only caught by a 3% accident, not by design.
+        -> _compute_s_gap returns 1.0 by definition.  k_new=0 means computing
+        S_gap at the wrong spectral cut was previously caught only by a thin ~3%
+        margin, not by design.
 
         The NEW fixture (lam_spike=4.5, rank=1, non-axis-aligned direction, seed=42):
         - top Welford-whitened eigenvalue ≈ 3.5 > cutoff=2.0 -> k_new=1
@@ -1061,7 +1063,7 @@ class TestRecovershClassical(BlackJAXTest):
         - random grads -> R2 approx 0 -> R2 gate blocks escalation (not S_gap gate)
         - flagged as 'marginal_s_gap' in verdict.flags
         - direct s_gap_curr == _compute_s_gap(eigs, k_new) assertion catches
-          MUT-e (using k instead of k_new as the spectral cut)
+          a regression where S_gap is computed at the wrong spectral cut (k instead of k_new)
 
         Why rank-1 NON-AXIS-ALIGNED: an axis-aligned spike (e.g. spike at e1)
         is perfectly cancelled by Welford diagonal whitening -> S_gap=1.  A
@@ -1127,7 +1129,8 @@ class TestRecovershClassical(BlackJAXTest):
         self.assertIn(verdict.route, ("diagonal", "reparam_suggested"))
 
         # Direct assertion: stored s_gap_curr == _compute_s_gap(eigenvalues, k_new).
-        # Catches MUT-e (spectral cut at wrong index, e.g. k-1 or k+1 instead of k).
+        # Catches a regression where S_gap is computed at the wrong spectral cut
+        # (e.g. k-1 or k+1 instead of k_new).
         # Uses the buffer BEFORE final() reset + Welford sigma from the post-final IMM.
         B = state_filled_2.draws_buffer.shape[0]
         n_buf = jnp.minimum(state_filled_2.buffer_idx, jnp.int32(B))
@@ -1150,16 +1153,16 @@ class TestRecovershClassical(BlackJAXTest):
             rtol=1e-5,
             err_msg=(
                 "s_gap_curr must equal _compute_s_gap(eigs, k_new); "
-                "catches MUT-e (wrong spectral cut index)"
+                "regression: S_gap computed at wrong spectral cut index"
             ),
         )
 
     def test_escalated_e2e_smoke_f32_and_x64(self):
         """Escalated e2e smoke: non-axis-aligned spike target escalates under both f32 and x64.
 
-        Regression guard for the x64 dtype crash (BLOCKER 1 in adversarial review):
-        the suite was green 28/28 only because all tests ran f32.  Under x64 the
-        dynamic_update_slice and _deferred branches both crashed at trace time.
+        Regression guard for the x64 dtype crash in the R² deferred branch / update
+        slice: the suite was previously green only because all tests ran f32.  Under
+        x64 the dynamic_update_slice and _deferred branches both crashed at trace time.
 
         The logdensity uses a NON-AXIS-ALIGNED random direction u so that Welford
         diagonal whitening leaves residual off-diagonal anisotropy:
