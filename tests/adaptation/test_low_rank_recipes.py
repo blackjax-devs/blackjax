@@ -26,8 +26,9 @@ Coverage:
   is the same object as the backward-compat re-export from
   ``low_rank_adaptation``.
 - :func:`window_adaptation_low_rank` shim: both buffer policies via staged engine,
-  gradient_based_init seam, info-bridge field layout, and bit-exact accumulating
-  parity gate vs frozen inline reference (``recompute_every=10**9``, ``atol=0.0``).
+  gradient_based_init seam, info-bridge field layout, and bit-exact parity gates
+  (reset + accumulating) vs frozen inline references on an anisotropic target
+  (``recompute_every ∈ {1, 5, 25}``, ``atol=0.0``).
 """
 import jax
 import jax.flatten_util as fu
@@ -70,6 +71,20 @@ from blackjax.adaptation.staged_adaptation import (
 from blackjax.adaptation.step_size import dual_averaging_adaptation
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix, gaussian_euclidean_low_rank
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
+
+# ---------------------------------------------------------------------------
+# Anisotropic parity target (shared by both parity gate classes)
+# ---------------------------------------------------------------------------
+# Variances [4, 1, 0.25, 0.0625, 0.015625] → std devs [2, 1, 0.5, 0.25, 0.125].
+# Spans ~2.5 orders of magnitude so the fitted (sigma, U, lam) are genuinely
+# non-identity and the parity gate is non-trivial.
+_PARITY_SCALE = jnp.array([2.0, 1.0, 0.5, 0.25, 0.125])
+
+
+def _aniso_logdensity(x):
+    """Mildly anisotropic 5-d Gaussian used by both parity gate classes."""
+    return std_normal_logdensity(x, scale=_PARITY_SCALE)
+
 
 # ---------------------------------------------------------------------------
 # Backward-compat object-identity test
@@ -1328,6 +1343,323 @@ class LowRankX64SmokeTest(BlackJAXTest):
 
 
 # ---------------------------------------------------------------------------
+# Bit-exact parity: reset path via engine vs frozen reference scan loop
+# ---------------------------------------------------------------------------
+
+
+def _reference_run_reset(rng_key, position, num_steps, n_dims, logdensity_fn=None):
+    """Frozen inline reset scan loop (verbatim copy of ``base(buffer_policy='reset')`` math).
+
+    Bit-exact reference for :class:`WindowAdaptationLowRankResetParityTest`.
+    Inline rather than importing ``base()`` so that this reference survives
+    independently of the production code and cannot be silently changed.
+
+    **Must NOT be modified** — this is the frozen pre-migration reference used by the parity gate.
+
+    The reset path is the simpler of the two policies: at each window end,
+    ``slow_final`` recomputes the metric from the current buffer and then
+    hard-clears the buffer to zeros (``buffer_idx=0``).  No mid-window
+    recomputes; no partial-forget.  The ``slow_update()`` engine fix
+    (changing ``ws.inverse_mass_matrix`` → ``new_metric_st.inverse_mass_matrix``)
+    is a no-op for the reset core because ``update()`` does not modify
+    ``inverse_mass_matrix`` — so ``new_metric_st.inverse_mass_matrix`` equals
+    the incoming ``ws.inverse_mass_matrix`` for every non-window-end step.
+    """
+    if logdensity_fn is None:
+        logdensity_fn = _aniso_logdensity
+
+    max_rank = 4
+    gamma = 1e-5
+    cutoff = 2.0
+    initial_step_size = 1.0
+    target_acceptance_rate = 0.80
+
+    da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
+    mcmc_kernel = blackjax.nuts.build_kernel(mcmc.integrators.velocity_verlet)
+    schedule = build_schedule(num_steps)
+    typical_window = max(num_steps // 5, 128)
+    buffer_size = min(typical_window * 2, max(num_steps, 1))
+    d = n_dims
+
+    def fast_update(pos, grad, acc_rate, state):
+        del pos, grad
+        new_ss = da_update(state.ss_state, acc_rate)
+        return LowRankAdaptationState(
+            new_ss,
+            state.sigma,
+            state.mu_star,
+            state.U,
+            state.lam,
+            jnp.exp(new_ss.log_step_size),
+            state.draws_buffer,
+            state.grads_buffer,
+            state.buffer_idx,
+            state.background_split,
+            state.recompute_counter,
+        )
+
+    def slow_update(pos, grad, acc_rate, state):
+        pos_flat, _ = fu.ravel_pytree(pos)
+        grad_flat, _ = fu.ravel_pytree(grad)
+        B = state.draws_buffer.shape[0]
+        idx = state.buffer_idx % B
+        new_draws = jax.lax.dynamic_update_slice(
+            state.draws_buffer, pos_flat[None, :], (idx, 0)
+        )
+        new_grads = jax.lax.dynamic_update_slice(
+            state.grads_buffer, grad_flat[None, :], (idx, 0)
+        )
+        new_ss = da_update(state.ss_state, acc_rate)
+        return LowRankAdaptationState(
+            new_ss,
+            state.sigma,
+            state.mu_star,
+            state.U,
+            state.lam,
+            jnp.exp(new_ss.log_step_size),
+            new_draws,
+            new_grads,
+            state.buffer_idx + 1,
+            state.background_split,
+            state.recompute_counter,  # inert under reset: always stays 0
+        )
+
+    def slow_final(state):
+        """Window end: recompute metric from current buffer, then hard-clear."""
+        sigma, mu_star, U, lam = _compute_low_rank_metric(
+            state.draws_buffer,
+            state.grads_buffer,
+            state.buffer_idx,
+            max_rank,
+            gamma,
+            cutoff,
+        )
+        new_ss = da_init(da_final(state.ss_state))
+        B, d_ = state.draws_buffer.shape
+        return LowRankAdaptationState(
+            new_ss,
+            sigma,
+            mu_star,
+            U,
+            lam,
+            jnp.exp(new_ss.log_step_size),
+            jnp.zeros((B, d_)),
+            jnp.zeros((B, d_)),
+            0,
+            0,
+            0,
+        )
+
+    def one_step(carry, xs):
+        _, rng_key_, adaptation_stage = xs
+        state, adaptation_state = carry
+        metric = gaussian_euclidean_low_rank(
+            adaptation_state.sigma, adaptation_state.U, adaptation_state.lam
+        )
+        new_state, step_info = mcmc_kernel(
+            rng_key_, state, logdensity_fn, adaptation_state.step_size, metric
+        )
+        stage = adaptation_stage[0]
+        is_window_end = adaptation_stage[1].astype(bool)
+        new_adapt = jax.lax.switch(
+            stage,
+            (fast_update, slow_update),
+            new_state.position,
+            new_state.logdensity_grad,
+            step_info.acceptance_rate,
+            adaptation_state,
+        )
+        new_adapt = jax.lax.cond(is_window_end, slow_final, lambda s: s, new_adapt)
+        return (
+            (new_state, new_adapt),
+            _default_low_rank_adaptation_info_fn(new_state, step_info, new_adapt),
+        )
+
+    ss_state = da_init(initial_step_size)
+    init_state = blackjax.nuts.init(position, logdensity_fn)
+    init_adaptation_state = LowRankAdaptationState(
+        ss_state,
+        jnp.ones(d),
+        jnp.zeros(d),
+        jnp.zeros((d, max_rank)),
+        jnp.ones(max_rank),
+        initial_step_size,
+        jnp.zeros((buffer_size, d)),
+        jnp.zeros((buffer_size, d)),
+        0,
+        0,
+        0,
+    )
+    keys = jax.random.split(rng_key, num_steps)
+    last_state, info = jax.lax.scan(
+        one_step,
+        (init_state, init_adaptation_state),
+        (jnp.arange(num_steps), keys, schedule),
+    )
+    _, last_warmup_state, *_ = last_state
+    step_size = jnp.exp(last_warmup_state.ss_state.log_step_size_avg)
+    inverse_mass_matrix = LowRankInverseMassMatrix(
+        sigma=last_warmup_state.sigma,
+        U=last_warmup_state.U,
+        lam=last_warmup_state.lam,
+    )
+    _, unravel = fu.ravel_pytree(position)
+    mu_star_state = blackjax.nuts.init(
+        unravel(last_warmup_state.mu_star), logdensity_fn
+    )
+    return (
+        mu_star_state,
+        {"step_size": step_size, "inverse_mass_matrix": inverse_mass_matrix},
+        info,
+    )
+
+
+class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
+    """Bit-exact parity: reset path via engine == frozen inline reset reference.
+
+    Uses the anisotropic parity target (variances [4, 1, .25, .0625, .0156])
+    so the fitted (sigma, U, lam) are genuinely non-identity.
+
+    The ``slow_update()`` engine fix changed the 4th ``StagedAdaptationState``
+    argument from ``ws.inverse_mass_matrix`` to
+    ``new_metric_st.inverse_mass_matrix``.  The reset core's ``update()``
+    does not modify ``inverse_mass_matrix``, so ``new_metric_st`` carries the
+    same value as the incoming ``ws`` for every non-window-end slow step —
+    the engine fix is a bit-identical no-op for the reset policy.  This test
+    asserts that the no-op claim holds end-to-end.
+    """
+
+    _N_DIMS = 5
+    _NUM_STEPS = 200
+
+    def _run_engine(self, rng_key, position):
+        wu = window_adaptation_low_rank(
+            blackjax.nuts,
+            _aniso_logdensity,
+            max_rank=4,
+            buffer_policy="reset",
+        )
+        return wu.run(rng_key, position, num_steps=self._NUM_STEPS)
+
+    def test_final_step_size_identical(self):
+        """Final step_size must be bit-identical between engine and frozen reference."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, params_engine), _ = self._run_engine(key, pos)
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    params_engine["step_size"], params_ref["step_size"], atol=0.0
+                )
+            )
+        )
+
+    def test_final_sigma_identical(self):
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, params_engine), _ = self._run_engine(key, pos)
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    params_engine["inverse_mass_matrix"].sigma,
+                    params_ref["inverse_mass_matrix"].sigma,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_final_u_identical(self):
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, params_engine), _ = self._run_engine(key, pos)
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    params_engine["inverse_mass_matrix"].U,
+                    params_ref["inverse_mass_matrix"].U,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_final_lam_identical(self):
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, params_engine), _ = self._run_engine(key, pos)
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    params_engine["inverse_mass_matrix"].lam,
+                    params_ref["inverse_mass_matrix"].lam,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_final_chain_state_position_identical(self):
+        """Returned chain state (mu_star re-init) must be bit-identical."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (state_engine, _), _ = self._run_engine(key, pos)
+        state_ref, _, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(jnp.allclose(state_engine.position, state_ref.position, atol=0.0))
+        )
+
+    def test_per_step_sigma_identical(self):
+        """Per-step sigma trace must be bit-identical across all steps."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, _), info_engine = self._run_engine(key, pos)
+        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    info_engine.adaptation_state.sigma,
+                    info_ref.adaptation_state.sigma,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_per_step_mu_star_identical(self):
+        """Per-step mu_star trace must be bit-identical."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, _), info_engine = self._run_engine(key, pos)
+        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    info_engine.adaptation_state.mu_star,
+                    info_ref.adaptation_state.mu_star,
+                    atol=0.0,
+                )
+            )
+        )
+
+    def test_per_step_step_size_identical(self):
+        """Per-step step_size trace must be bit-identical."""
+        key = self.next_key()
+        pos = jnp.zeros(self._N_DIMS)
+        (_, _), info_engine = self._run_engine(key, pos)
+        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        self.assertTrue(
+            bool(
+                jnp.allclose(
+                    info_engine.adaptation_state.step_size,
+                    info_ref.adaptation_state.step_size,
+                    atol=0.0,
+                )
+            )
+        )
+
+
+# ---------------------------------------------------------------------------
 # Bit-exact parity: accumulating path via engine vs frozen reference scan loop
 # ---------------------------------------------------------------------------
 
@@ -1468,7 +1800,7 @@ def _reference_run_accumulating(
             adaptation_state.sigma, adaptation_state.U, adaptation_state.lam
         )
         new_state, step_info = mcmc_kernel(
-            rng_key_, state, std_normal_logdensity, adaptation_state.step_size, metric
+            rng_key_, state, _aniso_logdensity, adaptation_state.step_size, metric
         )
         stage = adaptation_stage[0]
         is_window_end = adaptation_stage[1].astype(bool)
@@ -1496,7 +1828,7 @@ def _reference_run_accumulating(
         )
 
     ss_state = da_init(initial_step_size)
-    init_state = blackjax.nuts.init(position, std_normal_logdensity)
+    init_state = blackjax.nuts.init(position, _aniso_logdensity)
     init_adaptation_state = LowRankAdaptationState(
         ss_state,
         jnp.ones(d),
@@ -1525,7 +1857,7 @@ def _reference_run_accumulating(
     )
     _, unravel = fu.ravel_pytree(position)
     mu_star_state = blackjax.nuts.init(
-        unravel(last_warmup_state.mu_star), std_normal_logdensity
+        unravel(last_warmup_state.mu_star), _aniso_logdensity
     )
     return (
         mu_star_state,
@@ -1544,8 +1876,10 @@ class WindowAdaptationLowRankAccumulatingParityTest(BlackJAXTest):
     * Window 2: 50 slow steps (ends at global step 149).
     * Final fast phase: 50 steps (no mass-matrix updates).
 
-    With ``recompute_every=1`` : 73 mid-window + 2 at-window-end fires — exercises
-    every cadence combination.
+    With ``recompute_every=1`` : 71 mid-window + 2 at-window-end (73 total) — the
+    first 2 slow steps of window 1 skip the actual SVD because the ``n >= 3`` guard
+    in ``slow_recompute_only`` has not yet been satisfied; from step 3 onward every
+    step fires.  Exercises every cadence combination.
 
     With ``recompute_every=5`` : 13 mid-window + 2 at-window-end fires — exercises
     the "spurious recompute at window-end, immediately overwritten by final()" path
@@ -1559,10 +1893,11 @@ class WindowAdaptationLowRankAccumulatingParityTest(BlackJAXTest):
     Note: ``recompute_every=100`` fires zero times in 75 total slow steps and is
     equivalent to the degenerate ``10**9`` that was replaced — not included.
 
-    After the ``slow_update()`` engine fix (commit e2a4afa7d), mid-window metric
-    recomputes are forwarded to MCMC immediately (``new_metric_st.inverse_mass_matrix``
-    is returned, not ``ws.inverse_mass_matrix``), so the engine is bit-identical to
-    the legacy ``base()`` accumulating scan loop at ALL recompute cadences.
+    After the ``slow_update()`` engine fix that changed ``slow_update()`` to return
+    ``new_metric_st.inverse_mass_matrix`` rather than ``ws.inverse_mass_matrix``,
+    mid-window metric recomputes are forwarded to MCMC immediately, so the engine
+    is bit-identical to the legacy ``base()`` accumulating scan loop at ALL cadences.
+    Uses the anisotropic parity target so the fitted metric is genuinely non-identity.
     """
 
     _N_DIMS = 5
@@ -1572,7 +1907,7 @@ class WindowAdaptationLowRankAccumulatingParityTest(BlackJAXTest):
     def _run_engine(self, rng_key, position, recompute_every):
         wu = window_adaptation_low_rank(
             blackjax.nuts,
-            std_normal_logdensity,
+            _aniso_logdensity,
             max_rank=4,
             buffer_policy="accumulating",
             recompute_every=recompute_every,
