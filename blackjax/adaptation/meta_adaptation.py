@@ -423,35 +423,58 @@ def build_meta_adaptation_core(
         choose IMM → hard-reset buffer (v1 reset policy always).
         """
         B, d = state.draws_buffer.shape
-        n = state.buffer_idx
+        n = jnp.minimum(state.buffer_idx, jnp.int32(B))  # cap at B (Fix 4)
         actual_rank = state.inverse_mass_matrix.U.shape[1]  # static
 
-        # Fisher-LR metric from buffer (sigma_lr used for all downstream whitening).
+        # Welford diagonal sigma: sample std from the buffer.  Used for:
+        # (a) stay-diagonal metric (measured ≥0.62× welford vs 0.11× fisher-diag
+        #     on classes where escalation is correctly refused), (b) S_gap whitening
+        #     basis (where _S_MIN=2.0 and the anchors radon≈8.5/stoch_vol≈1.6 are
+        #     calibrated).
+        n_f = n.astype(state.draws_buffer.dtype)
+        n_safe = jnp.maximum(n_f, 1.0)
+        mask_w = (jnp.arange(B) < n).astype(state.draws_buffer.dtype)
+        mean_x = (mask_w[:, None] * state.draws_buffer).sum(0) / n_safe
+        var_x = (mask_w[:, None] * (state.draws_buffer - mean_x[None, :]) ** 2).sum(
+            0
+        ) / jnp.maximum(n_safe - 1.0, 1.0)
+        sigma_welford = jnp.sqrt(jnp.maximum(var_x, 1e-10))
+
+        # Fisher-LR metric (sigma + low-rank U, lam) — used only for the escalated
+        # path.  Its sigma is informative for the escalated metric but measured worse
+        # on the stay-diagonal classes (funnel 0.11×, stoch_vol 0.54× vs welford).
         sigma_lr, mu_star_new, U_lr, lam_lr = _compute_low_rank_metric(
             state.draws_buffer, state.grads_buffer, n, actual_rank, gamma, cutoff
         )
-        lr_imm = LowRankInverseMassMatrix(sigma=sigma_lr, U=U_lr, lam=lam_lr)
-        # Diagonal: same sigma_lr, U=0, lam=1 (LowRankIMM(U=0,lam=1) ≡ diagonal metric).
-        diag_imm = LowRankInverseMassMatrix(
-            sigma=sigma_lr,
-            U=jnp.zeros((d, actual_rank), dtype=sigma_lr.dtype),
-            lam=jnp.ones(actual_rank, dtype=sigma_lr.dtype),
-        )
 
-        # Whitened-residual spectrum.
+        # Stay-diagonal metric: Welford sigma, U=0, lam=1.
+        # Recovers-classical anchor: this IS the nutpie welford-diagonal scheme that
+        # the controller converges to on isotropic/curvature targets.
+        diag_imm = LowRankInverseMassMatrix(
+            sigma=sigma_welford,
+            U=jnp.zeros((d, actual_rank), dtype=sigma_welford.dtype),
+            lam=jnp.ones(actual_rank, dtype=sigma_welford.dtype),
+        )
+        # Escalated metric: full Fisher-LR (measured payoffs are relative to welford
+        # baseline, so the two-phase design diag(welford) → rank-k(fisher) is correct).
+        lr_imm = LowRankInverseMassMatrix(sigma=sigma_lr, U=U_lr, lam=lam_lr)
+
+        # Whitened-residual spectrum on the WELFORD basis (where _S_MIN and anchors
+        # were calibrated; the Fisher whitening inflates S_gap vs the calibrated scale).
         eigenvalues, U_k = _compute_whitened_spectrum(
-            state.draws_buffer, sigma_lr, n, actual_rank
+            state.draws_buffer, sigma_welford, n, actual_rank
         )
         k_new = _choose_rank(eigenvalues, n, actual_rank, cutoff)
         s_gap_new = _compute_s_gap(eigenvalues, k_new)
 
-        # Score-linearity R² (returns (r2, mode_int) — mode is observed, not inferred).
+        # Score-linearity R² on the Welford-whitened space.
+        # (mode is observed from the taken branch — not inferred post-hoc)
         r2_new, mode_new = _compute_r2_score_linearity(
-            state.draws_buffer, state.grads_buffer, sigma_lr, n, U_k, actual_rank
+            state.draws_buffer, state.grads_buffer, sigma_welford, n, U_k, actual_rank
         )
 
         # Transient-mixing class (reported in verdict; v1 always uses RESET).
-        is_slow = _compute_transient_mixing_signal(state.draws_buffer, sigma_lr, n)
+        is_slow = _compute_transient_mixing_signal(state.draws_buffer, sigma_welford, n)
 
         # ---- Escalation decision (all three gates must pass) ----
         r2_gate = (
