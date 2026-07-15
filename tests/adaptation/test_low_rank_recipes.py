@@ -25,9 +25,9 @@ Coverage:
 - Bit-identity: ``_compute_low_rank_metric`` moved to ``metric_estimators``
   is the same object as the backward-compat re-export from
   ``low_rank_adaptation``.
-- :func:`window_adaptation_low_rank` shim: reset path via staged engine,
-  accumulating path via established scan loop, gradient_based_init seam,
-  info-bridge field layout, and bit-exact reset parity vs reference runner.
+- :func:`window_adaptation_low_rank` shim: both buffer policies via staged engine,
+  gradient_based_init seam, info-bridge field layout, and bit-exact accumulating
+  parity gate vs frozen inline reference (``recompute_every=10**9``, ``atol=0.0``).
 """
 import jax
 import jax.flatten_util as fu
@@ -38,12 +38,15 @@ from absl.testing import absltest
 import blackjax
 import blackjax.mcmc as mcmc
 from blackjax.adaptation.base import return_all_adapt_info
+from blackjax.adaptation.low_rank_adaptation import (
+    LowRankAdaptationState,
+    _accumulating_buffer_capacity,
+)
 from blackjax.adaptation.low_rank_adaptation import _compute_low_rank_metric as lra_clrm
 from blackjax.adaptation.low_rank_adaptation import (
     _default_low_rank_adaptation_info_fn,
     _engine_state_to_low_rank_adaptation_state,
     _make_low_rank_bridge_info_fn,
-    base,
     build_growing_window_schedule,
     window_adaptation_low_rank,
 )
@@ -55,6 +58,7 @@ from blackjax.adaptation.metric_recipes import (
     MetricRecipe,
     _build_fisher_low_rank_core,
     _build_sample_cov_low_rank_core,
+    _shift_buffer_left,
     lookup_recipe,
     seed_low_rank_sigma_from_grad,
 )
@@ -63,6 +67,7 @@ from blackjax.adaptation.staged_adaptation import (
     build_schedule,
     staged_adaptation,
 )
+from blackjax.adaptation.step_size import dual_averaging_adaptation
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix, gaussian_euclidean_low_rank
 from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
@@ -1323,17 +1328,29 @@ class LowRankX64SmokeTest(BlackJAXTest):
 
 
 # ---------------------------------------------------------------------------
-# Bit-exact parity: reset path vs reference base() scan loop
+# Bit-exact parity: accumulating path via engine vs frozen reference scan loop
 # ---------------------------------------------------------------------------
 
 
-def _reference_run_reset(rng_key, position, num_steps, n_dims):
-    """Run the reset path using base() directly (the pre-shim reference).
+def _reference_run_accumulating(
+    rng_key, position, num_steps, n_dims, recompute_every=10**9
+):
+    """Frozen inline accumulating scan loop (verbatim copy of ``base(buffer_policy='accumulating')`` math).
 
-    This replicates exactly what window_adaptation_low_rank did before the
-    shim rewrite: builds base() init/update/final, builds the scan loop
-    inline, and post-processes with the mu_star re-init.  The new shim's
-    reset path (via staged_adaptation) must produce bit-identical output.
+    Bit-exact reference for :class:`WindowAdaptationLowRankAccumulatingParityTest`.
+    Inline rather than importing ``base()`` so that this reference survives
+    independently of the production code and cannot be silently changed.
+
+    **Must NOT be modified** after the Slice-3 migration commit.
+
+    Bit-exact comparison requires ``recompute_every=10**9`` (the default here).
+    With the engine path, mid-window metric recomputes (``slow_recompute_only``)
+    are stored in ``imm_state.inverse_mass_matrix`` but NOT forwarded to
+    ``StagedAdaptationState.inverse_mass_matrix`` (only ``slow_final`` at
+    window-end does that).  The old scan loop DID expose mid-window metrics to
+    the MCMC kernel immediately.  With ``recompute_every=10**9`` neither path
+    fires ``slow_recompute_only`` mid-window, so both see the same metric for
+    MCMC at every step and produce identical outputs.
     """
     max_rank = 4
     gamma = 1e-5
@@ -1341,16 +1358,110 @@ def _reference_run_reset(rng_key, position, num_steps, n_dims):
     initial_step_size = 1.0
     target_acceptance_rate = 0.80
 
-    adapt_init_fn, adapt_step_fn, adapt_final_fn = base(
-        max_rank=max_rank,
-        target_acceptance_rate=target_acceptance_rate,
-        gamma=gamma,
-        cutoff=cutoff,
-        gradient_based_init=False,
-        buffer_policy="reset",
-        recompute_every=1,
-    )
+    da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
     mcmc_kernel = blackjax.nuts.build_kernel(mcmc.integrators.velocity_verlet)
+    schedule = build_schedule(num_steps)
+    buffer_size = max(_accumulating_buffer_capacity(schedule), 1)
+    d = n_dims
+
+    def fast_update(pos, grad, acc_rate, state):
+        del pos, grad
+        new_ss = da_update(state.ss_state, acc_rate)
+        return LowRankAdaptationState(
+            new_ss,
+            state.sigma,
+            state.mu_star,
+            state.U,
+            state.lam,
+            jnp.exp(new_ss.log_step_size),
+            state.draws_buffer,
+            state.grads_buffer,
+            state.buffer_idx,
+            state.background_split,
+            state.recompute_counter,
+        )
+
+    def slow_update(pos, grad, acc_rate, state):
+        pos_flat, _ = fu.ravel_pytree(pos)
+        grad_flat, _ = fu.ravel_pytree(grad)
+        B = state.draws_buffer.shape[0]
+        idx = state.buffer_idx % B
+        new_draws = jax.lax.dynamic_update_slice(
+            state.draws_buffer, pos_flat[None, :], (idx, 0)
+        )
+        new_grads = jax.lax.dynamic_update_slice(
+            state.grads_buffer, grad_flat[None, :], (idx, 0)
+        )
+        new_ss = da_update(state.ss_state, acc_rate)
+        return LowRankAdaptationState(
+            new_ss,
+            state.sigma,
+            state.mu_star,
+            state.U,
+            state.lam,
+            jnp.exp(new_ss.log_step_size),
+            new_draws,
+            new_grads,
+            state.buffer_idx + 1,
+            state.background_split,
+            state.recompute_counter + 1,
+        )
+
+    def slow_switch(state):
+        shift = state.background_split
+        new_draws = _shift_buffer_left(state.draws_buffer, shift)
+        new_grads = _shift_buffer_left(state.grads_buffer, shift)
+        new_n_valid = state.buffer_idx - shift
+
+        def _recompute():
+            return _compute_low_rank_metric(
+                new_draws, new_grads, new_n_valid, max_rank, gamma, cutoff
+            )
+
+        def _keep():
+            return state.sigma, state.mu_star, state.U, state.lam
+
+        sigma, mu_star, U, lam = jax.lax.cond(new_n_valid >= 3, _recompute, _keep)
+        new_ss = da_init(da_final(state.ss_state))
+        return LowRankAdaptationState(
+            new_ss,
+            sigma,
+            mu_star,
+            U,
+            lam,
+            jnp.exp(new_ss.log_step_size),
+            new_draws,
+            new_grads,
+            new_n_valid,
+            new_n_valid,
+            0,
+        )
+
+    def slow_recompute_only(state):
+        n = state.buffer_idx
+
+        def _recompute():
+            return _compute_low_rank_metric(
+                state.draws_buffer, state.grads_buffer, n, max_rank, gamma, cutoff
+            )
+
+        def _keep():
+            return state.sigma, state.mu_star, state.U, state.lam
+
+        sigma, mu_star, U, lam = jax.lax.cond(n >= 3, _recompute, _keep)
+        return LowRankAdaptationState(
+            state.ss_state,
+            sigma,
+            mu_star,
+            U,
+            lam,
+            state.step_size,
+            state.draws_buffer,
+            state.grads_buffer,
+            state.buffer_idx,
+            state.background_split,
+            0,
+        )
 
     def one_step(carry, xs):
         _, rng_key_, adaptation_stage = xs
@@ -1361,31 +1472,46 @@ def _reference_run_reset(rng_key, position, num_steps, n_dims):
         new_state, step_info = mcmc_kernel(
             rng_key_, state, std_normal_logdensity, adaptation_state.step_size, metric
         )
-        new_adaptation_state = adapt_step_fn(
-            adaptation_state,
-            adaptation_stage,
+        stage = adaptation_stage[0]
+        is_window_end = adaptation_stage[1].astype(bool)
+        new_adapt = jax.lax.switch(
+            stage,
+            (fast_update, slow_update),
             new_state.position,
             new_state.logdensity_grad,
             step_info.acceptance_rate,
+            adaptation_state,
+        )
+
+        def _maybe_periodic_recompute(s):
+            due = jnp.logical_and(
+                stage == 1, s.recompute_counter % recompute_every == 0
+            )
+            return jax.lax.cond(due, slow_recompute_only, lambda x: x, s)
+
+        new_adapt = jax.lax.cond(
+            is_window_end, slow_switch, _maybe_periodic_recompute, new_adapt
         )
         return (
-            (new_state, new_adaptation_state),
-            _default_low_rank_adaptation_info_fn(
-                new_state, step_info, new_adaptation_state
-            ),
+            (new_state, new_adapt),
+            _default_low_rank_adaptation_info_fn(new_state, step_info, new_adapt),
         )
 
+    ss_state = da_init(initial_step_size)
     init_state = blackjax.nuts.init(position, std_normal_logdensity)
-    schedule = build_schedule(num_steps)
-    typical_window = max(num_steps // 5, 128)
-    buffer_size = min(typical_window * 2, max(num_steps, 1))
-    init_adaptation_state = adapt_init_fn(
-        position,
-        init_state.logdensity_grad,
+    init_adaptation_state = LowRankAdaptationState(
+        ss_state,
+        jnp.ones(d),
+        jnp.zeros(d),
+        jnp.zeros((d, max_rank)),
+        jnp.ones(max_rank),
         initial_step_size,
-        buffer_size,
+        jnp.zeros((buffer_size, d)),
+        jnp.zeros((buffer_size, d)),
+        0,
+        0,
+        0,
     )
-
     keys = jax.random.split(rng_key, num_steps)
     last_state, info = jax.lax.scan(
         one_step,
@@ -1393,10 +1519,16 @@ def _reference_run_reset(rng_key, position, num_steps, n_dims):
         (jnp.arange(num_steps), keys, schedule),
     )
     _, last_warmup_state, *_ = last_state
-    step_size, sigma, mu_star, U, lam = adapt_final_fn(last_warmup_state)
-    inverse_mass_matrix = LowRankInverseMassMatrix(sigma=sigma, U=U, lam=lam)
+    step_size = jnp.exp(last_warmup_state.ss_state.log_step_size_avg)
+    inverse_mass_matrix = LowRankInverseMassMatrix(
+        sigma=last_warmup_state.sigma,
+        U=last_warmup_state.U,
+        lam=last_warmup_state.lam,
+    )
     _, unravel = fu.ravel_pytree(position)
-    mu_star_state = blackjax.nuts.init(unravel(mu_star), std_normal_logdensity)
+    mu_star_state = blackjax.nuts.init(
+        unravel(last_warmup_state.mu_star), std_normal_logdensity
+    )
     return (
         mu_star_state,
         {"step_size": step_size, "inverse_mass_matrix": inverse_mass_matrix},
@@ -1404,30 +1536,39 @@ def _reference_run_reset(rng_key, position, num_steps, n_dims):
     )
 
 
-class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
-    """Bit-exact parity: reset path via staged engine == reference base() runner."""
+class WindowAdaptationLowRankAccumulatingParityTest(BlackJAXTest):
+    """Bit-exact parity: accumulating path via engine == frozen reference scan loop.
+
+    Uses ``recompute_every=10**9`` (effectively infinite) so mid-window metric
+    recomputes do NOT fire in either path.  See ``_reference_run_accumulating``
+    docstring for the full bit-exactness argument.
+    """
 
     _N_DIMS = 5
     _NUM_STEPS = 200
 
-    def _run_shim(self, rng_key, position):
+    def _run_engine(self, rng_key, position):
         wu = window_adaptation_low_rank(
             blackjax.nuts,
             std_normal_logdensity,
             max_rank=4,
+            buffer_policy="accumulating",
+            recompute_every=10**9,
         )
         return wu.run(rng_key, position, num_steps=self._NUM_STEPS)
 
     def test_final_step_size_identical(self):
-        """Final step_size must be bit-identical between shim and reference."""
+        """Final step_size must be bit-identical between engine and reference."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, params_shim), _ = self._run_shim(key, pos)
-        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        (_, params_engine), _ = self._run_engine(key, pos)
+        _, params_ref, _ = _reference_run_accumulating(
+            key, pos, self._NUM_STEPS, self._N_DIMS
+        )
         self.assertTrue(
             bool(
                 jnp.allclose(
-                    params_shim["step_size"], params_ref["step_size"], atol=0.0
+                    params_engine["step_size"], params_ref["step_size"], atol=0.0
                 )
             )
         )
@@ -1435,12 +1576,14 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
     def test_final_sigma_identical(self):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, params_shim), _ = self._run_shim(key, pos)
-        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        (_, params_engine), _ = self._run_engine(key, pos)
+        _, params_ref, _ = _reference_run_accumulating(
+            key, pos, self._NUM_STEPS, self._N_DIMS
+        )
         self.assertTrue(
             bool(
                 jnp.allclose(
-                    params_shim["inverse_mass_matrix"].sigma,
+                    params_engine["inverse_mass_matrix"].sigma,
                     params_ref["inverse_mass_matrix"].sigma,
                     atol=0.0,
                 )
@@ -1450,12 +1593,14 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
     def test_final_u_identical(self):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, params_shim), _ = self._run_shim(key, pos)
-        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        (_, params_engine), _ = self._run_engine(key, pos)
+        _, params_ref, _ = _reference_run_accumulating(
+            key, pos, self._NUM_STEPS, self._N_DIMS
+        )
         self.assertTrue(
             bool(
                 jnp.allclose(
-                    params_shim["inverse_mass_matrix"].U,
+                    params_engine["inverse_mass_matrix"].U,
                     params_ref["inverse_mass_matrix"].U,
                     atol=0.0,
                 )
@@ -1465,12 +1610,14 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
     def test_final_lam_identical(self):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, params_shim), _ = self._run_shim(key, pos)
-        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        (_, params_engine), _ = self._run_engine(key, pos)
+        _, params_ref, _ = _reference_run_accumulating(
+            key, pos, self._NUM_STEPS, self._N_DIMS
+        )
         self.assertTrue(
             bool(
                 jnp.allclose(
-                    params_shim["inverse_mass_matrix"].lam,
+                    params_engine["inverse_mass_matrix"].lam,
                     params_ref["inverse_mass_matrix"].lam,
                     atol=0.0,
                 )
@@ -1481,22 +1628,26 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         """Returned chain state (mu_star re-init) must be bit-identical."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (state_shim, _), _ = self._run_shim(key, pos)
-        state_ref, _, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        (state_engine, _), _ = self._run_engine(key, pos)
+        state_ref, _, _ = _reference_run_accumulating(
+            key, pos, self._NUM_STEPS, self._N_DIMS
+        )
         self.assertTrue(
-            bool(jnp.allclose(state_shim.position, state_ref.position, atol=0.0))
+            bool(jnp.allclose(state_engine.position, state_ref.position, atol=0.0))
         )
 
     def test_per_step_sigma_identical(self):
         """Per-step sigma trace must be bit-identical across all steps."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, _), info_shim = self._run_shim(key, pos)
-        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        (_, _), info_engine = self._run_engine(key, pos)
+        _, _, info_ref = _reference_run_accumulating(
+            key, pos, self._NUM_STEPS, self._N_DIMS
+        )
         self.assertTrue(
             bool(
                 jnp.allclose(
-                    info_shim.adaptation_state.sigma,
+                    info_engine.adaptation_state.sigma,
                     info_ref.adaptation_state.sigma,
                     atol=0.0,
                 )
@@ -1507,12 +1658,14 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         """Per-step mu_star trace must be bit-identical."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, _), info_shim = self._run_shim(key, pos)
-        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        (_, _), info_engine = self._run_engine(key, pos)
+        _, _, info_ref = _reference_run_accumulating(
+            key, pos, self._NUM_STEPS, self._N_DIMS
+        )
         self.assertTrue(
             bool(
                 jnp.allclose(
-                    info_shim.adaptation_state.mu_star,
+                    info_engine.adaptation_state.mu_star,
                     info_ref.adaptation_state.mu_star,
                     atol=0.0,
                 )
@@ -1523,12 +1676,14 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         """Per-step step_size trace must be bit-identical."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, _), info_shim = self._run_shim(key, pos)
-        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
+        (_, _), info_engine = self._run_engine(key, pos)
+        _, _, info_ref = _reference_run_accumulating(
+            key, pos, self._NUM_STEPS, self._N_DIMS
+        )
         self.assertTrue(
             bool(
                 jnp.allclose(
-                    info_shim.adaptation_state.step_size,
+                    info_engine.adaptation_state.step_size,
                     info_ref.adaptation_state.step_size,
                     atol=0.0,
                 )

@@ -22,10 +22,14 @@ from blackjax.adaptation.base import return_all_adapt_info
 from blackjax.adaptation.low_rank_adaptation import (
     _accumulating_buffer_capacity,
     _compute_low_rank_metric,
-    _shift_buffer_left,
     _spd_mean,
-    base,
     build_growing_window_schedule,
+)
+from blackjax.adaptation.metric_recipes import (
+    _build_fisher_low_rank_accumulating_core,
+    _build_fisher_low_rank_core,
+    _shift_buffer_left,
+    seed_low_rank_sigma_from_grad,
 )
 from blackjax.adaptation.window_adaptation import build_schedule
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
@@ -902,41 +906,56 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
 
     def test_default_reproduces_identity_init(self):
         """gradient_based_init=False (default) must reproduce the original
-        sigma=ones(d) initialisation exactly -- no default-behavior change."""
-        init, _, _ = base(max_rank=3, gradient_based_init=False)
+        sigma=ones(d) initialisation exactly -- no default-behavior change.
+
+        With the engine path, the default init is ``core.init(n_dims)`` (no
+        gradient seeding), which gives sigma=ones, U=zeros, lam=ones.
+        """
         d = 5
-        grad = jnp.array([2.0, -4.0, 0.5, 10.0, 0.1])
-        state = init(jnp.zeros(d), grad, 1.0, 100)
-        np.testing.assert_allclose(state.sigma, jnp.ones(d))
-        np.testing.assert_allclose(state.U, jnp.zeros((d, 3)))
-        np.testing.assert_allclose(state.lam, jnp.ones(3))
+        core = _build_fisher_low_rank_core(
+            buffer_size=100, max_rank=3, gamma=1e-5, cutoff=2.0
+        )
+        state = core.init(d)
+        np.testing.assert_allclose(state.inverse_mass_matrix.sigma, jnp.ones(d))
+        np.testing.assert_allclose(state.inverse_mass_matrix.U, jnp.zeros((d, 3)))
+        np.testing.assert_allclose(state.inverse_mass_matrix.lam, jnp.ones(3))
 
     def test_gradient_based_init_formula(self):
         """gradient_based_init=True seeds sigma = 1/sqrt(|grad|), so that
         M^{-1}_diag = sigma**2 = 1/|grad|, matching the paper's
-        M = diag(|grad|) (mass matrix, not inverse) initialisation."""
-        init, _, _ = base(max_rank=3, gradient_based_init=True)
+        M = diag(|grad|) (mass matrix, not inverse) initialisation.
+
+        With the engine path, seeding is done via
+        ``seed_low_rank_sigma_from_grad(core.init(n_dims), grad)``.
+        """
         d = 5
+        core = _build_fisher_low_rank_core(
+            buffer_size=100, max_rank=3, gamma=1e-5, cutoff=2.0
+        )
         grad = jnp.array([2.0, -4.0, 0.5, 10.0, 0.1])
-        state = init(jnp.zeros(d), grad, 1.0, 100)
+        state = seed_low_rank_sigma_from_grad(core.init(d), grad)
         expected_sigma = jnp.abs(grad) ** -0.5
-        np.testing.assert_allclose(state.sigma, expected_sigma, rtol=1e-5)
+        np.testing.assert_allclose(
+            state.inverse_mass_matrix.sigma, expected_sigma, rtol=1e-5
+        )
         # Only the diagonal changes; low-rank correction still starts inert.
-        np.testing.assert_allclose(state.U, jnp.zeros((d, 3)))
-        np.testing.assert_allclose(state.lam, jnp.ones(3))
+        np.testing.assert_allclose(state.inverse_mass_matrix.U, jnp.zeros((d, 3)))
+        np.testing.assert_allclose(state.inverse_mass_matrix.lam, jnp.ones(3))
 
     def test_gradient_based_init_clips_extreme_gradients(self):
         """Zero or huge gradient components must not produce NaN/Inf, and an
         exactly-zero component must fall back to sigma_i=1.0 (the
         near-zero-gradient hardening fix), not the 1e-20-clip-floor-derived
         sigma_i=1e10 extreme."""
-        init, _, _ = base(max_rank=2, gradient_based_init=True)
         d = 4
+        core = _build_fisher_low_rank_core(
+            buffer_size=50, max_rank=2, gamma=1e-5, cutoff=2.0
+        )
         grad = jnp.array([0.0, 1e30, 1e-30, 5.0])
-        state = init(jnp.zeros(d), grad, 1.0, 50)
-        self.assertTrue(bool(jnp.all(jnp.isfinite(state.sigma))))
-        self.assertTrue(bool(jnp.all(state.sigma > 0)))
-        self.assertAlmostEqual(float(state.sigma[0]), 1.0, places=5)
+        state = seed_low_rank_sigma_from_grad(core.init(d), grad)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(state.inverse_mass_matrix.sigma))))
+        self.assertTrue(bool(jnp.all(state.inverse_mass_matrix.sigma > 0)))
+        self.assertAlmostEqual(float(state.inverse_mass_matrix.sigma[0]), 1.0, places=5)
 
     def test_gradient_based_init_handles_exact_zero_gradient(self):
         """Real user-facing edge case (Fisher 2x2 calibration study's
@@ -958,9 +977,11 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
         boundary -- 1e-10 is a defensible, disclosed threshold choice."""
         d = 10
         grad = jnp.zeros(d)
-        init, _, _ = base(max_rank=3, gradient_based_init=True)
-        state = init(jnp.zeros(d), grad, 1.0, 100)
-        np.testing.assert_allclose(state.sigma, jnp.ones(d))
+        core = _build_fisher_low_rank_core(
+            buffer_size=100, max_rank=3, gamma=1e-5, cutoff=2.0
+        )
+        state = seed_low_rank_sigma_from_grad(core.init(d), grad)
+        np.testing.assert_allclose(state.inverse_mass_matrix.sigma, jnp.ones(d))
 
         # End-to-end: warmup on a centered Gaussian, x0=0 exactly, must
         # survive and produce finite draws with no sigma extremes.
@@ -1013,31 +1034,63 @@ class LowRankGradientBasedInitTest(BlackJAXTest):
         self.assertGreater(float(params["step_size"]), 0.0)
 
 
-def _run_schedule(policy, schedule, draws, grads, max_rank, d, recompute_every=1):
-    """Drive base()'s init/update through a concrete schedule with known
-    (draw, grad) inputs, tracking buffer_idx at every step. Used by the
-    accumulating-buffer tests below to inspect the buffer bookkeeping
-    without needing to expose the private slow_update/slow_switch closures.
+def _run_core_schedule(core, schedule, draws, grads, d):
+    """Drive a MetricCore through a concrete (stage, is_window_end) schedule.
+
+    Calls ``core.update`` at every step (regardless of stage) and
+    ``core.final`` at each window-end marker.  The returned trace is a
+    stacked ``LowRankMetricCoreState`` — access ``trace.buffer_idx``,
+    ``trace.background_split``, ``trace.inverse_mass_matrix.sigma``, etc.
+
+    Note: calling ``update`` on fast-stage steps (stage=0) is a no-op for the
+    buffer tests here because all test schedules used by
+    ``AccumulatingBufferPolicyTest`` contain only stage-1 (slow) steps, or the
+    assertions only read the trace at positions that precede any fast steps.
     """
-    init, update, final = base(
-        max_rank=max_rank, buffer_policy=policy, recompute_every=recompute_every
-    )
-    if policy == "accumulating":
-        buffer_size = _accumulating_buffer_capacity(schedule)
-    else:
-        num_steps = schedule.shape[0]
-        typical_window = max(num_steps // 5, 128)
-        buffer_size = min(typical_window * 2, max(num_steps, 1))
-    state0 = init(jnp.zeros(d), grads[0], 1.0, buffer_size)
+    state0 = core.init(d)
 
     def step(state, xs):
-        stage, is_end, pos, grad = xs
-        new_state = update(state, (stage, is_end), pos, grad, 0.8)
+        _stage, is_end, pos, grad = xs
+        new_state = core.update(state, pos, grad)
+        new_state = jax.lax.cond(is_end, core.final, lambda s: s, new_state)
         return new_state, new_state
 
     xs = (schedule[:, 0], schedule[:, 1].astype(bool), draws, grads)
     final_state, trace = jax.lax.scan(step, state0, xs)
     return final_state, trace
+
+
+def _run_accumulating_core_schedule(
+    schedule, draws, grads, max_rank, d, recompute_every=1
+):
+    """Drive ``_build_fisher_low_rank_accumulating_core`` through a schedule.
+
+    Buffer capacity is derived from ``_accumulating_buffer_capacity`` (same
+    calculation used by ``window_adaptation_low_rank``).
+    """
+    buffer_size = max(_accumulating_buffer_capacity(schedule), 1)
+    core = _build_fisher_low_rank_accumulating_core(
+        buffer_size=buffer_size,
+        max_rank=max_rank,
+        gamma=1e-5,
+        cutoff=2.0,
+        recompute_every=recompute_every,
+    )
+    return _run_core_schedule(core, schedule, draws, grads, d)
+
+
+def _run_reset_core_schedule(schedule, draws, grads, max_rank, d):
+    """Drive ``_build_fisher_low_rank_core`` (reset policy) through a schedule."""
+    num_steps = schedule.shape[0]
+    typical_window = max(num_steps // 5, 128)
+    buffer_size = min(typical_window * 2, max(num_steps, 1))
+    core = _build_fisher_low_rank_core(
+        buffer_size=buffer_size,
+        max_rank=max_rank,
+        gamma=1e-5,
+        cutoff=2.0,
+    )
+    return _run_core_schedule(core, schedule, draws, grads, d)
 
 
 class ShiftBufferLeftTest(BlackJAXTest):
@@ -1108,27 +1161,15 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
 
     def test_invalid_buffer_policy_raises(self):
         with self.assertRaises(ValueError):
-            base(buffer_policy="bogus")
+            blackjax.window_adaptation_low_rank(
+                blackjax.nuts, lambda x: -0.5 * jnp.sum(x**2), buffer_policy="bogus"
+            )
 
     def test_invalid_recompute_every_raises(self):
         with self.assertRaises(ValueError):
-            base(recompute_every=0)
-
-    def test_default_buffer_policy_state_fields_stay_inert(self):
-        """buffer_policy="reset" (default): background_split and
-        recompute_counter are always 0 -- these fields are brand new and
-        must not perturb the pre-existing (pre-buffer_policy) behaviour."""
-        d = 6
-        num_steps = 300
-        schedule = build_growing_window_schedule(num_steps)
-        key = self.next_key()
-        draws = jax.random.normal(key, (num_steps, d))
-        grads = -draws
-        final_state, trace = _run_schedule(
-            "reset", schedule, draws, grads, max_rank=2, d=d
-        )
-        self.assertTrue(bool(jnp.all(trace.background_split == 0)))
-        self.assertTrue(bool(jnp.all(trace.recompute_counter == 0)))
+            blackjax.window_adaptation_low_rank(
+                blackjax.nuts, lambda x: -0.5 * jnp.sum(x**2), recompute_every=0
+            )
 
     def test_switch_pops_only_the_prior_windows_worth_of_draws(self):
         """Hand-computed window-switch trace against three windows of
@@ -1158,8 +1199,7 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
         key = self.next_key()
         draws = jax.random.normal(key, (num_steps, d))
         grads = -draws
-        final_state, trace = _run_schedule(
-            "accumulating",
+        final_state, trace = _run_accumulating_core_schedule(
             schedule,
             draws,
             grads,
@@ -1206,11 +1246,10 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
         draws = jax.random.normal(key, (num_steps, d))
         grads = -draws
 
-        _, trace_reset = _run_schedule(
-            "reset", schedule, draws, grads, max_rank=10, d=d
+        _, trace_reset = _run_reset_core_schedule(
+            schedule, draws, grads, max_rank=10, d=d
         )
-        _, trace_acc = _run_schedule(
-            "accumulating",
+        _, trace_acc = _run_accumulating_core_schedule(
             schedule,
             draws,
             grads,
@@ -1291,10 +1330,10 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
         # noise, not the recompute cadence actually being exercised.
         draws = jax.random.normal(key1, (20, d)) * jnp.arange(1, 21)[:, None]
         grads = jax.random.normal(key2, (20, d)) * 3.0
-        _, trace = _run_schedule(
-            "accumulating", schedule, draws, grads, max_rank=2, d=d, recompute_every=1
+        _, trace = _run_accumulating_core_schedule(
+            schedule, draws, grads, max_rank=2, d=d, recompute_every=1
         )
-        sigmas = np.asarray(trace.sigma)
+        sigmas = np.asarray(trace.inverse_mass_matrix.sigma)
         # sigma must differ across at least one consecutive pair once n>=3.
         diffs = np.abs(np.diff(sigmas[2:], axis=0)).sum(axis=1)
         self.assertTrue(bool(np.any(diffs > 1e-4)))
@@ -1314,8 +1353,7 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
         # whether a recompute actually fired.
         draws = jax.random.normal(key1, (20, d))
         grads = jax.random.normal(key2, (20, d)) * 3.0
-        _, trace = _run_schedule(
-            "accumulating",
+        _, trace = _run_accumulating_core_schedule(
             schedule,
             draws,
             grads,
@@ -1323,7 +1361,7 @@ class AccumulatingBufferPolicyTest(BlackJAXTest):
             d=d,
             recompute_every=10**9,
         )
-        sigmas = np.asarray(trace.sigma)
+        sigmas = np.asarray(trace.inverse_mass_matrix.sigma)
         # Before the final switch (index 19), sigma must be constant.
         np.testing.assert_allclose(sigmas[:19], np.tile(sigmas[0], (19, 1)))
 
