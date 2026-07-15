@@ -17,6 +17,22 @@ import pytest
 
 
 @pytest.fixture(autouse=True)
+def restore_jax_config():
+    """Restore JAX config state after each test (hermetic to x64 leakage).
+
+    Some tests enable x64 via jax.enable_x64() context manager for precision-
+    sensitive tests. While context managers should properly restore state, this
+    fixture provides defense-in-depth: if a test exits abnormally (exception,
+    timeout) or a context manager has an edge-case bug, this ensures x64 state
+    is restored for the next test.  This prevents flaky failures when tests run
+    under different JAX configs depending on execution order.
+    """
+    orig_x64 = jax.config.jax_enable_x64
+    yield
+    jax.config.update("jax_enable_x64", orig_x64)
+
+
+@pytest.fixture(autouse=True)
 def clear_jax_caches():
     """Clear JAX JIT/XLA caches between adaptation tests.
 
