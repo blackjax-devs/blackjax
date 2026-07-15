@@ -191,8 +191,19 @@ def _make_engine(
         new_metric_st = metric_core.update(ws.imm_state, position, grad)
         new_ss = da_update(ws.ss_state, acceptance_rate)
         new_step_size = jnp.exp(new_ss.log_step_size)
+        # Propagate the core's current inverse_mass_matrix to the MCMC kernel
+        # at every slow step, not just at window-end.  For all non-accumulating
+        # cores (welford, fisher-diag, reset-low-rank, sample-cov) update() does
+        # not write inverse_mass_matrix, so new_metric_st.inverse_mass_matrix ==
+        # ws.inverse_mass_matrix and this is bit-identical to the previous
+        # ws.inverse_mass_matrix return.  For the accumulating core, update() may
+        # recompute inverse_mass_matrix mid-window (when recompute_counter %
+        # recompute_every == 0), and this line surfaces that to MCMC — matching
+        # the legacy base() accumulating scan loop's slow_recompute_only() which
+        # also updated adaptation_state.sigma/U/lam immediately.  Consistent with
+        # slow_final(), which already reads new_metric_st.inverse_mass_matrix.
         return StagedAdaptationState(
-            new_ss, new_metric_st, new_step_size, ws.inverse_mass_matrix
+            new_ss, new_metric_st, new_step_size, new_metric_st.inverse_mass_matrix
         )
 
     def slow_final(ws: StagedAdaptationState) -> StagedAdaptationState:
