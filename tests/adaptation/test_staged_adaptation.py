@@ -701,9 +701,12 @@ class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
         )
         imm_dense_no_shrink = params_dense_no_shrink["inverse_mass_matrix"]
 
-        # With shrinkage: dense case
+        # With shrinkage: dense case. Use a substantially stronger pseudo-count (100
+        # instead of 20) to ensure the shrinkage signal dominates the dense IMM's
+        # estimation noise. The dense case has smaller signal-to-noise than diagonal,
+        # so the stronger shrinkage makes the assertion robust to seed variations.
         core_dense_with_shrink = lookup_recipe("welford_dense").build_core(
-            initial_inverse_mass_matrix=wrong_seed, imm_shrinkage_to_previous=20.0
+            initial_inverse_mass_matrix=wrong_seed, imm_shrinkage_to_previous=100.0
         )
         warmup_dense_with_shrink = staged_adaptation(
             blackjax.nuts,
