@@ -24,15 +24,27 @@ Pass any of the following string names as the ``metric=`` argument to
 - ``"fisher_diag"`` — Fisher-divergence-minimising diagonal estimator
   (situational; requires position *and* gradient samples; see registry
   provenance note for operational guidance).
+- ``"fisher_low_rank"`` — Fisher-divergence-minimising LOW-RANK estimator;
+  requires position *and* gradient samples; needs a ``buffer_size``
+  argument in ``build_core()``.  Algorithm 1 of
+  :cite:p:`seyboldt2026preconditioning` / nutpie's mass-matrix estimator.
+- ``"sample_cov_low_rank"`` — Sample-covariance low-rank estimator (MEADS
+  / Scheme-B form); draws only, no gradients, no regularisation.  Needs a
+  ``buffer_size`` argument in ``build_core()``.
 
 Usage::
 
     # String sugar (registry lookup):
     wu = staged_adaptation(nuts, logdensity_fn, metric="welford_diag")
 
-    # Recipe constructor (testability / custom configuration):
-    from blackjax.adaptation.metric_recipes import REGISTRY
-    core = REGISTRY["welford_diag"].build_core(imm_shrinkage_to_previous=5.0)
+    # Low-rank: pre-build the core with buffer_size, then pass to engine:
+    from blackjax.adaptation.metric_recipes import REGISTRY, _build_fisher_low_rank_core
+    core = _build_fisher_low_rank_core(buffer_size=256, max_rank=10, gamma=1e-5, cutoff=2.0)
+    wu = staged_adaptation(nuts, logdensity_fn, metric=core, schedule_fn=my_schedule_fn)
+
+    # Via the recipe (also needs buffer_size):
+    recipe = REGISTRY["fisher_low_rank"]
+    core = recipe.build_core(buffer_size=256)
     wu = staged_adaptation(nuts, logdensity_fn, metric=core)
 
 Design
@@ -52,11 +64,15 @@ Layer doctrine:
 - The METRIC CORE (:class:`MetricCore`) handles mass-matrix tuning only.
 - Step-size adaptation and the stage schedule live in the HOST
   (:mod:`~blackjax.adaptation.staged_adaptation`).
-- Step-size proxy independence: for diag/dense representations (this slice),
-  the dual-averaging acceptance-rate proxy is not an eigenvalue proxy of the
-  adapted metric, so the step-size and metric adaptation are decoupled.  A
-  ``diag_reference`` accessor will be added in the low-rank slice where this
-  independence no longer holds.
+- Step-size/metric decoupling: for HMC/NUTS, the dual-averaging step-size proxy
+  is the scalar Metropolis acceptance rate — NOT an eigenvalue quantity of the
+  adapted metric.  This matters because in MCLMC-LRD, where step_size ∝ 1/√λ_max,
+  feeding the full low-rank metric to the proxy caused a previously observed
+  step-size collapse (effective-sample rate dropped 20.6×→1.27×).  For HMC/NUTS
+  the full low-rank metric feeds the MCMC kernel (correct coupling), and dual
+  averaging reads only acceptance_rate — the step-size/metric decoupling
+  principle is naturally satisfied; no diagonal-reference split is needed.  This
+  analysis applies to ALL recipes in this module.
 
 Notes
 -----
@@ -69,6 +85,8 @@ all recipe families.  Import directly from ``blackjax.adaptation.metric_recipes`
 import dataclasses
 from typing import Callable, NamedTuple
 
+import jax
+import jax.flatten_util as fu
 import jax.numpy as jnp
 
 from blackjax.adaptation.mass_matrix import (
@@ -76,14 +94,21 @@ from blackjax.adaptation.mass_matrix import (
     MassMatrixAdaptationState,
     mass_matrix_adaptation,
 )
-from blackjax.adaptation.metric_estimators import fisher_score_diagonal_from_moments
+from blackjax.adaptation.metric_estimators import (
+    _compute_low_rank_metric,
+    fisher_score_diagonal_from_moments,
+    sample_covariance_eigh_low_rank,
+)
+from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from blackjax.types import Array, ArrayLikeTree
 
 __all__ = [
+    "LowRankMetricCoreState",
     "MetricCore",
     "MetricRecipe",
     "REGISTRY",
     "lookup_recipe",
+    "seed_low_rank_sigma_from_grad",
 ]
 
 
@@ -133,6 +158,149 @@ class MetricCore(NamedTuple):
     init: Callable
     update: Callable
     final: Callable
+
+
+# ---------------------------------------------------------------------------
+# LowRankMetricCoreState — state type for the low-rank MetricCore
+# ---------------------------------------------------------------------------
+
+
+class LowRankMetricCoreState(NamedTuple):
+    """Scan-carry state for the low-rank mass-matrix MetricCore.
+
+    Holds the current low-rank inverse mass matrix factors, the draw/gradient
+    circular buffer, and the buffer bookkeeping counters.  The engine reads
+    ``inverse_mass_matrix`` at each window boundary; the core's ``final()``
+    updates it.
+
+    Parameters
+    ----------
+    inverse_mass_matrix
+        Current low-rank IMM as a
+        :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` NamedTuple
+        ``(sigma, U, lam)`` with shapes ``(d,)``, ``(d, max_rank)``,
+        ``(max_rank,)``.  This field is read by the engine at window boundaries
+        (via ``StagedAdaptationState.inverse_mass_matrix``) and by the MCMC
+        kernel's ``default_metric`` dispatch.
+    mu_star
+        Optimal translation ``x̄ + σ² ⊙ ᾱ``, shape ``(d,)``.  Not part of the
+        engine's host protocol; the shim reads this from the last adaptation
+        state to re-initialize the chain after warmup.  Always zero for the
+        ``"sample_cov_low_rank"`` recipe (no optimal translation in that
+        estimator).
+    draws_buffer
+        Circular buffer of chain positions, shape ``(buffer_size, d)``.
+        The first ``buffer_idx`` rows are valid; the remainder are zero-padded.
+        Dropped (replaced with ``None``) by the default OOM-guard
+        ``adaptation_info_fn`` in the shim to avoid O(num_steps × buffer_size × d)
+        allocations inside ``jax.lax.scan``.
+    grads_buffer
+        Circular buffer of log-density gradients, shape ``(buffer_size, d)``.
+        Same layout and OOM-guard treatment as ``draws_buffer``.  Always zeros
+        for the ``"sample_cov_low_rank"`` recipe (not used by that estimator).
+    buffer_idx
+        Number of draws written to the buffer so far (monotonically increasing,
+        NOT wrapped).  Modular indexing in ``update()`` handles wrap-around so
+        the most recent ``buffer_size`` draws are always in the buffer.
+        Reset to 0 by ``final()`` under the default ``"reset"`` buffer policy.
+    background_split
+        Number of the buffer's leading rows considered "background" (for the
+        accumulating buffer policy only).  Always 0 under the default
+        ``"reset"`` policy.
+    recompute_counter
+        Steps since the last metric recompute (for accumulating periodic
+        recompute only).  Always 0 under the default ``"reset"`` policy.
+    """
+
+    inverse_mass_matrix: LowRankInverseMassMatrix
+    mu_star: Array
+    draws_buffer: Array
+    grads_buffer: Array
+    buffer_idx: int
+    background_split: int
+    recompute_counter: int
+
+
+# ---------------------------------------------------------------------------
+# Seeding helpers for gradient_based_init
+# ---------------------------------------------------------------------------
+
+
+def seed_low_rank_sigma_from_grad(
+    state: LowRankMetricCoreState,
+    grad: ArrayLikeTree,
+) -> LowRankMetricCoreState:
+    """Seed the diagonal scale ``sigma`` from the initial log-density gradient.
+
+    Implements nutpie's ``gradient_based_init`` logic: instead of starting from
+    the identity (``sigma=1`` for every coordinate), set
+    ``sigma_i = 1/sqrt(clip(|grad_i|, 1e-20, 1e20))`` so that the initial
+    diagonal inverse mass matrix equals ``M^{-1}_i = sigma_i^2 = 1/|grad_i|``,
+    matching ``M = diag(|grad|)`` (a diagonal Hessian approximation at the
+    starting point; cf. L-BFGS and paper §3.1).
+
+    Coordinates where ``|grad_i| < 1e-10`` fall back to ``sigma_i = 1.0``
+    (identity) rather than the astronomically large ``sigma_i = 1e10`` that the
+    raw formula would give.  This defends the real edge case of initialising
+    at (or very near) a stationary point of the target — e.g. ``x=0`` on any
+    centered/standardised density — where the gradient is exactly zero and an
+    extreme initial scale causes near-certain divergence on the very first
+    trajectory (root-caused via the Fisher 2×2 calibration study).
+
+    This function is a **named seeding entry point** so that any host (the
+    window-adaptation shim, ChEES, etc.) can call the same code path and the
+    seeding logic is independently testable.
+
+    Parameters
+    ----------
+    state
+        Initial :class:`LowRankMetricCoreState` from ``core.init(n_dims)``
+        (before any gradient information).
+    grad
+        Log-density gradient at the initial position.  Must be the same pytree
+        structure as the chain's position.
+
+    Returns
+    -------
+    LowRankMetricCoreState
+        State with ``sigma`` replaced by the gradient-seeded values and
+        ``inverse_mass_matrix`` updated accordingly (``U``/``lam`` unchanged,
+        ``mu_star`` unchanged).
+    """
+    grad_flat, _ = fu.ravel_pytree(grad)
+    abs_grad = jnp.abs(grad_flat)
+    near_zero_grad_threshold = 1e-10
+    safe_sigma = jnp.power(jnp.clip(abs_grad, 1e-20, 1e20), -0.5)
+    sigma = jnp.where(abs_grad < near_zero_grad_threshold, 1.0, safe_sigma)
+    new_imm = LowRankInverseMassMatrix(
+        sigma=sigma,
+        U=state.inverse_mass_matrix.U,
+        lam=state.inverse_mass_matrix.lam,
+    )
+    return state._replace(inverse_mass_matrix=new_imm)
+
+
+# ---------------------------------------------------------------------------
+# Buffer utility (for accumulating policy; currently used by reset path too)
+# ---------------------------------------------------------------------------
+
+
+def _shift_buffer_left(buf: Array, shift: Array) -> Array:
+    """Drop the first ``shift`` rows of ``buf``, shifting the remainder forward.
+
+    Implements nutpie's partial-forget buffer pop under JAX's static-shape
+    constraint.  Canonical source: ``blackjax.adaptation.low_rank_adaptation``
+    ``._shift_buffer_left`` (same logic, defined here to avoid a circular
+    import since ``low_rank_adaptation`` is downstream of ``metric_recipes``
+    in the import chain).
+
+    Used by the accumulating buffer policy's ``final()`` (``slow_switch``
+    logic).  Not used by the default ``"reset"`` policy.
+    """
+    capacity = buf.shape[0]
+    shift = jnp.clip(shift, 0, capacity)
+    padded = jnp.concatenate([buf, jnp.zeros_like(buf)], axis=0)
+    return jax.lax.dynamic_slice_in_dim(padded, shift, capacity, axis=0)
 
 
 # ---------------------------------------------------------------------------
@@ -195,6 +363,10 @@ class MetricRecipe:
     provides: frozenset
     emits: str
     provenance: str
+    # Low-rank-specific fields (None for diag/dense recipes).
+    max_rank: int | None = None
+    gamma: float | None = None
+    cutoff: float | None = None
 
     def __post_init__(self) -> None:
         """Validate coupling contract at construction time."""
@@ -213,12 +385,19 @@ class MetricRecipe:
                 f"Choose an estimator whose emits tag matches the declared "
                 f"representation, or update representation to {self.emits!r}."
             )
+        if self.representation == "low_rank" and self.max_rank is None:
+            raise ValueError(
+                "MetricRecipe: max_rank is required for low-rank representations "
+                f"(representation={self.representation!r}).  "
+                "Set max_rank to a positive integer."
+            )
 
     def build_core(
         self,
         *,
         imm_shrinkage_to_previous: float = 0.0,
         initial_inverse_mass_matrix: Array | None = None,
+        buffer_size: int | None = None,
     ) -> MetricCore:
         """Build an embeddable :class:`MetricCore` from this recipe.
 
@@ -229,12 +408,23 @@ class MetricRecipe:
             previous window's IMM.  Default ``0.0`` (Stan vanilla, no
             persistence).  Forwarded to
             :func:`~blackjax.adaptation.mass_matrix.mass_matrix_adaptation`.
-            Not supported for ``"fisher_diag"`` (``ValueError`` there per
-            ``mass_matrix_adaptation``'s validation).
+            Not supported for ``"fisher_diag"`` or the low-rank recipes
+            (``ValueError`` there per ``mass_matrix_adaptation``'s validation).
         initial_inverse_mass_matrix
             Optional seed array for the initial inverse mass matrix.  ``None``
             (default) uses the standard identity initialisation (``ones(d)``
-            for diagonal, ``identity(d)`` for dense).
+            for diagonal, ``identity(d)`` for dense).  Ignored for the
+            low-rank estimators (``"fisher_low_rank"``, ``"sample_cov_low_rank"``).
+        buffer_size
+            Required for low-rank recipes (``"fisher_low_rank"`` and
+            ``"sample_cov_low_rank"``).  Size of the circular draw/gradient
+            buffer (number of rows).  Use the schedule-derived heuristic in
+            :func:`~blackjax.adaptation.low_rank_adaptation.window_adaptation_low_rank`
+            or compute it yourself:
+            ``min(2 * max(num_steps // 5, 128), max(num_steps, 1))`` for the
+            reset policy; :func:`~blackjax.adaptation.low_rank_adaptation
+            ._accumulating_buffer_capacity` for the accumulating policy.
+            Ignored for diag/dense recipes.
 
         Returns
         -------
@@ -244,7 +434,8 @@ class MetricRecipe:
         Raises
         ------
         ValueError
-            If the estimator tag is not supported by this slice.
+            If the estimator tag is not supported, or if ``buffer_size`` is
+            ``None`` for a low-rank estimator.
         """
         if self.estimator == "welford":
             is_diagonal = self.representation == "diag"
@@ -257,10 +448,46 @@ class MetricRecipe:
             return _build_fisher_diag_core(
                 initial_inverse_mass_matrix=initial_inverse_mass_matrix,
             )
+        elif self.estimator == "fisher_low_rank":
+            if buffer_size is None:
+                raise ValueError(
+                    "MetricRecipe.build_core: buffer_size is required for "
+                    "the 'fisher_low_rank' estimator.  Pass buffer_size=<int> "
+                    "or build the core directly via _build_fisher_low_rank_core()."
+                )
+            # max_rank/gamma/cutoff are non-None here: __post_init__ raises
+            # ValueError for low_rank representations with max_rank=None, and
+            # the registry always supplies gamma/cutoff for fisher_low_rank entries.
+            # The three asserts below are for mypy narrowing only — the runtime
+            # guard is in __post_init__ (ValueError, not stripped by -O).
+            assert self.max_rank is not None  # narrowing: enforced by __post_init__
+            assert self.gamma is not None, "fisher_low_rank recipe must have gamma"
+            assert self.cutoff is not None, "fisher_low_rank recipe must have cutoff"
+            return _build_fisher_low_rank_core(
+                buffer_size=buffer_size,
+                max_rank=self.max_rank,
+                gamma=self.gamma,
+                cutoff=self.cutoff,
+            )
+        elif self.estimator == "sample_cov_low_rank":
+            if buffer_size is None:
+                raise ValueError(
+                    "MetricRecipe.build_core: buffer_size is required for "
+                    "the 'sample_cov_low_rank' estimator.  Pass buffer_size=<int> "
+                    "or build the core directly via _build_sample_cov_low_rank_core()."
+                )
+            # max_rank is non-None: __post_init__ raises ValueError for
+            # low_rank representations with max_rank=None.
+            assert self.max_rank is not None  # narrowing: enforced by __post_init__
+            return _build_sample_cov_low_rank_core(
+                buffer_size=buffer_size,
+                max_rank=self.max_rank,
+            )
         else:
             raise ValueError(
                 f"Unknown estimator tag {self.estimator!r} in MetricRecipe.build_core. "
-                f"Slice-1 supports 'welford' and 'fisher_diag'."
+                f"Known estimators: 'welford', 'fisher_diag', 'fisher_low_rank', "
+                f"'sample_cov_low_rank'."
             )
 
 
@@ -371,6 +598,193 @@ def _build_fisher_diag_core(
     return MetricCore(init=init, update=update, final=final)
 
 
+def _build_fisher_low_rank_core(
+    *,
+    buffer_size: int,
+    max_rank: int,
+    gamma: float,
+    cutoff: float,
+) -> MetricCore:
+    """Build a MetricCore for the Fisher-score low-rank estimator (reset policy).
+
+    Implements the same window-end recompute as
+    :func:`~blackjax.adaptation.low_rank_adaptation.base`'s ``slow_final``
+    under ``buffer_policy="reset"``:
+
+    1. ``init(n_dims)`` — creates a zero-filled draw/gradient buffer of shape
+       ``(buffer_size, n_dims)`` with identity sigma, zero U, ones lam.
+    2. ``update(state, position, grad)`` — writes (position, grad) at
+       ``buffer_idx % buffer_size`` via dynamic update; increments ``buffer_idx``.
+    3. ``final(state)`` — calls :func:`~blackjax.adaptation.metric_estimators
+       ._compute_low_rank_metric` on the buffer, stores new sigma/mu_star/U/lam
+       in ``inverse_mass_matrix`` and ``mu_star``, resets the buffer to zeros.
+
+    **Step-size/metric decoupling**: the dual-averaging step-size proxy reads
+    only the scalar Metropolis acceptance rate, NOT an eigenvalue quantity of
+    the adapted metric — the decoupling principle is naturally satisfied for
+    HMC/NUTS regardless of metric rank.  See module docstring for the full
+    analysis.
+
+    Parameters
+    ----------
+    buffer_size
+        Number of rows in the circular draw/gradient buffer.
+    max_rank
+        Maximum number of eigenvectors retained in the low-rank correction.
+        Default 10, matching :func:`~blackjax.adaptation.low_rank_adaptation
+        .window_adaptation_low_rank`.
+    gamma
+        Regularisation scale (nutpie convention — projected covariance divided
+        by ``gamma`` before adding identity, no ``n`` scaling).  Default
+        1e-5.
+    cutoff
+        Eigenvalues in ``[1/cutoff, cutoff]`` are masked to 1.  Default 2.0.
+    """
+
+    def init(n_dims: int) -> LowRankMetricCoreState:
+        return LowRankMetricCoreState(
+            inverse_mass_matrix=LowRankInverseMassMatrix(
+                sigma=jnp.ones(n_dims),
+                U=jnp.zeros((n_dims, max_rank)),
+                lam=jnp.ones(max_rank),
+            ),
+            mu_star=jnp.zeros(n_dims),
+            draws_buffer=jnp.zeros((buffer_size, n_dims)),
+            grads_buffer=jnp.zeros((buffer_size, n_dims)),
+            buffer_idx=0,
+            background_split=0,
+            recompute_counter=0,
+        )
+
+    def update(
+        state: LowRankMetricCoreState,
+        position: ArrayLikeTree,
+        grad: ArrayLikeTree | None = None,
+    ) -> LowRankMetricCoreState:
+        pos_flat, _ = fu.ravel_pytree(position)
+        grad_flat, _ = fu.ravel_pytree(grad)
+        B = state.draws_buffer.shape[0]
+        idx = state.buffer_idx % B  # wrap to avoid out-of-bounds during trace
+        new_draws = jax.lax.dynamic_update_slice(
+            state.draws_buffer, pos_flat[None, :], (idx, 0)
+        )
+        new_grads = jax.lax.dynamic_update_slice(
+            state.grads_buffer, grad_flat[None, :], (idx, 0)
+        )
+        return state._replace(
+            draws_buffer=new_draws,
+            grads_buffer=new_grads,
+            buffer_idx=state.buffer_idx + 1,
+        )
+
+    def final(state: LowRankMetricCoreState) -> LowRankMetricCoreState:
+        # Recompute metric from buffer, then hard-reset for the next window.
+        sigma, mu_star, U, lam = _compute_low_rank_metric(
+            state.draws_buffer,
+            state.grads_buffer,
+            state.buffer_idx,
+            max_rank,
+            gamma,
+            cutoff,
+        )
+        B, d = state.draws_buffer.shape
+        return LowRankMetricCoreState(
+            inverse_mass_matrix=LowRankInverseMassMatrix(sigma=sigma, U=U, lam=lam),
+            mu_star=mu_star,
+            draws_buffer=jnp.zeros((B, d)),
+            grads_buffer=jnp.zeros((B, d)),
+            buffer_idx=0,
+            background_split=0,
+            recompute_counter=0,
+        )
+
+    return MetricCore(init=init, update=update, final=final)
+
+
+def _build_sample_cov_low_rank_core(
+    *,
+    buffer_size: int,
+    max_rank: int,
+) -> MetricCore:
+    """Build a MetricCore for the sample-covariance low-rank estimator (MEADS form).
+
+    Draws-only variant (no gradient data, no regularisation, raw top-k eigh
+    selection) following MEADS / Scheme-B.  Delegates to
+    :func:`~blackjax.adaptation.metric_estimators.sample_covariance_eigh_low_rank`
+    in ``final()``.
+
+    1. ``init(n_dims)`` — same buffer layout as the Fisher core; ``grads_buffer``
+       is allocated but stays zero (not used).
+    2. ``update(state, position, grad)`` — writes only ``position`` to
+       ``draws_buffer``; grad is accepted for interface uniformity but ignored.
+    3. ``final(state)`` — computes the masked sample covariance matrix from the
+       buffer, calls :func:`~blackjax.adaptation.metric_estimators
+       .sample_covariance_eigh_low_rank`, resets buffer.  ``mu_star`` is always
+       zero (this estimator does not compute an optimal translation).
+
+    Parameters
+    ----------
+    buffer_size
+        Number of rows in the circular draw buffer.
+    max_rank
+        Maximum number of eigenvectors retained.
+    """
+
+    def init(n_dims: int) -> LowRankMetricCoreState:
+        return LowRankMetricCoreState(
+            inverse_mass_matrix=LowRankInverseMassMatrix(
+                sigma=jnp.ones(n_dims),
+                U=jnp.zeros((n_dims, max_rank)),
+                lam=jnp.ones(max_rank),
+            ),
+            mu_star=jnp.zeros(n_dims),
+            draws_buffer=jnp.zeros((buffer_size, n_dims)),
+            grads_buffer=jnp.zeros((buffer_size, n_dims)),  # unused; zeros always
+            buffer_idx=0,
+            background_split=0,
+            recompute_counter=0,
+        )
+
+    def update(
+        state: LowRankMetricCoreState,
+        position: ArrayLikeTree,
+        grad: ArrayLikeTree | None = None,  # accepted for interface uniformity
+    ) -> LowRankMetricCoreState:
+        pos_flat, _ = fu.ravel_pytree(position)
+        B = state.draws_buffer.shape[0]
+        idx = state.buffer_idx % B
+        new_draws = jax.lax.dynamic_update_slice(
+            state.draws_buffer, pos_flat[None, :], (idx, 0)
+        )
+        return state._replace(
+            draws_buffer=new_draws,
+            buffer_idx=state.buffer_idx + 1,
+        )
+
+    def final(state: LowRankMetricCoreState) -> LowRankMetricCoreState:
+        B, d = state.draws_buffer.shape
+        n = state.buffer_idx
+        # Compute masked mean and accumulated sum of squared deviations from
+        # the buffer (same masking pattern as _compute_low_rank_metric).
+        mask = (jnp.arange(B) < n).astype(state.draws_buffer.dtype)
+        n_safe = jnp.maximum(n, 2).astype(state.draws_buffer.dtype)
+        mean = (mask[:, None] * state.draws_buffer).sum(0) / n_safe  # (d,)
+        diff = mask[:, None] * (state.draws_buffer - mean[None, :])  # (B, d)
+        m2 = diff.T @ diff  # (d, d) accumulated sum of squared deviations
+        new_imm = sample_covariance_eigh_low_rank(m2, n, max_rank)
+        return LowRankMetricCoreState(
+            inverse_mass_matrix=new_imm,
+            mu_star=jnp.zeros(d),  # no optimal translation for this estimator
+            draws_buffer=jnp.zeros((B, d)),
+            grads_buffer=jnp.zeros((B, d)),
+            buffer_idx=0,
+            background_split=0,
+            recompute_counter=0,
+        )
+
+    return MetricCore(init=init, update=update, final=final)
+
+
 # ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
@@ -430,6 +844,52 @@ REGISTRY: dict[str, MetricRecipe] = {
             "Validated 2026-07-13."
         ),
     ),
+    "fisher_low_rank": MetricRecipe(
+        representation="low_rank",
+        estimator="fisher_low_rank",
+        buffer="reset_window",
+        support_gate=None,
+        needs=frozenset({"positions", "gradients"}),
+        provides=frozenset({"positions", "gradients"}),
+        emits="low_rank",
+        max_rank=10,
+        gamma=1e-5,
+        cutoff=2.0,
+        provenance=(
+            "Fisher-divergence-minimising LOW-RANK estimator (Algorithm 1, "
+            "seyboldt2026preconditioning; nutpie reference implementation). "
+            "Defaults match window_adaptation_low_rank: max_rank=10, gamma=1e-5, "
+            "cutoff=2.0, reset buffer policy.  Requires buffer_size in build_core(). "
+            "Uses position AND gradient samples; requires x64 for float32 chains "
+            "(see _compute_low_rank_metric dtype note).  Composes with any "
+            "schedule_fn; pair with build_growing_window_schedule for the nutpie "
+            "schedule.  Step-size/metric decoupling is naturally satisfied for "
+            "HMC/NUTS (acceptance-rate proxy is not an eigenvalue quantity — "
+            "see module docstring)."
+        ),
+    ),
+    "sample_cov_low_rank": MetricRecipe(
+        representation="low_rank",
+        estimator="sample_cov_low_rank",
+        buffer="reset_window",
+        support_gate=None,
+        needs=frozenset({"positions"}),
+        provides=frozenset({"positions"}),
+        emits="low_rank",
+        max_rank=10,
+        gamma=None,
+        cutoff=None,
+        provenance=(
+            "Sample-covariance low-rank estimator (MEADS / Scheme-B form). "
+            "Draws only — no gradient data, no regularisation (no gamma), "
+            "raw top-k eigh selection (no informativeness cutoff masking). "
+            "Delegates to sample_covariance_eigh_low_rank.  Appropriate when "
+            "gradients are unavailable or expensive and the full covariance "
+            "structure matters more than the AIRM geometric-mean correction.  "
+            "No optimal translation (mu_star=0).  Requires buffer_size in "
+            "build_core(); max_rank=10 default."
+        ),
+    ),
 }
 
 
@@ -439,11 +899,13 @@ def lookup_recipe(name: str) -> MetricRecipe:
     Parameters
     ----------
     name
-        Registry key.  Current slice-1 names:
+        Registry key.  Current names:
 
         - ``"welford_diag"`` (default; reproduces ``window_adaptation`` exactly)
         - ``"welford_dense"``
         - ``"fisher_diag"``
+        - ``"fisher_low_rank"`` (Algorithm 1, seyboldt2026; needs ``buffer_size``)
+        - ``"sample_cov_low_rank"`` (MEADS/Scheme-B; needs ``buffer_size``)
 
     Returns
     -------

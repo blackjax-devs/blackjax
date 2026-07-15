@@ -386,6 +386,8 @@ def staged_adaptation(
     target_acceptance_rate: float = 0.80,
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
+    schedule_fn: Callable = build_schedule,
+    initial_metric_state: Any = None,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the step size and inverse mass matrix for HMC-family algorithms.
@@ -440,6 +442,23 @@ def staged_adaptation(
         The symplectic integrator passed to ``algorithm.build_kernel``; only
         used if ``build_kernel`` accepts arguments.  Defaults to
         :func:`~blackjax.mcmc.integrators.velocity_verlet`.
+    schedule_fn
+        Callable ``(num_steps: int) -> Array`` that returns a
+        ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs.
+        Default :func:`build_schedule` (Stan's fixed-absolute, 2×-doubling
+        schedule).  Pass
+        :func:`~blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule`
+        for nutpie's proportional-to-tune, 1.5×-growing-window schedule.
+    initial_metric_state
+        Optional pre-built mass-matrix adaptation core state.  When not
+        ``None``, overrides the ``metric_core.init(n_dims)`` call at warmup
+        start — the provided state is used as-is.  The object must be a
+        valid state for the chosen ``metric`` core (its
+        ``inverse_mass_matrix`` field is unpacked into
+        :class:`StagedAdaptationState` immediately).  Intended for callers
+        that seed the initial state from external data (e.g., gradient-based
+        diagonal-scale initialisation); ``None`` (the default) reproduces
+        the standard identity/zero initialisation.
     **extra_parameters
         Additional parameters forwarded to the MCMC kernel at every step, e.g.
         ``num_integration_steps`` for HMC.
@@ -499,6 +518,21 @@ def staged_adaptation(
         target_acceptance_rate=target_acceptance_rate,
     )
 
+    if initial_metric_state is not None:
+        # Narrow seam: override core.init with the caller-supplied state.
+        # The base adapt_init still runs (sets up ss_state, step_size), and we
+        # then replace imm_state + inverse_mass_matrix in the returned carry.
+        _base_adapt_init = adapt_init
+
+        def adapt_init(  # noqa: F811 — intentional shadowing; seam is local
+            position: ArrayLikeTree, initial_step_size_: float
+        ) -> StagedAdaptationState:
+            state = _base_adapt_init(position, initial_step_size_)
+            return state._replace(
+                imm_state=initial_metric_state,
+                inverse_mass_matrix=initial_metric_state.inverse_mass_matrix,
+            )
+
     def one_step(carry, xs):
         _, rng_key, adaptation_stage = xs
         state, adaptation_state = carry
@@ -530,7 +564,7 @@ def staged_adaptation(
 
         start_state = (init_state, init_adaptation_state)
         keys = jax.random.split(rng_key, num_steps)
-        schedule = build_schedule(num_steps)
+        schedule = schedule_fn(num_steps)
         last_state, info = jax.lax.scan(
             one_step,
             start_state,
