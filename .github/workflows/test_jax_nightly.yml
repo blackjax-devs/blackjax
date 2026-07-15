@@ -22,4 +22,4 @@ jobs:
         uv pip install --prerelease=allow --force-reinstall jax jaxlib \
           -f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html
     - name: Run tests
-      run: uv run pytest -n auto -vv --benchmark-disable tests
+      run: uv run pytest -n 2 -vv --benchmark-disable tests
