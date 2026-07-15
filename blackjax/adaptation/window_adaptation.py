@@ -29,6 +29,7 @@ delegates to :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation`).
 Fisher-diagonal adaptation is accessible via
 ``staged_adaptation(metric="fisher_diag")`` only.
 """
+import warnings
 from typing import Callable
 
 import jax
@@ -124,7 +125,20 @@ def base(
         Function that returns the step size and mass matrix given a warmup
         state.
 
+    .. deprecated::
+        This function is deprecated and will be removed in a future release.
+        Use :func:`blackjax.window_adaptation` for the standard warmup, or
+        :func:`blackjax.staged_adaptation` for custom metric recipes.
+
     """
+    warnings.warn(
+        "window_adaptation.base() is deprecated and will be removed in a future "
+        "release. Use blackjax.window_adaptation for the standard warmup, or "
+        "blackjax.staged_adaptation for custom metric recipes.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+
     mm_init, mm_update, mm_final = mass_matrix_adaptation(
         is_mass_matrix_diagonal, imm_shrinkage_to_previous
     )
