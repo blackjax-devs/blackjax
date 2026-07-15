@@ -15,13 +15,18 @@
 
 At each window boundary the controller computes two signals: (1) held-out
 score-linearity R² — the curvature gate (funnel R²≈0.007 vs ≥0.54 for all
-metric-fixable classes); (2) S_gap(k) = λ₁/λ_{k+1} of the diagonal-whitened
+metric-fixable classes); (2) S_gap(k) = λ₁/λ_{k+1} of the Welford-whitened
 residual — the magnitude predictor (Spearman 1.0 with measured rank-k payoff).
 Escalate diagonal → rank-k iff R² ≥ _R_MIN AND S_gap ≥ _S_MIN AND stable
 over two consecutive windows AND budget deadline clear. Growing-window schedule
 (nutpie-style) is the default; AIRM-velocity early exit is advisory in v1
 (the scan runs its full length; ``converged_at_step`` records where stopping
 would have helped — the actual early-stop host is the named v1.1 upgrade).
+
+**Dtype note**: the composed estimator ``_compute_low_rank_metric`` produces
+numerically indefinite metrics under float32 (~98% of runs). Enable x64 via
+``jax.config.update("jax_enable_x64", True)`` for production use and for the
+V-phase acceptance runs; all optpath harnesses ran with x64 enabled.
 
 See :mod:`blackjax.adaptation.metric_recipes` for the MetricCore protocol and
 :mod:`blackjax.adaptation.staged_adaptation` for the host engine.
@@ -273,7 +278,9 @@ def _compute_r2_score_linearity(
         return _r2_from_features(feats), jnp.int32(_R2_PROJECTED)
 
     def _deferred() -> tuple[Array, Array]:
-        return jnp.array(float("nan"), dtype=jnp.float32), jnp.int32(_R2_DEFERRED)
+        # dtype must match sibling branches (s_w.dtype); hardcoding float32 crashes
+        # under x64 where sibling branches return float64.
+        return jnp.asarray(float("nan"), dtype=s_w.dtype), jnp.int32(_R2_DEFERRED)
 
     min_n_full = float(2 * _MIN_TRAIN_D_RATIO * d)  # each half needs ≥ 8d samples
     min_n_proj = float(2 * _MIN_TRAIN_K_RATIO * (max_rank + 1))  # each half ≥ 8(k+1)
@@ -385,12 +392,16 @@ def build_meta_adaptation_core(
         grad_flat, _ = fu.ravel_pytree(grad)
         B = state.draws_buffer.shape[0]
         idx = state.buffer_idx % B
+        # Cast the column offset to idx.dtype — under x64 the literal 0 is int64
+        # but idx is int32, causing "index arguments must be integers of the same
+        # type" at trace time.
+        col0 = jnp.zeros((), dtype=idx.dtype)
         return state._replace(
             draws_buffer=jax.lax.dynamic_update_slice(
-                state.draws_buffer, pos_flat[None, :], (idx, 0)
+                state.draws_buffer, pos_flat[None, :], (idx, col0)
             ),
             grads_buffer=jax.lax.dynamic_update_slice(
-                state.grads_buffer, grad_flat[None, :], (idx, 0)
+                state.grads_buffer, grad_flat[None, :], (idx, col0)
             ),
             buffer_idx=state.buffer_idx + 1,
             budget_used=state.budget_used + 1,
