@@ -607,9 +607,8 @@ def _build_fisher_low_rank_core(
 ) -> MetricCore:
     """Build a MetricCore for the Fisher-score low-rank estimator (reset policy).
 
-    Implements the same window-end recompute as
-    :func:`~blackjax.adaptation.low_rank_adaptation.base`'s ``slow_final``
-    under ``buffer_policy="reset"``:
+    Implements the reset-policy window-end recompute (hard-reset buffer at
+    each slow-window boundary):
 
     1. ``init(n_dims)`` — creates a zero-filled draw/gradient buffer of shape
        ``(buffer_size, n_dims)`` with identity sigma, zero U, ones lam.
