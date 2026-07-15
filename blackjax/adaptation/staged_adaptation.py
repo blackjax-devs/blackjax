@@ -391,6 +391,7 @@ def staged_adaptation(
     logdensity_fn: Callable,
     metric: str | MetricRecipe | MetricCore = "welford_diag",
     *,
+    max_grad_budget: int | None = None,
     imm_shrinkage_to_previous: float = 0.0,
     initial_inverse_mass_matrix: Array | None = None,
     initial_step_size: float = 1.0,
@@ -421,6 +422,13 @@ def staged_adaptation(
     metric
         The mass-matrix adaptation specification.  Accepts:
 
+        - ``"auto"`` — the meta-adaptation controller
+          (:mod:`~blackjax.adaptation.meta_adaptation`). Automatically selects
+          the diagonal vs low-rank path and the growing-window schedule.
+          Requires ``max_grad_budget`` to be set.  The emitted metric is always
+          a :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` (with
+          U=0, lam=1 when the controller stays diagonal — bit-equivalent to
+          the diagonal metric).
         - **str** — a registry name (``"welford_diag"`` (default),
           ``"welford_dense"``, ``"fisher_diag"``); looked up via
           :func:`~blackjax.adaptation.metric_recipes.lookup_recipe` and built
@@ -430,6 +438,14 @@ def staged_adaptation(
         - :class:`~blackjax.adaptation.metric_recipes.MetricCore` — used
           directly as-is; ``imm_shrinkage_to_previous`` and
           ``initial_inverse_mass_matrix`` are ignored (closed over in the core).
+    max_grad_budget
+        Maximum total gradient budget (leapfrog evaluations).  Required when
+        ``metric="auto"``; ignored otherwise.  The meta-adaptation controller
+        converts this to a warmup step count via a conservative divisor (see
+        :mod:`~blackjax.adaptation.meta_adaptation`).  Passed as-is; use
+        :func:`~blackjax.adaptation.meta_adaptation.extract_meta_verdict` after
+        ``warmup.run()`` to get the structured routing verdict and true gradient
+        counts.
     imm_shrinkage_to_previous
         Pseudo-count controlling shrinkage of the per-window IMM toward the
         previous window's IMM (Bayesian persistence).  Default ``0.0``
@@ -496,7 +512,28 @@ def staged_adaptation(
         objects for the ``metric`` string argument.
     """
     # Resolve the metric argument to a MetricCore.
-    if isinstance(metric, str):
+    # "auto" is checked first so that the generic str branch below does not
+    # route it to the recipe registry (no "auto" registry entry exists).
+    if metric == "auto":
+        if max_grad_budget is None:
+            raise ValueError(
+                "staged_adaptation: max_grad_budget is required when metric='auto'. "
+                "Pass a positive integer, e.g. "
+                "staged_adaptation(nuts, logdensity_fn, metric='auto', max_grad_budget=50_000)."
+            )
+        from blackjax.adaptation.meta_adaptation import build_meta_adaptation_core
+
+        metric_core = build_meta_adaptation_core(max_grad_budget)
+        # Override the schedule to the nutpie growing-window shape, which the
+        # meta-adaptation controller is designed for. Only override if the
+        # caller has not explicitly passed a custom schedule_fn.
+        if schedule_fn is build_schedule:
+            from blackjax.adaptation.low_rank_adaptation import (
+                build_growing_window_schedule,
+            )
+
+            schedule_fn = build_growing_window_schedule
+    elif isinstance(metric, str):
         recipe = lookup_recipe(metric)
         metric_core = recipe.build_core(
             imm_shrinkage_to_previous=imm_shrinkage_to_previous,
