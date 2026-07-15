@@ -59,10 +59,13 @@ import numpy as np
 
 import blackjax
 from blackjax.adaptation.meta_adaptation import (
-    MetaAdaptationCoreState,
-    MetaAdaptationVerdict,
+    _R2_DEFERRED,
+    _R2_FULL_AFFINE,
+    _R2_PROJECTED,
     _R_MIN,
     _S_MIN,
+    MetaAdaptationCoreState,
+    MetaAdaptationVerdict,
     _choose_rank,
     _compute_r2_score_linearity,
     _compute_s_gap,
@@ -169,7 +172,9 @@ class TestCriterionR2Gate(BlackJAXTest):
         sigma = jnp.ones(d)
         U_k = jnp.zeros((d, max_rank))
         n_arr = jnp.array(n, dtype=jnp.int32)
-        r2, mode = _compute_r2_score_linearity(draws, grads, sigma, n_arr, U_k, max_rank)
+        r2, mode = _compute_r2_score_linearity(
+            draws, grads, sigma, n_arr, U_k, max_rank
+        )
         r2_np = float(np.asarray(r2))
         self.assertFalse(np.isnan(r2_np), "R² should not be deferred at n=400, d=20")
         self.assertGreater(
@@ -188,13 +193,15 @@ class TestCriterionR2Gate(BlackJAXTest):
         n_arr = jnp.array(n, dtype=jnp.int32)
         r2, _ = _compute_r2_score_linearity(draws, grads, sigma, n_arr, U_k, max_rank)
         r2_np = float(np.asarray(r2))
-        self.assertFalse(np.isnan(r2_np), "Should not defer with n=400, d=20, max_rank=10")
+        self.assertFalse(
+            np.isnan(r2_np), "Should not defer with n=400, d=20, max_rank=10"
+        )
         self.assertLess(
             r2_np, _R_MIN, f"Curvature proxy: expected R² < {_R_MIN}, got {r2_np}"
         )
 
     def test_high_d_deferred_when_n_too_small(self):
-        """R² is NaN when n is too small for either fit (both thresholds unmet)."""
+        """R² is NaN and mode=_R2_DEFERRED when n is too small for any fit."""
         d = 100
         n = 10  # far below 2 * 8 * (max_rank+1) = 176
         max_rank = 10
@@ -205,14 +212,19 @@ class TestCriterionR2Gate(BlackJAXTest):
         sigma = jnp.ones(d)
         U_k = jnp.zeros((d, max_rank))
         n_arr = jnp.array(n, dtype=jnp.int32)
-        r2, mode = _compute_r2_score_linearity(draws, grads, sigma, n_arr, U_k, max_rank)
+        r2, mode_int = _compute_r2_score_linearity(
+            draws, grads, sigma, n_arr, U_k, max_rank
+        )
         self.assertTrue(
             np.isnan(float(np.asarray(r2))),
-            f"Expected deferred (NaN) R² at n={n}, d={d}, max_rank={max_rank}",
+            f"Expected deferred (NaN) R² at n={n}, d={d}",
+        )
+        self.assertEqual(
+            int(np.asarray(mode_int)), _R2_DEFERRED, "Mode should be _R2_DEFERRED"
         )
 
-    def test_projected_fit_non_nan_when_feasible(self):
-        """Projected fit is used (non-NaN) when n ≥ 2*8*(max_rank+1)."""
+    def test_projected_fit_non_nan_and_mode_projected(self):
+        """Projected fit is used (non-NaN, mode=_R2_PROJECTED) when n ≥ 2*8*(max_rank+1)."""
         d = 200  # too large for full-affine with n=106
         max_rank = 5
         n = 2 * 8 * (max_rank + 1) + 10  # = 106, above min_n_proj=96
@@ -223,10 +235,34 @@ class TestCriterionR2Gate(BlackJAXTest):
         sigma = jnp.ones(d)
         U_k = jnp.zeros((d, max_rank))
         n_arr = jnp.array(n, dtype=jnp.int32)
-        r2, mode = _compute_r2_score_linearity(draws, grads, sigma, n_arr, U_k, max_rank)
+        r2, mode_int = _compute_r2_score_linearity(
+            draws, grads, sigma, n_arr, U_k, max_rank
+        )
         self.assertFalse(
             np.isnan(float(np.asarray(r2))),
-            f"Projected fit should be feasible at n={n}, d={d}, max_rank={max_rank}",
+            f"Projected fit should be feasible at n={n}, d={d}",
+        )
+        self.assertEqual(
+            int(np.asarray(mode_int)), _R2_PROJECTED, "Mode should be _R2_PROJECTED"
+        )
+
+    def test_full_affine_mode_when_n_large(self):
+        """Full-affine fit is used (mode=_R2_FULL_AFFINE) when n ≥ 2*8*d."""
+        d, max_rank = 10, 5
+        n = 2 * 8 * d + 10  # = 170, above min_n_full=160
+        draws, grads = _make_isotropic_buffer(d, n, seed=5)
+        draws = jnp.array(draws, dtype=jnp.float32)
+        grads = jnp.array(grads, dtype=jnp.float32)
+
+        sigma = jnp.ones(d)
+        U_k = jnp.zeros((d, max_rank))
+        n_arr = jnp.array(n, dtype=jnp.int32)
+        r2, mode_int = _compute_r2_score_linearity(
+            draws, grads, sigma, n_arr, U_k, max_rank
+        )
+        self.assertFalse(np.isnan(float(np.asarray(r2))))
+        self.assertEqual(
+            int(np.asarray(mode_int)), _R2_FULL_AFFINE, "Mode should be _R2_FULL_AFFINE"
         )
 
 
@@ -244,7 +280,9 @@ class TestCriterionSGap(BlackJAXTest):
         eigenvalues, _ = _compute_whitened_spectrum(draws, sigma, n_arr, max_rank)
         k = _choose_rank(eigenvalues, n_arr, max_rank)
         s_gap = float(np.asarray(_compute_s_gap(eigenvalues, k)))
-        self.assertAlmostEqual(s_gap, 1.0, delta=0.5, msg=f"Isotropic S_gap should ≈1, got {s_gap}")
+        self.assertAlmostEqual(
+            s_gap, 1.0, delta=0.5, msg=f"Isotropic S_gap should ≈1, got {s_gap}"
+        )
 
     def test_correlated_spike_s_gap_large(self):
         """Correlated rank-2 spike: S_gap >> _S_MIN after diagonal whitening."""
@@ -257,11 +295,15 @@ class TestCriterionSGap(BlackJAXTest):
         # Whiten with Fisher sigma (as the controller does)
         from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 
-        sigma_lr, _, _, _ = _compute_low_rank_metric(draws, grads, n_arr, max_rank, 1e-5, 2.0)
+        sigma_lr, _, _, _ = _compute_low_rank_metric(
+            draws, grads, n_arr, max_rank, 1e-5, 2.0
+        )
         eigenvalues, _ = _compute_whitened_spectrum(draws, sigma_lr, n_arr, max_rank)
         k = _choose_rank(eigenvalues, n_arr, max_rank)
         s_gap = float(np.asarray(_compute_s_gap(eigenvalues, k)))
-        self.assertGreater(s_gap, _S_MIN, f"Correlated spike S_gap should > {_S_MIN}, got {s_gap}")
+        self.assertGreater(
+            s_gap, _S_MIN, f"Correlated spike S_gap should > {_S_MIN}, got {s_gap}"
+        )
 
     def test_s_gap_ordering_matches_payoff_ordering(self):
         """S_gap ordering agrees with measured payoff ordering (high-payoff > low-payoff).
@@ -275,10 +317,14 @@ class TestCriterionSGap(BlackJAXTest):
         from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 
         # High-payoff: correlated spike
-        draws_h, grads_h = _make_correlated_buffer(d, n, rank=2, lam_spike=20.0, seed=20)
+        draws_h, grads_h = _make_correlated_buffer(
+            d, n, rank=2, lam_spike=20.0, seed=20
+        )
         draws_h = jnp.array(draws_h, dtype=jnp.float32)
         grads_h = jnp.array(grads_h, dtype=jnp.float32)
-        sigma_h, _, _, _ = _compute_low_rank_metric(draws_h, grads_h, n_arr, max_rank, 1e-5, 2.0)
+        sigma_h, _, _, _ = _compute_low_rank_metric(
+            draws_h, grads_h, n_arr, max_rank, 1e-5, 2.0
+        )
         eigs_h, _ = _compute_whitened_spectrum(draws_h, sigma_h, n_arr, max_rank)
         k_h = _choose_rank(eigs_h, n_arr, max_rank)
         s_gap_h = float(np.asarray(_compute_s_gap(eigs_h, k_h)))
@@ -287,7 +333,9 @@ class TestCriterionSGap(BlackJAXTest):
         draws_l, grads_l = _make_isotropic_buffer(d, n, seed=21)
         draws_l = jnp.array(draws_l, dtype=jnp.float32)
         grads_l = jnp.array(grads_l, dtype=jnp.float32)
-        sigma_l, _, _, _ = _compute_low_rank_metric(draws_l, grads_l, n_arr, max_rank, 1e-5, 2.0)
+        sigma_l, _, _, _ = _compute_low_rank_metric(
+            draws_l, grads_l, n_arr, max_rank, 1e-5, 2.0
+        )
         eigs_l, _ = _compute_whitened_spectrum(draws_l, sigma_l, n_arr, max_rank)
         k_l = _choose_rank(eigs_l, n_arr, max_rank)
         s_gap_l = float(np.asarray(_compute_s_gap(eigs_l, k_l)))
@@ -295,7 +343,7 @@ class TestCriterionSGap(BlackJAXTest):
         self.assertGreater(
             s_gap_h,
             s_gap_l,
-            f"High-payoff S_gap ({s_gap_h:.2f}) should exceed low-payoff ({s_gap_l:.2f})",
+            f"High-payoff S_gap ({s_gap_h:.2f}) should exceed low-payoff ({s_gap_l:.2f})",  # noqa: E231
         )
 
 
@@ -485,7 +533,9 @@ class TestStructuralE2ESmoke(BlackJAXTest):
 
         self.assertFalse(bool(np.asarray(state.has_escalated)))
 
-        verdict = extract_meta_verdict(state, max_grad_budget=50000, num_warmup_steps=2500)
+        verdict = extract_meta_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
         self.assertEqual(
             verdict.route,
             "reparam_suggested",
@@ -514,10 +564,16 @@ class TestRecovershClassical(BlackJAXTest):
         state = core.init(10)
         imm = state.inverse_mass_matrix
         np.testing.assert_allclose(
-            np.asarray(imm.U), 0.0, atol=1e-7, err_msg="Before escalation: U should be zero"
+            np.asarray(imm.U),
+            0.0,
+            atol=1e-7,
+            err_msg="Before escalation: U should be zero",
         )
         np.testing.assert_allclose(
-            np.asarray(imm.lam), 1.0, atol=1e-7, err_msg="Before escalation: lam should be one"
+            np.asarray(imm.lam),
+            1.0,
+            atol=1e-7,
+            err_msg="Before escalation: lam should be one",
         )
 
     def test_metric_core_protocol(self):
@@ -539,18 +595,80 @@ class TestRecovershClassical(BlackJAXTest):
         self.assertEqual(int(np.asarray(state1.buffer_idx)), 1)
         self.assertEqual(int(np.asarray(state1.budget_used)), 1)
 
+    def test_converged_at_step_init_sentinel(self):
+        """converged_at_step is -1 (sentinel for 'not yet converged') at init."""
+        core = build_meta_adaptation_core(50000, max_rank=5)
+        state = core.init(10)
+        self.assertEqual(
+            int(np.asarray(state.converged_at_step)),
+            -1,
+            "converged_at_step should be -1 (not yet converged) at init",
+        )
+
+    def test_r2_mode_init_deferred(self):
+        """r2_mode is _R2_DEFERRED at init (no window computed yet)."""
+        core = build_meta_adaptation_core(50000, max_rank=5)
+        state = core.init(10)
+        self.assertEqual(int(np.asarray(state.r2_mode)), _R2_DEFERRED)
+
+    def test_r2_mode_observed_after_window(self):
+        """r2_mode in carry matches the actually-taken branch after a window."""
+        d, n = 10, 400
+        max_rank = 5
+        draws, grads = _make_isotropic_buffer(d, n, seed=60)
+        draws = jnp.array(draws, dtype=jnp.float32)
+        grads = jnp.array(grads, dtype=jnp.float32)
+
+        core = build_meta_adaptation_core(50000, max_rank=max_rank)
+        state = core.init(d)
+        state = _fill_state_from_buffer(state, draws, grads)
+        state = core.final(state)
+
+        mode_int = int(np.asarray(state.r2_mode))
+        # n=400, d=10: min_n_full = 2*8*10 = 160 ≤ 400 → full_affine branch.
+        self.assertEqual(
+            mode_int,
+            _R2_FULL_AFFINE,
+            f"n=400, d=10: expected _R2_FULL_AFFINE, got mode_int={mode_int}",
+        )
+        # verdict flag should reflect the carry, not post-hoc inference
+        verdict = extract_meta_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
+        self.assertEqual(verdict.flags["high_d_r2_mode"], "full_affine")
+
+    def test_budget_returned_zero_before_airm_convergence(self):
+        """budget_returned_steps is 0 when AIRM criterion has never fired (v1 advisory)."""
+        core = build_meta_adaptation_core(50000, max_rank=5)
+        state = core.init(10)
+        verdict = extract_meta_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
+        self.assertEqual(
+            verdict.budget_returned_steps,
+            0,
+            "No AIRM convergence yet: budget_returned should be 0",
+        )
+
     def test_verdict_fields_present(self):
         """extract_meta_verdict populates all required fields."""
         core = build_meta_adaptation_core(50000, max_rank=5)
         state = core.init(10)
-        verdict = extract_meta_verdict(state, max_grad_budget=50000, num_warmup_steps=2500)
+        verdict = extract_meta_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
         self.assertIsInstance(verdict, MetaAdaptationVerdict)
         self.assertIn(verdict.route, ("diagonal", "low_rank", "reparam_suggested"))
         self.assertIn(verdict.confidence, ("high", "low"))
         self.assertEqual(verdict.buffer_policy, "reset")
         self.assertIsInstance(verdict.flags, dict)
-        for key in ("reparam_hint", "marginal_s_gap", "wall_cost_discount",
-                    "high_d_r2_mode", "mode_coverage"):
+        for key in (
+            "reparam_hint",
+            "marginal_s_gap",
+            "wall_cost_discount",
+            "high_d_r2_mode",
+            "mode_coverage",
+        ):
             self.assertIn(key, verdict.flags, f"Missing verdict flag: {key}")
 
     def test_staged_adaptation_auto_metric_smoke(self):
