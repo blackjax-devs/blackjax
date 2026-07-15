@@ -1333,7 +1333,7 @@ class LowRankX64SmokeTest(BlackJAXTest):
 
 
 def _reference_run_accumulating(
-    rng_key, position, num_steps, n_dims, recompute_every=10**9
+    rng_key, position, num_steps, n_dims, recompute_every=1
 ):
     """Frozen inline accumulating scan loop (verbatim copy of ``base(buffer_policy='accumulating')`` math).
 
@@ -1343,14 +1343,12 @@ def _reference_run_accumulating(
 
     **Must NOT be modified** after the Slice-3 migration commit.
 
-    Bit-exact comparison requires ``recompute_every=10**9`` (the default here).
-    With the engine path, mid-window metric recomputes (``slow_recompute_only``)
-    are stored in ``imm_state.inverse_mass_matrix`` but NOT forwarded to
-    ``StagedAdaptationState.inverse_mass_matrix`` (only ``slow_final`` at
-    window-end does that).  The old scan loop DID expose mid-window metrics to
-    the MCMC kernel immediately.  With ``recompute_every=10**9`` neither path
-    fires ``slow_recompute_only`` mid-window, so both see the same metric for
-    MCMC at every step and produce identical outputs.
+    Bit-exact comparison works at ANY ``recompute_every`` value (default 1,
+    matching nutpie's ``mass_matrix_update_freq=1``) after the engine fix that
+    changed ``slow_update()`` to return ``new_metric_st.inverse_mass_matrix``
+    instead of ``ws.inverse_mass_matrix``.  The engine now surfaces mid-window
+    metric recomputes to MCMC immediately, matching ``slow_recompute_only()``
+    in this reference.
     """
     max_rank = 4
     gamma = 1e-5
@@ -1539,156 +1537,202 @@ def _reference_run_accumulating(
 class WindowAdaptationLowRankAccumulatingParityTest(BlackJAXTest):
     """Bit-exact parity: accumulating path via engine == frozen reference scan loop.
 
-    Uses ``recompute_every=10**9`` (effectively infinite) so mid-window metric
-    recomputes do NOT fire in either path.  See ``_reference_run_accumulating``
-    docstring for the full bit-exactness argument.
+    Parametrized over ``recompute_every ∈ {1, 5, 25}`` — all three must pass at
+    ``atol=0.0``.  Verified against the 200-step Stan schedule (build_schedule(200)):
+
+    * Window 1: 25 slow steps (ends at global step 99).
+    * Window 2: 50 slow steps (ends at global step 149).
+    * Final fast phase: 50 steps (no mass-matrix updates).
+
+    With ``recompute_every=1`` : 73 mid-window + 2 at-window-end fires — exercises
+    every cadence combination.
+
+    With ``recompute_every=5`` : 13 mid-window + 2 at-window-end fires — exercises
+    the "spurious recompute at window-end, immediately overwritten by final()" path
+    (window 1 ends at slow_count=25, a multiple of 5; window 2 ends at 50=5×10).
+
+    With ``recompute_every=25`` : 1 mid-window + 2 at-window-end fires (per-window
+    counter resets: window-1 fires at counter=25=window-end; window-2 fires at
+    counter=25=mid and counter=50=window-end).  Exercises the infrequent-recompute
+    + at-window-boundary combination.
+
+    Note: ``recompute_every=100`` fires zero times in 75 total slow steps and is
+    equivalent to the degenerate ``10**9`` that was replaced — not included.
+
+    After the ``slow_update()`` engine fix (commit e2a4afa7d), mid-window metric
+    recomputes are forwarded to MCMC immediately (``new_metric_st.inverse_mass_matrix``
+    is returned, not ``ws.inverse_mass_matrix``), so the engine is bit-identical to
+    the legacy ``base()`` accumulating scan loop at ALL recompute cadences.
     """
 
     _N_DIMS = 5
     _NUM_STEPS = 200
+    _RECOMPUTE_CADENCES = (1, 5, 25)
 
-    def _run_engine(self, rng_key, position):
+    def _run_engine(self, rng_key, position, recompute_every):
         wu = window_adaptation_low_rank(
             blackjax.nuts,
             std_normal_logdensity,
             max_rank=4,
             buffer_policy="accumulating",
-            recompute_every=10**9,
+            recompute_every=recompute_every,
         )
         return wu.run(rng_key, position, num_steps=self._NUM_STEPS)
 
     def test_final_step_size_identical(self):
-        """Final step_size must be bit-identical between engine and reference."""
+        """Final step_size must be bit-identical for all recompute cadences."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, params_engine), _ = self._run_engine(key, pos)
-        _, params_ref, _ = _reference_run_accumulating(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
-        self.assertTrue(
-            bool(
-                jnp.allclose(
-                    params_engine["step_size"], params_ref["step_size"], atol=0.0
+        for re in self._RECOMPUTE_CADENCES:
+            with self.subTest(recompute_every=re):
+                (_, params_engine), _ = self._run_engine(key, pos, re)
+                _, params_ref, _ = _reference_run_accumulating(
+                    key, pos, self._NUM_STEPS, self._N_DIMS, recompute_every=re
                 )
-            )
-        )
+                self.assertTrue(
+                    bool(
+                        jnp.allclose(
+                            params_engine["step_size"],
+                            params_ref["step_size"],
+                            atol=0.0,
+                        )
+                    )
+                )
 
     def test_final_sigma_identical(self):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, params_engine), _ = self._run_engine(key, pos)
-        _, params_ref, _ = _reference_run_accumulating(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
-        self.assertTrue(
-            bool(
-                jnp.allclose(
-                    params_engine["inverse_mass_matrix"].sigma,
-                    params_ref["inverse_mass_matrix"].sigma,
-                    atol=0.0,
+        for re in self._RECOMPUTE_CADENCES:
+            with self.subTest(recompute_every=re):
+                (_, params_engine), _ = self._run_engine(key, pos, re)
+                _, params_ref, _ = _reference_run_accumulating(
+                    key, pos, self._NUM_STEPS, self._N_DIMS, recompute_every=re
                 )
-            )
-        )
+                self.assertTrue(
+                    bool(
+                        jnp.allclose(
+                            params_engine["inverse_mass_matrix"].sigma,
+                            params_ref["inverse_mass_matrix"].sigma,
+                            atol=0.0,
+                        )
+                    )
+                )
 
     def test_final_u_identical(self):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, params_engine), _ = self._run_engine(key, pos)
-        _, params_ref, _ = _reference_run_accumulating(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
-        self.assertTrue(
-            bool(
-                jnp.allclose(
-                    params_engine["inverse_mass_matrix"].U,
-                    params_ref["inverse_mass_matrix"].U,
-                    atol=0.0,
+        for re in self._RECOMPUTE_CADENCES:
+            with self.subTest(recompute_every=re):
+                (_, params_engine), _ = self._run_engine(key, pos, re)
+                _, params_ref, _ = _reference_run_accumulating(
+                    key, pos, self._NUM_STEPS, self._N_DIMS, recompute_every=re
                 )
-            )
-        )
+                self.assertTrue(
+                    bool(
+                        jnp.allclose(
+                            params_engine["inverse_mass_matrix"].U,
+                            params_ref["inverse_mass_matrix"].U,
+                            atol=0.0,
+                        )
+                    )
+                )
 
     def test_final_lam_identical(self):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, params_engine), _ = self._run_engine(key, pos)
-        _, params_ref, _ = _reference_run_accumulating(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
-        self.assertTrue(
-            bool(
-                jnp.allclose(
-                    params_engine["inverse_mass_matrix"].lam,
-                    params_ref["inverse_mass_matrix"].lam,
-                    atol=0.0,
+        for re in self._RECOMPUTE_CADENCES:
+            with self.subTest(recompute_every=re):
+                (_, params_engine), _ = self._run_engine(key, pos, re)
+                _, params_ref, _ = _reference_run_accumulating(
+                    key, pos, self._NUM_STEPS, self._N_DIMS, recompute_every=re
                 )
-            )
-        )
+                self.assertTrue(
+                    bool(
+                        jnp.allclose(
+                            params_engine["inverse_mass_matrix"].lam,
+                            params_ref["inverse_mass_matrix"].lam,
+                            atol=0.0,
+                        )
+                    )
+                )
 
     def test_final_chain_state_position_identical(self):
         """Returned chain state (mu_star re-init) must be bit-identical."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (state_engine, _), _ = self._run_engine(key, pos)
-        state_ref, _, _ = _reference_run_accumulating(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
-        self.assertTrue(
-            bool(jnp.allclose(state_engine.position, state_ref.position, atol=0.0))
-        )
+        for re in self._RECOMPUTE_CADENCES:
+            with self.subTest(recompute_every=re):
+                (state_engine, _), _ = self._run_engine(key, pos, re)
+                state_ref, _, _ = _reference_run_accumulating(
+                    key, pos, self._NUM_STEPS, self._N_DIMS, recompute_every=re
+                )
+                self.assertTrue(
+                    bool(
+                        jnp.allclose(
+                            state_engine.position, state_ref.position, atol=0.0
+                        )
+                    )
+                )
 
     def test_per_step_sigma_identical(self):
         """Per-step sigma trace must be bit-identical across all steps."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, _), info_engine = self._run_engine(key, pos)
-        _, _, info_ref = _reference_run_accumulating(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
-        self.assertTrue(
-            bool(
-                jnp.allclose(
-                    info_engine.adaptation_state.sigma,
-                    info_ref.adaptation_state.sigma,
-                    atol=0.0,
+        for re in self._RECOMPUTE_CADENCES:
+            with self.subTest(recompute_every=re):
+                (_, _), info_engine = self._run_engine(key, pos, re)
+                _, _, info_ref = _reference_run_accumulating(
+                    key, pos, self._NUM_STEPS, self._N_DIMS, recompute_every=re
                 )
-            )
-        )
+                self.assertTrue(
+                    bool(
+                        jnp.allclose(
+                            info_engine.adaptation_state.sigma,
+                            info_ref.adaptation_state.sigma,
+                            atol=0.0,
+                        )
+                    )
+                )
 
     def test_per_step_mu_star_identical(self):
         """Per-step mu_star trace must be bit-identical."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, _), info_engine = self._run_engine(key, pos)
-        _, _, info_ref = _reference_run_accumulating(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
-        self.assertTrue(
-            bool(
-                jnp.allclose(
-                    info_engine.adaptation_state.mu_star,
-                    info_ref.adaptation_state.mu_star,
-                    atol=0.0,
+        for re in self._RECOMPUTE_CADENCES:
+            with self.subTest(recompute_every=re):
+                (_, _), info_engine = self._run_engine(key, pos, re)
+                _, _, info_ref = _reference_run_accumulating(
+                    key, pos, self._NUM_STEPS, self._N_DIMS, recompute_every=re
                 )
-            )
-        )
+                self.assertTrue(
+                    bool(
+                        jnp.allclose(
+                            info_engine.adaptation_state.mu_star,
+                            info_ref.adaptation_state.mu_star,
+                            atol=0.0,
+                        )
+                    )
+                )
 
     def test_per_step_step_size_identical(self):
         """Per-step step_size trace must be bit-identical."""
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
-        (_, _), info_engine = self._run_engine(key, pos)
-        _, _, info_ref = _reference_run_accumulating(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
-        self.assertTrue(
-            bool(
-                jnp.allclose(
-                    info_engine.adaptation_state.step_size,
-                    info_ref.adaptation_state.step_size,
-                    atol=0.0,
+        for re in self._RECOMPUTE_CADENCES:
+            with self.subTest(recompute_every=re):
+                (_, _), info_engine = self._run_engine(key, pos, re)
+                _, _, info_ref = _reference_run_accumulating(
+                    key, pos, self._NUM_STEPS, self._N_DIMS, recompute_every=re
                 )
-            )
-        )
+                self.assertTrue(
+                    bool(
+                        jnp.allclose(
+                            info_engine.adaptation_state.step_size,
+                            info_ref.adaptation_state.step_size,
+                            atol=0.0,
+                        )
+                    )
+                )
 
 
 if __name__ == "__main__":
