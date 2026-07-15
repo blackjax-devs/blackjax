@@ -68,8 +68,10 @@ Warmup-phase S_gap is transient-inflated; two stable reads prevent acting early.
 _MIN_TRAIN_D_RATIO: int = 8
 """Full-affine fit: n_half ≥ 8d required; stoch_vol d=503: R²=-109 at n/d≈2."""
 
-_MIN_TRAIN_K_RATIO: int = 8
-"""Projected fit: n_half ≥ 8·(max_rank+1) required. d-independent threshold."""
+_MIN_TRAIN_K_RATIO: int = 4
+"""Projected fit: n_half ≥ 4·(actual_rank+1) required (total n ≳ 8·(k+1)).
+d-independent threshold — radon (d=390, k≈2, max_rank=50, n≳408) fits within
+the growing-window schedule at 50k-grad budget (max window ≈725 ≥ 408)."""
 
 _AIRM_VELOCITY_TOL: float = 0.05
 """Frobenius-norm lam-change threshold for AIRM early-exit (advisory, v1)."""
@@ -254,15 +256,16 @@ def _compute_r2_score_linearity(
     train_mask = mask * (jnp.arange(B) < n_train_int).astype(mask.dtype)
     test_mask = mask * (jnp.arange(B) >= n_train_int).astype(mask.dtype)
 
-    def _r2_from_features(feats: Array) -> Array:
+    def _r2_from_features(feats: Array, resp: Array) -> Array:
+        """Held-out R² of ``resp`` predicted from ``feats`` (train/test split)."""
         n_feats = feats.shape[1]
         FtF = (train_mask[:, None] * feats).T @ (train_mask[:, None] * feats)
-        FtS = (train_mask[:, None] * feats).T @ (train_mask[:, None] * s_w)
+        FtS = (train_mask[:, None] * feats).T @ (train_mask[:, None] * resp)
         A = jnp.linalg.lstsq(
             FtF + 1e-8 * jnp.eye(n_feats, dtype=FtF.dtype), FtS, rcond=None
         )[0]
         s_pred = (test_mask[:, None] * feats) @ A
-        s_test = test_mask[:, None] * s_w
+        s_test = test_mask[:, None] * resp
         n_test_safe = jnp.maximum(test_mask.sum().astype(jnp.float32), 2.0)
         s_mean = s_test.sum(0) / n_test_safe
         tss = ((s_test - test_mask[:, None] * s_mean[None, :]) ** 2).sum(0)
@@ -271,11 +274,19 @@ def _compute_r2_score_linearity(
 
     def _full_affine() -> tuple[Array, Array]:
         feats = jnp.concatenate([w, jnp.ones((B, 1), dtype=w.dtype)], axis=1)
-        return _r2_from_features(feats), jnp.int32(_R2_FULL_AFFINE)
+        return _r2_from_features(feats, s_w), jnp.int32(_R2_FULL_AFFINE)
 
     def _projected() -> tuple[Array, Array]:
-        feats = jnp.concatenate([w @ U_k, jnp.ones((B, 1), dtype=w.dtype)], axis=1)
-        return _r2_from_features(feats), jnp.int32(_R2_PROJECTED)
+        # Project BOTH position and score onto U_k.  Rank-k acts only in
+        # span(U_k), so linearity of the score RESTRICTED to that subspace is
+        # the escalation-safety question; nonlinearity orthogonal to U_k is
+        # invisible to rank-k and should not gate escalation.
+        # Bug fixed: old code regressed d-dim score on k+1 features → median
+        # R² ≈ 0 at d≫k (radon d=390 always emitted reparam_suggested).
+        w_proj = w @ U_k  # (B, actual_rank): position projected onto U_k
+        s_w_proj = s_w @ U_k  # (B, actual_rank): score projected onto U_k
+        feats = jnp.concatenate([w_proj, jnp.ones((B, 1), dtype=w.dtype)], axis=1)
+        return _r2_from_features(feats, s_w_proj), jnp.int32(_R2_PROJECTED)
 
     def _deferred() -> tuple[Array, Array]:
         # dtype must match sibling branches (s_w.dtype); hardcoding float32 crashes
