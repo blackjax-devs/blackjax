@@ -753,3 +753,9 @@ def test_floor_constant_value():
         np.pi
     )  # (pi/2)*sqrt(4), NOT via the CHEES_LENGTH_FLOOR_FACTOR symbol
     np.testing.assert_allclose(val, expected, rtol=1e-6)
+
+
+def test_window_adaptation_base_deprecated():
+    """Verify that calling window_adaptation.base() emits a DeprecationWarning."""
+    with pytest.warns(DeprecationWarning, match="window_adaptation.base.*deprecated"):
+        window_adaptation.base(is_mass_matrix_diagonal=True)
