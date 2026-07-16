@@ -2211,7 +2211,45 @@ def build_multi_chain_meta_core(
             jnp.array(float("nan"), dtype=r2_new.dtype),
             jnp.clip(r2_new, max=jnp.float32(1.0)),
         )
-        r2_gate = r2_new >= jnp.float32(_R_MIN)  # False when NaN
+
+        # W-branch r² gate uses the raw (pre-GAIN-override) R² so that a genuine
+        # linear Gaussian with GAIN ≈ 0 in the projected tier is not blocked.
+        # The W-branch question is "is the metric fixable?" — answered by the
+        # original per-chain-centered projected fit, not by the slope-heterogeneity test.
+        r2_gate_w = r2_new >= jnp.float32(_R_MIN)  # for W-branch only
+
+        # BLOCKER-2: projected-tier GAIN+abstain router for T-branch routing.
+        # When _R2_PROJECTED was taken (n_pool < 16d), the raw r2_new is
+        # meaningless at k<<d (can be ≤ 0 for valid curvature targets → false
+        # reparam_suggested in verdict; stoch_vol r2=-0.117, radon r2=-0.981).
+        # Override: compute slope-heterogeneity GAIN = R²_perchain − R²_shared.
+        #   abstain (NaN) → r2_routing = NaN → no T escalation / no reparam
+        #   GAIN > 0.3 AND R²_pc ≥ 0.5 → r2_routing = R²_pc → T can escalate
+        #   GAIN ≤ 0.3 (no evidence) → r2_routing = NaN → diagonal, no T action
+        # W-branch is NOT gated on r2_routing (uses r2_gate_w from the raw R²).
+        def _gain_r2_override() -> Array:
+            gain_proj, r2_pc_proj = _compute_projected_gain_r2_mc(
+                pc_draws_safe, pc_grads_safe, sigma_w_diag, n, M_stat, U_k_pooled
+            )
+            reparam_signal = (
+                jnp.isfinite(gain_proj)
+                & (gain_proj > jnp.float32(_GAIN_THRESHOLD))
+                & (r2_pc_proj >= jnp.float32(_R_MIN))
+            )
+            return jnp.where(
+                reparam_signal,
+                r2_pc_proj,
+                jnp.array(float("nan"), dtype=r2_new.dtype),
+            )
+
+        r2_routing = jax.lax.cond(
+            mode_new == jnp.int32(_R2_PROJECTED),
+            _gain_r2_override,
+            lambda: r2_new,
+        )
+        r2_gate = r2_routing >= jnp.float32(
+            _R_MIN
+        )  # for T-branch + verdict; False when NaN
 
         # ---- W-branch: pooled within-chain whiteness detector ----
         lam1_w, top_eigvec_w = _compute_pooled_within_spectrum(
@@ -2245,12 +2283,14 @@ def build_multi_chain_meta_core(
         # ---- W-branch conjunction ----
         # No unimodality gate: per-chain centering makes W structurally mode-blind.
         # No support gate: W detects continuous spread, not discrete spike count.
+        # Uses r2_gate_w (raw R², pre-GAIN-override) so that a genuine linear
+        # Gaussian with low projected GAIN is not incorrectly blocked here.
         escalate_W = (
             ~state.has_escalated
             & w_magnitude
             & w_psi_gate
             & w_r1_gate
-            & r2_gate
+            & r2_gate_w
             & deadline_ok
         )
 
@@ -2424,7 +2464,7 @@ def build_multi_chain_meta_core(
             escalation_rank=new_escalation_rank,
             s_gap_prev=state.s_gap_curr,  # NaN chain; diagnostic compat
             s_gap_curr=jnp.array(float("nan"), dtype=jnp.float32),
-            r2_latest=r2_new.astype(jnp.float32),
+            r2_latest=r2_routing.astype(jnp.float32),  # GAIN-corrected for verdict
             r2_mode=mode_new,
             budget_used=state.budget_used,
             converged_at_step=new_converged_at,
