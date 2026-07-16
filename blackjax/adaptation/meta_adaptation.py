@@ -1678,17 +1678,22 @@ def build_multi_chain_meta_core(
         mc_detection_T = t_pre_uni & t_unimodality
         escalate_T = ~state.has_escalated & r2_gate & mc_detection_T & deadline_ok
 
+        # ---- Union escalation (computed before deferred to enable the gate) ----
+        escalate_now = escalate_W | escalate_T
+        new_has_escalated = state.has_escalated | escalate_now
+
         # ---- Scoped latch: deferred_to_ensemble (non-monotone, v2.1 rule) ----
         # Recomputed each window from current T-branch evidence.
         # Temporal supersede is automatic: escalate_T requires ~confirmed_split →
         # confirmed_split=False → new_deferred=False when T escalates. ✓
         # Cross-branch coexistence is LEGAL: W escalate + T defer is representable.
-        # Impossible combo (T escalate + deferred) is excluded algebraically. ✓
-        new_deferred = t_pre_uni & unimodality_confirmed_split & r2_gate
-
-        # ---- Union escalation ----
-        escalate_now = escalate_W | escalate_T
-        new_has_escalated = state.has_escalated | escalate_now
+        # Post-escalation: deferred is False once escalated (moot after deployment). ✓
+        # Impossible combo (route=low_rank ∧ deferred ∧ detection_branch=between_means)
+        # is excluded: T escalation requires ~confirmed_split → deferred=False. And once
+        # new_has_escalated=True the ~new_has_escalated guard below holds deferred=False. ✓
+        new_deferred = (
+            t_pre_uni & unimodality_confirmed_split & r2_gate & ~new_has_escalated
+        )
         new_escalation_rank = jnp.where(escalate_now, k_new, state.escalation_rank)
 
         # Detection branch code (carry from last firing window if no fire this window)

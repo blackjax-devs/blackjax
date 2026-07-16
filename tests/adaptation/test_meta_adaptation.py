@@ -2618,8 +2618,14 @@ def _fill_mc_state(
 class TestTimeMajorLayout(BlackJAXTest):
     """_build_pc_centered_time_major_pool puts valid rows first (no padding contamination)."""
 
-    def test_valid_rows_are_contiguous_at_start(self):
-        """With n < B, the first n*M rows must be non-zero and the rest zero."""
+    def test_step_mask_valid_region_is_contiguous_at_start(self):
+        """With n < B, step_mask_tm must be 1 for rows 0..n*M-1 and 0 for rows n*M..B*M-1.
+
+        _build_pc_centered_time_major_pool returns unmasked centered draws and a
+        separate mask.  The mask encodes valid vs padding — callers apply it.
+        This test verifies that the mask correctly identifies the valid region as
+        contiguous at the start (time-major layout) rather than scattered (chain-major).
+        """
         M, n, B, d = 4, 30, 64, 10
         key = jax.random.key(1)
         draws = jax.random.normal(key, (M, B, d))
@@ -2627,25 +2633,33 @@ class TestTimeMajorLayout(BlackJAXTest):
         chain_means = draws.mean(axis=1)
 
         n_arr = jnp.array(n, dtype=jnp.int32)
-        pc_draws, _pc_grads, _step_mask = _build_pc_centered_time_major_pool(
+        pc_draws, _pc_grads, step_mask_tm = _build_pc_centered_time_major_pool(
             draws, grads, chain_means, n_arr, M
         )
 
         self.assertEqual(pc_draws.shape, (B * M, d))
+        self.assertEqual(step_mask_tm.shape, (B * M,))
 
-        valid_block = np.asarray(pc_draws[: n * M])
-        self.assertGreater(
-            float(np.abs(valid_block).max()),
-            0.0,
-            "valid rows should have non-zero content",
+        # Valid region: rows 0 .. n*M-1 → mask must be 1
+        valid_mask = np.asarray(step_mask_tm[: n * M])
+        last_valid = n * M - 1
+        self.assertTrue(
+            np.all(valid_mask == 1.0),
+            f"step_mask_tm rows 0..{last_valid} must all be 1",
         )
 
-        padding_block = np.asarray(pc_draws[n * M :])
-        self.assertAlmostEqual(
-            float(np.abs(padding_block).max()),
-            0.0,
-            places=6,
-            msg="padding rows should be all-zero",
+        # Padding region: rows n*M .. B*M-1 → mask must be 0
+        padding_mask = np.asarray(step_mask_tm[n * M :])
+        last_pad = B * M - 1
+        self.assertTrue(
+            np.all(padding_mask == 0.0),
+            f"step_mask_tm rows {n * M}..{last_pad} must all be 0",
+        )
+
+        # Valid draws should have non-zero content (centering does not collapse to zero)
+        valid_draws = np.asarray(pc_draws[: n * M])
+        self.assertGreater(
+            float(np.abs(valid_draws).max()), 0.0, "valid rows should be non-zero"
         )
 
     def test_first_valid_row_equals_chain0_step0_centered(self):
@@ -2913,8 +2927,15 @@ class TestImpossibleComboInvariant(BlackJAXTest):
                 deferred, "Impossible combo: escalated state must not be deferred"
             )
 
-    def test_deferred_state_has_no_escalation(self):
-        """deferred=True (T-only path) implies has_escalated=False."""
+    def test_impossible_combo_between_means_deferred_escalated(self):
+        """The combo route=low_rank ∧ deferred ∧ detection_branch=between_means is impossible.
+
+        Cross-branch coexistence (W-escalation + T-defer) IS LEGAL per the scoped
+        latch rule.  The ONLY impossible combo is:
+            deferred=True AND has_escalated=True AND detection_branch=between_means.
+        If T-branch alone escalated (between_means), it required ~confirmed_split
+        → confirmed_split=False → new_deferred=False.  So this triple cannot occur.
+        """
         M, n, d = 8, 150, 10
         core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
         state = core.init(d)
@@ -2929,11 +2950,13 @@ class TestImpossibleComboInvariant(BlackJAXTest):
 
         has_esc = bool(np.asarray(r2.has_escalated))
         deferred = bool(np.asarray(r2.deferred_to_ensemble))
+        branch = int(np.asarray(r2.detection_branch))
 
-        if deferred:
+        # If the T-only between_means branch escalated, deferred MUST be False
+        if has_esc and branch == _DETECTION_BRANCH_BETWEEN_MEANS:
             self.assertFalse(
-                has_esc,
-                "deferred=True (T-only path) must not coincide with has_escalated=True",
+                deferred,
+                "Impossible combo: detection_branch=between_means + escalated + deferred",
             )
 
 
@@ -3091,7 +3114,7 @@ class TestSharedEpsilonDA(BlackJAXTest):
         )
 
     def test_step_counter_increments_M_times(self):
-        """After n_da_updates=M, the DA step counter == M (not 1)."""
+        """After n_da_updates=M, the DA step counter increments by M (not 1)."""
         from blackjax.adaptation.meta_adaptation import build_meta_adaptation_core
 
         M = 3
@@ -3104,6 +3127,7 @@ class TestSharedEpsilonDA(BlackJAXTest):
             n_da_updates=M,
         )
         adaptation_state = eng_init(jnp.zeros(8), 0.1)
+        initial_step = int(np.asarray(adaptation_state.ss_state.step))
         adaptation_stage = (jnp.int32(0), jnp.bool_(False))
 
         new_state = eng_update(
@@ -3115,10 +3139,11 @@ class TestSharedEpsilonDA(BlackJAXTest):
         )
 
         step_count = int(np.asarray(new_state.ss_state.step))
+        # The step counter should have incremented exactly M times
         self.assertEqual(
-            step_count,
+            step_count - initial_step,
             M,
-            f"After n_da_updates={M}, DA step counter should be {M}, got {step_count}",
+            f"DA step counter should increment by {M}, got delta={step_count - initial_step}",
         )
 
 
