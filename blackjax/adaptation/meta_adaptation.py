@@ -62,6 +62,9 @@ __all__ = [
     "build_multi_chain_meta_core",
     "extract_meta_verdict",
     "extract_multi_chain_verdict",
+    "_between_chain_detection",
+    "_compute_within_chain_stats",
+    "_mc_detection_edge",
 ]
 
 # ---------------------------------------------------------------------------
@@ -116,16 +119,21 @@ escalation trigger.  Grounded in the sharp-transition point where the
 between-chain look-count makes escalation robust for near-edge cases.
 """
 
-_MULTI_CHAIN_AGREEMENT_TOL: float = 0.7
-"""Minimum cross-chain projector agreement score to confirm a detected spike.
+_MC_COLLINEARITY_TOL: float = 0.7
+"""Minimum collinearity score f₁ to accept a between-chain spike.
 
-Agreement is measured as the mean pairwise normalised Frobenius inner
-product of rank-k subspace projectors across M independent chains (∈ [0,1]).
-A true low-rank structure produces consistent leading directions across
-independent overdispersed chains; correlation-spurious spikes are near-
-orthogonal across chains and score well below this threshold.
-Two consecutive windows must both exceed this tolerance before the spike
-is confirmed and escalation proceeds.
+f₁ = fraction of total between-chain scatter variance in the top singular
+direction.  Genuine slow directions produce near-rank-1 concentration (f₁→1);
+within-chain autocorrelation artifacts scatter nearly isotropically across
+independent chains (f₁ ≈ 1/(M−1)).  Threshold is between those regimes.
+"""
+
+_MC_UNIMODALITY_GAP_RATIO: float = 4.0
+"""Gap-statistic threshold for the unimodality guard.
+
+max_gap / mean_gap on the projected chain-means; mode-split targets produce
+a large dominant gap (≈160× mean) whereas unimodal targets produce ≈2–3×.
+This is a FLAG, not a proof: noisy at small M or uneven splits.
 """
 
 # R² mode integers (stored in carry as int8).
@@ -206,8 +214,8 @@ class MultiChainMetaAdaptationCoreState(NamedTuple):
 
     All controller carry fields (``has_escalated``, ``s_gap_*``, ``r2_*``,
     ``airm_vel_*``, …) are identical in semantics to the single-chain state;
-    ``chain_agreement_prev`` / ``chain_agreement_curr`` replace the S_gap-
-    stability pair as the two-consecutive-window confirmation mechanism.
+    ``chain_collinearity`` carries the collinearity score f₁ from the most
+    recent window boundary (NaN until the first window is complete).
 
     When ``n_chains=1`` the single-chain path is used instead (see
     :func:`build_meta_adaptation_core`); this state is never constructed for
@@ -237,8 +245,7 @@ class MultiChainMetaAdaptationCoreState(NamedTuple):
     airm_vel_curr: Array  # float32
     is_slow_mixing: Array  # bool; always False in the multi-chain path (pooled diagnostic)
     # Multi-chain-specific carry
-    chain_agreement_prev: Array  # float32; projector agreement from window before last (NaN initially)
-    chain_agreement_curr: Array  # float32; projector agreement from most recent window (NaN initially)
+    chain_collinearity: Array  # float32; collinearity score f₁ from most recent window (NaN initially)
 
 
 # ---------------------------------------------------------------------------
@@ -415,107 +422,270 @@ def _compute_transient_mixing_signal(
     return jnp.max(jnp.abs(mu1 - mu2) / std) > _TRANSIENT_MIXING_THRESHOLD
 
 
-def _compute_per_chain_spectra(
+def _compute_within_chain_stats(
     draws_buffer_mc: Array,
-    sigma: Array,
     n: Array,
-    max_rank: int,
 ) -> tuple[Array, Array]:
-    """Top ``max_rank`` eigenvalues and eigenvectors for each of M chains.
+    """Per-chain means and pooled within-chain diagonal variance.
 
     Parameters
     ----------
     draws_buffer_mc
         Per-chain draw buffers, shape ``(M, buf_size, d)``.
-    sigma
-        Diagonal whitening scale, shape ``(d,)`` (shared across chains).
     n
-        Dynamic fill count per chain (same for all chains), int32 scalar.
-    max_rank
-        Number of eigencomponents to compute.
+        Dynamic fill count (same for all chains), int32 scalar.
 
     Returns
     -------
-    eigenvalues_per_chain
-        Shape ``(M, max_rank)``.
-    U_k_per_chain
-        Shape ``(M, d, max_rank)``.
+    chain_means
+        Shape ``(M, d)`` — per-chain mean over valid draws.
+    W_diag
+        Shape ``(d,)`` — average within-chain diagonal variance across M chains.
     """
-    return jax.vmap(lambda db: _compute_whitened_spectrum(db, sigma, n, max_rank))(
-        draws_buffer_mc
-    )
+    M_s, B, d = draws_buffer_mc.shape  # all static
+    n_f = n.astype(draws_buffer_mc.dtype)
+    n_safe = jnp.maximum(n_f, 1.0)
+    step_mask = (jnp.arange(B) < n).astype(draws_buffer_mc.dtype)  # (B,)
+
+    # Per-chain means: (M, d)
+    chain_means = (step_mask[None, :, None] * draws_buffer_mc).sum(
+        1
+    ) / n_safe  # broadcast (M, B, d) × (B,)
+
+    # Per-chain within-chain variance, vmapped over M: (M, d)
+    def _chain_var(draws_m: Array, mean_m: Array) -> Array:
+        centered = step_mask[:, None] * (draws_m - mean_m[None, :])
+        return (centered**2).sum(0) / jnp.maximum(n_safe - 1.0, 1.0)
+
+    per_chain_vars = jax.vmap(_chain_var)(draws_buffer_mc, chain_means)  # (M, d)
+    W_diag = per_chain_vars.mean(0)  # (d,) pooled within-chain variance
+    return chain_means, W_diag
 
 
-def _compute_projector_agreement(
-    U_k_per_chain: Array,
-    k: Array,
-    max_rank: int,
-) -> Array:
-    """Mean pairwise cross-chain projector agreement score ∈ [0, 1].
+def _between_chain_detection(
+    chain_means: Array,
+    W_diag: Array,
+    n: Array,
+    M: int,
+    d: int,
+) -> tuple[Array, Array, Array]:
+    """Between-chain detection statistic via the M×M Gram.
 
-    For k-dimensional subspaces spanned by the leading k columns of each
-    chain's U matrix, the pairwise agreement between chains m1 and m2 is:
-
-        ||U_m1[:, :k]ᵀ @ U_m2[:, :k]||_F² / k
-
-    This is the normalised Frobenius inner product of the rank-k projectors
-    P_m = U_m[:, :k] @ U_m[:, :k]ᵀ.  Using projectors instead of raw
-    eigenvectors avoids sign/rotation gauge freedom (W3 in the theoretical
-    grounding).
-
-    A true low-rank structure yields agreement → 1 because all chains'
-    leading eigenvectors align with the same population direction.
-    Correlation-spurious within-chain spikes produce near-orthogonal
-    eigenvectors across independent chains, scoring → 0.
+    Computes T = (n/(M−1))·ZᵀZ (rank ≤ M−1) via the M×M Gram ZZᵀ.
+    T's eigenvalues are the per-direction Gelman–Rubin B/W ratios (R̂²).
+    Null distribution has top eigenvalue → (1+√(d/(M−1)))² (the detection edge).
 
     Parameters
     ----------
-    U_k_per_chain
-        Per-chain eigenvector matrices, shape ``(M, d, max_rank)``.
-    k
-        Number of leading directions to compare (dynamic JAX int32).
-    max_rank
-        Static dimension of the trailing axis of ``U_k_per_chain``.
+    chain_means
+        Shape ``(M, d)`` — per-chain mean.
+    W_diag
+        Shape ``(d,)`` — within-chain diagonal variance (whitening basis).
+    n
+        Dynamic fill count, int32 scalar (within-chain number of draws).
+    M, d
+        Static integers.
 
     Returns
     -------
-    Agreement score, float scalar ∈ [0, 1].  Returns 1.0 when M < 2
-    (trivially; no pairs to compare).
+    T_eigenvalues
+        Shape ``(M,)`` — eigenvalues of T in descending order (last M−rank ≈ 0).
+    V_top
+        Shape ``(d, M−1)`` — top M−1 directions of T in whitened space (columns).
+    f1
+        float32 scalar — collinearity score: fraction of total between-chain
+        scatter variance in the leading direction (→1 for genuine slow dir,
+        ≈1/(M−1) for isotropic scatter).
     """
-    M = U_k_per_chain.shape[0]  # static
-    if M < 2:
-        return jnp.ones((), dtype=U_k_per_chain.dtype)
+    n_f = n.astype(chain_means.dtype)
+    grand_mean = chain_means.mean(0)  # (d,)
+    W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
+    sigma_w = jnp.sqrt(W_safe)  # (d,)
 
-    k_safe = jnp.maximum(k, jnp.int32(1))
-    # (max_rank, max_rank) mask selecting the top-k × top-k block
-    k_mask = jnp.arange(max_rank) < k_safe
-    pair_mask = k_mask[:, None] & k_mask[None, :]  # (max_rank, max_rank)
+    # Whitened chain-mean deviations: z_m = (mu_m − mu_bar) / sigma_w, (M, d)
+    Z = (chain_means - grand_mean[None, :]) / sigma_w[None, :]
 
-    pair_scores = []
-    for m1 in range(M):
-        for m2 in range(m1 + 1, M):
-            # Cross-gram of eigenvector matrices: (max_rank, max_rank)
-            G = U_k_per_chain[m1].T @ U_k_per_chain[m2]
-            # Masked Frobenius norm squared of the top-k block, normalised by k
-            score = (G**2 * pair_mask).sum() / k_safe.astype(G.dtype)
-            pair_scores.append(score)
+    # M×M Gram: cheaper than d×d when M ≪ d
+    gram = Z @ Z.T  # (M, M)
 
-    return jnp.mean(jnp.stack(pair_scores))
+    # Symmetric eigendecomp; eigh returns ascending order
+    eigvals_gram, eigvecs_gram = jnp.linalg.eigh(gram)  # (M,), (M, M)
+    # Descending order
+    eigvals_gram = jnp.flip(eigvals_gram)
+    eigvecs_gram = jnp.flip(eigvecs_gram, axis=1)
+
+    # T eigenvalues: scale by c = n/(M−1)
+    c = n_f / jnp.float32(M - 1)
+    T_eigenvalues = eigvals_gram * c  # (M,)
+
+    # Collinearity score f₁ = λ_max(gram) / trace(gram)
+    trace_gram = jnp.maximum(jnp.trace(gram), jnp.float32(1e-20))
+    f1 = (eigvals_gram[0] / trace_gram).astype(jnp.float32)
+
+    # Top M−1 directions in d-space via Z^T U / sqrt(gram_eigval)
+    # (eigenvectors of Z^T Z = right singular vectors of Z)
+    eps = jnp.float32(1e-10)
+    top_m1 = min(M - 1, d)  # static
+    s_safe = jnp.sqrt(jnp.maximum(eigvals_gram[:top_m1], eps))  # (M−1,)
+    V_top = Z.T @ eigvecs_gram[:, :top_m1] / s_safe[None, :]  # (d, M−1)
+
+    return T_eigenvalues, V_top, f1
 
 
-def _bbp_edge_sq(d: int, M: int) -> float:
-    """Sample-eigenvalue bulk-separation edge: ``(1 + √(d/M))²``.
+def _mc_detection_edge(d: int, dof: int) -> float:
+    """Between-chain bulk-separation edge: ``(1 + √(d/dof))²``.
 
-    The threshold separates the noise bulk from a true spike when the
-    governing effective count is M (the between-chain look-count) rather
-    than the total number of draws.  Using M instead of the single-chain
-    n_eff avoids the optimism of ESS estimates under poor mixing (the ESS
-    overestimates exactly when the sampler struggles most).
+    Calibrated for the M×M Gram whose null Wishart has ``dof = M−1`` degrees
+    of freedom (grand-mean constraint removes one dof from M chains).  Using
+    M−1 (not M) is rigorous: rank(T) = M−1 exactly.
 
-    Both ``d`` and ``M`` are Python ints (static at construction time), so
-    the result is a Python float suitable as a ``cutoff`` argument.
+    Both ``d`` and ``dof`` are Python ints (static at construction time).
     """
-    return (1.0 + (d / M) ** 0.5) ** 2
+    return (1.0 + (d / dof) ** 0.5) ** 2
+
+
+def _loo_detection_passes(
+    chain_means: Array,
+    W_diag: Array,
+    n: Array,
+    M: int,
+    d: int,
+    edge_loo: float,
+) -> Array:
+    """Leave-one-out check: detection must survive dropping any single chain.
+
+    For each m' = 0..M−1, re-centres the remaining M−1 chains, computes the
+    top T eigenvalue with (M−2) dof, and checks it clears ``edge_loo``.
+    All M checks must pass (conjunction).
+
+    Parameters
+    ----------
+    chain_means
+        Shape ``(M, d)``.
+    W_diag
+        Shape ``(d,)`` — within-chain diagonal variance.
+    n
+        Dynamic fill count, int32.
+    M, d
+        Static.
+    edge_loo
+        Detection edge for M−2 dof: ``(1+√(d/(M−2)))²`` (Python float).
+
+    Returns
+    -------
+    bool scalar (JAX) — True if all M leave-one-out checks pass.
+    """
+    n_f = n.astype(chain_means.dtype)
+    c_loo = n_f / jnp.float32(M - 2)
+    W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
+    sigma_w = jnp.sqrt(W_safe)
+    edge_f32 = jnp.float32(edge_loo)
+
+    all_pass = jnp.ones((), dtype=jnp.bool_)
+    for m_drop in range(M):
+        # Remaining M−1 chain means (static Python-time indexing)
+        rows = [chain_means[m] for m in range(M) if m != m_drop]
+        Z_loo = jnp.stack(rows)  # (M−1, d)
+        mu_loo = Z_loo.mean(0)  # (d,)
+        Z_loo_c = (Z_loo - mu_loo[None, :]) / sigma_w[None, :]  # whitened + centred
+        gram_loo = Z_loo_c @ Z_loo_c.T  # (M−1, M−1)
+        max_eigval_loo = jnp.linalg.eigvalsh(gram_loo)[-1]  # largest (ascending)
+        T_max_loo = max_eigval_loo * c_loo
+        all_pass = all_pass & (T_max_loo > edge_f32)
+
+    return all_pass
+
+
+def _unimodality_gap_stat(
+    chain_means: Array,
+    top_direction: Array,
+) -> tuple[Array, Array]:
+    """Gap-statistic check on projected chain-means.
+
+    Projects the M chain-means onto ``top_direction`` and measures whether
+    the projections cluster into one group (unimodal) or two or more groups
+    (mode-split).  Uses max_gap / mean_gap as the discreteness signal.
+
+    Parameters
+    ----------
+    chain_means
+        Shape ``(M, d)``.
+    top_direction
+        Shape ``(d,)`` — unit-vector slow direction (unwhitened).
+
+    Returns
+    -------
+    is_unimodal
+        bool scalar — True iff gap ratio < :data:`_MC_UNIMODALITY_GAP_RATIO`.
+    gap_ratio
+        float32 scalar — max_gap / mean_gap (diagnostic; large ⇒ mode-split).
+    """
+    projections = chain_means @ top_direction  # (M,)
+    sorted_proj = jnp.sort(projections)  # ascending
+    gaps = sorted_proj[1:] - sorted_proj[:-1]  # (M−1,) inter-point gaps
+    mean_gap = gaps.mean()
+    max_gap = gaps.max()
+    gap_ratio = max_gap / jnp.maximum(mean_gap, jnp.float32(1e-10))
+    is_unimodal = gap_ratio < jnp.float32(_MC_UNIMODALITY_GAP_RATIO)
+    return is_unimodal, gap_ratio.astype(jnp.float32)
+
+
+def _geometric_mean_deploy_scale(
+    chain_means: Array,
+    pooled_grads: Array,
+    step_mask_all: Array,
+    grand_mean: Array,
+    e: Array,
+    n_pool: Array,
+    M: int,
+) -> Array:
+    """Geometric-mean metric variance for the slow direction.
+
+    σ̂²_deploy = √( (B/n) · 1/(eᵀF̂e) )
+
+    where B/n is the between-chain variance of chain-means in direction e and
+    1/(eᵀF̂e) is the pooled-Fisher curvature scale in direction e.  The
+    geometric mean cancels the init-dispersion factor f_disp that makes each
+    term individually biased: B/n over-estimates by f_disp, Fisher curvature
+    under-estimates by f_disp; the product is f_disp-independent.
+
+    Parameters
+    ----------
+    chain_means
+        Shape ``(M, d)`` — per-chain means.
+    pooled_grads
+        Shape ``(M*B, d)`` — all chains' gradient buffers flattened.
+    step_mask_all
+        Shape ``(M*B,)`` — 1 for valid rows, 0 otherwise.
+    grand_mean
+        Shape ``(d,)`` — grand mean of chain means.
+    e
+        Shape ``(d,)`` — unit-vector slow direction in original (unwhitened) space.
+    n_pool
+        Dynamic int32 — total valid gradient count (M * n_per_chain).
+    M
+        Static int — number of chains.
+
+    Returns
+    -------
+    float32 scalar — σ̂²_deploy (positive).
+    """
+    # B/n: between-chain variance of chain-means projected onto e
+    mu_proj = (chain_means - grand_mean[None, :]) @ e  # (M,)
+    B_over_n = (mu_proj**2).sum() / jnp.float32(M - 1)
+
+    # Fisher curvature: eᵀF̂_pooled e
+    n_pool_f = n_pool.astype(pooled_grads.dtype)
+    n_pool_safe = jnp.maximum(n_pool_f, jnp.float32(1.0))
+    g_proj = pooled_grads @ e  # (M*B,)
+    fisher_curv_e = (step_mask_all * g_proj**2).sum() / n_pool_safe
+
+    # Geometric mean: sqrt(B/n * 1/fisher_curv_e)
+    sigma_sq_deploy = jnp.sqrt(
+        jnp.maximum(B_over_n, jnp.float32(1e-20))
+        / jnp.maximum(fisher_curv_e, jnp.float32(1e-20))
+    )
+    return sigma_sq_deploy.astype(jnp.float32)
 
 
 # ---------------------------------------------------------------------------
@@ -851,8 +1021,7 @@ def build_multi_chain_meta_core(
             airm_vel_prev=jnp.array(float("inf"), dtype=jnp.float32),
             airm_vel_curr=jnp.array(float("inf"), dtype=jnp.float32),
             is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
-            chain_agreement_prev=jnp.array(float("nan"), dtype=jnp.float32),
-            chain_agreement_curr=jnp.array(float("nan"), dtype=jnp.float32),
+            chain_collinearity=jnp.array(float("nan"), dtype=jnp.float32),
         )
 
     def update(
@@ -900,103 +1069,145 @@ def build_multi_chain_meta_core(
     def final(
         state: MultiChainMetaAdaptationCoreState,
     ) -> MultiChainMetaAdaptationCoreState:
-        """Window-boundary controller: pooled multi-chain gate → escalation → reset.
+        """Window-boundary controller: between-chain gate → escalation → reset.
 
-        Computes the two-part multi-chain gate:
-        1. Spike detection on the pooled whitened residual (all M chains'
-           draws pooled around the grand mean), compared against the M-based
-           detection edge.
-        2. Cross-chain projector agreement of per-chain leading subspaces.
-        Escalates iff both pass (in two consecutive windows) and R² + budget
-        gates also pass.
+        Five-gate conjunction (all must pass to escalate):
+        1. Magnitude: top T eigenvalue clears the (M−1)-dof bulk-separation edge.
+        2. Collinearity: f₁ ≥ threshold (genuine slow dir → rank-1 concentration).
+        3. Leave-one-out: detection survives dropping any single chain.
+        4. Support: k ≤ M−2 (M−1 dof supports at most M−2 spikes conservatively).
+        5. Unimodality: gap-stat on projected chain-means does not flag mode-split.
+        Plus R² curvature gate and budget deadline (carried from single-chain).
         """
         M_stat, B, d = state.draws_buffer.shape  # all static
         n = jnp.minimum(state.buffer_idx, jnp.int32(B))
         actual_rank = state.inverse_mass_matrix.U.shape[1]  # static
 
-        # ---- Pooled Welford sigma (grand mean across all M chains × n steps) ----
-        n_f = n.astype(state.draws_buffer.dtype)
-        total_n_f = n_f * jnp.float32(M_stat)
-        total_n_safe = jnp.maximum(total_n_f, 1.0)
+        # ---- Static detection edges (Python floats; M_stat and d are static) ----
+        dof = M_stat - 1  # rank of T (grand-mean constraint)
+        edge_full = _mc_detection_edge(d, dof)  # (1+√(d/(M−1)))²
+        # LOO edge: M−2 remaining chains → M−2 dof after re-centring (M−3 df)
+        # Conservatively use dof−1 = M−2 for the LOO edge
+        edge_loo = _mc_detection_edge(d, max(dof - 1, 1))
 
-        # step_mask shape (B,): same fill level for all chains
-        step_mask = (jnp.arange(B) < n).astype(state.draws_buffer.dtype)
-        mask_mc = step_mask[None, :, None]  # (1, B, 1) → broadcasts to (M, B, d)
+        # ---- Within-chain statistics ----
+        chain_means, W_diag = _compute_within_chain_stats(state.draws_buffer, n)
+        grand_mean = chain_means.mean(0)  # (d,)
 
-        pooled_mean = (mask_mc * state.draws_buffer).sum((0, 1)) / total_n_safe
-        pooled_var = (
-            mask_mc * (state.draws_buffer - pooled_mean[None, None, :]) ** 2
-        ).sum((0, 1)) / jnp.maximum(total_n_f - 1.0, 1.0)
-        sigma_welford = jnp.sqrt(jnp.maximum(pooled_var, 1e-10))  # (d,)
+        # ---- Between-chain detection matrix via M×M Gram ----
+        T_eigenvalues, V_top, f1 = _between_chain_detection(
+            chain_means, W_diag, n, M_stat, d
+        )
+        # T_eigenvalues is (M,) descending; first M−1 are non-trivial, last ≈ 0
+        T_top = T_eigenvalues[0]
 
-        # ---- Pooled draw / grad matrices for Fisher-LR metric ----
-        # Static reshape: (M*B, d).  Dynamic fill count: n*M.
+        # ---- Gate 1: Magnitude ----
+        magnitude_gate = T_top > jnp.float32(edge_full)
+
+        # ---- Count admitted spikes (for support gate and metric scale) ----
+        # k = number of T eigenvalues above the bulk edge, capped by M−2
+        # (M−1 dof supports at most M−2 independently admitted spikes).
+        k_raw = (T_eigenvalues > jnp.float32(edge_full)).sum().astype(jnp.int32)
+        k_new = jnp.minimum(k_raw, jnp.int32(max(dof - 1, 1)))
+        k_new = jnp.minimum(k_new, jnp.int32(actual_rank))
+
+        # ---- Gate 2: Collinearity ----
+        collinearity_gate = f1 >= jnp.float32(_MC_COLLINEARITY_TOL)
+
+        # ---- Gate 3: Leave-one-out ----
+        loo_gate = _loo_detection_passes(chain_means, W_diag, n, M_stat, d, edge_loo)
+
+        # ---- Gate 4: Support ----
+        support_gate = k_new >= jnp.int32(1)  # at least one spike admitted
+
+        # ---- Gate 5: Unimodality (flag; mode-split → refuse escalation) ----
+        # Use top whitened direction converted back to original space as the
+        # projection axis.  V_top[:, 0] is the whitened direction; unwhiten:
+        W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
+        e_unnorm = jnp.sqrt(W_safe) * V_top[:, 0]  # (d,) in original space
+        e_norm = jnp.linalg.norm(e_unnorm)
+        e_dir = e_unnorm / jnp.maximum(e_norm, jnp.float32(1e-10))  # unit vector
+        is_unimodal, _gap_ratio = _unimodality_gap_stat(chain_means, e_dir)
+        unimodality_gate = is_unimodal
+
+        # ---- Pooled draw/grad matrices for R² and Fisher-LR metric ----
+        step_mask = (jnp.arange(B) < n).astype(state.draws_buffer.dtype)  # (B,)
         pooled_draws = state.draws_buffer.reshape(M_stat * B, d)
         pooled_grads = state.grads_buffer.reshape(M_stat * B, d)
         n_pool = n * jnp.int32(M_stat)
+        step_mask_all = jnp.tile(step_mask, M_stat)  # (M*B,)
 
+        # Fisher-LR metric (for the stay-diagonal baseline sigma and the
+        # full-rank R² computation on pooled draws)
         sigma_lr, mu_star_new, U_lr, lam_lr = _compute_low_rank_metric(
             pooled_draws, pooled_grads, n_pool, actual_rank, gamma, cutoff
         )
 
-        # Stay-diagonal metric (Welford sigma; U=0, lam=1)
-        diag_imm = LowRankInverseMassMatrix(
-            sigma=sigma_welford,
-            U=jnp.zeros((d, actual_rank), dtype=sigma_welford.dtype),
-            lam=jnp.ones(actual_rank, dtype=sigma_welford.dtype),
+        # ---- R² curvature gate (on pooled draws; same as single-chain) ----
+        _, U_k_pooled = _compute_whitened_spectrum(
+            pooled_draws,
+            jnp.sqrt(jnp.maximum(W_diag, jnp.float32(1e-10))),
+            n_pool,
+            actual_rank,
         )
-        # Escalated metric: Fisher-LR from pooled draws
-        lr_imm = LowRankInverseMassMatrix(sigma=sigma_lr, U=U_lr, lam=lam_lr)
-
-        # ---- Pooled spectrum (spike detection) ----
-        # Spike detection uses the M-based detection edge; d and M_stat are
-        # Python ints (static), so bbp_edge is a Python float.
-        bbp_edge = _bbp_edge_sq(d, M_stat)  # (1 + √(d/M))² — Python float
-
-        # Pooled whitened spectrum: one SVD on all M×B draws
-        eigenvalues_pool, U_k_pool = _compute_whitened_spectrum(
-            pooled_draws, sigma_welford, n_pool, actual_rank
-        )
-        # Count spikes above the M-count detection edge (replaces fixed cutoff)
-        is_above_edge = eigenvalues_pool > jnp.float32(bbp_edge)
-        k_from_pool = is_above_edge.sum().astype(jnp.int32)
-        support_cap_pool = (n_pool // 2).astype(jnp.int32)
-        k_new = jnp.minimum(
-            k_from_pool, jnp.minimum(support_cap_pool, jnp.int32(actual_rank))
-        )
-
-        spike_detected = eigenvalues_pool[0] > jnp.float32(bbp_edge)
-
-        # ---- Per-chain spectra (cross-chain agreement) ----
-        # Each chain's leading subspace is computed independently on the
-        # per-chain buffer.  Agreement compares these subspaces as projectors
-        # (sign-invariant, rotation-invariant) to reject correlation-spurious
-        # spikes that would have random directions across independent chains.
-        eigenvalues_per_chain, U_k_per_chain = _compute_per_chain_spectra(
-            state.draws_buffer, sigma_welford, n, actual_rank
-        )
-        agreement_score_raw = _compute_projector_agreement(
-            U_k_per_chain, k_new, actual_rank
-        )
-        # Cast to float32 for consistent carry dtype (same pattern as s_gap)
-        agreement_score = agreement_score_raw.astype(jnp.float32)
-
-        # ---- R² score-linearity gate (on pooled draws) ----
         r2_new, mode_new = _compute_r2_score_linearity(
-            pooled_draws, pooled_grads, sigma_welford, n_pool, U_k_pool, actual_rank
+            pooled_draws,
+            pooled_grads,
+            jnp.sqrt(jnp.maximum(W_diag, jnp.float32(1e-10))),
+            n_pool,
+            U_k_pooled,
+            actual_rank,
+        )
+
+        # ---- Stay-diagonal metric (within-chain W_diag baseline) ----
+        sigma_w_diag = jnp.sqrt(jnp.maximum(W_diag, jnp.float32(1e-10)))
+        diag_imm = LowRankInverseMassMatrix(
+            sigma=sigma_w_diag,
+            U=jnp.zeros((d, actual_rank), dtype=sigma_w_diag.dtype),
+            lam=jnp.ones(actual_rank, dtype=sigma_w_diag.dtype),
+        )
+
+        # ---- Escalated metric: Fisher-LR baseline + geometric-mean rank-1 update ----
+        # Geometric-mean scale for the detected slow direction (rank-1 v2 update).
+        sigma_sq_deploy = _geometric_mean_deploy_scale(
+            chain_means,
+            pooled_grads,
+            step_mask_all,
+            grand_mean,
+            e_dir,
+            n_pool,
+            M_stat,
+        )
+        # lam for LR update: σ̂²_deploy = λ_slow · ||sigma_lr ⊙ e_dir||²
+        # ||sigma_lr ⊙ e||² = sum_i sigma_lr_i² e_i²  (not the dot-product squared)
+        sigma_lr_e_sq = jnp.maximum(
+            ((sigma_lr**2) * (e_dir**2)).sum(), jnp.float32(1e-20)
+        )
+        lam_slow = sigma_sq_deploy / sigma_lr_e_sq
+        # Escalated metric: Fisher-LR sigma baseline, rank-1 slow-dir correction
+        U_slow = e_dir[:, None]  # (d, 1) — one slow direction
+        lam_slow_vec = jnp.concatenate(
+            [lam_slow[None], jnp.ones(actual_rank - 1, dtype=lam_slow.dtype)]
+        )
+        # For actual_rank ≥ 1 (guaranteed by construction): first lam slot = slow dir,
+        # remaining slots = 1.0 (no correction).
+        # Combine with Fisher-LR: take Fisher U for all but the slow direction.
+        # Simple v2: single rank-1 update along e_dir; full rank-k is a v2.1 upgrade.
+        lr_imm = LowRankInverseMassMatrix(
+            sigma=sigma_lr,
+            U=jnp.concatenate([U_slow, U_lr[:, 1:]], axis=1),
+            lam=lam_slow_vec,
         )
 
         # ---- Escalation decision ----
         r2_gate = r2_new >= _R_MIN  # False when NaN (JAX comparison semantics)
 
-        spike_gate = spike_detected & (k_new > 0)
-
-        # Two-window agreement stability (replaces single-chain S_gap stability)
-        agreement_prev_valid = ~jnp.isnan(state.chain_agreement_curr)
-        agreement_stability_gate = (
-            (agreement_score >= jnp.float32(_MULTI_CHAIN_AGREEMENT_TOL))
-            & agreement_prev_valid
-            & (state.chain_agreement_curr >= jnp.float32(_MULTI_CHAIN_AGREEMENT_TOL))
+        mc_detection_gate = (
+            magnitude_gate
+            & collinearity_gate
+            & loo_gate
+            & support_gate
+            & unimodality_gate
         )
 
         budget_remaining = jnp.int32(max_budget_steps_per_chain) - (
@@ -1006,13 +1217,7 @@ def build_multi_chain_meta_core(
             _STEP_SIZE_READAPT_BUFFER
         )
 
-        escalate_now = (
-            ~state.has_escalated
-            & r2_gate
-            & spike_gate
-            & agreement_stability_gate
-            & deadline_ok
-        )
+        escalate_now = ~state.has_escalated & r2_gate & mc_detection_gate & deadline_ok
         new_has_escalated = state.has_escalated | escalate_now
         new_escalation_rank = jnp.where(escalate_now, k_new, state.escalation_rank)
 
@@ -1049,7 +1254,7 @@ def build_multi_chain_meta_core(
             recompute_counter=jnp.zeros_like(state.recompute_counter),
             has_escalated=new_has_escalated,
             escalation_rank=new_escalation_rank,
-            s_gap_prev=state.s_gap_curr,  # retained as NaN chain; diagnostic compat
+            s_gap_prev=state.s_gap_curr,  # NaN chain; diagnostic compat
             s_gap_curr=jnp.array(float("nan"), dtype=jnp.float32),
             r2_latest=r2_new.astype(jnp.float32),
             r2_mode=mode_new,
@@ -1059,8 +1264,7 @@ def build_multi_chain_meta_core(
             airm_vel_prev=new_airm_vel_prev,
             airm_vel_curr=new_airm_vel_curr,
             is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
-            chain_agreement_prev=state.chain_agreement_curr,
-            chain_agreement_curr=agreement_score,
+            chain_collinearity=f1,
         )
 
     return MetricCore(init=init, update=update, final=final)
@@ -1236,8 +1440,7 @@ def extract_multi_chain_verdict(
     airm_v_curr = float(np.asarray(final_state.airm_vel_curr))
     converged_at = int(np.asarray(final_state.converged_at_step))
     is_slow = bool(np.asarray(final_state.is_slow_mixing))
-    chain_agreement_raw = float(np.asarray(final_state.chain_agreement_curr))
-    chain_agreement_prev_raw = float(np.asarray(final_state.chain_agreement_prev))
+    chain_collinearity_raw = float(np.asarray(final_state.chain_collinearity))
     n_chains_actual: int = final_state.draws_buffer.shape[0]  # static
 
     lam_np = np.asarray(final_state.inverse_mass_matrix.lam)
@@ -1254,24 +1457,14 @@ def extract_multi_chain_verdict(
     else:
         route = "diagonal"
 
-    # Confidence — agreement replaces s_gap stability for multi-chain path
-    agreement_valid = not np.isnan(chain_agreement_raw)
-    agreement_passed = (
-        agreement_valid and chain_agreement_raw >= _MULTI_CHAIN_AGREEMENT_TOL
-    )
-    prev_agreement_valid = not np.isnan(chain_agreement_prev_raw)
-    prev_agreement_passed = (
-        prev_agreement_valid and chain_agreement_prev_raw >= _MULTI_CHAIN_AGREEMENT_TOL
+    # Confidence — collinearity gate replaces s_gap stability for multi-chain path
+    collinearity_valid = not np.isnan(chain_collinearity_raw)
+    collinearity_passed = (
+        collinearity_valid and chain_collinearity_raw >= _MC_COLLINEARITY_TOL
     )
     confidence = (
         "high"
-        if (
-            has_esc
-            and not r2_nan
-            and r2 >= _R_MIN
-            and agreement_passed
-            and prev_agreement_passed
-        )
+        if (has_esc and not r2_nan and r2 >= _R_MIN and collinearity_passed)
         else "low"
     )
 
@@ -1305,18 +1498,24 @@ def extract_multi_chain_verdict(
         _R2_FULL_AFFINE: "full_affine",
     }.get(mode_int, "deferred")
 
-    # "need_more_chains": spike present but agreement or per-chain budget marginal.
-    # Spike-present check: use effective_rank > 0 as the pooled spike proxy
-    # (escalation_rank > 0 implies at least one spike cleared the detection edge).
-    spike_present_but_marginal = (
-        (not has_esc) and (nominal_rank > 0) and (not agreement_passed)
-    )
+    # "need_more_chains": non-escalation with collinearity below threshold
+    # (magnitude may have been present but gate didn't pass; more chains or
+    # better-dispersed starts would help).
+    spike_marginal = (not has_esc) and (nominal_rank > 0) and (not collinearity_passed)
 
-    # mode_coverage: multi_chain_certified iff agreement gate passed (both windows)
+    # mode_coverage: multi_chain_certified iff collinearity gate passed
     mode_coverage = (
         "multi_chain_certified"
-        if (has_esc and agreement_passed and prev_agreement_passed)
+        if (has_esc and collinearity_passed)
+        else "multi_chain_uncertified"
+        if n_chains_actual > 1
         else "single_chain_uncertified"
+    )
+
+    # start_dispersion_adequacy: non-escalation is one-sided-safe (conservative);
+    # under-dispersed starts can miss slow directions but never over-escalate.
+    start_dispersion_adequacy = (
+        "adequate_if_overdispersed" if not has_esc else "not_applicable"
     )
 
     flags = {
@@ -1328,8 +1527,11 @@ def extract_multi_chain_verdict(
         "nominal_rank": nominal_rank,
         # Multi-chain specific
         "n_chains": n_chains_actual,
-        "chain_agreement": chain_agreement_raw,
-        "need_more_chains": spike_present_but_marginal,
+        "chain_collinearity": chain_collinearity_raw,
+        "need_more_chains": spike_marginal,
+        "start_dispersion_adequacy": start_dispersion_adequacy,
+        "unimodality_gate": "unknown",  # gap-stat result not stored in carry
+        "deferred_to_ensemble": False,  # populated when unimodality_gate flags
         "pooled_draws_by_window": pooled_draws_by_window,
     }
 
