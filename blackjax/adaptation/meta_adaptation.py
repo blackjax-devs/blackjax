@@ -902,7 +902,7 @@ def _w_branch_null_edge(M: int, n: Array, d: int) -> Array:
 
 
 # ---------------------------------------------------------------------------
-# BLOCKER-2 GAIN+abstain: projected-tier router for M-chain path (§5.2)
+# BLOCKER-2 GAIN+abstain: projected-tier router for M-chain path
 # ---------------------------------------------------------------------------
 
 _GAIN_THRESHOLD: float = 0.3
@@ -2295,7 +2295,7 @@ def build_multi_chain_meta_core(
         )
 
         # ---- BLOCKER-3: mode-consistency flag + contraction stat (T-branch guard) ----
-        # Mode-consistency (BLOCKER-3, §5.2(b)): per direction e_j, flag iff
+        # Mode-consistency (BLOCKER-3): per direction e_j, flag iff
         # (R²_local(e_j) − R²_global(e_j) > 0.3) AND (R²_local(e_j) ≥ 0.5).
         # Replaces the gap-stat as the primary multimodality signal — k-mode-agnostic.
         any_mode_flag = _compute_mode_consistency_flag(
@@ -2311,7 +2311,7 @@ def build_multi_chain_meta_core(
             n,
             M_stat,
         )
-        # Contraction stat (BLOCKER-3, §5.2, A§5.2): per-chain split-half drift t.
+        # Contraction stat (BLOCKER-3): per-chain split-half drift t.
         # t < -2.365 at M=8 → chains are converging → unimodal-safe, T can escalate.
         t_contr = _compute_contraction_stat(
             state.draws_buffer, chain_means, grand_mean, n, M_stat
