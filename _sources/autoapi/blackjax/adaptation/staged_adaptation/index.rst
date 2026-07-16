@@ -170,6 +170,15 @@ Module Contents
                     a :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` (with
                     U=0, lam=1 when the controller stays diagonal — bit-equivalent to
                     the diagonal metric).
+
+                    .. warning::
+                       ``metric="auto"`` is **experimental (v1)**.  The low-rank
+                       escalation is not robustly calibrated at high dimension: when
+                       the residual spectrum's dominant structure sits near the detection
+                       boundary, whether the controller escalates can depend on the
+                       random seed.  Use for exploration and algorithm development, not
+                       for production efficiency claims.  A multi-chain escalation
+                       trigger (planned for v2) is expected to make the decision robust.
                   - **str** — a registry name (``"welford_diag"`` (default),
                     ``"welford_dense"``, ``"fisher_diag"``); looked up via
                     :func:`~blackjax.adaptation.metric_recipes.lookup_recipe` and built

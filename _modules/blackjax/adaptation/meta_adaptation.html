@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g896932c1c" />
+  <meta name="docsearch:version" content="0.1.dev1+gb379a5a70" />
   </head>
   
   
@@ -428,10 +428,20 @@
 <span class="sd">(the scan runs its full length; ``converged_at_step`` records where stopping</span>
 <span class="sd">would have helped — the actual early-stop host is the named v1.1 upgrade).</span>
 
+<span class="sd">.. warning::</span>
+
+<span class="sd">   ``metric=&quot;auto&quot;`` is **experimental (v1)**.  The low-rank escalation is not</span>
+<span class="sd">   robustly calibrated at high dimension: when the residual spectrum&#39;s dominant</span>
+<span class="sd">   structure sits near the detection boundary, whether the controller escalates</span>
+<span class="sd">   can depend on the random seed used for sampling.  Use ``metric=&quot;auto&quot;`` for</span>
+<span class="sd">   exploration and algorithm development, not for production efficiency claims.</span>
+<span class="sd">   A multi-chain escalation trigger (planned for v2) is expected to make the</span>
+<span class="sd">   escalation decision robust across seeds.</span>
+
 <span class="sd">**Dtype note**: the composed estimator ``_compute_low_rank_metric`` produces</span>
 <span class="sd">numerically indefinite metrics under float32 (~98% of runs). Enable x64 via</span>
 <span class="sd">``jax.config.update(&quot;jax_enable_x64&quot;, True)`` for production use and for the</span>
-<span class="sd">V-phase acceptance runs; all optpath harnesses ran with x64 enabled.</span>
+<span class="sd">production use and for numerical-precision-sensitive acceptance runs; all optpath harnesses ran with x64 enabled.</span>
 
 <span class="sd">See :mod:`blackjax.adaptation.metric_recipes` for the MetricCore protocol and</span>
 <span class="sd">:mod:`blackjax.adaptation.staged_adaptation` for the host engine.</span>
@@ -457,7 +467,7 @@
 <span class="p">]</span>
 
 <span class="c1"># ---------------------------------------------------------------------------</span>
-<span class="c1"># Module constants — V-phase calibration anchors (not user knobs).</span>
+<span class="c1"># Module constants — empirical calibration anchors (not user knobs).</span>
 <span class="c1"># ---------------------------------------------------------------------------</span>
 
 <span class="n">_R_MIN</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
@@ -493,6 +503,13 @@
 
 <span class="n">_MAX_RANK_CAP</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
 <span class="sd">&quot;&quot;&quot;Static rank cap for buffer allocation; per-window rank ≤ min(cap, n//2).&quot;&quot;&quot;</span>
+
+<span class="n">_LAM_NONTRIVIAL_TOL</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span>
+<span class="sd">&quot;&quot;&quot;Threshold for a deployed-metric eigenvalue correction to be considered</span>
+<span class="sd">non-trivial: ``|lam_i - 1| &gt; _LAM_NONTRIVIAL_TOL``.  Directions with</span>
+<span class="sd">``lam_i = 1.0`` exactly (set by the Fisher estimator for sub-threshold</span>
+<span class="sd">directions) contribute zero to the deployed rank.</span>
+<span class="sd">&quot;&quot;&quot;</span>
 
 <span class="c1"># R² mode integers (stored in carry as int8).</span>
 <span class="n">_R2_DEFERRED</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
@@ -619,7 +636,7 @@
 
 <div class="viewcode-block" id="MetaAdaptationVerdict.effective_rank">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.effective_rank">[docs]</a>
-    <span class="n">effective_rank</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># k at escalation time (0 for diagonal route)</span></div>
+    <span class="n">effective_rank</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># deployed rank: count of |lam_i − 1| &gt; _LAM_NONTRIVIAL_TOL (0 for diagonal route)</span></div>
 
 <div class="viewcode-block" id="MetaAdaptationVerdict.confidence">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.confidence">[docs]</a>
@@ -659,7 +676,7 @@
 
 <div class="viewcode-block" id="MetaAdaptationVerdict.flags">
 <a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.flags">[docs]</a>
-    <span class="n">flags</span><span class="p">:</span> <span class="nb">dict</span>  <span class="c1"># reparam_hint, marginal_s_gap, wall_cost_discount, high_d_r2_mode, mode_coverage</span></div>
+    <span class="n">flags</span><span class="p">:</span> <span class="nb">dict</span>  <span class="c1"># reparam_hint, marginal_s_gap, wall_cost_discount, high_d_r2_mode, mode_coverage, nominal_rank</span></div>
 </div>
 
 
@@ -1094,7 +1111,8 @@
     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
     <span class="n">has_esc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">has_escalated</span><span class="p">))</span>
-    <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">escalation_rank</span><span class="p">))</span>
+    <span class="n">nominal_rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">escalation_rank</span><span class="p">))</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">nominal_rank</span>  <span class="c1"># kept for clarity; not used in escalation decisions</span>
     <span class="n">budget_used</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">budget_used</span><span class="p">))</span>
     <span class="n">s_gap</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">s_gap_curr</span><span class="p">))</span>
     <span class="n">r2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">r2_latest</span><span class="p">))</span>
@@ -1103,6 +1121,14 @@
     <span class="n">airm_v_curr</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">airm_vel_curr</span><span class="p">))</span>
     <span class="n">converged_at</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">converged_at_step</span><span class="p">))</span>
     <span class="n">is_slow</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_slow_mixing</span><span class="p">))</span>
+
+    <span class="c1"># Deployed rank: count of non-trivial eigenvalue corrections in the</span>
+    <span class="c1"># deployed metric (|lam_i - 1| &gt; threshold).  This is the rank of the</span>
+    <span class="c1"># structure the kernel actually uses, as opposed to the pre-mask count</span>
+    <span class="c1"># stored in escalation_rank (nominal_rank), which can over-count when</span>
+    <span class="c1"># the Fisher estimator zeroes sub-threshold directions back to lam=1.</span>
+    <span class="n">lam_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span>
+    <span class="n">effective_rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lam_np</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_LAM_NONTRIVIAL_TOL</span><span class="p">))</span>
 
     <span class="n">r2_nan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">r2</span><span class="p">)</span>
 
@@ -1163,12 +1189,16 @@
         <span class="s2">&quot;wall_cost_discount&quot;</span><span class="p">:</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
         <span class="s2">&quot;high_d_r2_mode&quot;</span><span class="p">:</span> <span class="n">high_d_r2_mode</span><span class="p">,</span>
         <span class="s2">&quot;mode_coverage&quot;</span><span class="p">:</span> <span class="s2">&quot;single_chain_uncertified&quot;</span><span class="p">,</span>
+        <span class="c1"># nominal_rank is the pre-filter count from the spectrum rank selector;</span>
+        <span class="c1"># effective_rank (the top-level field) is the deployed count from</span>
+        <span class="c1"># the Fisher metric&#39;s lam array.  Both are provided for diagnostics.</span>
+        <span class="s2">&quot;nominal_rank&quot;</span><span class="p">:</span> <span class="n">nominal_rank</span><span class="p">,</span>
     <span class="p">}</span>
 
     <span class="k">return</span> <span class="n">MetaAdaptationVerdict</span><span class="p">(</span>
         <span class="n">route</span><span class="o">=</span><span class="n">route</span><span class="p">,</span>
         <span class="n">metric</span><span class="o">=</span><span class="n">final_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
-        <span class="n">effective_rank</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+        <span class="n">effective_rank</span><span class="o">=</span><span class="n">effective_rank</span><span class="p">,</span>
         <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
         <span class="n">exit_reason</span><span class="o">=</span><span class="n">exit_reason</span><span class="p">,</span>
         <span class="n">budget_used_steps</span><span class="o">=</span><span class="n">budget_used</span><span class="p">,</span>

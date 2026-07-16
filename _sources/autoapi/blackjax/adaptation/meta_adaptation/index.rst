@@ -17,10 +17,20 @@ blackjax.adaptation.meta_adaptation
    (the scan runs its full length; ``converged_at_step`` records where stopping
    would have helped — the actual early-stop host is the named v1.1 upgrade).
 
+   .. warning::
+
+      ``metric="auto"`` is **experimental (v1)**.  The low-rank escalation is not
+      robustly calibrated at high dimension: when the residual spectrum's dominant
+      structure sits near the detection boundary, whether the controller escalates
+      can depend on the random seed used for sampling.  Use ``metric="auto"`` for
+      exploration and algorithm development, not for production efficiency claims.
+      A multi-chain escalation trigger (planned for v2) is expected to make the
+      escalation decision robust across seeds.
+
    **Dtype note**: the composed estimator ``_compute_low_rank_metric`` produces
    numerically indefinite metrics under float32 (~98% of runs). Enable x64 via
    ``jax.config.update("jax_enable_x64", True)`` for production use and for the
-   V-phase acceptance runs; all optpath harnesses ran with x64 enabled.
+   production use and for numerical-precision-sensitive acceptance runs; all optpath harnesses ran with x64 enabled.
 
    See :mod:`blackjax.adaptation.metric_recipes` for the MetricCore protocol and
    :mod:`blackjax.adaptation.staged_adaptation` for the host engine.

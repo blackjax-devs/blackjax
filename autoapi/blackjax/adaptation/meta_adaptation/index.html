@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.meads_adaptation" href="../meads_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g896932c1c" />
+  <meta name="docsearch:version" content="0.1.dev1+gb379a5a70" />
   </head>
   
   
@@ -469,10 +469,20 @@ over two consecutive windows AND budget deadline clear. Growing-window schedule
 (nutpie-style) is the default; AIRM-velocity early exit is advisory in v1
 (the scan runs its full length; <code class="docutils literal notranslate"><span class="pre">converged_at_step</span></code> records where stopping
 would have helped — the actual early-stop host is the named v1.1 upgrade).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="docutils literal notranslate"><span class="pre">metric=&quot;auto&quot;</span></code> is <strong>experimental (v1)</strong>.  The low-rank escalation is not
+robustly calibrated at high dimension: when the residual spectrum’s dominant
+structure sits near the detection boundary, whether the controller escalates
+can depend on the random seed used for sampling.  Use <code class="docutils literal notranslate"><span class="pre">metric=&quot;auto&quot;</span></code> for
+exploration and algorithm development, not for production efficiency claims.
+A multi-chain escalation trigger (planned for v2) is expected to make the
+escalation decision robust across seeds.</p>
+</div>
 <p><strong>Dtype note</strong>: the composed estimator <code class="docutils literal notranslate"><span class="pre">_compute_low_rank_metric</span></code> produces
 numerically indefinite metrics under float32 (~98% of runs). Enable x64 via
 <code class="docutils literal notranslate"><span class="pre">jax.config.update(&quot;jax_enable_x64&quot;,</span> <span class="pre">True)</span></code> for production use and for the
-V-phase acceptance runs; all optpath harnesses ran with x64 enabled.</p>
+production use and for numerical-precision-sensitive acceptance runs; all optpath harnesses ran with x64 enabled.</p>
 <p>See <a class="reference internal" href="../metric_recipes/index.html#module-blackjax.adaptation.metric_recipes" title="blackjax.adaptation.metric_recipes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.metric_recipes</span></code></a> for the MetricCore protocol and
 <a class="reference internal" href="../staged_adaptation/index.html#module-blackjax.adaptation.staged_adaptation" title="blackjax.adaptation.staged_adaptation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.staged_adaptation</span></code></a> for the host engine.</p>
 <section id="classes">

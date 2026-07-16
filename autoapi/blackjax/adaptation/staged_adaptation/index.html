@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.pathfinder_adaptation" href="../pathfinder_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g896932c1c" />
+  <meta name="docsearch:version" content="0.1.dev1+gb379a5a70" />
   </head>
   
   
@@ -599,7 +599,18 @@ the diagonal vs low-rank path and the growing-window schedule.
 Requires <code class="docutils literal notranslate"><span class="pre">max_grad_budget</span></code> to be set.  The emitted metric is always
 a <a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a> (with
 U=0, lam=1 when the controller stays diagonal — bit-equivalent to
-the diagonal metric).</p></li>
+the diagonal metric).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="docutils literal notranslate"><span class="pre">metric=&quot;auto&quot;</span></code> is <strong>experimental (v1)</strong>.  The low-rank
+escalation is not robustly calibrated at high dimension: when
+the residual spectrum’s dominant structure sits near the detection
+boundary, whether the controller escalates can depend on the
+random seed.  Use for exploration and algorithm development, not
+for production efficiency claims.  A multi-chain escalation
+trigger (planned for v2) is expected to make the decision robust.</p>
+</div>
+</li>
 <li><p><strong>str</strong> — a registry name (<code class="docutils literal notranslate"><span class="pre">&quot;welford_diag&quot;</span></code> (default),
 <code class="docutils literal notranslate"><span class="pre">&quot;welford_dense&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;fisher_diag&quot;</span></code>); looked up via
 <a class="reference internal" href="../metric_recipes/index.html#blackjax.adaptation.metric_recipes.lookup_recipe" title="blackjax.adaptation.metric_recipes.lookup_recipe"><code class="xref py py-func docutils literal notranslate"><span class="pre">lookup_recipe()</span></code></a> and built
