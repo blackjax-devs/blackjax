@@ -173,7 +173,7 @@ direction.
 _MC_UNIMODALITY_Q99_TABLE: dict[int, float] = {
     6: 3.8,  # conservative estimate; dedicated calibration needed for M<8
     7: 4.2,  # conservative estimate
-    8: 4.54,  # MC-calibrated from 1000 reps iid null (spec §7a)
+    8: 4.54,  # MC-calibrated from 1000 reps iid null at M=8
 }
 """Gap-stat null q99 per M for the unimodality guard (v2.1 recalibration).
 
@@ -795,7 +795,7 @@ def _geometric_mean_deploy_scale(
 
 
 def _w_branch_lam1_edge(d: int, N: Array) -> Array:
-    """Marchenko–Pastur bulk upper edge for the pooled within-chain residual spectrum.
+    """Null bulk upper edge for the pooled within-chain residual spectrum.
 
     Analytic formula: ``(1 + sqrt(d/N))²`` where ``N = M*(n-1)`` is the dof
     of the pooled residual covariance.  This equals the iid-null q95 at
