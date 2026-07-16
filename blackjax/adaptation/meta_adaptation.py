@@ -36,7 +36,7 @@ would have helped — the actual early-stop host is the named v1.1 upgrade).
 **Dtype note**: the composed estimator ``_compute_low_rank_metric`` produces
 numerically indefinite metrics under float32 (~98% of runs). Enable x64 via
 ``jax.config.update("jax_enable_x64", True)`` for production use and for the
-V-phase acceptance runs; all optpath harnesses ran with x64 enabled.
+production use and for numerical-precision-sensitive acceptance runs; all optpath harnesses ran with x64 enabled.
 
 See :mod:`blackjax.adaptation.metric_recipes` for the MetricCore protocol and
 :mod:`blackjax.adaptation.staged_adaptation` for the host engine.
@@ -62,7 +62,7 @@ __all__ = [
 ]
 
 # ---------------------------------------------------------------------------
-# Module constants — V-phase calibration anchors (not user knobs).
+# Module constants — empirical calibration anchors (not user knobs).
 # ---------------------------------------------------------------------------
 
 _R_MIN: float = 0.5
