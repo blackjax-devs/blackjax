@@ -1146,6 +1146,76 @@ def _compute_pooled_within_spectrum(
     return lam1, top_eigvec
 
 
+def _w_branch_psi_threshold(M: int, n: Array, d: int) -> Array:
+    """Adaptive Ψ threshold: max(3 * q99_null(M, n, d), 0.15).
+
+    FOLD-IN 4: the flat 0.15 floor causes 16–17% null leak at d=10.  The
+    adaptive threshold is calibrated as 3 * q99_null, where q99_null is the
+    q99 of Ψ under iid chains at (M, n, d) = (8, n, d).  Values are measured
+    at N_base = M * (n_base - 1) = 1360 (M=8, n_base=171); other N are scaled
+    by sqrt(N_base / N).
+
+    Calibration table (q99_null at N=1360, M=8):
+        d=10: q99=0.129 → threshold = 3*0.129 = 0.387
+        d=26: q99=0.040 → threshold = 3*0.040 = 0.120
+        d=50: q99=0.023 → threshold = 3*0.023 = 0.068
+
+    The floor 0.15 applies at all dimensions (avoids sub-0.15 thresholds for
+    large d at sparse N) and is the spec-provided minimum.
+
+    Parameters
+    ----------
+    M
+        Chain count (static Python int; baked into the N computation).
+    n
+        Per-chain valid draw count (dynamic JAX int32 scalar).
+    d
+        Observation dimension (static Python int).
+
+    Returns
+    -------
+    float32 scalar — adaptive Ψ gate threshold.
+    """
+    # Calibration table at N_base = 1360 (M=8, n=171):
+    # format: (d_anchor, q99_at_N_base)
+    _PSI_CAL_D = jnp.array([10.0, 26.0, 50.0], dtype=jnp.float32)
+    _PSI_CAL_Q99 = jnp.array([0.129, 0.040, 0.023], dtype=jnp.float32)
+    _N_BASE = jnp.float32(1360.0)
+
+    # Pool size for this (M, n): N = M * max(n-1, 1)
+    N = jnp.float32(M) * jnp.maximum(
+        n.astype(jnp.float32) - jnp.float32(1.0), jnp.float32(1.0)
+    )
+
+    # Log-interpolate q99 on d (linear interp in log-log space)
+    d_f = jnp.float32(d)
+    log_d = jnp.log(jnp.maximum(d_f, jnp.float32(1.0)))
+    log_d0 = jnp.log(_PSI_CAL_D[0])
+    log_d1 = jnp.log(_PSI_CAL_D[1])
+    log_d2 = jnp.log(_PSI_CAL_D[2])
+
+    log_q0 = jnp.log(jnp.maximum(_PSI_CAL_Q99[0], jnp.float32(1e-6)))
+    log_q1 = jnp.log(jnp.maximum(_PSI_CAL_Q99[1], jnp.float32(1e-6)))
+    log_q2 = jnp.log(jnp.maximum(_PSI_CAL_Q99[2], jnp.float32(1e-6)))
+
+    # Piecewise linear in log-log: clamp to calibrated range
+    t01 = jnp.clip((log_d - log_d0) / (log_d1 - log_d0), 0.0, 1.0)
+    t12 = jnp.clip((log_d - log_d1) / (log_d2 - log_d1), 0.0, 1.0)
+    log_q_01 = log_q0 + t01 * (log_q1 - log_q0)
+    log_q_12 = log_q1 + t12 * (log_q2 - log_q1)
+    log_q_interp = jnp.where(d_f <= _PSI_CAL_D[1], log_q_01, log_q_12)
+    q99_base = jnp.exp(log_q_interp)
+
+    # Scale by sqrt(N_base / N): tighter calibration at larger N
+    scale = jnp.sqrt(
+        jnp.maximum(_N_BASE / jnp.maximum(N, jnp.float32(1.0)), jnp.float32(0.01))
+    )
+    q99_at_N = q99_base * scale
+
+    adaptive_thresh = jnp.float32(3.0) * q99_at_N
+    return jnp.maximum(adaptive_thresh, jnp.float32(_W_BRANCH_PSI_FLOOR))
+
+
 def _compute_chain_consistency_psi(
     draws_buffer_mc: Array,
     chain_means: Array,
@@ -1521,6 +1591,12 @@ def build_meta_adaptation_core(
         r2_new, mode_new = _compute_r2_score_linearity(
             state.draws_buffer, state.grads_buffer, sigma_welford, n, U_k, actual_rank
         )
+        # FOLD-IN 6: clip R² to [-10, 1]; values below -10 → NaN (deferred path).
+        r2_new = jnp.where(
+            r2_new < jnp.float32(-10.0),
+            jnp.array(float("nan"), dtype=r2_new.dtype),
+            jnp.clip(r2_new, max=jnp.float32(1.0)),
+        )
 
         # Transient-mixing class (reported in verdict; v1 always uses RESET).
         is_slow = _compute_transient_mixing_signal(state.draws_buffer, sigma_welford, n)
@@ -1879,6 +1955,14 @@ def build_multi_chain_meta_core(
         r2_new, mode_new = _compute_r2_score_linearity(
             pc_draws_safe, pc_grads_safe, sigma_w_diag, n_pool, U_k_pooled, actual_rank
         )
+        # FOLD-IN 6: clip R² to [-10, 1] before any gate or carry.
+        # Fit values below -10 are garbage (starved / degenerate data) and should
+        # trigger the deferred path (NaN), not pollute the carry with extreme negatives.
+        r2_new = jnp.where(
+            r2_new < jnp.float32(-10.0),
+            jnp.array(float("nan"), dtype=r2_new.dtype),
+            jnp.clip(r2_new, max=jnp.float32(1.0)),
+        )
         r2_gate = r2_new >= jnp.float32(_R_MIN)  # False when NaN
 
         # ---- W-branch: pooled within-chain whiteness detector ----
@@ -1891,7 +1975,11 @@ def build_multi_chain_meta_core(
         psi_w = _compute_chain_consistency_psi(
             state.draws_buffer, chain_means, W_diag, n, M_stat
         )
-        w_psi_gate = psi_w > jnp.float32(_W_BRANCH_PSI_FLOOR)
+        # FOLD-IN 4: adaptive Ψ threshold max(3*q99_null(M,n,d), 0.15).
+        # The flat 0.15 causes 16-17% null leak at d=10; the calibrated table
+        # corrects this without changing the floor for large d (sparse N).
+        w_psi_thresh = _w_branch_psi_threshold(M_stat, n, d)
+        w_psi_gate = psi_w > w_psi_thresh
 
         r1_w = _compute_lag1_autocorr_top_dir(
             state.draws_buffer, chain_means, W_diag, top_eigvec_w, n, M_stat
