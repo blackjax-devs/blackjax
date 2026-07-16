@@ -64,7 +64,9 @@ __all__ = [
     "extract_multi_chain_verdict",
     "_between_chain_detection",
     "_compute_within_chain_stats",
+    "_lo2_detection_passes",
     "_mc_detection_edge",
+    "_mc_unimodality_threshold",
 ]
 
 # ---------------------------------------------------------------------------
@@ -119,6 +121,16 @@ escalation trigger.  Grounded in the sharp-transition point where the
 between-chain look-count makes escalation robust for near-edge cases.
 """
 
+_MC_MIN_CHAINS: int = 6
+"""Minimum safe chain count for the multi-chain detection gate.
+
+Below M=6 the collinearity null-margin is unsafe (iid null f₁ can reach 0.79
+at M=4, which is above the 0.70 threshold), and the unimodality gap-ratio for
+a perfect 2-cluster split (≈ M−1 = 3) falls below the threshold for M<4.
+At M≥6 both regimes have sufficient separation.  :func:`build_multi_chain_meta_core`
+warns when M is below this value.
+"""
+
 _MC_COLLINEARITY_TOL: float = 0.7
 """Minimum collinearity score f₁ to accept a between-chain spike.
 
@@ -128,12 +140,15 @@ within-chain autocorrelation artifacts scatter nearly isotropically across
 independent chains (f₁ ≈ 1/(M−1)).  Threshold is between those regimes.
 """
 
-_MC_UNIMODALITY_GAP_RATIO: float = 4.0
-"""Gap-statistic threshold for the unimodality guard.
+_MC_UNIMODALITY_GAP_FRACTION: float = 0.5
+"""Gap-statistic threshold fraction for the unimodality guard.
 
-max_gap / mean_gap on the projected chain-means; mode-split targets produce
-a large dominant gap (≈160× mean) whereas unimodal targets produce ≈2–3×.
-This is a FLAG, not a proof: noisy at small M or uneven splits.
+Threshold = max(0.5 * (M−1), 3.0).  A perfect 2-cluster bimodal split with
+M chains gives max_gap/mean_gap ≈ M−1; the genuine-unimodal null gives
+≈ 1.0–2.3 empirically.  The 0.5 fraction places the threshold halfway between
+those regimes for any M≥6 (the fenced minimum).  The floor of 3.0 adds
+headroom against noise for small M.  This is a FLAG, not a proof: noisy at
+small M or uneven splits.  Computed dynamically by :func:`_mc_unimodality_threshold`.
 """
 
 # R² mode integers (stored in carry as int8).
@@ -246,6 +261,8 @@ class MultiChainMetaAdaptationCoreState(NamedTuple):
     is_slow_mixing: Array  # bool; always False in the multi-chain path (pooled diagnostic)
     # Multi-chain-specific carry
     chain_collinearity: Array  # float32; collinearity score f₁ from most recent window (NaN initially)
+    unimodality_passed: Array  # bool; True = gap-stat found unimodal distribution (False = mode-split flag)
+    deferred_to_ensemble: Array  # bool; True = other gates passed but unimodality blocked (P1→P3 handoff)
 
 
 # ---------------------------------------------------------------------------
@@ -596,9 +613,94 @@ def _loo_detection_passes(
     return all_pass
 
 
+def _lo2_detection_passes(
+    chain_means: Array,
+    W_diag: Array,
+    n: Array,
+    M: int,
+    d: int,
+    edge_lo2: float,
+) -> Array:
+    """Leave-two-out check: detection must survive dropping any PAIR of chains.
+
+    At M≥8 an aligned outlier pair can pass leave-one-out (each member supports
+    the other's vote when one is dropped) but collapse under leave-two-out.  For
+    each pair (i, j), re-centres the remaining M−2 chains, computes the top T
+    eigenvalue with (M−3) dof, and checks it clears ``edge_lo2``.  All C(M,2)
+    checks must pass (conjunction).
+
+    Skipped (returns True) when the remaining M−2 chains leave fewer than 3
+    chains, which cannot support a meaningful T statistic.
+
+    Parameters
+    ----------
+    chain_means
+        Shape ``(M, d)``.
+    W_diag
+        Shape ``(d,)`` — within-chain diagonal variance.
+    n
+        Dynamic fill count, int32.
+    M, d
+        Static.
+    edge_lo2
+        Detection edge for M−3 dof: ``(1+√(d/(M−3)))²`` (Python float).
+
+    Returns
+    -------
+    bool scalar (JAX) — True if all C(M,2) leave-two-out checks pass.
+    """
+    n_f = n.astype(chain_means.dtype)
+    W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
+    sigma_w = jnp.sqrt(W_safe)
+    edge_f32 = jnp.float32(edge_lo2)
+
+    all_pass = jnp.ones((), dtype=jnp.bool_)
+    for i in range(M):
+        for j in range(i + 1, M):
+            remaining = [k for k in range(M) if k != i and k != j]
+            M_sub = len(remaining)
+            if M_sub < 3:
+                # Too few chains for a meaningful T; skip this pair
+                continue
+            rows = [chain_means[k] for k in remaining]
+            Z_lo2 = jnp.stack(rows)  # (M−2, d)
+            mu_lo2 = Z_lo2.mean(0)  # (d,)
+            Z_lo2_c = (Z_lo2 - mu_lo2[None, :]) / sigma_w[None, :]
+            gram_lo2 = Z_lo2_c @ Z_lo2_c.T  # (M−2, M−2)
+            dof_sub = jnp.float32(M_sub - 1)
+            c_sub = n_f / dof_sub
+            max_eigval_lo2 = jnp.linalg.eigvalsh(gram_lo2)[-1]
+            T_max_lo2 = max_eigval_lo2 * c_sub
+            all_pass = all_pass & (T_max_lo2 > edge_f32)
+
+    return all_pass
+
+
+def _mc_unimodality_threshold(M: int) -> float:
+    """Gap-stat threshold for the unimodality guard, scaled with chain count M.
+
+    A perfect 2-cluster bimodal split with M chains gives max_gap/mean_gap
+    ≈ M−1; the genuine-unimodal null gives ≈ 1.0–2.3 empirically.  The
+    threshold max(0.5*(M−1), 3.0) places the decision boundary halfway between
+    those regimes for any M≥6 (the fenced minimum).
+
+    Parameters
+    ----------
+    M
+        Number of chains (static Python int).
+
+    Returns
+    -------
+    float — threshold above which the projected chain-means are flagged as
+    mode-split.
+    """
+    return max(_MC_UNIMODALITY_GAP_FRACTION * (M - 1), 3.0)
+
+
 def _unimodality_gap_stat(
     chain_means: Array,
     top_direction: Array,
+    M: int,
 ) -> tuple[Array, Array]:
     """Gap-statistic check on projected chain-means.
 
@@ -612,21 +714,24 @@ def _unimodality_gap_stat(
         Shape ``(M, d)``.
     top_direction
         Shape ``(d,)`` — unit-vector slow direction (unwhitened).
+    M
+        Static int — number of chains.
 
     Returns
     -------
     is_unimodal
-        bool scalar — True iff gap ratio < :data:`_MC_UNIMODALITY_GAP_RATIO`.
+        bool scalar — True iff gap ratio < :func:`_mc_unimodality_threshold`.
     gap_ratio
         float32 scalar — max_gap / mean_gap (diagnostic; large ⇒ mode-split).
     """
+    threshold = _mc_unimodality_threshold(M)  # Python float, static
     projections = chain_means @ top_direction  # (M,)
     sorted_proj = jnp.sort(projections)  # ascending
     gaps = sorted_proj[1:] - sorted_proj[:-1]  # (M−1,) inter-point gaps
     mean_gap = gaps.mean()
     max_gap = gaps.max()
     gap_ratio = max_gap / jnp.maximum(mean_gap, jnp.float32(1e-10))
-    is_unimodal = gap_ratio < jnp.float32(_MC_UNIMODALITY_GAP_RATIO)
+    is_unimodal = gap_ratio < jnp.float32(threshold)
     return is_unimodal, gap_ratio.astype(jnp.float32)
 
 
@@ -932,24 +1037,25 @@ def build_multi_chain_meta_core(
     stability check.  The pooled between-chain signal makes the escalation
     decision robust to seed variation for near-edge posterior structures.
 
-    The multi-chain gate (replaces the single-chain S_gap-stability check):
+    The multi-chain gate (replaces the single-chain S_gap-stability check).
+    Five conditions must all hold to escalate:
 
-    1. **Spike detection on pooled spectrum.** All M chains' draws are pooled
-       around the grand mean.  A sample eigenvalue of the pooled whitened
-       residual is compared against the M-based detection edge
-       ``(1 + √(d/M))²``, where M is the between-chain count.  This uses M
-       as the governing effective-sample count for the slowest directions —
-       whose within-chain IACT is near the chain length so each chain
-       contributes only ~1 independent look at that direction.
-    2. **Cross-chain projector agreement.** The M chains' per-chain leading
-       subspaces are compared as projectors (Frobenius inner product,
-       sign-invariant).  A true low-rank structure produces consistent
-       leading directions across independent overdispersed chains; spurious
-       within-chain autocorrelation spikes are near-orthogonal across chains.
-    3. **Escalate iff** the pooled spike clears the edge AND the cross-chain
-       projector agreement exceeds :data:`_MULTI_CHAIN_AGREEMENT_TOL` in two
-       consecutive windows AND the R² score-linearity gate passes AND there
-       is remaining warmup budget.
+    1. **Magnitude.** Top eigenvalue of the between-chain T matrix exceeds the
+       detection edge ``(1 + √(d/(M−1)))²`` (M−1 dof, grand-mean constraint).
+    2. **Collinearity.** Fraction of total between-chain scatter in the top
+       singular direction f₁ ≥ :data:`_MC_COLLINEARITY_TOL`.  Genuine slow
+       directions produce near-rank-1 concentration (f₁→1); isotropic spurious
+       scatter gives f₁ ≈ 1/(M−1).
+    3. **Leave-one-out** (and **leave-two-out at M≥8**).  Detection must survive
+       dropping any single chain (and any pair at M≥8), preventing a single
+       outlier chain (or aligned pair) from driving the verdict.
+    4. **Support floor.** At least one spike is admitted (k ≥ 1).
+    5. **Unimodality guard.** Gap-statistic on the projected chain-means must
+       not flag mode-split; mode-separated chains are deferred to the ensemble
+       (Paper-3 scope) and reported via ``deferred_to_ensemble=True`` in the
+       verdict.
+
+    Plus R² curvature gate and budget deadline (same as single-chain).
 
     Budget re-allocation: ``max_grad_budget`` is the TOTAL gradient budget,
     shared across all M chains.  Providing ``n_chains=M`` overdispersed
@@ -981,6 +1087,18 @@ def build_multi_chain_meta_core(
         raise ValueError(
             f"build_multi_chain_meta_core: n_chains must be >= 2, got {n_chains}. "
             "For single-chain use, call build_meta_adaptation_core instead."
+        )
+    if n_chains < _MC_MIN_CHAINS:
+        import warnings
+
+        warnings.warn(
+            f"build_multi_chain_meta_core: n_chains={n_chains} < {_MC_MIN_CHAINS} "
+            f"(the recommended minimum).  At M<{_MC_MIN_CHAINS} the collinearity "
+            "null-margin is unsafe (iid null f₁ can exceed the 0.70 threshold) and "
+            "the unimodality gap-ratio for a perfect 2-cluster split falls below "
+            "the detection threshold.  Use n_chains >= 6 (default 8) for reliable "
+            "gate behaviour.",
+            stacklevel=2,
         )
     _max_rank: int = _MAX_RANK_CAP if max_rank is None else max_rank
     # Per-chain step budget: total budget divided across M chains
@@ -1022,6 +1140,8 @@ def build_multi_chain_meta_core(
             airm_vel_curr=jnp.array(float("inf"), dtype=jnp.float32),
             is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
             chain_collinearity=jnp.array(float("nan"), dtype=jnp.float32),
+            unimodality_passed=jnp.ones((), dtype=jnp.bool_),  # True until first window
+            deferred_to_ensemble=jnp.zeros((), dtype=jnp.bool_),
         )
 
     def update(
@@ -1086,9 +1206,10 @@ def build_multi_chain_meta_core(
         # ---- Static detection edges (Python floats; M_stat and d are static) ----
         dof = M_stat - 1  # rank of T (grand-mean constraint)
         edge_full = _mc_detection_edge(d, dof)  # (1+√(d/(M−1)))²
-        # LOO edge: M−2 remaining chains → M−2 dof after re-centring (M−3 df)
-        # Conservatively use dof−1 = M−2 for the LOO edge
+        # LOO edge: M−1 remaining chains, M−2 dof after re-centring
         edge_loo = _mc_detection_edge(d, max(dof - 1, 1))
+        # LO2 edge: M−2 remaining chains, M−3 dof after re-centring (only at M≥8)
+        edge_lo2 = _mc_detection_edge(d, max(dof - 2, 1))
 
         # ---- Within-chain statistics ----
         chain_means, W_diag = _compute_within_chain_stats(state.draws_buffer, n)
@@ -1105,8 +1226,11 @@ def build_multi_chain_meta_core(
         magnitude_gate = T_top > jnp.float32(edge_full)
 
         # ---- Count admitted spikes (for support gate and metric scale) ----
-        # k = number of T eigenvalues above the bulk edge, capped by M−2
-        # (M−1 dof supports at most M−2 independently admitted spikes).
+        # k = number of T eigenvalues above the bulk edge, capped by M−2.
+        # Note: v2 deploys a rank-1 update (one slow direction); the k_new /
+        # spike-count machinery is vestigial for the current deploy path and is
+        # retained for the v2.1 full rank-k upgrade.  Collinearity (f₁≥0.7)
+        # already rejects balanced rank≥2 scatter, so k_new≥2 is one-sided safe.
         k_raw = (T_eigenvalues > jnp.float32(edge_full)).sum().astype(jnp.int32)
         k_new = jnp.minimum(k_raw, jnp.int32(max(dof - 1, 1)))
         k_new = jnp.minimum(k_new, jnp.int32(actual_rank))
@@ -1116,6 +1240,17 @@ def build_multi_chain_meta_core(
 
         # ---- Gate 3: Leave-one-out ----
         loo_gate = _loo_detection_passes(chain_means, W_diag, n, M_stat, d, edge_loo)
+
+        # ---- Gate 3b: Leave-two-out (M≥8 only) ----
+        # An aligned outlier PAIR passes LOO (each supports the other when one is
+        # dropped) but collapses under LO2.  At M<8 we lack the degrees of freedom
+        # for a meaningful LO2 check (M−2 < 6), so skip it there.
+        if M_stat >= 8:
+            lo2_gate = _lo2_detection_passes(
+                chain_means, W_diag, n, M_stat, d, edge_lo2
+            )
+        else:
+            lo2_gate = jnp.ones((), dtype=jnp.bool_)
 
         # ---- Gate 4: Support ----
         support_gate = k_new >= jnp.int32(1)  # at least one spike admitted
@@ -1127,7 +1262,7 @@ def build_multi_chain_meta_core(
         e_unnorm = jnp.sqrt(W_safe) * V_top[:, 0]  # (d,) in original space
         e_norm = jnp.linalg.norm(e_unnorm)
         e_dir = e_unnorm / jnp.maximum(e_norm, jnp.float32(1e-10))  # unit vector
-        is_unimodal, _gap_ratio = _unimodality_gap_stat(chain_means, e_dir)
+        is_unimodal, _gap_ratio = _unimodality_gap_stat(chain_means, e_dir, M_stat)
         unimodality_gate = is_unimodal
 
         # ---- Pooled draw/grad matrices for R² and Fisher-LR metric ----
@@ -1202,12 +1337,15 @@ def build_multi_chain_meta_core(
         # ---- Escalation decision ----
         r2_gate = r2_new >= _R_MIN  # False when NaN (JAX comparison semantics)
 
-        mc_detection_gate = (
-            magnitude_gate
-            & collinearity_gate
-            & loo_gate
-            & support_gate
-            & unimodality_gate
+        pre_unimodality_gate = (
+            magnitude_gate & collinearity_gate & loo_gate & lo2_gate & support_gate
+        )
+        mc_detection_gate = pre_unimodality_gate & unimodality_gate
+
+        # deferred_to_ensemble: other gates passed but unimodality blocked (P1→P3 handoff).
+        # Store once (monotone): once True, keep True across windows.
+        new_deferred = state.deferred_to_ensemble | (
+            ~state.has_escalated & pre_unimodality_gate & ~unimodality_gate & r2_gate
         )
 
         budget_remaining = jnp.int32(max_budget_steps_per_chain) - (
@@ -1265,6 +1403,8 @@ def build_multi_chain_meta_core(
             airm_vel_curr=new_airm_vel_curr,
             is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
             chain_collinearity=f1,
+            unimodality_passed=unimodality_gate,
+            deferred_to_ensemble=new_deferred,
         )
 
     return MetricCore(init=init, update=update, final=final)
@@ -1423,8 +1563,8 @@ def extract_multi_chain_verdict(
     -------
     MetaAdaptationVerdict
         Verdict with multi-chain–specific flags: ``n_chains``,
-        ``chain_agreement``, and ``mode_coverage="multi_chain_certified"`` when
-        the projector agreement gate passed.
+        ``chain_collinearity``, ``unimodality_gate``, ``deferred_to_ensemble``,
+        and ``mode_coverage="multi_chain_certified"`` when all gates passed.
     """
     import numpy as np
 
@@ -1441,6 +1581,8 @@ def extract_multi_chain_verdict(
     converged_at = int(np.asarray(final_state.converged_at_step))
     is_slow = bool(np.asarray(final_state.is_slow_mixing))
     chain_collinearity_raw = float(np.asarray(final_state.chain_collinearity))
+    unimodality_passed_raw = bool(np.asarray(final_state.unimodality_passed))
+    deferred_raw = bool(np.asarray(final_state.deferred_to_ensemble))
     n_chains_actual: int = final_state.draws_buffer.shape[0]  # static
 
     lam_np = np.asarray(final_state.inverse_mass_matrix.lam)
@@ -1530,8 +1672,8 @@ def extract_multi_chain_verdict(
         "chain_collinearity": chain_collinearity_raw,
         "need_more_chains": spike_marginal,
         "start_dispersion_adequacy": start_dispersion_adequacy,
-        "unimodality_gate": "unknown",  # gap-stat result not stored in carry
-        "deferred_to_ensemble": False,  # populated when unimodality_gate flags
+        "unimodality_gate": "pass" if unimodality_passed_raw else "flag",
+        "deferred_to_ensemble": deferred_raw,
         "pooled_draws_by_window": pooled_draws_by_window,
     }
 
