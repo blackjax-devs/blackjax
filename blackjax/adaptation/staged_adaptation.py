@@ -120,6 +120,7 @@ def _make_engine(
     metric_core: MetricCore,
     *,
     target_acceptance_rate: float,
+    n_da_updates: int = 1,
 ) -> tuple[Callable, Callable, Callable]:
     """Build the (init, update, final) triple for the staged adaptation HOST.
 
@@ -134,6 +135,12 @@ def _make_engine(
         (init/update/final bundle for the inverse mass matrix).
     target_acceptance_rate
         Target acceptance rate for dual-averaging step-size adaptation.
+    n_da_updates
+        Number of sequential dual-averaging updates to apply per warmup step.
+        Set to ``n_chains`` for the multi-chain path (shared-ε pooled DA):
+        each chain's acceptance rate is applied in sequence, giving
+        ``n_chains`` DA observations per step rather than one mean observation.
+        Defaults to ``1`` (single-chain behaviour unchanged).
 
     Returns
     -------
@@ -146,6 +153,29 @@ def _make_engine(
         ``(warmup_state) -> (step_size, inverse_mass_matrix)``
     """
     da_init, da_update, da_final = dual_averaging_adaptation(target_acceptance_rate)
+
+    def _maybe_multi_da_update(
+        ss_state: DualAveragingAdaptationState,
+        acceptance_rates: Array,
+    ) -> DualAveragingAdaptationState:
+        """Apply ``n_da_updates`` sequential DA updates.
+
+        When ``n_da_updates == 1`` (single-chain), calls ``da_update`` once
+        with the scalar ``acceptance_rates``.  When ``n_da_updates > 1``
+        (multi-chain shared-ε), runs ``jax.lax.scan`` over the per-chain
+        acceptance rate vector, updating the shared step-size state M times
+        per warmup step.  This gives M×n_per_chain total DA observations per
+        window instead of n_per_chain with mean-pooled rates, which measurably
+        reduces per-chain step-size variance in the multi-chain regime.
+        """
+        if n_da_updates == 1:
+            return da_update(ss_state, acceptance_rates)
+
+        def _one(state: DualAveragingAdaptationState, ar: Array):
+            return da_update(state, ar), None
+
+        final_state, _ = jax.lax.scan(_one, ss_state, acceptance_rates)
+        return final_state
 
     def init(
         position: ArrayLikeTree, initial_step_size: float
@@ -163,12 +193,12 @@ def _make_engine(
     def fast_update(
         position: ArrayLikeTree,
         grad: ArrayLikeTree,
-        acceptance_rate: float,
+        acceptance_rate: Array,
         ws: StagedAdaptationState,
     ) -> StagedAdaptationState:
         """Update adaptation state during a fast (step-size-only) window."""
         del position, grad
-        new_ss = da_update(ws.ss_state, acceptance_rate)
+        new_ss = _maybe_multi_da_update(ws.ss_state, acceptance_rate)
         new_step_size = jnp.exp(new_ss.log_step_size)
         return StagedAdaptationState(
             new_ss, ws.imm_state, new_step_size, ws.inverse_mass_matrix
@@ -177,7 +207,7 @@ def _make_engine(
     def slow_update(
         position: ArrayLikeTree,
         grad: ArrayLikeTree,
-        acceptance_rate: float,
+        acceptance_rate: Array,
         ws: StagedAdaptationState,
     ) -> StagedAdaptationState:
         """Update adaptation state during a slow (step-size + mass-matrix) window.
@@ -190,7 +220,7 @@ def _make_engine(
         accumulator.
         """
         new_metric_st = metric_core.update(ws.imm_state, position, grad)
-        new_ss = da_update(ws.ss_state, acceptance_rate)
+        new_ss = _maybe_multi_da_update(ws.ss_state, acceptance_rate)
         new_step_size = jnp.exp(new_ss.log_step_size)
         # Propagate the core's current inverse_mass_matrix to the MCMC kernel
         # at every slow step, not just at window-end.  For all non-accumulating
@@ -670,6 +700,10 @@ def staged_adaptation(
     adapt_init, adapt_step, adapt_final = _make_engine(
         metric_core,
         target_acceptance_rate=target_acceptance_rate,
+        # Multi-chain shared-ε: apply one DA update per chain per step so the
+        # shared step size accumulates M observations per warmup step rather
+        # than a single mean-pooled observation.  Single-chain path unchanged.
+        n_da_updates=_n_chains if _is_multi_chain else 1,
     )
 
     if initial_metric_state is not None:
@@ -837,15 +871,17 @@ def staged_adaptation(
                 # metric core's update() handles (M, d) arrays natively.
                 positions_mc = new_states_mc.position
                 grads_mc = new_states_mc.logdensity_grad
-                # Average acceptance rate across chains for dual-averaging.
-                mean_accept = infos_mc.acceptance_rate.mean()
+                # Shared-ε: pass the full per-chain acceptance rate vector (M,)
+                # so _make_engine's _maybe_multi_da_update applies M sequential
+                # DA updates (one per chain) instead of one mean update.
+                per_chain_accepts = infos_mc.acceptance_rate  # shape (M,)
 
                 new_adaptation_state = adapt_step(
                     adaptation_state,
                     adaptation_stage,
                     positions_mc,
                     grads_mc,
-                    mean_accept,
+                    per_chain_accepts,
                 )
 
                 return (

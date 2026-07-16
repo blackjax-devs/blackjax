@@ -150,6 +150,53 @@ headroom against noise for small M.  This is a FLAG, not a proof: noisy at
 small M or uneven splits.  Computed dynamically by :func:`_mc_unimodality_threshold`.
 """
 
+# v2.1 W-branch and T-branch guard constants.
+_W_BRANCH_PSI_FLOOR: float = 0.15
+"""Minimum Ψ (cross-chain consistency) threshold.
+
+All measured null q999 values sit ≤ 0.095 across every null tried (iid, AR
+ρ∈{0.5,0.8,0.95}, oscillatory, shared slow-mixing direction).  The threshold
+0.15 sits ≥ 2× above the largest observed null q999 and ~6× below genuine
+deep-spread values (0.91–0.98).  Used as the floor: actual gate is
+max(3·q99_null(M,n,d), 0.15); for d≥50 this equals ~0.19 vs genuine ~0.96.
+"""
+
+_W_BRANCH_R1_TOL: float = -0.2
+"""Lag-1 autocorrelation lower bound for the oscillation screen.
+
+A genuine under-resolved slow direction is diffusive (r₁ > 0); integrator
+resonance alternates (r₁ < 0).  The −0.2 lower bound admits all positive and
+mildly-negative lag-1 values while blocking the strongly-negative oscillatory
+direction.
+"""
+
+_MC_UNIMODALITY_Q99_TABLE: dict[int, float] = {
+    6: 3.8,  # conservative estimate; dedicated calibration needed for M<8
+    7: 4.2,  # conservative estimate
+    8: 4.54,  # MC-calibrated from 1000 reps iid null (spec §7a)
+}
+"""Gap-stat null q99 per M for the unimodality guard (v2.1 recalibration).
+
+v2 used 3.5 = the measured null q90 → 10%/window FPR, causing 5/5 radon
+false-positives and 11-window cumulative rate ≈65%.  v2.1 targets 1%/window
+(q99 = 4.54 at M=8) and requires 2-consecutive-window confirmation.
+"""
+
+_MC_UNIMODALITY_CONFIRM_WINDOWS: int = 2
+"""Consecutive windows the gap-stat must flag before deferred_to_ensemble latches.
+
+Early transient windows can produce accidental splits (chains haven't yet
+mixed across the target); requiring 2 consecutive flags eliminates most
+transient false-defers.  Two is the minimum distinguishing confirmed from
+transient; three would be more conservative but too slow for the schedule.
+"""
+
+# Detection branch codes (int32 stored in state.detection_branch).
+_DETECTION_BRANCH_NONE: int = 0
+_DETECTION_BRANCH_POOLED_WITHIN: int = 1  # W-branch fired
+_DETECTION_BRANCH_BETWEEN_MEANS: int = 2  # T-branch fired
+_DETECTION_BRANCH_BOTH: int = 3  # both branches fired this window
+
 # R² mode integers (stored in carry as int8).
 _R2_DEFERRED: int = 0
 _R2_PROJECTED: int = 1
@@ -258,10 +305,16 @@ class MultiChainMetaAdaptationCoreState(NamedTuple):
     airm_vel_prev: Array  # float32
     airm_vel_curr: Array  # float32
     is_slow_mixing: Array  # bool; always False in the multi-chain path (pooled diagnostic)
-    # Multi-chain-specific carry
+    # Multi-chain-specific carry (v2 fields)
     chain_collinearity: Array  # float32; collinearity score f₁ from most recent window (NaN initially)
     unimodality_passed: Array  # bool; True = gap-stat found unimodal distribution (False = mode-split flag)
     deferred_to_ensemble: Array  # bool; True = other gates passed but unimodality blocked (P1→P3 handoff)
+    # v2.1 additions — W-branch diagnostics + T-branch guard state
+    within_lam1: Array  # float32; top eigenvalue of pooled within-chain residual (NaN until first window)
+    chain_consistency_psi: Array  # float32; Ψ cross-chain consistency cosine (NaN until first window)
+    r1_top: Array  # float32; lag-1 autocorr in top W-branch direction (NaN until first window)
+    detection_branch: Array  # int32; _DETECTION_BRANCH_* code from the most recent firing window
+    unimodality_flag_count: Array  # int32; consecutive windows gap-stat flagged (for 2-window confirmation)
 
 
 # ---------------------------------------------------------------------------
@@ -613,12 +666,17 @@ def _loo_detection_passes(
 
 
 def _mc_unimodality_threshold(M: int) -> float:
-    """Gap-stat threshold for the unimodality guard, scaled with chain count M.
+    """Gap-stat threshold for the unimodality guard, calibrated at null q99.
 
-    A perfect 2-cluster bimodal split with M chains gives max_gap/mean_gap
-    ≈ M−1; the genuine-unimodal null gives ≈ 1.0–2.3 empirically.  The
-    threshold max(0.5*(M−1), 3.0) places the decision boundary halfway between
-    those regimes for any M≥6 (the fenced minimum).
+    v2.1 recalibration: threshold = MC null q99 per M (table-based where
+    calibrated, conservative fallback otherwise).  v2 used q90 = 3.5 at M=8,
+    causing 10%/window FPR and 5/5 radon false-defers across 11 windows.
+    The table ``_MC_UNIMODALITY_Q99_TABLE`` holds measured values; M values
+    not in the table fall back to ``max(0.5*(M−1), 3.0)`` (the v2 formula,
+    now treated as a conservative estimate rather than a design threshold).
+
+    Requires 2-consecutive-window confirmation (``_MC_UNIMODALITY_CONFIRM_WINDOWS``)
+    before ``deferred_to_ensemble`` latches — this is a FLAG statistic, not a proof.
 
     Parameters
     ----------
@@ -628,9 +686,11 @@ def _mc_unimodality_threshold(M: int) -> float:
     Returns
     -------
     float — threshold above which the projected chain-means are flagged as
-    mode-split.
+    mode-split (one window; requires 2 consecutive to latch).
     """
-    return max(_MC_UNIMODALITY_GAP_FRACTION * (M - 1), 3.0)
+    return _MC_UNIMODALITY_Q99_TABLE.get(
+        M, max(_MC_UNIMODALITY_GAP_FRACTION * (M - 1), 3.0)
+    )
 
 
 def _unimodality_gap_stat(
@@ -727,6 +787,344 @@ def _geometric_mean_deploy_scale(
         / jnp.maximum(fisher_curv_e, jnp.float32(1e-20))
     )
     return sigma_sq_deploy.astype(jnp.float32)
+
+
+# ---------------------------------------------------------------------------
+# v2.1 W-branch signal functions (pooled within-chain residual detector)
+# ---------------------------------------------------------------------------
+
+
+def _w_branch_lam1_edge(d: int, N: Array) -> Array:
+    """Marchenko–Pastur bulk upper edge for the pooled within-chain residual spectrum.
+
+    Analytic formula: ``(1 + sqrt(d/N))²`` where ``N = M*(n-1)`` is the dof
+    of the pooled residual covariance.  This equals the iid-null q95 at
+    N ~ 1.4 × 10³ (Tracy–Widom correction ≈ 1.4% from q95 to q99); the Ψ
+    consistency gate is the primary FPR control so a slightly anti-conservative
+    edge is acceptable here.
+
+    Parameters
+    ----------
+    d
+        Dimension (static Python int).
+    N
+        Effective pooled count ``M*(n-1)`` (dynamic JAX int32 or Python int).
+
+    Returns
+    -------
+    float32 — the MP bulk upper edge.
+    """
+    N_safe = jnp.maximum(jnp.asarray(N, dtype=jnp.float32), jnp.float32(1.0))
+    return (jnp.float32(1.0) + jnp.sqrt(jnp.float32(d) / N_safe)) ** 2
+
+
+def _compute_pooled_within_spectrum(
+    draws_buffer_mc: Array,
+    chain_means: Array,
+    W_diag: Array,
+    n: Array,
+    M: int,
+    max_rank: int,
+) -> tuple[Array, Array]:
+    """Top eigenvalue and top eigenvector of the pooled within-chain residual
+    correlation matrix R_W.
+
+    Pools M chains' per-chain-centered, diag-whitened residuals into an
+    M(n-1)-dof estimate of the within-chain correlation.  Computed via thin SVD
+    of the stacked (M*B, d) masked residual matrix — never a d×d eigendecomp.
+
+    Structural facts (exact, not asymptotic):
+    - diag(R_W) = 1 exactly: per-chain centering removes the between-chain
+      component so W_diag is exactly R_W's diagonal.
+    - R_W is f_disp-free: chain means are removed before pooling so init
+      overdispersion never enters the estimate.
+    - R_W is mode-blind: per-chain centering within each mode gives white
+      residuals if the modes have similar within-mode geometry; multi-modal
+      chains escalate on the within-mode correlation structure only.
+
+    Parameters
+    ----------
+    draws_buffer_mc
+        Shape ``(M, B, d)``.
+    chain_means
+        Shape ``(M, d)``; per-chain means over valid draws.
+    W_diag
+        Shape ``(d,)``; pooled within-chain diagonal variance.
+    n
+        Dynamic fill count, int32 scalar.
+    M
+        Static chain count.
+    max_rank
+        Maximum rank for the SVD (determines how many right singular vectors
+        are returned; only the top one is used for the W-branch gate).
+
+    Returns
+    -------
+    lam1
+        float32 scalar — top eigenvalue of R_W.
+    top_eigvec
+        Shape ``(d,)`` float32 — top right singular vector (principal direction
+        in the whitened space).
+    """
+    _M, B, d = draws_buffer_mc.shape
+    W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
+    sigma_w = jnp.sqrt(W_safe)
+
+    # Per-chain centering + whitening: Y[m,t] = (X[m,t] - mu_m) / sigma_w
+    centered = draws_buffer_mc - chain_means[:, None, :]  # (M, B, d)
+    whitened = centered / sigma_w[None, None, :]  # (M, B, d)
+
+    # Apply valid-row mask within each chain; flatten chain-major → (M*B, d)
+    step_mask = (jnp.arange(B) < n).astype(whitened.dtype)  # (B,)
+    Y_pool = (step_mask[None, :, None] * whitened).reshape(M * B, d)  # (M*B, d)
+
+    # Dof: N = M*(n-1).  Scale so S = Y_scaled^T Y_scaled ≈ R_W = (1/N) Y_pool^T Y_pool
+    N_dof = jnp.maximum(
+        n.astype(jnp.int32) * jnp.int32(M) - jnp.int32(M), jnp.int32(1)
+    )  # M*(n-1)
+    N_f = N_dof.astype(Y_pool.dtype)
+    Y_scaled = Y_pool / jnp.sqrt(jnp.maximum(N_f, jnp.float32(1.0)))
+
+    # Finite guard before SVD (NaN/Inf rows from near-zero W_diag)
+    Y_safe = jnp.where(jnp.isfinite(Y_scaled), Y_scaled, jnp.zeros_like(Y_scaled))
+
+    # Thin SVD: singular values s satisfy lam_i(R_W) = s_i^2
+    _, s, Vt = jnp.linalg.svd(Y_safe, full_matrices=False)
+
+    lam1 = (s[0] ** 2).astype(jnp.float32)
+    top_eigvec = Vt[0].astype(jnp.float32)  # (d,) — top direction in whitened space
+
+    return lam1, top_eigvec
+
+
+def _compute_chain_consistency_psi(
+    draws_buffer_mc: Array,
+    chain_means: Array,
+    W_diag: Array,
+    n: Array,
+    M: int,
+) -> Array:
+    """Cross-chain consistency Ψ of the off-diagonal residual correlation.
+
+    Splits the M chains into fixed halves A (first M//2) and B (remaining),
+    computes the pooled within-chain residual correlation for each half using
+    the shared W_diag whitener, then computes the cosine similarity of their
+    off-diagonal parts in Frobenius matrix space.
+
+    Null property: chains are independent, so E[<C_A, C_B>_F] = ||E C||²_F
+    is the off-diagonal signal energy; the cross-noise term is exactly zero
+    regardless of within-chain autocorrelation law.  This makes Ψ τ-blind:
+    it carries genuine target structure but is insensitive to per-chain
+    mixing rate.
+
+    Parameters
+    ----------
+    draws_buffer_mc
+        Shape ``(M, B, d)``.
+    chain_means
+        Shape ``(M, d)``.
+    W_diag
+        Shape ``(d,)`` — pooled within-chain diagonal variance.
+    n
+        Dynamic fill count, int32 scalar.
+    M
+        Static chain count.
+
+    Returns
+    -------
+    float32 scalar — Ψ (ranges nominally in [−1, 1]; genuine deep-spread
+    ≈ 0.91–0.98; iid-null q999 ≤ 0.095 across all null types tested;
+    threshold floor = :data:`_W_BRANCH_PSI_FLOOR` = 0.15).
+    """
+    _M, B, d = draws_buffer_mc.shape
+    M_A = M // 2
+    M_B = M - M_A
+
+    W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
+    sigma_w = jnp.sqrt(W_safe)
+
+    # Per-chain centering + whitening
+    centered = draws_buffer_mc - chain_means[:, None, :]  # (M, B, d)
+    whitened = centered / sigma_w[None, None, :]  # (M, B, d)
+
+    step_mask = (jnp.arange(B) < n).astype(whitened.dtype)  # (B,)
+
+    # Half-A chains: flatten chain-major (M_A*B, d) with valid-row mask
+    Y_A = (step_mask[None, :, None] * whitened[:M_A]).reshape(M_A * B, d)
+    # Half-B chains: flatten chain-major (M_B*B, d)
+    Y_B = (step_mask[None, :, None] * whitened[M_A:]).reshape(M_B * B, d)
+
+    # Finite guards
+    Y_A = jnp.where(jnp.isfinite(Y_A), Y_A, jnp.zeros_like(Y_A))
+    Y_B = jnp.where(jnp.isfinite(Y_B), Y_B, jnp.zeros_like(Y_B))
+
+    # <R_A, R_B>_F = (1/(N_A*N_B)) * ||Y_A Y_B^T||_F^2 = (1/(N_A*N_B)) * ||cross_gram||_F^2
+    # (uses the identity trace(A^T A B^T B) = ||A B^T||_F^2 for A=Y_A, B=Y_B)
+    cross_gram = Y_A @ Y_B.T  # (M_A*B, M_B*B)
+    inner_R_AB = jnp.sum(cross_gram**2)  # = N_A*N_B * <R_A,R_B>_F
+
+    # Diagonal correction: sum_i (R_A)_{ii}(R_B)_{ii} = (1/(N_A*N_B)) * dot(d_A, d_B)
+    # where d_A[i] = ||Y_A[:,i]||^2 = N_A * (R_A)_{ii}
+    d_A = jnp.sum(Y_A**2, axis=0)  # (d,) = N_A * diag(R_A)
+    d_B = jnp.sum(Y_B**2, axis=0)  # (d,) = N_B * diag(R_B)
+    diag_corr = jnp.dot(d_A, d_B)  # = N_A*N_B * sum_i (R_A)_{ii}(R_B)_{ii}
+
+    # Frobenius inner product of off-diagonal parts
+    inner_C_AB = inner_R_AB - diag_corr  # = N_A*N_B * <C_A, C_B>_F
+
+    # Norms: ||C_X||_F^2 = ||R_X||_F^2 - sum_i (R_X)_{ii}^2
+    # ||R_A||_F^2 = (1/N_A^2) * trace((Y_A^T Y_A)^2) = (1/N_A^2) * ||Y_A Y_A^T||_F^2
+    auto_gram_A = Y_A @ Y_A.T  # (M_A*B, M_A*B)
+    auto_gram_B = Y_B @ Y_B.T  # (M_B*B, M_B*B)
+    inner_R_AA = jnp.sum(auto_gram_A**2)  # = N_A^2 * ||R_A||_F^2
+    inner_R_BB = jnp.sum(auto_gram_B**2)  # = N_B^2 * ||R_B||_F^2
+    diag_AA = jnp.dot(d_A, d_A)  # = N_A^2 * sum_i (R_A)_{ii}^2
+    diag_BB = jnp.dot(d_B, d_B)  # = N_B^2 * sum_i (R_B)_{ii}^2
+    inner_C_AA = inner_R_AA - diag_AA  # = N_A^2 * ||C_A||_F^2
+    inner_C_BB = inner_R_BB - diag_BB  # = N_B^2 * ||C_B||_F^2
+
+    # Ψ = <C_A,C_B>_F / (||C_A||_F * ||C_B||_F)
+    # Numerator: inner_C_AB / (N_A * N_B)
+    # Denominator: sqrt(inner_C_AA / N_A^2) * sqrt(inner_C_BB / N_B^2)
+    #            = sqrt(inner_C_AA * inner_C_BB) / (N_A * N_B)
+    # Simplifies to: inner_C_AB / sqrt(max(inner_C_AA * inner_C_BB, eps))
+    psi = inner_C_AB / jnp.maximum(
+        jnp.sqrt(jnp.maximum(inner_C_AA * inner_C_BB, jnp.float32(1e-30))),
+        jnp.float32(1e-20),
+    )
+    return psi.astype(jnp.float32)
+
+
+def _compute_lag1_autocorr_top_dir(
+    draws_buffer_mc: Array,
+    chain_means: Array,
+    W_diag: Array,
+    top_eigvec: Array,
+    n: Array,
+    M: int,
+) -> Array:
+    """Pooled lag-1 autocorrelation of projections onto the top W-branch direction.
+
+    The oscillation screen: a genuine under-resolved slow direction is
+    diffusive (r₁ > 0), while integrator resonance alternates (r₁ < 0).
+    Pooling M chains' lag-1 estimates reduces variance relative to single-chain.
+
+    Gate: ``r1_top > _W_BRANCH_R1_TOL`` (= −0.2).  The gate is a LOWER bound
+    only — no requirement of large positive r₁, or every isotropic-AC null
+    direction would pass (at ρ=0.8, AR direction r₁ ≈ +0.8 — the screen
+    must not penalize high-AC genuine slow directions).
+
+    Parameters
+    ----------
+    draws_buffer_mc
+        Shape ``(M, B, d)``.
+    chain_means
+        Shape ``(M, d)``.
+    W_diag
+        Shape ``(d,)`` — pooled within-chain diagonal variance.
+    top_eigvec
+        Shape ``(d,)`` — top right singular vector in whitened space (from
+        :func:`_compute_pooled_within_spectrum`).
+    n
+        Dynamic fill count, int32 scalar.
+    M
+        Static chain count.
+
+    Returns
+    -------
+    float32 scalar — pooled lag-1 autocorrelation (mean across M chains).
+    """
+    _M, B, d = draws_buffer_mc.shape
+    W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
+    sigma_w = jnp.sqrt(W_safe)
+
+    # Per-chain centering + whitening, then project onto top_eigvec (whitened space)
+    centered = draws_buffer_mc - chain_means[:, None, :]  # (M, B, d)
+    whitened = centered / sigma_w[None, None, :]  # (M, B, d)
+    proj = whitened @ top_eigvec  # (M, B)
+
+    step_mask = (jnp.arange(B) < n).astype(proj.dtype)  # (B,)
+    n_f = jnp.maximum(n.astype(proj.dtype), jnp.float32(2.0))
+
+    def _chain_lag1(proj_m: Array) -> Array:
+        """Lag-1 autocorrelation for one chain's projection time series."""
+        mu = (step_mask * proj_m).sum() / n_f
+        p_c = step_mask * (proj_m - mu)  # centered
+        var = (p_c**2).sum() / jnp.maximum(n_f - jnp.float32(1.0), jnp.float32(1.0))
+        lag1_cov = (
+            p_c[:-1] * p_c[1:] * step_mask[:-1] * step_mask[1:]
+        ).sum() / jnp.maximum(n_f - jnp.float32(2.0), jnp.float32(1.0))
+        return lag1_cov / jnp.maximum(var, jnp.float32(1e-20))
+
+    per_chain_r1 = jax.vmap(_chain_lag1)(proj)  # (M,)
+    return per_chain_r1.mean().astype(jnp.float32)
+
+
+def _build_pc_centered_time_major_pool(
+    draws_buffer_mc: Array,
+    grads_buffer_mc: Array,
+    chain_means: Array,
+    n: Array,
+    M: int,
+) -> tuple[Array, Array, Array]:
+    """Per-chain-centered draws/grads in time-major layout with the valid-row mask.
+
+    Subtracts each chain's own mean from positions and gradients, then
+    reshapes from chain-major ``(M, B, d)`` to time-major ``(B*M, d)`` where
+    the first ``n*M`` rows are valid (one real draw per chain per time step).
+
+    This simultaneously fixes two v2 defects in the pooled R² path:
+    1. **Padding bug**: chain-major layout puts zero-padded rows in the
+       middle of the buffer (rows ``m*B + n .. m*B + B-1``), so the valid-row
+       mask ``arange < n_pool`` incorrectly includes padding from early chains
+       and drops later chains.  Time-major layout makes all valid rows
+       contiguous at the start.
+    2. **Between-chain inflation**: grand-centered pooled data conflates local
+       curvature with transient chain-offset variance, producing wildly wrong
+       R² on real multi-chain draws.  Per-chain centering removes the offset.
+
+    Parameters
+    ----------
+    draws_buffer_mc
+        Shape ``(M, B, d)``.
+    grads_buffer_mc
+        Shape ``(M, B, d)``.
+    chain_means
+        Shape ``(M, d)`` — per-chain position means (computed from valid rows).
+    n
+        Dynamic valid-row fill count, int32.
+    M
+        Static chain count.
+
+    Returns
+    -------
+    pc_draws_tm : shape ``(B*M, d)`` — per-chain-centered draws, time-major.
+    pc_grads_tm : shape ``(B*M, d)`` — per-chain-centered grads, time-major.
+    step_mask_tm : shape ``(B*M,)`` — 1 for valid rows (first n*M), 0 otherwise.
+    """
+    _M, B, d = draws_buffer_mc.shape
+
+    # Gradient means per chain (computed from valid rows)
+    step_mask = (jnp.arange(B) < n).astype(draws_buffer_mc.dtype)  # (B,)
+    n_f = jnp.maximum(n.astype(draws_buffer_mc.dtype), jnp.float32(1.0))
+
+    def _chain_grad_mean(g_m: Array) -> Array:
+        return (step_mask[:, None] * g_m).sum(0) / n_f
+
+    grad_means = jax.vmap(_chain_grad_mean)(grads_buffer_mc)  # (M, d)
+
+    # Per-chain centering
+    pc_draws = draws_buffer_mc - chain_means[:, None, :]  # (M, B, d)
+    pc_grads = grads_buffer_mc - grad_means[:, None, :]  # (M, B, d)
+
+    # Time-major reshape: (M, B, d) → swap → (B, M, d) → reshape → (B*M, d)
+    # Valid rows: first n*M (all M chains at time step t, for t = 0..n-1)
+    pc_draws_tm = pc_draws.swapaxes(0, 1).reshape(B * M, d)
+    pc_grads_tm = pc_grads.swapaxes(0, 1).reshape(B * M, d)
+    # step_mask[t] = 1 for t < n; repeat M times → M*B mask, valid = first n*M
+    step_mask_tm = jnp.repeat(step_mask, M)  # (B*M,)
+
+    return pc_draws_tm, pc_grads_tm, step_mask_tm
 
 
 # ---------------------------------------------------------------------------
@@ -1079,6 +1477,12 @@ def build_multi_chain_meta_core(
             chain_collinearity=jnp.array(float("nan"), dtype=jnp.float32),
             unimodality_passed=jnp.ones((), dtype=jnp.bool_),  # True until first window
             deferred_to_ensemble=jnp.zeros((), dtype=jnp.bool_),
+            # v2.1 new fields — NaN / 0 until first window
+            within_lam1=jnp.array(float("nan"), dtype=jnp.float32),
+            chain_consistency_psi=jnp.array(float("nan"), dtype=jnp.float32),
+            r1_top=jnp.array(float("nan"), dtype=jnp.float32),
+            detection_branch=jnp.array(_DETECTION_BRANCH_NONE, dtype=jnp.int32),
+            unimodality_flag_count=jnp.zeros((), dtype=jnp.int32),
         )
 
     def update(
@@ -1126,157 +1530,129 @@ def build_multi_chain_meta_core(
     def final(
         state: MultiChainMetaAdaptationCoreState,
     ) -> MultiChainMetaAdaptationCoreState:
-        """Window-boundary controller: between-chain gate → escalation → reset.
+        """Window-boundary controller: W-branch ∪ T-branch detection (v2.1).
 
-        Five-gate conjunction (all must pass to escalate):
-        1. Magnitude: top T eigenvalue clears the (M−1)-dof bulk-separation edge.
-        2. Collinearity: f₁ ≥ threshold (genuine slow dir → rank-1 concentration).
-        3. Leave-one-out: detection survives dropping any single chain.
-        4. Support: k ≤ M−2 (M−1 dof supports at most M−2 spikes conservatively).
-        5. Unimodality: gap-stat on projected chain-means does not flag mode-split.
-        Plus R² curvature gate and budget deadline (carried from single-chain).
+        v2.1 two-branch union:
+        - **W-branch (primary, deep spread):** pools per-chain-centered,
+          within-chain-whitened residuals into a M(n−1)-dof spectrum; escalates
+          when λ₁ clears the MP null edge AND the cross-chain consistency Ψ
+          confirms AND the oscillation screen passes AND R² ≥ 0.5.
+        - **T-branch (pure spike):** v2's between-means detector kept for the
+          fully-unmixed regime.  Unimodality guard recalibrated to q99 (4.54
+          at M=8) with 2-window confirmation; latch is non-monotone.
+
+        Router fix: per-chain-centered draws/grads in time-major layout (first
+        n*M rows valid), replacing the v2 chain-major reshape that caused
+        r2 ∈ {−1.96×10¹⁷, +1.000} on real multi-chain draws.
         """
         M_stat, B, d = state.draws_buffer.shape  # all static
         n = jnp.minimum(state.buffer_idx, jnp.int32(B))
         actual_rank = state.inverse_mass_matrix.U.shape[1]  # static
 
-        # ---- Static detection edges (Python floats; M_stat and d are static) ----
-        dof = M_stat - 1  # rank of T (grand-mean constraint)
-        edge_full = _mc_detection_edge(d, dof)  # (1+√(d/(M−1)))²
-        # LOO edge: M−1 remaining chains, M−2 dof after re-centring
-        edge_loo = _mc_detection_edge(d, max(dof - 1, 1))
-
         # ---- Within-chain statistics ----
         chain_means, W_diag = _compute_within_chain_stats(state.draws_buffer, n)
         grand_mean = chain_means.mean(0)  # (d,)
+        W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
+        sigma_w_diag = jnp.sqrt(W_safe)
 
-        # ---- Between-chain detection matrix via M×M Gram ----
+        # ---- T-branch: between-chain detection via M×M Gram ----
+        dof = M_stat - 1  # rank of T (grand-mean constraint)
+        edge_full = _mc_detection_edge(d, dof)  # (1+√(d/(M−1)))²
+        edge_loo = _mc_detection_edge(d, max(dof - 1, 1))
+
         T_eigenvalues, V_top, f1 = _between_chain_detection(
             chain_means, W_diag, n, M_stat, d
         )
-        # T_eigenvalues is (M,) descending; first M−1 are non-trivial, last ≈ 0
         T_top = T_eigenvalues[0]
 
-        # ---- Gate 1: Magnitude ----
-        magnitude_gate = T_top > jnp.float32(edge_full)
-
-        # ---- Count admitted spikes (for support gate and metric scale) ----
-        # k = number of T eigenvalues above the bulk edge, capped by M−2.
-        # Note: v2 deploys a rank-1 update (one slow direction); the k_new /
-        # spike-count machinery is vestigial for the current deploy path and is
-        # retained for the v2.1 full rank-k upgrade.  Collinearity (f₁≥0.7)
-        # already rejects balanced rank≥2 scatter, so k_new≥2 is one-sided safe.
         k_raw = (T_eigenvalues > jnp.float32(edge_full)).sum().astype(jnp.int32)
-        k_new = jnp.minimum(k_raw, jnp.int32(max(dof - 1, 1)))
-        k_new = jnp.minimum(k_new, jnp.int32(actual_rank))
-
-        # ---- Gate 2: Collinearity ----
-        collinearity_gate = f1 >= jnp.float32(_MC_COLLINEARITY_TOL)
-
-        # ---- Gate 3: Leave-one-out ----
-        # Leave-two-out (dropping any chain pair) is subsumed by the collinearity +
-        # unimodality conjunction: near the edge f₁ cannot reach 0.7 (collinearity rejects the
-        # aligned pair), and once f₁≥0.7 the bulk sits far above the LO2 edge so
-        # dropping any pair never collapses the verdict; isolated-pair bimodal cases
-        # are caught by the unimodality gate.  LO2 is deferred to v2.1.
-        loo_gate = _loo_detection_passes(chain_means, W_diag, n, M_stat, d, edge_loo)
-
-        # ---- Gate 4: Support ----
-        support_gate = k_new >= jnp.int32(1)  # at least one spike admitted
-
-        # ---- Gate 5: Unimodality (flag; mode-split → refuse escalation) ----
-        # Use top whitened direction converted back to original space as the
-        # projection axis.  V_top[:, 0] is the whitened direction; unwhiten:
-        W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
-        e_unnorm = jnp.sqrt(W_safe) * V_top[:, 0]  # (d,) in original space
-        e_norm = jnp.linalg.norm(e_unnorm)
-        e_dir = e_unnorm / jnp.maximum(e_norm, jnp.float32(1e-10))  # unit vector
-        is_unimodal, _gap_ratio = _unimodality_gap_stat(chain_means, e_dir, M_stat)
-        unimodality_gate = is_unimodal
-
-        # ---- Pooled draw/grad matrices for R² and Fisher-LR metric ----
-        step_mask = (jnp.arange(B) < n).astype(state.draws_buffer.dtype)  # (B,)
-        pooled_draws = state.draws_buffer.reshape(M_stat * B, d)
-        pooled_grads = state.grads_buffer.reshape(M_stat * B, d)
-        n_pool = n * jnp.int32(M_stat)
-        step_mask_all = jnp.tile(step_mask, M_stat)  # (M*B,)
-
-        # Fisher-LR metric (for the stay-diagonal baseline sigma and the
-        # full-rank R² computation on pooled draws)
-        sigma_lr, mu_star_new, U_lr, lam_lr = _compute_low_rank_metric(
-            pooled_draws, pooled_grads, n_pool, actual_rank, gamma, cutoff
+        k_new = jnp.minimum(
+            jnp.minimum(k_raw, jnp.int32(max(dof - 1, 1))), jnp.int32(actual_rank)
         )
 
-        # ---- R² curvature gate (on pooled draws; same as single-chain) ----
+        t_magnitude = T_top > jnp.float32(edge_full)
+        t_collinearity = f1 >= jnp.float32(_MC_COLLINEARITY_TOL)
+        t_loo = _loo_detection_passes(chain_means, W_diag, n, M_stat, d, edge_loo)
+        t_support = k_new >= jnp.int32(1)
+
+        # ---- T-branch Gate 5: unimodality (recalibrated + 2-window confirmation) ----
+        # Unwhiten top T direction: V_top[:, 0] is in whitened space → unwhiten by sigma_w
+        e_unnorm = sigma_w_diag * V_top[:, 0]  # (d,) in original space
+        e_norm = jnp.linalg.norm(e_unnorm)
+        e_dir = e_unnorm / jnp.maximum(e_norm, jnp.float32(1e-10))
+        is_unimodal, _gap_ratio = _unimodality_gap_stat(chain_means, e_dir, M_stat)
+        # Increment flag counter when gap-stat flags; reset to 0 when unimodal
+        uni_flag = ~is_unimodal  # True = mode-split flag this window
+        new_flag_count = jnp.where(
+            uni_flag,
+            state.unimodality_flag_count + jnp.int32(1),
+            jnp.int32(0),
+        )
+        # Confirmed split requires _MC_UNIMODALITY_CONFIRM_WINDOWS (=2) consecutive flags
+        unimodality_confirmed_split = new_flag_count >= jnp.int32(
+            _MC_UNIMODALITY_CONFIRM_WINDOWS
+        )
+
+        # T pre-unimodality conjunction (four non-unimodality gates)
+        t_pre_uni = t_magnitude & t_collinearity & t_loo & t_support
+
+        # ---- Per-chain-centered pooled buffers in time-major layout ----
+        # Fixes the v2 padding bug (chain-major zeros contaminated R² / Fisher paths)
+        # and removes between-chain transient inflation from the curvature gate.
+        pc_draws_tm, pc_grads_tm, step_mask_tm = _build_pc_centered_time_major_pool(
+            state.draws_buffer, state.grads_buffer, chain_means, n, M_stat
+        )
+        n_pool = n.astype(jnp.int32) * jnp.int32(M_stat)
+        # step_mask_all for geometric_mean_deploy_scale (time-major, repeat)
+        step_mask = (jnp.arange(B) < n).astype(state.draws_buffer.dtype)  # (B,)
+        step_mask_all = jnp.repeat(step_mask, M_stat)  # (B*M,)
+
+        # Finite guard before SVD/eigh (sanitise NaN/Inf from near-zero W_diag dims)
+        pc_draws_safe = jnp.where(
+            jnp.isfinite(pc_draws_tm), pc_draws_tm, jnp.zeros_like(pc_draws_tm)
+        )
+        pc_grads_safe = jnp.where(
+            jnp.isfinite(pc_grads_tm), pc_grads_tm, jnp.zeros_like(pc_grads_tm)
+        )
+
+        # ---- Fisher-LR metric on per-chain-centered pooled buffers ----
+        # Used by the W-branch metric and by the T-branch sigma baseline.
+        sigma_lr, mu_star_new, U_lr, lam_lr = _compute_low_rank_metric(
+            pc_draws_safe, pc_grads_safe, n_pool, actual_rank, gamma, cutoff
+        )
+
+        # ---- R² curvature gate (per-chain-centered, time-major) ----
+        # Per-chain centering removes between-chain variance, so the shared-slope
+        # fit measures local metric-fixability (curvature), not global linearity.
         _, U_k_pooled = _compute_whitened_spectrum(
-            pooled_draws,
-            jnp.sqrt(jnp.maximum(W_diag, jnp.float32(1e-10))),
-            n_pool,
-            actual_rank,
+            pc_draws_safe, sigma_w_diag, n_pool, actual_rank
         )
         r2_new, mode_new = _compute_r2_score_linearity(
-            pooled_draws,
-            pooled_grads,
-            jnp.sqrt(jnp.maximum(W_diag, jnp.float32(1e-10))),
-            n_pool,
-            U_k_pooled,
-            actual_rank,
+            pc_draws_safe, pc_grads_safe, sigma_w_diag, n_pool, U_k_pooled, actual_rank
         )
+        r2_gate = r2_new >= jnp.float32(_R_MIN)  # False when NaN
 
-        # ---- Stay-diagonal metric (within-chain W_diag baseline) ----
-        sigma_w_diag = jnp.sqrt(jnp.maximum(W_diag, jnp.float32(1e-10)))
-        diag_imm = LowRankInverseMassMatrix(
-            sigma=sigma_w_diag,
-            U=jnp.zeros((d, actual_rank), dtype=sigma_w_diag.dtype),
-            lam=jnp.ones(actual_rank, dtype=sigma_w_diag.dtype),
+        # ---- W-branch: pooled within-chain whiteness detector ----
+        lam1_w, top_eigvec_w = _compute_pooled_within_spectrum(
+            state.draws_buffer, chain_means, W_diag, n, M_stat, actual_rank
         )
+        N_dof = jnp.maximum(
+            n.astype(jnp.int32) * jnp.int32(M_stat) - jnp.int32(M_stat), jnp.int32(1)
+        )  # M*(n-1) pooled within-chain dof
+        w_edge = _w_branch_lam1_edge(d, N_dof)
+        w_magnitude = lam1_w > w_edge
 
-        # ---- Escalated metric: Fisher-LR baseline + geometric-mean rank-1 update ----
-        # Geometric-mean scale for the detected slow direction (rank-1 v2 update).
-        sigma_sq_deploy = _geometric_mean_deploy_scale(
-            chain_means,
-            pooled_grads,
-            step_mask_all,
-            grand_mean,
-            e_dir,
-            n_pool,
-            M_stat,
+        psi_w = _compute_chain_consistency_psi(
+            state.draws_buffer, chain_means, W_diag, n, M_stat
         )
-        # lam for LR update: σ̂²_deploy = λ_slow · ||sigma_lr ⊙ e_dir||²
-        # ||sigma_lr ⊙ e||² = sum_i sigma_lr_i² e_i²  (not the dot-product squared)
-        sigma_lr_e_sq = jnp.maximum(
-            ((sigma_lr**2) * (e_dir**2)).sum(), jnp.float32(1e-20)
-        )
-        lam_slow = sigma_sq_deploy / sigma_lr_e_sq
-        # Escalated metric: Fisher-LR sigma baseline, rank-1 slow-dir correction
-        U_slow = e_dir[:, None]  # (d, 1) — one slow direction
-        lam_slow_vec = jnp.concatenate(
-            [lam_slow[None], jnp.ones(actual_rank - 1, dtype=lam_slow.dtype)]
-        )
-        # For actual_rank ≥ 1 (guaranteed by construction): first lam slot = slow dir,
-        # remaining slots = 1.0 (no correction).
-        # Combine with Fisher-LR: take Fisher U for all but the slow direction.
-        # Simple v2: single rank-1 update along e_dir; full rank-k is a v2.1 upgrade.
-        lr_imm = LowRankInverseMassMatrix(
-            sigma=sigma_lr,
-            U=jnp.concatenate([U_slow, U_lr[:, 1:]], axis=1),
-            lam=lam_slow_vec,
-        )
+        w_psi_gate = psi_w > jnp.float32(_W_BRANCH_PSI_FLOOR)
 
-        # ---- Escalation decision ----
-        r2_gate = r2_new >= _R_MIN  # False when NaN (JAX comparison semantics)
-
-        pre_unimodality_gate = (
-            magnitude_gate & collinearity_gate & loo_gate & support_gate
+        r1_w = _compute_lag1_autocorr_top_dir(
+            state.draws_buffer, chain_means, W_diag, top_eigvec_w, n, M_stat
         )
-        mc_detection_gate = pre_unimodality_gate & unimodality_gate
+        w_r1_gate = r1_w > jnp.float32(_W_BRANCH_R1_TOL)
 
-        # deferred_to_ensemble: other gates passed but unimodality blocked (P1→P3 handoff).
-        # Store once (monotone): once True, keep True across windows.
-        new_deferred = state.deferred_to_ensemble | (
-            ~state.has_escalated & pre_unimodality_gate & ~unimodality_gate & r2_gate
-        )
-
+        # ---- Budget deadline ----
         budget_remaining = jnp.int32(max_budget_steps_per_chain) - (
             state.budget_used.astype(jnp.int32) // jnp.int32(n_chains)
         )
@@ -1284,16 +1660,97 @@ def build_multi_chain_meta_core(
             _STEP_SIZE_READAPT_BUFFER
         )
 
-        escalate_now = ~state.has_escalated & r2_gate & mc_detection_gate & deadline_ok
+        # ---- W-branch conjunction ----
+        # No unimodality gate: per-chain centering makes W structurally mode-blind.
+        # No support gate: W detects continuous spread, not discrete spike count.
+        escalate_W = (
+            ~state.has_escalated
+            & w_magnitude
+            & w_psi_gate
+            & w_r1_gate
+            & r2_gate
+            & deadline_ok
+        )
+
+        # ---- T-branch conjunction ----
+        # Unimodality gate: must NOT be confirmed-split to escalate via T.
+        t_unimodality = ~unimodality_confirmed_split
+        mc_detection_T = t_pre_uni & t_unimodality
+        escalate_T = ~state.has_escalated & r2_gate & mc_detection_T & deadline_ok
+
+        # ---- Scoped latch: deferred_to_ensemble (non-monotone, v2.1 rule) ----
+        # Recomputed each window from current T-branch evidence.
+        # Temporal supersede is automatic: escalate_T requires ~confirmed_split →
+        # confirmed_split=False → new_deferred=False when T escalates. ✓
+        # Cross-branch coexistence is LEGAL: W escalate + T defer is representable.
+        # Impossible combo (T escalate + deferred) is excluded algebraically. ✓
+        new_deferred = t_pre_uni & unimodality_confirmed_split & r2_gate
+
+        # ---- Union escalation ----
+        escalate_now = escalate_W | escalate_T
         new_has_escalated = state.has_escalated | escalate_now
         new_escalation_rank = jnp.where(escalate_now, k_new, state.escalation_rank)
 
-        chosen_imm = jax.lax.cond(new_has_escalated, lambda: lr_imm, lambda: diag_imm)
+        # Detection branch code (carry from last firing window if no fire this window)
+        branch_when_fires = jnp.where(
+            escalate_W & escalate_T,
+            jnp.int32(_DETECTION_BRANCH_BOTH),
+            jnp.where(
+                escalate_W,
+                jnp.int32(_DETECTION_BRANCH_POOLED_WITHIN),
+                jnp.int32(_DETECTION_BRANCH_BETWEEN_MEANS),
+            ),
+        )
+        new_detection_branch = jnp.where(
+            escalate_now, branch_when_fires, state.detection_branch
+        )
+
+        # ---- Metric selection ----
+        # W fires: full Fisher-LR on per-chain-centered pooled buffers.
+        # T fires (alone): Fisher-LR sigma + rank-1 geometric-mean slow-dir correction.
+        # Neither fires post-escalation: carry the branch-appropriate LR metric.
+
+        # T-branch escalated metric (v2 rank-1 update, unchanged)
+        sigma_sq_deploy = _geometric_mean_deploy_scale(
+            chain_means, pc_grads_safe, step_mask_all, grand_mean, e_dir, n_pool, M_stat
+        )
+        sigma_lr_e_sq = jnp.maximum(
+            ((sigma_lr**2) * (e_dir**2)).sum(), jnp.float32(1e-20)
+        )
+        lam_slow = sigma_sq_deploy / sigma_lr_e_sq
+        U_slow = e_dir[:, None]  # (d, 1)
+        lam_slow_vec = jnp.concatenate(
+            [lam_slow[None], jnp.ones(actual_rank - 1, dtype=lam_slow.dtype)]
+        )
+        t_lr_imm = LowRankInverseMassMatrix(
+            sigma=sigma_lr,
+            U=jnp.concatenate([U_slow, U_lr[:, 1:]], axis=1),
+            lam=lam_slow_vec,
+        )
+
+        # W-branch metric: full Fisher-LR (all directions, no rank-1 truncation)
+        w_lr_imm = LowRankInverseMassMatrix(sigma=sigma_lr, U=U_lr, lam=lam_lr)
+
+        # Stay-diagonal metric (pre-escalation)
+        diag_imm = LowRankInverseMassMatrix(
+            sigma=sigma_w_diag,
+            U=jnp.zeros((d, actual_rank), dtype=sigma_w_diag.dtype),
+            lam=jnp.ones(actual_rank, dtype=sigma_w_diag.dtype),
+        )
+
+        # Select escalated metric: W fires (now or previously) → W metric; else T metric.
+        prev_was_w = (
+            new_detection_branch == jnp.int32(_DETECTION_BRANCH_POOLED_WITHIN)
+        ) | (new_detection_branch == jnp.int32(_DETECTION_BRANCH_BOTH))
+        escalated_imm = jax.lax.cond(prev_was_w, lambda: w_lr_imm, lambda: t_lr_imm)
+        chosen_imm = jax.lax.cond(
+            new_has_escalated, lambda: escalated_imm, lambda: diag_imm
+        )
         chosen_mu = jax.lax.cond(
             new_has_escalated, lambda: mu_star_new, lambda: jnp.zeros_like(mu_star_new)
         )
 
-        # ---- AIRM velocity proxy (same as single-chain; on pooled lam) ----
+        # ---- AIRM velocity proxy (on per-chain-centered pooled lam) ----
         lam_diff = jnp.linalg.norm(lam_lr - state.prev_lam.astype(lam_lr.dtype))
         lam_diff_f32 = lam_diff.astype(jnp.float32)
         new_airm_vel_prev = state.airm_vel_curr
@@ -1332,8 +1789,14 @@ def build_multi_chain_meta_core(
             airm_vel_curr=new_airm_vel_curr,
             is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
             chain_collinearity=f1,
-            unimodality_passed=unimodality_gate,
+            unimodality_passed=is_unimodal,
             deferred_to_ensemble=new_deferred,
+            # v2.1 new fields
+            within_lam1=lam1_w.astype(jnp.float32),
+            chain_consistency_psi=psi_w.astype(jnp.float32),
+            r1_top=r1_w.astype(jnp.float32),
+            detection_branch=new_detection_branch,
+            unimodality_flag_count=new_flag_count,
         )
 
     return MetricCore(init=init, update=update, final=final)
@@ -1589,6 +2052,19 @@ def extract_multi_chain_verdict(
         "adequate_if_overdispersed" if not has_esc else "not_applicable"
     )
 
+    # v2.1 new diagnostic fields
+    within_lam1_raw = float(np.asarray(final_state.within_lam1))
+    chain_consistency_psi_raw = float(np.asarray(final_state.chain_consistency_psi))
+    r1_top_raw = float(np.asarray(final_state.r1_top))
+    detection_branch_raw = int(np.asarray(final_state.detection_branch))
+    _BRANCH_NAMES = {
+        _DETECTION_BRANCH_NONE: "none",
+        _DETECTION_BRANCH_POOLED_WITHIN: "pooled_within",
+        _DETECTION_BRANCH_BETWEEN_MEANS: "between_means",
+        _DETECTION_BRANCH_BOTH: "both",
+    }
+    detection_branch_name = _BRANCH_NAMES.get(detection_branch_raw, "unknown")
+
     flags = {
         "reparam_hint": route == "reparam_suggested",
         "marginal_s_gap": False,  # s_gap not primary signal in multi-chain path
@@ -1604,6 +2080,11 @@ def extract_multi_chain_verdict(
         "unimodality_gate": "pass" if unimodality_passed_raw else "flag",
         "deferred_to_ensemble": deferred_raw,
         "pooled_draws_by_window": pooled_draws_by_window,
+        # v2.1 branch diagnostics
+        "within_lam1": within_lam1_raw,
+        "chain_consistency_psi": chain_consistency_psi_raw,
+        "r1_top": r1_top_raw,
+        "detection_branch": detection_branch_name,
     }
 
     return MetaAdaptationVerdict(
