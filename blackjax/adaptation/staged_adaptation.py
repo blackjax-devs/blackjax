@@ -392,6 +392,7 @@ def _resolve_metric_and_schedule(
     schedule_fn: Callable | None,
     max_grad_budget: int | None,
     *,
+    n_chains: int = 1,
     imm_shrinkage_to_previous: float = 0.0,
     initial_inverse_mass_matrix: Array | None = None,
 ) -> tuple[MetricCore, Callable]:
@@ -432,9 +433,14 @@ def _resolve_metric_and_schedule(
                 "Pass a positive integer, e.g. "
                 "staged_adaptation(nuts, logdensity_fn, metric='auto', max_grad_budget=50_000)."
             )
-        from blackjax.adaptation.meta_adaptation import build_meta_adaptation_core
+        if n_chains > 1:
+            from blackjax.adaptation.meta_adaptation import build_multi_chain_meta_core
 
-        metric_core = build_meta_adaptation_core(max_grad_budget)
+            metric_core = build_multi_chain_meta_core(max_grad_budget, n_chains)
+        else:
+            from blackjax.adaptation.meta_adaptation import build_meta_adaptation_core
+
+            metric_core = build_meta_adaptation_core(max_grad_budget)
         # Override the schedule ONLY when the caller has not specified one.
         # Using None as the sentinel (not build_schedule) is load-bearing: an
         # explicit schedule_fn=build_schedule must be preserved — the old
@@ -493,6 +499,7 @@ def staged_adaptation(
     metric: str | MetricRecipe | MetricCore = "welford_diag",
     *,
     max_grad_budget: int | None = None,
+    n_chains: int = 1,
     imm_shrinkage_to_previous: float = 0.0,
     initial_inverse_mass_matrix: Array | None = None,
     initial_step_size: float = 1.0,
@@ -628,10 +635,22 @@ def staged_adaptation(
     # The helper encapsulates the auto-override rule (growing-window only when
     # schedule_fn is None, never when the caller supplied one explicitly).
     # Use a distinct name so mypy knows _resolved_schedule_fn is Callable (not None).
+    # Validate n_chains before resolution (fail early with a clear message).
+    if n_chains < 1:
+        raise ValueError(f"staged_adaptation: n_chains must be >= 1, got {n_chains}.")
+    if n_chains > 1 and metric != "auto":
+        raise ValueError(
+            "staged_adaptation: n_chains > 1 is only supported with metric='auto' "
+            "(the multi-chain pooled gate is implemented in the meta-adaptation "
+            "controller). For other metric strings pass n_chains=1 (default) and "
+            "vmap the warmup call externally."
+        )
+
     metric_core, _resolved_schedule_fn = _resolve_metric_and_schedule(
         metric,
         schedule_fn,
         max_grad_budget,
+        n_chains=n_chains,
         imm_shrinkage_to_previous=imm_shrinkage_to_previous,
         initial_inverse_mass_matrix=initial_inverse_mass_matrix,
     )
@@ -639,6 +658,8 @@ def staged_adaptation(
     # Closure variables for the auto-metric path: used inside run() to derive
     # num_steps from max_grad_budget when the caller does not supply one.
     _is_auto_metric: bool = metric == "auto"
+    _is_multi_chain: bool = n_chains > 1
+    _n_chains: int = n_chains
     _auto_max_grad_budget: int | None = max_grad_budget if _is_auto_metric else None
 
     if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
@@ -697,6 +718,8 @@ def staged_adaptation(
         # largest window has enough draws to support the rank-detection check.
         # A None sentinel distinguishes "caller did not supply" from an explicit
         # value (even if that explicit value happens to equal 1000).
+        # For multi-chain (n_chains > 1) the budget is split across chains, so
+        # each chain runs total // n_chains steps.
         if num_steps is None:
             if _is_auto_metric:
                 from blackjax.adaptation.meta_adaptation import (
@@ -707,9 +730,10 @@ def staged_adaptation(
                 # (_resolve_metric_and_schedule already validated it); the assert
                 # lets mypy narrow the Optional[int] type.
                 assert _auto_max_grad_budget is not None
-                num_steps = max(
-                    _auto_max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP, 1
+                _denom = _ASSUMED_AVG_LEAPFROGS_PER_STEP * (
+                    _n_chains if _is_multi_chain else 1
                 )
+                num_steps = max(_auto_max_grad_budget // _denom, 1)
             else:
                 num_steps = 1000
 
@@ -725,7 +749,9 @@ def staged_adaptation(
                 _MIN_TRAIN_K_RATIO,
             )
 
-            d = pytree_size(position)
+            # For multi-chain, position has shape (M, d); use one chain's size.
+            _pos_for_size = jnp.asarray(position)[0] if _is_multi_chain else position
+            d = pytree_size(_pos_for_size)
             _actual_rank = min(_MAX_RANK_CAP, max(d // 2, 1))
             _min_rank_support = 2 * _MIN_TRAIN_K_RATIO * (_actual_rank + 1)
 
@@ -741,32 +767,102 @@ def staged_adaptation(
                     _window_start = _i + 1
 
             if _max_window > 0 and _max_window < _min_rank_support:
+                _chains_suffix = f", n_chains={_n_chains}" if _is_multi_chain else ""
                 warnings.warn(
                     f"metric='auto': the largest warmup window ({_max_window} steps) "
                     f"is below the rank-detection support floor for this model "
                     f"(d={d}, estimated rank capacity {_actual_rank}, "
                     f"floor={_min_rank_support} steps). "
                     f"Low-rank structure in the posterior may not be detectable "
-                    f"with this budget (num_steps={num_steps}). "
-                    f"Increase max_grad_budget to enable low-rank escalation "
-                    f"at this dimension.",
+                    f"with this budget (num_steps={num_steps}{_chains_suffix}). "
+                    "Increase max_grad_budget to enable low-rank escalation "
+                    "at this dimension.",
                     UserWarning,
                     stacklevel=2,
                 )
 
-        init_state = algorithm.init(position, logdensity_fn)
-        init_adaptation_state = adapt_init(position, initial_step_size)
+        if not _is_multi_chain:
+            # ----------------------------------------------------------------
+            # Single-chain path (n_chains=1): unchanged from v1.
+            # ----------------------------------------------------------------
+            init_state = algorithm.init(position, logdensity_fn)
+            init_adaptation_state = adapt_init(position, initial_step_size)
 
-        start_state = (init_state, init_adaptation_state)
-        keys = jax.random.split(rng_key, num_steps)
-        schedule = _resolved_schedule_fn(num_steps)
-        last_state, info = jax.lax.scan(
-            one_step,
-            start_state,
-            (jnp.arange(num_steps), keys, schedule),
-        )
+            start_state = (init_state, init_adaptation_state)
+            keys = jax.random.split(rng_key, num_steps)
+            schedule = _resolved_schedule_fn(num_steps)
+            last_state, info = jax.lax.scan(
+                one_step,
+                start_state,
+                (jnp.arange(num_steps), keys, schedule),
+            )
 
-        last_chain_state, last_warmup_state, *_ = last_state
+            last_chain_state, last_warmup_state, *_ = last_state
+
+        else:
+            # ----------------------------------------------------------------
+            # Multi-chain path (n_chains > 1): vmap MCMC kernel over M chains.
+            # position shape: (M, d); each chain gets its own rng_key split.
+            # The metric_core.update/final receive (M, d) positions/grads.
+            # num_steps is already the per-chain step count (total // n_chains).
+            # ----------------------------------------------------------------
+            init_states = jax.vmap(lambda pos: algorithm.init(pos, logdensity_fn))(
+                position
+            )
+            # Adapt init uses one chain's position so pytree_size → d (not M*d).
+            init_adaptation_state = adapt_init(
+                jnp.asarray(position)[0], initial_step_size
+            )
+
+            def one_step_mc(carry, xs):
+                _, rng_key_mc, adaptation_stage = xs
+                states_mc, adaptation_state = carry
+
+                # Split one key per chain for independent proposals.
+                chain_keys = jax.random.split(rng_key_mc, _n_chains)
+
+                def _step_one(key, state):
+                    return mcmc_kernel(
+                        key,
+                        state,
+                        logdensity_fn,
+                        adaptation_state.step_size,
+                        adaptation_state.inverse_mass_matrix,
+                        **extra_parameters,
+                    )
+
+                new_states_mc, infos_mc = jax.vmap(_step_one)(chain_keys, states_mc)
+
+                # Pass (M, d) positions and grads to adapt_step; the multi-chain
+                # metric core's update() handles (M, d) arrays natively.
+                positions_mc = new_states_mc.position
+                grads_mc = new_states_mc.logdensity_grad
+                # Average acceptance rate across chains for dual-averaging.
+                mean_accept = infos_mc.acceptance_rate.mean()
+
+                new_adaptation_state = adapt_step(
+                    adaptation_state,
+                    adaptation_stage,
+                    positions_mc,
+                    grads_mc,
+                    mean_accept,
+                )
+
+                return (
+                    (new_states_mc, new_adaptation_state),
+                    adaptation_info_fn(new_states_mc, infos_mc, new_adaptation_state),
+                )
+
+            start_state = (init_states, init_adaptation_state)
+            keys = jax.random.split(rng_key, num_steps)
+            schedule = _resolved_schedule_fn(num_steps)
+            last_state, info = jax.lax.scan(
+                one_step_mc,
+                start_state,
+                (jnp.arange(num_steps), keys, schedule),
+            )
+
+            last_chain_state, last_warmup_state, *_ = last_state
 
         step_size, inverse_mass_matrix = adapt_final(last_warmup_state)
         parameters = {

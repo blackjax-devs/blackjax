@@ -57,8 +57,11 @@ from blackjax.types import Array, ArrayLikeTree
 __all__ = [
     "MetaAdaptationCoreState",
     "MetaAdaptationVerdict",
+    "MultiChainMetaAdaptationCoreState",
     "build_meta_adaptation_core",
+    "build_multi_chain_meta_core",
     "extract_meta_verdict",
+    "extract_multi_chain_verdict",
 ]
 
 # ---------------------------------------------------------------------------
@@ -104,6 +107,25 @@ _LAM_NONTRIVIAL_TOL: float = 1e-6
 non-trivial: ``|lam_i - 1| > _LAM_NONTRIVIAL_TOL``.  Directions with
 ``lam_i = 1.0`` exactly (set by the Fisher estimator for sub-threshold
 directions) contribute zero to the deployed rank.
+"""
+
+# Multi-chain constants — escalation trigger v2.
+_MULTI_CHAIN_DEFAULT_N_CHAINS: int = 8
+"""Default number of independent overdispersed chains for the multi-chain
+escalation trigger.  Grounded in the sharp-transition point where the
+between-chain look-count makes escalation robust for near-edge cases.
+"""
+
+_MULTI_CHAIN_AGREEMENT_TOL: float = 0.7
+"""Minimum cross-chain projector agreement score to confirm a detected spike.
+
+Agreement is measured as the mean pairwise normalised Frobenius inner
+product of rank-k subspace projectors across M independent chains (∈ [0,1]).
+A true low-rank structure produces consistent leading directions across
+independent overdispersed chains; correlation-spurious spikes are near-
+orthogonal across chains and score well below this threshold.
+Two consecutive windows must both exceed this tolerance before the spike
+is confirmed and escalation proceeds.
 """
 
 # R² mode integers (stored in carry as int8).
@@ -172,6 +194,51 @@ class MetaAdaptationVerdict(NamedTuple):
     transient_mixing_class: str  # "slow" | "fast"
     buffer_policy: str  # always "reset" in v1
     flags: dict  # reparam_hint, marginal_s_gap, wall_cost_discount, high_d_r2_mode, mode_coverage, nominal_rank
+
+
+class MultiChainMetaAdaptationCoreState(NamedTuple):
+    """Scan-carry state for the multi-chain meta-adaptation MetricCore.
+
+    Extends :class:`MetaAdaptationCoreState` with per-chain draw/grad buffers
+    of shape ``(n_chains, buf_size, d)`` so that cross-chain projector agreement
+    can be computed at each window boundary.  The ``inverse_mass_matrix`` is
+    always shared across all chains (one adapted metric for all M chains).
+
+    All controller carry fields (``has_escalated``, ``s_gap_*``, ``r2_*``,
+    ``airm_vel_*``, …) are identical in semantics to the single-chain state;
+    ``chain_agreement_prev`` / ``chain_agreement_curr`` replace the S_gap-
+    stability pair as the two-consecutive-window confirmation mechanism.
+
+    When ``n_chains=1`` the single-chain path is used instead (see
+    :func:`build_meta_adaptation_core`); this state is never constructed for
+    ``n_chains=1``.
+    """
+
+    # Shared metric (all M chains adopt the same inverse mass matrix)
+    inverse_mass_matrix: LowRankInverseMassMatrix
+    mu_star: Array  # optimal translation, (d,)
+    # Per-chain buffers: (n_chains, buf_size, d)
+    draws_buffer: Array
+    grads_buffer: Array
+    buffer_idx: Array  # int32 scalar; steps elapsed in the current window
+    background_split: Array  # always 0 (protocol compat)
+    recompute_counter: Array  # always 0 (protocol compat)
+    # Controller carry — same semantics as MetaAdaptationCoreState
+    has_escalated: Array  # bool scalar; monotone True-once
+    escalation_rank: Array  # int32; rank k chosen at escalation (0 before)
+    s_gap_prev: Array  # float32; retained for diagnostic compatibility (NaN in v2 path)
+    s_gap_curr: Array  # float32; retained for diagnostic compatibility (NaN in v2 path)
+    r2_latest: Array  # float32; most recent R² from pooled draws
+    r2_mode: Array  # int32; _R2_DEFERRED / _R2_PROJECTED / _R2_FULL_AFFINE
+    budget_used: Array  # int32; warmup step evaluations elapsed
+    converged_at_step: Array  # int32; step of first AIRM convergence (<0 = not yet)
+    prev_lam: Array  # (max_rank,); lam from previous window for AIRM velocity
+    airm_vel_prev: Array  # float32
+    airm_vel_curr: Array  # float32
+    is_slow_mixing: Array  # bool; always False in the multi-chain path (pooled diagnostic)
+    # Multi-chain-specific carry
+    chain_agreement_prev: Array  # float32; projector agreement from window before last (NaN initially)
+    chain_agreement_curr: Array  # float32; projector agreement from most recent window (NaN initially)
 
 
 # ---------------------------------------------------------------------------
@@ -346,6 +413,109 @@ def _compute_transient_mixing_signal(
     mu2 = (m2[:, None] * w).sum(0) / n2
     std = jnp.maximum(((mask[:, None] * w**2).sum(0) / n_safe) ** 0.5, 1e-10)
     return jnp.max(jnp.abs(mu1 - mu2) / std) > _TRANSIENT_MIXING_THRESHOLD
+
+
+def _compute_per_chain_spectra(
+    draws_buffer_mc: Array,
+    sigma: Array,
+    n: Array,
+    max_rank: int,
+) -> tuple[Array, Array]:
+    """Top ``max_rank`` eigenvalues and eigenvectors for each of M chains.
+
+    Parameters
+    ----------
+    draws_buffer_mc
+        Per-chain draw buffers, shape ``(M, buf_size, d)``.
+    sigma
+        Diagonal whitening scale, shape ``(d,)`` (shared across chains).
+    n
+        Dynamic fill count per chain (same for all chains), int32 scalar.
+    max_rank
+        Number of eigencomponents to compute.
+
+    Returns
+    -------
+    eigenvalues_per_chain
+        Shape ``(M, max_rank)``.
+    U_k_per_chain
+        Shape ``(M, d, max_rank)``.
+    """
+    return jax.vmap(lambda db: _compute_whitened_spectrum(db, sigma, n, max_rank))(
+        draws_buffer_mc
+    )
+
+
+def _compute_projector_agreement(
+    U_k_per_chain: Array,
+    k: Array,
+    max_rank: int,
+) -> Array:
+    """Mean pairwise cross-chain projector agreement score ∈ [0, 1].
+
+    For k-dimensional subspaces spanned by the leading k columns of each
+    chain's U matrix, the pairwise agreement between chains m1 and m2 is:
+
+        ||U_m1[:, :k]ᵀ @ U_m2[:, :k]||_F² / k
+
+    This is the normalised Frobenius inner product of the rank-k projectors
+    P_m = U_m[:, :k] @ U_m[:, :k]ᵀ.  Using projectors instead of raw
+    eigenvectors avoids sign/rotation gauge freedom (W3 in the theoretical
+    grounding).
+
+    A true low-rank structure yields agreement → 1 because all chains'
+    leading eigenvectors align with the same population direction.
+    Correlation-spurious within-chain spikes produce near-orthogonal
+    eigenvectors across independent chains, scoring → 0.
+
+    Parameters
+    ----------
+    U_k_per_chain
+        Per-chain eigenvector matrices, shape ``(M, d, max_rank)``.
+    k
+        Number of leading directions to compare (dynamic JAX int32).
+    max_rank
+        Static dimension of the trailing axis of ``U_k_per_chain``.
+
+    Returns
+    -------
+    Agreement score, float scalar ∈ [0, 1].  Returns 1.0 when M < 2
+    (trivially; no pairs to compare).
+    """
+    M = U_k_per_chain.shape[0]  # static
+    if M < 2:
+        return jnp.ones((), dtype=U_k_per_chain.dtype)
+
+    k_safe = jnp.maximum(k, jnp.int32(1))
+    # (max_rank, max_rank) mask selecting the top-k × top-k block
+    k_mask = jnp.arange(max_rank) < k_safe
+    pair_mask = k_mask[:, None] & k_mask[None, :]  # (max_rank, max_rank)
+
+    pair_scores = []
+    for m1 in range(M):
+        for m2 in range(m1 + 1, M):
+            # Cross-gram of eigenvector matrices: (max_rank, max_rank)
+            G = U_k_per_chain[m1].T @ U_k_per_chain[m2]
+            # Masked Frobenius norm squared of the top-k block, normalised by k
+            score = (G**2 * pair_mask).sum() / k_safe.astype(G.dtype)
+            pair_scores.append(score)
+
+    return jnp.mean(jnp.stack(pair_scores))
+
+
+def _bbp_edge_sq(d: int, M: int) -> float:
+    """Sample-eigenvalue BBP detection edge: ``(1 + √(d/M))²``.
+
+    This is the upper edge of the Marchenko–Pastur bulk when the governing
+    effective count is M (the between-chain look-count) rather than the
+    total number of draws.  Using M instead of the single-chain n_eff
+    avoids the optimism of ESS estimates under poor mixing (the ESS
+    overestimates exactly when the sampler struggles most).
+
+    Both ``d`` and ``M`` are Python ints (static at construction time), so
+    the result is a Python float suitable as a ``cutoff`` argument.
+    """
+    return (1.0 + (d / M) ** 0.5) ** 2
 
 
 # ---------------------------------------------------------------------------
@@ -577,6 +747,325 @@ def build_meta_adaptation_core(
     return MetricCore(init=init, update=update, final=final)
 
 
+def build_multi_chain_meta_core(
+    max_grad_budget: int,
+    n_chains: int = _MULTI_CHAIN_DEFAULT_N_CHAINS,
+    *,
+    max_rank: int | None = None,
+    gamma: float = 1e-5,
+    cutoff: float = 2.0,
+) -> MetricCore:
+    """Build the multi-chain meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.
+
+    Runs M independent chains sharing one adapted metric; the escalation
+    decision uses pooled M-chain information instead of a single-chain
+    stability check.  The pooled between-chain signal makes the escalation
+    decision robust to seed variation for near-edge posterior structures.
+
+    The multi-chain gate (replaces the single-chain S_gap-stability check):
+
+    1. **Spike detection on pooled spectrum.** All M chains' draws are pooled
+       around the grand mean.  A sample eigenvalue of the pooled whitened
+       residual is compared against the M-based detection edge
+       ``(1 + √(d/M))²``, where M is the between-chain count.  This uses M
+       as the governing effective-sample count for the slowest directions —
+       whose within-chain IACT is near the chain length so each chain
+       contributes only ~1 independent look at that direction.
+    2. **Cross-chain projector agreement.** The M chains' per-chain leading
+       subspaces are compared as projectors (Frobenius inner product,
+       sign-invariant).  A true low-rank structure produces consistent
+       leading directions across independent overdispersed chains; spurious
+       within-chain autocorrelation spikes are near-orthogonal across chains.
+    3. **Escalate iff** the pooled spike clears the edge AND the cross-chain
+       projector agreement exceeds :data:`_MULTI_CHAIN_AGREEMENT_TOL` in two
+       consecutive windows AND the R² score-linearity gate passes AND there
+       is remaining warmup budget.
+
+    Budget re-allocation: ``max_grad_budget`` is the TOTAL gradient budget,
+    shared across all M chains.  Providing ``n_chains=M`` overdispersed
+    starting positions to ``run()`` causes each chain to run for
+    ``total // M`` leapfrog evaluations — the total cost equals the
+    single-chain budget, not M× it.
+
+    For ``n_chains=1`` use :func:`build_meta_adaptation_core` directly to
+    obtain exact single-chain (v1) behaviour; the ``staged_adaptation`` engine
+    routes to it automatically when ``n_chains=1``.
+
+    Parameters
+    ----------
+    max_grad_budget
+        Maximum total gradient budget (leapfrog evaluations) across all M chains.
+    n_chains
+        Number of independent chains.  Must be ≥ 2.  Defaults to
+        :data:`_MULTI_CHAIN_DEFAULT_N_CHAINS` (8).
+    max_rank, gamma, cutoff
+        Same as :func:`build_meta_adaptation_core`.
+
+    Returns
+    -------
+    MetricCore
+        Embeddable init/update/final bundle.  ``update`` expects ``position``
+        of shape ``(n_chains, d)`` and ``grad`` of shape ``(n_chains, d)``.
+    """
+    if n_chains < 2:
+        raise ValueError(
+            f"build_multi_chain_meta_core: n_chains must be >= 2, got {n_chains}. "
+            "For single-chain use, call build_meta_adaptation_core instead."
+        )
+    _max_rank: int = _MAX_RANK_CAP if max_rank is None else max_rank
+    # Per-chain step budget: total budget divided across M chains
+    max_budget_steps_total: int = max(
+        max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP, 1
+    )
+    max_budget_steps_per_chain: int = max(max_budget_steps_total // n_chains, 1)
+
+    def init(n_dims: int) -> MultiChainMetaAdaptationCoreState:
+        # buf_size: sized to hold the largest single-chain window.  With the
+        # budget split across n_chains, each chain runs max_budget_steps_per_chain
+        # steps, so buf_size is half that (growing-window largest window ≈ 40–50%).
+        buf = min(max(max_budget_steps_per_chain // 2, 256), max_budget_steps_per_chain)
+        buf = max(buf, 2 * (_max_rank + 1) * _MIN_TRAIN_K_RATIO)
+        buf = min(buf, max_budget_steps_per_chain)
+        actual_rank = min(_max_rank, max(n_dims // 2, 1), _MAX_RANK_CAP)
+        return MultiChainMetaAdaptationCoreState(
+            inverse_mass_matrix=LowRankInverseMassMatrix(
+                sigma=jnp.ones(n_dims),
+                U=jnp.zeros((n_dims, actual_rank)),
+                lam=jnp.ones(actual_rank),
+            ),
+            mu_star=jnp.zeros(n_dims),
+            draws_buffer=jnp.zeros((n_chains, buf, n_dims)),
+            grads_buffer=jnp.zeros((n_chains, buf, n_dims)),
+            buffer_idx=jnp.zeros((), dtype=jnp.int32),
+            background_split=jnp.zeros((), dtype=jnp.int32),
+            recompute_counter=jnp.zeros((), dtype=jnp.int32),
+            has_escalated=jnp.zeros((), dtype=jnp.bool_),
+            escalation_rank=jnp.zeros((), dtype=jnp.int32),
+            s_gap_prev=jnp.array(float("nan"), dtype=jnp.float32),
+            s_gap_curr=jnp.array(float("nan"), dtype=jnp.float32),
+            r2_latest=jnp.array(float("nan"), dtype=jnp.float32),
+            r2_mode=jnp.array(_R2_DEFERRED, dtype=jnp.int32),
+            budget_used=jnp.zeros((), dtype=jnp.int32),
+            converged_at_step=jnp.array(-1, dtype=jnp.int32),
+            prev_lam=jnp.ones(actual_rank, dtype=jnp.float32),
+            airm_vel_prev=jnp.array(float("inf"), dtype=jnp.float32),
+            airm_vel_curr=jnp.array(float("inf"), dtype=jnp.float32),
+            is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
+            chain_agreement_prev=jnp.array(float("nan"), dtype=jnp.float32),
+            chain_agreement_curr=jnp.array(float("nan"), dtype=jnp.float32),
+        )
+
+    def update(
+        state: MultiChainMetaAdaptationCoreState,
+        positions: Array,
+        grads: Array,
+    ) -> MultiChainMetaAdaptationCoreState:
+        """Accumulate one step of M chains into the per-chain buffers.
+
+        Parameters
+        ----------
+        positions
+            Shape ``(n_chains, d)`` — flat 2-D array, one row per chain.
+        grads
+            Shape ``(n_chains, d)`` — flat 2-D array, one row per chain.
+        """
+        # positions and grads are already flat (n_chains, d) arrays.
+        # Ravel each chain's row in case a pytree is passed (no-op for 1-D rows).
+        B = state.draws_buffer.shape[1]  # buf_size, static
+        idx = state.buffer_idx % B
+        col0 = jnp.zeros((), dtype=idx.dtype)
+
+        def _write_chain(draws_m: Array, grads_m: Array, pos_m: Array, grad_m: Array):
+            pos_flat, _ = fu.ravel_pytree(pos_m)
+            grad_flat, _ = fu.ravel_pytree(grad_m)
+            new_d = jax.lax.dynamic_update_slice(
+                draws_m, pos_flat[None, :], (idx, col0)
+            )
+            new_g = jax.lax.dynamic_update_slice(
+                grads_m, grad_flat[None, :], (idx, col0)
+            )
+            return new_d, new_g
+
+        new_draws_buffer, new_grads_buffer = jax.vmap(_write_chain)(
+            state.draws_buffer, state.grads_buffer, positions, grads
+        )
+
+        return state._replace(
+            draws_buffer=new_draws_buffer,
+            grads_buffer=new_grads_buffer,
+            buffer_idx=state.buffer_idx + 1,
+            budget_used=state.budget_used + n_chains,
+        )
+
+    def final(
+        state: MultiChainMetaAdaptationCoreState,
+    ) -> MultiChainMetaAdaptationCoreState:
+        """Window-boundary controller: pooled multi-chain gate → escalation → reset.
+
+        Computes the two-part multi-chain gate:
+        1. Spike detection on the pooled whitened residual (all M chains'
+           draws pooled around the grand mean), compared against the M-based
+           detection edge.
+        2. Cross-chain projector agreement of per-chain leading subspaces.
+        Escalates iff both pass (in two consecutive windows) and R² + budget
+        gates also pass.
+        """
+        M_stat, B, d = state.draws_buffer.shape  # all static
+        n = jnp.minimum(state.buffer_idx, jnp.int32(B))
+        actual_rank = state.inverse_mass_matrix.U.shape[1]  # static
+
+        # ---- Pooled Welford sigma (grand mean across all M chains × n steps) ----
+        n_f = n.astype(state.draws_buffer.dtype)
+        total_n_f = n_f * jnp.float32(M_stat)
+        total_n_safe = jnp.maximum(total_n_f, 1.0)
+
+        # step_mask shape (B,): same fill level for all chains
+        step_mask = (jnp.arange(B) < n).astype(state.draws_buffer.dtype)
+        mask_mc = step_mask[None, :, None]  # (1, B, 1) → broadcasts to (M, B, d)
+
+        pooled_mean = (mask_mc * state.draws_buffer).sum((0, 1)) / total_n_safe
+        pooled_var = (
+            mask_mc * (state.draws_buffer - pooled_mean[None, None, :]) ** 2
+        ).sum((0, 1)) / jnp.maximum(total_n_f - 1.0, 1.0)
+        sigma_welford = jnp.sqrt(jnp.maximum(pooled_var, 1e-10))  # (d,)
+
+        # ---- Pooled draw / grad matrices for Fisher-LR metric ----
+        # Static reshape: (M*B, d).  Dynamic fill count: n*M.
+        pooled_draws = state.draws_buffer.reshape(M_stat * B, d)
+        pooled_grads = state.grads_buffer.reshape(M_stat * B, d)
+        n_pool = n * jnp.int32(M_stat)
+
+        sigma_lr, mu_star_new, U_lr, lam_lr = _compute_low_rank_metric(
+            pooled_draws, pooled_grads, n_pool, actual_rank, gamma, cutoff
+        )
+
+        # Stay-diagonal metric (Welford sigma; U=0, lam=1)
+        diag_imm = LowRankInverseMassMatrix(
+            sigma=sigma_welford,
+            U=jnp.zeros((d, actual_rank), dtype=sigma_welford.dtype),
+            lam=jnp.ones(actual_rank, dtype=sigma_welford.dtype),
+        )
+        # Escalated metric: Fisher-LR from pooled draws
+        lr_imm = LowRankInverseMassMatrix(sigma=sigma_lr, U=U_lr, lam=lam_lr)
+
+        # ---- Pooled spectrum (spike detection) ----
+        # Spike detection uses the M-based detection edge; d and M_stat are
+        # Python ints (static), so bbp_edge is a Python float.
+        bbp_edge = _bbp_edge_sq(d, M_stat)  # (1 + √(d/M))² — Python float
+
+        # Pooled whitened spectrum: one SVD on all M×B draws
+        eigenvalues_pool, U_k_pool = _compute_whitened_spectrum(
+            pooled_draws, sigma_welford, n_pool, actual_rank
+        )
+        # Count spikes above the M-based BBP edge (replaces fixed cutoff)
+        is_above_edge = eigenvalues_pool > jnp.float32(bbp_edge)
+        k_from_pool = is_above_edge.sum().astype(jnp.int32)
+        support_cap_pool = (n_pool // 2).astype(jnp.int32)
+        k_new = jnp.minimum(
+            k_from_pool, jnp.minimum(support_cap_pool, jnp.int32(actual_rank))
+        )
+
+        spike_detected = eigenvalues_pool[0] > jnp.float32(bbp_edge)
+
+        # ---- Per-chain spectra (cross-chain agreement) ----
+        # Each chain's leading subspace is computed independently on the
+        # per-chain buffer.  Agreement compares these subspaces as projectors
+        # (sign-invariant, rotation-invariant) to reject correlation-spurious
+        # spikes that would have random directions across independent chains.
+        eigenvalues_per_chain, U_k_per_chain = _compute_per_chain_spectra(
+            state.draws_buffer, sigma_welford, n, actual_rank
+        )
+        agreement_score_raw = _compute_projector_agreement(
+            U_k_per_chain, k_new, actual_rank
+        )
+        # Cast to float32 for consistent carry dtype (same pattern as s_gap)
+        agreement_score = agreement_score_raw.astype(jnp.float32)
+
+        # ---- R² score-linearity gate (on pooled draws) ----
+        r2_new, mode_new = _compute_r2_score_linearity(
+            pooled_draws, pooled_grads, sigma_welford, n_pool, U_k_pool, actual_rank
+        )
+
+        # ---- Escalation decision ----
+        r2_gate = r2_new >= _R_MIN  # False when NaN (JAX comparison semantics)
+
+        spike_gate = spike_detected & (k_new > 0)
+
+        # Two-window agreement stability (replaces single-chain S_gap stability)
+        agreement_prev_valid = ~jnp.isnan(state.chain_agreement_curr)
+        agreement_stability_gate = (
+            (agreement_score >= jnp.float32(_MULTI_CHAIN_AGREEMENT_TOL))
+            & agreement_prev_valid
+            & (state.chain_agreement_curr >= jnp.float32(_MULTI_CHAIN_AGREEMENT_TOL))
+        )
+
+        budget_remaining = jnp.int32(max_budget_steps_per_chain) - (
+            state.budget_used.astype(jnp.int32) // jnp.int32(n_chains)
+        )
+        deadline_ok = budget_remaining >= 2 * k_new.astype(jnp.int32) + jnp.int32(
+            _STEP_SIZE_READAPT_BUFFER
+        )
+
+        escalate_now = (
+            ~state.has_escalated
+            & r2_gate
+            & spike_gate
+            & agreement_stability_gate
+            & deadline_ok
+        )
+        new_has_escalated = state.has_escalated | escalate_now
+        new_escalation_rank = jnp.where(escalate_now, k_new, state.escalation_rank)
+
+        chosen_imm = jax.lax.cond(new_has_escalated, lambda: lr_imm, lambda: diag_imm)
+        chosen_mu = jax.lax.cond(
+            new_has_escalated, lambda: mu_star_new, lambda: jnp.zeros_like(mu_star_new)
+        )
+
+        # ---- AIRM velocity proxy (same as single-chain; on pooled lam) ----
+        lam_diff = jnp.linalg.norm(lam_lr - state.prev_lam.astype(lam_lr.dtype))
+        lam_diff_f32 = lam_diff.astype(jnp.float32)
+        new_airm_vel_prev = state.airm_vel_curr
+        new_airm_vel_curr = jnp.where(
+            new_has_escalated, lam_diff_f32, state.airm_vel_curr
+        )
+        airm_converged_now = (
+            new_has_escalated
+            & (new_airm_vel_curr < _AIRM_VELOCITY_TOL)
+            & (new_airm_vel_prev < _AIRM_VELOCITY_TOL)
+        )
+        new_converged_at = jnp.where(
+            (state.converged_at_step < 0) & airm_converged_now,
+            state.budget_used,
+            state.converged_at_step,
+        )
+
+        return MultiChainMetaAdaptationCoreState(
+            inverse_mass_matrix=chosen_imm,
+            mu_star=chosen_mu,
+            draws_buffer=jnp.zeros_like(state.draws_buffer),
+            grads_buffer=jnp.zeros_like(state.grads_buffer),
+            buffer_idx=jnp.zeros_like(state.buffer_idx),
+            background_split=jnp.zeros_like(state.background_split),
+            recompute_counter=jnp.zeros_like(state.recompute_counter),
+            has_escalated=new_has_escalated,
+            escalation_rank=new_escalation_rank,
+            s_gap_prev=state.s_gap_curr,  # retained as NaN chain; diagnostic compat
+            s_gap_curr=jnp.array(float("nan"), dtype=jnp.float32),
+            r2_latest=r2_new.astype(jnp.float32),
+            r2_mode=mode_new,
+            budget_used=state.budget_used,
+            converged_at_step=new_converged_at,
+            prev_lam=lam_lr.astype(jnp.float32),
+            airm_vel_prev=new_airm_vel_prev,
+            airm_vel_curr=new_airm_vel_curr,
+            is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
+            chain_agreement_prev=state.chain_agreement_curr,
+            chain_agreement_curr=agreement_score,
+        )
+
+    return MetricCore(init=init, update=update, final=final)
+
+
 # ---------------------------------------------------------------------------
 # Verdict extraction — Python-side, runs after the warmup scan
 # ---------------------------------------------------------------------------
@@ -681,6 +1170,167 @@ def extract_meta_verdict(
         # effective_rank (the top-level field) is the deployed count from
         # the Fisher metric's lam array.  Both are provided for diagnostics.
         "nominal_rank": nominal_rank,
+    }
+
+    return MetaAdaptationVerdict(
+        route=route,
+        metric=final_state.inverse_mass_matrix,
+        effective_rank=effective_rank,
+        confidence=confidence,
+        exit_reason=exit_reason,
+        budget_used_steps=budget_used,
+        budget_returned_steps=budget_returned,
+        budget_used_grads=budget_used_grads,
+        r2_final=r2,
+        s_gap_final=s_gap,
+        transient_mixing_class="slow" if is_slow else "fast",
+        buffer_policy="reset",
+        flags=flags,
+    )
+
+
+def extract_multi_chain_verdict(
+    final_state: MultiChainMetaAdaptationCoreState,
+    max_grad_budget: int,
+    num_warmup_steps: int,
+    adaptation_info: Any = None,
+    *,
+    pooled_draws_by_window: Any = None,
+) -> MetaAdaptationVerdict:
+    """Build a :class:`MetaAdaptationVerdict` from a multi-chain final core state.
+
+    Drop-in counterpart of :func:`extract_meta_verdict` for the
+    :class:`MultiChainMetaAdaptationCoreState` produced by
+    :func:`build_multi_chain_meta_core`.
+
+    Parameters
+    ----------
+    final_state
+        Final :class:`MultiChainMetaAdaptationCoreState` after ``warmup.run()``.
+    max_grad_budget, num_warmup_steps, adaptation_info
+        Same semantics as :func:`extract_meta_verdict`.
+    pooled_draws_by_window
+        Optional per-window pooled draw array exposed for nested-R̂ diagnostics
+        (shape ``(n_chains, n_per_window, d)`` per window).  Not used internally
+        — passed through as ``flags["pooled_draws_by_window"]`` for the
+        evaluation layer.
+
+    Returns
+    -------
+    MetaAdaptationVerdict
+        Verdict with multi-chain–specific flags: ``n_chains``,
+        ``chain_agreement``, and ``mode_coverage="multi_chain_certified"`` when
+        the projector agreement gate passed.
+    """
+    import numpy as np
+
+    has_esc = bool(np.asarray(final_state.has_escalated))
+    nominal_rank = int(np.asarray(final_state.escalation_rank))
+    k = nominal_rank
+    budget_used = int(np.asarray(final_state.budget_used))
+    # s_gap fields are NaN in multi-chain path (not the primary signal)
+    s_gap = float(np.asarray(final_state.s_gap_curr))
+    r2 = float(np.asarray(final_state.r2_latest))
+    mode_int = int(np.asarray(final_state.r2_mode))
+    airm_v_prev = float(np.asarray(final_state.airm_vel_prev))
+    airm_v_curr = float(np.asarray(final_state.airm_vel_curr))
+    converged_at = int(np.asarray(final_state.converged_at_step))
+    is_slow = bool(np.asarray(final_state.is_slow_mixing))
+    chain_agreement_raw = float(np.asarray(final_state.chain_agreement_curr))
+    chain_agreement_prev_raw = float(np.asarray(final_state.chain_agreement_prev))
+    n_chains_actual: int = final_state.draws_buffer.shape[0]  # static
+
+    lam_np = np.asarray(final_state.inverse_mass_matrix.lam)
+    effective_rank = int(np.sum(np.abs(lam_np - 1.0) > _LAM_NONTRIVIAL_TOL))
+
+    r2_nan = np.isnan(r2)
+
+    # Route
+    r2_blocked = (not r2_nan) and (r2 < _R_MIN)
+    if not has_esc and r2_blocked:
+        route = "reparam_suggested"
+    elif has_esc:
+        route = "low_rank"
+    else:
+        route = "diagonal"
+
+    # Confidence — agreement replaces s_gap stability for multi-chain path
+    agreement_valid = not np.isnan(chain_agreement_raw)
+    agreement_passed = (
+        agreement_valid and chain_agreement_raw >= _MULTI_CHAIN_AGREEMENT_TOL
+    )
+    prev_agreement_valid = not np.isnan(chain_agreement_prev_raw)
+    prev_agreement_passed = (
+        prev_agreement_valid and chain_agreement_prev_raw >= _MULTI_CHAIN_AGREEMENT_TOL
+    )
+    confidence = (
+        "high"
+        if (
+            has_esc
+            and not r2_nan
+            and r2 >= _R_MIN
+            and agreement_passed
+            and prev_agreement_passed
+        )
+        else "low"
+    )
+
+    # Exit reason and advisory budget return
+    airm_converged = (airm_v_prev < _AIRM_VELOCITY_TOL) and (
+        airm_v_curr < _AIRM_VELOCITY_TOL
+    )
+    if airm_converged and has_esc:
+        exit_reason = "airm_velocity_converged"
+    elif budget_used >= num_warmup_steps:
+        exit_reason = "warmup_budget_exhausted"
+    else:
+        exit_reason = "warmup_complete"
+
+    budget_returned = (
+        max(num_warmup_steps - converged_at, 0) if converged_at >= 0 else 0
+    )
+
+    budget_used_grads = -1
+    if adaptation_info is not None:
+        try:
+            budget_used_grads = int(
+                np.asarray(adaptation_info.num_integration_steps).sum()
+            )
+        except AttributeError:
+            pass
+
+    high_d_r2_mode = {
+        _R2_DEFERRED: "deferred",
+        _R2_PROJECTED: "projected",
+        _R2_FULL_AFFINE: "full_affine",
+    }.get(mode_int, "deferred")
+
+    # "need_more_chains": spike present but agreement or per-chain budget marginal.
+    # Spike-present check: use effective_rank > 0 as the pooled spike proxy
+    # (escalation_rank > 0 implies at least one spike cleared the detection edge).
+    spike_present_but_marginal = (
+        (not has_esc) and (nominal_rank > 0) and (not agreement_passed)
+    )
+
+    # mode_coverage: multi_chain_certified iff agreement gate passed (both windows)
+    mode_coverage = (
+        "multi_chain_certified"
+        if (has_esc and agreement_passed and prev_agreement_passed)
+        else "single_chain_uncertified"
+    )
+
+    flags = {
+        "reparam_hint": route == "reparam_suggested",
+        "marginal_s_gap": False,  # s_gap not primary signal in multi-chain path
+        "wall_cost_discount": k > 0,
+        "high_d_r2_mode": high_d_r2_mode,
+        "mode_coverage": mode_coverage,
+        "nominal_rank": nominal_rank,
+        # Multi-chain specific
+        "n_chains": n_chains_actual,
+        "chain_agreement": chain_agreement_raw,
+        "need_more_chains": spike_present_but_marginal,
+        "pooled_draws_by_window": pooled_draws_by_window,
     }
 
     return MetaAdaptationVerdict(
