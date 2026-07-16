@@ -984,8 +984,8 @@ def build_multi_chain_meta_core(
        scatter gives f₁ ≈ 1/(M−1).
     3. **Leave-one-out.** Detection must survive dropping any single chain,
        preventing a single outlier chain from driving the verdict.  Leave-two-out
-       (spec §3.3) is subsumed by the collinearity + unimodality conjunction for
-       the aligned-pair threat model; deferred to v2.1 as belt-and-suspenders.
+       (dropping any pair) is subsumed by the collinearity + unimodality conjunction
+       for the aligned-pair threat model and is deferred to v2.1.
     4. **Support floor.** At least one spike is admitted (k ≥ 1).
     5. **Unimodality guard.** Gap-statistic on the projected chain-means must
        not flag mode-split; mode-separated chains are deferred to the ensemble
@@ -1174,8 +1174,8 @@ def build_multi_chain_meta_core(
         collinearity_gate = f1 >= jnp.float32(_MC_COLLINEARITY_TOL)
 
         # ---- Gate 3: Leave-one-out ----
-        # Leave-two-out (spec §3.3) is subsumed by the collinearity + unimodality
-        # conjunction: near the edge f₁ cannot reach 0.7 (collinearity rejects the
+        # Leave-two-out (dropping any chain pair) is subsumed by the collinearity +
+        # unimodality conjunction: near the edge f₁ cannot reach 0.7 (collinearity rejects the
         # aligned pair), and once f₁≥0.7 the bulk sits far above the LO2 edge so
         # dropping any pair never collapses the verdict; isolated-pair bimodal cases
         # are caught by the unimodality gate.  LO2 is deferred to v2.1.

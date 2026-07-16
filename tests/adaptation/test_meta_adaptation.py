@@ -1878,8 +1878,8 @@ class TestMultiChainGate(BlackJAXTest):
     10. Verdict multi-chain fields (n_chains, chain_collinearity, mode_coverage)
     11. Multi-chain e2e smoke under f32 and x64
 
-    Note: leave-two-out (spec §3.3) is subsumed by collinearity + unimodality
-    and is deferred to v2.1; no LO2 test is present.
+    Note: leave-two-out is subsumed by the collinearity + unimodality conjunction
+    for the aligned-pair threat model and is deferred to v2.1; no LO2 test is present.
 
     No thin-margin stochastic assertions.  Fixtures use consistent seeds; all
     structural properties are strictly held.
@@ -2048,7 +2048,8 @@ class TestMultiChainGate(BlackJAXTest):
         → core.final returns has_escalated=False because collinearity blocks.
 
         This test goes RED when the collinearity conjunct is removed (mutation-B).
-        Based on the adversarial probe at /tmp/adv-v2-t/probe_collinearity_isolation.py.
+        The fixture uses isotropic between-chain scatter (orthogonal chain-means)
+        with a linear target score so collinearity is the sole gate that rejects.
         """
         d, n, M = 20, 500, 4
         key = jax.random.key(212)
@@ -2188,7 +2189,7 @@ class TestMultiChainGate(BlackJAXTest):
         Each chain has draws from a ZERO-MEAN distribution with a rank-1 spike
         in an INDEPENDENT random direction (different per chain).  Because the
         target score is not linear across the misaligned structures, R² is low
-        (~−0.018 in the adversarial probe).  Additionally collinearity fails
+        (~−0.018 measured on this fixture).  Additionally collinearity fails
         (f₁ ≈ 0.54 < 0.70) and LOO fails.  Together these gate block escalation
         via multiple conjuncts (not magnitude alone — T_top≈15.1 > edge≈12.8).
 
