@@ -1846,7 +1846,7 @@ def _make_underdispersed_chains(
 
     Chain means are all approximately zero; the between-chain scatter is
     structurally near zero.  The detector cannot see the slow direction
-    because all chains probed the same basin — but this is one-sided safe
+    because all chains sampled the same basin — but this is one-sided safe
     (never a dangerous over-escalation, just conservative under-detection).
 
     Returns ``(draws_mc, grads_mc)`` with shapes ``(n_chains, n, n_dims)``.
@@ -2074,10 +2074,8 @@ class TestMultiChainGate(BlackJAXTest):
         n_arr = jnp.int32(n)
         from blackjax.adaptation.meta_adaptation import _compute_within_chain_stats
 
-        chain_means_probe, W_diag_probe = _compute_within_chain_stats(draws_mc, n_arr)
-        T_eig, _, f1 = _between_chain_detection(
-            chain_means_probe, W_diag_probe, n_arr, M, d
-        )
+        chain_means_mc, W_diag_mc = _compute_within_chain_stats(draws_mc, n_arr)
+        T_eig, _, f1 = _between_chain_detection(chain_means_mc, W_diag_mc, n_arr, M, d)
         edge = _mc_detection_edge(d, M - 1)
         self.assertGreater(
             float(T_eig[0]),
