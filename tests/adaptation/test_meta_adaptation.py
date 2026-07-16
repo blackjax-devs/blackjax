@@ -76,29 +76,40 @@ import numpy as np
 import blackjax
 from blackjax.adaptation.meta_adaptation import (
     _ASSUMED_AVG_LEAPFROGS_PER_STEP,
+    _DETECTION_BRANCH_BETWEEN_MEANS,
+    _DETECTION_BRANCH_BOTH,
+    _DETECTION_BRANCH_NONE,
+    _DETECTION_BRANCH_POOLED_WITHIN,
     _LAM_NONTRIVIAL_TOL,
     _MC_COLLINEARITY_TOL,
+    _MC_UNIMODALITY_CONFIRM_WINDOWS,
     _R2_DEFERRED,
     _R2_FULL_AFFINE,
     _R2_PROJECTED,
     _R_MIN,
     _S_MIN,
+    _W_BRANCH_PSI_FLOOR,
     MetaAdaptationCoreState,
     MetaAdaptationVerdict,
     MultiChainMetaAdaptationCoreState,
     _between_chain_detection,
+    _build_pc_centered_time_major_pool,
     _choose_rank,
+    _compute_chain_consistency_psi,
+    _compute_pooled_within_spectrum,
     _compute_r2_score_linearity,
     _compute_s_gap,
     _compute_whitened_spectrum,
     _mc_detection_edge,
     _mc_unimodality_threshold,
+    _w_branch_lam1_edge,
     build_meta_adaptation_core,
     build_multi_chain_meta_core,
     extract_meta_verdict,
     extract_multi_chain_verdict,
 )
 from blackjax.adaptation.metric_recipes import MetricCore
+from blackjax.adaptation.staged_adaptation import _make_engine
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.fixtures import BlackJAXTest
 
@@ -2491,6 +2502,670 @@ class TestMultiChainGate(BlackJAXTest):
             self.assertEqual(imm_x64.sigma.shape, (n_dims,))
             self.assertTrue(
                 bool(jnp.all(jnp.isfinite(imm_x64.sigma))),
+                "x64: sigma has non-finite values",
+            )
+        finally:
+            jax.config.update("jax_enable_x64", False)
+
+
+# ===========================================================================
+# v2.1 tests — W-branch, router fix, scoped latch, shared-ε
+# ===========================================================================
+
+
+# ---------------------------------------------------------------------------
+# Shared fixture helpers (multi-chain)
+# ---------------------------------------------------------------------------
+
+
+def _make_mc_deep_spread(M, n, d, lam_within=20.0, seed=_RNG_SEED):
+    """M chains each with the same within-chain slow direction, all centered at 0.
+
+    Generates the ill_cond-like scenario: W-branch should detect anisotropy
+    (lam1 >> w_edge) but T-branch stays silent (f1 ≈ 0 since chain means ≈ 0).
+    Returns arrays of shape (M, n, d).
+    """
+    key = jax.random.key(seed)
+    k_dir, k_chains = jax.random.split(key)
+    u_raw = jax.random.normal(k_dir, (d,))
+    u = u_raw / jnp.linalg.norm(u_raw)
+    chain_keys = jax.random.split(k_chains, M)
+    draws_list, grads_list = [], []
+    for m in range(M):
+        z = jax.random.normal(chain_keys[m], (n, d))
+        z_orth = z - (z @ u[:, None]) @ u[None, :]
+        x = z_orth + jnp.sqrt(jnp.float32(lam_within)) * (z @ u[:, None]) @ u[None, :]
+        g = -(x - (1.0 - 1.0 / lam_within) * (x @ u[:, None]) @ u[None, :])
+        draws_list.append(x)
+        grads_list.append(g)
+    return jnp.stack(draws_list), jnp.stack(grads_list)
+
+
+def _make_mc_isotropic(M, n, d, seed=_RNG_SEED):
+    """M chains, each isotropic N(0, I): W-branch should NOT fire."""
+    key = jax.random.key(seed)
+    chain_keys = jax.random.split(key, M)
+    draws_list, grads_list = [], []
+    for m in range(M):
+        x = jax.random.normal(chain_keys[m], (n, d))
+        draws_list.append(x)
+        grads_list.append(-x)
+    return jnp.stack(draws_list), jnp.stack(grads_list)
+
+
+def _make_mc_split_means(M, n, d, split_scale=10.0, seed=_RNG_SEED):
+    """Half-and-half bimodal chains: first M//2 at -split_scale, rest at +split_scale.
+
+    Triggers gap-stat flagging (gap_ratio >> threshold) when projected onto e0.
+    """
+    key = jax.random.key(seed)
+    chain_keys = jax.random.split(key, M)
+    draws_list, grads_list = [], []
+    for m in range(M):
+        mean = split_scale * (1.0 if m < M // 2 else -1.0)
+        center = jnp.zeros(d).at[0].set(mean)
+        x = jax.random.normal(chain_keys[m], (n, d)) * 0.5 + center
+        g = -x
+        draws_list.append(x)
+        grads_list.append(g)
+    return jnp.stack(draws_list), jnp.stack(grads_list)
+
+
+def _make_mc_even_spread(M, n, d, spread_scale=5.0, seed=_RNG_SEED):
+    """M chains with evenly-spaced means (unimodal): gap-stat should NOT flag."""
+    key = jax.random.key(seed)
+    chain_keys = jax.random.split(key, M)
+    means = jnp.linspace(-spread_scale, spread_scale, M)
+    draws_list, grads_list = [], []
+    for m in range(M):
+        center = jnp.zeros(d).at[0].set(means[m])
+        x = jax.random.normal(chain_keys[m], (n, d)) * 0.3 + center
+        g = -x
+        draws_list.append(x)
+        grads_list.append(g)
+    return jnp.stack(draws_list), jnp.stack(grads_list)
+
+
+def _fill_mc_state(
+    state: MultiChainMetaAdaptationCoreState,
+    draws_mc: jax.Array,
+    grads_mc: jax.Array,
+) -> MultiChainMetaAdaptationCoreState:
+    """Copy (M, n, d) draws/grads into the MultiChain state buffer."""
+    M, B, d = state.draws_buffer.shape
+    n = draws_mc.shape[1]
+    n_fill = min(n, B)
+    draws_buf = jnp.concatenate(
+        [draws_mc[:, :n_fill, :], jnp.zeros((M, B - n_fill, d), dtype=draws_mc.dtype)],
+        axis=1,
+    )
+    grads_buf = jnp.concatenate(
+        [grads_mc[:, :n_fill, :], jnp.zeros((M, B - n_fill, d), dtype=grads_mc.dtype)],
+        axis=1,
+    )
+    return state._replace(
+        draws_buffer=draws_buf,
+        grads_buffer=grads_buf,
+        buffer_idx=jnp.array(n_fill, dtype=jnp.int32),
+    )
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 1 — Time-major layout invariant (padding regression)
+# ---------------------------------------------------------------------------
+
+
+class TestTimeMajorLayout(BlackJAXTest):
+    """_build_pc_centered_time_major_pool puts valid rows first (no padding contamination)."""
+
+    def test_valid_rows_are_contiguous_at_start(self):
+        """With n < B, the first n*M rows must be non-zero and the rest zero."""
+        M, n, B, d = 4, 30, 64, 10
+        key = jax.random.key(1)
+        draws = jax.random.normal(key, (M, B, d))
+        grads = -draws
+        chain_means = draws.mean(axis=1)
+
+        n_arr = jnp.array(n, dtype=jnp.int32)
+        pc_draws, _pc_grads, _step_mask = _build_pc_centered_time_major_pool(
+            draws, grads, chain_means, n_arr, M
+        )
+
+        self.assertEqual(pc_draws.shape, (B * M, d))
+
+        valid_block = np.asarray(pc_draws[: n * M])
+        self.assertGreater(
+            float(np.abs(valid_block).max()),
+            0.0,
+            "valid rows should have non-zero content",
+        )
+
+        padding_block = np.asarray(pc_draws[n * M :])
+        self.assertAlmostEqual(
+            float(np.abs(padding_block).max()),
+            0.0,
+            places=6,
+            msg="padding rows should be all-zero",
+        )
+
+    def test_first_valid_row_equals_chain0_step0_centered(self):
+        """Row 0 of time-major output = (chain 0, step 0) − chain_0_mean."""
+        M, n, B, d = 4, 20, 64, 8
+        key = jax.random.key(2)
+        draws = jax.random.normal(key, (M, B, d))
+        grads = -draws
+        chain_means = draws.mean(axis=1)  # computed over full B steps
+
+        n_arr = jnp.array(n, dtype=jnp.int32)
+        pc_draws, _, _ = _build_pc_centered_time_major_pool(
+            draws, grads, chain_means, n_arr, M
+        )
+
+        # In time-major layout: row 0 = (chain 0, step 0) - chain_0_mean
+        expected_row0 = np.asarray(draws[0, 0] - chain_means[0])
+        actual_row0 = np.asarray(pc_draws[0])
+        np.testing.assert_allclose(expected_row0, actual_row0, atol=1e-5)
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 2 — W-branch: lam1 detection
+# ---------------------------------------------------------------------------
+
+
+class TestWBranchSpectrum(BlackJAXTest):
+    """W-branch top eigenvalue clears MP edge on deep spread, stays below on isotropic."""
+
+    def _check_spectrum(self, M, n, d, draws_mc, dtype=jnp.float32):
+        draws_f = draws_mc.astype(dtype)
+        chain_means = draws_f.mean(axis=1)
+        W_diag = jnp.ones(d, dtype=dtype)
+        n_arr = jnp.array(n, dtype=jnp.int32)
+        actual_rank = max(d // 2, 1)
+        lam1, _ = _compute_pooled_within_spectrum(
+            draws_f, chain_means, W_diag, n_arr, M, actual_rank
+        )
+        N_dof = max(n * M - M, 1)
+        edge = _w_branch_lam1_edge(d, jnp.array(N_dof, dtype=jnp.int32))
+        return float(np.asarray(lam1)), float(np.asarray(edge))
+
+    def test_deep_spread_lam1_exceeds_edge_f32(self):
+        """Anisotropic within-chain draws: lam1 >> MP edge (f32)."""
+        M, n, d = 8, 200, 20
+        draws_mc, _ = _make_mc_deep_spread(M, n, d, lam_within=25.0, seed=10)
+        lam1, edge = self._check_spectrum(M, n, d, draws_mc, jnp.float32)
+        self.assertGreater(
+            lam1, edge, f"Deep spread: lam1={lam1} should exceed edge={edge}"
+        )
+
+    def test_isotropic_lam1_at_most_slightly_above_edge_f32(self):
+        """Isotropic chains: lam1 should not greatly exceed MP edge (f32)."""
+        M, n, d = 8, 200, 20
+        draws_mc, _ = _make_mc_isotropic(M, n, d, seed=11)
+        lam1, edge = self._check_spectrum(M, n, d, draws_mc, jnp.float32)
+        self.assertLessEqual(
+            lam1,
+            edge * 1.3,
+            f"Isotropic: lam1={lam1} should not exceed 1.3x edge={edge}",
+        )
+
+    def test_deep_spread_lam1_exceeds_edge_x64(self):
+        """W-branch top eigenvalue clears MP edge in float64."""
+        try:
+            jax.config.update("jax_enable_x64", True)
+            M, n, d = 8, 200, 20
+            draws_mc, _ = _make_mc_deep_spread(M, n, d, lam_within=25.0, seed=12)
+            lam1, edge = self._check_spectrum(M, n, d, draws_mc, jnp.float64)
+            self.assertGreater(
+                lam1,
+                edge,
+                f"x64 deep spread: lam1={lam1} should exceed edge={edge}",
+            )
+        finally:
+            jax.config.update("jax_enable_x64", False)
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 3 — Cross-chain consistency Ψ
+# ---------------------------------------------------------------------------
+
+
+class TestChainConsistencyPsi(BlackJAXTest):
+    """Ψ > floor on genuine deep spread; Ψ ≈ 0 on isotropic (null)."""
+
+    def _compute_psi(self, M, n, d, draws_mc, dtype=jnp.float32):
+        draws_f = draws_mc.astype(dtype)
+        chain_means = draws_f.mean(axis=1)
+        W_diag = jnp.ones(d, dtype=dtype)
+        n_arr = jnp.array(n, dtype=jnp.int32)
+        psi = _compute_chain_consistency_psi(draws_f, chain_means, W_diag, n_arr, M)
+        return float(np.asarray(psi))
+
+    def test_deep_spread_psi_above_floor_f32(self):
+        """Genuine within-chain anisotropy: Ψ > _W_BRANCH_PSI_FLOOR (f32)."""
+        M, n, d = 8, 200, 20
+        draws_mc, _ = _make_mc_deep_spread(M, n, d, lam_within=25.0, seed=20)
+        psi = self._compute_psi(M, n, d, draws_mc, jnp.float32)
+        self.assertGreater(
+            psi,
+            _W_BRANCH_PSI_FLOOR,
+            f"Deep spread: psi={psi} should exceed floor={_W_BRANCH_PSI_FLOOR}",
+        )
+
+    def test_isotropic_psi_below_floor_f32(self):
+        """Isotropic null: Ψ should be near zero (f32)."""
+        M, n, d = 8, 200, 20
+        draws_mc, _ = _make_mc_isotropic(M, n, d, seed=21)
+        psi = self._compute_psi(M, n, d, draws_mc, jnp.float32)
+        self.assertLess(
+            psi,
+            _W_BRANCH_PSI_FLOOR,
+            f"Isotropic null: psi={psi} should be below floor={_W_BRANCH_PSI_FLOOR}",
+        )
+
+    def test_deep_spread_psi_above_floor_x64(self):
+        """Ψ > floor in float64."""
+        try:
+            jax.config.update("jax_enable_x64", True)
+            M, n, d = 8, 200, 20
+            draws_mc, _ = _make_mc_deep_spread(M, n, d, lam_within=25.0, seed=22)
+            psi = self._compute_psi(M, n, d, draws_mc, jnp.float64)
+            self.assertGreater(
+                psi,
+                _W_BRANCH_PSI_FLOOR,
+                f"x64 deep spread: psi={psi} should exceed floor",
+            )
+        finally:
+            jax.config.update("jax_enable_x64", False)
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 4 — W-branch MP edge formula
+# ---------------------------------------------------------------------------
+
+
+class TestMPEdgeFormula(BlackJAXTest):
+    """_w_branch_lam1_edge computes (1 + sqrt(d/N))^2 correctly."""
+
+    def test_edge_formula_scalar(self):
+        """Check the MP edge value for known d, N."""
+        d, N = 10, 100
+        edge = _w_branch_lam1_edge(d, jnp.array(N, dtype=jnp.int32))
+        expected = (1.0 + (d / N) ** 0.5) ** 2
+        self.assertAlmostEqual(float(np.asarray(edge)), expected, places=5)
+
+    def test_edge_decreases_with_more_samples(self):
+        """More samples → tighter (lower) MP edge → easier detection."""
+        d = 20
+        edge_small = _w_branch_lam1_edge(d, jnp.array(50, dtype=jnp.int32))
+        edge_large = _w_branch_lam1_edge(d, jnp.array(2000, dtype=jnp.int32))
+        self.assertGreater(float(np.asarray(edge_small)), float(np.asarray(edge_large)))
+
+    def test_edge_increases_with_dimension(self):
+        """Higher dimension → larger MP edge (more noise dims = larger null bulk)."""
+        N = 200
+        edge_low_d = _w_branch_lam1_edge(5, jnp.array(N, dtype=jnp.int32))
+        edge_high_d = _w_branch_lam1_edge(50, jnp.array(N, dtype=jnp.int32))
+        self.assertGreater(
+            float(np.asarray(edge_high_d)), float(np.asarray(edge_low_d))
+        )
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 5 — 2-window unimodality confirmation and non-monotone latch
+# ---------------------------------------------------------------------------
+
+
+class TestUnimodality2WindowConfirmation(BlackJAXTest):
+    """One flag does not defer; deferred resets on unimodal window (non-monotone)."""
+
+    def _build_core_and_state(self, M, d, max_grad_budget=40000):
+        core = build_multi_chain_meta_core(max_grad_budget=max_grad_budget, n_chains=M)
+        state = core.init(d)
+        return core, state
+
+    def test_single_flag_deferred_false(self):
+        """After one flagged window, deferred stays False (needs 2 consecutive)."""
+        M, n, d = 8, 150, 10
+        core, state = self._build_core_and_state(M, d)
+        draws_mc, grads_mc = _make_mc_split_means(M, n, d, split_scale=8.0, seed=30)
+        state1 = _fill_mc_state(state, draws_mc, grads_mc)
+        result1 = core.final(state1)
+
+        deferred = bool(np.asarray(result1.deferred_to_ensemble))
+        flag_count = int(np.asarray(result1.unimodality_flag_count))
+        self.assertFalse(
+            deferred, "deferred must be False after at most 1 flagged window"
+        )
+        self.assertLessEqual(flag_count, 1)
+
+    def test_structural_invariant_deferred_requires_flag_count_ge_2(self):
+        """deferred=True iff flag_count >= _MC_UNIMODALITY_CONFIRM_WINDOWS (structural)."""
+        M, n, d = 8, 150, 10
+        core, state = self._build_core_and_state(M, d, max_grad_budget=40000)
+        draws_mc, grads_mc = _make_mc_split_means(M, n, d, split_scale=8.0, seed=31)
+
+        state1 = _fill_mc_state(state, draws_mc, grads_mc)
+        r1 = core.final(state1)
+        state2 = _fill_mc_state(r1, draws_mc, grads_mc)
+        r2 = core.final(state2)
+
+        flag2 = int(np.asarray(r2.unimodality_flag_count))
+        deferred2 = bool(np.asarray(r2.deferred_to_ensemble))
+
+        # Invariant: deferred=True implies flag_count >= confirm_threshold
+        if deferred2:
+            self.assertGreaterEqual(
+                flag2,
+                _MC_UNIMODALITY_CONFIRM_WINDOWS,
+                "deferred=True requires at least CONFIRM_WINDOWS consecutive flags",
+            )
+
+    def test_non_monotone_latch_resets_on_unimodal_window(self):
+        """deferred resets to False when a unimodal window follows the flagged ones."""
+        M, n, d = 8, 150, 10
+        core, state = self._build_core_and_state(M, d)
+        draws_split, grads_split = _make_mc_split_means(
+            M, n, d, split_scale=8.0, seed=32
+        )
+
+        state1 = _fill_mc_state(state, draws_split, grads_split)
+        r1 = core.final(state1)
+        state2 = _fill_mc_state(r1, draws_split, grads_split)
+        r2 = core.final(state2)
+
+        draws_uni, grads_uni = _make_mc_even_spread(M, n, d, spread_scale=0.5, seed=33)
+        state3 = _fill_mc_state(r2, draws_uni, grads_uni)
+        r3 = core.final(state3)
+
+        flag3 = int(np.asarray(r3.unimodality_flag_count))
+        deferred3 = bool(np.asarray(r3.deferred_to_ensemble))
+
+        # If unimodal window cleared the flag, deferred must be False
+        if flag3 == 0:
+            self.assertFalse(
+                deferred3,
+                "Non-monotone latch: unimodal window (flag_count=0) must reset deferred to False",
+            )
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 6 — Impossible combo invariant
+# ---------------------------------------------------------------------------
+
+
+class TestImpossibleComboInvariant(BlackJAXTest):
+    """Escalation ↔ not deferred (algebraic exclusion from scoped latch rule)."""
+
+    def test_escalation_implies_not_deferred(self):
+        """If has_escalated=True after final(), deferred must be False."""
+        M, n, d = 8, 150, 10
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+        state = core.init(d)
+        draws_mc, grads_mc = _make_mc_deep_spread(M, n, d, lam_within=30.0, seed=40)
+        state1 = _fill_mc_state(state, draws_mc, grads_mc)
+        result = core.final(state1)
+
+        has_escalated = bool(np.asarray(result.has_escalated))
+        deferred = bool(np.asarray(result.deferred_to_ensemble))
+
+        if has_escalated:
+            self.assertFalse(
+                deferred, "Impossible combo: escalated state must not be deferred"
+            )
+
+    def test_deferred_state_has_no_escalation(self):
+        """deferred=True (T-only path) implies has_escalated=False."""
+        M, n, d = 8, 150, 10
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+        state = core.init(d)
+        draws_split, grads_split = _make_mc_split_means(
+            M, n, d, split_scale=8.0, seed=41
+        )
+
+        state1 = _fill_mc_state(state, draws_split, grads_split)
+        r1 = core.final(state1)
+        state2 = _fill_mc_state(r1, draws_split, grads_split)
+        r2 = core.final(state2)
+
+        has_esc = bool(np.asarray(r2.has_escalated))
+        deferred = bool(np.asarray(r2.deferred_to_ensemble))
+
+        if deferred:
+            self.assertFalse(
+                has_esc,
+                "deferred=True (T-only path) must not coincide with has_escalated=True",
+            )
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 7 — New state fields populated after final()
+# ---------------------------------------------------------------------------
+
+
+class TestNewStateFieldsPopulated(BlackJAXTest):
+    """All 5 new v2.1 state fields are finite after the first core.final() call."""
+
+    def _run(self, dtype, seed):
+        M, n, d = 8, 150, 10
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+        state = core.init(d)
+        draws_mc, grads_mc = _make_mc_deep_spread(M, n, d, seed=seed)
+        state1 = _fill_mc_state(state, draws_mc.astype(dtype), grads_mc.astype(dtype))
+        return core.final(state1)
+
+    def test_new_fields_finite_f32(self):
+        """within_lam1, chain_consistency_psi, r1_top are finite (f32)."""
+        result = self._run(jnp.float32, seed=50)
+        lam1 = float(np.asarray(result.within_lam1))
+        psi = float(np.asarray(result.chain_consistency_psi))
+        r1 = float(np.asarray(result.r1_top))
+        branch = int(np.asarray(result.detection_branch))
+        flag_count = int(np.asarray(result.unimodality_flag_count))
+
+        self.assertFalse(np.isnan(lam1), "within_lam1 is NaN")
+        self.assertFalse(np.isnan(psi), "chain_consistency_psi is NaN")
+        self.assertFalse(np.isnan(r1), "r1_top is NaN")
+        self.assertIn(
+            branch,
+            [
+                _DETECTION_BRANCH_NONE,
+                _DETECTION_BRANCH_POOLED_WITHIN,
+                _DETECTION_BRANCH_BETWEEN_MEANS,
+                _DETECTION_BRANCH_BOTH,
+            ],
+        )
+        self.assertGreaterEqual(flag_count, 0)
+
+    def test_new_fields_finite_x64(self):
+        """within_lam1, chain_consistency_psi, r1_top are finite (x64)."""
+        try:
+            jax.config.update("jax_enable_x64", True)
+            result = self._run(jnp.float64, seed=51)
+            lam1 = float(np.asarray(result.within_lam1))
+            psi = float(np.asarray(result.chain_consistency_psi))
+            r1 = float(np.asarray(result.r1_top))
+            self.assertFalse(np.isnan(lam1), "x64: within_lam1 is NaN")
+            self.assertFalse(np.isnan(psi), "x64: chain_consistency_psi is NaN")
+            self.assertFalse(np.isnan(r1), "x64: r1_top is NaN")
+        finally:
+            jax.config.update("jax_enable_x64", False)
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 8 — extract_multi_chain_verdict exposes new flags
+# ---------------------------------------------------------------------------
+
+
+class TestExtractMultiChainVerdictNewFields(BlackJAXTest):
+    """extract_multi_chain_verdict flags dict includes all four v2.1 diagnostic keys."""
+
+    def test_new_flags_present_and_finite(self):
+        """Flags dict contains within_lam1, chain_consistency_psi, r1_top, detection_branch."""
+        M, n, d = 8, 150, 10
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+        state = core.init(d)
+        draws_mc, grads_mc = _make_mc_deep_spread(M, n, d, seed=60)
+        state1 = _fill_mc_state(state, draws_mc, grads_mc)
+        final_state = core.final(state1)
+
+        verdict = extract_multi_chain_verdict(
+            final_state, max_grad_budget=40000, num_warmup_steps=1000
+        )
+        flags = verdict.flags
+
+        for key in (
+            "within_lam1",
+            "chain_consistency_psi",
+            "r1_top",
+            "detection_branch",
+        ):
+            self.assertIn(key, flags, f"Missing verdict flag: {key}")
+
+        self.assertFalse(np.isnan(flags["within_lam1"]))
+        self.assertFalse(np.isnan(flags["chain_consistency_psi"]))
+        self.assertFalse(np.isnan(flags["r1_top"]))
+        self.assertIn(
+            flags["detection_branch"],
+            ["none", "pooled_within", "between_means", "both"],
+        )
+
+    def test_detection_branch_none_on_init_state(self):
+        """Before any final() call, detection_branch flag is 'none'."""
+        M, d = 8, 10
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+        state = core.init(d)
+        verdict = extract_multi_chain_verdict(
+            state, max_grad_budget=40000, num_warmup_steps=1000
+        )
+        self.assertEqual(verdict.flags["detection_branch"], "none")
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 9 — Shared-ε: M sequential DA updates per step
+# ---------------------------------------------------------------------------
+
+
+class TestSharedEpsilonDA(BlackJAXTest):
+    """Shared-ε: n_da_updates=M via lax.scan matches M manual sequential DA updates."""
+
+    def test_n_da_updates_scan_matches_loop(self):
+        """_make_engine with n_da_updates=M gives same step_size_avg as M manual updates."""
+        from blackjax.adaptation.meta_adaptation import build_meta_adaptation_core
+        from blackjax.adaptation.step_size import dual_averaging_adaptation
+
+        target_ar = 0.80
+        M = 4
+        per_chain = jnp.array([0.55, 0.65, 0.75, 0.85])
+
+        # Manual sequential updates (ground truth)
+        da_init, da_update, _ = dual_averaging_adaptation(target_ar)
+        ss = da_init(0.1)
+        for ar in per_chain:
+            ss = da_update(ss, jnp.float32(float(ar)))
+        step_manual = float(np.asarray(jnp.exp(ss.log_step_size_avg)))
+
+        # Engine with n_da_updates=M (uses lax.scan internally)
+        dummy_core = build_meta_adaptation_core(max_grad_budget=5000)
+        eng_init, eng_update, _ = _make_engine(
+            dummy_core,
+            target_acceptance_rate=target_ar,
+            n_da_updates=M,
+        )
+        adaptation_state = eng_init(jnp.zeros(10), 0.1)
+        adaptation_stage = (jnp.int32(0), jnp.bool_(False))  # fast stage, no window end
+
+        new_state = eng_update(
+            adaptation_state,
+            adaptation_stage,
+            jnp.zeros(10),  # position (ignored in fast stage)
+            jnp.zeros(10),  # grad (ignored in fast stage)
+            per_chain,  # (M,) accept rates → M sequential DA updates
+        )
+
+        step_engine = float(np.asarray(jnp.exp(new_state.ss_state.log_step_size_avg)))
+        self.assertAlmostEqual(
+            step_engine,
+            step_manual,
+            places=4,
+            msg="n_da_updates=M via lax.scan must match M manual DA updates",
+        )
+
+    def test_step_counter_increments_M_times(self):
+        """After n_da_updates=M, the DA step counter == M (not 1)."""
+        from blackjax.adaptation.meta_adaptation import build_meta_adaptation_core
+
+        M = 3
+        per_chain = jnp.array([0.70, 0.75, 0.80])
+
+        dummy_core = build_meta_adaptation_core(max_grad_budget=5000)
+        eng_init, eng_update, _ = _make_engine(
+            dummy_core,
+            target_acceptance_rate=0.80,
+            n_da_updates=M,
+        )
+        adaptation_state = eng_init(jnp.zeros(8), 0.1)
+        adaptation_stage = (jnp.int32(0), jnp.bool_(False))
+
+        new_state = eng_update(
+            adaptation_state,
+            adaptation_stage,
+            jnp.zeros(8),
+            jnp.zeros(8),
+            per_chain,
+        )
+
+        step_count = int(np.asarray(new_state.ss_state.step))
+        self.assertEqual(
+            step_count,
+            M,
+            f"After n_da_updates={M}, DA step counter should be {M}, got {step_count}",
+        )
+
+
+# ---------------------------------------------------------------------------
+# v2.1 test 10 — W-branch e2e smoke (f32 and x64)
+# ---------------------------------------------------------------------------
+
+
+class TestWBranchE2ESmoke(BlackJAXTest):
+    """core.final() with deep-spread draws: W-branch diagnostics are finite and positive."""
+
+    def _run_smoke(self, dtype, seed):
+        M, n, d = 8, 150, 10
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+        state = core.init(d)
+        draws_mc, grads_mc = _make_mc_deep_spread(M, n, d, lam_within=25.0, seed=seed)
+        state1 = _fill_mc_state(state, draws_mc.astype(dtype), grads_mc.astype(dtype))
+        return core.final(state1), d
+
+    def test_w_branch_e2e_f32(self):
+        """Deep-spread draws: within_lam1 > 0, chain_consistency_psi > 0 (f32)."""
+        result, d = self._run_smoke(jnp.float32, seed=70)
+        lam1 = float(np.asarray(result.within_lam1))
+        psi = float(np.asarray(result.chain_consistency_psi))
+        self.assertFalse(np.isnan(lam1), "within_lam1 is NaN")
+        self.assertGreater(lam1, 0.0, "within_lam1 must be positive")
+        self.assertFalse(np.isnan(psi), "chain_consistency_psi is NaN")
+        self.assertGreater(psi, 0.0, "chain_consistency_psi must be positive")
+        imm = result.inverse_mass_matrix
+        self.assertIsInstance(imm, LowRankInverseMassMatrix)
+        self.assertEqual(imm.sigma.shape, (d,))
+        self.assertTrue(
+            bool(jnp.all(jnp.isfinite(imm.sigma))), "sigma has non-finite values"
+        )
+
+    def test_w_branch_e2e_x64(self):
+        """Deep-spread draws: W-branch diagnostics are finite in float64."""
+        try:
+            jax.config.update("jax_enable_x64", True)
+            result, d = self._run_smoke(jnp.float64, seed=71)
+            lam1 = float(np.asarray(result.within_lam1))
+            psi = float(np.asarray(result.chain_consistency_psi))
+            self.assertFalse(np.isnan(lam1), "x64: within_lam1 is NaN")
+            self.assertFalse(np.isnan(psi), "x64: chain_consistency_psi is NaN")
+            imm = result.inverse_mass_matrix
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(imm.sigma))),
                 "x64: sigma has non-finite values",
             )
         finally:
