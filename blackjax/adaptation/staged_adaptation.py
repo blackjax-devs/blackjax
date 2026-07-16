@@ -44,6 +44,7 @@ from ``window_adaptation`` for backward compatibility.  Import it from either
 module; the object is identical.
 """
 import inspect
+import warnings
 from typing import Any, Callable, NamedTuple
 
 import jax
@@ -529,6 +530,15 @@ def staged_adaptation(
           a :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` (with
           U=0, lam=1 when the controller stays diagonal — bit-equivalent to
           the diagonal metric).
+
+          .. warning::
+             ``metric="auto"`` is **experimental (v1)**.  The low-rank
+             escalation is not robustly calibrated at high dimension: when
+             the residual spectrum's dominant structure sits near the detection
+             boundary, whether the controller escalates can depend on the
+             random seed.  Use for exploration and algorithm development, not
+             for production efficiency claims.  A multi-chain escalation
+             trigger (planned for v2) is expected to make the decision robust.
         - **str** — a registry name (``"welford_diag"`` (default),
           ``"welford_dense"``, ``"fisher_diag"``); looked up via
           :func:`~blackjax.adaptation.metric_recipes.lookup_recipe` and built
@@ -626,6 +636,11 @@ def staged_adaptation(
         initial_inverse_mass_matrix=initial_inverse_mass_matrix,
     )
 
+    # Closure variables for the auto-metric path: used inside run() to derive
+    # num_steps from max_grad_budget when the caller does not supply one.
+    _is_auto_metric: bool = metric == "auto"
+    _auto_max_grad_budget: int | None = max_grad_budget if _is_auto_metric else None
+
     if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
         mcmc_kernel = algorithm.build_kernel(integrator)
     else:
@@ -676,7 +691,69 @@ def staged_adaptation(
             adaptation_info_fn(new_state, info, new_adaptation_state),
         )
 
-    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
+    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int | None = None):
+        # Resolve num_steps: when metric="auto" and the caller did not supply a
+        # value, derive it from max_grad_budget so the growing-window schedule's
+        # largest window has enough draws to support the rank-detection check.
+        # A None sentinel distinguishes "caller did not supply" from an explicit
+        # value (even if that explicit value happens to equal 1000).
+        if num_steps is None:
+            if _is_auto_metric:
+                from blackjax.adaptation.meta_adaptation import (
+                    _ASSUMED_AVG_LEAPFROGS_PER_STEP,
+                )
+
+                # _auto_max_grad_budget is non-None when _is_auto_metric is True
+                # (_resolve_metric_and_schedule already validated it); the assert
+                # lets mypy narrow the Optional[int] type.
+                assert _auto_max_grad_budget is not None
+                num_steps = max(
+                    _auto_max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP, 1
+                )
+            else:
+                num_steps = 1000
+
+        # For metric="auto": warn when the largest warmup window is below the
+        # rank-detection support floor for this model's dimension.  The check
+        # runs once at run() call time (Python, not JAX-traced), so model
+        # dimension is available from position.
+        if _is_auto_metric:
+            import numpy as _np
+
+            from blackjax.adaptation.meta_adaptation import (
+                _MAX_RANK_CAP,
+                _MIN_TRAIN_K_RATIO,
+            )
+
+            d = pytree_size(position)
+            _actual_rank = min(_MAX_RANK_CAP, max(d // 2, 1))
+            _min_rank_support = 2 * _MIN_TRAIN_K_RATIO * (_actual_rank + 1)
+
+            # Find the largest slow window in the resolved schedule.
+            _sched_np = _np.asarray(_resolved_schedule_fn(num_steps))
+            _max_window = 0
+            _window_start = 0
+            for _i, (_stage, _end) in enumerate(zip(_sched_np[:, 0], _sched_np[:, 1])):
+                if _end and _stage == 1:
+                    _window_size = _i - _window_start + 1
+                    if _window_size > _max_window:
+                        _max_window = _window_size
+                    _window_start = _i + 1
+
+            if _max_window > 0 and _max_window < _min_rank_support:
+                warnings.warn(
+                    f"metric='auto': the largest warmup window ({_max_window} steps) "
+                    f"is below the rank-detection support floor for this model "
+                    f"(d={d}, estimated rank capacity {_actual_rank}, "
+                    f"floor={_min_rank_support} steps). "
+                    f"Low-rank structure in the posterior may not be detectable "
+                    f"with this budget (num_steps={num_steps}). "
+                    f"Increase max_grad_budget to enable low-rank escalation "
+                    f"at this dimension.",
+                    UserWarning,
+                    stacklevel=2,
+                )
+
         init_state = algorithm.init(position, logdensity_fn)
         init_adaptation_state = adapt_init(position, initial_step_size)
 

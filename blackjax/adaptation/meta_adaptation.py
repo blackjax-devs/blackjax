@@ -23,6 +23,16 @@ over two consecutive windows AND budget deadline clear. Growing-window schedule
 (the scan runs its full length; ``converged_at_step`` records where stopping
 would have helped — the actual early-stop host is the named v1.1 upgrade).
 
+.. warning::
+
+   ``metric="auto"`` is **experimental (v1)**.  The low-rank escalation is not
+   robustly calibrated at high dimension: when the residual spectrum's dominant
+   structure sits near the detection boundary, whether the controller escalates
+   can depend on the random seed used for sampling.  Use ``metric="auto"`` for
+   exploration and algorithm development, not for production efficiency claims.
+   A multi-chain escalation trigger (planned for v2) is expected to make the
+   escalation decision robust across seeds.
+
 **Dtype note**: the composed estimator ``_compute_low_rank_metric`` produces
 numerically indefinite metrics under float32 (~98% of runs). Enable x64 via
 ``jax.config.update("jax_enable_x64", True)`` for production use and for the
@@ -89,6 +99,13 @@ _TRANSIENT_MIXING_THRESHOLD: float = 1.0
 _MAX_RANK_CAP: int = 50
 """Static rank cap for buffer allocation; per-window rank ≤ min(cap, n//2)."""
 
+_LAM_NONTRIVIAL_TOL: float = 1e-6
+"""Threshold for a deployed-metric eigenvalue correction to be considered
+non-trivial: ``|lam_i - 1| > _LAM_NONTRIVIAL_TOL``.  Directions with
+``lam_i = 1.0`` exactly (set by the Fisher estimator for sub-threshold
+directions) contribute zero to the deployed rank.
+"""
+
 # R² mode integers (stored in carry as int8).
 _R2_DEFERRED: int = 0
 _R2_PROJECTED: int = 1
@@ -144,7 +161,7 @@ class MetaAdaptationVerdict(NamedTuple):
 
     route: str  # "diagonal" | "low_rank" | "reparam_suggested"
     metric: LowRankInverseMassMatrix
-    effective_rank: int  # k at escalation time (0 for diagonal route)
+    effective_rank: int  # deployed rank: count of |lam_i − 1| > _LAM_NONTRIVIAL_TOL (0 for diagonal route)
     confidence: str  # "high" | "low"
     exit_reason: str  # "warmup_complete" | "airm_velocity_converged" | "warmup_budget_exhausted"
     budget_used_steps: int
@@ -154,7 +171,7 @@ class MetaAdaptationVerdict(NamedTuple):
     s_gap_final: float
     transient_mixing_class: str  # "slow" | "fast"
     buffer_policy: str  # always "reset" in v1
-    flags: dict  # reparam_hint, marginal_s_gap, wall_cost_discount, high_d_r2_mode, mode_coverage
+    flags: dict  # reparam_hint, marginal_s_gap, wall_cost_discount, high_d_r2_mode, mode_coverage, nominal_rank
 
 
 # ---------------------------------------------------------------------------
@@ -582,7 +599,8 @@ def extract_meta_verdict(
     import numpy as np
 
     has_esc = bool(np.asarray(final_state.has_escalated))
-    k = int(np.asarray(final_state.escalation_rank))
+    nominal_rank = int(np.asarray(final_state.escalation_rank))
+    k = nominal_rank  # kept for clarity; not used in escalation decisions
     budget_used = int(np.asarray(final_state.budget_used))
     s_gap = float(np.asarray(final_state.s_gap_curr))
     r2 = float(np.asarray(final_state.r2_latest))
@@ -591,6 +609,14 @@ def extract_meta_verdict(
     airm_v_curr = float(np.asarray(final_state.airm_vel_curr))
     converged_at = int(np.asarray(final_state.converged_at_step))
     is_slow = bool(np.asarray(final_state.is_slow_mixing))
+
+    # Deployed rank: count of non-trivial eigenvalue corrections in the
+    # deployed metric (|lam_i - 1| > threshold).  This is the rank of the
+    # structure the kernel actually uses, as opposed to the pre-mask count
+    # stored in escalation_rank (nominal_rank), which can over-count when
+    # the Fisher estimator zeroes sub-threshold directions back to lam=1.
+    lam_np = np.asarray(final_state.inverse_mass_matrix.lam)
+    effective_rank = int(np.sum(np.abs(lam_np - 1.0) > _LAM_NONTRIVIAL_TOL))
 
     r2_nan = np.isnan(r2)
 
@@ -651,12 +677,16 @@ def extract_meta_verdict(
         "wall_cost_discount": k > 0,
         "high_d_r2_mode": high_d_r2_mode,
         "mode_coverage": "single_chain_uncertified",
+        # nominal_rank is the pre-filter count from the spectrum rank selector;
+        # effective_rank (the top-level field) is the deployed count from
+        # the Fisher metric's lam array.  Both are provided for diagnostics.
+        "nominal_rank": nominal_rank,
     }
 
     return MetaAdaptationVerdict(
         route=route,
         metric=final_state.inverse_mass_matrix,
-        effective_rank=k,
+        effective_rank=effective_rank,
         confidence=confidence,
         exit_reason=exit_reason,
         budget_used_steps=budget_used,
