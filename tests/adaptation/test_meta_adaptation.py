@@ -76,6 +76,7 @@ import numpy as np
 import blackjax
 from blackjax.adaptation.meta_adaptation import (
     _ASSUMED_AVG_LEAPFROGS_PER_STEP,
+    _LAM_NONTRIVIAL_TOL,
     _R2_DEFERRED,
     _R2_FULL_AFFINE,
     _R2_PROJECTED,
@@ -1086,6 +1087,35 @@ class TestRecovershClassical(BlackJAXTest):
         )
         self.assertEqual(verdict.route, "low_rank")
 
+        # --- FIX 2 regression guard ---
+        # Directly compute the deployed rank from the state's deployed lam array.
+        # This asserts that effective_rank is the Fisher-metric deployed count,
+        # NOT the pre-mask escalation_rank stored in the carry.  Reverting Fix 2
+        # (setting effective_rank = escalation_rank) makes BOTH of the assertions
+        # below RED:
+        #   (a) assertEqual: reverted code gives escalation_rank (4), not the
+        #       deployed count (5) from state.inverse_mass_matrix.lam.
+        #   (b) assertNotEqual: reverted code sets effective_rank = nominal_rank.
+        lam_np = np.asarray(state.inverse_mass_matrix.lam)
+        directly_computed_deployed_rank = int(
+            np.sum(np.abs(lam_np - 1.0) > _LAM_NONTRIVIAL_TOL)
+        )
+        self.assertEqual(
+            verdict.effective_rank,
+            directly_computed_deployed_rank,
+            f"effective_rank must equal the directly-computed deployed lam count. "
+            f"Got verdict.effective_rank={verdict.effective_rank} vs "
+            f"directly_computed={directly_computed_deployed_rank}",
+        )
+        # For this fixture, effective_rank and nominal_rank diverge: the Fisher
+        # estimator deploys more directions than _choose_rank's pre-mask count.
+        self.assertNotEqual(
+            verdict.effective_rank,
+            verdict.flags["nominal_rank"],
+            "For this fixture effective_rank must differ from nominal_rank; "
+            "if they are equal, Fix 2 may have been accidentally reverted",
+        )
+
     def test_marginal_s_gap_stays_diagonal(self):
         """Marginal-band S_gap ∈ [_S_MIN, 2·_S_MIN) = [2.0, 4.0): stays diagonal.
 
@@ -1481,8 +1511,9 @@ class TestEffectiveRankHonesty(BlackJAXTest):
     _choose_rank) is larger than the count of truly active Fisher-metric
     directions (|lam_i - 1| > _LAM_NONTRIVIAL_TOL).  This reproduces the
     over-counting that occurs in high-d finite-sample settings where the
-    Marchenko-Pastur bulk contributes spurious eigenvalues above the fixed
-    cutoff=2.0.
+    finite-sample noise floor pushes spurious eigenvalues above the fixed
+    cutoff=2.0, inflating the pre-mask rank count beyond the true deployed
+    structure.
 
     All assertions are structural (not stochastic): the state is constructed
     deterministically by patching lam directly.  The fix is a reporting change
