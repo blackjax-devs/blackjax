@@ -805,6 +805,54 @@ def _geometric_mean_deploy_scale(
 # ---------------------------------------------------------------------------
 
 
+def _build_mc_window_schedule(num_steps: int, M: int, actual_rank: int) -> Array:
+    """Pooled-aware growing-window schedule for the M-chain meta-adaptation path.
+
+    The single-chain schedule's 30%-early phase and 80-step starting window are
+    sized for a single chain.  With M chains the detection-relevant count is the
+    POOLED ``M * n``, so windows should be sized on pooled samples: the first
+    main window is ``n1 = ceil(min_n_proj / M)`` per chain, ensuring
+    ``n_pool = n1 * M >= min_n_proj = 8 * (actual_rank + 1)`` (projected-tier
+    floor).  This restores early-escalation capability that the single-chain
+    schedule loses at M >= 4.
+
+    Example (M=8, actual_rank=25, num_steps=312):
+        ``n1 = ceil(208 / 8) = 26``.
+        Windows end at steps 1, 27, 66, 124, 265.
+        Steps 27, 66, 124 have n_pool ≥ 208 AND budget_remaining ≥ 50 —
+        all three are escalation-eligible.
+
+    The ``early_window=0.0`` argument to :func:`build_growing_window_schedule`
+    gives a harmless 1-step early window (due to the ``max(..., 1)`` guard in
+    that function) followed by the main pooled-aware phase.
+
+    Parameters
+    ----------
+    num_steps
+        Per-chain warmup step count (= total_budget // (LEAPS * M)).
+    M
+        Number of chains (static Python int).
+    actual_rank
+        Estimated rank capacity (static Python int; = min(d//2, _MAX_RANK_CAP)).
+
+    Returns
+    -------
+    Array
+        ``(num_steps, 2)`` schedule array in the same ``(stage, is_window_end)``
+        format as :func:`~blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule`.
+    """
+    from blackjax.adaptation.low_rank_adaptation import build_growing_window_schedule
+
+    min_n_proj = 2 * _MIN_TRAIN_K_RATIO * (actual_rank + 1)  # 8*(actual_rank+1)
+    n1 = max(-(-min_n_proj // M), 1)  # ceil division, ensure ≥ 1
+    return build_growing_window_schedule(
+        num_steps,
+        early_window=0.0,  # suppress early phase; harmless 1-step leftover is fine
+        window_size=n1,
+        window_growth=1.5,
+    )
+
+
 def _w_branch_null_edge(M: int, n: Array, d: int) -> Array:
     """Null bulk upper edge for the pooled within-chain residual spectrum.
 
@@ -851,6 +899,172 @@ def _w_branch_null_edge(M: int, n: Array, d: int) -> Array:
     )
     base_edge = (jnp.float32(1.0) + jnp.sqrt(jnp.float32(d) / N_safe)) ** 2
     return jnp.float32(_W_BRANCH_NULL_EDGE_TW_FACTOR) * base_edge
+
+
+# ---------------------------------------------------------------------------
+# BLOCKER-2 GAIN+abstain: projected-tier router for M-chain path (§5.2)
+# ---------------------------------------------------------------------------
+
+_GAIN_THRESHOLD: float = 0.3
+"""Slope-heterogeneity GAIN threshold for projected-tier reparam signal.
+
+Reparam requires per-chain fits to beat the shared pooled fit by this margin
+on held-out data.  A Gaussian (no structure) gives GAIN <= 0 (per-chain fits
+overfit relative to shared); a funnel-at-levels gives GAIN ~ +0.83.
+"""
+
+_GAIN_READABILITY_FLOOR: float = 0.5
+"""Minimum per-chain R² for the projected-tier fits to be considered readable.
+
+Below this threshold the fits are garbage (starved / transient chains) and
+the result is abstain (route = diagonal, confidence = low) rather than
+reparam.  Equals _R_MIN by construction (same curvature semantics).
+"""
+
+
+def _compute_projected_gain_r2_mc(
+    pc_draws_tm: Array,
+    pc_grads_tm: Array,
+    sigma_w_diag: Array,
+    n: Array,
+    M: int,
+    U_k: Array,
+) -> tuple[Array, Array]:
+    """Slope-heterogeneity GAIN for the projected router tier (M-chain path).
+
+    Both the per-chain fit and the pooled-shared fit are evaluated on held-out
+    data (train = first half of each chain, test = second half).  The GAIN
+
+    .. code-block:: text
+
+        GAIN = R2_perchain - R2_shared
+
+    is positive only when genuine curvature heterogeneity exists across chain
+    regions.  A Gaussian null produces GAIN <= 0 (per-chain fits overfit),
+    so the threshold 0.3 gives near-zero false-reparam rate.
+
+    **Abstain rule**: if R2_perchain < :data:`_GAIN_READABILITY_FLOOR` (garbage
+    fits due to starvation / transience), return (NaN, NaN).  The caller maps
+    NaN to diagonal + confidence=low (not reparam).
+
+    Parameters
+    ----------
+    pc_draws_tm
+        Per-chain-centered time-major pooled draws, shape ``(B*M, d)``.
+        Row ``t*M + m`` = (step t, chain m).  Valid rows: first ``n*M``.
+    pc_grads_tm
+        Same layout as ``pc_draws_tm`` for score vectors.
+    sigma_w_diag
+        Within-chain whitening std, shape ``(d,)``; ``sqrt(W_diag)``.
+    n
+        Per-chain valid draw count (dynamic JAX int32).
+    M
+        Chain count (static Python int; baked into reshape).
+    U_k
+        Top-k whitened eigenvectors, shape ``(d, k)`` where k = actual_rank.
+
+    Returns
+    -------
+    tuple[Array, Array]
+        ``(gain, r2_perchain)`` both float32.  ``NaN`` on abstain (unreadable
+        fits).
+    """
+    B_M = pc_draws_tm.shape[0]  # static: B*M
+    B = B_M // M  # per-chain buffer size (static)
+    k = U_k.shape[1]  # projected rank (static)
+
+    sigma_safe = jnp.maximum(sigma_w_diag, jnp.float32(1e-20))
+
+    # Reshape to step-major-chain: (B, M, d); chain m at [:, m, :].
+    draws_3d = pc_draws_tm.reshape(B, M, -1)  # (B, M, d)
+    grads_3d = pc_grads_tm.reshape(B, M, -1)  # (B, M, d)
+
+    # Whiten and project to k directions.
+    w_proj_3d = (draws_3d / sigma_safe[None, None, :]) @ U_k  # (B, M, k)
+    s_proj_3d = (grads_3d * sigma_safe[None, None, :]) @ U_k  # (B, M, k)
+
+    # Per-chain train/test masks (same split boundary for all chains).
+    n_half = n // 2
+    step_idx = jnp.arange(B, dtype=jnp.int32)
+    train_mask = (step_idx < n_half).astype(pc_draws_tm.dtype)  # (B,)
+    test_mask = ((step_idx >= n_half) & (step_idx < n)).astype(
+        pc_draws_tm.dtype
+    )  # (B,)
+    n_test_safe = jnp.maximum(test_mask.sum().astype(jnp.float32), jnp.float32(2.0))
+
+    # ---- Shared fit: pool all chains' train data ----
+    # Layout: (B, M, k) → chain-major (M, B, k) → reshape (M*B, k).
+    # Shared train mask: broadcast step mask over M chains.
+    w_pool = w_proj_3d.transpose(1, 0, 2).reshape(M * B, k)  # (M*B, k)
+    s_pool = s_proj_3d.transpose(1, 0, 2).reshape(M * B, k)  # (M*B, k)
+    # train_mask for pool: repeat each step's mask M times (chain-major order)
+    train_pool = jnp.tile(train_mask, M)  # (M*B,) — step t repeated for M chains
+    feats_sh = jnp.concatenate(
+        [w_pool, jnp.ones((M * B, 1), dtype=w_pool.dtype)], axis=1
+    )
+    tm = train_pool[:, None]
+    FtF_sh = (tm * feats_sh).T @ (tm * feats_sh)  # (k+1, k+1)
+    FtS_sh = (tm * feats_sh).T @ (tm * s_pool)  # (k+1, k)
+    A_sh = jnp.linalg.lstsq(
+        FtF_sh + jnp.float32(1e-8) * jnp.eye(k + 1, dtype=FtF_sh.dtype),
+        FtS_sh,
+        rcond=None,
+    )[
+        0
+    ]  # (k+1, k)
+
+    # ---- Per-chain r2_shared and r2_perchain via vmap ----
+    # Transpose to chain-major so vmap sees chain as batch dim.
+    w_proj_MC = w_proj_3d.transpose(1, 0, 2)  # (M, B, k)
+    s_proj_MC = s_proj_3d.transpose(1, 0, 2)  # (M, B, k)
+
+    def _chain_r2s(w_m: Array, s_m: Array) -> tuple[Array, Array]:
+        """Per-chain R2_shared and R2_perchain for one chain (vmapped)."""
+        feats_m = jnp.concatenate(
+            [w_m, jnp.ones((B, 1), dtype=w_m.dtype)], axis=1
+        )  # (B, k+1)
+        tm_col = test_mask[:, None]
+
+        # Shared model predictions on this chain's test data
+        pred_sh = (tm_col * feats_m) @ A_sh  # (B, k)
+        s_test = tm_col * s_m
+        s_mean = s_test.sum(0) / n_test_safe
+        tss = ((s_test - tm_col * s_mean[None, :]) ** 2).sum(0)
+        rss_sh = ((s_test - pred_sh) ** 2).sum(0)
+        r2_sh = jnp.median(
+            jnp.float32(1.0) - rss_sh / jnp.maximum(tss, jnp.float32(1e-10))
+        )
+
+        # Per-chain OLS on this chain's train, evaluated on its test
+        tr_col = train_mask[:, None]
+        FtF_m = (tr_col * feats_m).T @ (tr_col * feats_m)
+        FtS_m = (tr_col * feats_m).T @ (tr_col * s_m)
+        A_m = jnp.linalg.lstsq(
+            FtF_m + jnp.float32(1e-8) * jnp.eye(k + 1, dtype=FtF_m.dtype),
+            FtS_m,
+            rcond=None,
+        )[0]
+        pred_pc = (tm_col * feats_m) @ A_m
+        rss_pc = ((s_test - pred_pc) ** 2).sum(0)
+        r2_pc = jnp.median(
+            jnp.float32(1.0) - rss_pc / jnp.maximum(tss, jnp.float32(1e-10))
+        )
+        return r2_sh, r2_pc
+
+    r2_sh_all, r2_pc_all = jax.vmap(_chain_r2s)(w_proj_MC, s_proj_MC)  # (M,) each
+    r2_shared = jnp.median(r2_sh_all)
+    r2_perchain = jnp.median(r2_pc_all)
+
+    gain = r2_perchain - r2_shared
+
+    # Abstain: unreadable fits → return NaN to signal "no evidence"
+    abstain = (r2_perchain < jnp.float32(_GAIN_READABILITY_FLOOR)) | ~jnp.isfinite(
+        r2_perchain
+    )
+    nan32 = jnp.array(float("nan"), dtype=jnp.float32)
+    gain_out = jnp.where(abstain, nan32, gain.astype(jnp.float32))
+    r2_pc_out = jnp.where(abstain, nan32, r2_perchain.astype(jnp.float32))
+    return gain_out, r2_pc_out
 
 
 def _compute_pooled_within_spectrum(

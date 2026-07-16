@@ -771,6 +771,10 @@ def staged_adaptation(
             else:
                 num_steps = 1000
 
+        # Default effective schedule is the resolved one; overridden for the
+        # multi-chain metric="auto" path inside the block below (BLOCKER-1 fix).
+        _eff_schedule_fn = _resolved_schedule_fn
+
         # For metric="auto": warn when the largest warmup window is below the
         # rank-detection support floor for this model's dimension.  The check
         # runs once at run() call time (Python, not JAX-traced), so model
@@ -789,8 +793,25 @@ def staged_adaptation(
             _actual_rank = min(_MAX_RANK_CAP, max(d // 2, 1))
             _min_rank_support = 2 * _MIN_TRAIN_K_RATIO * (_actual_rank + 1)
 
-            # Find the largest slow window in the resolved schedule.
-            _sched_np = _np.asarray(_resolved_schedule_fn(num_steps))
+            # Pooled-aware schedule override for multi-chain path (BLOCKER-1 fix).
+            # The single-chain growing-window schedule produces windows with
+            # n_pool = per_chain_n ≤ 80 < min_n_proj = 208 for typical budgets,
+            # making escalation structurally impossible.  The MC schedule starts at
+            # n1 = ceil(min_n_proj / M) so every window ≥ n1 is escalation-eligible
+            # when pooled (n_pool = M * per_chain_n ≥ min_n_proj).
+            if _is_multi_chain:
+                from blackjax.adaptation.meta_adaptation import (
+                    _build_mc_window_schedule,
+                )
+
+                _eff_schedule_fn = lambda _ns: _build_mc_window_schedule(
+                    _ns, _n_chains, _actual_rank
+                )
+            else:
+                _eff_schedule_fn = _resolved_schedule_fn
+
+            # Find the largest slow window in the effective schedule.
+            _sched_np = _np.asarray(_eff_schedule_fn(num_steps))
             _max_window = 0
             _window_start = 0
             for _i, (_stage, _end) in enumerate(zip(_sched_np[:, 0], _sched_np[:, 1])):
@@ -800,10 +821,17 @@ def staged_adaptation(
                         _max_window = _window_size
                     _window_start = _i + 1
 
-            if _max_window > 0 and _max_window < _min_rank_support:
+            # For multi-chain, pooled count = M * per-chain window size — this is
+            # the effective support; compare it against _min_rank_support.
+            _eff_max_window = _max_window * (_n_chains if _is_multi_chain else 1)
+            if _max_window > 0 and _eff_max_window < _min_rank_support:
                 _chains_suffix = f", n_chains={_n_chains}" if _is_multi_chain else ""
+                _pool_suffix = (
+                    f" (pooled count = {_eff_max_window})" if _is_multi_chain else ""
+                )
                 warnings.warn(
-                    f"metric='auto': the largest warmup window ({_max_window} steps) "
+                    f"metric='auto': the largest warmup window ({_max_window} steps"
+                    f"{_pool_suffix}) "
                     f"is below the rank-detection support floor for this model "
                     f"(d={d}, estimated rank capacity {_actual_rank}, "
                     f"floor={_min_rank_support} steps). "
@@ -824,7 +852,7 @@ def staged_adaptation(
 
             start_state = (init_state, init_adaptation_state)
             keys = jax.random.split(rng_key, num_steps)
-            schedule = _resolved_schedule_fn(num_steps)
+            schedule = _eff_schedule_fn(num_steps)
             last_state, info = jax.lax.scan(
                 one_step,
                 start_state,
@@ -891,7 +919,7 @@ def staged_adaptation(
 
             start_state = (init_states, init_adaptation_state)
             keys = jax.random.split(rng_key, num_steps)
-            schedule = _resolved_schedule_fn(num_steps)
+            schedule = _eff_schedule_fn(num_steps)
             last_state, info = jax.lax.scan(
                 one_step_mc,
                 start_state,

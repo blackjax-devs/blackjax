@@ -2929,7 +2929,14 @@ class TestImpossibleComboInvariant(BlackJAXTest):
     """Escalation ↔ not deferred (algebraic exclusion from scoped latch rule)."""
 
     def test_escalation_implies_not_deferred(self):
-        """If has_escalated=True after final(), deferred must be False."""
+        """T-branch (between_means) escalation implies deferred=False.
+
+        Scoped latch rule: W-escalation + T-defer IS LEGAL (cross-branch
+        coexistence).  The ONLY impossible combo is escalated=True AND
+        detection_branch=between_means AND deferred=True.  If T-branch alone
+        escalated, it required ~confirmed_split → confirmed_split=False →
+        new_deferred=False.  So that triple cannot occur; this test asserts it.
+        """
         M, n, d = 8, 150, 10
         core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
         state = core.init(d)
@@ -2939,10 +2946,14 @@ class TestImpossibleComboInvariant(BlackJAXTest):
 
         has_escalated = bool(np.asarray(result.has_escalated))
         deferred = bool(np.asarray(result.deferred_to_ensemble))
+        branch = int(np.asarray(result.detection_branch))
 
-        if has_escalated:
+        # W-escalation + deferred is LEGAL per scoped latch rule.
+        # Only assert the impossible triple: T-only escalation + deferred.
+        if has_escalated and branch == _DETECTION_BRANCH_BETWEEN_MEANS:
             self.assertFalse(
-                deferred, "Impossible combo: escalated state must not be deferred"
+                deferred,
+                "Impossible combo: detection_branch=between_means + escalated + deferred",
             )
 
     def test_impossible_combo_between_means_deferred_escalated(self):
@@ -3213,3 +3224,95 @@ class TestWBranchE2ESmoke(BlackJAXTest):
             )
         finally:
             jax.config.update("jax_enable_x64", False)
+
+
+# ===========================================================================
+# v2.1 BLOCKER-1 acceptance test: staged escalation is structurally possible
+# ===========================================================================
+
+
+class TestEndToEndEscalation(BlackJAXTest):
+    """staged_adaptation with n_chains=8 on an ill-conditioned target escalates.
+
+    This is the HEADLINE v2.1 acceptance cell.  In v2 the runtime was
+    structurally inert: the single-chain schedule never produced a window with
+    n_pool >= min_n_proj, so escalation was impossible by construction.
+
+    The BLOCKER-1 fix (pooled-aware schedule) produces windows at steps ~27,
+    66, 124 with n_pool = M * per_chain_n >= min_n_proj = 208.  This test
+    asserts that after running staged_adaptation with max_grad_budget=50_000
+    and n_chains=8 on a rank-5 ill-conditioned Gaussian (d=50), the emitted
+    metric has effective_rank > 0 (at least one slow direction was deployed).
+
+    The target is a correlated Gaussian with a rank-5 spike (lam_spike=100),
+    chosen so the W-branch always fires given a working schedule.  The test
+    is structural, not stochastic: at this geometry the signal is several sigma
+    above the null edge regardless of the random seed.
+    """
+
+    def _make_ill_cond_logdensity(self, d: int, rank: int, lam_spike: float, seed: int):
+        """Return a logdensity_fn for N(0, Sigma) with rank-k spike.
+
+        Sigma = I + U*(lam_spike - 1)*Ut.  Precision = Sigma^{-1}.
+        The score is -Sigma^{-1} x (linear, unit R²).
+        """
+        key = jax.random.key(seed)
+        U_raw = jax.random.normal(key, (d, rank))
+        U, _ = jnp.linalg.qr(U_raw)  # orthonormal (d, rank)
+        U = U[:, :rank]
+
+        # Precision matrix: I + U*((1/lam_spike)-1)*Ut
+        lam_inv = 1.0 / lam_spike
+        prec = jnp.eye(d) + (lam_inv - 1.0) * (U @ U.T)
+
+        def logdensity_fn(x):
+            return -0.5 * x @ prec @ x
+
+        return logdensity_fn, U
+
+    def test_ill_cond_escalates_f32(self):
+        """staged_adaptation(n_chains=8, metric='auto') escalates on ill-conditioned target.
+
+        Asserts effective_rank > 0: at least one slow direction was detected
+        and deployed by the Fisher estimator.  With the BLOCKER-1 pooled-aware
+        schedule, the first escalation-eligible window fires at step ~27 and
+        the carry propagates has_escalated=True through subsequent windows.
+        """
+        d, rank, lam_spike = 50, 5, 100.0
+        M = 8
+        max_grad_budget = 50_000
+
+        logdensity_fn, _ = self._make_ill_cond_logdensity(d, rank, lam_spike, seed=0)
+
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+            n_chains=M,
+        )
+        key = jax.random.key(42)
+        # Overdispersed start: chain m starts near m*e_0 so the W-branch
+        # sees real within-chain spread rather than init-dispersion only.
+        positions = (
+            jnp.zeros((M, d))
+            .at[:, 0]
+            .set(jnp.linspace(-2.0, 2.0, M, dtype=jnp.float32))
+        )
+        results, _ = warmup.run(key, positions)
+
+        imm = results.parameters["inverse_mass_matrix"]
+        self.assertIsInstance(imm, LowRankInverseMassMatrix)
+
+        # Effective rank: count(|lam_i - 1| > _LAM_NONTRIVIAL_TOL) in deployed lam.
+        lam_np = np.asarray(imm.lam)
+        effective_rank = int(np.sum(np.abs(lam_np - 1.0) > _LAM_NONTRIVIAL_TOL))
+        self.assertGreater(
+            effective_rank,
+            0,
+            f"BLOCKER-1 acceptance: staged_adaptation(n_chains=8) must deploy at "
+            f"least one slow direction on an ill-conditioned d={d} rank-{rank} target "
+            f"(lam_spike={lam_spike}).  Got effective_rank=0 — the schedule fix did "
+            f"not produce an escalation-eligible window.  Check _build_mc_window_schedule "
+            f"wiring in staged_adaptation.py and the budget_remaining gate in final().",
+        )
