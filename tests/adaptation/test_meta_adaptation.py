@@ -88,6 +88,7 @@ from blackjax.adaptation.meta_adaptation import (
     _R2_PROJECTED,
     _R_MIN,
     _S_MIN,
+    _W_BRANCH_NULL_EDGE_TW_FACTOR,
     _W_BRANCH_PSI_FLOOR,
     MetaAdaptationCoreState,
     MetaAdaptationVerdict,
@@ -102,7 +103,7 @@ from blackjax.adaptation.meta_adaptation import (
     _compute_whitened_spectrum,
     _mc_detection_edge,
     _mc_unimodality_threshold,
-    _w_branch_lam1_edge,
+    _w_branch_null_edge,
     build_meta_adaptation_core,
     build_multi_chain_meta_core,
     extract_meta_verdict,
@@ -2714,8 +2715,7 @@ class TestWBranchSpectrum(BlackJAXTest):
         lam1, _ = _compute_pooled_within_spectrum(
             draws_f, chain_means, W_diag, n_arr, M, actual_rank
         )
-        N_dof = max(n * M - M, 1)
-        edge = _w_branch_lam1_edge(d, jnp.array(N_dof, dtype=jnp.int32))
+        edge = _w_branch_null_edge(M, n_arr, d)
         return float(np.asarray(lam1)), float(np.asarray(edge))
 
     def test_deep_spread_lam1_exceeds_edge_f32(self):
@@ -2813,28 +2813,30 @@ class TestChainConsistencyPsi(BlackJAXTest):
 # ---------------------------------------------------------------------------
 
 
-class TestMPEdgeFormula(BlackJAXTest):
-    """_w_branch_lam1_edge computes (1 + sqrt(d/N))^2 correctly."""
+class TestNullEdgeFormula(BlackJAXTest):
+    """_w_branch_null_edge computes TW_FACTOR*(1 + sqrt(d/N))^2 with N=M*(n-1)."""
 
     def test_edge_formula_scalar(self):
-        """Check the MP edge value for known d, N."""
-        d, N = 10, 100
-        edge = _w_branch_lam1_edge(d, jnp.array(N, dtype=jnp.int32))
-        expected = (1.0 + (d / N) ** 0.5) ** 2
+        """Check the null edge value for known M, n, d."""
+        M, n, d = 4, 26, 10  # N = M*(n-1) = 4*25 = 100
+        edge = _w_branch_null_edge(M, jnp.array(n, dtype=jnp.int32), d)
+        N = M * (n - 1)
+        expected = _W_BRANCH_NULL_EDGE_TW_FACTOR * (1.0 + (d / N) ** 0.5) ** 2
         self.assertAlmostEqual(float(np.asarray(edge)), expected, places=5)
 
-    def test_edge_decreases_with_more_samples(self):
-        """More samples → tighter (lower) MP edge → easier detection."""
-        d = 20
-        edge_small = _w_branch_lam1_edge(d, jnp.array(50, dtype=jnp.int32))
-        edge_large = _w_branch_lam1_edge(d, jnp.array(2000, dtype=jnp.int32))
+    def test_edge_decreases_with_more_draws(self):
+        """More draws per chain → tighter (lower) null edge → easier detection."""
+        M, d = 8, 20
+        # n=8 → N=7*8=56;  n=252 → N=251*8=2008
+        edge_small = _w_branch_null_edge(M, jnp.array(8, dtype=jnp.int32), d)
+        edge_large = _w_branch_null_edge(M, jnp.array(252, dtype=jnp.int32), d)
         self.assertGreater(float(np.asarray(edge_small)), float(np.asarray(edge_large)))
 
     def test_edge_increases_with_dimension(self):
-        """Higher dimension → larger MP edge (more noise dims = larger null bulk)."""
-        N = 200
-        edge_low_d = _w_branch_lam1_edge(5, jnp.array(N, dtype=jnp.int32))
-        edge_high_d = _w_branch_lam1_edge(50, jnp.array(N, dtype=jnp.int32))
+        """Higher dimension → larger null edge (more noise dims = larger null bulk)."""
+        M, n = 8, 30  # N = 8*29 = 232
+        edge_low_d = _w_branch_null_edge(M, jnp.array(n, dtype=jnp.int32), 5)
+        edge_high_d = _w_branch_null_edge(M, jnp.array(n, dtype=jnp.int32), 50)
         self.assertGreater(
             float(np.asarray(edge_high_d)), float(np.asarray(edge_low_d))
         )

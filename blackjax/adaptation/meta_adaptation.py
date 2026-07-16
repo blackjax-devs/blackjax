@@ -170,6 +170,17 @@ mildly-negative lag-1 values while blocking the strongly-negative oscillatory
 direction.
 """
 
+_W_BRANCH_NULL_EDGE_TW_FACTOR: float = 1.02
+"""Tracy-Widom finite-N inflation factor applied to the iid-null bulk upper edge.
+
+At the regime-relevant pool size N = M(n-1) approx 300 (8 chains, 40-draw window),
+the iid-null q99 of the top eigenvalue exceeds the asymptotic analytic edge by
+~2%, as measured on 1000 iid null replicates at M=8, n=40, d in {10,20,50,100}.
+This constant is isolated in one place so the next calibration pass can replace
+the analytic formula with a per-(M,n,d) lookup without touching any other constant.
+See :func:`_w_branch_null_edge`.
+"""
+
 _MC_UNIMODALITY_Q99_TABLE: dict[int, float] = {
     6: 3.8,  # conservative estimate; dedicated calibration needed for M<8
     7: 4.2,  # conservative estimate
@@ -794,28 +805,52 @@ def _geometric_mean_deploy_scale(
 # ---------------------------------------------------------------------------
 
 
-def _w_branch_lam1_edge(d: int, N: Array) -> Array:
+def _w_branch_null_edge(M: int, n: Array, d: int) -> Array:
     """Null bulk upper edge for the pooled within-chain residual spectrum.
 
-    Analytic formula: ``(1 + sqrt(d/N))²`` where ``N = M*(n-1)`` is the dof
-    of the pooled residual covariance.  This equals the iid-null q95 at
-    N ~ 1.4 × 10³ (Tracy–Widom correction ≈ 1.4% from q95 to q99); the Ψ
-    consistency gate is the primary FPR control so a slightly anti-conservative
-    edge is acceptable here.
+    Formula: ``_W_BRANCH_NULL_EDGE_TW_FACTOR * (1 + sqrt(d / (M*(n-1))))^2``.
+
+    **Conservative for positively-autocorrelated series.** The base analytic
+    form ``(1 + sqrt(d/N))^2`` is the iid-null upper bulk edge for N = M*(n-1)
+    degrees of freedom (within-chain residuals pooled across M chains, each
+    chain centered on its own mean).  For positively-autocorrelated chains
+    (AR rho > 0), within-chain variance is inflated above the iid level, which
+    reduces effective N below M*(n-1) — meaning genuine structure clears this
+    edge more easily than the iid calibration predicts.  The cross-chain Psi
+    consistency gate is the primary FPR control; this edge is secondary.
+
+    **TW-inflation factor.** :data:`_W_BRANCH_NULL_EDGE_TW_FACTOR` = 1.02
+    accounts for Tracy-Widom finite-N fluctuations: at the regime-relevant
+    pool size N approx 300 (M=8, n=40-draw window), the iid-null q99 exceeds
+    the asymptotic edge by ~2% (measured on 1000 iid null replicates at M=8,
+    n=40, d in {10,20,50,100}).
+
+    **Upgrade path.** MC-per-(M,n,d) calibration replaces this analytic formula
+    with a lookup table of measured null quantiles, eliminating the iid
+    assumption and the TW approximation.  This function is designed as one
+    swappable block for that transition: replace the body, keep the signature.
 
     Parameters
     ----------
-    d
-        Dimension (static Python int).
-    N
-        Effective pooled count ``M*(n-1)`` (dynamic JAX int32 or Python int).
+    M : int
+        Number of chains (static Python int; baked into N = M*(n-1)).
+    n : Array
+        Valid draws per chain in this window (dynamic JAX int32 or int).
+    d : int
+        Dimension (static Python int; baked into the aspect-ratio term d/N).
 
     Returns
     -------
-    float32 — the MP bulk upper edge.
+    Array
+        float32 null edge; compare directly to ``lam1`` from
+        :func:`_compute_pooled_within_spectrum`.
     """
-    N_safe = jnp.maximum(jnp.asarray(N, dtype=jnp.float32), jnp.float32(1.0))
-    return (jnp.float32(1.0) + jnp.sqrt(jnp.float32(d) / N_safe)) ** 2
+    N_safe = jnp.maximum(
+        jnp.float32(M) * (jnp.asarray(n, dtype=jnp.float32) - jnp.float32(1.0)),
+        jnp.float32(1.0),
+    )
+    base_edge = (jnp.float32(1.0) + jnp.sqrt(jnp.float32(d) / N_safe)) ** 2
+    return jnp.float32(_W_BRANCH_NULL_EDGE_TW_FACTOR) * base_edge
 
 
 def _compute_pooled_within_spectrum(
@@ -1636,10 +1671,7 @@ def build_multi_chain_meta_core(
         lam1_w, top_eigvec_w = _compute_pooled_within_spectrum(
             state.draws_buffer, chain_means, W_diag, n, M_stat, actual_rank
         )
-        N_dof = jnp.maximum(
-            n.astype(jnp.int32) * jnp.int32(M_stat) - jnp.int32(M_stat), jnp.int32(1)
-        )  # M*(n-1) pooled within-chain dof
-        w_edge = _w_branch_lam1_edge(d, N_dof)
+        w_edge = _w_branch_null_edge(M_stat, n, d)
         w_magnitude = lam1_w > w_edge
 
         psi_w = _compute_chain_consistency_psi(
