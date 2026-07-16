@@ -1146,6 +1146,261 @@ def _compute_pooled_within_spectrum(
     return lam1, top_eigvec
 
 
+def _compute_mode_consistency_flag(
+    pc_draws_tm: Array,
+    pc_grads_tm: Array,
+    grads_buffer_mc: Array,
+    chain_means: Array,
+    grand_mean: Array,
+    V_top: Array,
+    sigma_w_diag: Array,
+    T_eigenvalues: Array,
+    edge_full: Array,
+    n: Array,
+    M: int,
+) -> Array:
+    """Per-direction mode-consistency flag for T-branch multimodality detection.
+
+    BLOCKER-3 fix.  For each admitted T-spike direction ``e_j`` (where
+    ``T_eigenvalues[j] > edge_full``), computes
+
+    .. code-block:: text
+
+        mode_flag(j) = (R²_local(e_j) − R²_global(e_j) > 0.3) AND (R²_local(e_j) ≥ 0.5)
+
+    **R²_local**: per-chain OLS of (per-chain-centered score, per-chain-centered
+    position) projected to ``e_j``, then median over chains.  Captures local
+    score linearity within each chain's region.
+
+    **R²_global**: pooled OLS of (grand-centered score, grand-centered position)
+    projected to ``e_j``.  For a unimodal target the global score is globally
+    linear → R²_global ≈ R²_local.  For a mode-split the scores have different
+    intercepts per mode → the global linear fit collapses → R²_global << R²_local.
+
+    **Critical distinction**: R²_global must use the RAW (not per-chain-centered)
+    gradients, grand-mean-centered.  If per-chain-centered gradients were used for
+    R²_global, a unimodal overdispersed target (chains at different positions on
+    the same Gaussian) would falsely flag: the per-chain-centered score doesn't
+    correlate with the grand-centered position (the offset contributes to x but
+    not to pc_s), mimicking a mode-split.  Using grand-centered raw gradients
+    restores the global linear relationship for unimodal targets.
+
+    Returns True if ANY admitted direction flags.  W-branch is unaffected (never
+    gated on this — the W-branch is structurally mode-blind via per-chain centering).
+
+    Parameters
+    ----------
+    pc_draws_tm
+        Per-chain-centered time-major draws, shape ``(B*M, d)``.  Row ``t*M+m``.
+    pc_grads_tm
+        Per-chain-centered time-major grads, shape ``(B*M, d)``.  Used for R²_local.
+    grads_buffer_mc
+        Raw (non-centered) grads, shape ``(M, B, d)``.  Used for R²_global (grand-
+        centered).  For a unimodal Gaussian the raw grads ARE globally linear in
+        position; per-chain-centered grads lose this between-chain signal.
+    chain_means
+        Shape ``(M, d)`` — per-chain draw means.
+    grand_mean
+        Shape ``(d,)`` — mean of chain means.
+    V_top
+        Shape ``(d, k)`` — top T-eigenvectors in W-whitened space.
+    sigma_w_diag
+        Shape ``(d,)`` — within-chain whitening std.
+    T_eigenvalues
+        Shape ``(k,)`` — T-branch eigenvalues (to mask admitted dirs).
+    edge_full
+        Scalar float32 — T magnitude threshold.
+    n
+        Per-chain valid draw count (dynamic int32).
+    M
+        Static chain count.
+
+    Returns
+    -------
+    bool scalar — True if any T-spike direction exhibits mode-consistency signature.
+    """
+    BM, d = pc_draws_tm.shape
+    B = BM // M  # static
+
+    # Grand-mean-centered raw grads for R²_global (shape M, B, d → B*M, d time-major)
+    step_mask_col = (jnp.arange(B) < n).astype(grads_buffer_mc.dtype)  # (B,)
+    n_f = jnp.maximum(n.astype(grads_buffer_mc.dtype), jnp.float32(1.0))
+    # grand mean of raw grads (over all valid draws across all chains)
+    total_valid = n_f * jnp.float32(M)
+    grad_sum = (step_mask_col[None, :, None] * grads_buffer_mc).sum(axis=(0, 1))  # (d,)
+    grand_mean_grad = grad_sum / jnp.maximum(total_valid, jnp.float32(1.0))  # (d,)
+    # Grand-mean-centered raw grads, time-major layout
+    gc_grads_mc = grads_buffer_mc - grand_mean_grad[None, None, :]  # (M, B, d)
+    # swapaxes(0,1) → (B, M, d) → reshape → (B*M, d)
+    gc_grads_tm = gc_grads_mc.swapaxes(0, 1).reshape(BM, d)  # (B*M, d)
+
+    # Grand-centered position offset in time-major layout
+    gc_offset = chain_means - grand_mean[None, :]  # (M, d)
+    gc_offset_tm = jnp.tile(gc_offset, (B, 1))  # (B*M, d)
+
+    # Per-row valid mask: row t*M+m is valid when step t < n
+    row_idx = jnp.arange(BM, dtype=jnp.int32)
+    t_idx = row_idx // M  # (B*M,) time step per row
+    valid_mask = (t_idx < n).astype(pc_draws_tm.dtype)  # (B*M,)
+
+    # Step-wise valid mask for per-chain reshape
+    step_valid = step_mask_col.astype(pc_draws_tm.dtype)  # (B,)
+
+    def _r2_for_direction(j: int) -> Array:
+        """Mode-consistency flag (bool Array) for direction j."""
+        # Unwhiten V_top[:, j] → original space unit vector
+        e_unnorm = sigma_w_diag * V_top[:, j]
+        e_j = e_unnorm / jnp.maximum(jnp.linalg.norm(e_unnorm), jnp.float32(1e-10))
+
+        # ---- R²_global: OLS on grand-centered raw grads vs grand-centered positions ----
+        x_gc_proj = (pc_draws_tm + gc_offset_tm) @ e_j  # (B*M,) grand-centered position
+        s_gc_proj = gc_grads_tm @ e_j  # (B*M,) grand-centered raw score
+
+        n_total = jnp.maximum(valid_mask.sum(), jnp.float32(2.0))
+        x_gc_mean = (valid_mask * x_gc_proj).sum() / n_total
+        s_gc_mean = (valid_mask * s_gc_proj).sum() / n_total
+        x_gc_c = x_gc_proj - x_gc_mean
+        s_gc_c = s_gc_proj - s_gc_mean
+        Sxx_g = (valid_mask * x_gc_c**2).sum()
+        Sxs_g = (valid_mask * x_gc_c * s_gc_c).sum()
+        beta_g = Sxs_g / jnp.maximum(Sxx_g, jnp.float32(1e-20))
+        rss_g = (valid_mask * (s_gc_c - beta_g * x_gc_c) ** 2).sum()
+        ss_tot_g = (valid_mask * s_gc_c**2).sum()
+        r2_global = jnp.clip(
+            jnp.float32(1.0) - rss_g / jnp.maximum(ss_tot_g, jnp.float32(1e-20)),
+            jnp.float32(-10.0),
+            jnp.float32(1.0),
+        )
+
+        # ---- R²_local: per-chain OLS on per-chain-centered (x, s), median ----
+        x_pc_proj = pc_draws_tm @ e_j  # (B*M,) per-chain-centered position
+        s_pc_proj = pc_grads_tm @ e_j  # (B*M,) per-chain-centered score
+
+        # Reshape time-major (B*M,) → (B, M): column m = chain m's values
+        x_pc_2d = x_pc_proj.reshape(B, M)  # (B, M)
+        s_2d = s_pc_proj.reshape(B, M)  # (B, M)
+
+        def _chain_r2_1d(x_col: Array, s_col: Array) -> Array:
+            n_c = jnp.maximum(step_valid.sum(), jnp.float32(2.0))
+            x_m = (step_valid * x_col).sum() / n_c
+            s_m = (step_valid * s_col).sum() / n_c
+            x_c = x_col - x_m
+            s_c = s_col - s_m
+            Sxx = (step_valid * x_c**2).sum()
+            Sxs = (step_valid * x_c * s_c).sum()
+            beta = Sxs / jnp.maximum(Sxx, jnp.float32(1e-20))
+            rss = (step_valid * (s_c - beta * x_c) ** 2).sum()
+            ss_tot = (step_valid * s_c**2).sum()
+            r2 = jnp.float32(1.0) - rss / jnp.maximum(ss_tot, jnp.float32(1e-20))
+            return jnp.clip(r2, jnp.float32(-10.0), jnp.float32(1.0))
+
+        r2_per_chain = jax.vmap(_chain_r2_1d, in_axes=(1, 1))(x_pc_2d, s_2d)  # (M,)
+        r2_local = jnp.median(r2_per_chain)
+
+        # Admitted direction only (mask out by eigenvalue threshold)
+        admitted = T_eigenvalues[j] > edge_full
+        return (
+            admitted
+            & (r2_local - r2_global > jnp.float32(0.3))
+            & (r2_local >= jnp.float32(0.5))
+        )
+
+    # Compute flag for each static direction index; OR together
+    k = V_top.shape[1]  # static Python int
+    flags = jnp.stack([_r2_for_direction(j) for j in range(k)])  # (k,) bool
+    return flags.any()
+
+
+def _compute_contraction_stat(
+    draws_buffer: Array,
+    chain_means: Array,
+    grand_mean: Array,
+    n: Array,
+    M: int,
+) -> Array:
+    """Per-chain split-half drift t-statistic for the T-branch three-way rule.
+
+    BLOCKER-3 fix.  For each chain m, computes the whitened drift along the
+    chain's own offset direction
+
+    .. code-block:: text
+
+        c_m = ⟨mean(late half) − mean(early half), ô_m⟩ / SE_m
+
+    where ``ô_m = (chain_mean_m − grand_mean) / ‖·‖`` and ``SE_m`` is the
+    pooled SE of the two half-means along ``ô_m``.  A one-sided t across the
+    M chains is returned.
+
+    Interpretation (at M=8, critical value -2.365 at α=2.5%):
+
+    - ``t_contr < -2.365``: chains are converging toward the grand mean →
+      unimodal-safe, escalate if the other T gates pass.
+    - ``t_contr ≈ 0``: chains are frozen / not drifting (mode-split or
+      genuinely slow direction); combine with mode-consistency flag.
+    - ``t_contr >> 0``: chains are diverging (unusual, flag as inconclusive).
+
+    Parameters
+    ----------
+    draws_buffer
+        Shape ``(M, B, d)`` — raw (not centered) per-chain draws.
+    chain_means
+        Shape ``(M, d)`` — per-chain draw means.
+    grand_mean
+        Shape ``(d,)`` — mean of chain means.
+    n
+        Per-chain valid draw count (dynamic int32).
+    M
+        Static chain count.
+
+    Returns
+    -------
+    float32 scalar — one-sided t statistic across M chains.
+    """
+    _M, B, d = draws_buffer.shape  # all static
+
+    # Per-chain offset directions ô_m = (chain_means_m - grand_mean) / ||·||
+    offsets = chain_means - grand_mean[None, :]  # (M, d)
+    norms = jnp.linalg.norm(offsets, axis=1, keepdims=True)  # (M, 1)
+    o_hat = offsets / jnp.maximum(norms, jnp.float32(1e-10))  # (M, d)
+
+    # Project draws onto ô_m: (M, B, d) * (M, 1, d) → sum over d → (M, B)
+    proj = (draws_buffer * o_hat[:, None, :]).sum(axis=-1)  # (M, B)
+
+    # Build valid/early/late masks
+    step_idx = jnp.arange(B, dtype=jnp.int32)
+    n_half = n // 2
+    early_mask = (step_idx < n_half).astype(proj.dtype)  # (B,)
+    late_mask = ((step_idx >= n_half) & (step_idx < n)).astype(proj.dtype)
+    valid_mask = (step_idx < n).astype(proj.dtype)
+
+    n_half_f = jnp.maximum(n_half.astype(jnp.float32), jnp.float32(1.0))
+    n_late_f = jnp.maximum((n - n_half).astype(jnp.float32), jnp.float32(1.0))
+    n_total_f = jnp.maximum(n.astype(jnp.float32), jnp.float32(1.0))
+
+    # Per-chain half-means: broadcast mask (B,) over chains (M, B)
+    early_proj = (proj * early_mask[None, :]).sum(axis=1) / n_half_f  # (M,)
+    late_proj = (proj * late_mask[None, :]).sum(axis=1) / n_late_f  # (M,)
+
+    # Per-chain within-window std for SE estimation
+    proj_mean = (proj * valid_mask[None, :]).sum(axis=1) / n_total_f  # (M,)
+    proj_var = (valid_mask[None, :] * (proj - proj_mean[:, None]) ** 2).sum(
+        axis=1
+    ) / jnp.maximum(n_total_f - jnp.float32(1.0), jnp.float32(1.0))
+    se = jnp.sqrt(
+        jnp.maximum(proj_var, jnp.float32(1e-10)) * jnp.float32(2.0) / n_half_f
+    )  # (M,) — SE of mean difference between two half-means
+
+    # Standardized drift per chain
+    c_std = (late_proj - early_proj) / jnp.maximum(se, jnp.float32(1e-10))  # (M,)
+
+    # One-sided t across M chains
+    c_mean = c_std.mean()
+    c_se = jnp.std(c_std, ddof=1) / jnp.sqrt(jnp.float32(M))
+    t_contr = c_mean / jnp.maximum(c_se, jnp.float32(1e-10))
+
+    return t_contr.astype(jnp.float32)
+
+
 def _w_branch_psi_threshold(M: int, n: Array, d: int) -> Array:
     """Adaptive Ψ threshold: max(3 * q99_null(M, n, d), 0.15).
 
@@ -1900,23 +2155,16 @@ def build_multi_chain_meta_core(
         t_loo = _loo_detection_passes(chain_means, W_diag, n, M_stat, d, edge_loo)
         t_support = k_new >= jnp.int32(1)
 
-        # ---- T-branch Gate 5: unimodality (recalibrated + 2-window confirmation) ----
+        # ---- T-branch Gate 5: unimodality (gap-stat, corroborator after BLOCKER-3) ----
         # Unwhiten top T direction: V_top[:, 0] is in whitened space → unwhiten by sigma_w
         e_unnorm = sigma_w_diag * V_top[:, 0]  # (d,) in original space
         e_norm = jnp.linalg.norm(e_unnorm)
         e_dir = e_unnorm / jnp.maximum(e_norm, jnp.float32(1e-10))
         is_unimodal, _gap_ratio = _unimodality_gap_stat(chain_means, e_dir, M_stat)
-        # Increment flag counter when gap-stat flags; reset to 0 when unimodal
-        uni_flag = ~is_unimodal  # True = mode-split flag this window
-        new_flag_count = jnp.where(
-            uni_flag,
-            state.unimodality_flag_count + jnp.int32(1),
-            jnp.int32(0),
-        )
-        # Confirmed split requires _MC_UNIMODALITY_CONFIRM_WINDOWS (=2) consecutive flags
-        unimodality_confirmed_split = new_flag_count >= jnp.int32(
-            _MC_UNIMODALITY_CONFIRM_WINDOWS
-        )
+        # NOTE: new_flag_count is computed AFTER BLOCKER-3 (mode-consistency + contraction)
+        # because the primary multimodality signal is any_mode_flag (mode-consistency),
+        # not the gap-stat alone.  The flag counter uses multimodality_signal (either signal)
+        # to count consecutive windows for the 2-window confirmation gate.
 
         # T pre-unimodality conjunction (four non-unimodality gates)
         t_pre_uni = t_magnitude & t_collinearity & t_loo & t_support
@@ -2006,14 +2254,44 @@ def build_multi_chain_meta_core(
             & deadline_ok
         )
 
-        # ---- T-branch conjunction ----
-        # Unimodality gate: the CURRENT WINDOW must be unimodal.
-        # (The 2-window confirmation applies only to the deferred handoff, not here.)
-        # T-branch escalation is blocked whenever the current gap-stat flags.
-        # This preserves v2 semantics: a single bimodal window blocks T escalation.
-        t_unimodality = (
-            is_unimodal  # current-window unimodality (NOT 2-window confirmed)
+        # ---- BLOCKER-3: mode-consistency flag + contraction stat (T-branch guard) ----
+        # Mode-consistency (BLOCKER-3, §5.2(b)): per direction e_j, flag iff
+        # (R²_local(e_j) − R²_global(e_j) > 0.3) AND (R²_local(e_j) ≥ 0.5).
+        # Replaces the gap-stat as the primary multimodality signal — k-mode-agnostic.
+        any_mode_flag = _compute_mode_consistency_flag(
+            pc_draws_safe,
+            pc_grads_safe,
+            state.grads_buffer,  # raw (M, B, d) for grand-centered R²_global
+            chain_means,
+            grand_mean,
+            V_top,
+            sigma_w_diag,
+            T_eigenvalues,
+            jnp.float32(edge_full),
+            n,
+            M_stat,
         )
+        # Contraction stat (BLOCKER-3, §5.2, A§5.2): per-chain split-half drift t.
+        # t < -2.365 at M=8 → chains are converging → unimodal-safe, T can escalate.
+        t_contr = _compute_contraction_stat(
+            state.draws_buffer, chain_means, grand_mean, n, M_stat
+        )
+        _T_CONTR_CRIT = jnp.float32(-2.365)  # one-sided at α=2.5%, M=8 dof=7
+        is_converging = t_contr < _T_CONTR_CRIT
+
+        # ---- T-branch three-way (BLOCKER-3 fix, replaces binary gap-stat gate) ----
+        # (i) Converging → chains drifting toward grand mean → unimodal-safe → escalate
+        #     if pre-uni gates pass (override gap-stat).
+        # (ii) Any mode_flag AND NOT converging → defer (genuine or uncertain multimodality).
+        # (iii) Inconclusive (not converging, no mode flag) → existing gap-stat gate (is_unimodal).
+        t_unimodality_override = (
+            is_converging  # (i): converging overrides gap-stat block
+        )
+        t_unimodality_default = (
+            is_unimodal & ~any_mode_flag
+        )  # (iii): gap-stat + no flag
+        t_unimodality = t_unimodality_override | t_unimodality_default
+
         mc_detection_T = t_pre_uni & t_unimodality
         escalate_T = ~state.has_escalated & r2_gate & mc_detection_T & deadline_ok
 
@@ -2023,17 +2301,37 @@ def build_multi_chain_meta_core(
 
         # ---- Scoped latch: deferred_to_ensemble (non-monotone, v2.1 rule) ----
         # Deferred is set when T-branch wants to escalate (t_pre_uni=True) but the
-        # current window is bimodal (~is_unimodal), AND this has been true for
-        # _MC_UNIMODALITY_CONFIRM_WINDOWS=2 consecutive windows (flag_count ≥ 2).
-        # The 2-window confirmation prevents a transient bimodal window from
-        # triggering an immediate P1→P3 handoff (reduces false deferred signals).
-        # Non-monotone: recomputed each window; if chains merge, deferred resets.
+        # multimodality guard fires (any_mode_flag OR gap-stat flags), AND this has
+        # been true for _MC_UNIMODALITY_CONFIRM_WINDOWS=2 consecutive windows.
+        # The 2-window confirmation prevents transient flags from triggering P1→P3.
+        # Mode-consistency (any_mode_flag) is the primary multimodality signal;
+        # gap-stat (~is_unimodal) is a corroborating signal.  Either alone sets
+        # the flag counter; both together confirm split faster.
+        # Non-monotone: recomputed each window; if chains merge / flags clear, resets.
         # Post-escalation: deferred=False once escalated (moot after metric deployed). ✓
         # Impossible combo (route=low_rank ∧ deferred ∧ detection_branch=between_means):
-        # T escalation requires is_unimodal=True → ~is_unimodal=False → flag_count
-        # resets to 0 → confirmed_split=False → new_deferred=False. ✓
+        # T escalation requires t_unimodality=True → flag_count resets to 0 →
+        # confirmed_split=False → new_deferred=False. ✓
+        # W-escalation + deferred is LEGAL (cross-branch coexistence). ✓
+        # Primary = mode-consistency (any_mode_flag); corroborator = gap-stat (~is_unimodal).
+        # Either alone increments the flag counter for the 2-window confirmation gate.
+        multimodality_signal = any_mode_flag | ~is_unimodal
+        new_flag_count = jnp.where(
+            multimodality_signal,
+            state.unimodality_flag_count + jnp.int32(1),
+            jnp.int32(0),
+        )
+        # Confirmed split requires _MC_UNIMODALITY_CONFIRM_WINDOWS (=2) consecutive windows
+        unimodality_confirmed_split = new_flag_count >= jnp.int32(
+            _MC_UNIMODALITY_CONFIRM_WINDOWS
+        )
+
         new_deferred = (
-            t_pre_uni & unimodality_confirmed_split & r2_gate & ~new_has_escalated
+            t_pre_uni
+            & multimodality_signal
+            & unimodality_confirmed_split
+            & r2_gate
+            & ~new_has_escalated
         )
         new_escalation_rank = jnp.where(escalate_now, k_new, state.escalation_rank)
 
