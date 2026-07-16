@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ge5d92928c" />
+  <meta name="docsearch:version" content="0.1.dev1+g896932c1c" />
   </head>
   
   
@@ -427,6 +427,7 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;potential_scale_reduction&quot;</span><span class="p">,</span>
     <span class="s2">&quot;effective_sample_size&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;rhat&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ess_bulk&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ess_tail&quot;</span><span class="p">,</span>
     <span class="s2">&quot;pareto_khat&quot;</span><span class="p">,</span>
@@ -487,6 +488,74 @@
         <span class="o">/</span> <span class="p">(</span><span class="n">num_samples</span><span class="p">)</span>
     <span class="p">)</span>
     <span class="k">return</span> <span class="n">rhat_value</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="rhat">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.rhat">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">rhat</span><span class="p">(</span><span class="n">input_array</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rank-normalized split-R̂ (Vehtari et al. 2021).</span>
+
+<span class="sd">    The modern improved R̂ diagnostic.  Combines two split-chain R̂ values —</span>
+<span class="sd">    one on rank-normalized draws and one on rank-normalized *folded* draws —</span>
+<span class="sd">    and returns the maximum.  The folded component catches scale/variance</span>
+<span class="sd">    non-convergence that the bulk component can miss.</span>
+
+<span class="sd">    This matches the default ``az.rhat(method=&quot;rank&quot;)`` convention in ArviZ.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_array</span>
+<span class="sd">        An array representing multiple chains of MCMC samples. The array must</span>
+<span class="sd">        contain a chain dimension and a sample dimension.  At least 2 chains</span>
+<span class="sd">        and at least 4 draws per chain are required.</span>
+<span class="sd">    chain_axis</span>
+<span class="sd">        The axis indicating the multiple chains. Default 0.</span>
+<span class="sd">    sample_axis</span>
+<span class="sd">        The axis indicating a single chain of MCMC samples. Default 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    NDArray of the resulting R̂ values, with chain and sample dimensions</span>
+<span class="sd">    squeezed.  Values close to 1.0 indicate convergence; values above 1.01</span>
+<span class="sd">    suggest chains have not converged.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Algorithm (Vehtari et al. 2021, § 4):</span>
+
+<span class="sd">    1. Split each chain in half → 2× chains.</span>
+<span class="sd">    2. Rank-normalize with the Blom plotting position</span>
+<span class="sd">       :math:`z_r = \\Phi^{-1}((r - 3/8) / (n + 1/4))` over the joint pool.</span>
+<span class="sd">    3. Compute the standard split-R̂ on the rank-normalized draws (**bulk**).</span>
+<span class="sd">    4. Compute the folded draws :math:`|x - \\mathrm{median}(x)|`, rank-normalize</span>
+<span class="sd">       them, and compute split-R̂ again (**tail**).</span>
+<span class="sd">    5. Return :math:`\\max(\\hat{R}_{\\text{bulk}}, \\hat{R}_{\\text{tail}})`.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. cite:p:`vehtari2021rank`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">_to_standard_axes</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">input_array</span><span class="p">),</span> <span class="n">chain_axis</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">)</span>
+    <span class="c1"># Split each chain in half → (2*nchains, nsamples//2, …).</span>
+    <span class="n">x_split</span> <span class="o">=</span> <span class="n">_split_chains</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="c1"># Bulk: rank-normalize split draws, then compute split-R̂.</span>
+    <span class="n">x_rn</span> <span class="o">=</span> <span class="n">_rank_normalize</span><span class="p">(</span><span class="n">x_split</span><span class="p">)</span>
+    <span class="n">rhat_bulk</span> <span class="o">=</span> <span class="n">potential_scale_reduction</span><span class="p">(</span><span class="n">x_rn</span><span class="p">,</span> <span class="n">chain_axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Tail: fold the split draws about their joint median, rank-normalize,</span>
+    <span class="c1"># then compute split-R̂.  Catches variance non-convergence.</span>
+    <span class="n">nchains_split</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">nsamples_split</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">extra_shape</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">x_flat</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">nchains_split</span> <span class="o">*</span> <span class="n">nsamples_split</span><span class="p">,</span> <span class="o">*</span><span class="n">extra_shape</span><span class="p">)</span>
+    <span class="c1"># Global median per trailing dimension (scalar when extra_shape is empty).</span>
+    <span class="n">x_folded</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">x_split</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))</span>
+    <span class="n">x_folded_rn</span> <span class="o">=</span> <span class="n">_rank_normalize</span><span class="p">(</span><span class="n">x_folded</span><span class="p">)</span>
+    <span class="n">rhat_tail</span> <span class="o">=</span> <span class="n">potential_scale_reduction</span><span class="p">(</span><span class="n">x_folded_rn</span><span class="p">,</span> <span class="n">chain_axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">rhat_bulk</span><span class="p">,</span> <span class="n">rhat_tail</span><span class="p">)</span></div>
 
 
 

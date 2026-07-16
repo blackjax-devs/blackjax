@@ -15,6 +15,7 @@ Functions
 .. autoapisummary::
 
    blackjax.diagnostics.potential_scale_reduction
+   blackjax.diagnostics.rhat
    blackjax.diagnostics.effective_sample_size
    blackjax.diagnostics.ess_bulk
    blackjax.diagnostics.ess_tail
@@ -46,6 +47,44 @@ Module Contents
    estimate for the pooled traces. This is the potential scale reduction factor, which
    converges to unity when each of the traces is a sample from the target posterior. Values
    greater than one indicate that one or more chains have not yet converged :cite:p:`stan_rhat,gelman1992inference`.
+
+
+.. py:function:: rhat(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
+
+   Rank-normalized split-R̂ (Vehtari et al. 2021).
+
+   The modern improved R̂ diagnostic.  Combines two split-chain R̂ values —
+   one on rank-normalized draws and one on rank-normalized *folded* draws —
+   and returns the maximum.  The folded component catches scale/variance
+   non-convergence that the bulk component can miss.
+
+   This matches the default ``az.rhat(method="rank")`` convention in ArviZ.
+
+   :param input_array: An array representing multiple chains of MCMC samples. The array must
+                       contain a chain dimension and a sample dimension.  At least 2 chains
+                       and at least 4 draws per chain are required.
+   :param chain_axis: The axis indicating the multiple chains. Default 0.
+   :param sample_axis: The axis indicating a single chain of MCMC samples. Default 1.
+
+   :returns: * *NDArray of the resulting R̂ values, with chain and sample dimensions*
+             * *squeezed.  Values close to 1.0 indicate convergence; values above 1.01*
+             * *suggest chains have not converged.*
+
+   .. rubric:: Notes
+
+   Algorithm (Vehtari et al. 2021, § 4):
+
+   1. Split each chain in half → 2× chains.
+   2. Rank-normalize with the Blom plotting position
+      :math:`z_r = \Phi^{-1}((r - 3/8) / (n + 1/4))` over the joint pool.
+   3. Compute the standard split-R̂ on the rank-normalized draws (**bulk**).
+   4. Compute the folded draws :math:`|x - \mathrm{median}(x)|`, rank-normalize
+      them, and compute split-R̂ again (**tail**).
+   5. Return :math:`\max(\hat{R}_{\text{bulk}}, \hat{R}_{\text{tail}})`.
+
+   .. rubric:: References
+
+   .. cite:p:`vehtari2021rank`
 
 
 .. py:function:: effective_sample_size(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
