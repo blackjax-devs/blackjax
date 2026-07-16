@@ -159,12 +159,15 @@ class EssBulkTest(chex.TestCase):
 
     def test_arviz_calibration_normal(self):
         # Compare against arviz within 10%.  Skipped when arviz is not installed.
+        # arviz.convert_to_dataset expects shape (chain, draw) — do NOT add
+        # a leading dimension; samples.shape is already (nchains, nsamples).
+        # In arviz 0.23.x, az.ess()[var] returns a 1-element xarray DataArray,
+        # so extract via np.asarray(...).ravel()[0] rather than float(.values).
         az = pytest.importorskip("arviz")
         samples = np.array(self._iid_normal())
         bj = float(diagnostics.ess_bulk(jnp.asarray(samples)))
-        # arviz expects shape (chain, draw) for a single variable.
-        idata = az.convert_to_dataset({"x": samples[None]})
-        az_val = float(az.ess(idata, method="bulk")["x"].values)
+        idata = az.convert_to_dataset({"x": samples})
+        az_val = float(np.asarray(az.ess(idata, method="bulk")["x"]).ravel()[0])
         rel = abs(bj - az_val) / max(abs(az_val), 1.0)
         assert rel < 0.10, (
             f"ess_bulk normal: blackjax={round(bj, 2)}"
@@ -176,8 +179,8 @@ class EssBulkTest(chex.TestCase):
         az = pytest.importorskip("arviz")
         samples = np.array(jax.random.t(self.rng, df=3.0, shape=(_NCHAINS, _NSAMPLES)))
         bj = float(diagnostics.ess_bulk(jnp.asarray(samples)))
-        idata = az.convert_to_dataset({"x": samples[None]})
-        az_val = float(az.ess(idata, method="bulk")["x"].values)
+        idata = az.convert_to_dataset({"x": samples})
+        az_val = float(np.asarray(az.ess(idata, method="bulk")["x"]).ravel()[0])
         rel = abs(bj - az_val) / max(abs(az_val), 1.0)
         assert rel < 0.10, (
             f"ess_bulk t(3): blackjax={round(bj, 2)}"
@@ -229,8 +232,8 @@ class EssTailTest(chex.TestCase):
         az = pytest.importorskip("arviz")
         samples = np.array(self._iid_normal())
         bj = float(diagnostics.ess_tail(jnp.asarray(samples)))
-        idata = az.convert_to_dataset({"x": samples[None]})
-        az_val = float(az.ess(idata, method="tail")["x"].values)
+        idata = az.convert_to_dataset({"x": samples})
+        az_val = float(np.asarray(az.ess(idata, method="tail")["x"]).ravel()[0])
         rel = abs(bj - az_val) / max(abs(az_val), 1.0)
         assert rel < 0.10, (
             f"ess_tail normal: blackjax={round(bj, 2)}"
@@ -241,8 +244,8 @@ class EssTailTest(chex.TestCase):
         az = pytest.importorskip("arviz")
         samples = np.array(jax.random.t(self.rng, df=3.0, shape=(_NCHAINS, _NSAMPLES)))
         bj = float(diagnostics.ess_tail(jnp.asarray(samples)))
-        idata = az.convert_to_dataset({"x": samples[None]})
-        az_val = float(az.ess(idata, method="tail")["x"].values)
+        idata = az.convert_to_dataset({"x": samples})
+        az_val = float(np.asarray(az.ess(idata, method="tail")["x"]).ravel()[0])
         rel = abs(bj - az_val) / max(abs(az_val), 1.0)
         assert rel < 0.10, (
             f"ess_tail t(3): blackjax={round(bj, 2)}"
@@ -302,18 +305,21 @@ class ParetoKhatTest(chex.TestCase):
             assert np.isfinite(k), f"pareto_khat with tail_frac={frac} returned {k}"
 
     def test_arviz_calibration_normal(self):
-        # Verify that our k̂ is in the same ballpark as arviz's PSIS k̂.
-        # The comparison is approximate: different tail-fraction conventions.
-        az = pytest.importorskip("arviz")
+        # arviz's PSIS k̂ (az.psislw / az.loo) operates on importance
+        # log-weights, not raw samples, so there is no direct arviz equivalent
+        # for pareto_khat(raw_samples).  This test gates on arviz being present
+        # (dev-time only) and verifies the BlackJAX result is sensible:
+        # Normal(0,1) is light-tailed so k̂ should be finite and well below 0.5.
+        pytest.importorskip("arviz")
         x = np.array(jax.random.normal(self.rng, shape=(1000,)))
         bj_k = float(diagnostics.pareto_khat(jnp.asarray(x)))
-        # arviz.psislw fits PSIS on log-weight arrays; use uniform log-weights
-        # as a proxy to get az's GPD estimator result.
-        log_w = np.zeros(len(x))
-        _, az_k = az.psislw(log_w)
-        # Both should give small k for a degenerate (uniform weight) case.
-        assert np.isfinite(bj_k), "pareto_khat must be finite for normal samples"
-        assert np.isfinite(float(az_k)), "arviz k must be finite for uniform weights"
+        got_k = round(bj_k, 4)
+        assert np.isfinite(
+            bj_k
+        ), f"pareto_khat must be finite for normal samples, got {got_k}"
+        assert (
+            bj_k < 0.3
+        ), f"pareto_khat for normal should be <0.3 (light tail), got {got_k}"
 
     def test_arviz_calibration_cauchy(self):
         # For Cauchy samples (extreme tails), both should give k > 0.3.
