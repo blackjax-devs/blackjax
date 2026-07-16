@@ -16,6 +16,9 @@ Functions
 
    blackjax.diagnostics.potential_scale_reduction
    blackjax.diagnostics.effective_sample_size
+   blackjax.diagnostics.ess_bulk
+   blackjax.diagnostics.ess_tail
+   blackjax.diagnostics.pareto_khat
    blackjax.diagnostics.psis_weights
 
 
@@ -71,6 +74,90 @@ Module Contents
 
    The current implementation is similar to Stan, which uses Geyer's initial monotone sequence
    criterion :cite:p:`geyer1992practical,geyer2011introduction`.
+
+
+.. py:function:: ess_bulk(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
+
+   Bulk effective sample size (rank-normalized split-chain ESS).
+
+   Computes the bulk ESS from Vehtari et al. (2021): rank-normalizes draws
+   after splitting each chain in half, then applies the standard
+   autocorrelation-based :func:`effective_sample_size` estimator.  This
+   diagnostic is robust to non-stationarity and multimodality.
+
+   :param input_array: An array representing multiple chains of MCMC samples. The array must
+                       contain a chain dimension and a sample dimension.
+   :param chain_axis: The axis indicating the multiple chains. Default 0.
+   :param sample_axis: The axis indicating a single chain of MCMC samples. Default 1.
+
+   :rtype: NDArray of the resulting bulk-ESS, with chain and sample dimensions squeezed.
+
+   .. rubric:: Notes
+
+   Algorithm:
+
+   1. Split each chain in half → 2× chains.
+   2. Pool all draws and rank-normalize with :math:`z_r = \Phi^{-1}((r-3/8)/(n+1/4))`.
+   3. Apply :func:`effective_sample_size` to the rank-normalized draws.
+
+   .. rubric:: References
+
+   .. cite:p:`vehtari2021rank`
+
+
+.. py:function:: ess_tail(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
+
+   Tail effective sample size.
+
+   Computes the tail ESS from Vehtari et al. (2021) as the minimum of the
+   ESS of the 5th- and 95th-percentile indicator functions applied to
+   split-chain draws.
+
+   :param input_array: An array representing multiple chains of MCMC samples. The array must
+                       contain a chain dimension and a sample dimension.
+   :param chain_axis: The axis indicating the multiple chains. Default 0.
+   :param sample_axis: The axis indicating a single chain of MCMC samples. Default 1.
+
+   :rtype: NDArray of the resulting tail-ESS, with chain and sample dimensions squeezed.
+
+   .. rubric:: Notes
+
+   Algorithm:
+
+   1. Split each chain in half → 2× chains.
+   2. Compute pooled 5th and 95th quantiles across all split chains and draws.
+   3. Form indicator series :math:`\mathbf{1}(x \le q_{0.05})` and
+      :math:`\mathbf{1}(x \ge q_{0.95})`.
+   4. Compute :func:`effective_sample_size` for each indicator.
+   5. Return :math:`\min(\text{ESS}_\text{lower}, \text{ESS}_\text{upper})`.
+
+   .. rubric:: References
+
+   .. cite:p:`vehtari2021rank`
+
+
+.. py:function:: pareto_khat(x: blackjax.types.ArrayLike, tail: str = 'both', tail_frac: float = 0.1) -> blackjax.types.Array
+
+   Pareto shape parameter k̂ for tail diagnosis.
+
+   Fits a Generalised Pareto Distribution (GPD) to the upper and/or lower
+   tail of a 1-D sample and returns the estimated shape parameter k̂.
+
+   :param x: 1-D array of draws (or any array; it is ravelled before use).
+   :param tail: Which tail to fit: ``"upper"``, ``"lower"``, or ``"both"`` (default).
+                When ``"both"``, returns the maximum of the two k̂ estimates.
+   :param tail_frac: Fraction of samples used as the tail. Default 0.10 (10 %).
+                     A minimum of 5 tail samples is always enforced.
+
+   :returns: * **Scalar Array** (*the Pareto shape estimate k̂.  Values below 0.5 indicate*)
+             * *reliable tail estimates; 0.5–0.7 are moderate; above 0.7 may be*
+             * *unreliable.*
+
+   .. rubric:: Notes
+
+   Uses the Zhang & Stephens (2009) empirical-Bayes estimator implemented
+   in the internal :func:`_gpdfit`.  The upper tail is modelled directly;
+   the lower tail is reflected and modelled as an upper tail.
 
 
 .. py:function:: psis_weights(log_ratios: blackjax.types.Array, r_eff: float = 1.0) -> tuple[blackjax.types.Array, blackjax.types.Array]

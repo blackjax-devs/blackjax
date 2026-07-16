@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga4d46a8a3" />
+  <meta name="docsearch:version" content="0.1.dev1+ge5d92928c" />
   </head>
   
   
@@ -427,6 +427,9 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;potential_scale_reduction&quot;</span><span class="p">,</span>
     <span class="s2">&quot;effective_sample_size&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ess_bulk&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ess_tail&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pareto_khat&quot;</span><span class="p">,</span>
     <span class="s2">&quot;psis_weights&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
@@ -643,6 +646,248 @@
     <span class="n">R</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="p">(</span><span class="n">B</span> <span class="o">/</span> <span class="n">W</span><span class="p">))</span>  <span class="c1"># splitR, shape = (# func)</span>
 
     <span class="k">return</span> <span class="n">R</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_to_standard_axes</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Move chain and sample dimensions to positions 0 and 1 via ``jnp.transpose``.</span>
+
+<span class="sd">    All other dimensions are appended in their original relative order.  The</span>
+<span class="sd">    function handles negative axis indices correctly.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ndim</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">chain_axis</span> <span class="o">%</span> <span class="n">ndim</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sample_axis</span> <span class="o">%</span> <span class="n">ndim</span>
+    <span class="n">rest</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndim</span><span class="p">)</span> <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">c</span> <span class="ow">and</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">s</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">[</span><span class="n">c</span><span class="p">,</span> <span class="n">s</span><span class="p">]</span> <span class="o">+</span> <span class="n">rest</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_split_chains</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split each chain in half along the sample axis (axis 1).</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x</span>
+<span class="sd">        Array of shape ``(nchains, nsamples, …)``.  If ``nsamples`` is odd the</span>
+<span class="sd">        last sample is dropped so both halves are equal-length.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array of shape ``(2 * nchains, nsamples // 2, …)``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nsamples</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">half</span> <span class="o">=</span> <span class="n">nsamples</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="c1"># Trim to even length so both halves are the same size.</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">half</span><span class="p">]</span>
+    <span class="n">first</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="p">:</span><span class="n">half</span><span class="p">]</span>
+    <span class="n">second</span> <span class="o">=</span> <span class="n">x</span><span class="p">[:,</span> <span class="n">half</span><span class="p">:]</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_rank_normalize</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Rank-normalize draws using the Blom plotting position.</span>
+
+<span class="sd">    Ranks are computed over the joint pool of all ``nchains * nsamples`` values</span>
+<span class="sd">    independently for each element of the trailing dimensions.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x</span>
+<span class="sd">        Array of shape ``(nchains, nsamples, …)`` with chains on axis 0 and</span>
+<span class="sd">        draws on axis 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array of the same shape containing rank-normalized z-scores.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The plotting position follows Vehtari et al. (2021), equation (12):</span>
+
+<span class="sd">    .. math:: z_r = \\Phi^{-1}\\!\\left(\\frac{r - 3/8}{n + 1/4}\\right)</span>
+
+<span class="sd">    where :math:`r` is the 1-indexed rank and :math:`n = \\text{nchains}</span>
+<span class="sd">    \\times \\text{nsamples}`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nchains</span><span class="p">,</span> <span class="n">nsamples</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">extra_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">nchains</span> <span class="o">*</span> <span class="n">nsamples</span>
+
+    <span class="c1"># Pool chains and draws into the leading axis: (n, …extra).</span>
+    <span class="n">x_flat</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">*</span><span class="n">extra_shape</span><span class="p">)</span>
+
+    <span class="c1"># Double argsort gives 0-indexed ranks; +1 for 1-indexed.</span>
+    <span class="n">ranks</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+    <span class="c1"># Blom plotting position.</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">ndtri</span><span class="p">((</span><span class="n">ranks</span> <span class="o">-</span> <span class="mf">3.0</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mi">4</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">z</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">nchains</span><span class="p">,</span> <span class="n">nsamples</span><span class="p">,</span> <span class="o">*</span><span class="n">extra_shape</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="ess_bulk">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.ess_bulk">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ess_bulk</span><span class="p">(</span>
+    <span class="n">input_array</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Bulk effective sample size (rank-normalized split-chain ESS).</span>
+
+<span class="sd">    Computes the bulk ESS from Vehtari et al. (2021): rank-normalizes draws</span>
+<span class="sd">    after splitting each chain in half, then applies the standard</span>
+<span class="sd">    autocorrelation-based :func:`effective_sample_size` estimator.  This</span>
+<span class="sd">    diagnostic is robust to non-stationarity and multimodality.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_array</span>
+<span class="sd">        An array representing multiple chains of MCMC samples. The array must</span>
+<span class="sd">        contain a chain dimension and a sample dimension.</span>
+<span class="sd">    chain_axis</span>
+<span class="sd">        The axis indicating the multiple chains. Default 0.</span>
+<span class="sd">    sample_axis</span>
+<span class="sd">        The axis indicating a single chain of MCMC samples. Default 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    NDArray of the resulting bulk-ESS, with chain and sample dimensions squeezed.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Algorithm:</span>
+
+<span class="sd">    1. Split each chain in half → 2× chains.</span>
+<span class="sd">    2. Pool all draws and rank-normalize with :math:`z_r = \\Phi^{-1}((r-3/8)/(n+1/4))`.</span>
+<span class="sd">    3. Apply :func:`effective_sample_size` to the rank-normalized draws.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. cite:p:`vehtari2021rank`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">_to_standard_axes</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">input_array</span><span class="p">),</span> <span class="n">chain_axis</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">)</span>
+    <span class="n">x_split</span> <span class="o">=</span> <span class="n">_split_chains</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">x_rn</span> <span class="o">=</span> <span class="n">_rank_normalize</span><span class="p">(</span><span class="n">x_split</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">x_rn</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="ess_tail">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.ess_tail">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">ess_tail</span><span class="p">(</span>
+    <span class="n">input_array</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tail effective sample size.</span>
+
+<span class="sd">    Computes the tail ESS from Vehtari et al. (2021) as the minimum of the</span>
+<span class="sd">    ESS of the 5th- and 95th-percentile indicator functions applied to</span>
+<span class="sd">    split-chain draws.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    input_array</span>
+<span class="sd">        An array representing multiple chains of MCMC samples. The array must</span>
+<span class="sd">        contain a chain dimension and a sample dimension.</span>
+<span class="sd">    chain_axis</span>
+<span class="sd">        The axis indicating the multiple chains. Default 0.</span>
+<span class="sd">    sample_axis</span>
+<span class="sd">        The axis indicating a single chain of MCMC samples. Default 1.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    NDArray of the resulting tail-ESS, with chain and sample dimensions squeezed.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Algorithm:</span>
+
+<span class="sd">    1. Split each chain in half → 2× chains.</span>
+<span class="sd">    2. Compute pooled 5th and 95th quantiles across all split chains and draws.</span>
+<span class="sd">    3. Form indicator series :math:`\\mathbf{1}(x \\le q_{0.05})` and</span>
+<span class="sd">       :math:`\\mathbf{1}(x \\ge q_{0.95})`.</span>
+<span class="sd">    4. Compute :func:`effective_sample_size` for each indicator.</span>
+<span class="sd">    5. Return :math:`\\min(\\text{ESS}_\\text{lower}, \\text{ESS}_\\text{upper})`.</span>
+
+<span class="sd">    References</span>
+<span class="sd">    ----------</span>
+<span class="sd">    .. cite:p:`vehtari2021rank`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">_to_standard_axes</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">input_array</span><span class="p">),</span> <span class="n">chain_axis</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">)</span>
+    <span class="n">x_split</span> <span class="o">=</span> <span class="n">_split_chains</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="n">nchains</span><span class="p">,</span> <span class="n">nsamples</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">extra_shape</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+
+    <span class="c1"># Pooled quantiles over all chains and draws, per trailing dimension.</span>
+    <span class="n">x_flat</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">nchains</span> <span class="o">*</span> <span class="n">nsamples</span><span class="p">,</span> <span class="o">*</span><span class="n">extra_shape</span><span class="p">)</span>
+    <span class="n">q05</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">q95</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Indicator series (float for ESS computation).</span>
+    <span class="c1"># Broadcast q05/q95 over the (nchains, nsamples) leading axes.</span>
+    <span class="n">I_lower</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_split</span> <span class="o">&lt;=</span> <span class="n">q05</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">I_upper</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_split</span> <span class="o">&gt;=</span> <span class="n">q95</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+    <span class="n">ess_lower</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">I_lower</span><span class="p">)</span>
+    <span class="n">ess_upper</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">I_upper</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">ess_lower</span><span class="p">,</span> <span class="n">ess_upper</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="pareto_khat">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.pareto_khat">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">pareto_khat</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">tail</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;both&quot;</span><span class="p">,</span> <span class="n">tail_frac</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pareto shape parameter k̂ for tail diagnosis.</span>
+
+<span class="sd">    Fits a Generalised Pareto Distribution (GPD) to the upper and/or lower</span>
+<span class="sd">    tail of a 1-D sample and returns the estimated shape parameter k̂.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x</span>
+<span class="sd">        1-D array of draws (or any array; it is ravelled before use).</span>
+<span class="sd">    tail</span>
+<span class="sd">        Which tail to fit: ``&quot;upper&quot;``, ``&quot;lower&quot;``, or ``&quot;both&quot;`` (default).</span>
+<span class="sd">        When ``&quot;both&quot;``, returns the maximum of the two k̂ estimates.</span>
+<span class="sd">    tail_frac</span>
+<span class="sd">        Fraction of samples used as the tail. Default 0.10 (10 %).</span>
+<span class="sd">        A minimum of 5 tail samples is always enforced.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Scalar Array: the Pareto shape estimate k̂.  Values below 0.5 indicate</span>
+<span class="sd">    reliable tail estimates; 0.5–0.7 are moderate; above 0.7 may be</span>
+<span class="sd">    unreliable.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Uses the Zhang &amp; Stephens (2009) empirical-Bayes estimator implemented</span>
+<span class="sd">    in the internal :func:`_gpdfit`.  The upper tail is modelled directly;</span>
+<span class="sd">    the lower tail is reflected and modelled as an upper tail.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">x_flat</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">x_flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">tail_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">tail_frac</span> <span class="o">*</span> <span class="n">n</span><span class="p">),</span> <span class="mi">5</span><span class="p">)</span>
+
+    <span class="n">x_sorted</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">x_flat</span><span class="p">)</span>  <span class="c1"># ascending</span>
+
+    <span class="k">if</span> <span class="n">tail</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;upper&quot;</span><span class="p">,</span> <span class="s2">&quot;both&quot;</span><span class="p">):</span>
+        <span class="n">upper_tail</span> <span class="o">=</span> <span class="n">x_sorted</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="n">tail_size</span> <span class="p">:]</span>
+        <span class="n">threshold_upper</span> <span class="o">=</span> <span class="n">x_sorted</span><span class="p">[</span><span class="n">n</span> <span class="o">-</span> <span class="n">tail_size</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="n">exc_upper</span> <span class="o">=</span> <span class="n">upper_tail</span> <span class="o">-</span> <span class="n">threshold_upper</span>  <span class="c1"># &gt;= 0, ascending</span>
+        <span class="n">k_upper</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_gpdfit</span><span class="p">(</span><span class="n">exc_upper</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tail</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;lower&quot;</span><span class="p">,</span> <span class="s2">&quot;both&quot;</span><span class="p">):</span>
+        <span class="c1"># Reflect the lower tail so it becomes an upper-tail problem.</span>
+        <span class="n">lower_tail_reflected</span> <span class="o">=</span> <span class="o">-</span><span class="n">x_sorted</span><span class="p">[:</span><span class="n">tail_size</span><span class="p">][::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># ascending</span>
+        <span class="n">threshold_lower</span> <span class="o">=</span> <span class="o">-</span><span class="n">x_sorted</span><span class="p">[</span><span class="n">tail_size</span><span class="p">]</span>
+        <span class="n">exc_lower</span> <span class="o">=</span> <span class="n">lower_tail_reflected</span> <span class="o">-</span> <span class="n">threshold_lower</span>  <span class="c1"># &gt;= 0, ascending</span>
+        <span class="n">k_lower</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_gpdfit</span><span class="p">(</span><span class="n">exc_lower</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">tail</span> <span class="o">==</span> <span class="s2">&quot;upper&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">k_upper</span>
+    <span class="k">if</span> <span class="n">tail</span> <span class="o">==</span> <span class="s2">&quot;lower&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">k_lower</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">k_upper</span><span class="p">,</span> <span class="n">k_lower</span><span class="p">)</span></div>
+
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_gpdfit</span><span class="p">(</span><span class="n">exceedances</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>

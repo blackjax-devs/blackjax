@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.window_adaptation" href="../adaptation/window_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga4d46a8a3" />
+  <meta name="docsearch:version" content="0.1.dev1+ge5d92928c" />
   </head>
   
   
@@ -406,6 +406,9 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.potential_scale_reduction"><code class="docutils literal notranslate"><span class="pre">potential_scale_reduction()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.effective_sample_size"><code class="docutils literal notranslate"><span class="pre">effective_sample_size()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.ess_bulk"><code class="docutils literal notranslate"><span class="pre">ess_bulk()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.ess_tail"><code class="docutils literal notranslate"><span class="pre">ess_tail()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.pareto_khat"><code class="docutils literal notranslate"><span class="pre">pareto_khat()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.psis_weights"><code class="docutils literal notranslate"><span class="pre">psis_weights()</span></code></a></li>
 </ul>
 </li>
@@ -433,7 +436,16 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.diagnostics.effective_sample_size" title="blackjax.diagnostics.effective_sample_size"><code class="xref py py-obj docutils literal notranslate"><span class="pre">effective_sample_size</span></code></a>(→ blackjax.types.Array)</p></td>
 <td><p>Compute estimate of the effective sample size (ess).</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.diagnostics.psis_weights" title="blackjax.diagnostics.psis_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">psis_weights</span></code></a>(→ tuple[blackjax.types.Array, ...)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.diagnostics.ess_bulk" title="blackjax.diagnostics.ess_bulk"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ess_bulk</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Bulk effective sample size (rank-normalized split-chain ESS).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.diagnostics.ess_tail" title="blackjax.diagnostics.ess_tail"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ess_tail</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Tail effective sample size.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.diagnostics.pareto_khat" title="blackjax.diagnostics.pareto_khat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pareto_khat</span></code></a>(→ blackjax.types.Array)</p></td>
+<td><p>Pareto shape parameter k̂ for tail diagnosis.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.diagnostics.psis_weights" title="blackjax.diagnostics.psis_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">psis_weights</span></code></a>(→ tuple[blackjax.types.Array, ...)</p></td>
 <td><p>Pareto Smoothed Importance Sampling (PSIS) log weights.</p></td>
 </tr>
 </tbody>
@@ -498,6 +510,101 @@ contains a chain dimension and a sample dimension.</p></li>
 \hat{\rho}_{2K+1}\)</span> is still positive <span id="id2">[<a class="reference internal" href="../../../bib.html#id7" title="Effective sample size, stan manual. URL: https://mc-stan.org/docs/2_27/reference-manual/effective-sample-size-section.html.">staa</a>, <a class="reference internal" href="../../../bib.html#id11" title="Andrew Gelman, John B Carlin, Hal S Stern, and Donald B Rubin. Bayesian data analysis. Chapman and Hall/CRC, 1995.">GCSR95</a>]</span>.</p>
 <p>The current implementation is similar to Stan, which uses Geyer’s initial monotone sequence
 criterion <span id="id3">[<a class="reference internal" href="../../../bib.html#id12" title="Charles J Geyer. Practical markov chain monte carlo. Statistical science, pages 473–483, 1992.">Gey92</a>, <a class="reference internal" href="../../../bib.html#id13" title="Charles J Geyer. Introduction to markov chain monte carlo. Handbook of Markov Chain Monte Carlo, 20116022:45, 2011.">Gey11</a>]</span>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.diagnostics.ess_bulk">
+<span class="sig-name descname"><span class="pre">ess_bulk</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chain_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#ess_bulk"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.ess_bulk" title="Link to this definition">#</a></dt>
+<dd><p>Bulk effective sample size (rank-normalized split-chain ESS).</p>
+<p>Computes the bulk ESS from Vehtari et al. (2021): rank-normalizes draws
+after splitting each chain in half, then applies the standard
+autocorrelation-based <a class="reference internal" href="#blackjax.diagnostics.effective_sample_size" title="blackjax.diagnostics.effective_sample_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">effective_sample_size()</span></code></a> estimator.  This
+diagnostic is robust to non-stationarity and multimodality.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_array</strong> – An array representing multiple chains of MCMC samples. The array must
+contain a chain dimension and a sample dimension.</p></li>
+<li><p><strong>chain_axis</strong> – The axis indicating the multiple chains. Default 0.</p></li>
+<li><p><strong>sample_axis</strong> – The axis indicating a single chain of MCMC samples. Default 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>NDArray of the resulting bulk-ESS, with chain and sample dimensions squeezed.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Algorithm:</p>
+<ol class="arabic simple">
+<li><p>Split each chain in half → 2× chains.</p></li>
+<li><p>Pool all draws and rank-normalize with <span class="math notranslate nohighlight">\(z_r = \Phi^{-1}((r-3/8)/(n+1/4))\)</span>.</p></li>
+<li><p>Apply <a class="reference internal" href="#blackjax.diagnostics.effective_sample_size" title="blackjax.diagnostics.effective_sample_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">effective_sample_size()</span></code></a> to the rank-normalized draws.</p></li>
+</ol>
+<p class="rubric">References</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.diagnostics.ess_tail">
+<span class="sig-name descname"><span class="pre">ess_tail</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input_array</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chain_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_axis</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#ess_tail"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.ess_tail" title="Link to this definition">#</a></dt>
+<dd><p>Tail effective sample size.</p>
+<p>Computes the tail ESS from Vehtari et al. (2021) as the minimum of the
+ESS of the 5th- and 95th-percentile indicator functions applied to
+split-chain draws.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input_array</strong> – An array representing multiple chains of MCMC samples. The array must
+contain a chain dimension and a sample dimension.</p></li>
+<li><p><strong>chain_axis</strong> – The axis indicating the multiple chains. Default 0.</p></li>
+<li><p><strong>sample_axis</strong> – The axis indicating a single chain of MCMC samples. Default 1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>NDArray of the resulting tail-ESS, with chain and sample dimensions squeezed.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Algorithm:</p>
+<ol class="arabic simple">
+<li><p>Split each chain in half → 2× chains.</p></li>
+<li><p>Compute pooled 5th and 95th quantiles across all split chains and draws.</p></li>
+<li><p>Form indicator series <span class="math notranslate nohighlight">\(\mathbf{1}(x \le q_{0.05})\)</span> and
+<span class="math notranslate nohighlight">\(\mathbf{1}(x \ge q_{0.95})\)</span>.</p></li>
+<li><p>Compute <a class="reference internal" href="#blackjax.diagnostics.effective_sample_size" title="blackjax.diagnostics.effective_sample_size"><code class="xref py py-func docutils literal notranslate"><span class="pre">effective_sample_size()</span></code></a> for each indicator.</p></li>
+<li><p>Return <span class="math notranslate nohighlight">\(\min(\text{ESS}_\text{lower}, \text{ESS}_\text{upper})\)</span>.</p></li>
+</ol>
+<p class="rubric">References</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.diagnostics.pareto_khat">
+<span class="sig-name descname"><span class="pre">pareto_khat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'both'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail_frac</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.types.Array</span></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#pareto_khat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.pareto_khat" title="Link to this definition">#</a></dt>
+<dd><p>Pareto shape parameter k̂ for tail diagnosis.</p>
+<p>Fits a Generalised Pareto Distribution (GPD) to the upper and/or lower
+tail of a 1-D sample and returns the estimated shape parameter k̂.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>x</strong> – 1-D array of draws (or any array; it is ravelled before use).</p></li>
+<li><p><strong>tail</strong> – Which tail to fit: <code class="docutils literal notranslate"><span class="pre">&quot;upper&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;lower&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;both&quot;</span></code> (default).
+When <code class="docutils literal notranslate"><span class="pre">&quot;both&quot;</span></code>, returns the maximum of the two k̂ estimates.</p></li>
+<li><p><strong>tail_frac</strong> – Fraction of samples used as the tail. Default 0.10 (10 %).
+A minimum of 5 tail samples is always enforced.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>Scalar Array</strong> (<em>the Pareto shape estimate k̂.  Values below 0.5 indicate</em>)</p></li>
+<li><p><em>reliable tail estimates; 0.5–0.7 are moderate; above 0.7 may be</em></p></li>
+<li><p><em>unreliable.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Uses the Zhang &amp; Stephens (2009) empirical-Bayes estimator implemented
+in the internal <code class="xref py py-func docutils literal notranslate"><span class="pre">_gpdfit()</span></code>.  The upper tail is modelled directly;
+the lower tail is reflected and modelled as an upper tail.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -594,6 +701,9 @@ importance-ratio space, the same approach as ArviZ.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.potential_scale_reduction"><code class="docutils literal notranslate"><span class="pre">potential_scale_reduction()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.effective_sample_size"><code class="docutils literal notranslate"><span class="pre">effective_sample_size()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.ess_bulk"><code class="docutils literal notranslate"><span class="pre">ess_bulk()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.ess_tail"><code class="docutils literal notranslate"><span class="pre">ess_tail()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.pareto_khat"><code class="docutils literal notranslate"><span class="pre">pareto_khat()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.psis_weights"><code class="docutils literal notranslate"><span class="pre">psis_weights()</span></code></a></li>
 </ul>
 </li>
