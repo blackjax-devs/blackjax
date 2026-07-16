@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gb379a5a70" />
+  <meta name="docsearch:version" content="0.1.dev1+ga9ef478c6" />
   </head>
   
   
@@ -841,13 +841,22 @@
 <div class="viewcode-block" id="ess_tail">
 <a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.ess_tail">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">ess_tail</span><span class="p">(</span>
-    <span class="n">input_array</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span> <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">input_array</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">chain_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="n">sample_axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">prob</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.90</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Tail effective sample size.</span>
 
 <span class="sd">    Computes the tail ESS from Vehtari et al. (2021) as the minimum of the</span>
-<span class="sd">    ESS of the 5th- and 95th-percentile indicator functions applied to</span>
-<span class="sd">    split-chain draws.</span>
+<span class="sd">    ESS of the lower- and upper-tail indicator functions applied to split-chain</span>
+<span class="sd">    draws.</span>
+
+<span class="sd">    The tail quantiles are determined by ``prob``: the lower tail uses the</span>
+<span class="sd">    ``(1 - prob) / 2`` quantile and the upper tail uses the</span>
+<span class="sd">    ``(1 + prob) / 2`` quantile.  The default ``prob=0.90`` corresponds to</span>
+<span class="sd">    the 5th/95th percentiles, which matches ``az.ess(method=&quot;tail&quot;)`` in</span>
+<span class="sd">    ArviZ (the ArviZ default is also ``prob=(0.05, 0.95)``).</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -858,6 +867,11 @@
 <span class="sd">        The axis indicating the multiple chains. Default 0.</span>
 <span class="sd">    sample_axis</span>
 <span class="sd">        The axis indicating a single chain of MCMC samples. Default 1.</span>
+<span class="sd">    prob</span>
+<span class="sd">        Central-interval probability that determines the tail quantiles.</span>
+<span class="sd">        Lower quantile: ``(1 - prob) / 2``; upper quantile:</span>
+<span class="sd">        ``(1 + prob) / 2``.  Default ``0.90`` gives the 5th/95th-percentile</span>
+<span class="sd">        tail, matching ``az.ess(method=&quot;tail&quot;)`` (ArviZ default).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -868,9 +882,10 @@
 <span class="sd">    Algorithm:</span>
 
 <span class="sd">    1. Split each chain in half → 2× chains.</span>
-<span class="sd">    2. Compute pooled 5th and 95th quantiles across all split chains and draws.</span>
-<span class="sd">    3. Form indicator series :math:`\\mathbf{1}(x \\le q_{0.05})` and</span>
-<span class="sd">       :math:`\\mathbf{1}(x \\ge q_{0.95})`.</span>
+<span class="sd">    2. Compute pooled lower/upper quantiles (at ``(1-prob)/2`` and</span>
+<span class="sd">       ``(1+prob)/2``) across all split chains and draws.</span>
+<span class="sd">    3. Form indicator series :math:`\\mathbf{1}(x \\le q_{\\text{low}})` and</span>
+<span class="sd">       :math:`\\mathbf{1}(x \\ge q_{\\text{high}})`.</span>
 <span class="sd">    4. Compute :func:`effective_sample_size` for each indicator.</span>
 <span class="sd">    5. Return :math:`\\min(\\text{ESS}_\\text{lower}, \\text{ESS}_\\text{upper})`.</span>
 
@@ -884,15 +899,19 @@
     <span class="n">nchains</span><span class="p">,</span> <span class="n">nsamples</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">extra_shape</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
 
+    <span class="c1"># Tail quantiles derived from the central-interval probability.</span>
+    <span class="n">q_low</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">prob</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">q_high</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">prob</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span>
+
     <span class="c1"># Pooled quantiles over all chains and draws, per trailing dimension.</span>
     <span class="n">x_flat</span> <span class="o">=</span> <span class="n">x_split</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">nchains</span> <span class="o">*</span> <span class="n">nsamples</span><span class="p">,</span> <span class="o">*</span><span class="n">extra_shape</span><span class="p">)</span>
-    <span class="n">q05</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-    <span class="n">q95</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">q_lo</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="n">q_low</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">q_hi</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="n">q_high</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
     <span class="c1"># Indicator series (float for ESS computation).</span>
-    <span class="c1"># Broadcast q05/q95 over the (nchains, nsamples) leading axes.</span>
-    <span class="n">I_lower</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_split</span> <span class="o">&lt;=</span> <span class="n">q05</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
-    <span class="n">I_upper</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_split</span> <span class="o">&gt;=</span> <span class="n">q95</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="c1"># Broadcast q_lo/q_hi over the (nchains, nsamples) leading axes.</span>
+    <span class="n">I_lower</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_split</span> <span class="o">&lt;=</span> <span class="n">q_lo</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">I_upper</span> <span class="o">=</span> <span class="p">(</span><span class="n">x_split</span> <span class="o">&gt;=</span> <span class="n">q_hi</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
 
     <span class="n">ess_lower</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">I_lower</span><span class="p">)</span>
     <span class="n">ess_upper</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">I_upper</span><span class="p">)</span>

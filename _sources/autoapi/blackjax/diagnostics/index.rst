@@ -144,18 +144,28 @@ Module Contents
    .. cite:p:`vehtari2021rank`
 
 
-.. py:function:: ess_tail(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> blackjax.types.Array
+.. py:function:: ess_tail(input_array: blackjax.types.ArrayLike, chain_axis: int = 0, sample_axis: int = 1, prob: float = 0.9) -> blackjax.types.Array
 
    Tail effective sample size.
 
    Computes the tail ESS from Vehtari et al. (2021) as the minimum of the
-   ESS of the 5th- and 95th-percentile indicator functions applied to
-   split-chain draws.
+   ESS of the lower- and upper-tail indicator functions applied to split-chain
+   draws.
+
+   The tail quantiles are determined by ``prob``: the lower tail uses the
+   ``(1 - prob) / 2`` quantile and the upper tail uses the
+   ``(1 + prob) / 2`` quantile.  The default ``prob=0.90`` corresponds to
+   the 5th/95th percentiles, which matches ``az.ess(method="tail")`` in
+   ArviZ (the ArviZ default is also ``prob=(0.05, 0.95)``).
 
    :param input_array: An array representing multiple chains of MCMC samples. The array must
                        contain a chain dimension and a sample dimension.
    :param chain_axis: The axis indicating the multiple chains. Default 0.
    :param sample_axis: The axis indicating a single chain of MCMC samples. Default 1.
+   :param prob: Central-interval probability that determines the tail quantiles.
+                Lower quantile: ``(1 - prob) / 2``; upper quantile:
+                ``(1 + prob) / 2``.  Default ``0.90`` gives the 5th/95th-percentile
+                tail, matching ``az.ess(method="tail")`` (ArviZ default).
 
    :rtype: NDArray of the resulting tail-ESS, with chain and sample dimensions squeezed.
 
@@ -164,9 +174,10 @@ Module Contents
    Algorithm:
 
    1. Split each chain in half → 2× chains.
-   2. Compute pooled 5th and 95th quantiles across all split chains and draws.
-   3. Form indicator series :math:`\mathbf{1}(x \le q_{0.05})` and
-      :math:`\mathbf{1}(x \ge q_{0.95})`.
+   2. Compute pooled lower/upper quantiles (at ``(1-prob)/2`` and
+      ``(1+prob)/2``) across all split chains and draws.
+   3. Form indicator series :math:`\mathbf{1}(x \le q_{\text{low}})` and
+      :math:`\mathbf{1}(x \ge q_{\text{high}})`.
    4. Compute :func:`effective_sample_size` for each indicator.
    5. Return :math:`\min(\text{ESS}_\text{lower}, \text{ESS}_\text{upper})`.
 
