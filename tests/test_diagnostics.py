@@ -96,6 +96,137 @@ _NCHAINS = 4
 _NSAMPLES = 2000
 
 
+# ---------------------------------------------------------------------------
+# Tests for rhat (rank-normalized split-R̂, Vehtari et al. 2021)
+# ---------------------------------------------------------------------------
+
+
+class RhatTest(chex.TestCase):
+    """Tests for rank-normalized split-R̂."""
+
+    def setUp(self):
+        super().setUp()
+        self.rng = jax.random.key(13)
+
+    def _iid_normal(self, nchains=_NCHAINS, nsamples=_NSAMPLES):
+        return jax.random.normal(self.rng, shape=(nchains, nsamples))
+
+    def test_scalar_output_shape(self):
+        result = diagnostics.rhat(self._iid_normal())
+        assert result.shape == (), f"Expected scalar, got shape {result.shape}"
+
+    def test_vector_output_shape(self):
+        samples = jax.random.normal(self.rng, shape=(_NCHAINS, _NSAMPLES, 5))
+        result = diagnostics.rhat(samples)
+        assert result.shape == (5,), f"Expected (5,), got {result.shape}"
+
+    def test_converged_chains_near_one(self):
+        # IID samples → R̂ should be very close to 1.
+        result = float(diagnostics.rhat(self._iid_normal()))
+        assert (
+            abs(result - 1.0) < 0.05
+        ), f"rhat for iid samples should be ≈1, got {round(result, 4)}"
+
+    def test_non_converged_chains_above_one(self):
+        # Chains with distinct means → R̂ >> 1.
+        key1, key2, key3, key4 = jax.random.split(self.rng, 4)
+        means = jnp.array([0.0, 5.0, -5.0, 10.0])
+        chains = jnp.stack(
+            [
+                jax.random.normal(k, shape=(_NSAMPLES,)) + m
+                for k, m in zip([key1, key2, key3, key4], means)
+            ]
+        )
+        result = float(diagnostics.rhat(chains))
+        assert (
+            result > 1.1
+        ), f"rhat for non-converged chains should be > 1.1, got {round(result, 4)}"
+
+    def test_scale_nonconvergence_detected(self):
+        # Chains with same mean but very different variances (scale non-convergence).
+        # The folded component catches this; plain split-R̂ on the raw draws may miss it.
+        key1, key2 = jax.random.split(self.rng)
+        chain_narrow = jax.random.normal(key1, shape=(2, _NSAMPLES)) * 0.1
+        chain_wide = jax.random.normal(key2, shape=(2, _NSAMPLES)) * 10.0
+        chains = jnp.concatenate([chain_narrow, chain_wide], axis=0)
+        result = float(diagnostics.rhat(chains))
+        # Scale non-convergence → R̂ should be clearly above 1.
+        assert (
+            result > 1.05
+        ), f"rhat should detect scale non-convergence (> 1.05), got {round(result, 4)}"
+
+    def test_axis_invariance(self):
+        # Swapped chain/sample axes must give the same result.
+        samples = self._iid_normal()
+        samples_T = jnp.transpose(samples)  # (nsamples, nchains)
+        rh_std = diagnostics.rhat(samples)
+        rh_swp = diagnostics.rhat(samples_T, chain_axis=1, sample_axis=0)
+        np.testing.assert_allclose(float(rh_std), float(rh_swp), rtol=1e-5)
+
+    def test_negative_axes(self):
+        samples = self._iid_normal()
+        rh_pos = diagnostics.rhat(samples, chain_axis=0, sample_axis=1)
+        rh_neg = diagnostics.rhat(samples, chain_axis=-2, sample_axis=-1)
+        np.testing.assert_allclose(float(rh_pos), float(rh_neg), rtol=1e-5)
+
+    def test_top_level_api(self):
+        # blackjax.rhat must be the rank-normalized version, not the classic one.
+        import blackjax
+
+        samples = self._iid_normal()
+        bj = float(blackjax.rhat(samples))
+        direct = float(diagnostics.rhat(samples))
+        np.testing.assert_allclose(bj, direct, rtol=1e-6)
+
+    def test_arviz_calibration_converged(self):
+        # IID normal: both should be ≈1; agree within 1%.
+        az = pytest.importorskip("arviz")
+        samples = np.array(self._iid_normal())
+        bj = float(diagnostics.rhat(jnp.asarray(samples)))
+        idata = az.convert_to_dataset({"x": samples})
+        az_val = float(np.asarray(az.rhat(idata)["x"]).ravel()[0])
+        rel = abs(bj - az_val) / max(abs(az_val), 1e-6)
+        assert rel < 0.01, (
+            f"rhat converged: blackjax={round(bj, 6)}"
+            f" arviz={round(az_val, 6)} rel={round(rel, 6)}"
+        )
+
+    def test_arviz_calibration_nonconverged(self):
+        # Chains with distinct means: both should detect non-convergence; agree within 5%.
+        az = pytest.importorskip("arviz")
+        key1, key2, key3, key4 = jax.random.split(self.rng, 4)
+        means = jnp.array([0.0, 5.0, -5.0, 10.0])
+        chains = np.array(
+            jnp.stack(
+                [
+                    jax.random.normal(k, shape=(_NSAMPLES,)) + m
+                    for k, m in zip([key1, key2, key3, key4], means)
+                ]
+            )
+        )
+        bj = float(diagnostics.rhat(jnp.asarray(chains)))
+        idata = az.convert_to_dataset({"x": chains})
+        az_val = float(np.asarray(az.rhat(idata)["x"]).ravel()[0])
+        rel = abs(bj - az_val) / max(abs(az_val), 1e-6)
+        assert rel < 0.05, (
+            f"rhat non-converged: blackjax={round(bj, 4)}"
+            f" arviz={round(az_val, 4)} rel={round(rel, 4)}"
+        )
+
+    def test_arviz_calibration_heavy_tail(self):
+        # t(3) draws: heavier tails; agree within 1%.
+        az = pytest.importorskip("arviz")
+        samples = np.array(jax.random.t(self.rng, df=3.0, shape=(_NCHAINS, _NSAMPLES)))
+        bj = float(diagnostics.rhat(jnp.asarray(samples)))
+        idata = az.convert_to_dataset({"x": samples})
+        az_val = float(np.asarray(az.rhat(idata)["x"]).ravel()[0])
+        rel = abs(bj - az_val) / max(abs(az_val), 1e-6)
+        assert rel < 0.01, (
+            f"rhat t(3): blackjax={round(bj, 6)}"
+            f" arviz={round(az_val, 6)} rel={round(rel, 6)}"
+        )
+
+
 class EssBulkTest(chex.TestCase):
     """Tests for rank-normalised split-chain bulk ESS."""
 
