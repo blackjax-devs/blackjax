@@ -20,6 +20,7 @@ Submodules
    /autoapi/blackjax/adaptation/mclmc_adaptation/index
    /autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index
    /autoapi/blackjax/adaptation/meads_adaptation/index
+   /autoapi/blackjax/adaptation/meta_adaptation/index
    /autoapi/blackjax/adaptation/metric_buffers/index
    /autoapi/blackjax/adaptation/metric_estimators/index
    /autoapi/blackjax/adaptation/metric_recipes/index

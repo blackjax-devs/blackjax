@@ -1,0 +1,870 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>blackjax.adaptation.meta_adaptation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/adaptation/meta_adaptation/index';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.adaptation.metric_buffers" href="../metric_buffers/index.html" />
+    <link rel="prev" title="blackjax.adaptation.meads_adaptation" href="../meads_adaptation/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+ga4d46a8a3" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">blackjax.adaptation</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.adaptation.meta_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metric_recipes/index.html">blackjax.adaptation.metric_recipes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>blackjax.adaptation.meta_adaptation</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.inverse_mass_matrix</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.mu_star"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.mu_star</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.draws_buffer"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.draws_buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.grads_buffer"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.grads_buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.buffer_idx"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.buffer_idx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.background_split"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.background_split</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.recompute_counter"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.recompute_counter</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.has_escalated"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.has_escalated</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.escalation_rank"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.escalation_rank</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_prev"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.s_gap_prev</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_curr"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.s_gap_curr</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_latest"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.r2_latest</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_mode"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.r2_mode</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.budget_used"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.budget_used</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.converged_at_step"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.converged_at_step</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.prev_lam"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.prev_lam</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_prev"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.airm_vel_prev</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_curr"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.airm_vel_curr</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.is_slow_mixing"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.is_slow_mixing</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.route"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.route</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.metric"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.metric</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.effective_rank"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.effective_rank</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.confidence"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.confidence</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.exit_reason"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.exit_reason</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_steps"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.budget_used_steps</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_returned_steps"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.budget_returned_steps</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_grads"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.budget_used_grads</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.r2_final"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.r2_final</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.s_gap_final"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.s_gap_final</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.transient_mixing_class"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.transient_mixing_class</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.buffer_policy"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.buffer_policy</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.flags"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.flags</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.build_meta_adaptation_core"><code class="docutils literal notranslate"><span class="pre">build_meta_adaptation_core()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.extract_meta_verdict"><code class="docutils literal notranslate"><span class="pre">extract_meta_verdict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-blackjax.adaptation.meta_adaptation">
+<span id="blackjax-adaptation-meta-adaptation"></span><h1>blackjax.adaptation.meta_adaptation<a class="headerlink" href="#module-blackjax.adaptation.meta_adaptation" title="Link to this heading">#</a></h1>
+<p>Meta-adaptation controller for the HMC-family warmup.</p>
+<p>At each window boundary the controller computes two signals: (1) held-out
+score-linearity R² — the curvature gate (funnel R²≈0.007 vs ≥0.54 for all
+metric-fixable classes); (2) S_gap(k) = λ₁/λ_{k+1} of the Welford-whitened
+residual — the magnitude predictor (Spearman 1.0 with measured rank-k payoff).
+Escalate diagonal → rank-k iff R² ≥ _R_MIN AND S_gap ≥ _S_MIN AND stable
+over two consecutive windows AND budget deadline clear. Growing-window schedule
+(nutpie-style) is the default; AIRM-velocity early exit is advisory in v1
+(the scan runs its full length; <code class="docutils literal notranslate"><span class="pre">converged_at_step</span></code> records where stopping
+would have helped — the actual early-stop host is the named v1.1 upgrade).</p>
+<p><strong>Dtype note</strong>: the composed estimator <code class="docutils literal notranslate"><span class="pre">_compute_low_rank_metric</span></code> produces
+numerically indefinite metrics under float32 (~98% of runs). Enable x64 via
+<code class="docutils literal notranslate"><span class="pre">jax.config.update(&quot;jax_enable_x64&quot;,</span> <span class="pre">True)</span></code> for production use and for the
+V-phase acceptance runs; all optpath harnesses ran with x64 enabled.</p>
+<p>See <a class="reference internal" href="../metric_recipes/index.html#module-blackjax.adaptation.metric_recipes" title="blackjax.adaptation.metric_recipes"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.metric_recipes</span></code></a> for the MetricCore protocol and
+<a class="reference internal" href="../staged_adaptation/index.html#module-blackjax.adaptation.staged_adaptation" title="blackjax.adaptation.staged_adaptation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.adaptation.staged_adaptation</span></code></a> for the host engine.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState" title="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MetaAdaptationCoreState</span></code></a></p></td>
+<td><p>Scan-carry state for the meta-adaptation MetricCore.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict" title="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MetaAdaptationVerdict</span></code></a></p></td>
+<td><p>Verdict emitted by <a class="reference internal" href="#blackjax.adaptation.meta_adaptation.extract_meta_verdict" title="blackjax.adaptation.meta_adaptation.extract_meta_verdict"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_meta_verdict()</span></code></a> after the warmup scan.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.adaptation.meta_adaptation.build_meta_adaptation_core" title="blackjax.adaptation.meta_adaptation.build_meta_adaptation_core"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_meta_adaptation_core</span></code></a>(...)</p></td>
+<td><p>Build the meta-adaptation <a class="reference internal" href="../metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.adaptation.meta_adaptation.extract_meta_verdict" title="blackjax.adaptation.meta_adaptation.extract_meta_verdict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">extract_meta_verdict</span></code></a>(→ MetaAdaptationVerdict)</p></td>
+<td><p>Build a <a class="reference internal" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict" title="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetaAdaptationVerdict</span></code></a> from the final core state.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MetaAdaptationCoreState</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState" title="Link to this definition">#</a></dt>
+<dd><p>Scan-carry state for the meta-adaptation MetricCore.</p>
+<p>Buffer fields mirror <code class="docutils literal notranslate"><span class="pre">LowRankMetricCoreState</span></code> so the state is
+interchangeable in the staged_adaptation engine.  The <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>
+is always a <a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a>; before
+escalation, U=0 and lam=1 (bit-equivalent to the diagonal metric).</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.inverse_mass_matrix">
+<span class="sig-name descname"><span class="pre">inverse_mass_matrix</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><span class="pre">blackjax.mcmc.metrics.LowRankInverseMassMatrix</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.inverse_mass_matrix"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.inverse_mass_matrix" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.mu_star">
+<span class="sig-name descname"><span class="pre">mu_star</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.mu_star"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.mu_star" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.draws_buffer">
+<span class="sig-name descname"><span class="pre">draws_buffer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.draws_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.draws_buffer" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.grads_buffer">
+<span class="sig-name descname"><span class="pre">grads_buffer</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.grads_buffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.grads_buffer" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.buffer_idx">
+<span class="sig-name descname"><span class="pre">buffer_idx</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.buffer_idx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.buffer_idx" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.background_split">
+<span class="sig-name descname"><span class="pre">background_split</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.background_split"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.background_split" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.recompute_counter">
+<span class="sig-name descname"><span class="pre">recompute_counter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.recompute_counter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.recompute_counter" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.has_escalated">
+<span class="sig-name descname"><span class="pre">has_escalated</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.has_escalated"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.has_escalated" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.escalation_rank">
+<span class="sig-name descname"><span class="pre">escalation_rank</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.escalation_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.escalation_rank" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_prev">
+<span class="sig-name descname"><span class="pre">s_gap_prev</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.s_gap_prev"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_prev" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_curr">
+<span class="sig-name descname"><span class="pre">s_gap_curr</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.s_gap_curr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_curr" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_latest">
+<span class="sig-name descname"><span class="pre">r2_latest</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.r2_latest"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_latest" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_mode">
+<span class="sig-name descname"><span class="pre">r2_mode</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.r2_mode"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_mode" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.budget_used">
+<span class="sig-name descname"><span class="pre">budget_used</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.budget_used"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.budget_used" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.converged_at_step">
+<span class="sig-name descname"><span class="pre">converged_at_step</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.converged_at_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.converged_at_step" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.prev_lam">
+<span class="sig-name descname"><span class="pre">prev_lam</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.prev_lam"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.prev_lam" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_prev">
+<span class="sig-name descname"><span class="pre">airm_vel_prev</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.airm_vel_prev"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_prev" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_curr">
+<span class="sig-name descname"><span class="pre">airm_vel_curr</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.airm_vel_curr"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_curr" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.is_slow_mixing">
+<span class="sig-name descname"><span class="pre">is_slow_mixing</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationCoreState.is_slow_mixing"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.is_slow_mixing" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">MetaAdaptationVerdict</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict" title="Link to this definition">#</a></dt>
+<dd><p>Verdict emitted by <a class="reference internal" href="#blackjax.adaptation.meta_adaptation.extract_meta_verdict" title="blackjax.adaptation.meta_adaptation.extract_meta_verdict"><code class="xref py py-func docutils literal notranslate"><span class="pre">extract_meta_verdict()</span></code></a> after the warmup scan.</p>
+<p>All budget numbers are in warmup steps (step-clock proxy) unless the
+info stream is provided for true gradient counts.</p>
+<p><code class="docutils literal notranslate"><span class="pre">budget_returned_steps</span></code> is ADVISORY in v1: the scan runs its full length;
+a stopping host (lax.while) is the named v1.1 upgrade.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.route">
+<span class="sig-name descname"><span class="pre">route</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.route"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.route" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.metric">
+<span class="sig-name descname"><span class="pre">metric</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../../mcmc/metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><span class="pre">blackjax.mcmc.metrics.LowRankInverseMassMatrix</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.metric"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.metric" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.effective_rank">
+<span class="sig-name descname"><span class="pre">effective_rank</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.effective_rank"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.effective_rank" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.confidence">
+<span class="sig-name descname"><span class="pre">confidence</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.confidence"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.confidence" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.exit_reason">
+<span class="sig-name descname"><span class="pre">exit_reason</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.exit_reason"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.exit_reason" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_steps">
+<span class="sig-name descname"><span class="pre">budget_used_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.budget_used_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_steps" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_returned_steps">
+<span class="sig-name descname"><span class="pre">budget_returned_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.budget_returned_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_returned_steps" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_grads">
+<span class="sig-name descname"><span class="pre">budget_used_grads</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.budget_used_grads"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_grads" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.r2_final">
+<span class="sig-name descname"><span class="pre">r2_final</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.r2_final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.r2_final" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.s_gap_final">
+<span class="sig-name descname"><span class="pre">s_gap_final</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.s_gap_final"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.s_gap_final" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.transient_mixing_class">
+<span class="sig-name descname"><span class="pre">transient_mixing_class</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.transient_mixing_class"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.transient_mixing_class" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.buffer_policy">
+<span class="sig-name descname"><span class="pre">buffer_policy</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.buffer_policy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.buffer_policy" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.flags">
+<span class="sig-name descname"><span class="pre">flags</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.14)"><span class="pre">dict</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MetaAdaptationVerdict.flags"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.flags" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.build_meta_adaptation_core">
+<span class="sig-name descname"><span class="pre">build_meta_adaptation_core</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">max_grad_budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_rank</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">gamma</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cutoff</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">2.0</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><span class="pre">blackjax.adaptation.metric_recipes.MetricCore</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#build_meta_adaptation_core"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.build_meta_adaptation_core" title="Link to this definition">#</a></dt>
+<dd><p>Build the meta-adaptation <a class="reference internal" href="../metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>max_grad_budget</strong> – Maximum total gradient budget (leapfrog evaluations).  Converted to
+warmup steps via <code class="docutils literal notranslate"><span class="pre">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span></code> at Python time.</p></li>
+<li><p><strong>max_rank</strong> – Maximum low-rank rank; <code class="docutils literal notranslate"><span class="pre">None</span></code> uses <code class="xref py py-data docutils literal notranslate"><span class="pre">_MAX_RANK_CAP</span></code>.</p></li>
+<li><p><strong>gamma</strong> – Fisher-estimator parameters; defaults match <code class="docutils literal notranslate"><span class="pre">fisher_low_rank</span></code> recipe.</p></li>
+<li><p><strong>cutoff</strong> – Fisher-estimator parameters; defaults match <code class="docutils literal notranslate"><span class="pre">fisher_low_rank</span></code> recipe.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Embeddable init/update/final bundle.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore">MetricCore</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.extract_meta_verdict">
+<span class="sig-name descname"><span class="pre">extract_meta_verdict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">final_state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState" title="blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState"><span class="pre">MetaAdaptationCoreState</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_grad_budget</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_warmup_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">adaptation_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict" title="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict"><span class="pre">MetaAdaptationVerdict</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#extract_meta_verdict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.extract_meta_verdict" title="Link to this definition">#</a></dt>
+<dd><p>Build a <a class="reference internal" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict" title="blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetaAdaptationVerdict</span></code></a> from the final core state.</p>
+<p>Call after <code class="docutils literal notranslate"><span class="pre">warmup.run()</span></code> completes.  Pass <code class="docutils literal notranslate"><span class="pre">adaptation_info</span></code> (the
+second return of <code class="docutils literal notranslate"><span class="pre">warmup.run()</span></code>) for true gradient counts.</p>
+<p><code class="docutils literal notranslate"><span class="pre">budget_returned_steps</span></code> is ADVISORY: the scan runs its full length in v1;
+this field shows where a stopping host would have saved steps.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../meads_adaptation/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">blackjax.adaptation.meads_adaptation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../metric_buffers/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">blackjax.adaptation.metric_buffers</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.inverse_mass_matrix"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.inverse_mass_matrix</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.mu_star"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.mu_star</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.draws_buffer"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.draws_buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.grads_buffer"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.grads_buffer</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.buffer_idx"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.buffer_idx</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.background_split"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.background_split</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.recompute_counter"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.recompute_counter</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.has_escalated"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.has_escalated</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.escalation_rank"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.escalation_rank</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_prev"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.s_gap_prev</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_curr"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.s_gap_curr</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_latest"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.r2_latest</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_mode"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.r2_mode</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.budget_used"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.budget_used</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.converged_at_step"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.converged_at_step</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.prev_lam"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.prev_lam</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_prev"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.airm_vel_prev</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_curr"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.airm_vel_curr</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.is_slow_mixing"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationCoreState.is_slow_mixing</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.route"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.route</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.metric"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.metric</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.effective_rank"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.effective_rank</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.confidence"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.confidence</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.exit_reason"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.exit_reason</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_steps"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.budget_used_steps</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_returned_steps"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.budget_returned_steps</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_grads"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.budget_used_grads</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.r2_final"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.r2_final</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.s_gap_final"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.s_gap_final</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.transient_mixing_class"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.transient_mixing_class</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.buffer_policy"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.buffer_policy</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.flags"><code class="docutils literal notranslate"><span class="pre">MetaAdaptationVerdict.flags</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.build_meta_adaptation_core"><code class="docutils literal notranslate"><span class="pre">build_meta_adaptation_core()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.extract_meta_verdict"><code class="docutils literal notranslate"><span class="pre">extract_meta_verdict()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

@@ -1,0 +1,1252 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.adaptation.meta_adaptation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/meta_adaptation';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+ga4d46a8a3" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html">blackjax.adaptation.meta_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html">blackjax.adaptation.metric_recipes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blackjax.adaptation.meta_adaptation</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;Meta-adaptation controller for the HMC-family warmup.</span>
+
+<span class="sd">At each window boundary the controller computes two signals: (1) held-out</span>
+<span class="sd">score-linearity R² — the curvature gate (funnel R²≈0.007 vs ≥0.54 for all</span>
+<span class="sd">metric-fixable classes); (2) S_gap(k) = λ₁/λ_{k+1} of the Welford-whitened</span>
+<span class="sd">residual — the magnitude predictor (Spearman 1.0 with measured rank-k payoff).</span>
+<span class="sd">Escalate diagonal → rank-k iff R² ≥ _R_MIN AND S_gap ≥ _S_MIN AND stable</span>
+<span class="sd">over two consecutive windows AND budget deadline clear. Growing-window schedule</span>
+<span class="sd">(nutpie-style) is the default; AIRM-velocity early exit is advisory in v1</span>
+<span class="sd">(the scan runs its full length; ``converged_at_step`` records where stopping</span>
+<span class="sd">would have helped — the actual early-stop host is the named v1.1 upgrade).</span>
+
+<span class="sd">**Dtype note**: the composed estimator ``_compute_low_rank_metric`` produces</span>
+<span class="sd">numerically indefinite metrics under float32 (~98% of runs). Enable x64 via</span>
+<span class="sd">``jax.config.update(&quot;jax_enable_x64&quot;, True)`` for production use and for the</span>
+<span class="sd">V-phase acceptance runs; all optpath harnesses ran with x64 enabled.</span>
+
+<span class="sd">See :mod:`blackjax.adaptation.metric_recipes` for the MetricCore protocol and</span>
+<span class="sd">:mod:`blackjax.adaptation.staged_adaptation` for the host engine.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NamedTuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">fu</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">_compute_low_rank_metric</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_recipes</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetricCore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="kn">import</span> <span class="n">LowRankInverseMassMatrix</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MetaAdaptationCoreState&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MetaAdaptationVerdict&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_meta_adaptation_core&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;extract_meta_verdict&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Module constants — V-phase calibration anchors (not user knobs).</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="n">_R_MIN</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="sd">&quot;&quot;&quot;R² gate: curvature targets score ≈0.007–0.09; metric-fixable ≥0.54 (optpath-B).&quot;&quot;&quot;</span>
+
+<span class="n">_S_MIN</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span>
+<span class="sd">&quot;&quot;&quot;S_gap magnitude gate: stoch_vol (marginal, S_gap≈1.5) must not escalate.&quot;&quot;&quot;</span>
+
+<span class="n">_S_GAP_STABILITY_TOL</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span>
+<span class="sd">&quot;&quot;&quot;Max relative S_gap change between consecutive windows before acting.</span>
+<span class="sd">Warmup-phase S_gap is transient-inflated; two stable reads prevent acting early.&quot;&quot;&quot;</span>
+
+<span class="n">_MIN_TRAIN_D_RATIO</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">8</span>
+<span class="sd">&quot;&quot;&quot;Full-affine fit: n_half ≥ 8d required; stoch_vol d=503: R²=-109 at n/d≈2.&quot;&quot;&quot;</span>
+
+<span class="n">_MIN_TRAIN_K_RATIO</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span>
+<span class="sd">&quot;&quot;&quot;Projected fit: n_half ≥ 4·(actual_rank+1) required (total n ≳ 8·(k+1)).</span>
+<span class="sd">d-independent threshold — radon (d=390, k≈2, max_rank=50, n≳408) fits within</span>
+<span class="sd">the growing-window schedule at 50k-grad budget (max window ≈725 ≥ 408).&quot;&quot;&quot;</span>
+
+<span class="n">_AIRM_VELOCITY_TOL</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span>
+<span class="sd">&quot;&quot;&quot;Frobenius-norm lam-change threshold for AIRM early-exit (advisory, v1).&quot;&quot;&quot;</span>
+
+<span class="n">_STEP_SIZE_READAPT_BUFFER</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="sd">&quot;&quot;&quot;Steps reserved for step-size re-adaptation after escalation.&quot;&quot;&quot;</span>
+
+<span class="n">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span>
+<span class="sd">&quot;&quot;&quot;Conservative grad-per-step divisor: max_grad_budget → num_steps.</span>
+<span class="sd">Most NUTS runs average 4–15 leapfrogs per step; 20 is conservative.&quot;&quot;&quot;</span>
+
+<span class="n">_TRANSIENT_MIXING_THRESHOLD</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="sd">&quot;&quot;&quot;Split-half normalised mean-diff threshold for slow-mixing class detection.&quot;&quot;&quot;</span>
+
+<span class="n">_MAX_RANK_CAP</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
+<span class="sd">&quot;&quot;&quot;Static rank cap for buffer allocation; per-window rank ≤ min(cap, n//2).&quot;&quot;&quot;</span>
+
+<span class="c1"># R² mode integers (stored in carry as int8).</span>
+<span class="n">_R2_DEFERRED</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">_R2_PROJECTED</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">_R2_FULL_AFFINE</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># State types</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="MetaAdaptationCoreState">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetaAdaptationCoreState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Scan-carry state for the meta-adaptation MetricCore.</span>
+
+<span class="sd">    Buffer fields mirror ``LowRankMetricCoreState`` so the state is</span>
+<span class="sd">    interchangeable in the staged_adaptation engine.  The ``inverse_mass_matrix``</span>
+<span class="sd">    is always a :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`; before</span>
+<span class="sd">    escalation, U=0 and lam=1 (bit-equivalent to the diagonal metric).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Buffer (mirrors LowRankMetricCoreState layout)</span>
+<div class="viewcode-block" id="MetaAdaptationCoreState.inverse_mass_matrix">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.inverse_mass_matrix">[docs]</a>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">LowRankInverseMassMatrix</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.mu_star">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.mu_star">[docs]</a>
+    <span class="n">mu_star</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># optimal translation, (d,); zero before escalation</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.draws_buffer">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.draws_buffer">[docs]</a>
+    <span class="n">draws_buffer</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (buffer_size, d)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.grads_buffer">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.grads_buffer">[docs]</a>
+    <span class="n">grads_buffer</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (buffer_size, d)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.buffer_idx">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.buffer_idx">[docs]</a>
+    <span class="n">buffer_idx</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># int32 scalar; reset to 0 after each window (v1 reset policy)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.background_split">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.background_split">[docs]</a>
+    <span class="n">background_split</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># always 0 in v1</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.recompute_counter">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.recompute_counter">[docs]</a>
+    <span class="n">recompute_counter</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># always 0 in v1</span></div>
+
+    <span class="c1"># Controller carry</span>
+<div class="viewcode-block" id="MetaAdaptationCoreState.has_escalated">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.has_escalated">[docs]</a>
+    <span class="n">has_escalated</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># bool scalar; monotone True-once</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.escalation_rank">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.escalation_rank">[docs]</a>
+    <span class="n">escalation_rank</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># int32; the rank k chosen at escalation (0 before)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.s_gap_prev">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_prev">[docs]</a>
+    <span class="n">s_gap_prev</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># float32; S_gap from window before last (NaN initially)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.s_gap_curr">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.s_gap_curr">[docs]</a>
+    <span class="n">s_gap_curr</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># float32; S_gap from most recent window (NaN initially)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.r2_latest">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_latest">[docs]</a>
+    <span class="n">r2_latest</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># float32; most recent R² (NaN if deferred or not yet computed)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.r2_mode">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.r2_mode">[docs]</a>
+    <span class="n">r2_mode</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># int32; 0=deferred, 1=projected, 2=full_affine (last window)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.budget_used">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.budget_used">[docs]</a>
+    <span class="n">budget_used</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># int32; warmup steps elapsed (step-clock proxy)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.converged_at_step">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.converged_at_step">[docs]</a>
+    <span class="n">converged_at_step</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># int32; step when AIRM velocity first fired (&lt;0 = not yet)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.prev_lam">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.prev_lam">[docs]</a>
+    <span class="n">prev_lam</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># (max_rank,); lam from previous window for AIRM velocity</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.airm_vel_prev">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_prev">[docs]</a>
+    <span class="n">airm_vel_prev</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># float32; AIRM velocity proxy from window before last</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.airm_vel_curr">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.airm_vel_curr">[docs]</a>
+    <span class="n">airm_vel_curr</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># float32; AIRM velocity proxy from most recent window</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationCoreState.is_slow_mixing">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationCoreState.is_slow_mixing">[docs]</a>
+    <span class="n">is_slow_mixing</span><span class="p">:</span> <span class="n">Array</span>  <span class="c1"># bool; True = slow-mixing (RESET preferred by v1.1 switch)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="MetaAdaptationVerdict">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MetaAdaptationVerdict</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Verdict emitted by :func:`extract_meta_verdict` after the warmup scan.</span>
+
+<span class="sd">    All budget numbers are in warmup steps (step-clock proxy) unless the</span>
+<span class="sd">    info stream is provided for true gradient counts.</span>
+
+<span class="sd">    ``budget_returned_steps`` is ADVISORY in v1: the scan runs its full length;</span>
+<span class="sd">    a stopping host (lax.while) is the named v1.1 upgrade.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.route">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.route">[docs]</a>
+    <span class="n">route</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;diagonal&quot; | &quot;low_rank&quot; | &quot;reparam_suggested&quot;</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.metric">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.metric">[docs]</a>
+    <span class="n">metric</span><span class="p">:</span> <span class="n">LowRankInverseMassMatrix</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.effective_rank">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.effective_rank">[docs]</a>
+    <span class="n">effective_rank</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># k at escalation time (0 for diagonal route)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.confidence">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.confidence">[docs]</a>
+    <span class="n">confidence</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;high&quot; | &quot;low&quot;</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.exit_reason">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.exit_reason">[docs]</a>
+    <span class="n">exit_reason</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;warmup_complete&quot; | &quot;airm_velocity_converged&quot; | &quot;warmup_budget_exhausted&quot;</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.budget_used_steps">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_steps">[docs]</a>
+    <span class="n">budget_used_steps</span><span class="p">:</span> <span class="nb">int</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.budget_returned_steps">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_returned_steps">[docs]</a>
+    <span class="n">budget_returned_steps</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># advisory (see docstring)</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.budget_used_grads">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.budget_used_grads">[docs]</a>
+    <span class="n">budget_used_grads</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># -1 if info stream not provided</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.r2_final">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.r2_final">[docs]</a>
+    <span class="n">r2_final</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.s_gap_final">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.s_gap_final">[docs]</a>
+    <span class="n">s_gap_final</span><span class="p">:</span> <span class="nb">float</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.transient_mixing_class">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.transient_mixing_class">[docs]</a>
+    <span class="n">transient_mixing_class</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># &quot;slow&quot; | &quot;fast&quot;</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.buffer_policy">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.buffer_policy">[docs]</a>
+    <span class="n">buffer_policy</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># always &quot;reset&quot; in v1</span></div>
+
+<div class="viewcode-block" id="MetaAdaptationVerdict.flags">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.MetaAdaptationVerdict.flags">[docs]</a>
+    <span class="n">flags</span><span class="p">:</span> <span class="nb">dict</span>  <span class="c1"># reparam_hint, marginal_s_gap, wall_cost_discount, high_d_r2_mode, mode_coverage</span></div>
+</div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Signal computation — pure JAX functions, module-private</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_whitened_spectrum</span><span class="p">(</span>
+    <span class="n">draws_buffer</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">n</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Top ``max_rank`` eigenvalues and eigenvectors of the diagonal-whitened</span>
+<span class="sd">    sample covariance R = D^{-1/2}ΣD^{-1/2} (D = diag(σ²)), computed via the</span>
+<span class="sd">    thin SVD of the centred whitened draw matrix.</span>
+
+<span class="sd">    Returns ``(eigenvalues, U_k)`` with shapes ``(max_rank,)`` and</span>
+<span class="sd">    ``(d, max_rank)``; zero-padded when fewer than max_rank components are</span>
+<span class="sd">    available.  Invalid rows (beyond index n) are zeroed via a mask.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">B</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">n_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">sigma_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="mf">1e-20</span><span class="p">)</span>
+    <span class="n">mean_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">draws_buffer</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_safe</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">draws_buffer</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">/</span> <span class="n">sigma_safe</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">Vt</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">svd</span><span class="p">(</span><span class="n">w</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">eigs_all</span> <span class="o">=</span> <span class="p">(</span><span class="n">s</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_safe</span>
+    <span class="n">actual</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_rank</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">d</span><span class="p">))</span>  <span class="c1"># static</span>
+    <span class="k">if</span> <span class="n">actual</span> <span class="o">&lt;</span> <span class="n">max_rank</span><span class="p">:</span>
+        <span class="n">pad</span> <span class="o">=</span> <span class="n">max_rank</span> <span class="o">-</span> <span class="n">actual</span>
+        <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">eigs_all</span><span class="p">[:</span><span class="n">actual</span><span class="p">],</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">eigs_all</span><span class="o">.</span><span class="n">dtype</span><span class="p">)]</span>
+        <span class="p">)</span>
+        <span class="n">U_k</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">Vt</span><span class="p">[:</span><span class="n">actual</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,</span> <span class="n">pad</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">Vt</span><span class="o">.</span><span class="n">dtype</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">eigs_all</span><span class="p">[:</span><span class="n">max_rank</span><span class="p">]</span>
+        <span class="n">U_k</span> <span class="o">=</span> <span class="n">Vt</span><span class="p">[:</span><span class="n">max_rank</span><span class="p">]</span><span class="o">.</span><span class="n">T</span>
+    <span class="k">return</span> <span class="n">eigenvalues</span><span class="p">,</span> <span class="n">U_k</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_choose_rank</span><span class="p">(</span>
+    <span class="n">eigenvalues</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">n</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Count informative eigenvalues (outside [1/cutoff, cutoff]), capped by</span>
+<span class="sd">    n//2 (estimation-support limit) and max_rank.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">is_informative</span> <span class="o">=</span> <span class="p">(</span><span class="n">eigenvalues</span> <span class="o">&gt;</span> <span class="n">cutoff</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">eigenvalues</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">cutoff</span><span class="p">)</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">is_informative</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">support_cap</span> <span class="o">=</span> <span class="p">(</span><span class="n">n</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">count</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">support_cap</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">max_rank</span><span class="p">)))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_s_gap</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">k</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;S_gap at rank cut k: λ₁/λ_{k+1}.  Returns 1.0 when k=0.&quot;&quot;&quot;</span>
+    <span class="n">max_rank</span> <span class="o">=</span> <span class="n">eigenvalues</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">k_clipped</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span> <span class="mi">0</span><span class="p">,</span> <span class="n">max_rank</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">lambda_1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mf">1e-10</span><span class="p">)</span>
+    <span class="n">lambda_k1</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_index_in_dim</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">,</span> <span class="n">k_clipped</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">lambda_k1_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">lambda_k1</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">k</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">lambda_1</span><span class="p">),</span> <span class="n">lambda_1</span> <span class="o">/</span> <span class="n">lambda_k1_safe</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_r2_score_linearity</span><span class="p">(</span>
+    <span class="n">draws_buffer</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">grads_buffer</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">n</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">U_k</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Held-out score-linearity R² with three-tier fallback.</span>
+
+<span class="sd">    Fit s_w ≈ A·w + b train/test (first/last n//2 valid rows).  Three modes:</span>
+<span class="sd">    full-affine (n ≥ 2·8·d), projected on max_rank+1 candidate directions</span>
+<span class="sd">    (n ≥ 2·8·(max_rank+1)), deferred/NaN otherwise.  Returns (r2, mode_int)</span>
+<span class="sd">    where mode_int is a traced JAX int32: _R2_DEFERRED=0, _R2_PROJECTED=1,</span>
+<span class="sd">    _R2_FULL_AFFINE=2.  Mode is observed from the actual branch taken — not</span>
+<span class="sd">    inferred post-hoc.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">B</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">n_f</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">n_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">n_f</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">sigma_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="mf">1e-20</span><span class="p">)</span>
+    <span class="n">mean_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">draws_buffer</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_safe</span>
+    <span class="n">mean_g</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">grads_buffer</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_safe</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">draws_buffer</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">/</span> <span class="n">sigma_safe</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">s_w</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">grads_buffer</span> <span class="o">-</span> <span class="n">mean_g</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">*</span> <span class="n">sigma_safe</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">n_train_int</span> <span class="o">=</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">train_mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n_train_int</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">test_mask</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">n_train_int</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_r2_from_features</span><span class="p">(</span><span class="n">feats</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">resp</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Held-out R² of ``resp`` predicted from ``feats`` (train/test split).&quot;&quot;&quot;</span>
+        <span class="n">n_feats</span> <span class="o">=</span> <span class="n">feats</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">FtF</span> <span class="o">=</span> <span class="p">(</span><span class="n">train_mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">feats</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">train_mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">feats</span><span class="p">)</span>
+        <span class="n">FtS</span> <span class="o">=</span> <span class="p">(</span><span class="n">train_mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">feats</span><span class="p">)</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="p">(</span><span class="n">train_mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">resp</span><span class="p">)</span>
+        <span class="n">A</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">lstsq</span><span class="p">(</span>
+            <span class="n">FtF</span> <span class="o">+</span> <span class="mf">1e-8</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">n_feats</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">FtF</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="n">FtS</span><span class="p">,</span> <span class="n">rcond</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">s_pred</span> <span class="o">=</span> <span class="p">(</span><span class="n">test_mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">feats</span><span class="p">)</span> <span class="o">@</span> <span class="n">A</span>
+        <span class="n">s_test</span> <span class="o">=</span> <span class="n">test_mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">resp</span>
+        <span class="n">n_test_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">test_mask</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="mf">2.0</span><span class="p">)</span>
+        <span class="n">s_mean</span> <span class="o">=</span> <span class="n">s_test</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_test_safe</span>
+        <span class="n">tss</span> <span class="o">=</span> <span class="p">((</span><span class="n">s_test</span> <span class="o">-</span> <span class="n">test_mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">s_mean</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">rss</span> <span class="o">=</span> <span class="p">((</span><span class="n">s_test</span> <span class="o">-</span> <span class="n">s_pred</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">rss</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">tss</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_full_affine</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">w</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">B</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">dtype</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_r2_from_features</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">s_w</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_R2_FULL_AFFINE</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_projected</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+        <span class="c1"># Project BOTH position and score onto U_k.  Rank-k acts only in</span>
+        <span class="c1"># span(U_k), so linearity of the score RESTRICTED to that subspace is</span>
+        <span class="c1"># the escalation-safety question; nonlinearity orthogonal to U_k is</span>
+        <span class="c1"># invisible to rank-k and should not gate escalation.</span>
+        <span class="c1"># Bug fixed: old code regressed d-dim score on k+1 features → median</span>
+        <span class="c1"># R² ≈ 0 at d≫k (radon d=390 always emitted reparam_suggested).</span>
+        <span class="n">w_proj</span> <span class="o">=</span> <span class="n">w</span> <span class="o">@</span> <span class="n">U_k</span>  <span class="c1"># (B, actual_rank): position projected onto U_k</span>
+        <span class="n">s_w_proj</span> <span class="o">=</span> <span class="n">s_w</span> <span class="o">@</span> <span class="n">U_k</span>  <span class="c1"># (B, actual_rank): score projected onto U_k</span>
+        <span class="n">feats</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">w_proj</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">B</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">w</span><span class="o">.</span><span class="n">dtype</span><span class="p">)],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_r2_from_features</span><span class="p">(</span><span class="n">feats</span><span class="p">,</span> <span class="n">s_w_proj</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_R2_PROJECTED</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_deferred</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Array</span><span class="p">]:</span>
+        <span class="c1"># dtype must match sibling branches (s_w.dtype); hardcoding float32 crashes</span>
+        <span class="c1"># under x64 where sibling branches return float64.</span>
+        <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">s_w</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_R2_DEFERRED</span><span class="p">)</span>
+
+    <span class="n">min_n_full</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">_MIN_TRAIN_D_RATIO</span> <span class="o">*</span> <span class="n">d</span><span class="p">)</span>  <span class="c1"># each half needs ≥ 8d samples</span>
+    <span class="n">min_n_proj</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">_MIN_TRAIN_K_RATIO</span> <span class="o">*</span> <span class="p">(</span><span class="n">max_rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>  <span class="c1"># each half ≥ 8(k+1)</span>
+
+    <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+        <span class="n">n_f</span> <span class="o">&gt;=</span> <span class="n">min_n_full</span><span class="p">,</span>
+        <span class="n">_full_affine</span><span class="p">,</span>
+        <span class="k">lambda</span><span class="p">:</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">n_f</span> <span class="o">&gt;=</span> <span class="n">min_n_proj</span><span class="p">,</span> <span class="n">_projected</span><span class="p">,</span> <span class="n">_deferred</span><span class="p">),</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_compute_transient_mixing_signal</span><span class="p">(</span>
+    <span class="n">draws_buffer</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">sigma</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">n</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split-half mean-difference proxy for the warmup transient-mixing class.</span>
+
+<span class="sd">    Returns traced bool: True = slow-mixing (RESET preferred by v1.1 switch).</span>
+<span class="sd">    V1 always uses RESET; this signal is reported for the v1.1 anchor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">B</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span>
+    <span class="n">n_f</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">n_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">n_f</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">)</span>
+    <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">sigma_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="mf">1e-20</span><span class="p">)</span>
+    <span class="n">mean_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">draws_buffer</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_safe</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">draws_buffer</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">/</span> <span class="n">sigma_safe</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+    <span class="n">n_train_int</span> <span class="o">=</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">2</span>
+    <span class="n">m1</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n_train_int</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">m2</span> <span class="o">=</span> <span class="n">mask</span> <span class="o">*</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">n_train_int</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+    <span class="n">n1</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">m1</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">n2</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">m2</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="mf">1.0</span><span class="p">)</span>
+    <span class="n">mu1</span> <span class="o">=</span> <span class="p">(</span><span class="n">m1</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n1</span>
+    <span class="n">mu2</span> <span class="o">=</span> <span class="p">(</span><span class="n">m2</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">w</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n2</span>
+    <span class="n">std</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(((</span><span class="n">mask</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">w</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_safe</span><span class="p">)</span> <span class="o">**</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mu1</span> <span class="o">-</span> <span class="n">mu2</span><span class="p">)</span> <span class="o">/</span> <span class="n">std</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_TRANSIENT_MIXING_THRESHOLD</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Core builder</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="build_meta_adaptation_core">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.build_meta_adaptation_core">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_meta_adaptation_core</span><span class="p">(</span>
+    <span class="n">max_grad_budget</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
+    <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricCore</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    max_grad_budget</span>
+<span class="sd">        Maximum total gradient budget (leapfrog evaluations).  Converted to</span>
+<span class="sd">        warmup steps via ``_ASSUMED_AVG_LEAPFROGS_PER_STEP`` at Python time.</span>
+<span class="sd">    max_rank</span>
+<span class="sd">        Maximum low-rank rank; ``None`` uses :data:`_MAX_RANK_CAP`.</span>
+<span class="sd">    gamma, cutoff</span>
+<span class="sd">        Fisher-estimator parameters; defaults match ``fisher_low_rank`` recipe.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    MetricCore</span>
+<span class="sd">        Embeddable init/update/final bundle.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_max_rank</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_MAX_RANK_CAP</span> <span class="k">if</span> <span class="n">max_rank</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">max_rank</span>
+    <span class="n">max_budget_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_grad_budget</span> <span class="o">//</span> <span class="n">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaAdaptationCoreState</span><span class="p">:</span>
+        <span class="c1"># Buffer sized to half the budget so the growing-window schedule&#39;s largest</span>
+        <span class="c1"># window (≈ max_budget_steps * 0.4–0.5) does not overflow the buffer.</span>
+        <span class="c1"># With the cap n=min(buffer_idx, B) in final(), overflow is still safe</span>
+        <span class="c1"># (RESET policy keeps the most-recent B draws = the more-stationary tail).</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">max_budget_steps</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">max_budget_steps</span><span class="p">)</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">_max_rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">_MIN_TRAIN_K_RATIO</span><span class="p">)</span>
+        <span class="n">buf</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">max_budget_steps</span><span class="p">)</span>
+        <span class="n">actual_rank</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_max_rank</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_dims</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">_MAX_RANK_CAP</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MetaAdaptationCoreState</span><span class="p">(</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">LowRankInverseMassMatrix</span><span class="p">(</span>
+                <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_dims</span><span class="p">),</span>
+                <span class="n">U</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">actual_rank</span><span class="p">)),</span>
+                <span class="n">lam</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">actual_rank</span><span class="p">),</span>
+            <span class="p">),</span>
+            <span class="n">mu_star</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n_dims</span><span class="p">),</span>
+            <span class="n">draws_buffer</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">buf</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">)),</span>
+            <span class="n">grads_buffer</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">buf</span><span class="p">,</span> <span class="n">n_dims</span><span class="p">)),</span>
+            <span class="n">buffer_idx</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">background_split</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">recompute_counter</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">has_escalated</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">),</span>
+            <span class="n">escalation_rank</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">s_gap_prev</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">s_gap_curr</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">r2_latest</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">r2_mode</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_R2_DEFERRED</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">budget_used</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="n">converged_at_step</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>  <span class="c1"># -1 = not yet converged</span>
+            <span class="n">prev_lam</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">actual_rank</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">airm_vel_prev</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">airm_vel_curr</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">is_slow_mixing</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">MetaAdaptationCoreState</span><span class="p">,</span>
+        <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
+        <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaAdaptationCoreState</span><span class="p">:</span>
+        <span class="n">pos_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">grad_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">fu</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">grad</span><span class="p">)</span>
+        <span class="n">B</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">%</span> <span class="n">B</span>
+        <span class="c1"># Cast the column offset to idx.dtype — under x64 the literal 0 is int64</span>
+        <span class="c1"># but idx is int32, causing &quot;index arguments must be integers of the same</span>
+        <span class="c1"># type&quot; at trace time.</span>
+        <span class="n">col0</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">idx</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
+            <span class="n">draws_buffer</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_update_slice</span><span class="p">(</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">pos_flat</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">col0</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">grads_buffer</span><span class="o">=</span><span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">dynamic_update_slice</span><span class="p">(</span>
+                <span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span> <span class="n">grad_flat</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:],</span> <span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">col0</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="n">buffer_idx</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="n">budget_used</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">budget_used</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">MetaAdaptationCoreState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaAdaptationCoreState</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Window-boundary controller: compute signals → escalation decision →</span>
+<span class="sd">        choose IMM → hard-reset buffer (v1 reset policy always).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">B</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">B</span><span class="p">))</span>  <span class="c1"># cap at B (Fix 4)</span>
+        <span class="n">actual_rank</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">U</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># static</span>
+
+        <span class="c1"># Welford diagonal sigma: sample std from the buffer.  Used for:</span>
+        <span class="c1"># (a) stay-diagonal metric (measured ≥0.62× welford vs 0.11× fisher-diag</span>
+        <span class="c1">#     on classes where escalation is correctly refused), (b) S_gap whitening</span>
+        <span class="c1">#     basis (where _S_MIN=2.0 and the anchors radon≈8.5/stoch_vol≈1.6 are</span>
+        <span class="c1">#     calibrated).</span>
+        <span class="n">n_f</span> <span class="o">=</span> <span class="n">n</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">n_safe</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">n_f</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">mask_w</span> <span class="o">=</span> <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">B</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="n">mean_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask_w</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">n_safe</span>
+        <span class="n">var_x</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask_w</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span> <span class="o">-</span> <span class="n">mean_x</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+            <span class="mi">0</span>
+        <span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">n_safe</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">sigma_welford</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">var_x</span><span class="p">,</span> <span class="mf">1e-10</span><span class="p">))</span>
+
+        <span class="c1"># Fisher-LR metric (sigma + low-rank U, lam) — used only for the escalated</span>
+        <span class="c1"># path.  Its sigma is informative for the escalated metric but measured worse</span>
+        <span class="c1"># on the stay-diagonal classes (funnel 0.11×, stoch_vol 0.54× vs welford).</span>
+        <span class="n">sigma_lr</span><span class="p">,</span> <span class="n">mu_star_new</span><span class="p">,</span> <span class="n">U_lr</span><span class="p">,</span> <span class="n">lam_lr</span> <span class="o">=</span> <span class="n">_compute_low_rank_metric</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">actual_rank</span><span class="p">,</span> <span class="n">gamma</span><span class="p">,</span> <span class="n">cutoff</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Stay-diagonal metric: Welford sigma, U=0, lam=1.</span>
+        <span class="c1"># Recovers-classical anchor: this IS the nutpie welford-diagonal scheme that</span>
+        <span class="c1"># the controller converges to on isotropic/curvature targets.</span>
+        <span class="n">diag_imm</span> <span class="o">=</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">(</span>
+            <span class="n">sigma</span><span class="o">=</span><span class="n">sigma_welford</span><span class="p">,</span>
+            <span class="n">U</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">d</span><span class="p">,</span> <span class="n">actual_rank</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">sigma_welford</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+            <span class="n">lam</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">actual_rank</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">sigma_welford</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># Escalated metric: full Fisher-LR (measured payoffs are relative to welford</span>
+        <span class="c1"># baseline, so the two-phase design diag(welford) → rank-k(fisher) is correct).</span>
+        <span class="n">lr_imm</span> <span class="o">=</span> <span class="n">LowRankInverseMassMatrix</span><span class="p">(</span><span class="n">sigma</span><span class="o">=</span><span class="n">sigma_lr</span><span class="p">,</span> <span class="n">U</span><span class="o">=</span><span class="n">U_lr</span><span class="p">,</span> <span class="n">lam</span><span class="o">=</span><span class="n">lam_lr</span><span class="p">)</span>
+
+        <span class="c1"># Whitened-residual spectrum on the WELFORD basis (where _S_MIN and anchors</span>
+        <span class="c1"># were calibrated; the Fisher whitening inflates S_gap vs the calibrated scale).</span>
+        <span class="n">eigenvalues</span><span class="p">,</span> <span class="n">U_k</span> <span class="o">=</span> <span class="n">_compute_whitened_spectrum</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">sigma_welford</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">actual_rank</span>
+        <span class="p">)</span>
+        <span class="n">k_new</span> <span class="o">=</span> <span class="n">_choose_rank</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">actual_rank</span><span class="p">,</span> <span class="n">cutoff</span><span class="p">)</span>
+        <span class="n">s_gap_new</span> <span class="o">=</span> <span class="n">_compute_s_gap</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">,</span> <span class="n">k_new</span><span class="p">)</span>
+
+        <span class="c1"># Score-linearity R² on the Welford-whitened space.</span>
+        <span class="c1"># (mode is observed from the taken branch — not inferred post-hoc)</span>
+        <span class="n">r2_new</span><span class="p">,</span> <span class="n">mode_new</span> <span class="o">=</span> <span class="n">_compute_r2_score_linearity</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">,</span> <span class="n">sigma_welford</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">U_k</span><span class="p">,</span> <span class="n">actual_rank</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Transient-mixing class (reported in verdict; v1 always uses RESET).</span>
+        <span class="n">is_slow</span> <span class="o">=</span> <span class="n">_compute_transient_mixing_signal</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">,</span> <span class="n">sigma_welford</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+        <span class="c1"># ---- Escalation decision (all three gates must pass) ----</span>
+        <span class="n">r2_gate</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">r2_new</span> <span class="o">&gt;=</span> <span class="n">_R_MIN</span>
+        <span class="p">)</span>  <span class="c1"># False when r2_new is NaN (JAX comparison semantics)</span>
+        <span class="n">s_gap_prev_valid</span> <span class="o">=</span> <span class="o">~</span><span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">s_gap_curr</span><span class="p">)</span>
+        <span class="n">relative_change</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">s_gap_new</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">s_gap_curr</span><span class="p">)</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+            <span class="n">s_gap_new</span><span class="p">,</span> <span class="mf">1e-10</span>
+        <span class="p">)</span>
+        <span class="n">s_gap_gate</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">s_gap_new</span> <span class="o">&gt;=</span> <span class="n">_S_MIN</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="n">s_gap_prev_valid</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">relative_change</span> <span class="o">&lt;</span> <span class="n">_S_GAP_STABILITY_TOL</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">budget_remaining</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">max_budget_steps</span><span class="p">)</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">budget_used</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span>
+        <span class="p">)</span>
+        <span class="n">deadline_ok</span> <span class="o">=</span> <span class="n">budget_remaining</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">k_new</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span>
+            <span class="n">_STEP_SIZE_READAPT_BUFFER</span>
+        <span class="p">)</span>
+
+        <span class="n">escalate_now</span> <span class="o">=</span> <span class="o">~</span><span class="n">state</span><span class="o">.</span><span class="n">has_escalated</span> <span class="o">&amp;</span> <span class="n">r2_gate</span> <span class="o">&amp;</span> <span class="n">s_gap_gate</span> <span class="o">&amp;</span> <span class="n">deadline_ok</span>
+        <span class="n">new_has_escalated</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">has_escalated</span> <span class="o">|</span> <span class="n">escalate_now</span>
+        <span class="n">new_escalation_rank</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">escalate_now</span><span class="p">,</span> <span class="n">k_new</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">escalation_rank</span><span class="p">)</span>
+
+        <span class="n">chosen_imm</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span><span class="n">new_has_escalated</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">lr_imm</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">diag_imm</span><span class="p">)</span>
+        <span class="n">chosen_mu</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">new_has_escalated</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">mu_star_new</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">mu_star_new</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># ---- AIRM velocity proxy + advisory convergence step ----</span>
+        <span class="c1"># Cast prev_lam to lam_lr dtype for the norm so the subtraction is</span>
+        <span class="c1"># numerically sound; then cast back to float32 before storing.</span>
+        <span class="n">lam_diff</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">lam_lr</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">prev_lam</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">lam_lr</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+        <span class="c1"># Controller-signal scalars are always stored as float32: they are gate</span>
+        <span class="c1"># comparisons and AIRM velocities that don&#39;t benefit from float64 precision.</span>
+        <span class="c1"># Explicit casts here are required so that both branches of the</span>
+        <span class="c1"># jax.lax.cond in staged_adaptation produce identical types under x64</span>
+        <span class="c1"># (the false branch returns the init-time float32 carry unchanged).</span>
+        <span class="n">lam_diff_f32</span> <span class="o">=</span> <span class="n">lam_diff</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">new_airm_vel_prev</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">airm_vel_curr</span>  <span class="c1"># already float32</span>
+        <span class="n">new_airm_vel_curr</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">new_has_escalated</span><span class="p">,</span> <span class="n">lam_diff_f32</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">airm_vel_curr</span>
+        <span class="p">)</span>
+        <span class="c1"># Set converged_at_step once (monotone, like has_escalated) when AIRM criterion fires.</span>
+        <span class="n">airm_converged_now</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">new_has_escalated</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">new_airm_vel_curr</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span><span class="p">)</span>
+            <span class="o">&amp;</span> <span class="p">(</span><span class="n">new_airm_vel_prev</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">new_converged_at</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">converged_at_step</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">airm_converged_now</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">budget_used</span><span class="p">,</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">converged_at_step</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">MetaAdaptationCoreState</span><span class="p">(</span>
+            <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">chosen_imm</span><span class="p">,</span>
+            <span class="n">mu_star</span><span class="o">=</span><span class="n">chosen_mu</span><span class="p">,</span>
+            <span class="n">draws_buffer</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">),</span>
+            <span class="n">grads_buffer</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">grads_buffer</span><span class="p">),</span>
+            <span class="n">buffer_idx</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span><span class="p">),</span>
+            <span class="n">background_split</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">background_split</span><span class="p">),</span>
+            <span class="n">recompute_counter</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">recompute_counter</span><span class="p">),</span>
+            <span class="n">has_escalated</span><span class="o">=</span><span class="n">new_has_escalated</span><span class="p">,</span>
+            <span class="n">escalation_rank</span><span class="o">=</span><span class="n">new_escalation_rank</span><span class="p">,</span>
+            <span class="n">s_gap_prev</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">s_gap_curr</span><span class="p">,</span>  <span class="c1"># float32, propagated from prior window</span>
+            <span class="n">s_gap_curr</span><span class="o">=</span><span class="n">s_gap_new</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">r2_latest</span><span class="o">=</span><span class="n">r2_new</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">r2_mode</span><span class="o">=</span><span class="n">mode_new</span><span class="p">,</span>
+            <span class="n">budget_used</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">budget_used</span><span class="p">,</span>
+            <span class="n">converged_at_step</span><span class="o">=</span><span class="n">new_converged_at</span><span class="p">,</span>
+            <span class="n">prev_lam</span><span class="o">=</span><span class="n">lam_lr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+            <span class="n">airm_vel_prev</span><span class="o">=</span><span class="n">new_airm_vel_prev</span><span class="p">,</span>
+            <span class="n">airm_vel_curr</span><span class="o">=</span><span class="n">new_airm_vel_curr</span><span class="p">,</span>
+            <span class="n">is_slow_mixing</span><span class="o">=</span><span class="n">is_slow</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">MetricCore</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Verdict extraction — Python-side, runs after the warmup scan</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="extract_meta_verdict">
+<a class="viewcode-back" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html#blackjax.adaptation.meta_adaptation.extract_meta_verdict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_meta_verdict</span><span class="p">(</span>
+    <span class="n">final_state</span><span class="p">:</span> <span class="n">MetaAdaptationCoreState</span><span class="p">,</span>
+    <span class="n">max_grad_budget</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_warmup_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">adaptation_info</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaAdaptationVerdict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`MetaAdaptationVerdict` from the final core state.</span>
+
+<span class="sd">    Call after ``warmup.run()`` completes.  Pass ``adaptation_info`` (the</span>
+<span class="sd">    second return of ``warmup.run()``) for true gradient counts.</span>
+
+<span class="sd">    ``budget_returned_steps`` is ADVISORY: the scan runs its full length in v1;</span>
+<span class="sd">    this field shows where a stopping host would have saved steps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">has_esc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">has_escalated</span><span class="p">))</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">escalation_rank</span><span class="p">))</span>
+    <span class="n">budget_used</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">budget_used</span><span class="p">))</span>
+    <span class="n">s_gap</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">s_gap_curr</span><span class="p">))</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">r2_latest</span><span class="p">))</span>
+    <span class="n">mode_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">r2_mode</span><span class="p">))</span>
+    <span class="n">airm_v_prev</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">airm_vel_prev</span><span class="p">))</span>
+    <span class="n">airm_v_curr</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">airm_vel_curr</span><span class="p">))</span>
+    <span class="n">converged_at</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">converged_at_step</span><span class="p">))</span>
+    <span class="n">is_slow</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_slow_mixing</span><span class="p">))</span>
+
+    <span class="n">r2_nan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">r2</span><span class="p">)</span>
+
+    <span class="c1"># Route</span>
+    <span class="n">r2_blocked</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">r2_nan</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">r2</span> <span class="o">&lt;</span> <span class="n">_R_MIN</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">has_esc</span> <span class="ow">and</span> <span class="n">r2_blocked</span><span class="p">:</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;reparam_suggested&quot;</span>
+    <span class="k">elif</span> <span class="n">has_esc</span><span class="p">:</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;low_rank&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;diagonal&quot;</span>
+
+    <span class="c1"># Confidence</span>
+    <span class="n">s_gap_valid</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">s_gap</span><span class="p">)</span>
+    <span class="n">confidence</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;high&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">has_esc</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">r2_nan</span> <span class="ow">and</span> <span class="n">r2</span> <span class="o">&gt;=</span> <span class="n">_R_MIN</span> <span class="ow">and</span> <span class="n">s_gap_valid</span> <span class="ow">and</span> <span class="n">s_gap</span> <span class="o">&gt;=</span> <span class="n">_S_MIN</span><span class="p">)</span>
+        <span class="k">else</span> <span class="s2">&quot;low&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Exit reason and advisory budget return</span>
+    <span class="n">airm_converged</span> <span class="o">=</span> <span class="p">(</span><span class="n">airm_v_prev</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="n">airm_v_curr</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">airm_converged</span> <span class="ow">and</span> <span class="n">has_esc</span><span class="p">:</span>
+        <span class="n">exit_reason</span> <span class="o">=</span> <span class="s2">&quot;airm_velocity_converged&quot;</span>
+    <span class="k">elif</span> <span class="n">budget_used</span> <span class="o">&gt;=</span> <span class="n">num_warmup_steps</span><span class="p">:</span>
+        <span class="n">exit_reason</span> <span class="o">=</span> <span class="s2">&quot;warmup_budget_exhausted&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">exit_reason</span> <span class="o">=</span> <span class="s2">&quot;warmup_complete&quot;</span>
+
+    <span class="c1"># Advisory budget return: steps from first AIRM convergence to end of warmup.</span>
+    <span class="c1"># converged_at_step = -1 means never converged (scan ran full length).</span>
+    <span class="n">budget_returned</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">max</span><span class="p">(</span><span class="n">num_warmup_steps</span> <span class="o">-</span> <span class="n">converged_at</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">converged_at</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="p">)</span>
+
+    <span class="c1"># True gradient count from info stream</span>
+    <span class="n">budget_used_grads</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="n">adaptation_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">budget_used_grads</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">adaptation_info</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="c1"># Flags — mode_int is observed from the carry, not inferred.</span>
+    <span class="n">high_d_r2_mode</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">_R2_DEFERRED</span><span class="p">:</span> <span class="s2">&quot;deferred&quot;</span><span class="p">,</span>
+        <span class="n">_R2_PROJECTED</span><span class="p">:</span> <span class="s2">&quot;projected&quot;</span><span class="p">,</span>
+        <span class="n">_R2_FULL_AFFINE</span><span class="p">:</span> <span class="s2">&quot;full_affine&quot;</span><span class="p">,</span>
+    <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mode_int</span><span class="p">,</span> <span class="s2">&quot;deferred&quot;</span><span class="p">)</span>
+    <span class="n">marginal_s_gap</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_esc</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s_gap_valid</span> <span class="ow">and</span> <span class="p">(</span><span class="n">_S_MIN</span> <span class="o">&lt;=</span> <span class="n">s_gap</span> <span class="o">&lt;</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">_S_MIN</span><span class="p">)</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;reparam_hint&quot;</span><span class="p">:</span> <span class="n">route</span> <span class="o">==</span> <span class="s2">&quot;reparam_suggested&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;marginal_s_gap&quot;</span><span class="p">:</span> <span class="n">marginal_s_gap</span><span class="p">,</span>
+        <span class="s2">&quot;wall_cost_discount&quot;</span><span class="p">:</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;high_d_r2_mode&quot;</span><span class="p">:</span> <span class="n">high_d_r2_mode</span><span class="p">,</span>
+        <span class="s2">&quot;mode_coverage&quot;</span><span class="p">:</span> <span class="s2">&quot;single_chain_uncertified&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">MetaAdaptationVerdict</span><span class="p">(</span>
+        <span class="n">route</span><span class="o">=</span><span class="n">route</span><span class="p">,</span>
+        <span class="n">metric</span><span class="o">=</span><span class="n">final_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+        <span class="n">effective_rank</span><span class="o">=</span><span class="n">k</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
+        <span class="n">exit_reason</span><span class="o">=</span><span class="n">exit_reason</span><span class="p">,</span>
+        <span class="n">budget_used_steps</span><span class="o">=</span><span class="n">budget_used</span><span class="p">,</span>
+        <span class="n">budget_returned_steps</span><span class="o">=</span><span class="n">budget_returned</span><span class="p">,</span>
+        <span class="n">budget_used_grads</span><span class="o">=</span><span class="n">budget_used_grads</span><span class="p">,</span>
+        <span class="n">r2_final</span><span class="o">=</span><span class="n">r2</span><span class="p">,</span>
+        <span class="n">s_gap_final</span><span class="o">=</span><span class="n">s_gap</span><span class="p">,</span>
+        <span class="n">transient_mixing_class</span><span class="o">=</span><span class="s2">&quot;slow&quot;</span> <span class="k">if</span> <span class="n">is_slow</span> <span class="k">else</span> <span class="s2">&quot;fast&quot;</span><span class="p">,</span>
+        <span class="n">buffer_policy</span><span class="o">=</span><span class="s2">&quot;reset&quot;</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

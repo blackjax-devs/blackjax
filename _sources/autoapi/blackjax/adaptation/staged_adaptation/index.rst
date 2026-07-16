@@ -146,7 +146,7 @@ Module Contents
    :rtype: A list of tuples (window_label, is_middle_window_end).
 
 
-.. py:function:: staged_adaptation(algorithm, logdensity_fn: Callable, metric: str | blackjax.adaptation.metric_recipes.MetricRecipe | blackjax.adaptation.metric_recipes.MetricCore = 'welford_diag', *, imm_shrinkage_to_previous: float = 0.0, initial_inverse_mass_matrix: blackjax.types.Array | None = None, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, schedule_fn: Callable = build_schedule, initial_metric_state: Any = None, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: staged_adaptation(algorithm, logdensity_fn: Callable, metric: str | blackjax.adaptation.metric_recipes.MetricRecipe | blackjax.adaptation.metric_recipes.MetricCore = 'welford_diag', *, max_grad_budget: int | None = None, imm_shrinkage_to_previous: float = 0.0, initial_inverse_mass_matrix: blackjax.types.Array | None = None, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, schedule_fn: Callable | None = None, initial_metric_state: Any = None, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the step size and inverse mass matrix for HMC-family algorithms.
 
@@ -163,6 +163,13 @@ Module Contents
    :param logdensity_fn: The log density probability density function to sample.
    :param metric: The mass-matrix adaptation specification.  Accepts:
 
+                  - ``"auto"`` — the meta-adaptation controller
+                    (:mod:`~blackjax.adaptation.meta_adaptation`). Automatically selects
+                    the diagonal vs low-rank path and the growing-window schedule.
+                    Requires ``max_grad_budget`` to be set.  The emitted metric is always
+                    a :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` (with
+                    U=0, lam=1 when the controller stays diagonal — bit-equivalent to
+                    the diagonal metric).
                   - **str** — a registry name (``"welford_diag"`` (default),
                     ``"welford_dense"``, ``"fisher_diag"``); looked up via
                     :func:`~blackjax.adaptation.metric_recipes.lookup_recipe` and built
@@ -172,6 +179,13 @@ Module Contents
                   - :class:`~blackjax.adaptation.metric_recipes.MetricCore` — used
                     directly as-is; ``imm_shrinkage_to_previous`` and
                     ``initial_inverse_mass_matrix`` are ignored (closed over in the core).
+   :param max_grad_budget: Maximum total gradient budget (leapfrog evaluations).  Required when
+                           ``metric="auto"``; ignored otherwise.  The meta-adaptation controller
+                           converts this to a warmup step count via a conservative divisor (see
+                           :mod:`~blackjax.adaptation.meta_adaptation`).  Passed as-is; use
+                           :func:`~blackjax.adaptation.meta_adaptation.extract_meta_verdict` after
+                           ``warmup.run()`` to get the structured routing verdict and true gradient
+                           counts.
    :param imm_shrinkage_to_previous: Pseudo-count controlling shrinkage of the per-window IMM toward the
                                      previous window's IMM (Bayesian persistence).  Default ``0.0``
                                      reproduces Stan's per-window-reset behavior exactly.  Ignored when
@@ -190,11 +204,14 @@ Module Contents
                       used if ``build_kernel`` accepts arguments.  Defaults to
                       :func:`~blackjax.mcmc.integrators.velocity_verlet`.
    :param schedule_fn: Callable ``(num_steps: int) -> Array`` that returns a
-                       ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs.
-                       Default :func:`build_schedule` (Stan's fixed-absolute, 2×-doubling
-                       schedule).  Pass
+                       ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs, or
+                       ``None`` (default) to use the path-appropriate default.
+                       When ``None`` and ``metric="auto"``, the default is
                        :func:`~blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule`
-                       for nutpie's proportional-to-tune, 1.5×-growing-window schedule.
+                       (nutpie's proportional-to-tune, 1.5×-growing-window schedule).
+                       When ``None`` and any other ``metric``, the default is
+                       :func:`build_schedule` (Stan's fixed-absolute, 2×-doubling schedule).
+                       An explicit callable is always honored regardless of ``metric``.
    :param initial_metric_state: Optional pre-built mass-matrix adaptation core state.  When not
                                 ``None``, overrides the ``metric_core.init(n_dims)`` call at warmup
                                 start — the provided state is used as-is.  The object must be a
