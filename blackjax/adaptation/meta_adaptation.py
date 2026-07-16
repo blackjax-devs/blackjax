@@ -504,12 +504,12 @@ def _compute_projector_agreement(
 
 
 def _bbp_edge_sq(d: int, M: int) -> float:
-    """Sample-eigenvalue BBP detection edge: ``(1 + √(d/M))²``.
+    """Sample-eigenvalue bulk-separation edge: ``(1 + √(d/M))²``.
 
-    This is the upper edge of the Marchenko–Pastur bulk when the governing
-    effective count is M (the between-chain look-count) rather than the
-    total number of draws.  Using M instead of the single-chain n_eff
-    avoids the optimism of ESS estimates under poor mixing (the ESS
+    The threshold separates the noise bulk from a true spike when the
+    governing effective count is M (the between-chain look-count) rather
+    than the total number of draws.  Using M instead of the single-chain
+    n_eff avoids the optimism of ESS estimates under poor mixing (the ESS
     overestimates exactly when the sampler struggles most).
 
     Both ``d`` and ``M`` are Python ints (static at construction time), so
@@ -957,7 +957,7 @@ def build_multi_chain_meta_core(
         eigenvalues_pool, U_k_pool = _compute_whitened_spectrum(
             pooled_draws, sigma_welford, n_pool, actual_rank
         )
-        # Count spikes above the M-based BBP edge (replaces fixed cutoff)
+        # Count spikes above the M-count detection edge (replaces fixed cutoff)
         is_above_edge = eigenvalues_pool > jnp.float32(bbp_edge)
         k_from_pool = is_above_edge.sum().astype(jnp.int32)
         support_cap_pool = (n_pool // 2).astype(jnp.int32)
