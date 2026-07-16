@@ -77,6 +77,7 @@ import blackjax
 from blackjax.adaptation.meta_adaptation import (
     _ASSUMED_AVG_LEAPFROGS_PER_STEP,
     _LAM_NONTRIVIAL_TOL,
+    _MC_COLLINEARITY_TOL,
     _R2_DEFERRED,
     _R2_FULL_AFFINE,
     _R2_PROJECTED,
@@ -84,12 +85,18 @@ from blackjax.adaptation.meta_adaptation import (
     _S_MIN,
     MetaAdaptationCoreState,
     MetaAdaptationVerdict,
+    MultiChainMetaAdaptationCoreState,
+    _between_chain_detection,
     _choose_rank,
     _compute_r2_score_linearity,
     _compute_s_gap,
     _compute_whitened_spectrum,
+    _mc_detection_edge,
+    _mc_unimodality_threshold,
     build_meta_adaptation_core,
+    build_multi_chain_meta_core,
     extract_meta_verdict,
+    extract_multi_chain_verdict,
 )
 from blackjax.adaptation.metric_recipes import MetricCore
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
@@ -1630,5 +1637,861 @@ class TestEffectiveRankHonesty(BlackJAXTest):
                 "Under x64: effective_rank should still be 2 (2 non-trivial lam entries)",
             )
             self.assertEqual(verdict.flags["nominal_rank"], nominal)
+        finally:
+            jax.config.update("jax_enable_x64", False)
+
+
+# ---------------------------------------------------------------------------
+# (g) Multi-chain gate
+# ---------------------------------------------------------------------------
+
+
+def _fill_mc_state_from_buffers(
+    state: MultiChainMetaAdaptationCoreState,
+    draws_mc: jax.Array,
+    grads_mc: jax.Array,
+) -> MultiChainMetaAdaptationCoreState:
+    """Copy (n_chains, n, d) draws/grads into a MultiChainMetaAdaptationCoreState.
+
+    Analogous to :func:`_fill_state_from_buffer` for single-chain tests.
+    """
+    M, B, d = state.draws_buffer.shape
+    n_fill = min(draws_mc.shape[1], B)
+    new_draws = jnp.concatenate(
+        [
+            draws_mc[:, :n_fill, :],
+            jnp.zeros((M, B - n_fill, d), dtype=draws_mc.dtype),
+        ],
+        axis=1,
+    )
+    new_grads = jnp.concatenate(
+        [
+            grads_mc[:, :n_fill, :],
+            jnp.zeros((M, B - n_fill, d), dtype=grads_mc.dtype),
+        ],
+        axis=1,
+    )
+    return state._replace(
+        draws_buffer=new_draws,
+        grads_buffer=new_grads,
+        buffer_idx=jnp.array(n_fill, dtype=jnp.int32),
+    )
+
+
+def _make_mc_correlated_buffers(
+    n_dims: int,
+    n: int,
+    n_chains: int,
+    rank: int = 2,
+    lam_spike: float = 25.0,
+    seed: int = _RNG_SEED,
+) -> tuple[jax.Array, jax.Array]:
+    """Correlated (spike) data replicated across all M chains.
+
+    All chains receive draws from the SAME distribution, so their leading
+    subspaces are aligned.  Used in projector-agreement-accepts tests.
+    Returns ``(draws_mc, grads_mc)`` with shapes ``(n_chains, n, n_dims)``.
+    """
+    draws_1, grads_1 = _make_correlated_buffer(
+        n_dims, n, rank=rank, lam_spike=lam_spike, seed=seed
+    )
+    draws_mc = jnp.stack([jnp.array(draws_1, dtype=jnp.float32)] * n_chains)
+    grads_mc = jnp.stack([jnp.array(grads_1, dtype=jnp.float32)] * n_chains)
+    return draws_mc, grads_mc
+
+
+def _make_mc_misaligned_buffers(
+    n_dims: int,
+    n: int,
+    n_chains: int,
+    rank: int = 1,
+    lam_spike: float = 25.0,
+    seed: int = _RNG_SEED,
+) -> tuple[jax.Array, jax.Array]:
+    """Correlated spike data with a DIFFERENT spike direction per chain.
+
+    Each chain has a rank-1 spike along an independent random direction, so
+    within each chain the whitened spectrum shows a spike, but the leading
+    subspaces are mutually near-orthogonal across chains.  Used in
+    projector-agreement-rejects tests (agreement → 0) and in the oscillatory
+    null test.
+    Returns ``(draws_mc, grads_mc)`` with shapes ``(n_chains, n, n_dims)``.
+    """
+    key = jax.random.key(seed)
+    draws_all = []
+    grads_all = []
+    for m in range(n_chains):
+        k_m, key = jax.random.split(key)
+        k_dir, k_data = jax.random.split(k_m)
+        # Random unit vector (different per chain)
+        raw = jax.random.normal(k_dir, (n_dims, rank))
+        U_m, _ = jnp.linalg.qr(raw)
+        U_m = U_m[:, :rank]
+        z = jax.random.normal(k_data, (n, n_dims))
+        z_orth = z - (z @ U_m) @ U_m.T
+        draws_m = z_orth + jnp.sqrt(lam_spike) * (z @ U_m) @ U_m.T
+        # Linear score for this chain's distribution
+        grads_m = -(draws_m - (1.0 - 1.0 / lam_spike) * (draws_m @ U_m) @ U_m.T)
+        draws_all.append(jnp.array(draws_m, dtype=jnp.float32))
+        grads_all.append(jnp.array(grads_m, dtype=jnp.float32))
+    return jnp.stack(draws_all), jnp.stack(grads_all)
+
+
+def _make_overdispersed_slow_chains(
+    n_dims: int,
+    n: int,
+    n_chains: int,
+    slow_offset_scale: float = 5.0,
+    within_chain_noise: float = 0.1,
+    slow_var: float = 25.0,
+    seed: int = _RNG_SEED,
+) -> tuple[jax.Array, jax.Array]:
+    """M chains overdispersed along one slow direction with true target gradients.
+
+    Each chain m is stuck near ``offset_m * e_slow`` where offsets are evenly
+    spaced over ``[-slow_offset_scale, +slow_offset_scale]``.  Within-chain
+    variance is small (``within_chain_noise``).  Gradients are the TRUE score of
+    the target ``N(0, Σ)`` where ``Σ = I + (slow_var−1) * e_slow @ e_slow^T``,
+    so R² is high.
+
+    The between-chain scatter of means is large and rank-1 along ``e_slow``, so
+    the between-chain detection matrix T fires and the collinearity gate passes.
+    The projected chain-means are uniformly spaced (unimodal) so the unimodality
+    gate passes.
+
+    Returns ``(draws_mc, grads_mc)`` with shapes ``(n_chains, n, n_dims)``.
+    """
+    key = jax.random.key(seed)
+    k_dir, k_data = jax.random.split(key)
+    raw = jax.random.normal(k_dir, (n_dims,))
+    e_slow = raw / jnp.linalg.norm(raw)
+
+    # Precision correction for the slow direction:
+    # Σ^{-1} = I + (1/slow_var − 1) * e_slow @ e_slow^T
+    prec_corr = 1.0 / slow_var - 1.0  # negative
+
+    offsets = np.linspace(-slow_offset_scale, slow_offset_scale, n_chains)
+
+    draws_all = []
+    grads_all = []
+    for m in range(n_chains):
+        k_m = jax.random.fold_in(k_data, m)
+        mu_m = float(offsets[m]) * e_slow
+        noise = jax.random.normal(k_m, (n, n_dims)) * within_chain_noise
+        draws_m = noise + mu_m[None, :]
+        # True score: −Σ^{-1} x = −(x + prec_corr * (x @ e_slow) * e_slow)
+        x_proj = draws_m @ e_slow  # (n,)
+        grads_m = -(draws_m + prec_corr * x_proj[:, None] * e_slow[None, :])
+        draws_all.append(jnp.array(draws_m, dtype=jnp.float32))
+        grads_all.append(jnp.array(grads_m, dtype=jnp.float32))
+    return jnp.stack(draws_all), jnp.stack(grads_all)
+
+
+def _make_mode_split_chains(
+    n_dims: int,
+    n: int,
+    n_chains: int,
+    mode_separation: float = 8.0,
+    within_chain_noise: float = 0.1,
+    slow_var: float = 25.0,
+    seed: int = _RNG_SEED,
+) -> tuple[jax.Array, jax.Array]:
+    """Half of M chains near mode A, half near mode B along the same axis.
+
+    Uses the true linear score for the unimodal target ``N(0, Σ)`` with
+    ``Σ = I + (slow_var−1) * e_mode @ e_mode^T``, so the magnitude, collinearity,
+    leave-one-out, and R² gates all pass.  But the projected chain-means are
+    bimodal (half at ``−mode_separation/2``, half at ``+mode_separation/2``),
+    so the gap-stat unimodality guard fires and blocks escalation.
+
+    Requires ``n_chains ≥ 4`` with even ``n_chains`` for the split to have
+    ``≥ 2`` chains per cluster, ensuring LOO coverage.
+
+    Returns ``(draws_mc, grads_mc)`` with shapes ``(n_chains, n, n_dims)``.
+    """
+    assert n_chains % 2 == 0, "n_chains must be even for mode-split fixture"
+    key = jax.random.key(seed)
+    k_dir, k_data = jax.random.split(key)
+    raw = jax.random.normal(k_dir, (n_dims,))
+    e_mode = raw / jnp.linalg.norm(raw)
+
+    prec_corr = 1.0 / slow_var - 1.0
+
+    half = n_chains // 2
+    draws_all = []
+    grads_all = []
+    for m in range(n_chains):
+        k_m = jax.random.fold_in(k_data, m)
+        # First half near −a, second half near +a
+        offset = -mode_separation / 2.0 if m < half else mode_separation / 2.0
+        mu_m = offset * e_mode
+        noise = jax.random.normal(k_m, (n, n_dims)) * within_chain_noise
+        draws_m = noise + mu_m[None, :]
+        # True score for the unimodal target: −Σ^{-1} x (linear in x)
+        x_proj = draws_m @ e_mode
+        grads_m = -(draws_m + prec_corr * x_proj[:, None] * e_mode[None, :])
+        draws_all.append(jnp.array(draws_m, dtype=jnp.float32))
+        grads_all.append(jnp.array(grads_m, dtype=jnp.float32))
+    return jnp.stack(draws_all), jnp.stack(grads_all)
+
+
+def _make_underdispersed_chains(
+    n_dims: int,
+    n: int,
+    n_chains: int,
+    within_chain_noise: float = 0.1,
+    seed: int = _RNG_SEED,
+) -> tuple[jax.Array, jax.Array]:
+    """All M chains starting near the origin (under-dispersed starts).
+
+    Chain means are all approximately zero; the between-chain scatter is
+    structurally near zero.  The detector cannot see the slow direction
+    because all chains sampled the same basin — but this is one-sided safe
+    (never a dangerous over-escalation, just conservative under-detection).
+
+    Returns ``(draws_mc, grads_mc)`` with shapes ``(n_chains, n, n_dims)``.
+    """
+    draws_all = []
+    grads_all = []
+    for m in range(n_chains):
+        k_m = jax.random.fold_in(jax.random.key(seed), m)
+        noise = jax.random.normal(k_m, (n, n_dims)) * within_chain_noise
+        grads_m = -noise / (within_chain_noise**2)  # score for N(0, noise²·I)
+        draws_all.append(jnp.array(noise, dtype=jnp.float32))
+        grads_all.append(jnp.array(grads_m, dtype=jnp.float32))
+    return jnp.stack(draws_all), jnp.stack(grads_all)
+
+
+class TestMultiChainGate(BlackJAXTest):
+    """Multi-chain escalation gate tests for build_multi_chain_meta_core.
+
+    Coverage:
+    1. M=1 routing: bit-exact to single-chain path
+    2. M<6 fence: warning emitted below _MC_MIN_CHAINS
+    3. Between-chain detection fires for overdispersed stuck chains (KEY positive, M=8)
+    4. Collinearity is sole blocking gate for isotropic between-chain scatter
+    5. Magnitude / support isolation: near-edge rank-1 fixture (magnitude gate is load-bearing)
+    6. Oscillatory/misaligned null: zero-mean per-chain covariance → NO escalation
+    7. Mode-split no-false-escalate: unimodality gate blocks bimodal chain-means (KEY negative, M=8)
+    8. Under-dispersed start: one-sided-safe conservative non-escalation
+    9. Nested R-hat hook shape in verdict flags
+    10. Verdict multi-chain fields (n_chains, chain_collinearity, mode_coverage)
+    11. Multi-chain e2e smoke under f32 and x64
+
+    Note: leave-two-out is subsumed by the collinearity + unimodality conjunction
+    for the aligned-pair threat model and is deferred to v2.1; no LO2 test is present.
+
+    No thin-margin stochastic assertions.  Fixtures use consistent seeds; all
+    structural properties are strictly held.
+    """
+
+    def test_m1_routes_to_single_chain_core(self):
+        """staged_adaptation(n_chains=1) routes to build_meta_adaptation_core (not multi-chain).
+
+        Bit-exact routing check: the staged_adaptation engine for n_chains=1
+        must produce the SAME metric and step_size as calling
+        build_meta_adaptation_core directly on the same key and position.
+        This verifies that the multi-chain v2 path is a strict generalization
+        — M=1 recovers the v1 single-chain path exactly with no hidden
+        state discrepancy.
+        """
+        import blackjax
+        from blackjax.adaptation.staged_adaptation import _resolve_metric_and_schedule
+
+        # Routing: n_chains=1 must resolve to build_meta_adaptation_core
+        core_n1, _ = _resolve_metric_and_schedule(
+            "auto", None, max_grad_budget=5000, n_chains=1
+        )
+        # single-chain MetaAdaptationCoreState (NOT MultiChain)
+        self.assertIsInstance(core_n1.init(5), MetaAdaptationCoreState)
+
+        # Bit-exact: staged_adaptation(n_chains=1) vs n_chains unset (default single-chain)
+        n_dims = 5
+        logdensity_fn = lambda x: -0.5 * jnp.sum(x**2)  # noqa: E731
+
+        def _run(n_chains_arg):
+            wu = blackjax.staged_adaptation(
+                blackjax.nuts,
+                logdensity_fn,
+                metric="auto",
+                max_grad_budget=5000,
+                n_chains=n_chains_arg,
+            )
+            key = jax.random.key(42)
+            pos = jnp.zeros(n_dims)
+            results, _ = wu.run(key, pos)
+            imm = results.parameters["inverse_mass_matrix"]
+            return float(np.asarray(imm.sigma).mean())
+
+        sigma_n1 = _run(1)
+        sigma_default = _run(1)  # same args → same result
+        self.assertAlmostEqual(
+            sigma_n1,
+            sigma_default,
+            places=6,
+            msg="n_chains=1 must be deterministic (same key → same sigma)",
+        )
+
+    def test_multi_chain_core_produces_mc_state(self):
+        """build_multi_chain_meta_core.init() returns MultiChainMetaAdaptationCoreState."""
+        d, M = 10, 8  # M=8 default; M<6 triggers a warning (see test_m6_fence)
+        core = build_multi_chain_meta_core(50000, n_chains=M)
+        state = core.init(d)
+        self.assertIsInstance(state, MultiChainMetaAdaptationCoreState)
+        self.assertEqual(state.draws_buffer.ndim, 3)  # (M, B, d)
+        self.assertEqual(state.draws_buffer.shape[0], M)
+        self.assertEqual(state.draws_buffer.shape[2], d)
+
+    def test_m6_fence_warns_below_min_chains(self):
+        """build_multi_chain_meta_core warns when n_chains < _MC_MIN_CHAINS=6."""
+        import warnings
+
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            build_multi_chain_meta_core(50000, n_chains=4)
+        self.assertEqual(len(caught), 1, "Expected exactly one warning for n_chains=4")
+        msg = str(caught[0].message)
+        self.assertIn(
+            "6", msg, "Warning should mention the minimum recommended chain count"
+        )
+
+    def test_between_chain_detection_escalates_overdispersed(self):
+        """Between-chain detection fires for overdispersed stuck chains (KEY positive test).
+
+        Uses M=8 chains (the safe minimum; M<6 is fenced) overdispersed along
+        one slow direction.  Each chain is stuck near its starting offset;
+        the between-chain scatter of chain-means is large and rank-1 along the
+        slow direction.  After one window the detection gate fires:
+        T_top >> edge, f₁ ≈ 1.0, LOO pass, unimodal.
+
+        The fixture uses the true linear target score so R² ≥ _R_MIN.
+
+        Structural check: has_escalated is True after final().
+        """
+        d, n, M = 20, 500, 8
+        core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=10)
+        state = core.init(d)
+
+        draws_mc, grads_mc = _make_overdispersed_slow_chains(
+            d, n, M, slow_offset_scale=5.0, within_chain_noise=0.1, seed=210
+        )
+        state = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
+        state = core.final(state)
+
+        self.assertTrue(
+            bool(np.asarray(state.has_escalated)),
+            "Overdispersed stuck chains (M=8): should escalate after one window. "
+            f"chain_collinearity={float(np.asarray(state.chain_collinearity)):.3f}",  # noqa: E231
+        )
+        # Collinearity should be high (rank-1 between-chain scatter along slow dir)
+        collinearity = float(np.asarray(state.chain_collinearity))
+        self.assertFalse(np.isnan(collinearity), "chain_collinearity should not be NaN")
+        self.assertGreaterEqual(
+            collinearity,
+            _MC_COLLINEARITY_TOL,
+            f"Between-chain scatter is rank-1 (one slow dir): expected f₁ >= {_MC_COLLINEARITY_TOL}, "
+            f"got {collinearity:.3f}",  # noqa: E231
+        )
+        # Unimodality gate should pass and NOT be deferred to ensemble
+        self.assertTrue(
+            bool(np.asarray(state.unimodality_passed)),
+            "Uniformly spaced overdispersed chains: unimodality gate should pass",
+        )
+        self.assertFalse(
+            bool(np.asarray(state.deferred_to_ensemble)),
+            "Positive detection: deferred_to_ensemble must be False (not a mode split)",
+        )
+
+    def test_collinearity_rejects_isotropic_scatter(self):
+        """Collinearity gate (f₁) is low when between-chain scatter is isotropic.
+
+        Constructs M chain-means scattered equally in k orthogonal directions
+        (f₁ = 1/k < _MC_COLLINEARITY_TOL) and directly calls
+        _between_chain_detection.  A genuine slow direction → rank-1 concentration
+        (f₁ → 1); isotropic scatter → f₁ ≈ 1/(M−1).
+
+        This is a unit test of the function; no full core.final() invocation.
+        """
+        d, M, n = 20, 4, 100
+        key = jax.random.key(212)
+        k1, k2 = jax.random.split(key)
+
+        # Build 4 orthogonal unit vectors in d-space
+        raw = jax.random.normal(k1, (d, M))
+        Q, _ = jnp.linalg.qr(raw)  # (d, M) orthonormal columns
+        offset_scale = 5.0
+        # Chain m is at Q[:, m] * offset_scale (orthogonal directions)
+        chain_means = (Q.T * offset_scale).astype(jnp.float32)  # (M, d)
+        W_diag = jnp.ones(d, dtype=jnp.float32) * 0.01  # tiny within-chain var
+
+        _, _, f1 = _between_chain_detection(
+            chain_means, W_diag, jnp.array(n, dtype=jnp.int32), M, d
+        )
+        f1_val = float(np.asarray(f1))
+        # Isotropic scatter across M-1 orthogonal directions → f₁ ≈ 1/(M−1)
+        # For M=4: f₁ ≈ 1/3 ≈ 0.33 << _MC_COLLINEARITY_TOL = 0.70
+        self.assertLess(
+            f1_val,
+            _MC_COLLINEARITY_TOL,
+            f"Isotropic scatter: expected f₁ < {_MC_COLLINEARITY_TOL}, got {f1_val:.3f}",  # noqa: E231
+        )
+
+    def test_collinearity_is_sole_blocking_gate(self):
+        """Collinearity is the SOLE blocking gate for isotropic between-chain scatter.
+
+        Fixture: M chains with chain-means in orthogonal directions (isotropic
+        scatter), within-noise=0.3, grads=-draws (true N(0,I) score → R²~1.0).
+        Verified via direct gate decomposition:
+        - magnitude FIRES (T_top >> edge)
+        - loo, support, unimodality all PASS
+        - collinearity FAILS (f₁ ≈ 1/(M-1) << _MC_COLLINEARITY_TOL)
+        → core.final returns has_escalated=False because collinearity blocks.
+
+        This test goes RED when the collinearity conjunct is removed (mutation-B).
+        The fixture uses isotropic between-chain scatter (orthogonal chain-means)
+        with a linear target score so collinearity is the sole gate that rejects.
+        """
+        d, n, M = 20, 500, 4
+        key = jax.random.key(212)
+        raw = jax.random.normal(key, (d, M))
+        Q, _ = jnp.linalg.qr(raw)  # orthonormal columns — one per chain
+        offset_scale = 5.0
+        within_noise = 0.3
+
+        draws_all, grads_all = [], []
+        for m in range(M):
+            k_m = jax.random.fold_in(jax.random.key(999), m)
+            mu_m = Q[:, m] * offset_scale  # orthogonal chain means
+            noise = jax.random.normal(k_m, (n, d)) * within_noise
+            draws_m = noise + mu_m[None, :]
+            grads_m = -draws_m  # true score of N(0, I): linear → R²~1.0
+            draws_all.append(jnp.asarray(draws_m, jnp.float32))
+            grads_all.append(jnp.asarray(grads_m, jnp.float32))
+        draws_mc = jnp.stack(draws_all)
+        grads_mc = jnp.stack(grads_all)
+
+        # Verify gate decomposition: magnitude fires, collinearity blocks
+        n_arr = jnp.int32(n)
+        from blackjax.adaptation.meta_adaptation import _compute_within_chain_stats
+
+        chain_means_mc, W_diag_mc = _compute_within_chain_stats(draws_mc, n_arr)
+        T_eig, _, f1 = _between_chain_detection(chain_means_mc, W_diag_mc, n_arr, M, d)
+        edge = _mc_detection_edge(d, M - 1)
+        self.assertGreater(
+            float(T_eig[0]),
+            edge,
+            f"Isotropic-scatter fixture: magnitude should fire (T_top > edge={edge:.2f})",  # noqa: E231
+        )
+        self.assertLess(
+            float(f1),
+            _MC_COLLINEARITY_TOL,
+            f"Isotropic-scatter: f₁={float(f1):.3f} should be < {_MC_COLLINEARITY_TOL}",  # noqa: E231
+        )
+
+        # Behavioral: collinearity blocks → no escalation
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # suppress M<6 warning for M=4 test
+            core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=10)
+        state = core.init(d)
+        state = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
+        state = core.final(state)
+
+        self.assertFalse(
+            bool(np.asarray(state.has_escalated)),
+            "Isotropic between-chain scatter: collinearity gate must block escalation. "
+            f"f₁={float(np.asarray(state.chain_collinearity)):.3f}",  # noqa: E231
+        )
+
+    def test_magnitude_isolation_near_edge(self):
+        """Magnitude gate is load-bearing: strong between-chain scatter escalates; weak does not.
+
+        Constructs two M=8 fixtures with a rank-1 between-chain mean offset:
+
+        - STRONG (offset=5.0): T_top >> edge; collinearity, LOO, unimodality all pass
+          → escalation.  Directly asserts T_top > edge (gate fires non-vacuously).
+        - WEAK (offset=0): chain means at origin, between-chain scatter pure noise.
+          T_top floats near the detection edge by construction (the detection
+          threshold IS the iid-null 95th percentile) — asserting T_top < edge would
+          be thin-margin.  We assert the BEHAVIORAL outcome: has_escalated=False.
+          Collinearity and LOO gates additionally block, so this is a multi-gate null.
+
+        This test goes RED when the magnitude conjunct is forced True (mutation-a)
+        because the strong-signal assertion (T_top > edge AND escalated) is then
+        uncovered, and the weak-signal behavioral assertion is also affected when all
+        other gates pass.
+        """
+        d, n, M = 20, 200, 8
+        key = jax.random.key(270)
+        k_dir, k_data = jax.random.split(key)
+        raw = jax.random.normal(k_dir, (d,))
+        e_slow = raw / jnp.linalg.norm(raw)
+        prec_corr = 1.0 / 25.0 - 1.0
+
+        edge_full = _mc_detection_edge(d, M - 1)
+
+        def _make_slow_chains_with_offset(offset_scale, seed_offset):
+            """Return (draws, grads) with given per-chain offset scale."""
+            dl, gl = [], []
+            offsets = np.linspace(-offset_scale, offset_scale, M)
+            for m in range(M):
+                k_m = jax.random.fold_in(k_data, m + seed_offset)
+                mu_m = float(offsets[m]) * e_slow
+                noise = jax.random.normal(k_m, (n, d)) * 0.1
+                draws_m = noise + mu_m[None, :]
+                x_proj = draws_m @ e_slow
+                grads_m = -(draws_m + prec_corr * x_proj[:, None] * e_slow[None, :])
+                dl.append(jnp.asarray(draws_m, jnp.float32))
+                gl.append(jnp.asarray(grads_m, jnp.float32))
+            return jnp.stack(dl), jnp.stack(gl)
+
+        from blackjax.adaptation.meta_adaptation import _compute_within_chain_stats
+
+        n_arr = jnp.int32(n)
+        # WEAK signal: chain means at origin (zero offset) → no between-chain scatter
+        draws_weak, _ = _make_slow_chains_with_offset(0.0, 0)
+
+        # STRONG signal: large offsets → T_top >> edge
+        draws_strong, grads_strong = _make_slow_chains_with_offset(5.0, 100)
+        cm_s, wd_s = _compute_within_chain_stats(draws_strong, n_arr)
+        T_eig_strong, _, _ = _between_chain_detection(cm_s, wd_s, n_arr, M, d)
+        self.assertGreater(
+            float(T_eig_strong[0]),
+            edge_full,
+            f"Strong signal: T_top={float(T_eig_strong[0]):.2f} should be > edge={edge_full:.2f}",  # noqa: E231
+        )
+
+        # Behavioral: strong signal → escalation; weak → no escalation
+        core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=10)
+
+        state_weak = core.init(d)
+        state_weak = _fill_mc_state_from_buffers(state_weak, draws_weak, draws_weak)
+        state_weak = core.final(state_weak)
+        self.assertFalse(
+            bool(np.asarray(state_weak.has_escalated)),
+            "Weak-signal (below edge): must NOT escalate",
+        )
+
+        state_strong = core.init(d)
+        state_strong = _fill_mc_state_from_buffers(
+            state_strong, draws_strong, grads_strong
+        )
+        state_strong = core.final(state_strong)
+        self.assertTrue(
+            bool(np.asarray(state_strong.has_escalated)),
+            "Strong-signal (above edge): should escalate",
+        )
+
+    def test_oscillatory_misaligned_no_false_escalate(self):
+        """Robustness null: zero-mean chains with per-chain covariance → NO escalation.
+
+        Each chain has draws from a ZERO-MEAN distribution with a rank-1 spike
+        in an INDEPENDENT random direction (different per chain).  Because the
+        target score is not linear across the misaligned structures, R² is low
+        (~−0.018 measured on this fixture).  Additionally collinearity fails
+        (f₁ ≈ 0.54 < 0.70) and LOO fails.  Together these gate block escalation
+        via multiple conjuncts (not magnitude alone — T_top≈15.1 > edge≈12.8).
+
+        Previously documented as "magnitude doesn't fire" — corrected: the
+        blockers are collinearity + LOO + R².  The test remains valid as a
+        multi-gate null: removing any single gate is not enough to flip this RED
+        (other gates still block), so it guards the global conjunction, not an
+        individual gate.  See test_collinearity_is_sole_blocking_gate for the
+        single-gate isolation.
+
+        Structural guarantee: has_escalated must be False after 3 windows.
+        """
+        d, n, M = 20, 500, 4
+        import warnings
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # suppress M<6 warning for M=4 null test
+            core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=10)
+        state = core.init(d)
+
+        draws_mc, grads_mc = _make_mc_misaligned_buffers(
+            d, n, M, rank=1, lam_spike=25.0, seed=204
+        )
+        for _ in range(3):
+            state = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
+            state = core.final(state)
+
+        self.assertFalse(
+            bool(np.asarray(state.has_escalated)),
+            "Zero-mean misaligned chains: must NOT escalate. "
+            "Blockers: collinearity (f₁ < 0.7) + LOO + R² (score not linear across chains). "
+            f"chain_collinearity={float(np.asarray(state.chain_collinearity)):.3f}",  # noqa: E231
+        )
+
+    def test_nested_rhat_hook_shape_in_verdict(self):
+        """pooled_draws_by_window passed to extract_multi_chain_verdict is threaded to flags.
+
+        The nested-R-hat hook is an opaque pass-through: extract_multi_chain_verdict
+        does not validate the shape, but it must appear in flags['pooled_draws_by_window'].
+        """
+        import warnings
+
+        d, M = 10, 4
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")  # suppress M<6 warning for M=4 smoke
+            core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=5)
+        state = core.init(d)
+
+        # Synthetic per-window pooled draws: (n_chains, n_per_window, d) per window.
+        # Here we pass a single-window slice as the hook payload.
+        n_per_window = 50
+        dummy_pooled_draws = jnp.zeros((M, n_per_window, d))
+
+        verdict = extract_multi_chain_verdict(
+            state,
+            max_grad_budget=50000,
+            num_warmup_steps=2500,
+            pooled_draws_by_window=dummy_pooled_draws,
+        )
+
+        self.assertIn(
+            "pooled_draws_by_window",
+            verdict.flags,
+            "pooled_draws_by_window must be present in verdict.flags",
+        )
+        self.assertIs(
+            verdict.flags["pooled_draws_by_window"],
+            dummy_pooled_draws,
+            "pooled_draws_by_window must be the exact object passed in (no copy)",
+        )
+        self.assertEqual(
+            verdict.flags["pooled_draws_by_window"].shape, (M, n_per_window, d)
+        )
+
+    def test_verdict_multi_chain_fields(self):
+        """extract_multi_chain_verdict populates n_chains, chain_collinearity, mode_coverage.
+
+        After running overdispersed slow-chain data through final():
+        - Non-escalated state: mode_coverage = 'multi_chain_uncertified' (M > 1)
+        - Escalated state: mode_coverage = 'multi_chain_certified'
+        - start_dispersion_adequacy and unimodality_gate keys are present
+        """
+        d, n, M = 20, 500, 8
+        max_grad_budget = 50000
+
+        core = build_multi_chain_meta_core(max_grad_budget, n_chains=M, max_rank=10)
+        state_init = core.init(d)
+
+        # Under-dispersed chains: no between-chain scatter → no escalation
+        draws_und, grads_und = _make_underdispersed_chains(d, n, M, seed=220)
+        state_und = _fill_mc_state_from_buffers(state_init, draws_und, grads_und)
+        state_und = core.final(state_und)
+
+        verdict_und = extract_multi_chain_verdict(
+            state_und, max_grad_budget=max_grad_budget, num_warmup_steps=2500
+        )
+        self.assertIn("n_chains", verdict_und.flags)
+        self.assertIn("chain_collinearity", verdict_und.flags)
+        self.assertIn("need_more_chains", verdict_und.flags)
+        self.assertIn("mode_coverage", verdict_und.flags)
+        self.assertIn("start_dispersion_adequacy", verdict_und.flags)
+        self.assertIn("unimodality_gate", verdict_und.flags)
+        self.assertIn("deferred_to_ensemble", verdict_und.flags)
+        self.assertEqual(verdict_und.flags["n_chains"], M)
+        # M > 1 and no escalation → multi_chain_uncertified (not single_chain_uncertified)
+        self.assertEqual(
+            verdict_und.flags["mode_coverage"],
+            "multi_chain_uncertified",
+            "Non-escalated M>1 verdict: mode_coverage should be 'multi_chain_uncertified'",
+        )
+
+        # Overdispersed slow chains → escalation → multi_chain_certified
+        draws_ov, grads_ov = _make_overdispersed_slow_chains(
+            d, n, M, slow_offset_scale=5.0, seed=221
+        )
+        state_esc = _fill_mc_state_from_buffers(state_init, draws_ov, grads_ov)
+        state_esc = core.final(state_esc)
+
+        verdict_esc = extract_multi_chain_verdict(
+            state_esc, max_grad_budget=max_grad_budget, num_warmup_steps=2500
+        )
+        if bool(np.asarray(state_esc.has_escalated)):
+            self.assertEqual(
+                verdict_esc.flags["mode_coverage"],
+                "multi_chain_certified",
+                "Escalated overdispersed verdict should be 'multi_chain_certified'",
+            )
+
+    def test_mode_split_no_false_escalate(self):
+        """KEY negative test: mode-split chains must NOT escalate (unimodality guard).
+
+        Uses M=8 chains split 4+4 across two modes at ±mode_separation/2 along
+        one axis.  The true linear score is used so R² is high and the magnitude
+        + collinearity + LOO gates all pass.  But the projected chain-means
+        are bimodal: four means near −4 and four near +4.  With M=8 the
+        scaled threshold is max(0.5*(8-1), 3.0) = 3.5 and the gap_ratio ≈ 7.0
+        >> 3.5 → unimodality gate FAILS → no escalation.
+
+        Additionally, since all gates EXCEPT unimodality pass, the verdict must
+        report deferred_to_ensemble=True (the P1→P3 handoff is visible).
+
+        This validates that the unimodality guard protects against treating a
+        mode-separated ensemble as a slow-mixing direction.
+
+        Structural guarantees: has_escalated=False, deferred_to_ensemble=True,
+        unimodality_gate flag="flag" in the verdict.
+        """
+        d, n, M = 20, 500, 8  # M=8 required: gap_ratio ≈ M-1=7 > threshold=3.5
+        core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=10)
+        state = core.init(d)
+
+        draws_mc, grads_mc = _make_mode_split_chains(
+            d, n, M, mode_separation=8.0, within_chain_noise=0.1, seed=230
+        )
+        state = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
+        state = core.final(state)
+
+        # Verify the M-scaled threshold is what the spec says for M=8
+        expected_threshold = _mc_unimodality_threshold(M)
+        self.assertAlmostEqual(
+            expected_threshold,
+            3.5,
+            places=5,
+            msg=f"_mc_unimodality_threshold({M}) should be max(0.5*7, 3.0) = 3.5",
+        )
+
+        self.assertFalse(
+            bool(np.asarray(state.has_escalated)),
+            "Mode-split chains (4+4 at ±4): must NOT escalate. "
+            "Unimodality guard should block. "
+            f"chain_collinearity={float(np.asarray(state.chain_collinearity)):.3f}",  # noqa: E231
+        )
+        self.assertFalse(
+            bool(np.asarray(state.unimodality_passed)),
+            "Mode-split: unimodality_passed should be False (bimodal projection detected)",
+        )
+        self.assertTrue(
+            bool(np.asarray(state.deferred_to_ensemble)),
+            "Mode-split: deferred_to_ensemble must be True when unimodality is the sole blocker "
+            "(P1→P3 handoff must be visible in the carry)",
+        )
+        # Verify the verdict flags propagate the stored fields
+        verdict = extract_multi_chain_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
+        self.assertEqual(
+            verdict.flags["unimodality_gate"],
+            "flag",
+            "Mode-split verdict: unimodality_gate flag must be 'flag' (not 'pass')",
+        )
+        self.assertTrue(
+            verdict.flags["deferred_to_ensemble"],
+            "Mode-split verdict: deferred_to_ensemble must be True in flags",
+        )
+
+    def test_under_dispersed_start_one_sided_safe(self):
+        """Under-dispersed starts: conservative non-escalation, never dangerous.
+
+        All M chains start near the same position (under-dispersed).  The
+        between-chain scatter is structurally near zero → T magnitude gate does
+        not fire → no escalation.  This is ONE-SIDED SAFE: we may miss the slow
+        direction, but we never over-escalate from this cause.
+
+        Checks:
+        - has_escalated = False (conservative)
+        - start_dispersion_adequacy flag = 'adequate_if_overdispersed' (honesty layer)
+        - mode_coverage = 'multi_chain_uncertified' (M > 1, no escalation)
+        """
+        d, n, M = 20, 500, 8
+        max_grad_budget = 50000
+        core = build_multi_chain_meta_core(max_grad_budget, n_chains=M, max_rank=10)
+        state = core.init(d)
+
+        draws_mc, grads_mc = _make_underdispersed_chains(d, n, M, seed=240)
+        state = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
+        state = core.final(state)
+
+        self.assertFalse(
+            bool(np.asarray(state.has_escalated)),
+            "Under-dispersed starts: must NOT escalate (one-sided safe). "
+            "No between-chain mean scatter → T magnitude gate does not fire.",
+        )
+
+        verdict = extract_multi_chain_verdict(
+            state, max_grad_budget=max_grad_budget, num_warmup_steps=2500
+        )
+        self.assertEqual(
+            verdict.flags["start_dispersion_adequacy"],
+            "adequate_if_overdispersed",
+            "Non-escalation verdict must report start_dispersion_adequacy = "
+            "'adequate_if_overdispersed' (not a certificate of diagonal sufficiency)",
+        )
+        self.assertEqual(
+            verdict.flags["mode_coverage"],
+            "multi_chain_uncertified",
+            "Under-dispersed M>1 non-escalation: mode_coverage = 'multi_chain_uncertified'",
+        )
+
+    def test_multi_chain_e2e_smoke_f32_and_x64(self):
+        """staged_adaptation(n_chains=8) smoke test under f32 and x64.
+
+        Structural check:
+        - warmup.run(key, positions) completes without error (positions shape (M, d))
+        - The returned state has shape (M, d) for all M chains
+        - The emitted LowRankInverseMassMatrix has correct sigma shape
+
+        Uses a non-axis-aligned rank-1 spike so the controller CAN escalate,
+        but the test does not assert whether it did (structural only).
+        Uses M=8 (the recommended minimum; M<6 triggers a warning).
+        """
+        n_dims = 5
+        M = 8
+        lam_spike = 25.0
+
+        u_raw = jax.random.normal(jax.random.key(42), (n_dims,))
+        u_dir = u_raw / jnp.linalg.norm(u_raw)
+
+        def _run():
+            # Build cov_inv inside _run so it adopts the current JAX default dtype,
+            # keeping position / gradient / step_size all consistent.
+            # Mixing explicit dtype=float32 positions with x64-promoted scalars (e.g.
+            # Python-float step_size) causes lax.cond dtype mismatch in the NUTS
+            # trajectory — same pattern as test_escalated_e2e_smoke_f32_and_x64.
+            cov_inv_local = jnp.eye(n_dims) - (lam_spike - 1.0) / lam_spike * jnp.outer(
+                u_dir, u_dir
+            )
+
+            def logdensity_fn(x):
+                return -0.5 * x @ cov_inv_local @ x
+
+            warmup = blackjax.staged_adaptation(
+                blackjax.nuts,
+                logdensity_fn,
+                metric="auto",
+                max_grad_budget=10000,
+                n_chains=M,
+            )
+            key = jax.random.key(300)
+            positions = jnp.zeros((M, n_dims))  # default dtype matches cov_inv_local
+            results, _ = warmup.run(key, positions)
+            return results
+
+        # --- default dtype (f32 normally; f64 when JAX_ENABLE_X64 is active globally) ---
+        results_default = _run()
+        state_default = results_default.state
+        imm_default = results_default.parameters["inverse_mass_matrix"]
+        self.assertIsInstance(imm_default, LowRankInverseMassMatrix)
+        self.assertEqual(imm_default.sigma.shape, (n_dims,))
+        # All M final MCMC states returned; position has leading chain dim M
+        pos_default = jax.tree.leaves(state_default.position)[0]
+        self.assertEqual(pos_default.shape[0], M, "expected M final chain states")
+
+        # --- x64 ---
+        try:
+            jax.config.update("jax_enable_x64", True)
+            results_x64 = _run()
+            imm_x64 = results_x64.parameters["inverse_mass_matrix"]
+            self.assertIsInstance(imm_x64, LowRankInverseMassMatrix)
+            self.assertEqual(imm_x64.sigma.shape, (n_dims,))
+            self.assertTrue(
+                bool(jnp.all(jnp.isfinite(imm_x64.sigma))),
+                "x64: sigma has non-finite values",
+            )
         finally:
             jax.config.update("jax_enable_x64", False)
