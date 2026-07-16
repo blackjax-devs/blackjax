@@ -64,7 +64,6 @@ __all__ = [
     "extract_multi_chain_verdict",
     "_between_chain_detection",
     "_compute_within_chain_stats",
-    "_lo2_detection_passes",
     "_mc_detection_edge",
     "_mc_unimodality_threshold",
 ]
@@ -613,69 +612,6 @@ def _loo_detection_passes(
     return all_pass
 
 
-def _lo2_detection_passes(
-    chain_means: Array,
-    W_diag: Array,
-    n: Array,
-    M: int,
-    d: int,
-    edge_lo2: float,
-) -> Array:
-    """Leave-two-out check: detection must survive dropping any PAIR of chains.
-
-    At M≥8 an aligned outlier pair can pass leave-one-out (each member supports
-    the other's vote when one is dropped) but collapse under leave-two-out.  For
-    each pair (i, j), re-centres the remaining M−2 chains, computes the top T
-    eigenvalue with (M−3) dof, and checks it clears ``edge_lo2``.  All C(M,2)
-    checks must pass (conjunction).
-
-    Skipped (returns True) when the remaining M−2 chains leave fewer than 3
-    chains, which cannot support a meaningful T statistic.
-
-    Parameters
-    ----------
-    chain_means
-        Shape ``(M, d)``.
-    W_diag
-        Shape ``(d,)`` — within-chain diagonal variance.
-    n
-        Dynamic fill count, int32.
-    M, d
-        Static.
-    edge_lo2
-        Detection edge for M−3 dof: ``(1+√(d/(M−3)))²`` (Python float).
-
-    Returns
-    -------
-    bool scalar (JAX) — True if all C(M,2) leave-two-out checks pass.
-    """
-    n_f = n.astype(chain_means.dtype)
-    W_safe = jnp.maximum(W_diag, jnp.float32(1e-20))
-    sigma_w = jnp.sqrt(W_safe)
-    edge_f32 = jnp.float32(edge_lo2)
-
-    all_pass = jnp.ones((), dtype=jnp.bool_)
-    for i in range(M):
-        for j in range(i + 1, M):
-            remaining = [k for k in range(M) if k != i and k != j]
-            M_sub = len(remaining)
-            if M_sub < 3:
-                # Too few chains for a meaningful T; skip this pair
-                continue
-            rows = [chain_means[k] for k in remaining]
-            Z_lo2 = jnp.stack(rows)  # (M−2, d)
-            mu_lo2 = Z_lo2.mean(0)  # (d,)
-            Z_lo2_c = (Z_lo2 - mu_lo2[None, :]) / sigma_w[None, :]
-            gram_lo2 = Z_lo2_c @ Z_lo2_c.T  # (M−2, M−2)
-            dof_sub = jnp.float32(M_sub - 1)
-            c_sub = n_f / dof_sub
-            max_eigval_lo2 = jnp.linalg.eigvalsh(gram_lo2)[-1]
-            T_max_lo2 = max_eigval_lo2 * c_sub
-            all_pass = all_pass & (T_max_lo2 > edge_f32)
-
-    return all_pass
-
-
 def _mc_unimodality_threshold(M: int) -> float:
     """Gap-stat threshold for the unimodality guard, scaled with chain count M.
 
@@ -1046,9 +982,10 @@ def build_multi_chain_meta_core(
        singular direction f₁ ≥ :data:`_MC_COLLINEARITY_TOL`.  Genuine slow
        directions produce near-rank-1 concentration (f₁→1); isotropic spurious
        scatter gives f₁ ≈ 1/(M−1).
-    3. **Leave-one-out** (and **leave-two-out at M≥8**).  Detection must survive
-       dropping any single chain (and any pair at M≥8), preventing a single
-       outlier chain (or aligned pair) from driving the verdict.
+    3. **Leave-one-out.** Detection must survive dropping any single chain,
+       preventing a single outlier chain from driving the verdict.  Leave-two-out
+       (spec §3.3) is subsumed by the collinearity + unimodality conjunction for
+       the aligned-pair threat model; deferred to v2.1 as belt-and-suspenders.
     4. **Support floor.** At least one spike is admitted (k ≥ 1).
     5. **Unimodality guard.** Gap-statistic on the projected chain-means must
        not flag mode-split; mode-separated chains are deferred to the ensemble
@@ -1208,8 +1145,6 @@ def build_multi_chain_meta_core(
         edge_full = _mc_detection_edge(d, dof)  # (1+√(d/(M−1)))²
         # LOO edge: M−1 remaining chains, M−2 dof after re-centring
         edge_loo = _mc_detection_edge(d, max(dof - 1, 1))
-        # LO2 edge: M−2 remaining chains, M−3 dof after re-centring (only at M≥8)
-        edge_lo2 = _mc_detection_edge(d, max(dof - 2, 1))
 
         # ---- Within-chain statistics ----
         chain_means, W_diag = _compute_within_chain_stats(state.draws_buffer, n)
@@ -1239,18 +1174,12 @@ def build_multi_chain_meta_core(
         collinearity_gate = f1 >= jnp.float32(_MC_COLLINEARITY_TOL)
 
         # ---- Gate 3: Leave-one-out ----
+        # Leave-two-out (spec §3.3) is subsumed by the collinearity + unimodality
+        # conjunction: near the edge f₁ cannot reach 0.7 (collinearity rejects the
+        # aligned pair), and once f₁≥0.7 the bulk sits far above the LO2 edge so
+        # dropping any pair never collapses the verdict; isolated-pair bimodal cases
+        # are caught by the unimodality gate.  LO2 is deferred to v2.1.
         loo_gate = _loo_detection_passes(chain_means, W_diag, n, M_stat, d, edge_loo)
-
-        # ---- Gate 3b: Leave-two-out (M≥8 only) ----
-        # An aligned outlier PAIR passes LOO (each supports the other when one is
-        # dropped) but collapses under LO2.  At M<8 we lack the degrees of freedom
-        # for a meaningful LO2 check (M−2 < 6), so skip it there.
-        if M_stat >= 8:
-            lo2_gate = _lo2_detection_passes(
-                chain_means, W_diag, n, M_stat, d, edge_lo2
-            )
-        else:
-            lo2_gate = jnp.ones((), dtype=jnp.bool_)
 
         # ---- Gate 4: Support ----
         support_gate = k_new >= jnp.int32(1)  # at least one spike admitted
@@ -1338,7 +1267,7 @@ def build_multi_chain_meta_core(
         r2_gate = r2_new >= _R_MIN  # False when NaN (JAX comparison semantics)
 
         pre_unimodality_gate = (
-            magnitude_gate & collinearity_gate & loo_gate & lo2_gate & support_gate
+            magnitude_gate & collinearity_gate & loo_gate & support_gate
         )
         mc_detection_gate = pre_unimodality_gate & unimodality_gate
 

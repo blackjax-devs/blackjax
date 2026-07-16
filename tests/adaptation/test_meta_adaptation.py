@@ -91,8 +91,6 @@ from blackjax.adaptation.meta_adaptation import (
     _compute_r2_score_linearity,
     _compute_s_gap,
     _compute_whitened_spectrum,
-    _lo2_detection_passes,
-    _loo_detection_passes,
     _mc_detection_edge,
     _mc_unimodality_threshold,
     build_meta_adaptation_core,
@@ -1872,14 +1870,16 @@ class TestMultiChainGate(BlackJAXTest):
     2. M<6 fence: warning emitted below _MC_MIN_CHAINS
     3. Between-chain detection fires for overdispersed stuck chains (KEY positive, M=8)
     4. Collinearity is sole blocking gate for isotropic between-chain scatter
-    5. LO2 blocks aligned outlier pair that passes LOO
-    6. Magnitude / support isolation: near-edge rank-1 fixture (magnitude gate is load-bearing)
-    7. Oscillatory/misaligned null: zero-mean per-chain covariance → NO escalation
-    8. Mode-split no-false-escalate: unimodality gate blocks bimodal chain-means (KEY negative, M=8)
-    9. Under-dispersed start: one-sided-safe conservative non-escalation
-    10. Nested R-hat hook shape in verdict flags
-    11. Verdict multi-chain fields (n_chains, chain_collinearity, mode_coverage)
-    12. Multi-chain e2e smoke under f32 and x64
+    5. Magnitude / support isolation: near-edge rank-1 fixture (magnitude gate is load-bearing)
+    6. Oscillatory/misaligned null: zero-mean per-chain covariance → NO escalation
+    7. Mode-split no-false-escalate: unimodality gate blocks bimodal chain-means (KEY negative, M=8)
+    8. Under-dispersed start: one-sided-safe conservative non-escalation
+    9. Nested R-hat hook shape in verdict flags
+    10. Verdict multi-chain fields (n_chains, chain_collinearity, mode_coverage)
+    11. Multi-chain e2e smoke under f32 and x64
+
+    Note: leave-two-out (spec §3.3) is subsumed by collinearity + unimodality
+    and is deferred to v2.1; no LO2 test is present.
 
     No thin-margin stochastic assertions.  Fixtures use consistent seeds; all
     structural properties are strictly held.
@@ -1962,7 +1962,7 @@ class TestMultiChainGate(BlackJAXTest):
         one slow direction.  Each chain is stuck near its starting offset;
         the between-chain scatter of chain-means is large and rank-1 along the
         slow direction.  After one window the detection gate fires:
-        T_top >> edge, f₁ ≈ 1.0, LOO+LO2 pass, unimodal.
+        T_top >> edge, f₁ ≈ 1.0, LOO pass, unimodal.
 
         The fixture uses the true linear target score so R² ≥ _R_MIN.
 
@@ -2103,93 +2103,6 @@ class TestMultiChainGate(BlackJAXTest):
             bool(np.asarray(state.has_escalated)),
             "Isotropic between-chain scatter: collinearity gate must block escalation. "
             f"f₁={float(np.asarray(state.chain_collinearity)):.3f}",  # noqa: E231
-        )
-
-    def test_lo2_blocks_aligned_outlier_pair(self):
-        """Leave-two-out check blocks an aligned outlier pair that passes leave-one-out.
-
-        Fixture: M=8 chains — 6 tightly clustered near the origin (small offsets,
-        within_noise=1.0) plus 2 outliers at large offset along e_slow (noise=0.1).
-        This is the adversarial 6+2 case from spec §3.3:
-
-        - LOO passes: dropping one outlier leaves the other, which still drives
-          a large T (each outlier supports the other's vote when one is dropped).
-        - LO2 fails: dropping BOTH outliers leaves 6 tightly clustered chains
-          whose T falls below the detection edge.
-
-        The test directly calls _loo_detection_passes and _lo2_detection_passes
-        to isolate the gate behaviour, then runs core.final() to confirm the
-        conjunction blocks escalation.
-        """
-        d, n, M = 20, 500, 8
-        key = jax.random.key(260)
-        k_dir, k_data = jax.random.split(key)
-        raw = jax.random.normal(k_dir, (d,))
-        e_slow = raw / jnp.linalg.norm(raw)
-
-        # 6 good chains with large within-chain noise (so LOO of just one good chain
-        # doesn't collapse T — the outlier pair drives the signal)
-        large_noise = 1.0
-        small_noise = 0.1
-        good_offsets = np.linspace(-0.1, 0.1, 6)  # tiny offsets relative to noise
-        outlier_offset = 5.0  # large offset for the pair
-
-        draws_all, grads_all = [], []
-        for m in range(6):
-            k_m = jax.random.fold_in(k_data, m)
-            mu_m = float(good_offsets[m]) * e_slow
-            draws_m = jax.random.normal(k_m, (n, d)) * large_noise + mu_m[None, :]
-            grads_m = -draws_m  # N(0, large_noise² I) score, approximately linear
-            draws_all.append(jnp.asarray(draws_m, jnp.float32))
-            grads_all.append(jnp.asarray(grads_m, jnp.float32))
-        for m in range(2):
-            k_m = jax.random.fold_in(k_data, 100 + m)
-            mu_m = outlier_offset * e_slow
-            draws_m = jax.random.normal(k_m, (n, d)) * small_noise + mu_m[None, :]
-            grads_m = -draws_m
-            draws_all.append(jnp.asarray(draws_m, jnp.float32))
-            grads_all.append(jnp.asarray(grads_m, jnp.float32))
-        draws_mc = jnp.stack(draws_all)
-        grads_mc = jnp.stack(grads_all)
-
-        # Direct gate probe
-        n_arr = jnp.int32(n)
-        from blackjax.adaptation.meta_adaptation import _compute_within_chain_stats
-
-        chain_means_p, W_diag_p = _compute_within_chain_stats(draws_mc, n_arr)
-        dof = M - 1
-        edge_loo = _mc_detection_edge(d, max(dof - 1, 1))
-        edge_lo2 = _mc_detection_edge(d, max(dof - 2, 1))
-
-        loo_result = bool(
-            np.asarray(
-                _loo_detection_passes(chain_means_p, W_diag_p, n_arr, M, d, edge_loo)
-            )
-        )
-        lo2_result = bool(
-            np.asarray(
-                _lo2_detection_passes(chain_means_p, W_diag_p, n_arr, M, d, edge_lo2)
-            )
-        )
-
-        self.assertTrue(
-            loo_result,
-            "Aligned-pair fixture: LOO must PASS (outlier pair mutually support each other)",
-        )
-        self.assertFalse(
-            lo2_result,
-            "Aligned-pair fixture: LO2 must FAIL (dropping both outliers collapses T)",
-        )
-
-        # Behavioral: conjunction blocks escalation
-        core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=10)
-        state = core.init(d)
-        state = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
-        state = core.final(state)
-        self.assertFalse(
-            bool(np.asarray(state.has_escalated)),
-            "Aligned-outlier-pair (6+2): must NOT escalate. "
-            "LO2 gate should block even though LOO passes.",
         )
 
     def test_magnitude_isolation_near_edge(self):
@@ -2409,7 +2322,7 @@ class TestMultiChainGate(BlackJAXTest):
 
         Uses M=8 chains split 4+4 across two modes at ±mode_separation/2 along
         one axis.  The true linear score is used so R² is high and the magnitude
-        + collinearity + LOO + LO2 gates all pass.  But the projected chain-means
+        + collinearity + LOO gates all pass.  But the projected chain-means
         are bimodal: four means near −4 and four near +4.  With M=8 the
         scaled threshold is max(0.5*(8-1), 3.0) = 3.5 and the gap_ratio ≈ 7.0
         >> 3.5 → unimodality gate FAILS → no escalation.
