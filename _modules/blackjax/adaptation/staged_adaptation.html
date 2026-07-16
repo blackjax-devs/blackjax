@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ga9ef478c6" />
+  <meta name="docsearch:version" content="0.1.dev1+gbc82419d1" />
   </head>
   
   
@@ -815,6 +815,7 @@
     <span class="n">schedule_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_grad_budget</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
+    <span class="n">n_chains</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">imm_shrinkage_to_previous</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">initial_inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">MetricCore</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
@@ -855,9 +856,14 @@
                 <span class="s2">&quot;Pass a positive integer, e.g. &quot;</span>
                 <span class="s2">&quot;staged_adaptation(nuts, logdensity_fn, metric=&#39;auto&#39;, max_grad_budget=50_000).&quot;</span>
             <span class="p">)</span>
-        <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_meta_adaptation_core</span>
+        <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_multi_chain_meta_core</span>
 
-        <span class="n">metric_core</span> <span class="o">=</span> <span class="n">build_meta_adaptation_core</span><span class="p">(</span><span class="n">max_grad_budget</span><span class="p">)</span>
+            <span class="n">metric_core</span> <span class="o">=</span> <span class="n">build_multi_chain_meta_core</span><span class="p">(</span><span class="n">max_grad_budget</span><span class="p">,</span> <span class="n">n_chains</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_meta_adaptation_core</span>
+
+            <span class="n">metric_core</span> <span class="o">=</span> <span class="n">build_meta_adaptation_core</span><span class="p">(</span><span class="n">max_grad_budget</span><span class="p">)</span>
         <span class="c1"># Override the schedule ONLY when the caller has not specified one.</span>
         <span class="c1"># Using None as the sentinel (not build_schedule) is load-bearing: an</span>
         <span class="c1"># explicit schedule_fn=build_schedule must be preserved — the old</span>
@@ -918,6 +924,7 @@
     <span class="n">metric</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="n">MetricRecipe</span> <span class="o">|</span> <span class="n">MetricCore</span> <span class="o">=</span> <span class="s2">&quot;welford_diag&quot;</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">max_grad_budget</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">n_chains</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">imm_shrinkage_to_previous</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
     <span class="n">initial_inverse_mass_matrix</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
@@ -1053,10 +1060,22 @@
     <span class="c1"># The helper encapsulates the auto-override rule (growing-window only when</span>
     <span class="c1"># schedule_fn is None, never when the caller supplied one explicitly).</span>
     <span class="c1"># Use a distinct name so mypy knows _resolved_schedule_fn is Callable (not None).</span>
+    <span class="c1"># Validate n_chains before resolution (fail early with a clear message).</span>
+    <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;staged_adaptation: n_chains must be &gt;= 1, got </span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">metric</span> <span class="o">!=</span> <span class="s2">&quot;auto&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;staged_adaptation: n_chains &gt; 1 is only supported with metric=&#39;auto&#39; &quot;</span>
+            <span class="s2">&quot;(the multi-chain pooled gate is implemented in the meta-adaptation &quot;</span>
+            <span class="s2">&quot;controller). For other metric strings pass n_chains=1 (default) and &quot;</span>
+            <span class="s2">&quot;vmap the warmup call externally.&quot;</span>
+        <span class="p">)</span>
+
     <span class="n">metric_core</span><span class="p">,</span> <span class="n">_resolved_schedule_fn</span> <span class="o">=</span> <span class="n">_resolve_metric_and_schedule</span><span class="p">(</span>
         <span class="n">metric</span><span class="p">,</span>
         <span class="n">schedule_fn</span><span class="p">,</span>
         <span class="n">max_grad_budget</span><span class="p">,</span>
+        <span class="n">n_chains</span><span class="o">=</span><span class="n">n_chains</span><span class="p">,</span>
         <span class="n">imm_shrinkage_to_previous</span><span class="o">=</span><span class="n">imm_shrinkage_to_previous</span><span class="p">,</span>
         <span class="n">initial_inverse_mass_matrix</span><span class="o">=</span><span class="n">initial_inverse_mass_matrix</span><span class="p">,</span>
     <span class="p">)</span>
@@ -1064,6 +1083,8 @@
     <span class="c1"># Closure variables for the auto-metric path: used inside run() to derive</span>
     <span class="c1"># num_steps from max_grad_budget when the caller does not supply one.</span>
     <span class="n">_is_auto_metric</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;auto&quot;</span>
+    <span class="n">_is_multi_chain</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">n_chains</span> <span class="o">&gt;</span> <span class="mi">1</span>
+    <span class="n">_n_chains</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">n_chains</span>
     <span class="n">_auto_max_grad_budget</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">max_grad_budget</span> <span class="k">if</span> <span class="n">_is_auto_metric</span> <span class="k">else</span> <span class="kc">None</span>
 
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -1122,6 +1143,8 @@
         <span class="c1"># largest window has enough draws to support the rank-detection check.</span>
         <span class="c1"># A None sentinel distinguishes &quot;caller did not supply&quot; from an explicit</span>
         <span class="c1"># value (even if that explicit value happens to equal 1000).</span>
+        <span class="c1"># For multi-chain (n_chains &gt; 1) the budget is split across chains, so</span>
+        <span class="c1"># each chain runs total // n_chains steps.</span>
         <span class="k">if</span> <span class="n">num_steps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">_is_auto_metric</span><span class="p">:</span>
                 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
@@ -1132,9 +1155,10 @@
                 <span class="c1"># (_resolve_metric_and_schedule already validated it); the assert</span>
                 <span class="c1"># lets mypy narrow the Optional[int] type.</span>
                 <span class="k">assert</span> <span class="n">_auto_max_grad_budget</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="n">num_steps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
-                    <span class="n">_auto_max_grad_budget</span> <span class="o">//</span> <span class="n">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span><span class="p">,</span> <span class="mi">1</span>
+                <span class="n">_denom</span> <span class="o">=</span> <span class="n">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span> <span class="o">*</span> <span class="p">(</span>
+                    <span class="n">_n_chains</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="mi">1</span>
                 <span class="p">)</span>
+                <span class="n">num_steps</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">_auto_max_grad_budget</span> <span class="o">//</span> <span class="n">_denom</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">num_steps</span> <span class="o">=</span> <span class="mi">1000</span>
 
@@ -1150,7 +1174,9 @@
                 <span class="n">_MIN_TRAIN_K_RATIO</span><span class="p">,</span>
             <span class="p">)</span>
 
-            <span class="n">d</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+            <span class="c1"># For multi-chain, position has shape (M, d); use one chain&#39;s size.</span>
+            <span class="n">_pos_for_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">position</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="n">position</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">pytree_size</span><span class="p">(</span><span class="n">_pos_for_size</span><span class="p">)</span>
             <span class="n">_actual_rank</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_MAX_RANK_CAP</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">d</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
             <span class="n">_min_rank_support</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">_MIN_TRAIN_K_RATIO</span> <span class="o">*</span> <span class="p">(</span><span class="n">_actual_rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
@@ -1166,32 +1192,102 @@
                     <span class="n">_window_start</span> <span class="o">=</span> <span class="n">_i</span> <span class="o">+</span> <span class="mi">1</span>
 
             <span class="k">if</span> <span class="n">_max_window</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">_max_window</span> <span class="o">&lt;</span> <span class="n">_min_rank_support</span><span class="p">:</span>
+                <span class="n">_chains_suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;, n_chains=</span><span class="si">{</span><span class="n">_n_chains</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;metric=&#39;auto&#39;: the largest warmup window (</span><span class="si">{</span><span class="n">_max_window</span><span class="si">}</span><span class="s2"> steps) &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;is below the rank-detection support floor for this model &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;(d=</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">, estimated rank capacity </span><span class="si">{</span><span class="n">_actual_rank</span><span class="si">}</span><span class="s2">, &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;floor=</span><span class="si">{</span><span class="n">_min_rank_support</span><span class="si">}</span><span class="s2"> steps). &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;Low-rank structure in the posterior may not be detectable &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;with this budget (num_steps=</span><span class="si">{</span><span class="n">num_steps</span><span class="si">}</span><span class="s2">). &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;Increase max_grad_budget to enable low-rank escalation &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;at this dimension.&quot;</span><span class="p">,</span>
+                    <span class="sa">f</span><span class="s2">&quot;with this budget (num_steps=</span><span class="si">{</span><span class="n">num_steps</span><span class="si">}{</span><span class="n">_chains_suffix</span><span class="si">}</span><span class="s2">). &quot;</span>
+                    <span class="s2">&quot;Increase max_grad_budget to enable low-rank escalation &quot;</span>
+                    <span class="s2">&quot;at this dimension.&quot;</span><span class="p">,</span>
                     <span class="ne">UserWarning</span><span class="p">,</span>
                     <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
                 <span class="p">)</span>
 
-        <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
-        <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_is_multi_chain</span><span class="p">:</span>
+            <span class="c1"># ----------------------------------------------------------------</span>
+            <span class="c1"># Single-chain path (n_chains=1): unchanged from v1.</span>
+            <span class="c1"># ----------------------------------------------------------------</span>
+            <span class="n">init_state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+            <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">)</span>
 
-        <span class="n">start_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">)</span>
-        <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-        <span class="n">schedule</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
-        <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
-            <span class="n">one_step</span><span class="p">,</span>
-            <span class="n">start_state</span><span class="p">,</span>
-            <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">),</span>
-        <span class="p">)</span>
+            <span class="n">start_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">)</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+            <span class="n">schedule</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+            <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+                <span class="n">one_step</span><span class="p">,</span>
+                <span class="n">start_state</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">),</span>
+            <span class="p">)</span>
 
-        <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
+            <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># ----------------------------------------------------------------</span>
+            <span class="c1"># Multi-chain path (n_chains &gt; 1): vmap MCMC kernel over M chains.</span>
+            <span class="c1"># position shape: (M, d); each chain gets its own rng_key split.</span>
+            <span class="c1"># The metric_core.update/final receive (M, d) positions/grads.</span>
+            <span class="c1"># num_steps is already the per-chain step count (total // n_chains).</span>
+            <span class="c1"># ----------------------------------------------------------------</span>
+            <span class="n">init_states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pos</span><span class="p">:</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">))(</span>
+                <span class="n">position</span>
+            <span class="p">)</span>
+            <span class="c1"># Adapt init uses one chain&#39;s position so pytree_size → d (not M*d).</span>
+            <span class="n">init_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_init</span><span class="p">(</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">position</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="n">initial_step_size</span>
+            <span class="p">)</span>
+
+            <span class="k">def</span><span class="w"> </span><span class="nf">one_step_mc</span><span class="p">(</span><span class="n">carry</span><span class="p">,</span> <span class="n">xs</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">rng_key_mc</span><span class="p">,</span> <span class="n">adaptation_stage</span> <span class="o">=</span> <span class="n">xs</span>
+                <span class="n">states_mc</span><span class="p">,</span> <span class="n">adaptation_state</span> <span class="o">=</span> <span class="n">carry</span>
+
+                <span class="c1"># Split one key per chain for independent proposals.</span>
+                <span class="n">chain_keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key_mc</span><span class="p">,</span> <span class="n">_n_chains</span><span class="p">)</span>
+
+                <span class="k">def</span><span class="w"> </span><span class="nf">_step_one</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">mcmc_kernel</span><span class="p">(</span>
+                        <span class="n">key</span><span class="p">,</span>
+                        <span class="n">state</span><span class="p">,</span>
+                        <span class="n">logdensity_fn</span><span class="p">,</span>
+                        <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+                        <span class="n">adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                <span class="n">new_states_mc</span><span class="p">,</span> <span class="n">infos_mc</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_step_one</span><span class="p">)(</span><span class="n">chain_keys</span><span class="p">,</span> <span class="n">states_mc</span><span class="p">)</span>
+
+                <span class="c1"># Pass (M, d) positions and grads to adapt_step; the multi-chain</span>
+                <span class="c1"># metric core&#39;s update() handles (M, d) arrays natively.</span>
+                <span class="n">positions_mc</span> <span class="o">=</span> <span class="n">new_states_mc</span><span class="o">.</span><span class="n">position</span>
+                <span class="n">grads_mc</span> <span class="o">=</span> <span class="n">new_states_mc</span><span class="o">.</span><span class="n">logdensity_grad</span>
+                <span class="c1"># Average acceptance rate across chains for dual-averaging.</span>
+                <span class="n">mean_accept</span> <span class="o">=</span> <span class="n">infos_mc</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+
+                <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_step</span><span class="p">(</span>
+                    <span class="n">adaptation_state</span><span class="p">,</span>
+                    <span class="n">adaptation_stage</span><span class="p">,</span>
+                    <span class="n">positions_mc</span><span class="p">,</span>
+                    <span class="n">grads_mc</span><span class="p">,</span>
+                    <span class="n">mean_accept</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="k">return</span> <span class="p">(</span>
+                    <span class="p">(</span><span class="n">new_states_mc</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
+                    <span class="n">adaptation_info_fn</span><span class="p">(</span><span class="n">new_states_mc</span><span class="p">,</span> <span class="n">infos_mc</span><span class="p">,</span> <span class="n">new_adaptation_state</span><span class="p">),</span>
+                <span class="p">)</span>
+
+            <span class="n">start_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">init_states</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">)</span>
+            <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
+            <span class="n">schedule</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+            <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
+                <span class="n">one_step_mc</span><span class="p">,</span>
+                <span class="n">start_state</span><span class="p">,</span>
+                <span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_steps</span><span class="p">),</span> <span class="n">keys</span><span class="p">,</span> <span class="n">schedule</span><span class="p">),</span>
+            <span class="p">)</span>
+
+            <span class="n">last_chain_state</span><span class="p">,</span> <span class="n">last_warmup_state</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">last_state</span>
 
         <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">adapt_final</span><span class="p">(</span><span class="n">last_warmup_state</span><span class="p">)</span>
         <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
