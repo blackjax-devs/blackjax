@@ -1673,8 +1673,13 @@ def build_multi_chain_meta_core(
         )
 
         # ---- T-branch conjunction ----
-        # Unimodality gate: must NOT be confirmed-split to escalate via T.
-        t_unimodality = ~unimodality_confirmed_split
+        # Unimodality gate: the CURRENT WINDOW must be unimodal.
+        # (The 2-window confirmation applies only to the deferred handoff, not here.)
+        # T-branch escalation is blocked whenever the current gap-stat flags.
+        # This preserves v2 semantics: a single bimodal window blocks T escalation.
+        t_unimodality = (
+            is_unimodal  # current-window unimodality (NOT 2-window confirmed)
+        )
         mc_detection_T = t_pre_uni & t_unimodality
         escalate_T = ~state.has_escalated & r2_gate & mc_detection_T & deadline_ok
 
@@ -1683,14 +1688,16 @@ def build_multi_chain_meta_core(
         new_has_escalated = state.has_escalated | escalate_now
 
         # ---- Scoped latch: deferred_to_ensemble (non-monotone, v2.1 rule) ----
-        # Recomputed each window from current T-branch evidence.
-        # Temporal supersede is automatic: escalate_T requires ~confirmed_split →
-        # confirmed_split=False → new_deferred=False when T escalates. ✓
-        # Cross-branch coexistence is LEGAL: W escalate + T defer is representable.
-        # Post-escalation: deferred is False once escalated (moot after deployment). ✓
-        # Impossible combo (route=low_rank ∧ deferred ∧ detection_branch=between_means)
-        # is excluded: T escalation requires ~confirmed_split → deferred=False. And once
-        # new_has_escalated=True the ~new_has_escalated guard below holds deferred=False. ✓
+        # Deferred is set when T-branch wants to escalate (t_pre_uni=True) but the
+        # current window is bimodal (~is_unimodal), AND this has been true for
+        # _MC_UNIMODALITY_CONFIRM_WINDOWS=2 consecutive windows (flag_count ≥ 2).
+        # The 2-window confirmation prevents a transient bimodal window from
+        # triggering an immediate P1→P3 handoff (reduces false deferred signals).
+        # Non-monotone: recomputed each window; if chains merge, deferred resets.
+        # Post-escalation: deferred=False once escalated (moot after metric deployed). ✓
+        # Impossible combo (route=low_rank ∧ deferred ∧ detection_branch=between_means):
+        # T escalation requires is_unimodal=True → ~is_unimodal=False → flag_count
+        # resets to 0 → confirmed_split=False → new_deferred=False. ✓
         new_deferred = (
             t_pre_uni & unimodality_confirmed_split & r2_gate & ~new_has_escalated
         )

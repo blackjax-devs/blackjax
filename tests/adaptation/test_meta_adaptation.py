@@ -2335,56 +2335,72 @@ class TestMultiChainGate(BlackJAXTest):
         Uses M=8 chains split 4+4 across two modes at ±mode_separation/2 along
         one axis.  The true linear score is used so R² is high and the magnitude
         + collinearity + LOO gates all pass.  But the projected chain-means
-        are bimodal: four means near −4 and four near +4.  With M=8 the
-        scaled threshold is max(0.5*(8-1), 3.0) = 3.5 and the gap_ratio ≈ 7.0
-        >> 3.5 → unimodality gate FAILS → no escalation.
+        are bimodal: four means near −4 and four near +4.
 
-        Additionally, since all gates EXCEPT unimodality pass, the verdict must
-        report deferred_to_ensemble=True (the P1→P3 handoff is visible).
-
+        v2.1 (recalibrated q99=4.54 at M=8, 2-window confirmation):
+        - Window 1: flag_count=1, deferred=False (1 flag < 2-window threshold).
+        - Window 2: flag_count=2, deferred=True (2-window confirmation satisfied).
         This validates that the unimodality guard protects against treating a
-        mode-separated ensemble as a slow-mixing direction.
+        mode-separated ensemble as a slow-mixing direction, and that the P1→P3
+        handoff (deferred) is visible after the confirmation threshold.
 
-        Structural guarantees: has_escalated=False, deferred_to_ensemble=True,
-        unimodality_gate flag="flag" in the verdict.
+        Structural guarantees: has_escalated=False across both windows;
+        deferred_to_ensemble=True only after the second flagged window.
         """
-        d, n, M = 20, 500, 8  # M=8 required: gap_ratio ≈ M-1=7 > threshold=3.5
+        d, n, M = 20, 500, 8
         core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=10)
         state = core.init(d)
 
         draws_mc, grads_mc = _make_mode_split_chains(
             d, n, M, mode_separation=8.0, within_chain_noise=0.1, seed=230
         )
-        state = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
-        state = core.final(state)
 
-        # Verify the M-scaled threshold is what the spec says for M=8
+        # Verify the v2.1 recalibrated threshold for M=8 (q99 ≈ 4.54)
         expected_threshold = _mc_unimodality_threshold(M)
         self.assertAlmostEqual(
             expected_threshold,
-            3.5,
+            4.54,
             places=5,
-            msg=f"_mc_unimodality_threshold({M}) should be max(0.5*7, 3.0) = 3.5",
+            msg=f"_mc_unimodality_threshold({M}) should be q99=4.54 (v2.1 recalibration)",
         )
 
+        # --- Window 1: one flagged window, deferred stays False (2-window not yet met) ---
+        state1 = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
+        state1 = core.final(state1)
+
         self.assertFalse(
-            bool(np.asarray(state.has_escalated)),
-            "Mode-split chains (4+4 at ±4): must NOT escalate. "
-            "Unimodality guard should block. "
-            f"chain_collinearity={float(np.asarray(state.chain_collinearity)):.3f}",  # noqa: E231
+            bool(np.asarray(state1.has_escalated)),
+            "Mode-split chains (4+4 at ±4): must NOT escalate after window 1. "
+            "Unimodality guard should block.",
         )
         self.assertFalse(
-            bool(np.asarray(state.unimodality_passed)),
+            bool(np.asarray(state1.unimodality_passed)),
             "Mode-split: unimodality_passed should be False (bimodal projection detected)",
         )
-        self.assertTrue(
-            bool(np.asarray(state.deferred_to_ensemble)),
-            "Mode-split: deferred_to_ensemble must be True when unimodality is the sole blocker "
-            "(P1→P3 handoff must be visible in the carry)",
+        flag_count1 = int(np.asarray(state1.unimodality_flag_count))
+        self.assertLessEqual(flag_count1, 1, "flag_count should be ≤1 after window 1")
+        self.assertFalse(
+            bool(np.asarray(state1.deferred_to_ensemble)),
+            "Mode-split window 1: deferred must be False (2-window confirmation not yet met)",
         )
+
+        # --- Window 2: second consecutive flag → confirmation → deferred=True ---
+        state2 = _fill_mc_state_from_buffers(state1, draws_mc, grads_mc)
+        state2 = core.final(state2)
+
+        self.assertFalse(
+            bool(np.asarray(state2.has_escalated)),
+            "Mode-split chains: must NOT escalate after window 2",
+        )
+        self.assertTrue(
+            bool(np.asarray(state2.deferred_to_ensemble)),
+            "Mode-split window 2: deferred_to_ensemble must be True (2-window confirmation met). "
+            "P1→P3 handoff must be visible in the carry.",
+        )
+
         # Verify the verdict flags propagate the stored fields
         verdict = extract_multi_chain_verdict(
-            state, max_grad_budget=50000, num_warmup_steps=2500
+            state2, max_grad_budget=50000, num_warmup_steps=2500
         )
         self.assertEqual(
             verdict.flags["unimodality_gate"],
