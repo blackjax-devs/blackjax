@@ -22,6 +22,7 @@ from blackjax.types import Array, ArrayLike
 __all__ = [
     "potential_scale_reduction",
     "effective_sample_size",
+    "rhat",
     "ess_bulk",
     "ess_tail",
     "pareto_khat",
@@ -80,6 +81,71 @@ def potential_scale_reduction(
         / (num_samples)
     )
     return rhat_value.squeeze()
+
+
+def rhat(input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> Array:
+    """Rank-normalized split-R̂ (Vehtari et al. 2021).
+
+    The modern improved R̂ diagnostic.  Combines two split-chain R̂ values —
+    one on rank-normalized draws and one on rank-normalized *folded* draws —
+    and returns the maximum.  The folded component catches scale/variance
+    non-convergence that the bulk component can miss.
+
+    This matches the default ``az.rhat(method="rank")`` convention in ArviZ.
+
+    Parameters
+    ----------
+    input_array
+        An array representing multiple chains of MCMC samples. The array must
+        contain a chain dimension and a sample dimension.  At least 2 chains
+        and at least 4 draws per chain are required.
+    chain_axis
+        The axis indicating the multiple chains. Default 0.
+    sample_axis
+        The axis indicating a single chain of MCMC samples. Default 1.
+
+    Returns
+    -------
+    NDArray of the resulting R̂ values, with chain and sample dimensions
+    squeezed.  Values close to 1.0 indicate convergence; values above 1.01
+    suggest chains have not converged.
+
+    Notes
+    -----
+    Algorithm (Vehtari et al. 2021, § 4):
+
+    1. Split each chain in half → 2× chains.
+    2. Rank-normalize with the Blom plotting position
+       :math:`z_r = \\Phi^{-1}((r - 3/8) / (n + 1/4))` over the joint pool.
+    3. Compute the standard split-R̂ on the rank-normalized draws (**bulk**).
+    4. Compute the folded draws :math:`|x - \\mathrm{median}(x)|`, rank-normalize
+       them, and compute split-R̂ again (**tail**).
+    5. Return :math:`\\max(\\hat{R}_{\\text{bulk}}, \\hat{R}_{\\text{tail}})`.
+
+    References
+    ----------
+    .. cite:p:`vehtari2021rank`
+    """
+    x = _to_standard_axes(jnp.asarray(input_array), chain_axis, sample_axis)
+    # Split each chain in half → (2*nchains, nsamples//2, …).
+    x_split = _split_chains(x)
+
+    # Bulk: rank-normalize split draws, then compute split-R̂.
+    x_rn = _rank_normalize(x_split)
+    rhat_bulk = potential_scale_reduction(x_rn, chain_axis=0, sample_axis=1)
+
+    # Tail: fold the split draws about their joint median, rank-normalize,
+    # then compute split-R̂.  Catches variance non-convergence.
+    nchains_split = x_split.shape[0]
+    nsamples_split = x_split.shape[1]
+    extra_shape = x_split.shape[2:]
+    x_flat = x_split.reshape(nchains_split * nsamples_split, *extra_shape)
+    # Global median per trailing dimension (scalar when extra_shape is empty).
+    x_folded = jnp.abs(x_split - jnp.median(x_flat, axis=0))
+    x_folded_rn = _rank_normalize(x_folded)
+    rhat_tail = potential_scale_reduction(x_folded_rn, chain_axis=0, sample_axis=1)
+
+    return jnp.maximum(rhat_bulk, rhat_tail)
 
 
 def effective_sample_size(
