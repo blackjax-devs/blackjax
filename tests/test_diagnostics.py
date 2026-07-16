@@ -383,6 +383,54 @@ class EssTailTest(chex.TestCase):
             f" arviz={round(az_val, 2)} rel={round(rel, 3)}"
         )
 
+    def test_prob_param_default_matches_arviz(self):
+        # Default prob=0.90 gives (0.05, 0.95) quantiles — same as az.ess(method="tail").
+        # Verify bit-match (within floating-point rounding) on normal and t(3) data.
+        az = pytest.importorskip("arviz")
+        for dist_name, samples in [
+            ("normal", np.array(self._iid_normal())),
+            (
+                "t3",
+                np.array(jax.random.t(self.rng, df=3.0, shape=(_NCHAINS, _NSAMPLES))),
+            ),
+        ]:
+            bj = float(diagnostics.ess_tail(jnp.asarray(samples)))
+            idata = az.convert_to_dataset({"x": samples})
+            az_val = float(np.asarray(az.ess(idata, method="tail")["x"]).ravel()[0])
+            rel = abs(bj - az_val) / max(abs(az_val), 1.0)
+            assert rel < 0.01, (
+                f"ess_tail default prob=0.90 ({dist_name}): "
+                f"blackjax={round(bj, 4)} arviz={round(az_val, 4)} rel={round(rel, 6)}"
+            )
+
+    def test_prob_param_0_90_matches_5_95(self):
+        # prob=0.90 → quantiles at (0.05, 0.95): explicit vs default must match.
+        samples = self._iid_normal()
+        bj_default = float(diagnostics.ess_tail(samples))
+        bj_explicit = float(diagnostics.ess_tail(samples, prob=0.90))
+        np.testing.assert_allclose(bj_default, bj_explicit, rtol=1e-6)
+
+    def test_prob_param_changes_result(self):
+        # Different prob values should produce different (but valid) ESS estimates.
+        samples = self._iid_normal()
+        bj_90 = float(diagnostics.ess_tail(samples, prob=0.90))
+        bj_80 = float(diagnostics.ess_tail(samples, prob=0.80))
+        # prob=0.80 → 10th/90th percentiles (less extreme tail); ESS can differ.
+        assert bj_80 > 0 and bj_90 > 0, "ess_tail must be positive for any prob"
+        assert (
+            bj_80 != bj_90
+        ), f"Different prob values must give different ESS, got same value {bj_90}"
+
+    def test_funnel_tail_ess(self):
+        # Neal's funnel: x[0] ~ N(0,9), x[1:] ~ N(0, exp(x[0]/2)).
+        # From iid funnel draws, ess_tail should be positive.
+        rng = self.rng
+        k1, k2 = jax.random.split(rng)
+        v = jax.random.normal(k1, shape=(_NCHAINS, _NSAMPLES)) * 3.0
+        x = jax.random.normal(k2, shape=(_NCHAINS, _NSAMPLES)) * jnp.exp(v / 2.0)
+        result = float(diagnostics.ess_tail(x))
+        assert result > 0, f"ess_tail for funnel draws must be positive, got {result}"
+
 
 class ParetoKhatTest(chex.TestCase):
     """Tests for pareto_khat."""

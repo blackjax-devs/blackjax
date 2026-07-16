@@ -422,13 +422,22 @@ def ess_bulk(
 
 
 def ess_tail(
-    input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1
+    input_array: ArrayLike,
+    chain_axis: int = 0,
+    sample_axis: int = 1,
+    prob: float = 0.90,
 ) -> Array:
     """Tail effective sample size.
 
     Computes the tail ESS from Vehtari et al. (2021) as the minimum of the
-    ESS of the 5th- and 95th-percentile indicator functions applied to
-    split-chain draws.
+    ESS of the lower- and upper-tail indicator functions applied to split-chain
+    draws.
+
+    The tail quantiles are determined by ``prob``: the lower tail uses the
+    ``(1 - prob) / 2`` quantile and the upper tail uses the
+    ``(1 + prob) / 2`` quantile.  The default ``prob=0.90`` corresponds to
+    the 5th/95th percentiles, which matches ``az.ess(method="tail")`` in
+    ArviZ (the ArviZ default is also ``prob=(0.05, 0.95)``).
 
     Parameters
     ----------
@@ -439,6 +448,11 @@ def ess_tail(
         The axis indicating the multiple chains. Default 0.
     sample_axis
         The axis indicating a single chain of MCMC samples. Default 1.
+    prob
+        Central-interval probability that determines the tail quantiles.
+        Lower quantile: ``(1 - prob) / 2``; upper quantile:
+        ``(1 + prob) / 2``.  Default ``0.90`` gives the 5th/95th-percentile
+        tail, matching ``az.ess(method="tail")`` (ArviZ default).
 
     Returns
     -------
@@ -449,9 +463,10 @@ def ess_tail(
     Algorithm:
 
     1. Split each chain in half → 2× chains.
-    2. Compute pooled 5th and 95th quantiles across all split chains and draws.
-    3. Form indicator series :math:`\\mathbf{1}(x \\le q_{0.05})` and
-       :math:`\\mathbf{1}(x \\ge q_{0.95})`.
+    2. Compute pooled lower/upper quantiles (at ``(1-prob)/2`` and
+       ``(1+prob)/2``) across all split chains and draws.
+    3. Form indicator series :math:`\\mathbf{1}(x \\le q_{\\text{low}})` and
+       :math:`\\mathbf{1}(x \\ge q_{\\text{high}})`.
     4. Compute :func:`effective_sample_size` for each indicator.
     5. Return :math:`\\min(\\text{ESS}_\\text{lower}, \\text{ESS}_\\text{upper})`.
 
@@ -465,15 +480,19 @@ def ess_tail(
     nchains, nsamples = x_split.shape[0], x_split.shape[1]
     extra_shape = x_split.shape[2:]
 
+    # Tail quantiles derived from the central-interval probability.
+    q_low = (1.0 - prob) / 2.0
+    q_high = (1.0 + prob) / 2.0
+
     # Pooled quantiles over all chains and draws, per trailing dimension.
     x_flat = x_split.reshape(nchains * nsamples, *extra_shape)
-    q05 = jnp.quantile(x_flat, 0.05, axis=0)
-    q95 = jnp.quantile(x_flat, 0.95, axis=0)
+    q_lo = jnp.quantile(x_flat, q_low, axis=0)
+    q_hi = jnp.quantile(x_flat, q_high, axis=0)
 
     # Indicator series (float for ESS computation).
-    # Broadcast q05/q95 over the (nchains, nsamples) leading axes.
-    I_lower = (x_split <= q05[None, None]).astype(float)
-    I_upper = (x_split >= q95[None, None]).astype(float)
+    # Broadcast q_lo/q_hi over the (nchains, nsamples) leading axes.
+    I_lower = (x_split <= q_lo[None, None]).astype(float)
+    I_upper = (x_split >= q_hi[None, None]).astype(float)
 
     ess_lower = effective_sample_size(I_lower)
     ess_upper = effective_sample_size(I_upper)
