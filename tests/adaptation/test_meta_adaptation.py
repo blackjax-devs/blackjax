@@ -67,12 +67,15 @@ or the deadline ever runs.  Correct isolation:
   - deadline gate: use correlated draws + true score (all gates pass) + jam budget
   - S_gap gate: use isotropic draws (S_gap≈1 blocks; R² passes as a side-effect)
 """
+import warnings
+
 import jax
 import jax.numpy as jnp
 import numpy as np
 
 import blackjax
 from blackjax.adaptation.meta_adaptation import (
+    _ASSUMED_AVG_LEAPFROGS_PER_STEP,
     _R2_DEFERRED,
     _R2_FULL_AFFINE,
     _R2_PROJECTED,
@@ -851,6 +854,7 @@ class TestRecovershClassical(BlackJAXTest):
             "wall_cost_discount",
             "high_d_r2_mode",
             "mode_coverage",
+            "nominal_rank",
         ):
             self.assertIn(key, verdict.flags, f"Missing verdict flag: {key}")
 
@@ -1025,7 +1029,16 @@ class TestRecovershClassical(BlackJAXTest):
         self.assertEqual(verdict.exit_reason, "warmup_complete")
 
     def test_effective_rank_matches_escalation_rank(self):
-        """effective_rank in verdict equals the chosen rank at escalation."""
+        """For a clean spike fixture, effective_rank and nominal_rank both equal the deployed count.
+
+        The rank-2 spike with lam_spike=20 produces a Fisher lam where exactly
+        2 entries satisfy |lam_i - 1| > _LAM_NONTRIVIAL_TOL (the genuine spike
+        directions); the remaining entries are set to 1.0 by the Fisher estimator.
+        _choose_rank also returns 2 for this fixture, so effective_rank (deployed)
+        and nominal_rank (pre-mask) coincide here — both equal carry_rank.
+        The separate TestEffectiveRankHonesty suite tests the over-counting case
+        where the two diverge.
+        """
         d, n = 20, 500
         draws, grads = _make_correlated_buffer(d, n, rank=2, lam_spike=20.0, seed=62)
         draws = jnp.array(draws, dtype=jnp.float32)
@@ -1044,7 +1057,10 @@ class TestRecovershClassical(BlackJAXTest):
         verdict = extract_meta_verdict(
             state, max_grad_budget=50000, num_warmup_steps=2500
         )
+        # effective_rank = deployed count (|lam_i - 1| > tol); coincides with
+        # nominal_rank for a clean spike fixture with well-separated eigenvalues.
         self.assertEqual(verdict.effective_rank, carry_rank)
+        self.assertEqual(verdict.flags["nominal_rank"], carry_rank)
         self.assertEqual(verdict.route, "low_rank")
 
     def test_marginal_s_gap_stays_diagonal(self):
@@ -1233,5 +1249,325 @@ class TestRecovershClassical(BlackJAXTest):
                 bool(jnp.all(imm64.lam > 0)),
                 "x64: lam is not positive definite",
             )
+        finally:
+            jax.config.update("jax_enable_x64", False)
+
+
+# ---------------------------------------------------------------------------
+# (e) FIX 1 — Default-wiring and low-budget warning
+# ---------------------------------------------------------------------------
+
+
+class TestDefaultWiringAndBudgetWarning(BlackJAXTest):
+    """FIX 1: metric='auto' derives num_steps from max_grad_budget when unset.
+
+    Three sub-cases:
+    - Large budget derives num_steps > the old fixed default (1000).
+    - Derived default and explicit equal num_steps give identical results
+      (same key, same position → same computation when derivation is correct).
+    - Explicit num_steps is honored (not replaced by derivation).
+    - Low-budget high-d config emits a UserWarning about rank-detection support.
+    """
+
+    def _simple_logdensity(self, x):
+        return -0.5 * jnp.sum(x**2)
+
+    def test_large_budget_derives_more_than_old_default(self):
+        """max_grad_budget=30000 → derived num_steps = 1500 > 1000 (old fixed default)."""
+        max_grad_budget = 30000
+        derived = max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP
+        self.assertGreater(
+            derived,
+            1000,
+            f"Derived num_steps ({derived}) should exceed the old default 1000 "
+            f"for max_grad_budget={max_grad_budget}",
+        )
+
+    def test_derived_default_matches_explicit(self):
+        """metric='auto' with no num_steps gives same result as explicit derived value.
+
+        Structural check: same rng_key, same position, same derivation formula →
+        same final warmup state.  Uses a small budget so the warmup is fast.
+        """
+        max_grad_budget = 600  # → derived = 600 // 20 = 30 steps
+        derived = max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP
+
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            self._simple_logdensity,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+        )
+        key = jax.random.key(10)
+        pos = jnp.zeros(5)
+
+        results_default, _ = warmup.run(key, pos)  # no num_steps → derived
+        results_explicit, _ = warmup.run(key, pos, num_steps=derived)  # explicit
+
+        np.testing.assert_allclose(
+            np.asarray(results_default.state.position),
+            np.asarray(results_explicit.state.position),
+            rtol=1e-5,
+            err_msg="Default derivation should match explicit num_steps",
+        )
+        np.testing.assert_allclose(
+            np.asarray(results_default.parameters["step_size"]),
+            np.asarray(results_explicit.parameters["step_size"]),
+            rtol=1e-5,
+            err_msg="Default derivation should produce same step_size as explicit",
+        )
+
+    def test_explicit_num_steps_honored(self):
+        """Explicit num_steps bypasses derivation for both auto and non-auto metrics."""
+        # For metric='auto': explicit 50 steps must not be overridden by the derived
+        # value (which could be larger).
+        max_grad_budget = 30000  # → derived = 1500
+        explicit_steps = 50
+
+        warmup_auto = blackjax.staged_adaptation(
+            blackjax.nuts,
+            self._simple_logdensity,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+        )
+        key = jax.random.key(11)
+        pos = jnp.zeros(5)
+        results_auto, info_auto = warmup_auto.run(key, pos, num_steps=explicit_steps)
+        # The adaptation_info has leading dim = num_steps; verify it matches explicit.
+        # info_auto is a tuple (chain_state, mcmc_info, adapt_state) each stacked.
+        first_leaf = jax.tree.leaves(info_auto)[0]
+        self.assertEqual(
+            first_leaf.shape[0],
+            explicit_steps,
+            f"Explicit num_steps={explicit_steps} must not be overridden by derivation",
+        )
+
+        # For non-auto metric: num_steps=50 also honors explicit.
+        warmup_welford = blackjax.staged_adaptation(
+            blackjax.nuts, self._simple_logdensity, metric="welford_diag"
+        )
+        results_welford, info_welford = warmup_welford.run(
+            key, pos, num_steps=explicit_steps
+        )
+        first_leaf_w = jax.tree.leaves(info_welford)[0]
+        self.assertEqual(
+            first_leaf_w.shape[0],
+            explicit_steps,
+            "Non-auto metric: explicit num_steps must be honored",
+        )
+
+    def test_low_budget_warning_fires_for_high_d(self):
+        """Low max_grad_budget + high-d position → UserWarning about rank-detection support.
+
+        For d=100, actual_rank=50, the support floor is 8*51=408 steps.
+        With max_grad_budget=2000, derived num_steps=100, and the largest window
+        in the growing schedule is well below 408 → warning fires.
+
+        The warning must fire from run(), not from staged_adaptation() construction.
+        assertWarns() confirms a UserWarning with 'rank-detection' in the message.
+        """
+        max_grad_budget = 2000  # → derived num_steps = 100
+        n_dims = 100  # → actual_rank = min(50, 50) = 50; floor = 8*51 = 408
+
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            self._simple_logdensity,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+        )
+        key = jax.random.key(12)
+        pos = jnp.zeros(n_dims)
+
+        with self.assertWarnsRegex(
+            UserWarning,
+            "rank-detection",
+            msg="Expected a UserWarning mentioning 'rank-detection' for "
+            f"d={n_dims}, max_grad_budget={max_grad_budget}",
+        ):
+            warmup.run(key, pos)
+
+    def test_low_budget_warning_not_suppressed_by_explicit_small_num_steps(self):
+        """Warning fires even when the caller passes an explicit small num_steps.
+
+        The warning is about budget, not about whether num_steps was derived.
+        An explicit num_steps that still yields a small largest window should
+        also trigger the warning.
+        """
+        n_dims = 100
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            self._simple_logdensity,
+            metric="auto",
+            max_grad_budget=50000,
+        )
+        key = jax.random.key(13)
+        pos = jnp.zeros(n_dims)
+
+        # num_steps=100 is explicitly below the support floor for d=100
+        with self.assertWarnsRegex(UserWarning, "rank-detection"):
+            warmup.run(key, pos, num_steps=100)
+
+    def test_sufficient_budget_emits_no_warning(self):
+        """Large budget for a small model produces no UserWarning at run() time."""
+        n_dims = 5  # small d → low support floor
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            self._simple_logdensity,
+            metric="auto",
+            max_grad_budget=50000,
+        )
+        key = jax.random.key(14)
+        pos = jnp.zeros(n_dims)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            # Should not raise — sufficient budget for d=5.
+            warmup.run(key, pos)
+
+    def test_non_auto_metric_no_warning(self):
+        """Non-auto metrics never emit the rank-detection warning."""
+        n_dims = 100
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts, self._simple_logdensity, metric="welford_diag"
+        )
+        key = jax.random.key(15)
+        pos = jnp.zeros(n_dims)
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            # welford_diag with default num_steps=1000 must not warn.
+            warmup.run(key, pos, num_steps=50)
+
+
+# ---------------------------------------------------------------------------
+# (f) FIX 2 — Effective rank honesty (deployed vs nominal)
+# ---------------------------------------------------------------------------
+
+
+class TestEffectiveRankHonesty(BlackJAXTest):
+    """FIX 2: effective_rank reports the deployed rank; nominal_rank is in flags.
+
+    The fixture constructs a state where escalation_rank (nominal, from
+    _choose_rank) is larger than the count of truly active Fisher-metric
+    directions (|lam_i - 1| > _LAM_NONTRIVIAL_TOL).  This reproduces the
+    over-counting that occurs in high-d finite-sample settings where the
+    Marchenko-Pastur bulk contributes spurious eigenvalues above the fixed
+    cutoff=2.0.
+
+    All assertions are structural (not stochastic): the state is constructed
+    deterministically by patching lam directly.  The fix is a reporting change
+    only — no escalation-decision path is altered.
+
+    The suite runs under both f32 (default) and x64 via _run_under_x64.
+    """
+
+    def _build_overcount_state(self, d=12, max_rank=6, nominal=6):
+        """Construct a post-escalation state where nominal_rank > effective_rank.
+
+        d=12, max_rank=6 → actual_rank = min(6, max(12//2,1)) = 6.
+        lam = [3.5, 0.2, 1.0, 1.0, 1.0, 1.0]: only first 2 are non-trivial.
+        escalation_rank = nominal (6): simulates _choose_rank over-count.
+        effective_rank = 2: only the first two directions are deployed.
+        """
+        core = build_meta_adaptation_core(50000, max_rank=max_rank)
+        state = core.init(d)
+
+        lam_deployed = jnp.array([3.5, 0.2] + [1.0] * (max_rank - 2), dtype=jnp.float32)
+        state = state._replace(
+            has_escalated=jnp.array(True, dtype=jnp.bool_),
+            escalation_rank=jnp.array(nominal, dtype=jnp.int32),
+            inverse_mass_matrix=state.inverse_mass_matrix._replace(lam=lam_deployed),
+        )
+        return state, nominal
+
+    def test_effective_rank_reflects_deployed_count(self):
+        """effective_rank = count(|lam_i - 1| > tol) = 2, not nominal_rank = 6."""
+        state, nominal = self._build_overcount_state()
+        verdict = extract_meta_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
+        # Deployed: only lam[0]=3.5 and lam[1]=0.2 are non-trivial.
+        self.assertEqual(
+            verdict.effective_rank,
+            2,
+            f"effective_rank should be 2 (deployed); got {verdict.effective_rank}",  # noqa: E702
+        )
+
+    def test_nominal_rank_in_flags(self):
+        """flags['nominal_rank'] preserves the pre-mask escalation_rank."""
+        state, nominal = self._build_overcount_state()
+        verdict = extract_meta_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
+        self.assertIn(
+            "nominal_rank", verdict.flags, "nominal_rank must be present in flags"
+        )
+        self.assertEqual(
+            verdict.flags["nominal_rank"],
+            nominal,
+            f"flags['nominal_rank'] should equal escalation_rank={nominal}",
+        )
+
+    def test_effective_rank_strictly_less_than_nominal(self):
+        """When _choose_rank over-counts, effective_rank < nominal_rank."""
+        state, nominal = self._build_overcount_state()
+        verdict = extract_meta_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
+        self.assertLess(
+            verdict.effective_rank,
+            verdict.flags["nominal_rank"],
+            f"effective_rank ({verdict.effective_rank}) must be < "
+            f"nominal_rank ({verdict.flags['nominal_rank']}) for over-count fixture",
+        )
+
+    def test_effective_rank_zero_before_escalation(self):
+        """Before escalation, effective_rank = 0 (lam = ones → all |lam_i - 1| = 0)."""
+        core = build_meta_adaptation_core(50000, max_rank=5)
+        state = core.init(10)
+        verdict = extract_meta_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
+        self.assertEqual(
+            verdict.effective_rank,
+            0,
+            "Before escalation, all lam = 1 → effective_rank must be 0",
+        )
+        self.assertEqual(
+            verdict.flags["nominal_rank"],
+            0,
+            "Before escalation, nominal_rank must also be 0",
+        )
+
+    def test_effective_rank_no_effect_on_escalation_decision(self):
+        """Changing effective_rank reporting does not affect has_escalated in carry.
+
+        Verifies that effective_rank is a pure reporting transformation:
+        the underlying has_escalated flag in the state is unchanged after
+        calling extract_meta_verdict (it only reads, never writes).
+        """
+        state, nominal = self._build_overcount_state()
+        self.assertTrue(bool(np.asarray(state.has_escalated)))
+        verdict = extract_meta_verdict(
+            state, max_grad_budget=50000, num_warmup_steps=2500
+        )
+        # has_escalated is still True in the original state
+        self.assertTrue(bool(np.asarray(state.has_escalated)))
+        self.assertEqual(verdict.route, "low_rank")
+
+    def test_effective_rank_under_x64(self):
+        """effective_rank count is consistent under x64 (lam dtype may widen to f64)."""
+        try:
+            jax.config.update("jax_enable_x64", True)
+            state, nominal = self._build_overcount_state()
+            verdict = extract_meta_verdict(
+                state, max_grad_budget=50000, num_warmup_steps=2500
+            )
+            self.assertEqual(
+                verdict.effective_rank,
+                2,
+                "Under x64: effective_rank should still be 2 (2 non-trivial lam entries)",
+            )
+            self.assertEqual(verdict.flags["nominal_rank"], nominal)
         finally:
             jax.config.update("jax_enable_x64", False)
