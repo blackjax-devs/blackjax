@@ -386,18 +386,119 @@ def build_schedule(
 # ---------------------------------------------------------------------------
 
 
+def _resolve_metric_and_schedule(
+    metric: str | MetricRecipe | MetricCore,
+    schedule_fn: Callable | None,
+    max_grad_budget: int | None,
+    *,
+    imm_shrinkage_to_previous: float = 0.0,
+    initial_inverse_mass_matrix: Array | None = None,
+) -> tuple[MetricCore, Callable]:
+    """Resolve (metric, schedule_fn) to a (MetricCore, schedule_callable) pair.
+
+    Extracted from :func:`staged_adaptation` for testability.
+
+    The auto-override rule is:
+    - ``metric="auto"`` AND ``schedule_fn is None`` (caller did not specify one)
+      → schedule is set to :func:`~blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule`.
+    - ``metric="auto"`` AND ``schedule_fn`` is an explicit callable
+      → the explicit schedule is **honored as-is** (NOT replaced by the growing-window
+      schedule even though ``metric="auto"``).
+    - All other metric paths with ``schedule_fn is None`` → :func:`build_schedule` (Stan doubling).
+
+    Parameters
+    ----------
+    metric
+        The mass-matrix adaptation specification (same as :func:`staged_adaptation`).
+    schedule_fn
+        An explicit schedule callable, or ``None`` meaning "use the default for
+        this metric path".
+    max_grad_budget
+        Required when ``metric="auto"``; ignored otherwise.
+    imm_shrinkage_to_previous, initial_inverse_mass_matrix
+        Forwarded to ``recipe.build_core`` for recipe-based metrics; ignored when
+        ``metric`` is already a :class:`~blackjax.adaptation.metric_recipes.MetricCore`.
+
+    Returns
+    -------
+    tuple[MetricCore, Callable]
+        ``(metric_core, resolved_schedule_fn)``
+    """
+    if metric == "auto":
+        if max_grad_budget is None:
+            raise ValueError(
+                "staged_adaptation: max_grad_budget is required when metric='auto'. "
+                "Pass a positive integer, e.g. "
+                "staged_adaptation(nuts, logdensity_fn, metric='auto', max_grad_budget=50_000)."
+            )
+        from blackjax.adaptation.meta_adaptation import build_meta_adaptation_core
+
+        metric_core = build_meta_adaptation_core(max_grad_budget)
+        # Override the schedule ONLY when the caller has not specified one.
+        # Using None as the sentinel (not build_schedule) is load-bearing: an
+        # explicit schedule_fn=build_schedule must be preserved — the old
+        # `if schedule_fn is build_schedule` sentinel could not distinguish
+        # between "user explicitly chose Stan" and "user passed nothing".
+        if schedule_fn is None:
+            from blackjax.adaptation.low_rank_adaptation import (
+                build_growing_window_schedule,
+            )
+
+            resolved_schedule: Callable = build_growing_window_schedule
+        else:
+            resolved_schedule = (
+                schedule_fn  # explicit Callable, not None-guarded ternary
+            )
+    elif isinstance(metric, str):
+        recipe = lookup_recipe(metric)
+        metric_core = recipe.build_core(
+            imm_shrinkage_to_previous=imm_shrinkage_to_previous,
+            initial_inverse_mass_matrix=initial_inverse_mass_matrix,
+        )
+        if schedule_fn is not None:
+            resolved_schedule = schedule_fn
+        else:
+            resolved_schedule = build_schedule
+    elif isinstance(metric, MetricRecipe):
+        metric_core = metric.build_core(
+            imm_shrinkage_to_previous=imm_shrinkage_to_previous,
+            initial_inverse_mass_matrix=initial_inverse_mass_matrix,
+        )
+        if schedule_fn is not None:
+            resolved_schedule = schedule_fn
+        else:
+            resolved_schedule = build_schedule
+    elif isinstance(metric, MetricCore):
+        # The core is pre-built; imm_shrinkage_to_previous and
+        # initial_inverse_mass_matrix are ignored (already closed over).
+        metric_core = metric
+        if schedule_fn is not None:
+            resolved_schedule = schedule_fn
+        else:
+            resolved_schedule = build_schedule
+    else:
+        raise TypeError(
+            f"staged_adaptation: metric must be a str, MetricRecipe, or MetricCore "
+            f"(got {type(metric).__name__}). "
+            f"Pass a registry name (e.g. 'welford_diag') or construct a "
+            f"MetricRecipe or MetricCore directly."
+        )
+    return metric_core, resolved_schedule
+
+
 def staged_adaptation(
     algorithm,
     logdensity_fn: Callable,
     metric: str | MetricRecipe | MetricCore = "welford_diag",
     *,
+    max_grad_budget: int | None = None,
     imm_shrinkage_to_previous: float = 0.0,
     initial_inverse_mass_matrix: Array | None = None,
     initial_step_size: float = 1.0,
     target_acceptance_rate: float = 0.80,
     adaptation_info_fn: Callable = return_all_adapt_info,
     integrator=mcmc.integrators.velocity_verlet,
-    schedule_fn: Callable = build_schedule,
+    schedule_fn: Callable | None = None,
     initial_metric_state: Any = None,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
@@ -421,6 +522,13 @@ def staged_adaptation(
     metric
         The mass-matrix adaptation specification.  Accepts:
 
+        - ``"auto"`` — the meta-adaptation controller
+          (:mod:`~blackjax.adaptation.meta_adaptation`). Automatically selects
+          the diagonal vs low-rank path and the growing-window schedule.
+          Requires ``max_grad_budget`` to be set.  The emitted metric is always
+          a :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` (with
+          U=0, lam=1 when the controller stays diagonal — bit-equivalent to
+          the diagonal metric).
         - **str** — a registry name (``"welford_diag"`` (default),
           ``"welford_dense"``, ``"fisher_diag"``); looked up via
           :func:`~blackjax.adaptation.metric_recipes.lookup_recipe` and built
@@ -430,6 +538,14 @@ def staged_adaptation(
         - :class:`~blackjax.adaptation.metric_recipes.MetricCore` — used
           directly as-is; ``imm_shrinkage_to_previous`` and
           ``initial_inverse_mass_matrix`` are ignored (closed over in the core).
+    max_grad_budget
+        Maximum total gradient budget (leapfrog evaluations).  Required when
+        ``metric="auto"``; ignored otherwise.  The meta-adaptation controller
+        converts this to a warmup step count via a conservative divisor (see
+        :mod:`~blackjax.adaptation.meta_adaptation`).  Passed as-is; use
+        :func:`~blackjax.adaptation.meta_adaptation.extract_meta_verdict` after
+        ``warmup.run()`` to get the structured routing verdict and true gradient
+        counts.
     imm_shrinkage_to_previous
         Pseudo-count controlling shrinkage of the per-window IMM toward the
         previous window's IMM (Bayesian persistence).  Default ``0.0``
@@ -455,11 +571,14 @@ def staged_adaptation(
         :func:`~blackjax.mcmc.integrators.velocity_verlet`.
     schedule_fn
         Callable ``(num_steps: int) -> Array`` that returns a
-        ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs.
-        Default :func:`build_schedule` (Stan's fixed-absolute, 2×-doubling
-        schedule).  Pass
+        ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs, or
+        ``None`` (default) to use the path-appropriate default.
+        When ``None`` and ``metric="auto"``, the default is
         :func:`~blackjax.adaptation.low_rank_adaptation.build_growing_window_schedule`
-        for nutpie's proportional-to-tune, 1.5×-growing-window schedule.
+        (nutpie's proportional-to-tune, 1.5×-growing-window schedule).
+        When ``None`` and any other ``metric``, the default is
+        :func:`build_schedule` (Stan's fixed-absolute, 2×-doubling schedule).
+        An explicit callable is always honored regardless of ``metric``.
     initial_metric_state
         Optional pre-built mass-matrix adaptation core state.  When not
         ``None``, overrides the ``metric_core.init(n_dims)`` call at warmup
@@ -495,29 +614,17 @@ def staged_adaptation(
         Registry of named :class:`~blackjax.adaptation.metric_recipes.MetricRecipe`
         objects for the ``metric`` string argument.
     """
-    # Resolve the metric argument to a MetricCore.
-    if isinstance(metric, str):
-        recipe = lookup_recipe(metric)
-        metric_core = recipe.build_core(
-            imm_shrinkage_to_previous=imm_shrinkage_to_previous,
-            initial_inverse_mass_matrix=initial_inverse_mass_matrix,
-        )
-    elif isinstance(metric, MetricRecipe):
-        metric_core = metric.build_core(
-            imm_shrinkage_to_previous=imm_shrinkage_to_previous,
-            initial_inverse_mass_matrix=initial_inverse_mass_matrix,
-        )
-    elif isinstance(metric, MetricCore):
-        # The core is pre-built; imm_shrinkage_to_previous and
-        # initial_inverse_mass_matrix are ignored (already closed over).
-        metric_core = metric
-    else:
-        raise TypeError(
-            f"staged_adaptation: metric must be a str, MetricRecipe, or MetricCore "
-            f"(got {type(metric).__name__}). "
-            f"Pass a registry name (e.g. 'welford_diag') or construct a "
-            f"MetricRecipe or MetricCore directly."
-        )
+    # Resolve metric → MetricCore and schedule_fn → schedule callable.
+    # The helper encapsulates the auto-override rule (growing-window only when
+    # schedule_fn is None, never when the caller supplied one explicitly).
+    # Use a distinct name so mypy knows _resolved_schedule_fn is Callable (not None).
+    metric_core, _resolved_schedule_fn = _resolve_metric_and_schedule(
+        metric,
+        schedule_fn,
+        max_grad_budget,
+        imm_shrinkage_to_previous=imm_shrinkage_to_previous,
+        initial_inverse_mass_matrix=initial_inverse_mass_matrix,
+    )
 
     if len(inspect.signature(algorithm.build_kernel).parameters) > 0:
         mcmc_kernel = algorithm.build_kernel(integrator)
@@ -575,7 +682,7 @@ def staged_adaptation(
 
         start_state = (init_state, init_adaptation_state)
         keys = jax.random.split(rng_key, num_steps)
-        schedule = schedule_fn(num_steps)
+        schedule = _resolved_schedule_fn(num_steps)
         last_state, info = jax.lax.scan(
             one_step,
             start_state,
