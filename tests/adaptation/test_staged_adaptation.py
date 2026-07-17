@@ -894,3 +894,83 @@ class StagedAdaptationNonNUTSAlgorithmsTest(BlackJAXTest):
         # Welford estimate after warmup should be within ~0.3-3.0
         self.assertTrue(bool(jnp.all(imm >= 0.3)))
         self.assertTrue(bool(jnp.all(imm <= 3.0)))
+
+
+class StagedAdaptationDivisorFixTest(BlackJAXTest):
+    """Test the divisor fix for metric='auto' when num_integration_steps is known.
+
+    When metric='auto' derives num_steps from max_grad_budget, it should use
+    the actual num_integration_steps for HMC instead of the NUTS-calibrated
+    constant when num_integration_steps is provided in extra_parameters.
+    """
+
+    def test_num_steps_scales_inversely_with_num_integration_steps(self):
+        """Same max_grad_budget, different num_integration_steps → inverse scaling.
+
+        With max_grad_budget = 50k:
+        - HMC with num_integration_steps=5: num_steps ≈ 50k/5 = 10k
+        - HMC with num_integration_steps=50: num_steps ≈ 50k/50 = 1k
+        - Ratio: 10× difference
+        """
+
+        def logdensity_fn(x):
+            return std_normal_logdensity(x)
+
+        max_grad_budget = 50_000
+
+        # Run warmup with num_integration_steps=5
+        warmup_5 = staged_adaptation(
+            blackjax.hmc,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+            initial_step_size=0.5,
+            num_integration_steps=5,
+        )
+        # Capture num_steps by inspecting the info; alternatively, we can
+        # instrument the run() method to expose num_steps. For now, just verify
+        # the warmup runs without error.
+        (state_5, params_5), info_5 = warmup_5.run(
+            self.next_key(), jnp.zeros(5), num_steps=None
+        )
+
+        # Run warmup with num_integration_steps=50
+        warmup_50 = staged_adaptation(
+            blackjax.hmc,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+            initial_step_size=0.5,
+            num_integration_steps=50,
+        )
+        (state_50, params_50), info_50 = warmup_50.run(
+            self.next_key(), jnp.zeros(5), num_steps=None
+        )
+
+        # With the divisor fix, num_steps(5) should be ~10× larger than num_steps(50).
+        # Since we don't expose num_steps directly, verify indirectly:
+        # - More steps → more total gradients computed
+        # - info.adaptation_state is a stacked array per step
+        # - len(info.adaptation_state) == num_steps
+
+        # Extract num_steps from info (stacked per step)
+        num_steps_5 = len(info_5.adaptation_state.step_size)
+        num_steps_50 = len(info_50.adaptation_state.step_size)
+
+        # With the divisor fix:
+        # num_steps_5 ≈ max_grad_budget / 5 = 10000
+        # num_steps_50 ≈ max_grad_budget / 50 = 1000
+        # ratio ≈ 10
+        ratio = num_steps_5 / num_steps_50
+        self.assertGreater(
+            ratio,
+            5.0,
+            f"Expected num_steps ratio > 5, got {ratio} "
+            f"(num_steps_5={num_steps_5}, num_steps_50={num_steps_50})",
+        )
+        self.assertLess(
+            ratio,
+            20.0,
+            f"Expected num_steps ratio < 20, got {ratio} "
+            f"(num_steps_5={num_steps_5}, num_steps_50={num_steps_50})",
+        )

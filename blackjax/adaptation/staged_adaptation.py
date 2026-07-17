@@ -764,9 +764,15 @@ def staged_adaptation(
                 # (_resolve_metric_and_schedule already validated it); the assert
                 # lets mypy narrow the Optional[int] type.
                 assert _auto_max_grad_budget is not None
-                _denom = _ASSUMED_AVG_LEAPFROGS_PER_STEP * (
-                    _n_chains if _is_multi_chain else 1
+
+                # Compute grads-per-step divisor. For algorithms with fixed
+                # num_integration_steps (e.g. HMC), use it directly. For NUTS
+                # (no num_integration_steps in extra_parameters), use the
+                # NUTS-calibrated conservative constant.
+                _grads_per_step = extra_parameters.get(
+                    "num_integration_steps", _ASSUMED_AVG_LEAPFROGS_PER_STEP
                 )
+                _denom = _grads_per_step * (_n_chains if _is_multi_chain else 1)
                 num_steps = max(_auto_max_grad_budget // _denom, 1)
             else:
                 num_steps = 1000
