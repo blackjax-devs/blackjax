@@ -28,18 +28,15 @@ import jax.numpy as jnp
 import numpy as np
 
 import blackjax
-
 from blackjax.adaptation.meta import (
     MetaAdaptationCoreState,
     MultiChainMetaAdaptationCoreState,
-    build_meta_adaptation_core,
     build_multi_chain_meta_core,
     extract_multi_chain_verdict,
 )
 from blackjax.adaptation.meta._calibration import (
     _MC_COLLINEARITY_TOL,
     _MC_UNIMODALITY_CONFIRM_WINDOWS,
-    _R_MIN,
     _W_BRANCH_NULL_EDGE_TW_FACTOR,
     _W_BRANCH_PSI_FLOOR,
     _mc_detection_edge,
@@ -52,14 +49,9 @@ from blackjax.adaptation.meta._detection import (
     _compute_pooled_within_spectrum,
     _compute_within_chain_stats,
 )
-from blackjax.adaptation.meta._router import (
-    _build_pc_centered_time_major_pool,
-)
-from blackjax.adaptation.meta._signals import (
-    _compute_r2_score_linearity,
-)
+from blackjax.adaptation.meta._router import _build_pc_centered_time_major_pool
+from blackjax.adaptation.meta._signals import _compute_r2_score_linearity
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
-
 from tests.adaptation._meta_fixtures import (
     _fill_mc_state,
     _fill_mc_state_from_buffers,
@@ -75,6 +67,7 @@ from tests.adaptation._meta_fixtures import (
     _make_underdispersed_chains,
 )
 from tests.fixtures import BlackJAXTest
+
 
 class TestMultiChainGate(BlackJAXTest):
     """Multi-chain escalation gate tests for build_multi_chain_meta_core.
@@ -158,8 +151,6 @@ class TestMultiChainGate(BlackJAXTest):
 
     def test_m6_fence_warns_below_min_chains(self):
         """build_multi_chain_meta_core warns when n_chains < _MC_MIN_CHAINS=6."""
-        import warnings
-
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
             build_multi_chain_meta_core(50000, n_chains=4)
@@ -286,8 +277,6 @@ class TestMultiChainGate(BlackJAXTest):
 
         # Verify gate decomposition: magnitude fires, collinearity blocks
         n_arr = jnp.int32(n)
-        from blackjax.adaptation.meta._detection import _compute_within_chain_stats
-
         chain_means_mc, W_diag_mc = _compute_within_chain_stats(draws_mc, n_arr)
         T_eig, _, f1 = _between_chain_detection(chain_means_mc, W_diag_mc, n_arr, M, d)
         edge = _mc_detection_edge(d, M - 1)
@@ -303,8 +292,6 @@ class TestMultiChainGate(BlackJAXTest):
         )
 
         # Behavioral: collinearity blocks → no escalation
-        import warnings
-
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")  # suppress M<6 warning for M=4 test
             core = build_multi_chain_meta_core(50000, n_chains=M, max_rank=10)
@@ -727,7 +714,6 @@ class TestMultiChainGate(BlackJAXTest):
             jax.config.update("jax_enable_x64", False)
 
 
-
 class TestTimeMajorLayout(BlackJAXTest):
     """_build_pc_centered_time_major_pool puts valid rows first (no padding contamination)."""
 
@@ -926,7 +912,6 @@ class TestTimeMajorLayout(BlackJAXTest):
             jax.config.update("jax_enable_x64", False)
 
 
-
 class TestWBranchSpectrum(BlackJAXTest):
     """W-branch top eigenvalue clears MP edge on deep spread, stays below on isotropic."""
 
@@ -995,7 +980,6 @@ class TestWBranchSpectrum(BlackJAXTest):
             edge,
             f"Multi-spread (k=5, lam={15.0}): lam1={lam1:.4f} should exceed edge={edge:.4f}",  # noqa: E231
         )
-
 
 
 class TestChainConsistencyPsi(BlackJAXTest):
@@ -1141,7 +1125,6 @@ class TestChainConsistencyPsi(BlackJAXTest):
             jax.config.update("jax_enable_x64", False)
 
 
-
 class TestNullEdgeFormula(BlackJAXTest):
     """_w_branch_null_edge computes TW_FACTOR*(1 + sqrt(d/N))^2 with N=M*(n-1)."""
 
@@ -1219,7 +1202,6 @@ class TestNullEdgeFormula(BlackJAXTest):
         self.assertGreater(
             float(np.asarray(edge_high_d)), float(np.asarray(edge_low_d))
         )
-
 
 
 class TestUnimodality2WindowConfirmation(BlackJAXTest):

@@ -27,7 +27,6 @@ import jax.numpy as jnp
 import numpy as np
 
 import blackjax
-
 from blackjax.adaptation.meta import (
     MetaAdaptationVerdict,
     build_meta_adaptation_core,
@@ -46,20 +45,14 @@ from blackjax.adaptation.meta._calibration import (
     _R_MIN,
     _S_MIN,
 )
-from blackjax.adaptation.meta._detection import (
-    _compute_chain_consistency_psi,
-    _compute_pooled_within_spectrum,
-)
 from blackjax.adaptation.meta._signals import (
     _choose_rank,
     _compute_s_gap,
     _compute_whitened_spectrum,
 )
-
 from blackjax.adaptation.metric_recipes import MetricCore
 from blackjax.adaptation.staged_adaptation import _make_engine
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
-
 from tests.adaptation._meta_fixtures import (
     _fill_mc_state,
     _fill_state_from_buffer,
@@ -75,6 +68,7 @@ from tests.adaptation._meta_fixtures import (
     _make_mc_split_means,
 )
 from tests.fixtures import BlackJAXTest
+
 
 class TestEscalationDecisionTable(BlackJAXTest):
     """Each escalation gate blocks independently; monotone escalation verified."""
@@ -259,7 +253,6 @@ class TestEscalationDecisionTable(BlackJAXTest):
         )
 
 
-
 class TestStructuralE2ESmoke(BlackJAXTest):
     """Structural e2e smokes for three geometry classes.
 
@@ -365,7 +358,6 @@ class TestStructuralE2ESmoke(BlackJAXTest):
             "low_rank",
             "High-d linear spike should route to low_rank; got " + verdict.route,
         )
-
 
 
 class TestRecovershClassical(BlackJAXTest):
@@ -938,7 +930,6 @@ class TestRecovershClassical(BlackJAXTest):
             jax.config.update("jax_enable_x64", False)
 
 
-
 class TestDefaultWiringAndBudgetWarning(BlackJAXTest):
     """FIX 1: metric='auto' derives num_steps from max_grad_budget when unset.
 
@@ -1127,7 +1118,6 @@ class TestDefaultWiringAndBudgetWarning(BlackJAXTest):
             warmup.run(key, pos, num_steps=50)
 
 
-
 class TestImpossibleComboInvariant(BlackJAXTest):
     """Impossible combo + legal coexistence invariants from the scoped latch rule.
 
@@ -1258,7 +1248,6 @@ class TestImpossibleComboInvariant(BlackJAXTest):
                     f"Window {window + 1}: impossible combo "
                     f"between_means+escalated+deferred occurred",
                 )
-
 
 
 class TestNewStateFieldsPopulated(BlackJAXTest):
@@ -1393,7 +1382,6 @@ class TestNewStateFieldsPopulated(BlackJAXTest):
             jax.config.update("jax_enable_x64", False)
 
 
-
 class TestSharedEpsilonDA(BlackJAXTest):
     """Shared-ε: n_da_updates=M via lax.scan matches M manual sequential DA updates."""
 
@@ -1516,7 +1504,6 @@ class TestSharedEpsilonDA(BlackJAXTest):
         )
 
 
-
 class TestWBranchE2ESmoke(BlackJAXTest):
     """core.final() with deep-spread draws: W-branch diagnostics are finite and positive."""
 
@@ -1560,7 +1547,6 @@ class TestWBranchE2ESmoke(BlackJAXTest):
             )
         finally:
             jax.config.update("jax_enable_x64", False)
-
 
 
 class TestEndToEndEscalation(BlackJAXTest):
