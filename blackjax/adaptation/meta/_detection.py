@@ -328,7 +328,7 @@ def _compute_mode_consistency_flag(
 ) -> Array:
     """Per-direction mode-consistency flag for T-branch multimodality detection.
 
-    BLOCKER-3 fix.  For each admitted T-spike direction ``e_j`` (where
+    For each admitted T-spike direction ``e_j`` (where
     ``T_eigenvalues[j] > edge_full``), computes
 
     .. code-block:: text
@@ -487,8 +487,8 @@ def _compute_contraction_stat(
 ) -> Array:
     """Per-chain split-half drift t-statistic for the T-branch three-way rule.
 
-    BLOCKER-3 fix.  For each chain m, computes the whitened drift along the
-    chain's own offset direction
+    For each chain m, computes the whitened drift along the chain's own offset
+    direction
 
     .. code-block:: text
 

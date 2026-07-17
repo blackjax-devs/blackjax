@@ -1251,7 +1251,7 @@ class TestImpossibleComboInvariant(BlackJAXTest):
 
 
 class TestNewStateFieldsPopulated(BlackJAXTest):
-    """All 5 new v2.1 state fields are finite after the first core.final() call."""
+    """The five W-branch/T-branch diagnostic state fields are finite after the first core.final() call."""
 
     def _run(self, dtype, seed):
         M, n, d = 8, 150, 10
@@ -1552,15 +1552,11 @@ class TestWBranchE2ESmoke(BlackJAXTest):
 class TestEndToEndEscalation(BlackJAXTest):
     """staged_adaptation with n_chains=8 on an ill-conditioned target escalates.
 
-    This is the HEADLINE v2.1 acceptance cell.  In v2 the runtime was
-    structurally inert: the single-chain schedule never produced a window with
-    n_pool >= min_n_proj, so escalation was impossible by construction.
-
-    The BLOCKER-1 fix (pooled-aware schedule) produces windows at steps ~27,
-    66, 124 with n_pool = M * per_chain_n >= min_n_proj = 208.  This test
-    asserts that after running staged_adaptation with max_grad_budget=50_000
-    and n_chains=8 on a rank-5 ill-conditioned Gaussian (d=50), the emitted
-    metric has effective_rank > 0 (at least one slow direction was deployed).
+    The pooled-aware schedule produces windows at steps ~27, 66, 124 with
+    n_pool = M * per_chain_n >= min_n_proj = 208.  This test asserts that after
+    running staged_adaptation with max_grad_budget=50_000 and n_chains=8 on a
+    rank-5 ill-conditioned Gaussian (d=50), the emitted metric has
+    effective_rank > 0 (at least one slow direction was deployed).
 
     The target is a correlated Gaussian with a rank-5 spike (lam_spike=100),
     chosen so the W-branch always fires given a working schedule.  The test
@@ -1592,9 +1588,9 @@ class TestEndToEndEscalation(BlackJAXTest):
         """staged_adaptation(n_chains=8, metric='auto') escalates on ill-conditioned target.
 
         Asserts effective_rank > 0: at least one slow direction was detected
-        and deployed by the Fisher estimator.  With the BLOCKER-1 pooled-aware
-        schedule, the first escalation-eligible window fires at step ~27 and
-        the carry propagates has_escalated=True through subsequent windows.
+        and deployed by the Fisher estimator.  The pooled-aware schedule
+        produces the first escalation-eligible window at step ~27 and the
+        carry propagates has_escalated=True through subsequent windows.
         """
         d, rank, lam_spike = 50, 5, 100.0
         M = 8
@@ -1628,9 +1624,9 @@ class TestEndToEndEscalation(BlackJAXTest):
         self.assertGreater(
             effective_rank,
             0,
-            f"BLOCKER-1 acceptance: staged_adaptation(n_chains=8) must deploy at "
-            f"least one slow direction on an ill-conditioned d={d} rank-{rank} target "
-            f"(lam_spike={lam_spike}).  Got effective_rank=0 — the schedule fix did "
-            f"not produce an escalation-eligible window.  Check _build_mc_window_schedule "
-            f"wiring in staged_adaptation.py and the budget_remaining gate in final().",
+            f"staged_adaptation(n_chains=8) must deploy at least one slow direction "
+            f"on an ill-conditioned d={d} rank-{rank} target (lam_spike={lam_spike}).  "
+            f"Got effective_rank=0 — the pooled-aware schedule did not produce an "
+            f"escalation-eligible window.  Check _build_mc_window_schedule wiring in "
+            f"staged_adaptation.py and the budget_remaining gate in final().",
         )

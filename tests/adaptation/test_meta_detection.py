@@ -782,15 +782,13 @@ class TestTimeMajorLayout(BlackJAXTest):
     def test_padding_invariant_to_buffer_size(self):
         """R²/routing output of _build_pc_centered_time_major_pool is invariant to B (F1).
 
-        This is the CORRECT regression test for the v2 padding bug: the bug
-        lived in ``_build_pc_centered_time_major_pool`` (R²/Fisher pool), not in
-        ``_compute_pooled_within_spectrum``/``_compute_chain_consistency_psi``
-        which mask BEFORE reshape and are padding-safe by construction.
+        Time-major layout makes the first n*M rows exactly the valid data;
+        increasing B only extends the zero-padding tail.  ``_compute_pooled_within_spectrum``
+        and ``_compute_chain_consistency_psi`` are also padding-safe (they mask before
+        reshape), but the regression target here is the pooled R²/Fisher path.
 
-        A chain-major revert would scatter valid rows across the pool so that
-        the ``arange < n_pool`` mask clips chains rather than time steps.
-        Time-major layout makes the first n*M rows exactly the valid data —
-        doubling B only extends the zero-padding tail.
+        A chain-major layout would scatter valid rows so that the ``arange < n_pool``
+        mask clips chains rather than time steps, changing the routing output.
 
         Assertions:
         1. Valid-row content: pc_draws_tm[:n*M] is bit-identical for B=64 and B=200.

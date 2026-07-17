@@ -290,7 +290,7 @@ def extract_multi_chain_verdict(
         "adequate_if_overdispersed" if not has_esc else "not_applicable"
     )
 
-    # v2.1 new diagnostic fields
+    # W-branch/T-branch diagnostic fields
     within_lam1_raw = float(np.asarray(final_state.within_lam1))
     chain_consistency_psi_raw = float(np.asarray(final_state.chain_consistency_psi))
     r1_top_raw = float(np.asarray(final_state.r1_top))

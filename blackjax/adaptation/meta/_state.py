@@ -40,22 +40,22 @@ class MetaAdaptationCoreState(NamedTuple):
     mu_star: Array  # optimal translation, (d,); zero before escalation
     draws_buffer: Array  # (buffer_size, d)
     grads_buffer: Array  # (buffer_size, d)
-    buffer_idx: Array  # int32 scalar; reset to 0 after each window (v1 reset policy)
+    buffer_idx: Array  # scalar; reset to 0 at each window boundary
     background_split: Array  # always 0 in v1
     recompute_counter: Array  # always 0 in v1
     # Controller carry
-    has_escalated: Array  # bool scalar; monotone True-once
-    escalation_rank: Array  # int32; the rank k chosen at escalation (0 before)
-    s_gap_prev: Array  # float32; S_gap from window before last (NaN initially)
-    s_gap_curr: Array  # float32; S_gap from most recent window (NaN initially)
-    r2_latest: Array  # float32; most recent R² (NaN if deferred or not yet computed)
-    r2_mode: Array  # int32; 0=deferred, 1=projected, 2=full_affine (last window)
-    budget_used: Array  # int32; warmup steps elapsed (step-clock proxy)
-    converged_at_step: Array  # int32; step when AIRM velocity first fired (<0 = not yet)
+    has_escalated: Array  # monotone True-once flag
+    escalation_rank: Array  # rank k chosen at escalation (0 before)
+    s_gap_prev: Array  # S_gap from window before last (NaN initially)
+    s_gap_curr: Array  # S_gap from most recent window (NaN initially)
+    r2_latest: Array  # most recent R² (NaN if deferred or not yet computed)
+    r2_mode: Array  # 0=deferred, 1=projected, 2=full_affine (last window)
+    budget_used: Array  # warmup steps elapsed
+    converged_at_step: Array  # step when AIRM velocity first converged (<0 = not yet)
     prev_lam: Array  # (max_rank,); lam from previous window for AIRM velocity
-    airm_vel_prev: Array  # float32; AIRM velocity proxy from window before last
-    airm_vel_curr: Array  # float32; AIRM velocity proxy from most recent window
-    is_slow_mixing: Array  # bool; True = slow-mixing (RESET preferred by v1.1 switch)
+    airm_vel_prev: Array  # AIRM velocity proxy from window before last
+    airm_vel_curr: Array  # AIRM velocity proxy from most recent window
+    is_slow_mixing: Array  # True = slow-mixing (RESET preferred by v1.1 switch)
 
 
 class MetaAdaptationVerdict(NamedTuple):
@@ -108,29 +108,29 @@ class MultiChainMetaAdaptationCoreState(NamedTuple):
     # Per-chain buffers: (n_chains, buf_size, d)
     draws_buffer: Array
     grads_buffer: Array
-    buffer_idx: Array  # int32 scalar; steps elapsed in the current window
+    buffer_idx: Array  # steps elapsed in the current window
     background_split: Array  # always 0 (protocol compat)
     recompute_counter: Array  # always 0 (protocol compat)
     # Controller carry — same semantics as MetaAdaptationCoreState
-    has_escalated: Array  # bool scalar; monotone True-once
-    escalation_rank: Array  # int32; rank k chosen at escalation (0 before)
-    s_gap_prev: Array  # float32; retained for diagnostic compatibility (NaN in v2 path)
-    s_gap_curr: Array  # float32; retained for diagnostic compatibility (NaN in v2 path)
-    r2_latest: Array  # float32; most recent R² from pooled draws
-    r2_mode: Array  # int32; _R2_DEFERRED / _R2_PROJECTED / _R2_FULL_AFFINE
-    budget_used: Array  # int32; warmup step evaluations elapsed
-    converged_at_step: Array  # int32; step of first AIRM convergence (<0 = not yet)
+    has_escalated: Array  # monotone True-once flag
+    escalation_rank: Array  # rank k chosen at escalation (0 before)
+    s_gap_prev: Array  # retained for diagnostic compatibility (NaN in multi-chain path)
+    s_gap_curr: Array  # retained for diagnostic compatibility (NaN in multi-chain path)
+    r2_latest: Array  # most recent R² from pooled draws
+    r2_mode: Array  # _R2_DEFERRED / _R2_PROJECTED / _R2_FULL_AFFINE
+    budget_used: Array  # warmup step evaluations elapsed
+    converged_at_step: Array  # step of first AIRM convergence (<0 = not yet)
     prev_lam: Array  # (max_rank,); lam from previous window for AIRM velocity
-    airm_vel_prev: Array  # float32
-    airm_vel_curr: Array  # float32
-    is_slow_mixing: Array  # bool; always False in the multi-chain path (pooled diagnostic)
-    # Multi-chain-specific carry (v2 fields)
-    chain_collinearity: Array  # float32; collinearity score f₁ from most recent window (NaN initially)
-    unimodality_passed: Array  # bool; True = gap-stat found unimodal distribution (False = mode-split flag)
-    deferred_to_ensemble: Array  # bool; True = other gates passed but unimodality blocked (P1→P3 handoff)
-    # v2.1 additions — W-branch diagnostics + T-branch guard state
-    within_lam1: Array  # float32; top eigenvalue of pooled within-chain residual (NaN until first window)
-    chain_consistency_psi: Array  # float32; Ψ cross-chain consistency cosine (NaN until first window)
-    r1_top: Array  # float32; lag-1 autocorr in top W-branch direction (NaN until first window)
-    detection_branch: Array  # int32; _DETECTION_BRANCH_* code from the most recent firing window
-    unimodality_flag_count: Array  # int32; consecutive windows gap-stat flagged (for 2-window confirmation)
+    airm_vel_prev: Array  # AIRM velocity proxy from window before last
+    airm_vel_curr: Array  # AIRM velocity proxy from most recent window
+    is_slow_mixing: Array  # always False in the multi-chain path (pooled diagnostic)
+    # Multi-chain-specific carry
+    chain_collinearity: Array  # collinearity score f₁ from most recent window (NaN initially)
+    unimodality_passed: Array  # True = gap-stat found unimodal distribution (False = mode-split flag)
+    deferred_to_ensemble: Array  # True = other gates passed but unimodality blocked (P1→P3 handoff)
+    # W-branch diagnostics + T-branch guard state
+    within_lam1: Array  # top eigenvalue of pooled within-chain residual (NaN until first window)
+    chain_consistency_psi: Array  # Ψ cross-chain consistency cosine (NaN until first window)
+    r1_top: Array  # lag-1 autocorr in top W-branch direction (NaN until first window)
+    detection_branch: Array  # _DETECTION_BRANCH_* code from the most recent firing window
+    unimodality_flag_count: Array  # consecutive windows gap-stat flagged (for 2-window confirmation)

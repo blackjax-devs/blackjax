@@ -19,9 +19,8 @@ metric-fixable classes); (2) S_gap(k) = λ₁/λ_{k+1} of the Welford-whitened
 residual — the magnitude predictor (Spearman 1.0 with measured rank-k payoff).
 Escalate diagonal → rank-k iff R² ≥ _R_MIN AND S_gap ≥ _S_MIN AND stable
 over two consecutive windows AND budget deadline clear. Growing-window schedule
-(nutpie-style) is the default; AIRM-velocity early exit is advisory in v1
-(the scan runs its full length; ``converged_at_step`` records where stopping
-would have helped — the actual early-stop host is the named v1.1 upgrade).
+(nutpie-style) is the default; AIRM-velocity early exit is advisory
+(``converged_at_step`` records where stopping would have helped).
 
 .. warning::
 
@@ -35,8 +34,7 @@ would have helped — the actual early-stop host is the named v1.1 upgrade).
 
 **Dtype note**: the composed estimator ``_compute_low_rank_metric`` produces
 numerically indefinite metrics under float32 (~98% of runs). Enable x64 via
-``jax.config.update("jax_enable_x64", True)`` for production use and for the
-production use and for numerical-precision-sensitive acceptance runs; all optpath harnesses ran with x64 enabled.
+``jax.config.update("jax_enable_x64", True)`` for production use.
 
 See :mod:`blackjax.adaptation.metric_recipes` for the MetricCore protocol and
 :mod:`blackjax.adaptation.staged_adaptation` for the host engine.

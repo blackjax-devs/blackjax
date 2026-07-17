@@ -190,7 +190,7 @@ _R2_PROJECTED: int = 1
 _R2_FULL_AFFINE: int = 2
 
 # ---------------------------------------------------------------------------
-# BLOCKER-2 GAIN+abstain: projected-tier router for M-chain path
+# Projected-tier GAIN+abstain: router constants for M-chain path
 # ---------------------------------------------------------------------------
 
 _GAIN_THRESHOLD: float = 0.3

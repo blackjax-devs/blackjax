@@ -114,10 +114,7 @@ def build_meta_adaptation_core(
     max_budget_steps: int = max(max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP, 1)
 
     def init(n_dims: int) -> MetaAdaptationCoreState:
-        # Buffer sized to half the budget so the growing-window schedule's largest
-        # window (≈ max_budget_steps * 0.4–0.5) does not overflow the buffer.
-        # With the cap n=min(buffer_idx, B) in final(), overflow is still safe
-        # (RESET policy keeps the most-recent B draws = the more-stationary tail).
+        # half-budget ceiling; overflow is safe — RESET keeps the most-recent B draws
         buf = min(max(max_budget_steps // 2, 256), max_budget_steps)
         buf = max(buf, 2 * (_max_rank + 1) * _MIN_TRAIN_K_RATIO)
         buf = min(buf, max_budget_steps)
@@ -269,11 +266,7 @@ def build_meta_adaptation_core(
         # Cast prev_lam to lam_lr dtype for the norm so the subtraction is
         # numerically sound; then cast back to float32 before storing.
         lam_diff = jnp.linalg.norm(lam_lr - state.prev_lam.astype(lam_lr.dtype))
-        # Controller-signal scalars are always stored as float32: they are gate
-        # comparisons and AIRM velocities that don't benefit from float64 precision.
-        # Explicit casts here are required so that both branches of the
-        # jax.lax.cond in staged_adaptation produce identical types under x64
-        # (the false branch returns the init-time float32 carry unchanged).
+        # cast to float32 so both lax.cond branches match under x64
         lam_diff_f32 = lam_diff.astype(jnp.float32)
         new_airm_vel_prev = state.airm_vel_curr  # already float32
         new_airm_vel_curr = jnp.where(
@@ -403,9 +396,7 @@ def build_multi_chain_meta_core(
     max_budget_steps_per_chain: int = max(max_budget_steps_total // n_chains, 1)
 
     def init(n_dims: int) -> MultiChainMetaAdaptationCoreState:
-        # buf_size: sized to hold the largest single-chain window.  With the
-        # budget split across n_chains, each chain runs max_budget_steps_per_chain
-        # steps, so buf_size is half that (growing-window largest window ≈ 40–50%).
+        # half-budget ceiling per chain; same logic as single-chain init
         buf = min(max(max_budget_steps_per_chain // 2, 256), max_budget_steps_per_chain)
         buf = max(buf, 2 * (_max_rank + 1) * _MIN_TRAIN_K_RATIO)
         buf = min(buf, max_budget_steps_per_chain)
@@ -437,7 +428,7 @@ def build_multi_chain_meta_core(
             chain_collinearity=jnp.array(float("nan"), dtype=jnp.float32),
             unimodality_passed=jnp.ones((), dtype=jnp.bool_),  # True until first window
             deferred_to_ensemble=jnp.zeros((), dtype=jnp.bool_),
-            # v2.1 new fields — NaN / 0 until first window
+            # NaN / 0 until first window
             within_lam1=jnp.array(float("nan"), dtype=jnp.float32),
             chain_consistency_psi=jnp.array(float("nan"), dtype=jnp.float32),
             r1_top=jnp.array(float("nan"), dtype=jnp.float32),
@@ -535,23 +526,18 @@ def build_multi_chain_meta_core(
         t_loo = _loo_detection_passes(chain_means, W_diag, n, M_stat, d, edge_loo)
         t_support = k_new >= jnp.int32(1)
 
-        # ---- T-branch Gate 5: unimodality (gap-stat, corroborator after BLOCKER-3) ----
+        # ---- T-branch Gate 5: unimodality guard (gap-stat corroborator) ----
         # Unwhiten top T direction: V_top[:, 0] is in whitened space → unwhiten by sigma_w
         e_unnorm = sigma_w_diag * V_top[:, 0]  # (d,) in original space
         e_norm = jnp.linalg.norm(e_unnorm)
         e_dir = e_unnorm / jnp.maximum(e_norm, jnp.float32(1e-10))
         is_unimodal, _gap_ratio = _unimodality_gap_stat(chain_means, e_dir, M_stat)
-        # NOTE: new_flag_count is computed AFTER BLOCKER-3 (mode-consistency + contraction)
-        # because the primary multimodality signal is any_mode_flag (mode-consistency),
-        # not the gap-stat alone.  The flag counter uses multimodality_signal (either signal)
-        # to count consecutive windows for the 2-window confirmation gate.
+        # flag counter: multimodality_signal (any_mode_flag | ~is_unimodal) for 2-window confirmation
 
         # T pre-unimodality conjunction (four non-unimodality gates)
         t_pre_uni = t_magnitude & t_collinearity & t_loo & t_support
 
         # ---- Per-chain-centered pooled buffers in time-major layout ----
-        # Fixes the v2 padding bug (chain-major zeros contaminated R² / Fisher paths)
-        # and removes between-chain transient inflation from the curvature gate.
         pc_draws_tm, pc_grads_tm, step_mask_tm = _build_pc_centered_time_major_pool(
             state.draws_buffer, state.grads_buffer, chain_means, n, M_stat
         )
@@ -598,7 +584,7 @@ def build_multi_chain_meta_core(
         # original per-chain-centered projected fit, not by the slope-heterogeneity test.
         r2_gate_w = r2_new >= jnp.float32(_R_MIN)  # for W-branch only
 
-        # BLOCKER-2: projected-tier GAIN+abstain router for T-branch routing.
+        # Projected-tier GAIN+abstain router for T-branch routing.
         # When _R2_PROJECTED was taken (n_pool < 16d), the raw r2_new is
         # meaningless at k<<d (can be ≤ 0 for valid curvature targets → false
         # reparam_suggested in verdict; stoch_vol r2=-0.117, radon r2=-0.981).
@@ -674,8 +660,8 @@ def build_multi_chain_meta_core(
             & deadline_ok
         )
 
-        # ---- BLOCKER-3: mode-consistency flag + contraction stat (T-branch guard) ----
-        # Mode-consistency (BLOCKER-3): per direction e_j, flag iff
+        # ---- Mode-consistency flag + contraction stat (T-branch guard) ----
+        # Mode-consistency: per direction e_j, flag iff
         # (R²_local(e_j) − R²_global(e_j) > 0.3) AND (R²_local(e_j) ≥ 0.5).
         # Replaces the gap-stat as the primary multimodality signal — k-mode-agnostic.
         any_mode_flag = _compute_mode_consistency_flag(
@@ -691,7 +677,7 @@ def build_multi_chain_meta_core(
             n,
             M_stat,
         )
-        # Contraction stat (BLOCKER-3): per-chain split-half drift t.
+        # Contraction stat: per-chain split-half drift t.
         # t < -2.365 at M=8 → chains are converging → unimodal-safe, T can escalate.
         t_contr = _compute_contraction_stat(
             state.draws_buffer, chain_means, grand_mean, n, M_stat
@@ -699,7 +685,7 @@ def build_multi_chain_meta_core(
         _T_CONTR_CRIT = jnp.float32(-2.365)  # one-sided at α=2.5%, M=8 dof=7
         is_converging = t_contr < _T_CONTR_CRIT
 
-        # ---- T-branch three-way (BLOCKER-3 fix, replaces binary gap-stat gate) ----
+        # ---- T-branch three-way rule (replaces binary gap-stat gate) ----
         # (i) Converging → chains drifting toward grand mean → unimodal-safe → escalate
         #     if pre-uni gates pass (override gap-stat).
         # (ii) Any mode_flag AND NOT converging → defer (genuine or uncertain multimodality).
@@ -860,7 +846,6 @@ def build_multi_chain_meta_core(
             chain_collinearity=f1,
             unimodality_passed=is_unimodal,
             deferred_to_ensemble=new_deferred,
-            # v2.1 new fields
             within_lam1=lam1_w.astype(jnp.float32),
             chain_consistency_psi=psi_w.astype(jnp.float32),
             r1_top=r1_w.astype(jnp.float32),
