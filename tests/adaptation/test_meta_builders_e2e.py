@@ -1382,11 +1382,129 @@ class TestNewStateFieldsPopulated(BlackJAXTest):
             jax.config.update("jax_enable_x64", False)
 
 
-class TestSharedEpsilonDA(BlackJAXTest):
-    """Shared-ε: n_da_updates=M via lax.scan matches M manual sequential DA updates."""
+class TestMeanPoolGainDefect(BlackJAXTest):
+    """Mean-pool DA correctness: M chains at shared ε → one observation, not M.
 
-    def test_n_da_updates_scan_matches_loop(self):
-        """_make_engine with n_da_updates=M gives same step_size_avg as M manual updates."""
+    The statistical model: M chains stepping at ONE shared ε produce M measurements
+    of the same acceptance quantity — one mean observation, not M independent ones.
+    Mean-pool DA (one da_update on mean(rates)) is the correct model.
+    M-sequential lax.scan inflates the DA primal gain ~√M and advances the Polyak
+    schedule M× too fast, causing self-sustained limit cycles.
+    """
+
+    def test_mean_pool_matches_single_chain_at_identical_acceptance(self):
+        """With M chains at identical acceptance rate, mean-pool == single-chain.
+
+        When all chains see ar=0.75, mean-pool produces da_update(ss, 0.75),
+        which is identical to the single-chain update.  M-sequential would run
+        four separate updates at 0.75 and advance the Polyak counter 4×, giving
+        a different (over-corrected) result.
+
+        This test asserts the CORRECT (mean-pool) behavior.  It FAILs with the
+        M-sequential lax.scan implementation and PASSes after the mean-pool fix.
+        """
+        from blackjax.adaptation.meta import build_meta_adaptation_core
+        from blackjax.adaptation.step_size import dual_averaging_adaptation
+
+        target_ar = 0.80
+        M = 4
+        ar_uniform = 0.75  # same rate on all chains
+        per_chain = jnp.full((M,), ar_uniform)
+
+        # Single-chain reference: ONE da_update at the shared acceptance rate.
+        da_init, da_update, _ = dual_averaging_adaptation(target_ar)
+        ss_ref = da_init(0.1)
+        ss_single = da_update(ss_ref, jnp.float32(ar_uniform))
+        step_single = float(np.asarray(jnp.exp(ss_single.log_step_size_avg)))
+
+        # Engine with n_da_updates=M — must give SAME result as single-chain
+        # after the mean-pool fix (M-sequential gives a different result).
+        dummy_core = build_meta_adaptation_core(max_grad_budget=5000)
+        eng_init, eng_update, _ = _make_engine(
+            dummy_core,
+            target_acceptance_rate=target_ar,
+            n_da_updates=M,
+        )
+        adapt_state = eng_init(jnp.zeros(10), 0.1)
+        adapt_stage = (jnp.int32(0), jnp.bool_(False))  # fast stage, no window end
+
+        new_state = eng_update(
+            adapt_state,
+            adapt_stage,
+            jnp.zeros(10),
+            jnp.zeros(10),
+            per_chain,
+        )
+        step_engine = float(np.asarray(jnp.exp(new_state.ss_state.log_step_size_avg)))
+
+        np.testing.assert_allclose(
+            step_engine,
+            step_single,
+            rtol=1e-4,
+            err_msg=(
+                "Mean-pool DA: engine with M="
+                + str(M)
+                + " identical acceptances must match "
+                "single-chain at the same rate. "
+                "Got engine="
+                + str(round(step_engine, 7))
+                + " vs single="
+                + str(round(step_single, 7))
+                + ".  "
+                "If this fails, the engine is using M-sequential updates (the bug): "
+                "M chains at shared eps are one mean observation, not M independent ones."
+            ),
+        )
+
+    def test_mean_pool_counter_advances_once_per_step(self):
+        """Mean-pool DA: the Polyak counter increments by 1 per multi-chain step.
+
+        With the correct mean-pool model, each warmup step contributes ONE DA
+        observation (the mean acceptance rate across chains), so the step counter
+        must advance by 1 — not by M.  Advancing M× is the limit-cycle mechanism.
+
+        This test asserts the CORRECT (mean-pool) counter behavior.  It FAILs
+        with the M-sequential implementation (counter advances by M) and PASSes
+        after the mean-pool fix.
+        """
+        from blackjax.adaptation.meta import build_meta_adaptation_core
+
+        M = 6
+        per_chain = jnp.full((M,), 0.78)
+
+        dummy_core = build_meta_adaptation_core(max_grad_budget=5000)
+        eng_init, eng_update, _ = _make_engine(
+            dummy_core,
+            target_acceptance_rate=0.80,
+            n_da_updates=M,
+        )
+        adapt_state = eng_init(jnp.zeros(8), 0.1)
+        initial_step = int(np.asarray(adapt_state.ss_state.step))
+        adapt_stage = (jnp.int32(0), jnp.bool_(False))
+
+        new_state = eng_update(
+            adapt_state, adapt_stage, jnp.zeros(8), jnp.zeros(8), per_chain
+        )
+
+        delta = int(np.asarray(new_state.ss_state.step)) - initial_step
+        self.assertEqual(
+            delta,
+            1,
+            f"Mean-pool DA counter must advance by 1 per warmup step (not M={M}). "
+            f"Got delta={delta}. M-sequential advances by M — that is the gain defect.",
+        )
+
+
+class TestSharedEpsilonDA(BlackJAXTest):
+    """Shared-ε: mean-pool DA matches single-chain DA at the mean acceptance rate."""
+
+    def test_n_da_updates_mean_matches_single_chain_at_mean_ar(self):
+        """_make_engine with n_da_updates=M computes da_update(ss, mean(rates)).
+
+        The correct statistical model: M chains at one shared eps contribute ONE
+        mean observation.  The engine must produce the same step_size_avg as a
+        single da_update at mean(per_chain), not M sequential updates.
+        """
         from blackjax.adaptation.meta import build_meta_adaptation_core
         from blackjax.adaptation.step_size import dual_averaging_adaptation
 
@@ -1394,14 +1512,13 @@ class TestSharedEpsilonDA(BlackJAXTest):
         M = 4
         per_chain = jnp.array([0.55, 0.65, 0.75, 0.85])
 
-        # Manual sequential updates (ground truth)
+        # Single-chain reference: ONE da_update at mean(per_chain) = 0.70
         da_init, da_update, _ = dual_averaging_adaptation(target_ar)
         ss = da_init(0.1)
-        for ar in per_chain:
-            ss = da_update(ss, jnp.float32(float(ar)))
-        step_manual = float(np.asarray(jnp.exp(ss.log_step_size_avg)))
+        ss_ref = da_update(ss, jnp.mean(per_chain))
+        step_ref = float(np.asarray(jnp.exp(ss_ref.log_step_size_avg)))
 
-        # Engine with n_da_updates=M (uses lax.scan internally)
+        # Engine with n_da_updates=M uses mean-pool (one update at the mean)
         dummy_core = build_meta_adaptation_core(max_grad_budget=5000)
         eng_init, eng_update, _ = _make_engine(
             dummy_core,
@@ -1414,21 +1531,21 @@ class TestSharedEpsilonDA(BlackJAXTest):
         new_state = eng_update(
             adaptation_state,
             adaptation_stage,
-            jnp.zeros(10),  # position (ignored in fast stage)
-            jnp.zeros(10),  # grad (ignored in fast stage)
-            per_chain,  # (M,) accept rates → M sequential DA updates
+            jnp.zeros(10),
+            jnp.zeros(10),
+            per_chain,
         )
 
         step_engine = float(np.asarray(jnp.exp(new_state.ss_state.log_step_size_avg)))
         self.assertAlmostEqual(
             step_engine,
-            step_manual,
+            step_ref,
             places=4,
-            msg="n_da_updates=M via lax.scan must match M manual DA updates",
+            msg="n_da_updates=M must produce da_update(ss, mean(rates)), not M sequential updates",
         )
 
-    def test_step_counter_increments_M_times(self):
-        """After n_da_updates=M, the DA step counter increments by M (not 1)."""
+    def test_step_counter_increments_once_per_step(self):
+        """After n_da_updates=M (mean-pool), the DA step counter increments by 1."""
         from blackjax.adaptation.meta import build_meta_adaptation_core
 
         M = 3
@@ -1453,30 +1570,40 @@ class TestSharedEpsilonDA(BlackJAXTest):
         )
 
         step_count = int(np.asarray(new_state.ss_state.step))
-        # The step counter should have incremented exactly M times
+        # Mean-pool: ONE observation per warmup step, so counter advances by 1.
         self.assertEqual(
             step_count - initial_step,
-            M,
-            f"DA step counter should increment by {M}, got delta={step_count - initial_step}",
+            1,
+            "Mean-pool DA: counter must advance by 1 per step (not M="
+            + str(M)
+            + "). Got delta="
+            + str(step_count - initial_step),
         )
 
-    def test_mc_engine_wiring_n_da_matches_n_chains(self):
-        """staged_adaptation(n_chains=M) wires n_da_updates=M into _make_engine (F3).
+    def test_mc_engine_wiring_n_da_gives_mean_pool(self):
+        """staged_adaptation(n_chains=M) wires n_da_updates=M for mean-pool DA.
 
         Tests the WIRING from staged_adaptation.py:
             n_da_updates = _n_chains if _is_multi_chain else 1
 
-        The DA step counter must advance by M per multi-chain warmup step (one
-        acceptance rate per chain consumed sequentially).  If staged_adaptation
-        accidentally passed n_da_updates=1, each step would consume one acceptance
-        rate and the DA calibration would be M× off.
-
-        Uses a single-chain dummy metric core with n_da_updates=M to test the
-        DA machinery in isolation (the same mechanism staged_adaptation uses).
+        The DA step counter must advance by 1 per multi-chain warmup step
+        (one mean-pool observation per step, not M sequential ones).
+        The mean-pool result must match a single da_update at the mean
+        acceptance rate.
         """
         from blackjax.adaptation.meta import build_meta_adaptation_core
+        from blackjax.adaptation.step_size import dual_averaging_adaptation
 
         M = 8  # matches the recommended n_chains minimum
+        ar_val = 0.78
+        per_chain = jnp.full((M,), ar_val)
+
+        # Reference: one da_update at the mean (= ar_val since all equal)
+        da_init, da_update, _ = dual_averaging_adaptation(0.80)
+        ss_ref = da_init(0.1)
+        ss_ref = da_update(ss_ref, jnp.float32(ar_val))
+        step_ref = float(np.asarray(jnp.exp(ss_ref.log_step_size_avg)))
+
         dummy_core = build_meta_adaptation_core(max_grad_budget=5000)
         eng_init, eng_update, _ = _make_engine(
             dummy_core, target_acceptance_rate=0.80, n_da_updates=M
@@ -1484,7 +1611,6 @@ class TestSharedEpsilonDA(BlackJAXTest):
         adaptation_state = eng_init(jnp.zeros(10), 0.1)
         initial_step = int(np.asarray(adaptation_state.ss_state.step))
         adaptation_stage = (jnp.int32(0), jnp.bool_(False))
-        per_chain = jnp.full((M,), 0.78)
 
         new_state = eng_update(
             adaptation_state,
@@ -1495,12 +1621,23 @@ class TestSharedEpsilonDA(BlackJAXTest):
         )
 
         step_count = int(np.asarray(new_state.ss_state.step))
+        step_engine = float(np.asarray(jnp.exp(new_state.ss_state.log_step_size_avg)))
+
+        # Counter must advance by 1 (mean-pool = one observation per step).
         self.assertEqual(
             step_count - initial_step,
-            M,
-            f"MC wiring: DA counter must advance by M={M} per multi-chain step, "
-            f"got delta={step_count - initial_step}. "
-            f"Check staged_adaptation.py: n_da_updates=_n_chains for _is_multi_chain.",
+            1,
+            "MC wiring: DA counter must advance by 1 per multi-chain step "
+            "(mean-pool model). Got delta="
+            + str(step_count - initial_step)
+            + ". Check staged_adaptation.py _maybe_multi_da_update.",
+        )
+        # Result must match single da_update at the mean acceptance rate.
+        self.assertAlmostEqual(
+            step_engine,
+            step_ref,
+            places=4,
+            msg="MC wiring: engine must match da_update(ss, mean(rates)), not M sequential updates",
         )
 
 
