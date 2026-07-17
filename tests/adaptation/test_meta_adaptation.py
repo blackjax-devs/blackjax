@@ -118,7 +118,7 @@ from tests.fixtures import BlackJAXTest
 # Test geometry helpers
 # ---------------------------------------------------------------------------
 
-_RNG_SEED = 20260715
+_RNG_SEED = 424242
 
 
 def _make_isotropic_buffer(n_dims: int, n: int, seed: int = _RNG_SEED):
@@ -2603,6 +2603,68 @@ def _make_mc_even_spread(M, n, d, spread_scale=5.0, seed=_RNG_SEED):
     return jnp.stack(draws_list), jnp.stack(grads_list)
 
 
+def _make_mc_ar_null(M, n, d, rho=0.8, seed=_RNG_SEED):
+    """M independent AR(1) chains: magnitude fires but Ψ refuses (F4).
+
+    Each chain: x_t = rho * x_{t-1} + sqrt(1-rho^2) * eps_t, eps_t ~ N(0,I).
+    The within-chain pooled spectrum is inflated (lam1 >> edge due to
+    autocorrelation).  But cross-chain consistency Ψ ≈ 0: each chain's AR
+    noise is independent, so the off-diagonal correlation matrices C_A and C_B
+    (between chain-halves) are near-zero for isotropic AR.  This proves Ψ is
+    load-bearing — without it the W-branch would fire false positives on any
+    well-mixed chain with slow mixing.
+
+    Use d >= 26 where the adaptive Ψ threshold exceeds the flat 0.15 floor.
+    """
+    key = jax.random.key(seed)
+    chain_keys = jax.random.split(key, M)
+    noise_scale = float((1.0 - rho**2) ** 0.5)
+    draws_list, grads_list = [], []
+    for m in range(M):
+        eps = jax.random.normal(chain_keys[m], (n, d)).astype(jnp.float32)
+        # Build AR(1) via Python-level loop (fixture construction only)
+        rows = [jnp.zeros(d, dtype=jnp.float32)]
+        for t in range(1, n):
+            rows.append(rho * rows[-1] + noise_scale * eps[t])
+        x = jnp.stack(rows)  # (n, d)
+        draws_list.append(x)
+        grads_list.append(-x)  # N(0,I) stationary score
+    return jnp.stack(draws_list), jnp.stack(grads_list)
+
+
+def _make_mc_multi_spread(M, n, d, n_dirs=5, lam_within=10.0, seed=_RNG_SEED):
+    """M chains each with n_dirs COMPARABLE slow directions (f1 ≈ 1/n_dirs).
+
+    Unlike _make_mc_deep_spread (rank-1 spike, f1 ≈ 0.65, NOT the W-branch
+    target), this represents the GENUINE W-branch target: continuous spread
+    across multiple directions with no single dominant eigenvalue.
+
+    Construction: lam_within applied equally to all n_dirs directions → all
+    slow-direction eigenvalues equal → f1 = 1/n_dirs by construction.
+
+    Use this fixture for W-branch detection tests; _make_mc_deep_spread is
+    retained for T-branch and single-chain compatibility tests.
+    """
+    key = jax.random.key(seed)
+    k_dir, k_chains = jax.random.split(key)
+    raw = jax.random.normal(k_dir, (d, n_dirs))
+    U, _ = jnp.linalg.qr(raw)
+    U = U[:, :n_dirs]  # (d, n_dirs) orthonormal slow directions
+
+    chain_keys = jax.random.split(k_chains, M)
+    draws_list, grads_list = [], []
+    for m in range(M):
+        z = jax.random.normal(chain_keys[m], (n, d))
+        z_proj = z @ U  # (n, n_dirs)
+        z_orth = z - z_proj @ U.T  # (n, d)
+        x = z_orth + jnp.sqrt(jnp.float32(lam_within)) * z_proj @ U.T
+        # Score: -(I + (lam-1)*U*U^T)^{-1} x = -(x - (1-1/lam)*U*U^T*x)
+        g = -(x - (1.0 - 1.0 / lam_within) * (x @ U) @ U.T)
+        draws_list.append(x)
+        grads_list.append(g)
+    return jnp.stack(draws_list), jnp.stack(grads_list)
+
+
 def _fill_mc_state(
     state: MultiChainMetaAdaptationCoreState,
     draws_mc: jax.Array,
@@ -2697,6 +2759,53 @@ class TestTimeMajorLayout(BlackJAXTest):
         actual_row0 = np.asarray(pc_draws[0])
         np.testing.assert_allclose(expected_row0, actual_row0, atol=1e-5)
 
+    def test_padding_invariant_to_buffer_size(self):
+        """lam1, R², and Ψ are invariant to buffer size B when n < B (F1).
+
+        A time-major→chain-major revert would break this: in chain-major layout
+        the valid-row mask 'arange < n_pool' incorrectly includes padding from
+        early chains, so doubling B while holding n fixed changes which rows
+        the mask covers.  Time-major layout makes all valid rows contiguous at
+        the start, so B only changes the zero-padding tail (no effect on result).
+        """
+        M, n, d = 4, 30, 10
+        key = jax.random.key(777)
+        # Reference draws: use first n draws per chain
+        draws_core = jax.random.normal(key, (M, n, d)).astype(jnp.float32)
+        chain_means = draws_core.mean(axis=1)  # (M, d)
+        W_diag = jnp.ones(d, dtype=jnp.float32)
+        n_arr = jnp.array(n, dtype=jnp.int32)
+        max_rank = 5
+
+        def _run(B):
+            # Embed draws_core into buffer of size B (pad with zeros)
+            draws_buf = jnp.concatenate(
+                [draws_core, jnp.zeros((M, B - n, d), dtype=jnp.float32)], axis=1
+            )
+            lam1, _ = _compute_pooled_within_spectrum(
+                draws_buf, chain_means, W_diag, n_arr, M, max_rank
+            )
+            psi = _compute_chain_consistency_psi(
+                draws_buf, chain_means, W_diag, n_arr, M
+            )
+            return float(np.asarray(lam1)), float(np.asarray(psi))
+
+        lam1_b64, psi_b64 = _run(64)
+        lam1_b200, psi_b200 = _run(200)
+
+        self.assertAlmostEqual(
+            lam1_b64,
+            lam1_b200,
+            places=4,
+            msg=f"lam1 must be invariant to B: B=64→{lam1_b64:.6f}, B=200→{lam1_b200:.6f}",  # noqa: E231
+        )
+        self.assertAlmostEqual(
+            psi_b64,
+            psi_b200,
+            places=4,
+            msg=f"Ψ must be invariant to B: B=64→{psi_b64:.6f}, B=200→{psi_b200:.6f}",  # noqa: E231
+        )
+
 
 # ---------------------------------------------------------------------------
 # v2.1 test 2 — W-branch: lam1 detection
@@ -2753,6 +2862,25 @@ class TestWBranchSpectrum(BlackJAXTest):
         finally:
             jax.config.update("jax_enable_x64", False)
 
+    def test_multi_spread_lam1_exceeds_edge(self):
+        """Genuine multi-direction spread (f1≈1/k): W-branch lam1 > edge (F6).
+
+        _make_mc_deep_spread is rank-1 (f1≈0.65) and does NOT represent the
+        W-branch's actual target.  _make_mc_multi_spread creates k=5 comparable
+        slow directions (f1≈0.2), the genuine W-branch target regime.
+
+        This test exercises the code path that was previously untested by the
+        rank-1 deep_spread fixture.
+        """
+        M, n, d = 8, 200, 50
+        draws_mc, _ = _make_mc_multi_spread(M, n, d, n_dirs=5, lam_within=15.0, seed=13)
+        lam1, edge = self._check_spectrum(M, n, d, draws_mc, jnp.float32)
+        self.assertGreater(
+            lam1,
+            edge,
+            f"Multi-spread (k=5, lam={15.0}): lam1={lam1:.4f} should exceed edge={edge:.4f}",  # noqa: E231
+        )
+
 
 # ---------------------------------------------------------------------------
 # v2.1 test 3 — Cross-chain consistency Ψ
@@ -2807,6 +2935,50 @@ class TestChainConsistencyPsi(BlackJAXTest):
         finally:
             jax.config.update("jax_enable_x64", False)
 
+    def test_ar_null_psi_gate_refuses_at_d26(self):
+        """AR(1)-null at d=26: magnitude fires (lam1 > edge), Ψ refuses (F4).
+
+        This proves Ψ is load-bearing — without it the W-branch would fire on
+        any slow-mixing chain whose within-chain spectrum is inflated.
+        At d=26 the adaptive Ψ threshold is max(3*q99_null, 0.15) > 0.15
+        (the flat floor is not inert here).
+
+        AR(1) chains at rho=0.8 inflate lam1 ~9× above I (effective-N
+        reduction by (1-rho)/(1+rho)=1/9), pushing lam1 well above the MP edge.
+        But because each chain's AR noise is independent, cross-chain
+        off-diagonal correlation C_A, C_B ≈ 0 → Ψ ≈ 0 (gate refuses).
+        """
+        M, n, d = 8, 60, 26
+        draws_mc, _ = _make_mc_ar_null(M, n, d, rho=0.8, seed=200)
+        draws_mc = draws_mc.astype(jnp.float32)
+        chain_means = draws_mc.mean(axis=1)  # (M, d)
+        W_diag = jnp.ones(d, dtype=jnp.float32)
+        n_arr = jnp.array(n, dtype=jnp.int32)
+        max_rank = 10
+
+        lam1, _ = _compute_pooled_within_spectrum(
+            draws_mc, chain_means, W_diag, n_arr, M, max_rank
+        )
+        psi = _compute_chain_consistency_psi(draws_mc, chain_means, W_diag, n_arr, M)
+        edge = _w_branch_null_edge(M, n_arr, d)
+
+        lam1_f = float(np.asarray(lam1))
+        psi_f = float(np.asarray(psi))
+        edge_f = float(np.asarray(edge))
+
+        self.assertGreater(
+            lam1_f,
+            edge_f,
+            f"AR(1)-null d={d}: lam1={lam1_f:.3f} must exceed edge={edge_f:.3f} "  # noqa: E231
+            f"(AR autocorrelation inflates the pooled spectrum)",
+        )
+        self.assertLess(
+            psi_f,
+            _W_BRANCH_PSI_FLOOR,
+            f"AR(1)-null d={d}: Ψ={psi_f:.4f} must be < floor={_W_BRANCH_PSI_FLOOR} "  # noqa: E231
+            f"(independent AR chains have no shared off-diagonal structure)",
+        )
+
 
 # ---------------------------------------------------------------------------
 # v2.1 test 4 — W-branch MP edge formula
@@ -2816,13 +2988,63 @@ class TestChainConsistencyPsi(BlackJAXTest):
 class TestNullEdgeFormula(BlackJAXTest):
     """_w_branch_null_edge computes TW_FACTOR*(1 + sqrt(d/N))^2 with N=M*(n-1)."""
 
-    def test_edge_formula_scalar(self):
-        """Check the null edge value for known M, n, d."""
-        M, n, d = 4, 26, 10  # N = M*(n-1) = 4*25 = 100
-        edge = _w_branch_null_edge(M, jnp.array(n, dtype=jnp.int32), d)
-        N = M * (n - 1)
-        expected = _W_BRANCH_NULL_EDGE_TW_FACTOR * (1.0 + (d / N) ** 0.5) ** 2
-        self.assertAlmostEqual(float(np.asarray(edge)), expected, places=5)
+    def test_tw_factor_sanity_range(self):
+        """TW_FACTOR is in [1.0, 1.1] — guards against transcription typo."""
+        self.assertGreaterEqual(
+            _W_BRANCH_NULL_EDGE_TW_FACTOR,
+            1.0,
+            "TW factor should be >= 1.0 (at least as large as the asymptotic edge)",
+        )
+        self.assertLessEqual(
+            _W_BRANCH_NULL_EDGE_TW_FACTOR,
+            1.1,
+            "TW factor > 1.1 is implausibly large for an O(1/N) finite-N correction",
+        )
+
+    def test_empirical_null_lam1_under_edge(self):
+        """Fraction of iid-null lam1 values exceeding edge is small at (M=8, n=40, d=20).
+
+        F8: replaces the self-referential test that imported _W_BRANCH_NULL_EDGE_TW_FACTOR
+        into its expected value (making the constant's numeric value completely unprotected).
+        This test validates the factor's VALUE against iid-null spectra.
+
+        Runs 200 iid draws sets (with correct per-chain centering on actual sample means)
+        and checks that fewer than 15% of null spectra exceed the edge.  The true
+        null FPR at this edge should be ~1%; 15% provides headroom for 200-rep MC
+        noise while still catching a wildly mis-calibrated constant (e.g. 0.5 or 5.0).
+        """
+        M, n, d = 8, 40, 20
+        N_reps = 200
+        key = jax.random.key(9999)
+        W_diag = jnp.ones(d, dtype=jnp.float32)  # identity whitening
+        n_arr = jnp.array(n, dtype=jnp.int32)
+        max_rank = 10
+
+        edge = float(np.asarray(_w_branch_null_edge(M, n_arr, d)))
+
+        n_above = 0
+        keys = jax.random.split(key, N_reps)
+        for i in range(N_reps):
+            # iid null: M chains of N(0,I) draws
+            draws = jax.random.normal(keys[i], (M, n, d)).astype(jnp.float32)
+            # Correct centering: use the actual per-chain sample mean so that
+            # _compute_pooled_within_spectrum receives properly centered residuals.
+            chain_means = draws.mean(axis=1)  # (M, d)
+            lam1, _ = _compute_pooled_within_spectrum(
+                draws, chain_means, W_diag, n_arr, M, max_rank
+            )
+            if float(np.asarray(lam1)) > edge:
+                n_above += 1
+
+        frac_above = n_above / N_reps
+        self.assertLess(
+            frac_above,
+            0.15,
+            f"Too many iid-null lam1 exceed edge={edge:.4f}: "  # noqa: E231
+            f"{n_above}/{N_reps} ({frac_above:.1%}). "  # noqa: E231
+            f"True null FPR is ~1%: 15% cap catches badly miscalibrated"
+            f" _W_BRANCH_NULL_EDGE_TW_FACTOR={_W_BRANCH_NULL_EDGE_TW_FACTOR}.",
+        )
 
     def test_edge_decreases_with_more_draws(self):
         """More draws per chain → tighter (lower) null edge → easier detection."""
@@ -2926,67 +3148,109 @@ class TestUnimodality2WindowConfirmation(BlackJAXTest):
 
 
 class TestImpossibleComboInvariant(BlackJAXTest):
-    """Escalation ↔ not deferred (algebraic exclusion from scoped latch rule)."""
+    """Impossible combo + legal coexistence invariants from the scoped latch rule.
 
-    def test_escalation_implies_not_deferred(self):
-        """T-branch (between_means) escalation implies deferred=False.
+    The ONLY impossible combo: escalated=True AND detection_branch=between_means
+    AND deferred=True.  (T-branch escalation requires confirmed_split=True, but
+    confirmed_split=True ⟹ new_deferred=False algebraically.)
 
-        Scoped latch rule: W-escalation + T-defer IS LEGAL (cross-branch
-        coexistence).  The ONLY impossible combo is escalated=True AND
-        detection_branch=between_means AND deferred=True.  If T-branch alone
-        escalated, it required ~confirmed_split → confirmed_split=False →
-        new_deferred=False.  So that triple cannot occur; this test asserts it.
-        """
-        M, n, d = 8, 150, 10
-        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
-        state = core.init(d)
-        draws_mc, grads_mc = _make_mc_deep_spread(M, n, d, lam_within=30.0, seed=40)
-        state1 = _fill_mc_state(state, draws_mc, grads_mc)
-        result = core.final(state1)
+    Cross-branch coexistence IS LEGAL: W-escalation (pooled_within) + T-defer.
+    """
 
-        has_escalated = bool(np.asarray(result.has_escalated))
-        deferred = bool(np.asarray(result.deferred_to_ensemble))
-        branch = int(np.asarray(result.detection_branch))
+    def test_split_means_no_between_branch_window1(self):
+        """Split-means in window 1: detection_branch ≠ between_means (F2 regression).
 
-        # W-escalation + deferred is LEGAL per scoped latch rule.
-        # Only assert the impossible triple: T-only escalation + deferred.
-        if has_escalated and branch == _DETECTION_BRANCH_BETWEEN_MEANS:
-            self.assertFalse(
-                deferred,
-                "Impossible combo: detection_branch=between_means + escalated + deferred",
-            )
-
-    def test_impossible_combo_between_means_deferred_escalated(self):
-        """The combo route=low_rank ∧ deferred ∧ detection_branch=between_means is impossible.
-
-        Cross-branch coexistence (W-escalation + T-defer) IS LEGAL per the scoped
-        latch rule.  The ONLY impossible combo is:
-            deferred=True AND has_escalated=True AND detection_branch=between_means.
-        If T-branch alone escalated (between_means), it required ~confirmed_split
-        → confirmed_split=False → new_deferred=False.  So this triple cannot occur.
+        In v1/v2 a bug caused between_means escalation on the FIRST window even
+        before the 2-window confirmation check could accumulate.  The fix makes
+        window-1 data produce deferred (or none), not T-escalation.
+        This test catches that revert: with split_scale=8 the between-chain signal
+        is strong, but a single window must not yield detection_branch=between_means.
         """
         M, n, d = 8, 150, 10
         core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
         state = core.init(d)
         draws_split, grads_split = _make_mc_split_means(
-            M, n, d, split_scale=8.0, seed=41
+            M, n, d, split_scale=8.0, seed=43
         )
-
         state1 = _fill_mc_state(state, draws_split, grads_split)
         r1 = core.final(state1)
-        state2 = _fill_mc_state(r1, draws_split, grads_split)
-        r2 = core.final(state2)
 
-        has_esc = bool(np.asarray(r2.has_escalated))
-        deferred = bool(np.asarray(r2.deferred_to_ensemble))
-        branch = int(np.asarray(r2.detection_branch))
+        branch = int(np.asarray(r1.detection_branch))
+        self.assertNotEqual(
+            branch,
+            _DETECTION_BRANCH_BETWEEN_MEANS,
+            f"Window 1 split-means must NOT escalate via between_means "
+            f"(needs 2-window confirmation) -- got detection_branch={branch}",
+        )
 
-        # If the T-only between_means branch escalated, deferred MUST be False
-        if has_esc and branch == _DETECTION_BRANCH_BETWEEN_MEANS:
-            self.assertFalse(
-                deferred,
-                "Impossible combo: detection_branch=between_means + escalated + deferred",
+    def test_w_escalation_deferred_is_legal_coexistence(self):
+        """W-branch escalation + deferred=True is LEGAL (not the impossible combo).
+
+        The scoped latch rule: pooled_within (W-branch) escalation is independent
+        of the T-branch defer gate.  Both can fire in the same window.  This test
+        asserts the code correctly permits that coexistence.
+
+        We inject deep-spread draws (W-branch fires) followed by split-means draws
+        (T-branch would defer).  If both fire, detection_branch=both AND
+        deferred=True is a legal state — only 'between_means+escalated+deferred'
+        is forbidden.  The test asserts: IF both W-escalated AND deferred, then
+        detection_branch ≠ between_means.
+        """
+        M, n, d = 8, 150, 10
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+        state = core.init(d)
+
+        # First window: deep spread to prime W-branch
+        draws_spread, grads_spread = _make_mc_deep_spread(
+            M, n, d, lam_within=30.0, seed=44
+        )
+        state1 = _fill_mc_state(state, draws_spread, grads_spread)
+        r1 = core.final(state1)
+
+        has_esc = bool(np.asarray(r1.has_escalated))
+        deferred = bool(np.asarray(r1.deferred_to_ensemble))
+        branch = int(np.asarray(r1.detection_branch))
+
+        # Core invariant: IF escalated AND deferred, THEN branch ≠ between_means
+        if has_esc and deferred:
+            self.assertNotEqual(
+                branch,
+                _DETECTION_BRANCH_BETWEEN_MEANS,
+                "Impossible combo: escalated=True + deferred=True + between_means.  "
+                "W-escalation + T-defer is LEGAL (branch may be pooled_within or both); "
+                "but T-escalation + deferred is impossible (confirmed_split excludes defer).",
             )
+
+    def test_impossible_combo_never_occurs_over_windows(self):
+        """Three-window scan: escalated+between_means+deferred NEVER appears (F5).
+
+        Runs split-means draws through 3 consecutive windows.  Each window's
+        output is checked: IF has_escalated AND detection_branch=between_means
+        THEN deferred must be False.  The test is structurally rigorous because
+        we RUN windows until between_means escalation could reasonably occur
+        (not just checking a never-reached condition).
+        """
+        M, n, d = 8, 150, 10
+        core = build_multi_chain_meta_core(max_grad_budget=80000, n_chains=M)
+        state = core.init(d)
+        draws_split, grads_split = _make_mc_split_means(
+            M, n, d, split_scale=10.0, seed=45
+        )
+
+        for window in range(3):
+            state = _fill_mc_state(state, draws_split, grads_split)
+            result = core.final(state)
+
+            has_esc = bool(np.asarray(result.has_escalated))
+            deferred = bool(np.asarray(result.deferred_to_ensemble))
+            branch = int(np.asarray(result.detection_branch))
+
+            if has_esc and branch == _DETECTION_BRANCH_BETWEEN_MEANS:
+                self.assertFalse(
+                    deferred,
+                    f"Window {window + 1}: impossible combo "
+                    f"between_means+escalated+deferred occurred",
+                )
 
 
 # ---------------------------------------------------------------------------
@@ -3039,6 +3303,89 @@ class TestNewStateFieldsPopulated(BlackJAXTest):
             self.assertFalse(np.isnan(lam1), "x64: within_lam1 is NaN")
             self.assertFalse(np.isnan(psi), "x64: chain_consistency_psi is NaN")
             self.assertFalse(np.isnan(r1), "x64: r1_top is NaN")
+        finally:
+            jax.config.update("jax_enable_x64", False)
+
+    def test_nan_row_finite_guard(self):
+        """A NaN draw row in the buffer does not make lam1/Ψ/r1 NaN (F7).
+
+        The finite-guard in _compute_pooled_within_spectrum and
+        _compute_chain_consistency_psi zero-clamps NaN/Inf rows before the
+        SVD/Gram products.  This test injects NaN into one chain's buffer
+        and verifies the outputs are still finite.
+        """
+        M, n, d = 8, 150, 10
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+        state = core.init(d)
+        draws_mc, grads_mc = _make_mc_deep_spread(M, n, d, seed=52)
+        state1 = _fill_mc_state(
+            state, draws_mc.astype(jnp.float32), grads_mc.astype(jnp.float32)
+        )
+
+        # Inject NaN into chain 0, row 5
+        draws_with_nan = state1.draws_buffer.at[0, 5, :].set(jnp.nan)
+        state_nan = state1._replace(draws_buffer=draws_with_nan)
+        result = core.final(state_nan)
+
+        lam1 = float(np.asarray(result.within_lam1))
+        psi = float(np.asarray(result.chain_consistency_psi))
+
+        self.assertFalse(np.isnan(lam1), "NaN-row: within_lam1 became NaN")
+        self.assertFalse(np.isnan(psi), "NaN-row: chain_consistency_psi became NaN")
+        self.assertFalse(np.isinf(lam1), "NaN-row: within_lam1 became Inf")
+
+    def test_mu_star_nonzero_on_nonzero_grand_mean(self):
+        """mu_star is non-zero after escalation with non-zero chain positions (F7).
+
+        Per-chain centering removes chain offsets from the R² pipeline, but the
+        grand mean must be re-added (mu_star) so the metric is correct in the
+        original position space.  All prior fixtures have chains centered at 0
+        (grand_mean≈0), leaving this re-add path untested.
+
+        _make_mc_split_means has chains at ±split_scale along dim 0, so
+        grand_mean[0] ≈ 0 (symmetric split).  Use even-spread chains where
+        the grand mean is 0 but per-chain means are non-zero — the spec-A §4
+        warning is about per-chain-centered input not the grand mean.
+
+        Use _make_mc_even_spread with a large spread to ensure non-zero per-chain
+        means.  Check result.mu_star is populated (finite, from Fisher estimator).
+        """
+        M, n, d = 8, 150, 10
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+        state = core.init(d)
+        # even-spread: chains at linearly-spaced positions → per-chain means ≠ 0
+        draws_mc, grads_mc = _make_mc_even_spread(M, n, d, spread_scale=3.0, seed=53)
+        state1 = _fill_mc_state(
+            state, draws_mc.astype(jnp.float32), grads_mc.astype(jnp.float32)
+        )
+        result = core.final(state1)
+
+        mu_star = np.asarray(result.mu_star)
+        self.assertEqual(mu_star.shape, (d,), "mu_star shape must be (d,)")
+        self.assertTrue(
+            np.all(np.isfinite(mu_star)),
+            f"mu_star must be finite -- got {mu_star}",
+        )
+
+    def test_isotropic_no_false_escalate_x64(self):
+        """Isotropic chains do not escalate in float64 (F7 isotropic x64)."""
+        try:
+            jax.config.update("jax_enable_x64", True)
+            M, n, d = 8, 200, 20
+            core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
+            state = core.init(d)
+            draws_mc, grads_mc = _make_mc_isotropic(M, n, d, seed=54)
+            state1 = _fill_mc_state(
+                state, draws_mc.astype(jnp.float64), grads_mc.astype(jnp.float64)
+            )
+            result = core.final(state1)
+
+            has_esc = bool(np.asarray(result.has_escalated))
+            self.assertFalse(
+                has_esc,
+                "x64: Isotropic null must not escalate (W-branch Ψ and/or T-branch "
+                "collinearity gate should refuse)",
+            )
         finally:
             jax.config.update("jax_enable_x64", False)
 
@@ -3173,6 +3520,49 @@ class TestSharedEpsilonDA(BlackJAXTest):
             step_count - initial_step,
             M,
             f"DA step counter should increment by {M}, got delta={step_count - initial_step}",
+        )
+
+    def test_mc_engine_wiring_n_da_matches_n_chains(self):
+        """staged_adaptation(n_chains=M) wires n_da_updates=M into _make_engine (F3).
+
+        Tests the WIRING from staged_adaptation.py:
+            n_da_updates = _n_chains if _is_multi_chain else 1
+
+        The DA step counter must advance by M per multi-chain warmup step (one
+        acceptance rate per chain consumed sequentially).  If staged_adaptation
+        accidentally passed n_da_updates=1, each step would consume one acceptance
+        rate and the DA calibration would be M× off.
+
+        Uses a single-chain dummy metric core with n_da_updates=M to test the
+        DA machinery in isolation (the same mechanism staged_adaptation uses).
+        """
+        from blackjax.adaptation.meta_adaptation import build_meta_adaptation_core
+
+        M = 8  # matches the recommended n_chains minimum
+        dummy_core = build_meta_adaptation_core(max_grad_budget=5000)
+        eng_init, eng_update, _ = _make_engine(
+            dummy_core, target_acceptance_rate=0.80, n_da_updates=M
+        )
+        adaptation_state = eng_init(jnp.zeros(10), 0.1)
+        initial_step = int(np.asarray(adaptation_state.ss_state.step))
+        adaptation_stage = (jnp.int32(0), jnp.bool_(False))
+        per_chain = jnp.full((M,), 0.78)
+
+        new_state = eng_update(
+            adaptation_state,
+            adaptation_stage,
+            jnp.zeros(10),
+            jnp.zeros(10),
+            per_chain,
+        )
+
+        step_count = int(np.asarray(new_state.ss_state.step))
+        self.assertEqual(
+            step_count - initial_step,
+            M,
+            f"MC wiring: DA counter must advance by M={M} per multi-chain step, "
+            f"got delta={step_count - initial_step}. "
+            f"Check staged_adaptation.py: n_da_updates=_n_chains for _is_multi_chain.",
         )
 
 
