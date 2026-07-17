@@ -1,0 +1,827 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.adaptation.meta.verdict</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/adaptation/meta/verdict';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+g496b2573f" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/meta/index.html">blackjax.adaptation.meta</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/meta/builders/index.html">blackjax.adaptation.meta.builders</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/meta/verdict/index.html">blackjax.adaptation.meta.verdict</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/meta_adaptation/index.html">blackjax.adaptation.meta_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/metric_recipes/index.html">blackjax.adaptation.metric_recipes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../../autoapi/blackjax/progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blackjax.adaptation.meta.verdict</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;Post-run verdict extractors for the meta-adaptation controller.</span>
+
+<span class="sd">Functions</span>
+<span class="sd">---------</span>
+<span class="sd">:func:`extract_meta_verdict` — single-chain verdict from</span>
+<span class="sd">    :class:`~blackjax.adaptation.meta._state.MetaAdaptationCoreState`.</span>
+<span class="sd">:func:`extract_multi_chain_verdict` — multi-chain verdict from</span>
+<span class="sd">    :class:`~blackjax.adaptation.meta._state.MultiChainMetaAdaptationCoreState`.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta._calibration</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">_AIRM_VELOCITY_TOL</span><span class="p">,</span>
+    <span class="n">_DETECTION_BRANCH_BETWEEN_MEANS</span><span class="p">,</span>
+    <span class="n">_DETECTION_BRANCH_BOTH</span><span class="p">,</span>
+    <span class="n">_DETECTION_BRANCH_NONE</span><span class="p">,</span>
+    <span class="n">_DETECTION_BRANCH_POOLED_WITHIN</span><span class="p">,</span>
+    <span class="n">_LAM_NONTRIVIAL_TOL</span><span class="p">,</span>
+    <span class="n">_MC_COLLINEARITY_TOL</span><span class="p">,</span>
+    <span class="n">_R2_DEFERRED</span><span class="p">,</span>
+    <span class="n">_R2_FULL_AFFINE</span><span class="p">,</span>
+    <span class="n">_R2_PROJECTED</span><span class="p">,</span>
+    <span class="n">_R_MIN</span><span class="p">,</span>
+    <span class="n">_S_MIN</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta._state</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MetaAdaptationCoreState</span><span class="p">,</span>
+    <span class="n">MetaAdaptationVerdict</span><span class="p">,</span>
+    <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="extract_meta_verdict">
+<a class="viewcode-back" href="../../../../autoapi/blackjax/adaptation/meta/verdict/index.html#blackjax.adaptation.meta.verdict.extract_meta_verdict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_meta_verdict</span><span class="p">(</span>
+    <span class="n">final_state</span><span class="p">:</span> <span class="n">MetaAdaptationCoreState</span><span class="p">,</span>
+    <span class="n">max_grad_budget</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_warmup_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">adaptation_info</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaAdaptationVerdict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`~blackjax.adaptation.meta._state.MetaAdaptationVerdict` from the final core state.</span>
+
+<span class="sd">    Call after ``warmup.run()`` completes.  Pass ``adaptation_info`` (the</span>
+<span class="sd">    second return of ``warmup.run()``) for true gradient counts.</span>
+
+<span class="sd">    ``budget_returned_steps`` is ADVISORY: the scan runs its full length in v1;</span>
+<span class="sd">    this field shows where a stopping host would have saved steps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">has_esc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">has_escalated</span><span class="p">))</span>
+    <span class="n">nominal_rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">escalation_rank</span><span class="p">))</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">nominal_rank</span>  <span class="c1"># kept for clarity; not used in escalation decisions</span>
+    <span class="n">budget_used</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">budget_used</span><span class="p">))</span>
+    <span class="n">s_gap</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">s_gap_curr</span><span class="p">))</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">r2_latest</span><span class="p">))</span>
+    <span class="n">mode_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">r2_mode</span><span class="p">))</span>
+    <span class="n">airm_v_prev</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">airm_vel_prev</span><span class="p">))</span>
+    <span class="n">airm_v_curr</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">airm_vel_curr</span><span class="p">))</span>
+    <span class="n">converged_at</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">converged_at_step</span><span class="p">))</span>
+    <span class="n">is_slow</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_slow_mixing</span><span class="p">))</span>
+
+    <span class="c1"># Deployed rank: count of non-trivial eigenvalue corrections in the</span>
+    <span class="c1"># deployed metric (|lam_i - 1| &gt; threshold).  This is the rank of the</span>
+    <span class="c1"># structure the kernel actually uses, as opposed to the pre-mask count</span>
+    <span class="c1"># stored in escalation_rank (nominal_rank), which can over-count when</span>
+    <span class="c1"># the Fisher estimator zeroes sub-threshold directions back to lam=1.</span>
+    <span class="n">lam_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span>
+    <span class="n">effective_rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lam_np</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_LAM_NONTRIVIAL_TOL</span><span class="p">))</span>
+
+    <span class="n">r2_nan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">r2</span><span class="p">)</span>
+
+    <span class="c1"># Route</span>
+    <span class="n">r2_blocked</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">r2_nan</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">r2</span> <span class="o">&lt;</span> <span class="n">_R_MIN</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">has_esc</span> <span class="ow">and</span> <span class="n">r2_blocked</span><span class="p">:</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;reparam_suggested&quot;</span>
+    <span class="k">elif</span> <span class="n">has_esc</span><span class="p">:</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;low_rank&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;diagonal&quot;</span>
+
+    <span class="c1"># Confidence</span>
+    <span class="n">s_gap_valid</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">s_gap</span><span class="p">)</span>
+    <span class="n">confidence</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;high&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">has_esc</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">r2_nan</span> <span class="ow">and</span> <span class="n">r2</span> <span class="o">&gt;=</span> <span class="n">_R_MIN</span> <span class="ow">and</span> <span class="n">s_gap_valid</span> <span class="ow">and</span> <span class="n">s_gap</span> <span class="o">&gt;=</span> <span class="n">_S_MIN</span><span class="p">)</span>
+        <span class="k">else</span> <span class="s2">&quot;low&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Exit reason and advisory budget return</span>
+    <span class="n">airm_converged</span> <span class="o">=</span> <span class="p">(</span><span class="n">airm_v_prev</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="n">airm_v_curr</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">airm_converged</span> <span class="ow">and</span> <span class="n">has_esc</span><span class="p">:</span>
+        <span class="n">exit_reason</span> <span class="o">=</span> <span class="s2">&quot;airm_velocity_converged&quot;</span>
+    <span class="k">elif</span> <span class="n">budget_used</span> <span class="o">&gt;=</span> <span class="n">num_warmup_steps</span><span class="p">:</span>
+        <span class="n">exit_reason</span> <span class="o">=</span> <span class="s2">&quot;warmup_budget_exhausted&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">exit_reason</span> <span class="o">=</span> <span class="s2">&quot;warmup_complete&quot;</span>
+
+    <span class="c1"># Advisory budget return: steps from first AIRM convergence to end of warmup.</span>
+    <span class="c1"># converged_at_step = -1 means never converged (scan ran full length).</span>
+    <span class="n">budget_returned</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">max</span><span class="p">(</span><span class="n">num_warmup_steps</span> <span class="o">-</span> <span class="n">converged_at</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">converged_at</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="p">)</span>
+
+    <span class="c1"># True gradient count from info stream</span>
+    <span class="n">budget_used_grads</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="n">adaptation_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">budget_used_grads</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">adaptation_info</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="c1"># Flags — mode_int is observed from the carry, not inferred.</span>
+    <span class="n">high_d_r2_mode</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">_R2_DEFERRED</span><span class="p">:</span> <span class="s2">&quot;deferred&quot;</span><span class="p">,</span>
+        <span class="n">_R2_PROJECTED</span><span class="p">:</span> <span class="s2">&quot;projected&quot;</span><span class="p">,</span>
+        <span class="n">_R2_FULL_AFFINE</span><span class="p">:</span> <span class="s2">&quot;full_affine&quot;</span><span class="p">,</span>
+    <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mode_int</span><span class="p">,</span> <span class="s2">&quot;deferred&quot;</span><span class="p">)</span>
+    <span class="n">marginal_s_gap</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_esc</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s_gap_valid</span> <span class="ow">and</span> <span class="p">(</span><span class="n">_S_MIN</span> <span class="o">&lt;=</span> <span class="n">s_gap</span> <span class="o">&lt;</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">_S_MIN</span><span class="p">)</span>
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;reparam_hint&quot;</span><span class="p">:</span> <span class="n">route</span> <span class="o">==</span> <span class="s2">&quot;reparam_suggested&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;marginal_s_gap&quot;</span><span class="p">:</span> <span class="n">marginal_s_gap</span><span class="p">,</span>
+        <span class="s2">&quot;wall_cost_discount&quot;</span><span class="p">:</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;high_d_r2_mode&quot;</span><span class="p">:</span> <span class="n">high_d_r2_mode</span><span class="p">,</span>
+        <span class="s2">&quot;mode_coverage&quot;</span><span class="p">:</span> <span class="s2">&quot;single_chain_uncertified&quot;</span><span class="p">,</span>
+        <span class="c1"># nominal_rank is the pre-filter count from the spectrum rank selector;</span>
+        <span class="c1"># effective_rank (the top-level field) is the deployed count from</span>
+        <span class="c1"># the Fisher metric&#39;s lam array.  Both are provided for diagnostics.</span>
+        <span class="s2">&quot;nominal_rank&quot;</span><span class="p">:</span> <span class="n">nominal_rank</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">MetaAdaptationVerdict</span><span class="p">(</span>
+        <span class="n">route</span><span class="o">=</span><span class="n">route</span><span class="p">,</span>
+        <span class="n">metric</span><span class="o">=</span><span class="n">final_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+        <span class="n">effective_rank</span><span class="o">=</span><span class="n">effective_rank</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
+        <span class="n">exit_reason</span><span class="o">=</span><span class="n">exit_reason</span><span class="p">,</span>
+        <span class="n">budget_used_steps</span><span class="o">=</span><span class="n">budget_used</span><span class="p">,</span>
+        <span class="n">budget_returned_steps</span><span class="o">=</span><span class="n">budget_returned</span><span class="p">,</span>
+        <span class="n">budget_used_grads</span><span class="o">=</span><span class="n">budget_used_grads</span><span class="p">,</span>
+        <span class="n">r2_final</span><span class="o">=</span><span class="n">r2</span><span class="p">,</span>
+        <span class="n">s_gap_final</span><span class="o">=</span><span class="n">s_gap</span><span class="p">,</span>
+        <span class="n">transient_mixing_class</span><span class="o">=</span><span class="s2">&quot;slow&quot;</span> <span class="k">if</span> <span class="n">is_slow</span> <span class="k">else</span> <span class="s2">&quot;fast&quot;</span><span class="p">,</span>
+        <span class="n">buffer_policy</span><span class="o">=</span><span class="s2">&quot;reset&quot;</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="extract_multi_chain_verdict">
+<a class="viewcode-back" href="../../../../autoapi/blackjax/adaptation/meta/verdict/index.html#blackjax.adaptation.meta.verdict.extract_multi_chain_verdict">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">extract_multi_chain_verdict</span><span class="p">(</span>
+    <span class="n">final_state</span><span class="p">:</span> <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">,</span>
+    <span class="n">max_grad_budget</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_warmup_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">adaptation_info</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">pooled_draws_by_window</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaAdaptationVerdict</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a :class:`~blackjax.adaptation.meta._state.MetaAdaptationVerdict` from a multi-chain final core state.</span>
+
+<span class="sd">    Drop-in counterpart of :func:`extract_meta_verdict` for the</span>
+<span class="sd">    :class:`~blackjax.adaptation.meta._state.MultiChainMetaAdaptationCoreState` produced by</span>
+<span class="sd">    :func:`~blackjax.adaptation.meta.builders.build_multi_chain_meta_core`.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    final_state</span>
+<span class="sd">        Final :class:`~blackjax.adaptation.meta._state.MultiChainMetaAdaptationCoreState` after ``warmup.run()``.</span>
+<span class="sd">    max_grad_budget, num_warmup_steps, adaptation_info</span>
+<span class="sd">        Same semantics as :func:`extract_meta_verdict`.</span>
+<span class="sd">    pooled_draws_by_window</span>
+<span class="sd">        Optional per-window pooled draw array exposed for nested-R̂ diagnostics</span>
+<span class="sd">        (shape ``(n_chains, n_per_window, d)`` per window).  Not used internally</span>
+<span class="sd">        — passed through as ``flags[&quot;pooled_draws_by_window&quot;]`` for the</span>
+<span class="sd">        evaluation layer.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    MetaAdaptationVerdict</span>
+<span class="sd">        Verdict with multi-chain–specific flags: ``n_chains``,</span>
+<span class="sd">        ``chain_collinearity``, ``unimodality_gate``, ``deferred_to_ensemble``,</span>
+<span class="sd">        and ``mode_coverage=&quot;multi_chain_certified&quot;`` when all gates passed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+    <span class="n">has_esc</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">has_escalated</span><span class="p">))</span>
+    <span class="n">nominal_rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">escalation_rank</span><span class="p">))</span>
+    <span class="n">k</span> <span class="o">=</span> <span class="n">nominal_rank</span>
+    <span class="n">budget_used</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">budget_used</span><span class="p">))</span>
+    <span class="c1"># s_gap fields are NaN in multi-chain path (not the primary signal)</span>
+    <span class="n">s_gap</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">s_gap_curr</span><span class="p">))</span>
+    <span class="n">r2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">r2_latest</span><span class="p">))</span>
+    <span class="n">mode_int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">r2_mode</span><span class="p">))</span>
+    <span class="n">airm_v_prev</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">airm_vel_prev</span><span class="p">))</span>
+    <span class="n">airm_v_curr</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">airm_vel_curr</span><span class="p">))</span>
+    <span class="n">converged_at</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">converged_at_step</span><span class="p">))</span>
+    <span class="n">is_slow</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">is_slow_mixing</span><span class="p">))</span>
+    <span class="n">chain_collinearity_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">chain_collinearity</span><span class="p">))</span>
+    <span class="n">unimodality_passed_raw</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">unimodality_passed</span><span class="p">))</span>
+    <span class="n">deferred_raw</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">deferred_to_ensemble</span><span class="p">))</span>
+    <span class="n">n_chains_actual</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">final_state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># static</span>
+
+    <span class="n">lam_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span>
+    <span class="n">effective_rank</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">lam_np</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">_LAM_NONTRIVIAL_TOL</span><span class="p">))</span>
+
+    <span class="n">r2_nan</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">r2</span><span class="p">)</span>
+
+    <span class="c1"># Route</span>
+    <span class="n">r2_blocked</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">r2_nan</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">r2</span> <span class="o">&lt;</span> <span class="n">_R_MIN</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">has_esc</span> <span class="ow">and</span> <span class="n">r2_blocked</span><span class="p">:</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;reparam_suggested&quot;</span>
+    <span class="k">elif</span> <span class="n">has_esc</span><span class="p">:</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;low_rank&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;diagonal&quot;</span>
+
+    <span class="c1"># Confidence — collinearity gate replaces s_gap stability for multi-chain path</span>
+    <span class="n">collinearity_valid</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">chain_collinearity_raw</span><span class="p">)</span>
+    <span class="n">collinearity_passed</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">collinearity_valid</span> <span class="ow">and</span> <span class="n">chain_collinearity_raw</span> <span class="o">&gt;=</span> <span class="n">_MC_COLLINEARITY_TOL</span>
+    <span class="p">)</span>
+    <span class="n">confidence</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;high&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">has_esc</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">r2_nan</span> <span class="ow">and</span> <span class="n">r2</span> <span class="o">&gt;=</span> <span class="n">_R_MIN</span> <span class="ow">and</span> <span class="n">collinearity_passed</span><span class="p">)</span>
+        <span class="k">else</span> <span class="s2">&quot;low&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Exit reason and advisory budget return</span>
+    <span class="n">airm_converged</span> <span class="o">=</span> <span class="p">(</span><span class="n">airm_v_prev</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+        <span class="n">airm_v_curr</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="n">airm_converged</span> <span class="ow">and</span> <span class="n">has_esc</span><span class="p">:</span>
+        <span class="n">exit_reason</span> <span class="o">=</span> <span class="s2">&quot;airm_velocity_converged&quot;</span>
+    <span class="k">elif</span> <span class="n">budget_used</span> <span class="o">&gt;=</span> <span class="n">num_warmup_steps</span><span class="p">:</span>
+        <span class="n">exit_reason</span> <span class="o">=</span> <span class="s2">&quot;warmup_budget_exhausted&quot;</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">exit_reason</span> <span class="o">=</span> <span class="s2">&quot;warmup_complete&quot;</span>
+
+    <span class="n">budget_returned</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">max</span><span class="p">(</span><span class="n">num_warmup_steps</span> <span class="o">-</span> <span class="n">converged_at</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">if</span> <span class="n">converged_at</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+    <span class="p">)</span>
+
+    <span class="n">budget_used_grads</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="n">adaptation_info</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">budget_used_grads</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">adaptation_info</span><span class="o">.</span><span class="n">num_integration_steps</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="n">high_d_r2_mode</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">_R2_DEFERRED</span><span class="p">:</span> <span class="s2">&quot;deferred&quot;</span><span class="p">,</span>
+        <span class="n">_R2_PROJECTED</span><span class="p">:</span> <span class="s2">&quot;projected&quot;</span><span class="p">,</span>
+        <span class="n">_R2_FULL_AFFINE</span><span class="p">:</span> <span class="s2">&quot;full_affine&quot;</span><span class="p">,</span>
+    <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mode_int</span><span class="p">,</span> <span class="s2">&quot;deferred&quot;</span><span class="p">)</span>
+
+    <span class="c1"># &quot;need_more_chains&quot;: non-escalation with collinearity below threshold</span>
+    <span class="c1"># (magnitude may have been present but gate didn&#39;t pass; more chains or</span>
+    <span class="c1"># better-dispersed starts would help).</span>
+    <span class="n">spike_marginal</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_esc</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">nominal_rank</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">collinearity_passed</span><span class="p">)</span>
+
+    <span class="c1"># mode_coverage: multi_chain_certified iff collinearity gate passed</span>
+    <span class="n">mode_coverage</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;multi_chain_certified&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">has_esc</span> <span class="ow">and</span> <span class="n">collinearity_passed</span><span class="p">)</span>
+        <span class="k">else</span> <span class="s2">&quot;multi_chain_uncertified&quot;</span>
+        <span class="k">if</span> <span class="n">n_chains_actual</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="k">else</span> <span class="s2">&quot;single_chain_uncertified&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># start_dispersion_adequacy: non-escalation is one-sided-safe (conservative);</span>
+    <span class="c1"># under-dispersed starts can miss slow directions but never over-escalate.</span>
+    <span class="n">start_dispersion_adequacy</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;adequate_if_overdispersed&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">has_esc</span> <span class="k">else</span> <span class="s2">&quot;not_applicable&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># W-branch/T-branch diagnostic fields</span>
+    <span class="n">within_lam1_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">within_lam1</span><span class="p">))</span>
+    <span class="n">chain_consistency_psi_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">chain_consistency_psi</span><span class="p">))</span>
+    <span class="n">r1_top_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">r1_top</span><span class="p">))</span>
+    <span class="n">detection_branch_raw</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">detection_branch</span><span class="p">))</span>
+    <span class="n">_BRANCH_NAMES</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="n">_DETECTION_BRANCH_NONE</span><span class="p">:</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+        <span class="n">_DETECTION_BRANCH_POOLED_WITHIN</span><span class="p">:</span> <span class="s2">&quot;pooled_within&quot;</span><span class="p">,</span>
+        <span class="n">_DETECTION_BRANCH_BETWEEN_MEANS</span><span class="p">:</span> <span class="s2">&quot;between_means&quot;</span><span class="p">,</span>
+        <span class="n">_DETECTION_BRANCH_BOTH</span><span class="p">:</span> <span class="s2">&quot;both&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">detection_branch_name</span> <span class="o">=</span> <span class="n">_BRANCH_NAMES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">detection_branch_raw</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span>
+
+    <span class="n">flags</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;reparam_hint&quot;</span><span class="p">:</span> <span class="n">route</span> <span class="o">==</span> <span class="s2">&quot;reparam_suggested&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;marginal_s_gap&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># s_gap not primary signal in multi-chain path</span>
+        <span class="s2">&quot;wall_cost_discount&quot;</span><span class="p">:</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="s2">&quot;high_d_r2_mode&quot;</span><span class="p">:</span> <span class="n">high_d_r2_mode</span><span class="p">,</span>
+        <span class="s2">&quot;mode_coverage&quot;</span><span class="p">:</span> <span class="n">mode_coverage</span><span class="p">,</span>
+        <span class="s2">&quot;nominal_rank&quot;</span><span class="p">:</span> <span class="n">nominal_rank</span><span class="p">,</span>
+        <span class="c1"># Multi-chain specific</span>
+        <span class="s2">&quot;n_chains&quot;</span><span class="p">:</span> <span class="n">n_chains_actual</span><span class="p">,</span>
+        <span class="s2">&quot;chain_collinearity&quot;</span><span class="p">:</span> <span class="n">chain_collinearity_raw</span><span class="p">,</span>
+        <span class="s2">&quot;need_more_chains&quot;</span><span class="p">:</span> <span class="n">spike_marginal</span><span class="p">,</span>
+        <span class="s2">&quot;start_dispersion_adequacy&quot;</span><span class="p">:</span> <span class="n">start_dispersion_adequacy</span><span class="p">,</span>
+        <span class="s2">&quot;unimodality_gate&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span> <span class="k">if</span> <span class="n">unimodality_passed_raw</span> <span class="k">else</span> <span class="s2">&quot;flag&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;deferred_to_ensemble&quot;</span><span class="p">:</span> <span class="n">deferred_raw</span><span class="p">,</span>
+        <span class="s2">&quot;pooled_draws_by_window&quot;</span><span class="p">:</span> <span class="n">pooled_draws_by_window</span><span class="p">,</span>
+        <span class="c1"># Multi-chain branch diagnostics</span>
+        <span class="s2">&quot;within_lam1&quot;</span><span class="p">:</span> <span class="n">within_lam1_raw</span><span class="p">,</span>
+        <span class="s2">&quot;chain_consistency_psi&quot;</span><span class="p">:</span> <span class="n">chain_consistency_psi_raw</span><span class="p">,</span>
+        <span class="s2">&quot;r1_top&quot;</span><span class="p">:</span> <span class="n">r1_top_raw</span><span class="p">,</span>
+        <span class="s2">&quot;detection_branch&quot;</span><span class="p">:</span> <span class="n">detection_branch_name</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="n">MetaAdaptationVerdict</span><span class="p">(</span>
+        <span class="n">route</span><span class="o">=</span><span class="n">route</span><span class="p">,</span>
+        <span class="n">metric</span><span class="o">=</span><span class="n">final_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
+        <span class="n">effective_rank</span><span class="o">=</span><span class="n">effective_rank</span><span class="p">,</span>
+        <span class="n">confidence</span><span class="o">=</span><span class="n">confidence</span><span class="p">,</span>
+        <span class="n">exit_reason</span><span class="o">=</span><span class="n">exit_reason</span><span class="p">,</span>
+        <span class="n">budget_used_steps</span><span class="o">=</span><span class="n">budget_used</span><span class="p">,</span>
+        <span class="n">budget_returned_steps</span><span class="o">=</span><span class="n">budget_returned</span><span class="p">,</span>
+        <span class="n">budget_used_grads</span><span class="o">=</span><span class="n">budget_used_grads</span><span class="p">,</span>
+        <span class="n">r2_final</span><span class="o">=</span><span class="n">r2</span><span class="p">,</span>
+        <span class="n">s_gap_final</span><span class="o">=</span><span class="n">s_gap</span><span class="p">,</span>
+        <span class="n">transient_mixing_class</span><span class="o">=</span><span class="s2">&quot;slow&quot;</span> <span class="k">if</span> <span class="n">is_slow</span> <span class="k">else</span> <span class="s2">&quot;fast&quot;</span><span class="p">,</span>
+        <span class="n">buffer_policy</span><span class="o">=</span><span class="s2">&quot;reset&quot;</span><span class="p">,</span>
+        <span class="n">flags</span><span class="o">=</span><span class="n">flags</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

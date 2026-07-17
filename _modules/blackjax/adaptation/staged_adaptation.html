@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g58d99c90a" />
+  <meta name="docsearch:version" content="0.1.dev1+g496b2573f" />
   </head>
   
   
@@ -189,6 +189,11 @@
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meta/index.html">blackjax.adaptation.meta</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meta/builders/index.html">blackjax.adaptation.meta.builders</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meta/verdict/index.html">blackjax.adaptation.meta.verdict</a></li>
+</ul>
+</details></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html">blackjax.adaptation.meta_adaptation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
@@ -887,11 +892,11 @@
                 <span class="s2">&quot;staged_adaptation(nuts, logdensity_fn, metric=&#39;auto&#39;, max_grad_budget=50_000).&quot;</span>
             <span class="p">)</span>
         <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_multi_chain_meta_core</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_multi_chain_meta_core</span>
 
             <span class="n">metric_core</span> <span class="o">=</span> <span class="n">build_multi_chain_meta_core</span><span class="p">(</span><span class="n">max_grad_budget</span><span class="p">,</span> <span class="n">n_chains</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_meta_adaptation_core</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_meta_adaptation_core</span>
 
             <span class="n">metric_core</span> <span class="o">=</span> <span class="n">build_meta_adaptation_core</span><span class="p">(</span><span class="n">max_grad_budget</span><span class="p">)</span>
         <span class="c1"># Override the schedule ONLY when the caller has not specified one.</span>
@@ -1181,7 +1186,7 @@
         <span class="c1"># each chain runs total // n_chains steps.</span>
         <span class="k">if</span> <span class="n">num_steps</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">_is_auto_metric</span><span class="p">:</span>
-                <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta._calibration</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
                     <span class="n">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span><span class="p">,</span>
                 <span class="p">)</span>
 
@@ -1207,7 +1212,7 @@
         <span class="k">if</span> <span class="n">_is_auto_metric</span><span class="p">:</span>
             <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_np</span>
 
-            <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta._calibration</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
                 <span class="n">_MAX_RANK_CAP</span><span class="p">,</span>
                 <span class="n">_MIN_TRAIN_K_RATIO</span><span class="p">,</span>
             <span class="p">)</span>
@@ -1225,9 +1230,7 @@
             <span class="c1"># n1 = ceil(min_n_proj / M) so every window ≥ n1 is escalation-eligible</span>
             <span class="c1"># when pooled (n_pool = M * per_chain_n ≥ min_n_proj).</span>
             <span class="k">if</span> <span class="n">_is_multi_chain</span><span class="p">:</span>
-                <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-                    <span class="n">_build_mc_window_schedule</span><span class="p">,</span>
-                <span class="p">)</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta._schedule</span><span class="w"> </span><span class="kn">import</span> <span class="n">_build_mc_window_schedule</span>
 
                 <span class="n">_eff_schedule_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_ns</span><span class="p">:</span> <span class="n">_build_mc_window_schedule</span><span class="p">(</span>
                     <span class="n">_ns</span><span class="p">,</span> <span class="n">_n_chains</span><span class="p">,</span> <span class="n">_actual_rank</span>
