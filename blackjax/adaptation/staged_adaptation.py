@@ -128,11 +128,15 @@ def _make_engine(
     target_acceptance_rate
         Target acceptance rate for dual-averaging step-size adaptation.
     n_da_updates
-        Number of sequential dual-averaging updates to apply per warmup step.
-        Set to ``n_chains`` for the multi-chain path (shared-ε pooled DA):
-        each chain's acceptance rate is applied in sequence, giving
-        ``n_chains`` DA observations per step rather than one mean observation.
-        Defaults to ``1`` (single-chain behaviour unchanged).
+        When ``1`` (single-chain), calls ``da_update`` once with the scalar
+        acceptance rate.  When ``> 1`` (multi-chain shared-ε), calls
+        ``da_update`` once on ``jnp.mean(acceptance_rates)``: M chains stepping
+        at ONE shared ε produce M measurements of the SAME acceptance quantity,
+        so the correct observation model is one mean observation (not M
+        sequential ones).  Sequencing M updates inflates the DA primal gain
+        ~√M and advances the Polyak schedule M× too fast, causing a warmup
+        limit cycle.  Set to ``n_chains`` for the multi-chain path (the caller
+        in :func:`staged_adaptation` does this).  Defaults to ``1``.
 
     Returns
     -------
@@ -150,24 +154,21 @@ def _make_engine(
         ss_state: DualAveragingAdaptationState,
         acceptance_rates: Array,
     ) -> DualAveragingAdaptationState:
-        """Apply ``n_da_updates`` sequential DA updates.
+        """Apply one DA update using the mean acceptance rate.
 
-        When ``n_da_updates == 1`` (single-chain), calls ``da_update`` once
-        with the scalar ``acceptance_rates``.  When ``n_da_updates > 1``
-        (multi-chain shared-ε), runs ``jax.lax.scan`` over the per-chain
-        acceptance rate vector, updating the shared step-size state M times
-        per warmup step.  This gives M×n_per_chain total DA observations per
-        window instead of n_per_chain with mean-pooled rates, which measurably
-        reduces per-chain step-size variance in the multi-chain regime.
+        When ``n_da_updates == 1`` (single-chain), calls ``da_update`` with
+        the scalar ``acceptance_rates`` unchanged.  When ``n_da_updates > 1``
+        (multi-chain shared-ε), calls ``da_update`` once on
+        ``jnp.mean(acceptance_rates)`` — the correct observation model for M
+        chains stepping at one shared ε.  The previous sequential scan
+        (M updates, one per chain) inflated the DA gain ~√M and caused
+        self-sustained limit cycles; the mean-pool form treats the M
+        measurements as one mean observation with M-fold reduced variance.
         """
         if n_da_updates == 1:
             return da_update(ss_state, acceptance_rates)
 
-        def _one(state: DualAveragingAdaptationState, ar: Array):
-            return da_update(state, ar), None
-
-        final_state, _ = jax.lax.scan(_one, ss_state, acceptance_rates)
-        return final_state
+        return da_update(ss_state, jnp.mean(acceptance_rates))
 
     def init(
         position: ArrayLikeTree, initial_step_size: float
@@ -695,9 +696,11 @@ def staged_adaptation(
     adapt_init, adapt_step, adapt_final = _make_engine(
         metric_core,
         target_acceptance_rate=target_acceptance_rate,
-        # Multi-chain shared-ε: apply one DA update per chain per step so the
-        # shared step size accumulates M observations per warmup step rather
-        # than a single mean-pooled observation.  Single-chain path unchanged.
+        # Multi-chain shared-ε: pass n_da_updates=n_chains to signal the
+        # multi-chain path.  _make_engine will call da_update once on the mean
+        # acceptance rate rather than running M sequential updates — the correct
+        # statistical model for M chains sharing one epsilon.
+        # Single-chain path (n_da_updates=1) is unchanged.
         n_da_updates=_n_chains if _is_multi_chain else 1,
     )
 
@@ -899,8 +902,9 @@ def staged_adaptation(
                 positions_mc = new_states_mc.position
                 grads_mc = new_states_mc.logdensity_grad
                 # Shared-ε: pass the full per-chain acceptance rate vector (M,)
-                # so _make_engine's _maybe_multi_da_update applies M sequential
-                # DA updates (one per chain) instead of one mean update.
+                # to _maybe_multi_da_update, which takes jnp.mean and runs ONE
+                # DA update on the mean — the correct observation model (M chains
+                # at a shared epsilon contribute one mean observation).
                 per_chain_accepts = infos_mc.acceptance_rate  # shape (M,)
 
                 new_adaptation_state = adapt_step(
