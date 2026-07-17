@@ -2665,6 +2665,49 @@ def _make_mc_multi_spread(M, n, d, n_dirs=5, lam_within=10.0, seed=_RNG_SEED):
     return jnp.stack(draws_list), jnp.stack(grads_list)
 
 
+def _make_mc_coexistence(M, n, d, lam_within=20.0, split_scale=5.0, seed=_RNG_SEED):
+    """W fires (within-chain anisotropy) AND any_mode_flag fires (modal split grads).
+
+    Used for the scoped-latch coexistence test: a combined fixture where both the
+    W-branch and the T-branch defer gate can be active simultaneously.
+
+    Construction:
+    - Within-chain slow direction u_within along dims 1..d-1 (orthogonal to e_0).
+    - Split means: first M//2 chains at +split_scale*e_0, rest at -split_scale*e_0.
+    - Mode-specific gradients: g = -Sigma^{-1}@(x - center_m), which gives
+      GAIN = R²_local - R²_global ≈ 1 >> 0.3 so any_mode_flag fires.
+
+    Why modal grads matter: g=-x (global N(0,I) gradient) gives R²_local≈R²_global≈1
+    → GAIN≈0 → any_mode_flag=False.  Mode-specific g=-prec@(x-center_m) decouples
+    per-chain from global fit, making R²_global low along the split direction.
+    """
+    key = jax.random.key(seed)
+    k_dir, k_chains = jax.random.split(key)
+
+    # Slow direction orthogonal to e_0 (split direction) so the two effects are separable
+    u_raw = jax.random.normal(k_dir, (d,)).at[0].set(0.0)
+    u = u_raw / jnp.linalg.norm(u_raw)  # unit vector in dims 1..d-1
+
+    chain_keys = jax.random.split(k_chains, M)
+    draws_list, grads_list = [], []
+    for m in range(M):
+        sign = 1.0 if m < M // 2 else -1.0
+        center = jnp.zeros(d).at[0].set(sign * split_scale)
+        z = jax.random.normal(chain_keys[m], (n, d))
+        # Scale along u_within → within-chain lam_within spike (W fires)
+        proj_u = (z @ u)[:, None] * u[None, :]
+        z_aniso = z - proj_u + jnp.sqrt(jnp.float32(lam_within)) * proj_u
+        x = z_aniso + center
+        # Mode-specific gradient: score of N(center_m, Sigma) where Sigma = I + (lam-1)u uT
+        # score = -(x - center) + (1 - 1/lam) * ((x-center) @ u) * u = -prec @ (x - center)
+        z_m = x - center
+        proj_zm = (z_m @ u)[:, None] * u[None, :]
+        g = -(z_m - (1.0 - 1.0 / lam_within) * proj_zm)
+        draws_list.append(x)
+        grads_list.append(g)
+    return jnp.stack(draws_list), jnp.stack(grads_list)
+
+
 def _fill_mc_state(
     state: MultiChainMetaAdaptationCoreState,
     draws_mc: jax.Array,
@@ -3184,42 +3227,68 @@ class TestImpossibleComboInvariant(BlackJAXTest):
         )
 
     def test_w_escalation_deferred_is_legal_coexistence(self):
-        """W-branch escalation + deferred=True is LEGAL (not the impossible combo).
+        """W-branch escalation + deferred=True COEXIST: asserts the combined state (F5).
 
-        The scoped latch rule: pooled_within (W-branch) escalation is independent
-        of the T-branch defer gate.  Both can fire in the same window.  This test
-        asserts the code correctly permits that coexistence.
+        The scoped latch rule: W-escalation (detection_branch=pooled_within) is
+        independent of the T-branch defer gate.  Uses _make_mc_coexistence which
+        has BOTH within-chain anisotropy (W fires) AND modal split gradients
+        (any_mode_flag fires via GAIN = R2_local - R2_global > 0.3).
 
-        We inject deep-spread draws (W-branch fires) followed by split-means draws
-        (T-branch would defer).  If both fire, detection_branch=both AND
-        deferred=True is a legal state — only 'between_means+escalated+deferred'
-        is forbidden.  The test asserts: IF both W-escalated AND deferred, then
-        detection_branch ≠ between_means.
+        Protocol (2 windows of the combined fixture):
+          Window 1: W fires (has_escalated=True, detection_branch=pooled_within),
+                    any_mode_flag fires (flag_count=1 -- not yet confirmed), deferred=False.
+          Window 2: flag_count=2 (confirmed) -- deferred=True while has_escalated=True.
+
+        Asserts: has_escalated=True AND deferred=True AND
+                 detection_branch=pooled_within.
         """
         M, n, d = 8, 150, 10
-        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=M)
-        state = core.init(d)
-
-        # First window: deep spread to prime W-branch
-        draws_spread, grads_spread = _make_mc_deep_spread(
-            M, n, d, lam_within=30.0, seed=44
+        draws_cx, grads_cx = _make_mc_coexistence(
+            M, n, d, lam_within=25.0, split_scale=8.0, seed=44
         )
-        state1 = _fill_mc_state(state, draws_spread, grads_spread)
-        r1 = core.final(state1)
+        core = build_multi_chain_meta_core(max_grad_budget=80000, n_chains=M)
 
-        has_esc = bool(np.asarray(r1.has_escalated))
-        deferred = bool(np.asarray(r1.deferred_to_ensemble))
-        branch = int(np.asarray(r1.detection_branch))
+        # Window 1: W fires, any_mode_flag fires (flag_count=1, not yet confirmed)
+        state = core.init(d)
+        state = _fill_mc_state(
+            state, draws_cx.astype(jnp.float32), grads_cx.astype(jnp.float32)
+        )
+        state = core.final(state)
+        self.assertTrue(
+            bool(np.asarray(state.has_escalated)),
+            "Window 1: W-branch must escalate (within-chain anisotropy present)",
+        )
+        self.assertFalse(
+            bool(np.asarray(state.deferred_to_ensemble)),
+            "Window 1: deferred must be False (flag_count=1, confirmation needs 2 windows)",
+        )
 
-        # Core invariant: IF escalated AND deferred, THEN branch ≠ between_means
-        if has_esc and deferred:
-            self.assertNotEqual(
-                branch,
-                _DETECTION_BRANCH_BETWEEN_MEANS,
-                "Impossible combo: escalated=True + deferred=True + between_means.  "
-                "W-escalation + T-defer is LEGAL (branch may be pooled_within or both); "
-                "but T-escalation + deferred is impossible (confirmed_split excludes defer).",
-            )
+        # Window 2: flag_count becomes 2 (confirmed) → coexistence
+        state = _fill_mc_state(
+            state, draws_cx.astype(jnp.float32), grads_cx.astype(jnp.float32)
+        )
+        result = core.final(state)
+
+        has_esc = bool(np.asarray(result.has_escalated))
+        deferred = bool(np.asarray(result.deferred_to_ensemble))
+        branch = int(np.asarray(result.detection_branch))
+
+        self.assertTrue(
+            has_esc,
+            "Coexistence: has_escalated must remain True (monotone W-latch)",
+        )
+        self.assertTrue(
+            deferred,
+            "Coexistence: deferred_to_ensemble must be True (W-escalation + T-defer coexist "
+            "under the branch-scoped latch rule).  "
+            "If False -- check new_deferred uses ~escalate_T not ~new_has_escalated.",
+        )
+        self.assertEqual(
+            branch,
+            _DETECTION_BRANCH_POOLED_WITHIN,
+            f"Coexistence: detection_branch must be pooled_within "
+            f"(W fired in window 1 -- T never escalated) -- got {branch}",
+        )
 
     def test_impossible_combo_never_occurs_over_windows(self):
         """Three-window scan: escalated+between_means+deferred NEVER appears (F5).
@@ -3344,7 +3413,7 @@ class TestNewStateFieldsPopulated(BlackJAXTest):
 
         _make_mc_split_means has chains at ±split_scale along dim 0, so
         grand_mean[0] ≈ 0 (symmetric split).  Use even-spread chains where
-        the grand mean is 0 but per-chain means are non-zero — the spec-A §4
+        the grand mean is 0 but per-chain means are non-zero — the design note
         warning is about per-chain-centered input not the grand mean.
 
         Use _make_mc_even_spread with a large spread to ensure non-zero per-chain

@@ -2340,21 +2340,24 @@ def build_multi_chain_meta_core(
         new_has_escalated = state.has_escalated | escalate_now
 
         # ---- Scoped latch: deferred_to_ensemble (non-monotone, v2.1 rule) ----
-        # Deferred is set when T-branch wants to escalate (t_pre_uni=True) but the
-        # multimodality guard fires (any_mode_flag OR gap-stat flags), AND this has
-        # been true for _MC_UNIMODALITY_CONFIRM_WINDOWS=2 consecutive windows.
-        # The 2-window confirmation prevents transient flags from triggering P1→P3.
-        # Mode-consistency (any_mode_flag) is the primary multimodality signal;
-        # gap-stat (~is_unimodal) is a corroborating signal.  Either alone sets
-        # the flag counter; both together confirm split faster.
-        # Non-monotone: recomputed each window; if chains merge / flags clear, resets.
-        # Post-escalation: deferred=False once escalated (moot after metric deployed). ✓
-        # Impossible combo (route=low_rank ∧ deferred ∧ detection_branch=between_means):
-        # T escalation requires t_unimodality=True → flag_count resets to 0 →
-        # confirmed_split=False → new_deferred=False. ✓
-        # W-escalation + deferred is LEGAL (cross-branch coexistence). ✓
-        # Primary = mode-consistency (any_mode_flag); corroborator = gap-stat (~is_unimodal).
-        # Either alone increments the flag counter for the 2-window confirmation gate.
+        # Deferred is set when T-branch sees a spike (t_magnitude + t_support) AND
+        # the mode-consistency flag fires (any_mode_flag), AND this has been true
+        # for _MC_UNIMODALITY_CONFIRM_WINDOWS=2 consecutive windows, AND no T-escalation
+        # fires this window.
+        #
+        # t_collinearity (f1 ≥ 0.7) is NOT in the defer gate: many-mode targets with
+        # scattered eigenvalue mass (e.g. gmm, f1≈0.27) lose the P3 handoff if we gate
+        # behind rank-1 collinearity.  Mode-consistency (any_mode_flag) already implies
+        # an admitted T-spike; collinearity is irrelevant to a scattered-mode split.
+        #
+        # ~escalate_T (branch-scoped, not ~new_has_escalated): a W-escalation is legal
+        # coexistence with defer; only a T-escalation (which requires t_unimodality=True)
+        # is mutually exclusive with defer (confirmed_split resets flag_count → deferred=False).
+        #
+        # Non-monotone: recomputed each window; if mode flags clear, defer resets to False.
+        # Impossible combo (route=low_rank ∧ deferred ∧ detection_branch=between_means)
+        # remains impossible: T-escalation requires t_unimodality=True → any_mode_flag
+        # drives flag_count to 0 via the False branch → confirmed_split=False. ✓
         multimodality_signal = any_mode_flag | ~is_unimodal
         new_flag_count = jnp.where(
             multimodality_signal,
@@ -2367,11 +2370,13 @@ def build_multi_chain_meta_core(
         )
 
         new_deferred = (
-            t_pre_uni
-            & multimodality_signal
+            t_magnitude  # T-spike above null edge
+            & t_loo  # leave-one-out cross-chain validation
+            & t_support  # at least one eigenvalue above edge
+            & multimodality_signal  # any_mode_flag (primary) | ~is_unimodal (gap-stat corroborator)
             & unimodality_confirmed_split
             & r2_gate
-            & ~new_has_escalated
+            & ~escalate_T  # branch-scoped: W-escalation coexists; T-escalation precludes
         )
         new_escalation_rank = jnp.where(escalate_now, k_new, state.escalation_rank)
 
