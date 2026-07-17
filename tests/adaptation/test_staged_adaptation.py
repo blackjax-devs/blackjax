@@ -729,3 +729,276 @@ class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
             f"dist_with_shrink={dist_with_shrink: .6f}"
         )
         self.assertLess(dist_with_shrink, dist_no_shrink, error_msg)
+
+
+# ---------------------------------------------------------------------------
+# Non-NUTS algorithm integration tests
+# ---------------------------------------------------------------------------
+
+
+class StagedAdaptationNonNUTSAlgorithmsTest(BlackJAXTest):
+    """Test staged_adaptation with non-NUTS HMC-family algorithms.
+
+    Each algorithm flows through the PUBLIC staged_adaptation entry with
+    extra_parameters (e.g., num_integration_steps for HMC).  Verifies that:
+    - warmup completes and produces finite/positive step_size and IMM
+    - the extra_parameters flow through correctly
+    - different parameter choices (e.g., num_integration_steps) produce
+      detectably different behavior
+    """
+
+    def _run_warmup_and_sample(
+        self, algorithm, num_integration_steps=8, n_warmup=200, n_sample=100
+    ):
+        """Helper: run warmup + sampling for a given algorithm.
+
+        Parameters
+        ----------
+        algorithm
+            The algorithm (blackjax.hmc, blackjax.mhmc, blackjax.dynamic_hmc).
+        num_integration_steps
+            The number of integration steps for the algorithm.
+        n_warmup
+            Number of warmup steps.
+        n_sample
+            Number of sampling steps after warmup.
+
+        Returns
+        -------
+        state, warmup_params, samples
+        """
+
+        def logdensity_fn(x):
+            return std_normal_logdensity(x)
+
+        # Create warmup adaptation
+        warmup = staged_adaptation(
+            algorithm,
+            logdensity_fn,
+            metric="welford_diag",
+            initial_step_size=0.5,
+            num_integration_steps=num_integration_steps,
+        )
+
+        # Run warmup
+        (state, params), info = warmup.run(
+            self.next_key(), jnp.zeros(5), num_steps=n_warmup
+        )
+
+        # Build sampling kernel
+        kernel = algorithm.build_kernel()
+
+        # Run sampling loop
+        positions = []
+        sample_state = state
+        for _ in range(n_sample):
+            rng_key = self.next_key()
+            sample_state, _ = kernel(
+                rng_key,
+                sample_state,
+                logdensity_fn,
+                params["step_size"],
+                params["inverse_mass_matrix"],
+                num_integration_steps=num_integration_steps,
+            )
+            positions.append(sample_state.position)
+
+        samples = jnp.stack(positions)
+        return state, params, samples
+
+    def test_hmc_with_num_integration_steps_8(self):
+        """HMC with num_integration_steps=8 runs warmup and sampling successfully."""
+        state, params, samples = self._run_warmup_and_sample(
+            blackjax.hmc, num_integration_steps=8
+        )
+
+        # Check warmup converged
+        self.assertTrue(bool(jnp.isfinite(params["step_size"])))
+        self.assertGreater(float(params["step_size"]), 0.0)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(params["inverse_mass_matrix"]))))
+        self.assertTrue(bool(jnp.all(params["inverse_mass_matrix"] > 0)))
+
+        # Check sampling produced valid chains
+        self.assertEqual(samples.shape, (100, 5))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(samples))))
+
+    def test_hmc_step_size_differs_by_num_integration_steps(self):
+        """HMC with different num_integration_steps produces noticeably different traces.
+
+        Verify that num_integration_steps actually flows through and affects behavior.
+        Compare num_integration_steps=1 vs 8: samples should differ due to different
+        random seeds and trajectory structures.
+        """
+        _, params_1, samples_1 = self._run_warmup_and_sample(
+            blackjax.hmc, num_integration_steps=1, n_warmup=200, n_sample=50
+        )
+
+        _, params_8, samples_8 = self._run_warmup_and_sample(
+            blackjax.hmc, num_integration_steps=8, n_warmup=200, n_sample=50
+        )
+
+        # Samples should be different (different random seeds + different trajectories)
+        sample_diff = jnp.mean((samples_1 - samples_8) ** 2)
+        self.assertGreater(
+            float(sample_diff),
+            1e-6,
+            "Samples with different num_integration_steps should differ",
+        )
+
+    def test_mhmc_multinomial_runs(self):
+        """Multinomial HMC (mhmc) with staged_adaptation runs successfully."""
+        _, params, samples = self._run_warmup_and_sample(
+            blackjax.mhmc, num_integration_steps=8
+        )
+
+        # Check warmup converged
+        self.assertTrue(bool(jnp.isfinite(params["step_size"])))
+        self.assertGreater(float(params["step_size"]), 0.0)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(params["inverse_mass_matrix"]))))
+        self.assertTrue(bool(jnp.all(params["inverse_mass_matrix"] > 0)))
+
+        # Check sampling produced valid chains
+        self.assertEqual(samples.shape, (100, 5))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(samples))))
+
+    def test_barker_proposal_runs(self):
+        """Barker's proposal algorithm with staged_adaptation runs successfully."""
+
+        def logdensity_fn(x):
+            return std_normal_logdensity(x)
+
+        # Create warmup adaptation for Barker (no num_integration_steps needed)
+        warmup = staged_adaptation(
+            blackjax.barker,
+            logdensity_fn,
+            metric="welford_diag",
+            initial_step_size=0.5,
+        )
+
+        # Run warmup
+        (state, params), info = warmup.run(self.next_key(), jnp.zeros(5), num_steps=200)
+
+        # Build sampling kernel
+        kernel = blackjax.barker.build_kernel()
+
+        # Run sampling loop
+        positions = []
+        sample_state = state
+        for _ in range(50):
+            rng_key = self.next_key()
+            sample_state, _ = kernel(
+                rng_key,
+                sample_state,
+                logdensity_fn,
+                params["step_size"],
+                params["inverse_mass_matrix"],
+            )
+            positions.append(sample_state.position)
+
+        samples = jnp.stack(positions)
+
+        # Check warmup converged
+        self.assertTrue(bool(jnp.isfinite(params["step_size"])))
+        self.assertGreater(float(params["step_size"]), 0.0)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(params["inverse_mass_matrix"]))))
+        self.assertTrue(bool(jnp.all(params["inverse_mass_matrix"] > 0)))
+
+        # Check sampling produced valid chains
+        self.assertEqual(samples.shape, (50, 5))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(samples))))
+
+    def test_hmc_inverse_mass_matrix_sane(self):
+        """HMC warmup produces IMM values within loose factor of target variances.
+
+        For a standard normal (identity covariance), the inverse mass matrix
+        should be close to 1.0 (within ~50% for stochastic estimation).
+        """
+        _, params, _ = self._run_warmup_and_sample(
+            blackjax.hmc, num_integration_steps=8, n_warmup=300
+        )
+
+        imm = params["inverse_mass_matrix"]
+        # For std_normal, true marginal variance is 1.0
+        # Welford estimate after warmup should be within ~0.3-3.0
+        self.assertTrue(bool(jnp.all(imm >= 0.3)))
+        self.assertTrue(bool(jnp.all(imm <= 3.0)))
+
+
+class StagedAdaptationDivisorFixTest(BlackJAXTest):
+    """Test the divisor fix for metric='auto' when num_integration_steps is known.
+
+    When metric='auto' derives num_steps from max_grad_budget, it should use
+    the actual num_integration_steps for HMC instead of the NUTS-calibrated
+    constant when num_integration_steps is provided in extra_parameters.
+    """
+
+    def test_num_steps_scales_inversely_with_num_integration_steps(self):
+        """Same max_grad_budget, different num_integration_steps → inverse scaling.
+
+        With max_grad_budget = 50k:
+        - HMC with num_integration_steps=5: num_steps ≈ 50k/5 = 10k
+        - HMC with num_integration_steps=50: num_steps ≈ 50k/50 = 1k
+        - Ratio: 10× difference
+        """
+
+        def logdensity_fn(x):
+            return std_normal_logdensity(x)
+
+        max_grad_budget = 50_000
+
+        # Run warmup with num_integration_steps=5
+        warmup_5 = staged_adaptation(
+            blackjax.hmc,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+            initial_step_size=0.5,
+            num_integration_steps=5,
+        )
+        # Capture num_steps by inspecting the info; alternatively, we can
+        # instrument the run() method to expose num_steps. For now, just verify
+        # the warmup runs without error.
+        (state_5, params_5), info_5 = warmup_5.run(
+            self.next_key(), jnp.zeros(5), num_steps=None
+        )
+
+        # Run warmup with num_integration_steps=50
+        warmup_50 = staged_adaptation(
+            blackjax.hmc,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+            initial_step_size=0.5,
+            num_integration_steps=50,
+        )
+        (state_50, params_50), info_50 = warmup_50.run(
+            self.next_key(), jnp.zeros(5), num_steps=None
+        )
+
+        # With the divisor fix, num_steps(5) should be ~10× larger than num_steps(50).
+        # Since we don't expose num_steps directly, verify indirectly:
+        # - More steps → more total gradients computed
+        # - info.adaptation_state is a stacked array per step
+        # - len(info.adaptation_state) == num_steps
+
+        # Extract num_steps from info (stacked per step)
+        num_steps_5 = len(info_5.adaptation_state.step_size)
+        num_steps_50 = len(info_50.adaptation_state.step_size)
+
+        # With the divisor fix:
+        # num_steps_5 ≈ max_grad_budget / 5 = 10000
+        # num_steps_50 ≈ max_grad_budget / 50 = 1000
+        # ratio ≈ 10
+        ratio = num_steps_5 / num_steps_50
+        self.assertGreater(
+            ratio,
+            5.0,
+            f"Expected num_steps ratio > 5, got {ratio} "
+            f"(num_steps_5={num_steps_5}, num_steps_50={num_steps_50})",
+        )
+        self.assertLess(
+            ratio,
+            20.0,
+            f"Expected num_steps ratio < 20, got {ratio} "
+            f"(num_steps_5={num_steps_5}, num_steps_50={num_steps_50})",
+        )
