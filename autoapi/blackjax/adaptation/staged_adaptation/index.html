@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.pathfinder_adaptation" href="../pathfinder_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g496b2573f" />
+  <meta name="docsearch:version" content="0.1.dev1+g2f6292184" />
   </head>
   
   
@@ -406,7 +406,6 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture-layer-doctrine">Architecture (layer doctrine)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
@@ -434,34 +433,25 @@
                   
   <section id="module-blackjax.adaptation.staged_adaptation">
 <span id="blackjax-adaptation-staged-adaptation"></span><h1>blackjax.adaptation.staged_adaptation<a class="headerlink" href="#module-blackjax.adaptation.staged_adaptation" title="Link to this heading">#</a></h1>
-<p>Staged warmup adaptation engine for the HMC family.</p>
+<p>Staged warmup adaptation engine for HMC-family algorithms.</p>
 <p>This module provides the <a class="reference internal" href="#blackjax.adaptation.staged_adaptation.staged_adaptation" title="blackjax.adaptation.staged_adaptation.staged_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">staged_adaptation()</span></code></a> engine and the
 <a class="reference internal" href="#blackjax.adaptation.staged_adaptation.build_schedule" title="blackjax.adaptation.staged_adaptation.build_schedule"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_schedule()</span></code></a> function (previously in <code class="docutils literal notranslate"><span class="pre">window_adaptation.py</span></code>;
 re-exported from there for backward compatibility).</p>
-<section id="architecture-layer-doctrine">
-<h2>Architecture (layer doctrine)<a class="headerlink" href="#architecture-layer-doctrine" title="Link to this heading">#</a></h2>
-<ul class="simple">
-<li><p><a class="reference internal" href="#blackjax.adaptation.staged_adaptation.StagedAdaptationState" title="blackjax.adaptation.staged_adaptation.StagedAdaptationState"><code class="xref py py-class docutils literal notranslate"><span class="pre">StagedAdaptationState</span></code></a> — the scan-carry for the warmup.</p></li>
-<li><p><code class="xref py py-func docutils literal notranslate"><span class="pre">_make_engine()</span></code> — builds the HOST: stage schedule dispatching +
-step-size dual averaging + metric core hooks.  Only the MetricCore protocol
-crosses the host/core boundary.</p></li>
-<li><p><a class="reference internal" href="#blackjax.adaptation.staged_adaptation.staged_adaptation" title="blackjax.adaptation.staged_adaptation.staged_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">staged_adaptation()</span></code></a> — public entry point; accepts a recipe name, a
-<a class="reference internal" href="../metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricRecipe" title="blackjax.adaptation.metric_recipes.MetricRecipe"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricRecipe</span></code></a>, or a pre-built
-<a class="reference internal" href="../metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a>.</p></li>
-</ul>
-<p>The metric core (<a class="reference internal" href="../metric_recipes/index.html#blackjax.adaptation.metric_recipes.MetricCore" title="blackjax.adaptation.metric_recipes.MetricCore"><code class="xref py py-class docutils literal notranslate"><span class="pre">MetricCore</span></code></a>) is
-the separable, embeddable component — its init/update/final protocol runs on
-the engine’s clock (Stan window schedule for slice 1).  Step-size dual
-averaging lives in the HOST layer (this module), not in the core.</p>
-<p><code class="docutils literal notranslate"><span class="pre">WindowAdaptationState</span></code> in <a class="reference internal" href="../window_adaptation/index.html#module-blackjax.adaptation.window_adaptation" title="blackjax.adaptation.window_adaptation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">window_adaptation</span></code></a>
-is defined as <code class="docutils literal notranslate"><span class="pre">WindowAdaptationState</span> <span class="pre">=</span> <span class="pre">StagedAdaptationState</span></code>.  Both names
-refer to the same class object; <code class="docutils literal notranslate"><span class="pre">isinstance</span></code> checks using either name continue
-to work.</p>
+<p><a class="reference internal" href="#blackjax.adaptation.staged_adaptation.staged_adaptation" title="blackjax.adaptation.staged_adaptation.staged_adaptation"><code class="xref py py-func docutils literal notranslate"><span class="pre">staged_adaptation()</span></code></a> adapts step size and inverse mass matrix via the
+Stan warmup schedule for any algorithm whose kernel has signature:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">kernel</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="o">**</span><span class="n">extra</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Supported: <a class="reference internal" href="../../index.html#blackjax.nuts" title="blackjax.nuts"><code class="xref py py-data docutils literal notranslate"><span class="pre">blackjax.nuts</span></code></a>, <a class="reference internal" href="../../index.html#blackjax.hmc" title="blackjax.hmc"><code class="xref py py-data docutils literal notranslate"><span class="pre">blackjax.hmc</span></code></a>, <a class="reference internal" href="../../index.html#blackjax.mhmc" title="blackjax.mhmc"><code class="xref py py-data docutils literal notranslate"><span class="pre">blackjax.mhmc</span></code></a>,
+<a class="reference internal" href="../../index.html#blackjax.barker" title="blackjax.barker"><code class="xref py py-data docutils literal notranslate"><span class="pre">blackjax.barker</span></code></a>, and others accepting the above contract.
+Excluded: RMHMC (kernel takes <code class="docutils literal notranslate"><span class="pre">mass_matrix:</span> <span class="pre">Metric</span></code>, not <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>);
+GHMC/MEADS (kernel lacks <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code>); MCLMC (has own warmup);
+dynamic_hmc (init requires <code class="docutils literal notranslate"><span class="pre">random_generator_arg</span></code>).  <code class="docutils literal notranslate"><span class="pre">WindowAdaptationState</span></code> in
+<a class="reference internal" href="../window_adaptation/index.html#module-blackjax.adaptation.window_adaptation" title="blackjax.adaptation.window_adaptation"><code class="xref py py-mod docutils literal notranslate"><span class="pre">window_adaptation</span></code></a> is an alias for
+<a class="reference internal" href="#blackjax.adaptation.staged_adaptation.StagedAdaptationState" title="blackjax.adaptation.staged_adaptation.StagedAdaptationState"><code class="xref py py-class docutils literal notranslate"><span class="pre">StagedAdaptationState</span></code></a> (same class object).</p>
 <p class="rubric">Notes</p>
-<p><code class="docutils literal notranslate"><span class="pre">build_schedule</span></code> is defined here (the canonical location) and re-exported
-from <code class="docutils literal notranslate"><span class="pre">window_adaptation</span></code> for backward compatibility.  Import it from either
-module; the object is identical.</p>
-</section>
+<p><code class="docutils literal notranslate"><span class="pre">build_schedule</span></code> is defined here (canonical location) and re-exported from
+<code class="docutils literal notranslate"><span class="pre">window_adaptation</span></code> for backward compatibility.  Import from either module.</p>
 <section id="classes">
 <h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
@@ -592,9 +582,11 @@ estimation is fully delegated to the <code class="docutils literal notranslate">
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>algorithm</strong> – An algorithm from the HMC family (e.g. <a class="reference internal" href="../../index.html#blackjax.nuts" title="blackjax.nuts"><code class="xref py py-data docutils literal notranslate"><span class="pre">blackjax.nuts</span></code></a>,
-<a class="reference internal" href="../../index.html#blackjax.hmc" title="blackjax.hmc"><code class="xref py py-data docutils literal notranslate"><span class="pre">blackjax.hmc</span></code></a>).  The algorithm’s <code class="docutils literal notranslate"><span class="pre">build_kernel</span></code> method is
-inspected to decide whether to pass an integrator.</p></li>
+<li><p><strong>algorithm</strong> – A sampling algorithm whose kernel signature is <code class="docutils literal notranslate"><span class="pre">(rng_key,</span> <span class="pre">state,</span>
+<span class="pre">logdensity_fn,</span> <span class="pre">step_size,</span> <span class="pre">inverse_mass_matrix,</span> <span class="pre">**extra_parameters)</span></code>,
+e.g. <a class="reference internal" href="../../index.html#blackjax.nuts" title="blackjax.nuts"><code class="xref py py-data docutils literal notranslate"><span class="pre">blackjax.nuts</span></code></a>, <a class="reference internal" href="../../index.html#blackjax.hmc" title="blackjax.hmc"><code class="xref py py-data docutils literal notranslate"><span class="pre">blackjax.hmc</span></code></a>, <a class="reference internal" href="../../index.html#blackjax.mhmc" title="blackjax.mhmc"><code class="xref py py-data docutils literal notranslate"><span class="pre">blackjax.mhmc</span></code></a>.
+The algorithm’s <code class="docutils literal notranslate"><span class="pre">build_kernel</span></code> method is inspected to decide whether
+to pass an integrator.</p></li>
 <li><p><strong>logdensity_fn</strong> – The log density probability density function to sample.</p></li>
 <li><p><strong>metric</strong> – <p>The mass-matrix adaptation specification.  Accepts:</p>
 <ul>
@@ -669,8 +661,9 @@ valid state for the chosen <code class="docutils literal notranslate"><span clas
 that seed the initial state from external data (e.g., gradient-based
 diagonal-scale initialisation); <code class="docutils literal notranslate"><span class="pre">None</span></code> (the default) reproduces
 the standard identity/zero initialisation.</p></li>
-<li><p><strong>**extra_parameters</strong> – Additional parameters forwarded to the MCMC kernel at every step, e.g.
-<code class="docutils literal notranslate"><span class="pre">num_integration_steps</span></code> for HMC.</p></li>
+<li><p><strong>**extra_parameters</strong> – Algorithm-specific parameters forwarded to the MCMC kernel at every step,
+e.g. <code class="docutils literal notranslate"><span class="pre">num_integration_steps</span></code> for HMC/MHMC (divides budget when
+<code class="docutils literal notranslate"><span class="pre">metric='auto'</span></code>) or <code class="docutils literal notranslate"><span class="pre">num_max_steps</span></code> for dynamic HMC.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -746,7 +739,6 @@ progress bar, e.g. <code class="docutils literal notranslate"><span class="pre">
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#architecture-layer-doctrine">Architecture (layer doctrine)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
