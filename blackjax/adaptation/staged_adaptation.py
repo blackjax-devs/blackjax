@@ -11,37 +11,28 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Staged warmup adaptation engine for the HMC family.
+"""Staged warmup adaptation engine for HMC-family algorithms.
 
 This module provides the :func:`staged_adaptation` engine and the
 :func:`build_schedule` function (previously in ``window_adaptation.py``;
 re-exported from there for backward compatibility).
 
-Architecture (layer doctrine)
-------------------------------
-- :class:`StagedAdaptationState` — the scan-carry for the warmup.
-- :func:`_make_engine` — builds the HOST: stage schedule dispatching +
-  step-size dual averaging + metric core hooks.  Only the MetricCore protocol
-  crosses the host/core boundary.
-- :func:`staged_adaptation` — public entry point; accepts a recipe name, a
-  :class:`~blackjax.adaptation.metric_recipes.MetricRecipe`, or a pre-built
-  :class:`~blackjax.adaptation.metric_recipes.MetricCore`.
+:func:`staged_adaptation` adapts step size and inverse mass matrix via the
+Stan warmup schedule for any algorithm whose kernel has signature::
 
-The metric core (:class:`~blackjax.adaptation.metric_recipes.MetricCore`) is
-the separable, embeddable component — its init/update/final protocol runs on
-the engine's clock (Stan window schedule for slice 1).  Step-size dual
-averaging lives in the HOST layer (this module), not in the core.
+    kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, **extra)
 
-``WindowAdaptationState`` in :mod:`~blackjax.adaptation.window_adaptation`
-is defined as ``WindowAdaptationState = StagedAdaptationState``.  Both names
-refer to the same class object; ``isinstance`` checks using either name continue
-to work.
+Supported: :data:`blackjax.nuts`, :data:`blackjax.hmc`, :data:`blackjax.mhmc`,
+:data:`blackjax.rmhmc`, :data:`blackjax.barker`, and others accepting the above
+contract.  Excluded: GHMC/MEADS (kernel lacks ``inverse_mass_matrix``);
+MCLMC (has own warmup).  ``WindowAdaptationState`` in
+:mod:`~blackjax.adaptation.window_adaptation` is an alias for
+:class:`StagedAdaptationState` (same class object).
 
 Notes
 -----
-``build_schedule`` is defined here (the canonical location) and re-exported
-from ``window_adaptation`` for backward compatibility.  Import it from either
-module; the object is identical.
+``build_schedule`` is defined here (canonical location) and re-exported from
+``window_adaptation`` for backward compatibility.  Import from either module.
 """
 import inspect
 import warnings
@@ -552,9 +543,11 @@ def staged_adaptation(
     Parameters
     ----------
     algorithm
-        An algorithm from the HMC family (e.g. :data:`blackjax.nuts`,
-        :data:`blackjax.hmc`).  The algorithm's ``build_kernel`` method is
-        inspected to decide whether to pass an integrator.
+        A sampling algorithm whose kernel signature is ``(rng_key, state,
+        logdensity_fn, step_size, inverse_mass_matrix, **extra_parameters)``,
+        e.g. :data:`blackjax.nuts`, :data:`blackjax.hmc`, :data:`blackjax.mhmc`.
+        The algorithm's ``build_kernel`` method is inspected to decide whether
+        to pass an integrator.
     logdensity_fn
         The log density probability density function to sample.
     metric
@@ -637,8 +630,9 @@ def staged_adaptation(
         diagonal-scale initialisation); ``None`` (the default) reproduces
         the standard identity/zero initialisation.
     **extra_parameters
-        Additional parameters forwarded to the MCMC kernel at every step, e.g.
-        ``num_integration_steps`` for HMC.
+        Algorithm-specific parameters forwarded to the MCMC kernel at every step,
+        e.g. ``num_integration_steps`` for HMC/MHMC (divides budget when
+        ``metric='auto'``) or ``num_max_steps`` for dynamic HMC.
 
     Returns
     -------
