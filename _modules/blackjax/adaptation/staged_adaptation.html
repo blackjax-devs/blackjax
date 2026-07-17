@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc65a9da64" />
+  <meta name="docsearch:version" content="0.1.dev1+g58d99c90a" />
   </head>
   
   
@@ -540,6 +540,7 @@
     <span class="n">metric_core</span><span class="p">:</span> <span class="n">MetricCore</span><span class="p">,</span>
     <span class="o">*</span><span class="p">,</span>
     <span class="n">target_acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">n_da_updates</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the (init, update, final) triple for the staged adaptation HOST.</span>
 
@@ -554,6 +555,12 @@
 <span class="sd">        (init/update/final bundle for the inverse mass matrix).</span>
 <span class="sd">    target_acceptance_rate</span>
 <span class="sd">        Target acceptance rate for dual-averaging step-size adaptation.</span>
+<span class="sd">    n_da_updates</span>
+<span class="sd">        Number of sequential dual-averaging updates to apply per warmup step.</span>
+<span class="sd">        Set to ``n_chains`` for the multi-chain path (shared-ε pooled DA):</span>
+<span class="sd">        each chain&#39;s acceptance rate is applied in sequence, giving</span>
+<span class="sd">        ``n_chains`` DA observations per step rather than one mean observation.</span>
+<span class="sd">        Defaults to ``1`` (single-chain behaviour unchanged).</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -566,6 +573,29 @@
 <span class="sd">        ``(warmup_state) -&gt; (step_size, inverse_mass_matrix)``</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">da_init</span><span class="p">,</span> <span class="n">da_update</span><span class="p">,</span> <span class="n">da_final</span> <span class="o">=</span> <span class="n">dual_averaging_adaptation</span><span class="p">(</span><span class="n">target_acceptance_rate</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_maybe_multi_da_update</span><span class="p">(</span>
+        <span class="n">ss_state</span><span class="p">:</span> <span class="n">DualAveragingAdaptationState</span><span class="p">,</span>
+        <span class="n">acceptance_rates</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DualAveragingAdaptationState</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply ``n_da_updates`` sequential DA updates.</span>
+
+<span class="sd">        When ``n_da_updates == 1`` (single-chain), calls ``da_update`` once</span>
+<span class="sd">        with the scalar ``acceptance_rates``.  When ``n_da_updates &gt; 1``</span>
+<span class="sd">        (multi-chain shared-ε), runs ``jax.lax.scan`` over the per-chain</span>
+<span class="sd">        acceptance rate vector, updating the shared step-size state M times</span>
+<span class="sd">        per warmup step.  This gives M×n_per_chain total DA observations per</span>
+<span class="sd">        window instead of n_per_chain with mean-pooled rates, which measurably</span>
+<span class="sd">        reduces per-chain step-size variance in the multi-chain regime.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">n_da_updates</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">da_update</span><span class="p">(</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rates</span><span class="p">)</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">_one</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">DualAveragingAdaptationState</span><span class="p">,</span> <span class="n">ar</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">da_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">ar</span><span class="p">),</span> <span class="kc">None</span>
+
+        <span class="n">final_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_one</span><span class="p">,</span> <span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rates</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">final_state</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span>
         <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span>
@@ -583,12 +613,12 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">fast_update</span><span class="p">(</span>
         <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">acceptance_rate</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">ws</span><span class="p">:</span> <span class="n">StagedAdaptationState</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedAdaptationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update adaptation state during a fast (step-size-only) window.&quot;&quot;&quot;</span>
         <span class="k">del</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span>
-        <span class="n">new_ss</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
+        <span class="n">new_ss</span> <span class="o">=</span> <span class="n">_maybe_multi_da_update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
         <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">StagedAdaptationState</span><span class="p">(</span>
             <span class="n">new_ss</span><span class="p">,</span> <span class="n">ws</span><span class="o">.</span><span class="n">imm_state</span><span class="p">,</span> <span class="n">new_step_size</span><span class="p">,</span> <span class="n">ws</span><span class="o">.</span><span class="n">inverse_mass_matrix</span>
@@ -597,7 +627,7 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">slow_update</span><span class="p">(</span>
         <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
-        <span class="n">acceptance_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">acceptance_rate</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">ws</span><span class="p">:</span> <span class="n">StagedAdaptationState</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">StagedAdaptationState</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Update adaptation state during a slow (step-size + mass-matrix) window.</span>
@@ -610,7 +640,7 @@
 <span class="sd">        accumulator.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">new_metric_st</span> <span class="o">=</span> <span class="n">metric_core</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">imm_state</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">grad</span><span class="p">)</span>
-        <span class="n">new_ss</span> <span class="o">=</span> <span class="n">da_update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
+        <span class="n">new_ss</span> <span class="o">=</span> <span class="n">_maybe_multi_da_update</span><span class="p">(</span><span class="n">ws</span><span class="o">.</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rate</span><span class="p">)</span>
         <span class="n">new_step_size</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">new_ss</span><span class="o">.</span><span class="n">log_step_size</span><span class="p">)</span>
         <span class="c1"># Propagate the core&#39;s current inverse_mass_matrix to the MCMC kernel</span>
         <span class="c1"># at every slow step, not just at window-end.  For all non-accumulating</span>
@@ -1095,6 +1125,10 @@
     <span class="n">adapt_init</span><span class="p">,</span> <span class="n">adapt_step</span><span class="p">,</span> <span class="n">adapt_final</span> <span class="o">=</span> <span class="n">_make_engine</span><span class="p">(</span>
         <span class="n">metric_core</span><span class="p">,</span>
         <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="n">target_acceptance_rate</span><span class="p">,</span>
+        <span class="c1"># Multi-chain shared-ε: apply one DA update per chain per step so the</span>
+        <span class="c1"># shared step size accumulates M observations per warmup step rather</span>
+        <span class="c1"># than a single mean-pooled observation.  Single-chain path unchanged.</span>
+        <span class="n">n_da_updates</span><span class="o">=</span><span class="n">_n_chains</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">if</span> <span class="n">initial_metric_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -1162,6 +1196,10 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">num_steps</span> <span class="o">=</span> <span class="mi">1000</span>
 
+        <span class="c1"># Default effective schedule is the resolved one; overridden for the</span>
+        <span class="c1"># multi-chain metric=&quot;auto&quot; path inside the block below (BLOCKER-1 fix).</span>
+        <span class="n">_eff_schedule_fn</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span>
+
         <span class="c1"># For metric=&quot;auto&quot;: warn when the largest warmup window is below the</span>
         <span class="c1"># rank-detection support floor for this model&#39;s dimension.  The check</span>
         <span class="c1"># runs once at run() call time (Python, not JAX-traced), so model</span>
@@ -1180,8 +1218,25 @@
             <span class="n">_actual_rank</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_MAX_RANK_CAP</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">d</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
             <span class="n">_min_rank_support</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">_MIN_TRAIN_K_RATIO</span> <span class="o">*</span> <span class="p">(</span><span class="n">_actual_rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
 
-            <span class="c1"># Find the largest slow window in the resolved schedule.</span>
-            <span class="n">_sched_np</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_resolved_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">))</span>
+            <span class="c1"># Pooled-aware schedule override for multi-chain path (BLOCKER-1 fix).</span>
+            <span class="c1"># The single-chain growing-window schedule produces windows with</span>
+            <span class="c1"># n_pool = per_chain_n ≤ 80 &lt; min_n_proj = 208 for typical budgets,</span>
+            <span class="c1"># making escalation structurally impossible.  The MC schedule starts at</span>
+            <span class="c1"># n1 = ceil(min_n_proj / M) so every window ≥ n1 is escalation-eligible</span>
+            <span class="c1"># when pooled (n_pool = M * per_chain_n ≥ min_n_proj).</span>
+            <span class="k">if</span> <span class="n">_is_multi_chain</span><span class="p">:</span>
+                <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta_adaptation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+                    <span class="n">_build_mc_window_schedule</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="n">_eff_schedule_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">_ns</span><span class="p">:</span> <span class="n">_build_mc_window_schedule</span><span class="p">(</span>
+                    <span class="n">_ns</span><span class="p">,</span> <span class="n">_n_chains</span><span class="p">,</span> <span class="n">_actual_rank</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_eff_schedule_fn</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span>
+
+            <span class="c1"># Find the largest slow window in the effective schedule.</span>
+            <span class="n">_sched_np</span> <span class="o">=</span> <span class="n">_np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">_eff_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">))</span>
             <span class="n">_max_window</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="n">_window_start</span> <span class="o">=</span> <span class="mi">0</span>
             <span class="k">for</span> <span class="n">_i</span><span class="p">,</span> <span class="p">(</span><span class="n">_stage</span><span class="p">,</span> <span class="n">_end</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">_sched_np</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">_sched_np</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">])):</span>
@@ -1191,10 +1246,17 @@
                         <span class="n">_max_window</span> <span class="o">=</span> <span class="n">_window_size</span>
                     <span class="n">_window_start</span> <span class="o">=</span> <span class="n">_i</span> <span class="o">+</span> <span class="mi">1</span>
 
-            <span class="k">if</span> <span class="n">_max_window</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">_max_window</span> <span class="o">&lt;</span> <span class="n">_min_rank_support</span><span class="p">:</span>
+            <span class="c1"># For multi-chain, pooled count = M * per-chain window size — this is</span>
+            <span class="c1"># the effective support; compare it against _min_rank_support.</span>
+            <span class="n">_eff_max_window</span> <span class="o">=</span> <span class="n">_max_window</span> <span class="o">*</span> <span class="p">(</span><span class="n">_n_chains</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">_max_window</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">_eff_max_window</span> <span class="o">&lt;</span> <span class="n">_min_rank_support</span><span class="p">:</span>
                 <span class="n">_chains_suffix</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;, n_chains=</span><span class="si">{</span><span class="n">_n_chains</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                <span class="n">_pool_suffix</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot; (pooled count = </span><span class="si">{</span><span class="n">_eff_max_window</span><span class="si">}</span><span class="s2">)&quot;</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                <span class="p">)</span>
                 <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;metric=&#39;auto&#39;: the largest warmup window (</span><span class="si">{</span><span class="n">_max_window</span><span class="si">}</span><span class="s2"> steps) &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;metric=&#39;auto&#39;: the largest warmup window (</span><span class="si">{</span><span class="n">_max_window</span><span class="si">}</span><span class="s2"> steps&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_pool_suffix</span><span class="si">}</span><span class="s2">) &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;is below the rank-detection support floor for this model &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;(d=</span><span class="si">{</span><span class="n">d</span><span class="si">}</span><span class="s2">, estimated rank capacity </span><span class="si">{</span><span class="n">_actual_rank</span><span class="si">}</span><span class="s2">, &quot;</span>
                     <span class="sa">f</span><span class="s2">&quot;floor=</span><span class="si">{</span><span class="n">_min_rank_support</span><span class="si">}</span><span class="s2"> steps). &quot;</span>
@@ -1215,7 +1277,7 @@
 
             <span class="n">start_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">init_state</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">)</span>
             <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-            <span class="n">schedule</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+            <span class="n">schedule</span> <span class="o">=</span> <span class="n">_eff_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
             <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
                 <span class="n">one_step</span><span class="p">,</span>
                 <span class="n">start_state</span><span class="p">,</span>
@@ -1262,15 +1324,17 @@
                 <span class="c1"># metric core&#39;s update() handles (M, d) arrays natively.</span>
                 <span class="n">positions_mc</span> <span class="o">=</span> <span class="n">new_states_mc</span><span class="o">.</span><span class="n">position</span>
                 <span class="n">grads_mc</span> <span class="o">=</span> <span class="n">new_states_mc</span><span class="o">.</span><span class="n">logdensity_grad</span>
-                <span class="c1"># Average acceptance rate across chains for dual-averaging.</span>
-                <span class="n">mean_accept</span> <span class="o">=</span> <span class="n">infos_mc</span><span class="o">.</span><span class="n">acceptance_rate</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+                <span class="c1"># Shared-ε: pass the full per-chain acceptance rate vector (M,)</span>
+                <span class="c1"># so _make_engine&#39;s _maybe_multi_da_update applies M sequential</span>
+                <span class="c1"># DA updates (one per chain) instead of one mean update.</span>
+                <span class="n">per_chain_accepts</span> <span class="o">=</span> <span class="n">infos_mc</span><span class="o">.</span><span class="n">acceptance_rate</span>  <span class="c1"># shape (M,)</span>
 
                 <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_step</span><span class="p">(</span>
                     <span class="n">adaptation_state</span><span class="p">,</span>
                     <span class="n">adaptation_stage</span><span class="p">,</span>
                     <span class="n">positions_mc</span><span class="p">,</span>
                     <span class="n">grads_mc</span><span class="p">,</span>
-                    <span class="n">mean_accept</span><span class="p">,</span>
+                    <span class="n">per_chain_accepts</span><span class="p">,</span>
                 <span class="p">)</span>
 
                 <span class="k">return</span> <span class="p">(</span>
@@ -1280,7 +1344,7 @@
 
             <span class="n">start_state</span> <span class="o">=</span> <span class="p">(</span><span class="n">init_states</span><span class="p">,</span> <span class="n">init_adaptation_state</span><span class="p">)</span>
             <span class="n">keys</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">num_steps</span><span class="p">)</span>
-            <span class="n">schedule</span> <span class="o">=</span> <span class="n">_resolved_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
+            <span class="n">schedule</span> <span class="o">=</span> <span class="n">_eff_schedule_fn</span><span class="p">(</span><span class="n">num_steps</span><span class="p">)</span>
             <span class="n">last_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span>
                 <span class="n">one_step_mc</span><span class="p">,</span>
                 <span class="n">start_state</span><span class="p">,</span>

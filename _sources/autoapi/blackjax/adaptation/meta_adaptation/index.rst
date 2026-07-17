@@ -323,6 +323,26 @@ Module Contents
       :type:  blackjax.types.Array
 
 
+   .. py:attribute:: within_lam1
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: chain_consistency_psi
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: r1_top
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: detection_branch
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: unimodality_flag_count
+      :type:  blackjax.types.Array
+
+
 .. py:function:: build_meta_adaptation_core(max_grad_budget: int, *, max_rank: int | None = None, gamma: float = 1e-05, cutoff: float = 2.0) -> blackjax.adaptation.metric_recipes.MetricCore
 
    Build the meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.

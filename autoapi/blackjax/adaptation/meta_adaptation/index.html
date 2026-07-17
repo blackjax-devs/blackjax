@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.meads_adaptation" href="../meads_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gc65a9da64" />
+  <meta name="docsearch:version" content="0.1.dev1+g58d99c90a" />
   </head>
   
   
@@ -465,6 +465,11 @@
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.chain_collinearity"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.chain_collinearity</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.unimodality_passed"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.unimodality_passed</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.deferred_to_ensemble"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.deferred_to_ensemble</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.within_lam1"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.within_lam1</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.chain_consistency_psi"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.chain_consistency_psi</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.r1_top"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.r1_top</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.detection_branch"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.detection_branch</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.unimodality_flag_count"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.unimodality_flag_count</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.build_meta_adaptation_core"><code class="docutils literal notranslate"><span class="pre">build_meta_adaptation_core()</span></code></a></li>
@@ -856,6 +861,31 @@ recent window boundary (NaN until the first window is complete).</p>
 <span class="sig-name descname"><span class="pre">deferred_to_ensemble</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MultiChainMetaAdaptationCoreState.deferred_to_ensemble"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.deferred_to_ensemble" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.within_lam1">
+<span class="sig-name descname"><span class="pre">within_lam1</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MultiChainMetaAdaptationCoreState.within_lam1"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.within_lam1" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.chain_consistency_psi">
+<span class="sig-name descname"><span class="pre">chain_consistency_psi</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MultiChainMetaAdaptationCoreState.chain_consistency_psi"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.chain_consistency_psi" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.r1_top">
+<span class="sig-name descname"><span class="pre">r1_top</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MultiChainMetaAdaptationCoreState.r1_top"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.r1_top" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.detection_branch">
+<span class="sig-name descname"><span class="pre">detection_branch</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MultiChainMetaAdaptationCoreState.detection_branch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.detection_branch" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.unimodality_flag_count">
+<span class="sig-name descname"><span class="pre">unimodality_flag_count</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/adaptation/meta_adaptation.html#MultiChainMetaAdaptationCoreState.unimodality_flag_count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.unimodality_flag_count" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 <dl class="py function">
@@ -1093,6 +1123,11 @@ and <code class="docutils literal notranslate"><span class="pre">mode_coverage=&
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.chain_collinearity"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.chain_collinearity</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.unimodality_passed"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.unimodality_passed</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.deferred_to_ensemble"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.deferred_to_ensemble</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.within_lam1"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.within_lam1</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.chain_consistency_psi"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.chain_consistency_psi</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.r1_top"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.r1_top</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.detection_branch"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.detection_branch</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.MultiChainMetaAdaptationCoreState.unimodality_flag_count"><code class="docutils literal notranslate"><span class="pre">MultiChainMetaAdaptationCoreState.unimodality_flag_count</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.adaptation.meta_adaptation.build_meta_adaptation_core"><code class="docutils literal notranslate"><span class="pre">build_meta_adaptation_core()</span></code></a></li>
