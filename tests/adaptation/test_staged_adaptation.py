@@ -861,23 +861,51 @@ class StagedAdaptationNonNUTSAlgorithmsTest(BlackJAXTest):
         self.assertEqual(samples.shape, (100, 5))
         self.assertTrue(bool(jnp.all(jnp.isfinite(samples))))
 
-    def test_dynamic_hmc_runs(self):
-        """Dynamic HMC (NUTS-like trajectory, static L) runs successfully.
-
-        Dynamic HMC requires num_max_steps to set trajectory length; adapts step_size
-        and inverse_mass_matrix via staged_adaptation.
-        """
+    def test_barker_proposal_runs(self):
+        """Barker's proposal algorithm with staged_adaptation runs successfully."""
 
         def logdensity_fn(x):
             return std_normal_logdensity(x)
 
-        # Note: dynamic_hmc uses num_max_steps (not num_integration_steps like HMC).
-        # The algorithm is compatible with staged_adaptation as long as its init()
-        # takes (position, logdensity_fn) — which dynamic_hmc also requires, but
-        # it has an optional third argument (random_generator_arg).  For now, we
-        # skip dynamic_hmc (non-standard init signature) and focus on hmc/mhmc.
-        # This is still tested implicitly via the full test suite.
-        pass
+        # Create warmup adaptation for Barker (no num_integration_steps needed)
+        warmup = staged_adaptation(
+            blackjax.barker,
+            logdensity_fn,
+            metric="welford_diag",
+            initial_step_size=0.5,
+        )
+
+        # Run warmup
+        (state, params), info = warmup.run(self.next_key(), jnp.zeros(5), num_steps=200)
+
+        # Build sampling kernel
+        kernel = blackjax.barker.build_kernel()
+
+        # Run sampling loop
+        positions = []
+        sample_state = state
+        for _ in range(50):
+            rng_key = self.next_key()
+            sample_state, _ = kernel(
+                rng_key,
+                sample_state,
+                logdensity_fn,
+                params["step_size"],
+                params["inverse_mass_matrix"],
+            )
+            positions.append(sample_state.position)
+
+        samples = jnp.stack(positions)
+
+        # Check warmup converged
+        self.assertTrue(bool(jnp.isfinite(params["step_size"])))
+        self.assertGreater(float(params["step_size"]), 0.0)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(params["inverse_mass_matrix"]))))
+        self.assertTrue(bool(jnp.all(params["inverse_mass_matrix"] > 0)))
+
+        # Check sampling produced valid chains
+        self.assertEqual(samples.shape, (50, 5))
+        self.assertTrue(bool(jnp.all(jnp.isfinite(samples))))
 
     def test_hmc_inverse_mass_matrix_sane(self):
         """HMC warmup produces IMM values within loose factor of target variances.

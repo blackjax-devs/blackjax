@@ -23,9 +23,10 @@ Stan warmup schedule for any algorithm whose kernel has signature::
     kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix, **extra)
 
 Supported: :data:`blackjax.nuts`, :data:`blackjax.hmc`, :data:`blackjax.mhmc`,
-:data:`blackjax.rmhmc`, :data:`blackjax.barker`, and others accepting the above
-contract.  Excluded: GHMC/MEADS (kernel lacks ``inverse_mass_matrix``);
-MCLMC (has own warmup).  ``WindowAdaptationState`` in
+:data:`blackjax.barker`, and others accepting the above contract.
+Excluded: RMHMC (kernel takes ``mass_matrix: Metric``, not ``inverse_mass_matrix``);
+GHMC/MEADS (kernel lacks ``inverse_mass_matrix``); MCLMC (has own warmup);
+dynamic_hmc (init requires ``random_generator_arg``).  ``WindowAdaptationState`` in
 :mod:`~blackjax.adaptation.window_adaptation` is an alias for
 :class:`StagedAdaptationState` (same class object).
 
