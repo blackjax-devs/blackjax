@@ -20,7 +20,13 @@ Coverage:
 import jax.numpy as jnp
 import numpy as np
 
-from blackjax.adaptation.meta._calibration import _R2_DEFERRED, _R2_FULL_AFFINE, _R2_PROJECTED, _R_MIN, _S_MIN
+from blackjax.adaptation.meta._calibration import (
+    _R2_DEFERRED,
+    _R2_FULL_AFFINE,
+    _R2_PROJECTED,
+    _R_MIN,
+    _S_MIN,
+)
 from blackjax.adaptation.meta._signals import (
     _choose_rank,
     _compute_r2_score_linearity,
