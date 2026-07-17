@@ -858,20 +858,28 @@ def _w_branch_null_edge(M: int, n: Array, d: int) -> Array:
 
     Formula: ``_W_BRANCH_NULL_EDGE_TW_FACTOR * (1 + sqrt(d / (M*(n-1))))^2``.
 
-    **Conservative for positively-autocorrelated series.** The base analytic
-    form ``(1 + sqrt(d/N))^2`` is the iid-null upper bulk edge for N = M*(n-1)
-    degrees of freedom (within-chain residuals pooled across M chains, each
-    chain centered on its own mean).  For positively-autocorrelated chains
-    (AR rho > 0), within-chain variance is inflated above the iid level, which
-    reduces effective N below M*(n-1) — meaning genuine structure clears this
-    edge more easily than the iid calibration predicts.  The cross-chain Psi
-    consistency gate is the primary FPR control; this edge is secondary.
+    **Role of this edge — magnitude gate only, not the FP control.**
+    The edge is a NECESSARY condition for W-branch escalation, not a sufficient
+    one.  The cross-chain Ψ consistency gate is the load-bearing false-positive
+    control.  Measured on 2000 iid-null replicates at (M=8, n=40, d in
+    {10,20,50,100}), the magnitude-alone FPR at this edge is 0.6–1.8% (~q98 at
+    small d, tightening toward q99 at large d).  Under AR(0.9) chains,
+    magnitude-alone FPR is ~100% (autocorrelation inflates lam1 well above the
+    edge), but the joint (magnitude AND Ψ) FPR is 0.000% at every measured cell
+    because the Ψ gate correctly identifies independent-chain autocorrelation as
+    isotropic and refuses escalation.  Do NOT interpret the magnitude-alone rate
+    as a standalone FPR guarantee.
+
+    **Conservative for positively-autocorrelated series.** For AR rho > 0,
+    within-chain variance is inflated above the iid level, reducing effective N
+    below M*(n-1) — genuine structure clears the edge more easily than the iid
+    calibration predicts.  The Ψ gate handles the resulting magnitude-alone
+    inflation; the edge provides an efficient first-pass screen.
 
     **TW-inflation factor.** :data:`_W_BRANCH_NULL_EDGE_TW_FACTOR` = 1.02
-    accounts for Tracy-Widom finite-N fluctuations: at the regime-relevant
-    pool size N approx 300 (M=8, n=40-draw window), the iid-null q99 exceeds
-    the asymptotic edge by ~2% (measured on 1000 iid null replicates at M=8,
-    n=40, d in {10,20,50,100}).
+    is a finite-N correction derived from the measured iid-null magnitude-alone
+    rates above (factor chosen so the edge sits at approximately the iid null
+    q98–q99 boundary across d in {10,20,50,100} at the regime-relevant N ~ 300).
 
     **Upgrade path.** MC-per-(M,n,d) calibration replaces this analytic formula
     with a lookup table of measured null quantiles, eliminating the iid
