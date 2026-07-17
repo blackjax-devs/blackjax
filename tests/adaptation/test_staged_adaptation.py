@@ -212,8 +212,8 @@ class StagedAdaptationDtypeTest(BlackJAXTest):
 
 
 class StagedAdaptationRecipeSmokeTest(BlackJAXTest):
-    """All three slice-1 recipes produce finite/positive warmup results on a
-    small isotropic Gaussian."""
+    """The core metric recipes (welford_diag, welford_dense, fisher_diag) produce
+    finite/positive warmup results on a small isotropic Gaussian."""
 
     def _run_recipe(self, recipe_name, n_dims=3):
         def logdensity_fn(x):
