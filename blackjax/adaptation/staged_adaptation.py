@@ -693,6 +693,16 @@ def staged_adaptation(
     else:
         mcmc_kernel = algorithm.build_kernel()
 
+    # Introspect the built kernel once to know which warmup-only overrides it
+    # can accept.  Kernels that declare **kwargs accept everything; kernels with
+    # an explicit parameter set (e.g. HMC accepts num_integration_steps but NOT
+    # max_num_doublings) must not receive unknown kwargs — they raise TypeError.
+    _kernel_sig_params = inspect.signature(mcmc_kernel).parameters
+    _kernel_accepts_doublings = "max_num_doublings" in _kernel_sig_params or any(
+        p.kind == inspect.Parameter.VAR_KEYWORD
+        for p in _kernel_sig_params.values()
+    )
+
     adapt_init, adapt_step, adapt_final = _make_engine(
         metric_core,
         target_acceptance_rate=target_acceptance_rate,
@@ -870,6 +880,27 @@ def staged_adaptation(
             # The metric_core.update/final receive (M, d) positions/grads.
             # num_steps is already the per-chain step count (total // n_chains).
             # ----------------------------------------------------------------
+
+            # Warmup-only treedepth cap (metric="auto" multi-chain path, NUTS only).
+            # The identity-metric first window with M dispersed inits produces
+            # deep trees (987 lf/step on ill_cond vs 31 equilibrated), burning
+            # warmup budget before the metric is known.  Cap max_num_doublings=5
+            # (31 lf max) during warmup only; sampling runs uncapped (default 10,
+            # or whatever the user set).  The cap is NOT included in the returned
+            # parameters dict — it is a warmup-loop-only override.
+            # Guard: only inject when the kernel actually accepts max_num_doublings
+            # (NUTS does; HMC and other non-NUTS kernels do not — they raise TypeError
+            # on an unknown kwarg if we inject it unconditionally).
+            _WARMUP_DOUBLINGS_CAP = 5
+            if _is_auto_metric and _kernel_accepts_doublings:
+                _user_doublings = extra_parameters.get("max_num_doublings", 10)
+                _warmup_extra_params: dict = {
+                    **extra_parameters,
+                    "max_num_doublings": min(_user_doublings, _WARMUP_DOUBLINGS_CAP),
+                }
+            else:
+                _warmup_extra_params = extra_parameters
+
             init_states = jax.vmap(lambda pos: algorithm.init(pos, logdensity_fn))(
                 position
             )
@@ -892,7 +923,7 @@ def staged_adaptation(
                         logdensity_fn,
                         adaptation_state.step_size,
                         adaptation_state.inverse_mass_matrix,
-                        **extra_parameters,
+                        **_warmup_extra_params,
                     )
 
                 new_states_mc, infos_mc = jax.vmap(_step_one)(chain_keys, states_mc)

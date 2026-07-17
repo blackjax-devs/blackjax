@@ -1002,3 +1002,245 @@ class StagedAdaptationDivisorFixTest(BlackJAXTest):
             f"Expected num_steps ratio < 20, got {ratio} "
             f"(num_steps_5={num_steps_5}, num_steps_50={num_steps_50})",
         )
+
+
+# ---------------------------------------------------------------------------
+# Warmup-only treedepth cap tests (metric="auto" multi-chain path)
+# ---------------------------------------------------------------------------
+
+
+class WarmupTreedepthCapTest(BlackJAXTest):
+    """The warmup-only max_num_doublings=5 cap applies during warmup and does not
+    appear in the returned parameters dict.
+
+    Rationale: the identity-metric first window with M dispersed inits produces
+    very deep NUTS trees (identity IMM + dispersed chains => large leapfrog budget),
+    burning warmup grads before the metric is known.  Capping at depth 5 during
+    warmup only keeps the cost bounded while still allowing full-depth sampling
+    after the metric is adapted.
+    """
+
+    def _make_ill_cond_logdensity(self, d: int = 20, lam_spike: float = 50.0):
+        """Return a correlated Gaussian logdensity where deep trees occur at warmup."""
+        key = jax.random.key(7)
+        u_raw = jax.random.normal(key, (d,))
+        u = u_raw / jnp.linalg.norm(u_raw)
+        lam_inv = 1.0 / lam_spike
+        prec = jnp.eye(d) + (lam_inv - 1.0) * jnp.outer(u, u)
+
+        def logdensity_fn(x):
+            return -0.5 * x @ prec @ x
+
+        return logdensity_fn
+
+    def test_warmup_info_reflects_capped_depth(self):
+        """During warmup with metric='auto' and M chains, NUTS depth is capped at 5.
+
+        Verifies that adaptation_info (num_integration_steps stacked over warmup)
+        contains no entries exceeding 2**5 = 32 leapfrog steps.  Uses an
+        ill-conditioned target and dispersed inits so un-capped runs would hit
+        the default depth limit (2**10 = 1024 steps).
+        """
+        import warnings
+
+        d = 20
+        M = 8
+        max_grad_budget = 20_000
+        logdensity_fn = self._make_ill_cond_logdensity(d=d)
+
+        def _info_fn(state, info, adapt_state):
+            return info.num_integration_steps
+
+        warmup = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+            n_chains=M,
+            adaptation_info_fn=_info_fn,
+        )
+        positions = (
+            jnp.zeros((M, d))
+            .at[:, 0]
+            .set(jnp.linspace(-5.0, 5.0, M, dtype=jnp.float32))
+        )
+        key = jax.random.key(42)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            (_, nis_per_step) = warmup.run(key, positions)
+
+        # max_num_doublings=5 cap: max leapfrogs per step = 2**5 = 32
+        max_cap = 2**5
+        nis_np = jnp.asarray(nis_per_step)
+        # nis_per_step has shape (num_warmup_steps, M) — one per chain per step
+        max_nis = int(nis_np.max())
+        self.assertLessEqual(
+            max_nis,
+            max_cap,
+            f"Warmup NUTS depth cap=5: all steps must use <= {max_cap} leapfrogs. "
+            f"Got max={max_nis}. If the cap is not applied, expect ~1024 on "
+            f"an ill-conditioned target with dispersed inits.",
+        )
+
+    def test_cap_not_in_returned_parameters(self):
+        """The warmup cap must NOT appear in the returned parameters dict.
+
+        If the user did not pass max_num_doublings in extra_parameters, the
+        returned parameters dict must not contain it (sampling uses NUTS default).
+        If the user passed max_num_doublings=8, the returned dict must have 8,
+        not 5 (the warmup cap must not override the user's sampling preference).
+        """
+        import warnings
+
+        d = 5
+        M = 8  # use the recommended minimum (>=6) to avoid the collinearity warning
+        logdensity_fn = self._make_ill_cond_logdensity(d=d)
+
+        # Case 1: no max_num_doublings passed → returned params must not have it
+        warmup_no_depth = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=10_000,
+            n_chains=M,
+        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            results, _ = warmup_no_depth.run(jax.random.key(1), jnp.zeros((M, d)))
+        self.assertNotIn(
+            "max_num_doublings",
+            results.parameters,
+            "Warmup cap must NOT appear in returned parameters when user did not "
+            "pass max_num_doublings. Sampling should use the NUTS default.",
+        )
+
+        # Case 2: user passes max_num_doublings=8 → returned params must have 8
+        warmup_user_depth = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=10_000,
+            n_chains=M,
+            max_num_doublings=8,
+        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            results_8, _ = warmup_user_depth.run(jax.random.key(2), jnp.zeros((M, d)))
+        self.assertEqual(
+            results_8.parameters.get("max_num_doublings"),
+            8,
+            "User-specified max_num_doublings=8 must survive in returned parameters "
+            "(warmup cap must not override user's sampling preference).",
+        )
+
+    def test_single_chain_path_unchanged(self):
+        """The warmup treedepth cap does not affect the single-chain path.
+
+        With n_chains=1 (or equivalently, metric != 'auto'), the returned
+        parameters and warmup behavior must be identical to v1 (the cap is only
+        on the metric='auto' multi-chain path).
+        """
+        d = 5
+
+        def logdensity_fn(x):
+            return std_normal_logdensity(x)
+
+        warmup = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="welford_diag",
+        )
+        (_, params), _ = warmup.run(self.next_key(), jnp.zeros(d), num_steps=100)
+
+        # The single-chain path must never add max_num_doublings to returned params
+        self.assertNotIn(
+            "max_num_doublings",
+            params,
+            "Single-chain path must not inject max_num_doublings into returned parameters.",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Signature-guard tests: cap only injected when kernel accepts the kwarg
+# ---------------------------------------------------------------------------
+
+
+class WarmupCapSignatureGuardTest(BlackJAXTest):
+    """The warmup treedepth cap must not be injected for kernels that do not
+    accept max_num_doublings (e.g. blackjax.hmc on the metric='auto' multi-chain
+    path).  Before the signature guard, hmc+auto+n_chains>1 raised TypeError.
+    """
+
+    def test_hmc_auto_multichain_no_type_error(self):
+        """blackjax.hmc with metric='auto' and n_chains>1 must not raise TypeError.
+
+        Regression test for the latent bug where the warmup cap injected
+        max_num_doublings into every kernel's extra_parameters, even though
+        only NUTS accepts that kwarg.  HMC raises TypeError on an unknown kwarg.
+        """
+        import warnings
+
+        d = 5
+        M = 4
+
+        def logdensity_fn(x):
+            return std_normal_logdensity(x)
+
+        warmup = staged_adaptation(
+            blackjax.hmc,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=10_000,
+            n_chains=M,
+            num_integration_steps=8,
+        )
+        positions = jnp.zeros((M, d))
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            # Must NOT raise TypeError: got an unexpected keyword argument 'max_num_doublings'
+            (results, _) = warmup.run(self.next_key(), positions)
+
+        self.assertTrue(bool(jnp.isfinite(results.parameters["step_size"])))
+        self.assertGreater(float(results.parameters["step_size"]), 0.0)
+
+    def test_nuts_auto_multichain_cap_still_applied(self):
+        """NUTS on the metric='auto' multi-chain path still gets the depth cap.
+
+        Verifies that the signature guard does not accidentally remove the cap
+        for NUTS — NUTS explicitly accepts max_num_doublings.
+        """
+        import warnings
+
+        d = 20
+        M = 8
+        max_grad_budget = 20_000
+        logdensity_fn = WarmupTreedepthCapTest()._make_ill_cond_logdensity(d=d)
+
+        def _info_fn(state, info, adapt_state):
+            return info.num_integration_steps
+
+        warmup = staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=max_grad_budget,
+            n_chains=M,
+            adaptation_info_fn=_info_fn,
+        )
+        positions = (
+            jnp.zeros((M, d))
+            .at[:, 0]
+            .set(jnp.linspace(-5.0, 5.0, M, dtype=jnp.float32))
+        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", UserWarning)
+            (_, nis_per_step) = warmup.run(jax.random.key(42), positions)
+
+        max_cap = 2**5
+        max_nis = int(jnp.asarray(nis_per_step).max())
+        self.assertLessEqual(
+            max_nis,
+            max_cap,
+            f"NUTS depth cap=5 must still apply after signature guard: "
+            f"expected <= {max_cap}, got {max_nis}.",
+        )
