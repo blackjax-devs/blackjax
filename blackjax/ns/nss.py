@@ -48,30 +48,83 @@ __all__ = [
     "covariance_proposal",
     "init",
     "live_covariance",
+    "live_covariance_factor",
     "live_widths",
     "slice_constrained_step",
     "swig_as_top_level_api",
 ]
 
 
+def sample_direction_from_covariance_factor(
+    rng_key: PRNGKey, position: ArrayTree, covariance_factor: Array
+) -> ArrayTree:
+    """Sample a covariance-shaped direction with Mahalanobis norm 2.
+
+    Given a lower-triangular factor ``L`` satisfying ``L @ L.T = C``, draws
+    ``z ~ N(0, I)`` and returns ``2 * L @ z / ||z||``. The factor can therefore
+    be computed once per outer nested-sampling step and reused by every inner
+    slice step.
+
+    Parameters
+    ----------
+    rng_key
+        Key used to draw the standard-normal direction.
+    position
+        Position PyTree whose structure the returned direction must match.
+    covariance_factor
+        Lower-triangular Cholesky factor of the live-point covariance.
+
+    Returns
+    -------
+    A direction PyTree with length 2 in the live covariance metric.
+    """
+    _, unravel_fn = jax.flatten_util.ravel_pytree(position)
+    dimension = covariance_factor.shape[-1]
+    standard_direction = jax.random.normal(
+        rng_key,
+        shape=(dimension,),
+        dtype=covariance_factor.dtype,
+    )
+    direction = (
+        2.0
+        * (covariance_factor @ standard_direction)
+        / jnp.linalg.norm(standard_direction)
+    )
+    return unravel_fn(direction)
+
+
 def sample_direction_from_covariance(
     rng_key: PRNGKey, position: ArrayTree, cov: Array
 ) -> ArrayTree:
-    """A random direction shaped by ``cov``, scaled to Mahalanobis norm 2.
+    """Sample a direction from a covariance matrix.
 
-    Samples ``d ~ N(0, cov)`` and normalizes it with ``inv(cov)`` to a length of
-    2 in the covariance metric (~2 std devs, a step size that mixes well). Uses
-    ``inv(cov)`` rather than an explicit Cholesky factor, has encountered differing
-    behavior on GPU.
+    This compatibility helper factors ``cov`` for each call. The default NSS
+    kernel uses :func:`sample_direction_from_covariance_factor` so that the
+    factorization is performed outside the inner sampling loop.
+
+    Parameters
+    ----------
+    rng_key
+        Key used to draw the standard-normal direction.
+    position
+        Position PyTree whose structure the returned direction must match.
+    cov
+        Live-point covariance matrix.
+
+    Returns
+    -------
+    A direction PyTree with length 2 in the live covariance metric.
     """
-    _, unravel_fn = jax.flatten_util.ravel_pytree(position)
-    d = jax.random.multivariate_normal(rng_key, jnp.zeros(cov.shape[0]), cov)
-    d = 2.0 * d / jnp.sqrt(d @ jnp.linalg.inv(cov) @ d)
-    return unravel_fn(d)
+    covariance_factor = jnp.linalg.cholesky(cov)
+    return sample_direction_from_covariance_factor(rng_key, position, covariance_factor)
 
 
 def covariance_proposal(
-    init_state_fn: Callable, loglikelihood_0: Array, cov: Array
+    init_state_fn: Callable,
+    loglikelihood_0: Array,
+    cov: Array | None = None,
+    *,
+    covariance_factor: Array | None = None,
 ) -> Callable:
     """Proposal generator for nested slice sampling.
 
@@ -82,11 +135,39 @@ def covariance_proposal(
     (recording its log-likelihood, computed once) and reports it admissible only
     when ``loglikelihood > loglikelihood_0``. Override it to write a custom
     nested stepper.
+
+    The default NSS kernel supplies ``covariance_factor`` so the Cholesky
+    factorization is shared by all inner steps. ``cov`` remains supported for
+    covariance-based custom parameter callbacks and direct callers.
+
+    Parameters
+    ----------
+    init_state_fn
+        Builds a particle state from a position and birth log-likelihood.
+    loglikelihood_0
+        Hard lower likelihood threshold for valid proposals.
+    cov
+        Live-point covariance matrix. Used only when ``covariance_factor`` is
+        not supplied.
+    covariance_factor
+        Precomputed lower-triangular Cholesky factor of the live covariance.
+
+    Returns
+    -------
+    A proposal generator consumed by the univariate slice kernel.
     """
+    if covariance_factor is None:
+        if cov is None:
+            raise ValueError("Specify either cov or covariance_factor")
+        covariance_factor = jnp.linalg.cholesky(cov)
+    elif cov is not None:
+        raise ValueError("Specify only one of cov and covariance_factor")
 
     def proposal_generator(rng_key, position, logdensity_fn):
         del logdensity_fn  # NS gates on the recorded loglikelihood, not logdensity
-        direction = sample_direction_from_covariance(rng_key, position, cov)
+        direction = sample_direction_from_covariance_factor(
+            rng_key, position, covariance_factor
+        )
 
         def slice_fn(t):
             x = jax.tree.map(lambda p, d: p + t * d, position, direction)
@@ -134,12 +215,57 @@ def live_covariance(
     info: NSInfo,
     params: dict[str, ArrayTree] | None = None,
 ) -> dict[str, ArrayTree]:
-    """Live-point covariance, recomputed each step to shape the direction."""
+    """Compute the live-point covariance for covariance-based custom proposals.
+
+    Parameters
+    ----------
+    rng_key
+        Unused key required by the adaptive-kernel callback protocol.
+    state
+        Nested-sampling state containing the current live particles.
+    info
+        Unused transition information required by the callback protocol.
+    params
+        Unused previous parameters required by the callback protocol.
+
+    Returns
+    -------
+    A parameter dictionary containing the live-point covariance.
+    """
     # rng_key, info and params are unused here but required by the
     # adaptive-kernel callback protocol (update_inner_kernel_params_fn).
+    del rng_key, info, params
     return {
         "cov": jnp.atleast_2d(particles_covariance_matrix(state.particles.position))
     }
+
+
+def live_covariance_factor(
+    rng_key: PRNGKey,
+    state: NSState,
+    info: NSInfo,
+    params: dict[str, ArrayTree] | None = None,
+) -> dict[str, ArrayTree]:
+    """Factor the live-point covariance once per nested-sampling step.
+
+    Parameters
+    ----------
+    rng_key
+        Unused key required by the adaptive-kernel callback protocol.
+    state
+        Nested-sampling state containing the current live particles.
+    info
+        Unused transition information required by the callback protocol.
+    params
+        Unused previous parameters required by the callback protocol.
+
+    Returns
+    -------
+    A parameter dictionary containing the lower-triangular Cholesky factor.
+    """
+    del rng_key, info, params
+    covariance = jnp.atleast_2d(particles_covariance_matrix(state.particles.position))
+    return {"covariance_factor": jnp.linalg.cholesky(covariance)}
 
 
 def live_widths(
@@ -150,11 +276,11 @@ def live_widths(
 ) -> dict[str, ArrayTree]:
     """Per-axis live-point spread (std): the per-coordinate slice widths for SwiG.
 
-    The coordinate counterpart of :func:`live_covariance`: only the marginal
+    The coordinate counterpart of :func:`live_covariance_factor`: only the marginal
     per-axis spread is used, so axis correlations are deliberately ignored -- the
     defining trait of a coordinate (slice-within-Gibbs) move. Overridable via the
     ``inner_kernel_params`` seam of :func:`build_swig_kernel` and
-    :func:`swig_as_top_level_api`, mirroring :func:`live_covariance`.
+    :func:`swig_as_top_level_api`, mirroring :func:`live_covariance_factor`.
     """
     # rng_key, info and params are unused here but required by the
     # adaptive-kernel callback protocol (update_inner_kernel_params_fn).
@@ -181,6 +307,17 @@ def slice_constrained_step(
     return step
 
 
+def _resolve_inner_kernel_params(
+    proposal: Callable, inner_kernel_params: Callable | None
+) -> Callable:
+    """Choose optimized defaults without breaking covariance-based proposals."""
+    if inner_kernel_params is not None:
+        return inner_kernel_params
+    if proposal is covariance_proposal:
+        return live_covariance_factor
+    return live_covariance
+
+
 def build_kernel(
     init_state_fn: Callable,
     num_inner_steps: int,
@@ -188,7 +325,7 @@ def build_kernel(
     max_steps: int = 10,
     max_shrinkage: int = 100,
     proposal: Callable = covariance_proposal,
-    inner_kernel_params: Callable = live_covariance,
+    inner_kernel_params: Callable | None = None,
 ) -> Callable:
     """Build the Nested Slice Sampling kernel.
 
@@ -207,18 +344,22 @@ def build_kernel(
     max_shrinkage
         Cap on shrinkage evaluations per slice (default 100).
     proposal
-        Proposal factory ``(init_state_fn, loglikelihood_0, cov) ->
-        proposal_generator`` (:func:`covariance_proposal` by default). Override
+        Proposal factory ``(init_state_fn, loglikelihood_0, **params) ->
+        proposal_generator`` (:func:`covariance_proposal` by default). The
+        default proposal consumes a precomputed ``covariance_factor``. Override
         to write a custom nested stepper.
     inner_kernel_params
         Computes the inner-kernel parameters from the live points each step,
-        ``(rng_key, state, info, params) -> params`` (:func:`live_covariance`
-        by default, the live-point covariance).
+        ``(rng_key, state, info, params) -> params``. When ``None``, uses
+        :func:`live_covariance_factor` with the default proposal and
+        :func:`live_covariance` with a custom proposal, preserving the existing
+        covariance-based extension seam.
 
     Returns
     -------
     A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.
     """
+    inner_kernel_params = _resolve_inner_kernel_params(proposal, inner_kernel_params)
     slice_kernel = build_slice_kernel(
         interval=stepping_out,
         max_expansions=max_steps,
@@ -364,7 +505,7 @@ def as_top_level_api(
     max_steps: int = 10,
     max_shrinkage: int = 100,
     proposal: Callable = covariance_proposal,
-    inner_kernel_params: Callable = live_covariance,
+    inner_kernel_params: Callable | None = None,
 ) -> SamplingAlgorithm:
     """Creates a Nested Slice Sampling (NSS) algorithm, ``blackjax.nss``.
 
@@ -391,13 +532,16 @@ def as_top_level_api(
     max_shrinkage
         Cap on shrinkage evaluations per slice (default 100).
     proposal
-        Proposal factory ``(init_state_fn, loglikelihood_0, cov) ->
-        proposal_generator`` (:func:`covariance_proposal` by default). Override
+        Proposal factory ``(init_state_fn, loglikelihood_0, **params) ->
+        proposal_generator`` (:func:`covariance_proposal` by default). The
+        default proposal consumes a precomputed ``covariance_factor``. Override
         to write a custom nested stepper.
     inner_kernel_params
         Computes the inner-kernel parameters from the live points,
-        ``(rng_key, state, info, params) -> params`` (:func:`live_covariance`
-        by default). Used both to seed ``init`` and to update each step.
+        ``(rng_key, state, info, params) -> params``. When ``None``, uses
+        :func:`live_covariance_factor` with the default proposal and
+        :func:`live_covariance` with a custom proposal. Used both to seed
+        ``init`` and to update each step.
 
     Returns
     -------
@@ -418,6 +562,7 @@ def as_top_level_api(
     weighted correctly in the resampled posterior, but may be absent from the final
     live set.
     """
+    inner_kernel_params = _resolve_inner_kernel_params(proposal, inner_kernel_params)
     init_state_fn = partial(
         init_state_strategy,
         logprior_fn=logprior_fn,
