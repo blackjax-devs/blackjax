@@ -464,11 +464,11 @@ def _resolve_metric_and_schedule(
                 "staged_adaptation(nuts, logdensity_fn, metric='auto', max_grad_budget=50_000)."
             )
         if n_chains > 1:
-            from blackjax.adaptation.meta_adaptation import build_multi_chain_meta_core
+            from blackjax.adaptation.meta import build_multi_chain_meta_core
 
             metric_core = build_multi_chain_meta_core(max_grad_budget, n_chains)
         else:
-            from blackjax.adaptation.meta_adaptation import build_meta_adaptation_core
+            from blackjax.adaptation.meta import build_meta_adaptation_core
 
             metric_core = build_meta_adaptation_core(max_grad_budget)
         # Override the schedule ONLY when the caller has not specified one.
@@ -756,7 +756,7 @@ def staged_adaptation(
         # each chain runs total // n_chains steps.
         if num_steps is None:
             if _is_auto_metric:
-                from blackjax.adaptation.meta_adaptation import (
+                from blackjax.adaptation.meta._calibration import (
                     _ASSUMED_AVG_LEAPFROGS_PER_STEP,
                 )
 
@@ -782,7 +782,7 @@ def staged_adaptation(
         if _is_auto_metric:
             import numpy as _np
 
-            from blackjax.adaptation.meta_adaptation import (
+            from blackjax.adaptation.meta._calibration import (
                 _MAX_RANK_CAP,
                 _MIN_TRAIN_K_RATIO,
             )
@@ -800,9 +800,7 @@ def staged_adaptation(
             # n1 = ceil(min_n_proj / M) so every window ≥ n1 is escalation-eligible
             # when pooled (n_pool = M * per_chain_n ≥ min_n_proj).
             if _is_multi_chain:
-                from blackjax.adaptation.meta_adaptation import (
-                    _build_mc_window_schedule,
-                )
+                from blackjax.adaptation.meta._schedule import _build_mc_window_schedule
 
                 _eff_schedule_fn = lambda _ns: _build_mc_window_schedule(
                     _ns, _n_chains, _actual_rank
