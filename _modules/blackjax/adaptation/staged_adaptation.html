@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g2f6292184" />
+  <meta name="docsearch:version" content="0.1.dev1+ge53f46b02" />
   </head>
   
   
@@ -553,11 +553,15 @@
 <span class="sd">    target_acceptance_rate</span>
 <span class="sd">        Target acceptance rate for dual-averaging step-size adaptation.</span>
 <span class="sd">    n_da_updates</span>
-<span class="sd">        Number of sequential dual-averaging updates to apply per warmup step.</span>
-<span class="sd">        Set to ``n_chains`` for the multi-chain path (shared-ε pooled DA):</span>
-<span class="sd">        each chain&#39;s acceptance rate is applied in sequence, giving</span>
-<span class="sd">        ``n_chains`` DA observations per step rather than one mean observation.</span>
-<span class="sd">        Defaults to ``1`` (single-chain behaviour unchanged).</span>
+<span class="sd">        When ``1`` (single-chain), calls ``da_update`` once with the scalar</span>
+<span class="sd">        acceptance rate.  When ``&gt; 1`` (multi-chain shared-ε), calls</span>
+<span class="sd">        ``da_update`` once on ``jnp.mean(acceptance_rates)``: M chains stepping</span>
+<span class="sd">        at ONE shared ε produce M measurements of the SAME acceptance quantity,</span>
+<span class="sd">        so the correct observation model is one mean observation (not M</span>
+<span class="sd">        sequential ones).  Sequencing M updates inflates the DA primal gain</span>
+<span class="sd">        ~√M and advances the Polyak schedule M× too fast, causing a warmup</span>
+<span class="sd">        limit cycle.  Set to ``n_chains`` for the multi-chain path (the caller</span>
+<span class="sd">        in :func:`staged_adaptation` does this).  Defaults to ``1``.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -575,24 +579,21 @@
         <span class="n">ss_state</span><span class="p">:</span> <span class="n">DualAveragingAdaptationState</span><span class="p">,</span>
         <span class="n">acceptance_rates</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DualAveragingAdaptationState</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply ``n_da_updates`` sequential DA updates.</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply one DA update using the mean acceptance rate.</span>
 
-<span class="sd">        When ``n_da_updates == 1`` (single-chain), calls ``da_update`` once</span>
-<span class="sd">        with the scalar ``acceptance_rates``.  When ``n_da_updates &gt; 1``</span>
-<span class="sd">        (multi-chain shared-ε), runs ``jax.lax.scan`` over the per-chain</span>
-<span class="sd">        acceptance rate vector, updating the shared step-size state M times</span>
-<span class="sd">        per warmup step.  This gives M×n_per_chain total DA observations per</span>
-<span class="sd">        window instead of n_per_chain with mean-pooled rates, which measurably</span>
-<span class="sd">        reduces per-chain step-size variance in the multi-chain regime.</span>
+<span class="sd">        When ``n_da_updates == 1`` (single-chain), calls ``da_update`` with</span>
+<span class="sd">        the scalar ``acceptance_rates`` unchanged.  When ``n_da_updates &gt; 1``</span>
+<span class="sd">        (multi-chain shared-ε), calls ``da_update`` once on</span>
+<span class="sd">        ``jnp.mean(acceptance_rates)`` — the correct observation model for M</span>
+<span class="sd">        chains stepping at one shared ε.  The previous sequential scan</span>
+<span class="sd">        (M updates, one per chain) inflated the DA gain ~√M and caused</span>
+<span class="sd">        self-sustained limit cycles; the mean-pool form treats the M</span>
+<span class="sd">        measurements as one mean observation with M-fold reduced variance.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="n">n_da_updates</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">da_update</span><span class="p">(</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rates</span><span class="p">)</span>
 
-        <span class="k">def</span><span class="w"> </span><span class="nf">_one</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">DualAveragingAdaptationState</span><span class="p">,</span> <span class="n">ar</span><span class="p">:</span> <span class="n">Array</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">da_update</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">ar</span><span class="p">),</span> <span class="kc">None</span>
-
-        <span class="n">final_state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">scan</span><span class="p">(</span><span class="n">_one</span><span class="p">,</span> <span class="n">ss_state</span><span class="p">,</span> <span class="n">acceptance_rates</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">final_state</span>
+        <span class="k">return</span> <span class="n">da_update</span><span class="p">(</span><span class="n">ss_state</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">acceptance_rates</span><span class="p">))</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span>
         <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">initial_step_size</span><span class="p">:</span> <span class="nb">float</span>
@@ -1122,12 +1123,23 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">mcmc_kernel</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">build_kernel</span><span class="p">()</span>
 
+    <span class="c1"># Introspect the built kernel once to know which warmup-only overrides it</span>
+    <span class="c1"># can accept.  Kernels that declare **kwargs accept everything; kernels with</span>
+    <span class="c1"># an explicit parameter set (e.g. HMC accepts num_integration_steps but NOT</span>
+    <span class="c1"># max_num_doublings) must not receive unknown kwargs — they raise TypeError.</span>
+    <span class="n">_kernel_sig_params</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">mcmc_kernel</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
+    <span class="n">_kernel_accepts_doublings</span> <span class="o">=</span> <span class="s2">&quot;max_num_doublings&quot;</span> <span class="ow">in</span> <span class="n">_kernel_sig_params</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="n">p</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">inspect</span><span class="o">.</span><span class="n">Parameter</span><span class="o">.</span><span class="n">VAR_KEYWORD</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">_kernel_sig_params</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+    <span class="p">)</span>
+
     <span class="n">adapt_init</span><span class="p">,</span> <span class="n">adapt_step</span><span class="p">,</span> <span class="n">adapt_final</span> <span class="o">=</span> <span class="n">_make_engine</span><span class="p">(</span>
         <span class="n">metric_core</span><span class="p">,</span>
         <span class="n">target_acceptance_rate</span><span class="o">=</span><span class="n">target_acceptance_rate</span><span class="p">,</span>
-        <span class="c1"># Multi-chain shared-ε: apply one DA update per chain per step so the</span>
-        <span class="c1"># shared step size accumulates M observations per warmup step rather</span>
-        <span class="c1"># than a single mean-pooled observation.  Single-chain path unchanged.</span>
+        <span class="c1"># Multi-chain shared-ε: pass n_da_updates=n_chains to signal the</span>
+        <span class="c1"># multi-chain path.  _make_engine will call da_update once on the mean</span>
+        <span class="c1"># acceptance rate rather than running M sequential updates — the correct</span>
+        <span class="c1"># statistical model for M chains sharing one epsilon.</span>
+        <span class="c1"># Single-chain path (n_da_updates=1) is unchanged.</span>
         <span class="n">n_da_updates</span><span class="o">=</span><span class="n">_n_chains</span> <span class="k">if</span> <span class="n">_is_multi_chain</span> <span class="k">else</span> <span class="mi">1</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -1297,6 +1309,27 @@
             <span class="c1"># The metric_core.update/final receive (M, d) positions/grads.</span>
             <span class="c1"># num_steps is already the per-chain step count (total // n_chains).</span>
             <span class="c1"># ----------------------------------------------------------------</span>
+
+            <span class="c1"># Warmup-only treedepth cap (metric=&quot;auto&quot; multi-chain path, NUTS only).</span>
+            <span class="c1"># The identity-metric first window with M dispersed inits produces</span>
+            <span class="c1"># deep trees (987 lf/step on ill_cond vs 31 equilibrated), burning</span>
+            <span class="c1"># warmup budget before the metric is known.  Cap max_num_doublings=5</span>
+            <span class="c1"># (31 lf max) during warmup only; sampling runs uncapped (default 10,</span>
+            <span class="c1"># or whatever the user set).  The cap is NOT included in the returned</span>
+            <span class="c1"># parameters dict — it is a warmup-loop-only override.</span>
+            <span class="c1"># Guard: only inject when the kernel actually accepts max_num_doublings</span>
+            <span class="c1"># (NUTS does; HMC and other non-NUTS kernels do not — they raise TypeError</span>
+            <span class="c1"># on an unknown kwarg if we inject it unconditionally).</span>
+            <span class="n">_WARMUP_DOUBLINGS_CAP</span> <span class="o">=</span> <span class="mi">5</span>
+            <span class="k">if</span> <span class="n">_is_auto_metric</span> <span class="ow">and</span> <span class="n">_kernel_accepts_doublings</span><span class="p">:</span>
+                <span class="n">_user_doublings</span> <span class="o">=</span> <span class="n">extra_parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;max_num_doublings&quot;</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+                <span class="n">_warmup_extra_params</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
+                    <span class="s2">&quot;max_num_doublings&quot;</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span><span class="n">_user_doublings</span><span class="p">,</span> <span class="n">_WARMUP_DOUBLINGS_CAP</span><span class="p">),</span>
+                <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_warmup_extra_params</span> <span class="o">=</span> <span class="n">extra_parameters</span>
+
             <span class="n">init_states</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pos</span><span class="p">:</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">pos</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">))(</span>
                 <span class="n">position</span>
             <span class="p">)</span>
@@ -1319,7 +1352,7 @@
                         <span class="n">logdensity_fn</span><span class="p">,</span>
                         <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
                         <span class="n">adaptation_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">,</span>
-                        <span class="o">**</span><span class="n">extra_parameters</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">_warmup_extra_params</span><span class="p">,</span>
                     <span class="p">)</span>
 
                 <span class="n">new_states_mc</span><span class="p">,</span> <span class="n">infos_mc</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">_step_one</span><span class="p">)(</span><span class="n">chain_keys</span><span class="p">,</span> <span class="n">states_mc</span><span class="p">)</span>
@@ -1329,8 +1362,9 @@
                 <span class="n">positions_mc</span> <span class="o">=</span> <span class="n">new_states_mc</span><span class="o">.</span><span class="n">position</span>
                 <span class="n">grads_mc</span> <span class="o">=</span> <span class="n">new_states_mc</span><span class="o">.</span><span class="n">logdensity_grad</span>
                 <span class="c1"># Shared-ε: pass the full per-chain acceptance rate vector (M,)</span>
-                <span class="c1"># so _make_engine&#39;s _maybe_multi_da_update applies M sequential</span>
-                <span class="c1"># DA updates (one per chain) instead of one mean update.</span>
+                <span class="c1"># to _maybe_multi_da_update, which takes jnp.mean and runs ONE</span>
+                <span class="c1"># DA update on the mean — the correct observation model (M chains</span>
+                <span class="c1"># at a shared epsilon contribute one mean observation).</span>
                 <span class="n">per_chain_accepts</span> <span class="o">=</span> <span class="n">infos_mc</span><span class="o">.</span><span class="n">acceptance_rate</span>  <span class="c1"># shape (M,)</span>
 
                 <span class="n">new_adaptation_state</span> <span class="o">=</span> <span class="n">adapt_step</span><span class="p">(</span>
