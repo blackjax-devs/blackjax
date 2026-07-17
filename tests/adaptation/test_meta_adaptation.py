@@ -2803,51 +2803,136 @@ class TestTimeMajorLayout(BlackJAXTest):
         np.testing.assert_allclose(expected_row0, actual_row0, atol=1e-5)
 
     def test_padding_invariant_to_buffer_size(self):
-        """lam1, R², and Ψ are invariant to buffer size B when n < B (F1).
+        """R²/routing output of _build_pc_centered_time_major_pool is invariant to B (F1).
 
-        A time-major→chain-major revert would break this: in chain-major layout
-        the valid-row mask 'arange < n_pool' incorrectly includes padding from
-        early chains, so doubling B while holding n fixed changes which rows
-        the mask covers.  Time-major layout makes all valid rows contiguous at
-        the start, so B only changes the zero-padding tail (no effect on result).
+        This is the CORRECT regression test for the v2 padding bug: the bug
+        lived in ``_build_pc_centered_time_major_pool`` (R²/Fisher pool), not in
+        ``_compute_pooled_within_spectrum``/``_compute_chain_consistency_psi``
+        which mask BEFORE reshape and are padding-safe by construction.
+
+        A chain-major revert would scatter valid rows across the pool so that
+        the ``arange < n_pool`` mask clips chains rather than time steps.
+        Time-major layout makes the first n*M rows exactly the valid data —
+        doubling B only extends the zero-padding tail.
+
+        Assertions:
+        1. Valid-row content: pc_draws_tm[:n*M] is bit-identical for B=64 and B=200.
+        2. Routing R²: _compute_r2_score_linearity on the pooled output gives
+           the same R² regardless of B (the end-to-end pool→router path is safe).
         """
         M, n, d = 4, 30, 10
+        max_rank = 2
+        n_pool = n * M  # 120 valid rows; projected tier fires (n_pool ≥ 2*8*(k+1)=48)
         key = jax.random.key(777)
-        # Reference draws: use first n draws per chain
         draws_core = jax.random.normal(key, (M, n, d)).astype(jnp.float32)
+        key2 = jax.random.fold_in(key, jnp.uint32(1))
+        grads_core = -draws_core + 0.1 * jax.random.normal(key2, (M, n, d)).astype(
+            jnp.float32
+        )
         chain_means = draws_core.mean(axis=1)  # (M, d)
-        W_diag = jnp.ones(d, dtype=jnp.float32)
         n_arr = jnp.array(n, dtype=jnp.int32)
-        max_rank = 5
+        sigma = jnp.ones(d, dtype=jnp.float32)
+        U_k = jnp.eye(d, dtype=jnp.float32)[:, :max_rank]  # placeholder directions
 
         def _run(B):
-            # Embed draws_core into buffer of size B (pad with zeros)
-            draws_buf = jnp.concatenate(
-                [draws_core, jnp.zeros((M, B - n, d), dtype=jnp.float32)], axis=1
+            pad_d = jnp.zeros((M, B - n, d), dtype=jnp.float32)
+            draws_buf = jnp.concatenate([draws_core, pad_d], axis=1)
+            grads_buf = jnp.concatenate([grads_core, pad_d], axis=1)
+            pc_draws_tm, pc_grads_tm, step_mask_tm = _build_pc_centered_time_major_pool(
+                draws_buf, grads_buf, chain_means, n_arr, M
             )
-            lam1, _ = _compute_pooled_within_spectrum(
-                draws_buf, chain_means, W_diag, n_arr, M, max_rank
+            # R² on the pooled time-major buffer (the route-deciding path)
+            n_pool_arr = jnp.array(n_pool, dtype=jnp.int32)
+            r2, _ = _compute_r2_score_linearity(
+                pc_draws_tm, pc_grads_tm, sigma, n_pool_arr, U_k, max_rank
             )
-            psi = _compute_chain_consistency_psi(
-                draws_buf, chain_means, W_diag, n_arr, M
+            return (
+                np.asarray(pc_draws_tm[:n_pool]),  # valid rows
+                np.asarray(step_mask_tm[:n_pool]),  # mask for valid rows
+                float(np.asarray(r2)),
             )
-            return float(np.asarray(lam1)), float(np.asarray(psi))
 
-        lam1_b64, psi_b64 = _run(64)
-        lam1_b200, psi_b200 = _run(200)
+        rows_b64, mask_b64, r2_b64 = _run(64)
+        rows_b200, mask_b200, r2_b200 = _run(200)
 
-        self.assertAlmostEqual(
-            lam1_b64,
-            lam1_b200,
-            places=4,
-            msg=f"lam1 must be invariant to B: B=64→{lam1_b64:.6f}, B=200→{lam1_b200:.6f}",  # noqa: E231
+        # 1. Valid-row content is bit-identical regardless of B
+        np.testing.assert_allclose(
+            rows_b64,
+            rows_b200,
+            atol=1e-6,
+            err_msg="pc_draws_tm[:n*M] must be identical for B=64 and B=200",
         )
-        self.assertAlmostEqual(
-            psi_b64,
-            psi_b200,
-            places=4,
-            msg=f"Ψ must be invariant to B: B=64→{psi_b64:.6f}, B=200→{psi_b200:.6f}",  # noqa: E231
+        # 2. Valid-row mask is all-ones for both (no padding contamination)
+        np.testing.assert_array_equal(
+            mask_b64,
+            np.ones(n_pool, dtype=np.float32),
+            err_msg="step_mask_tm[:n*M] must be all-ones for B=64",
         )
+        np.testing.assert_array_equal(
+            mask_b200,
+            np.ones(n_pool, dtype=np.float32),
+            err_msg="step_mask_tm[:n*M] must be all-ones for B=200",
+        )
+        # 3. Routing R² is identical (end-to-end pool→router invariance)
+        self.assertAlmostEqual(
+            r2_b64,
+            r2_b200,
+            places=4,
+            msg=f"R² must be invariant to B: B=64→{r2_b64:.6f}, B=200→{r2_b200:.6f}",  # noqa: E231
+        )
+
+    def test_padding_invariant_to_buffer_size_x64(self):
+        """R²/routing output of _build_pc_centered_time_major_pool is invariant to B (F1, x64)."""
+        try:
+            jax.config.update("jax_enable_x64", True)
+            M, n, d = 4, 30, 10
+            max_rank = 2
+            n_pool = n * M
+            key = jax.random.key(777)
+            draws_core = jax.random.normal(key, (M, n, d)).astype(jnp.float64)
+            key2 = jax.random.fold_in(key, jnp.uint32(1))
+            grads_core = -draws_core + 0.1 * jax.random.normal(key2, (M, n, d)).astype(
+                jnp.float64
+            )
+            chain_means = draws_core.mean(axis=1)
+            n_arr = jnp.array(n, dtype=jnp.int32)
+            sigma = jnp.ones(d, dtype=jnp.float64)
+            U_k = jnp.eye(d, dtype=jnp.float64)[:, :max_rank]
+
+            def _run(B):
+                pad_d = jnp.zeros((M, B - n, d), dtype=jnp.float64)
+                draws_buf = jnp.concatenate([draws_core, pad_d], axis=1)
+                grads_buf = jnp.concatenate([grads_core, pad_d], axis=1)
+                (
+                    pc_draws_tm,
+                    pc_grads_tm,
+                    step_mask_tm,
+                ) = _build_pc_centered_time_major_pool(
+                    draws_buf, grads_buf, chain_means, n_arr, M
+                )
+                n_pool_arr = jnp.array(n_pool, dtype=jnp.int32)
+                r2, _ = _compute_r2_score_linearity(
+                    pc_draws_tm, pc_grads_tm, sigma, n_pool_arr, U_k, max_rank
+                )
+                return np.asarray(pc_draws_tm[:n_pool]), float(np.asarray(r2))
+
+            rows_b64, r2_b64 = _run(64)
+            rows_b200, r2_b200 = _run(200)
+
+            np.testing.assert_allclose(
+                rows_b64,
+                rows_b200,
+                atol=1e-10,
+                err_msg="x64: pc_draws_tm[:n*M] must be identical for B=64 and B=200",
+            )
+            self.assertAlmostEqual(
+                r2_b64,
+                r2_b200,
+                places=8,
+                msg=f"x64: R² must be invariant to B: B=64→{r2_b64:.10f}, B=200→{r2_b200:.10f}",  # noqa: E231
+            )
+        finally:
+            jax.config.update("jax_enable_x64", False)
 
 
 # ---------------------------------------------------------------------------
@@ -3021,6 +3106,56 @@ class TestChainConsistencyPsi(BlackJAXTest):
             f"AR(1)-null d={d}: Ψ={psi_f:.4f} must be < floor={_W_BRANCH_PSI_FLOOR} "  # noqa: E231
             f"(independent AR chains have no shared off-diagonal structure)",
         )
+
+    def test_ar_null_no_escalation_through_final(self):
+        """AR(1)-null through final() must not escalate (F4-GATE).
+
+        This makes the Ψ gate load-bearing in integration context: with the
+        Ψ gate removed, ``final()`` would escalate on AR-null chains because
+        lam1 >> edge (proven above in test_ar_null_psi_gate_refuses_at_d26).
+        Here we verify that Ψ's refusal is wired correctly all the way through
+        the W-branch conditional in ``final()``.
+
+        Running this at d=26 exercises the adaptive Ψ threshold
+        ``max(3*q99_null, 0.15)`` region where the flat floor is not the
+        tightest constraint.
+        """
+        M, n, d = 8, 60, 26
+        draws_mc, grads_mc = _make_mc_ar_null(M, n, d, rho=0.8, seed=200)
+        draws_mc = draws_mc.astype(jnp.float32)
+        grads_mc = grads_mc.astype(jnp.float32)
+
+        core = build_multi_chain_meta_core(40000, n_chains=M, max_rank=10)
+        state = core.init(d)
+        state = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
+        state = core.final(state)
+
+        self.assertFalse(
+            bool(np.asarray(state.has_escalated)),
+            f"AR(1)-null d={d}: Ψ gate must refuse escalation through final() "  # noqa: E231
+            f"(has_escalated={bool(np.asarray(state.has_escalated))})",
+        )
+
+    def test_ar_null_no_escalation_through_final_x64(self):
+        """AR(1)-null through final() must not escalate in float64 (F4-GATE x64)."""
+        try:
+            jax.config.update("jax_enable_x64", True)
+            M, n, d = 8, 60, 26
+            draws_mc, grads_mc = _make_mc_ar_null(M, n, d, rho=0.8, seed=200)
+            draws_mc = draws_mc.astype(jnp.float64)
+            grads_mc = grads_mc.astype(jnp.float64)
+
+            core = build_multi_chain_meta_core(40000, n_chains=M, max_rank=10)
+            state = core.init(d)
+            state = _fill_mc_state_from_buffers(state, draws_mc, grads_mc)
+            state = core.final(state)
+
+            self.assertFalse(
+                bool(np.asarray(state.has_escalated)),
+                f"AR(1)-null x64 d={d}: Ψ gate must refuse escalation through final()",  # noqa: E231
+            )
+        finally:
+            jax.config.update("jax_enable_x64", False)
 
 
 # ---------------------------------------------------------------------------
