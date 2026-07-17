@@ -699,8 +699,7 @@ def staged_adaptation(
     # max_num_doublings) must not receive unknown kwargs — they raise TypeError.
     _kernel_sig_params = inspect.signature(mcmc_kernel).parameters
     _kernel_accepts_doublings = "max_num_doublings" in _kernel_sig_params or any(
-        p.kind == inspect.Parameter.VAR_KEYWORD
-        for p in _kernel_sig_params.values()
+        p.kind == inspect.Parameter.VAR_KEYWORD for p in _kernel_sig_params.values()
     )
 
     adapt_init, adapt_step, adapt_final = _make_engine(

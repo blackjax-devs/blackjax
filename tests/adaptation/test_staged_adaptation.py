@@ -1181,22 +1181,22 @@ class WarmupCapSignatureGuardTest(BlackJAXTest):
         import warnings
 
         d = 5
-        M = 4
+        M = 8  # Use >= 6 (recommended minimum) to avoid the collinearity UserWarning
 
         def logdensity_fn(x):
             return std_normal_logdensity(x)
 
-        warmup = staged_adaptation(
-            blackjax.hmc,
-            logdensity_fn,
-            metric="auto",
-            max_grad_budget=10_000,
-            n_chains=M,
-            num_integration_steps=8,
-        )
-        positions = jnp.zeros((M, d))
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", UserWarning)
+            warmup = staged_adaptation(
+                blackjax.hmc,
+                logdensity_fn,
+                metric="auto",
+                max_grad_budget=10_000,
+                n_chains=M,
+                num_integration_steps=8,
+            )
+            positions = jnp.zeros((M, d))
             # Must NOT raise TypeError: got an unexpected keyword argument 'max_num_doublings'
             (results, _) = warmup.run(self.next_key(), positions)
 
