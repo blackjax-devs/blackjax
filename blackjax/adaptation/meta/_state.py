@@ -41,8 +41,8 @@ class MetaAdaptationCoreState(NamedTuple):
     draws_buffer: Array  # (buffer_size, d)
     grads_buffer: Array  # (buffer_size, d)
     buffer_idx: Array  # scalar; reset to 0 at each window boundary
-    background_split: Array  # always 0 in v1
-    recompute_counter: Array  # always 0 in v1
+    background_split: Array  # reserved; always 0
+    recompute_counter: Array  # reserved; always 0
     # Controller carry
     has_escalated: Array  # monotone True-once flag
     escalation_rank: Array  # rank k chosen at escalation (0 before)
@@ -55,7 +55,7 @@ class MetaAdaptationCoreState(NamedTuple):
     prev_lam: Array  # (max_rank,); lam from previous window for AIRM velocity
     airm_vel_prev: Array  # AIRM velocity proxy from window before last
     airm_vel_curr: Array  # AIRM velocity proxy from most recent window
-    is_slow_mixing: Array  # True = slow-mixing (RESET preferred by v1.1 switch)
+    is_slow_mixing: Array  # True = slow-mixing (selects the RESET buffer policy)
 
 
 class MetaAdaptationVerdict(NamedTuple):
@@ -80,7 +80,7 @@ class MetaAdaptationVerdict(NamedTuple):
     r2_final: float
     s_gap_final: float
     transient_mixing_class: str  # "slow" | "fast"
-    buffer_policy: str  # always "reset" in v1
+    buffer_policy: str  # currently always "reset"
     flags: dict  # reparam_hint, marginal_s_gap, wall_cost_discount, high_d_r2_mode, mode_coverage, nominal_rank
 
 

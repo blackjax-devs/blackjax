@@ -89,7 +89,7 @@ non-trivial: ``|lam_i - 1| > _LAM_NONTRIVIAL_TOL``.  Directions with
 directions) contribute zero to the deployed rank.
 """
 
-# Multi-chain constants — escalation trigger v2.
+# Multi-chain escalation-trigger constants.
 _MULTI_CHAIN_DEFAULT_N_CHAINS: int = 8
 """Default number of independent overdispersed chains for the multi-chain
 escalation trigger.  Grounded in the sharp-transition point where the
@@ -126,7 +126,7 @@ headroom against noise for small M.  This is a FLAG, not a proof: noisy at
 small M or uneven splits.  Computed dynamically by :func:`_mc_unimodality_threshold`.
 """
 
-# v2.1 W-branch and T-branch guard constants.
+# W-branch and T-branch guard constants.
 _W_BRANCH_PSI_FLOOR: float = 0.15
 """Minimum Ψ (cross-chain consistency) threshold.
 

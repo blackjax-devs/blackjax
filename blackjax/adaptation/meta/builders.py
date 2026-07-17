@@ -230,7 +230,7 @@ def build_meta_adaptation_core(
             jnp.clip(r2_new, max=jnp.float32(1.0)),
         )
 
-        # Transient-mixing class (reported in verdict; v1 always uses RESET).
+        # Transient-mixing class (reported in verdict; buffer policy is always RESET).
         is_slow = _compute_transient_mixing_signal(state.draws_buffer, sigma_welford, n)
 
         # ---- Escalation decision (all three gates must pass) ----
@@ -705,7 +705,7 @@ def build_multi_chain_meta_core(
         escalate_now = escalate_W | escalate_T
         new_has_escalated = state.has_escalated | escalate_now
 
-        # ---- Scoped latch: deferred_to_ensemble (non-monotone, v2.1 rule) ----
+        # ---- Scoped latch: deferred_to_ensemble (non-monotone) ----
         # Deferred is set when T-branch sees a spike (t_magnitude + t_support) AND
         # the mode-consistency flag fires (any_mode_flag), AND this has been true
         # for _MC_UNIMODALITY_CONFIRM_WINDOWS=2 consecutive windows, AND no T-escalation
@@ -765,7 +765,7 @@ def build_multi_chain_meta_core(
         # T fires (alone): Fisher-LR sigma + rank-1 geometric-mean slow-dir correction.
         # Neither fires post-escalation: carry the branch-appropriate LR metric.
 
-        # T-branch escalated metric (v2 rank-1 update, unchanged)
+        # T-branch escalated metric (rank-1 update)
         sigma_sq_deploy = _geometric_mean_deploy_scale(
             chain_means, pc_grads_safe, step_mask_all, grand_mean, e_dir, n_pool, M_stat
         )

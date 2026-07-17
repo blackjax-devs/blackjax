@@ -318,7 +318,7 @@ def extract_multi_chain_verdict(
         "unimodality_gate": "pass" if unimodality_passed_raw else "flag",
         "deferred_to_ensemble": deferred_raw,
         "pooled_draws_by_window": pooled_draws_by_window,
-        # v2.1 branch diagnostics
+        # Multi-chain branch diagnostics
         "within_lam1": within_lam1_raw,
         "chain_consistency_psi": chain_consistency_psi_raw,
         "r1_top": r1_top_raw,
