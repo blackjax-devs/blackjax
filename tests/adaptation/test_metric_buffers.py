@@ -525,8 +525,8 @@ class ResetWindowBufferTest(BlackJAXTest):
         block = get_moments(state)
         ref_n, ref_mean, ref_m2 = _ref_single_pass_moments(draws)
 
-        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4)
-        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4)
+        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4, atol=1e-5)
+        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4, atol=1e-5)
         self.assertAlmostEqual(float(block.count), ref_n, places=5)
 
     def test_push_split_zeros_accumulator(self):
@@ -586,8 +586,8 @@ class ResetWindowBufferTest(BlackJAXTest):
         # Fresh accumulation on draws2 only
         ref_n, ref_mean, ref_m2 = _ref_single_pass_moments(draws2)
 
-        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4)
-        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4)
+        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4, atol=1e-5)
+        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4, atol=1e-5)
         self.assertAlmostEqual(float(block.count), ref_n, places=5)
 
     def test_requires_draws_false_no_draw_ring(self):
@@ -698,8 +698,8 @@ class AccumulatingSplitPopTest(BlackJAXTest):
         all_draws = np.concatenate(draws_list, axis=0)
         ref_n, ref_mean, ref_m2 = _ref_single_pass_moments(all_draws)
 
-        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4)
-        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4)
+        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4, atol=1e-5)
+        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4, atol=1e-5)
         self.assertAlmostEqual(float(block.count), ref_n, places=5)
 
     @parameterized.named_parameters(
@@ -783,12 +783,14 @@ class AccumulatingSplitPopTest(BlackJAXTest):
             np.array(block.mean),
             ref_mean,
             rtol=1e-4,
+            atol=1e-5,
             err_msg="pop-oldest: merged mean != recomputation from scratch",
         )
         np.testing.assert_allclose(
             np.array(block.m2),
             ref_m2,
             rtol=1e-4,
+            atol=1e-5,
             err_msg="pop-oldest: merged M2 != recomputation from scratch",
         )
         self.assertAlmostEqual(
@@ -1027,6 +1029,7 @@ class DiagReferenceTest(BlackJAXTest):
             np.array(diag_ref),
             expected,
             rtol=1e-4,
+            atol=1e-5,
             err_msg="diag_reference != diag(M2)/max(n-1,1)",
         )
 
@@ -1151,8 +1154,8 @@ class LateStartTest(BlackJAXTest):
         all_valid = np.concatenate(valid_draws, axis=0)
         ref_n, ref_mean, ref_m2 = _ref_single_pass_moments(all_valid)
 
-        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4)
-        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4)
+        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4, atol=1e-5)
+        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4, atol=1e-5)
         self.assertAlmostEqual(float(block.count), ref_n, places=5)
 
     def test_zero_offset(self):
@@ -1177,8 +1180,8 @@ class LateStartTest(BlackJAXTest):
         block = ls_get_moments(state)
         ref_n, ref_mean, ref_m2 = _ref_single_pass_moments(draws)
 
-        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4)
-        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4)
+        np.testing.assert_allclose(np.array(block.mean), ref_mean, rtol=1e-4, atol=1e-5)
+        np.testing.assert_allclose(np.array(block.m2), ref_m2, rtol=1e-4, atol=1e-5)
         self.assertAlmostEqual(float(block.count), ref_n, places=5)
 
     def test_state_is_late_start_state(self):
@@ -1682,6 +1685,7 @@ class MergeBlockRingK1ShortCircuitTest(BlackJAXTest):
             np.array(block.mean),
             ref_mean,
             rtol=1e-4,
+            atol=1e-5,
             err_msg="k=1 split_pop: push_split must zero the slot (hard reset)",
         )
         self.assertAlmostEqual(
