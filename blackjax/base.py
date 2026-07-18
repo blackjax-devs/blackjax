@@ -34,7 +34,7 @@ class InitFn(Protocol):
 
     """
 
-    def __call__(self, position: Position, rng_key: PRNGKey | None) -> State:
+    def __call__(self, position: Position, rng_key: PRNGKey | None = None) -> State:
         """Initialize the algorithm's state.
 
         Parameters
