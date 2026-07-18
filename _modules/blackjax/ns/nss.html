@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ge53f46b02" />
+  <meta name="docsearch:version" content="0.1.dev1+gc43ce13b7" />
   </head>
   
   
@@ -458,32 +458,85 @@
     <span class="s2">&quot;covariance_proposal&quot;</span><span class="p">,</span>
     <span class="s2">&quot;init&quot;</span><span class="p">,</span>
     <span class="s2">&quot;live_covariance&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;live_covariance_factor&quot;</span><span class="p">,</span>
     <span class="s2">&quot;live_widths&quot;</span><span class="p">,</span>
     <span class="s2">&quot;slice_constrained_step&quot;</span><span class="p">,</span>
     <span class="s2">&quot;swig_as_top_level_api&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">sample_direction_from_covariance_factor</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">covariance_factor</span><span class="p">:</span> <span class="n">Array</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample a covariance-shaped direction with Mahalanobis norm 2.</span>
+
+<span class="sd">    Given a lower-triangular factor ``L`` satisfying ``L @ L.T = C``, draws</span>
+<span class="sd">    ``z ~ N(0, I)`` and returns ``2 * L @ z / ||z||``. The factor can therefore</span>
+<span class="sd">    be computed once per outer nested-sampling step and reused by every inner</span>
+<span class="sd">    slice step.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    rng_key</span>
+<span class="sd">        Key used to draw the standard-normal direction.</span>
+<span class="sd">    position</span>
+<span class="sd">        Position PyTree whose structure the returned direction must match.</span>
+<span class="sd">    covariance_factor</span>
+<span class="sd">        Lower-triangular Cholesky factor of the live-point covariance.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A direction PyTree with length 2 in the live covariance metric.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+    <span class="n">dimension</span> <span class="o">=</span> <span class="n">covariance_factor</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">standard_direction</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">,</span>
+        <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">dimension</span><span class="p">,),</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">covariance_factor</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">direction</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="mf">2.0</span>
+        <span class="o">*</span> <span class="p">(</span><span class="n">covariance_factor</span> <span class="o">@</span> <span class="n">standard_direction</span><span class="p">)</span>
+        <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">standard_direction</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">sample_direction_from_covariance</span><span class="p">(</span>
     <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">position</span><span class="p">:</span> <span class="n">ArrayTree</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">Array</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ArrayTree</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;A random direction shaped by ``cov``, scaled to Mahalanobis norm 2.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Sample a direction from a covariance matrix.</span>
 
-<span class="sd">    Samples ``d ~ N(0, cov)`` and normalizes it with ``inv(cov)`` to a length of</span>
-<span class="sd">    2 in the covariance metric (~2 std devs, a step size that mixes well). Uses</span>
-<span class="sd">    ``inv(cov)`` rather than an explicit Cholesky factor, has encountered differing</span>
-<span class="sd">    behavior on GPU.</span>
+<span class="sd">    This compatibility helper factors ``cov`` for each call. The default NSS</span>
+<span class="sd">    kernel uses :func:`sample_direction_from_covariance_factor` so that the</span>
+<span class="sd">    factorization is performed outside the inner sampling loop.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    rng_key</span>
+<span class="sd">        Key used to draw the standard-normal direction.</span>
+<span class="sd">    position</span>
+<span class="sd">        Position PyTree whose structure the returned direction must match.</span>
+<span class="sd">    cov</span>
+<span class="sd">        Live-point covariance matrix.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A direction PyTree with length 2 in the live covariance metric.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_</span><span class="p">,</span> <span class="n">unravel_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">flatten_util</span><span class="o">.</span><span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-    <span class="n">d</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">cov</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">cov</span><span class="p">)</span>
-    <span class="n">d</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">d</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">d</span> <span class="o">@</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span> <span class="o">@</span> <span class="n">d</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">unravel_fn</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+    <span class="n">covariance_factor</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">sample_direction_from_covariance_factor</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">covariance_factor</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="covariance_proposal">
 <a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.covariance_proposal">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">covariance_proposal</span><span class="p">(</span>
-    <span class="n">init_state_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">loglikelihood_0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="n">init_state_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">loglikelihood_0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">cov</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">covariance_factor</span><span class="p">:</span> <span class="n">Array</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Proposal generator for nested slice sampling.</span>
 
@@ -494,11 +547,39 @@
 <span class="sd">    (recording its log-likelihood, computed once) and reports it admissible only</span>
 <span class="sd">    when ``loglikelihood &gt; loglikelihood_0``. Override it to write a custom</span>
 <span class="sd">    nested stepper.</span>
+
+<span class="sd">    The default NSS kernel supplies ``covariance_factor`` so the Cholesky</span>
+<span class="sd">    factorization is shared by all inner steps. ``cov`` remains supported for</span>
+<span class="sd">    covariance-based custom parameter callbacks and direct callers.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    init_state_fn</span>
+<span class="sd">        Builds a particle state from a position and birth log-likelihood.</span>
+<span class="sd">    loglikelihood_0</span>
+<span class="sd">        Hard lower likelihood threshold for valid proposals.</span>
+<span class="sd">    cov</span>
+<span class="sd">        Live-point covariance matrix. Used only when ``covariance_factor`` is</span>
+<span class="sd">        not supplied.</span>
+<span class="sd">    covariance_factor</span>
+<span class="sd">        Precomputed lower-triangular Cholesky factor of the live covariance.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A proposal generator consumed by the univariate slice kernel.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">covariance_factor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">cov</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Specify either cov or covariance_factor&quot;</span><span class="p">)</span>
+        <span class="n">covariance_factor</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">cov</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">cov</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Specify only one of cov and covariance_factor&quot;</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">proposal_generator</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">):</span>
         <span class="k">del</span> <span class="n">logdensity_fn</span>  <span class="c1"># NS gates on the recorded loglikelihood, not logdensity</span>
-        <span class="n">direction</span> <span class="o">=</span> <span class="n">sample_direction_from_covariance</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
+        <span class="n">direction</span> <span class="o">=</span> <span class="n">sample_direction_from_covariance_factor</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">covariance_factor</span>
+        <span class="p">)</span>
 
         <span class="k">def</span><span class="w"> </span><span class="nf">slice_fn</span><span class="p">(</span><span class="n">t</span><span class="p">):</span>
             <span class="n">x</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">p</span><span class="p">,</span> <span class="n">d</span><span class="p">:</span> <span class="n">p</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">d</span><span class="p">,</span> <span class="n">position</span><span class="p">,</span> <span class="n">direction</span><span class="p">)</span>
@@ -552,12 +633,60 @@
     <span class="n">info</span><span class="p">:</span> <span class="n">NSInfo</span><span class="p">,</span>
     <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Live-point covariance, recomputed each step to shape the direction.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the live-point covariance for covariance-based custom proposals.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    rng_key</span>
+<span class="sd">        Unused key required by the adaptive-kernel callback protocol.</span>
+<span class="sd">    state</span>
+<span class="sd">        Nested-sampling state containing the current live particles.</span>
+<span class="sd">    info</span>
+<span class="sd">        Unused transition information required by the callback protocol.</span>
+<span class="sd">    params</span>
+<span class="sd">        Unused previous parameters required by the callback protocol.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A parameter dictionary containing the live-point covariance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># rng_key, info and params are unused here but required by the</span>
     <span class="c1"># adaptive-kernel callback protocol (update_inner_kernel_params_fn).</span>
+    <span class="k">del</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">params</span>
     <span class="k">return</span> <span class="p">{</span>
         <span class="s2">&quot;cov&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">particles_covariance_matrix</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">particles</span><span class="o">.</span><span class="n">position</span><span class="p">))</span>
     <span class="p">}</span></div>
+
+
+
+<div class="viewcode-block" id="live_covariance_factor">
+<a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.live_covariance_factor">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">live_covariance_factor</span><span class="p">(</span>
+    <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+    <span class="n">state</span><span class="p">:</span> <span class="n">NSState</span><span class="p">,</span>
+    <span class="n">info</span><span class="p">:</span> <span class="n">NSInfo</span><span class="p">,</span>
+    <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Factor the live-point covariance once per nested-sampling step.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    rng_key</span>
+<span class="sd">        Unused key required by the adaptive-kernel callback protocol.</span>
+<span class="sd">    state</span>
+<span class="sd">        Nested-sampling state containing the current live particles.</span>
+<span class="sd">    info</span>
+<span class="sd">        Unused transition information required by the callback protocol.</span>
+<span class="sd">    params</span>
+<span class="sd">        Unused previous parameters required by the callback protocol.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A parameter dictionary containing the lower-triangular Cholesky factor.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">del</span> <span class="n">rng_key</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">params</span>
+    <span class="n">covariance</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">particles_covariance_matrix</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">particles</span><span class="o">.</span><span class="n">position</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;covariance_factor&quot;</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">covariance</span><span class="p">)}</span></div>
 
 
 
@@ -571,11 +700,11 @@
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ArrayTree</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-axis live-point spread (std): the per-coordinate slice widths for SwiG.</span>
 
-<span class="sd">    The coordinate counterpart of :func:`live_covariance`: only the marginal</span>
+<span class="sd">    The coordinate counterpart of :func:`live_covariance_factor`: only the marginal</span>
 <span class="sd">    per-axis spread is used, so axis correlations are deliberately ignored -- the</span>
 <span class="sd">    defining trait of a coordinate (slice-within-Gibbs) move. Overridable via the</span>
 <span class="sd">    ``inner_kernel_params`` seam of :func:`build_swig_kernel` and</span>
-<span class="sd">    :func:`swig_as_top_level_api`, mirroring :func:`live_covariance`.</span>
+<span class="sd">    :func:`swig_as_top_level_api`, mirroring :func:`live_covariance_factor`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="c1"># rng_key, info and params are unused here but required by the</span>
     <span class="c1"># adaptive-kernel callback protocol (update_inner_kernel_params_fn).</span>
@@ -606,6 +735,17 @@
 
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_resolve_inner_kernel_params</span><span class="p">(</span>
+    <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Choose optimized defaults without breaking covariance-based proposals.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">inner_kernel_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">inner_kernel_params</span>
+    <span class="k">if</span> <span class="n">proposal</span> <span class="ow">is</span> <span class="n">covariance_proposal</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">live_covariance_factor</span>
+    <span class="k">return</span> <span class="n">live_covariance</span>
+
+
 <div class="viewcode-block" id="build_kernel">
 <a class="viewcode-back" href="../../../autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.build_kernel">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
@@ -615,7 +755,7 @@
     <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">covariance_proposal</span><span class="p">,</span>
-    <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">live_covariance</span><span class="p">,</span>
+    <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Nested Slice Sampling kernel.</span>
 
@@ -634,18 +774,22 @@
 <span class="sd">    max_shrinkage</span>
 <span class="sd">        Cap on shrinkage evaluations per slice (default 100).</span>
 <span class="sd">    proposal</span>
-<span class="sd">        Proposal factory ``(init_state_fn, loglikelihood_0, cov) -&gt;</span>
-<span class="sd">        proposal_generator`` (:func:`covariance_proposal` by default). Override</span>
+<span class="sd">        Proposal factory ``(init_state_fn, loglikelihood_0, **params) -&gt;</span>
+<span class="sd">        proposal_generator`` (:func:`covariance_proposal` by default). The</span>
+<span class="sd">        default proposal consumes a precomputed ``covariance_factor``. Override</span>
 <span class="sd">        to write a custom nested stepper.</span>
 <span class="sd">    inner_kernel_params</span>
 <span class="sd">        Computes the inner-kernel parameters from the live points each step,</span>
-<span class="sd">        ``(rng_key, state, info, params) -&gt; params`` (:func:`live_covariance`</span>
-<span class="sd">        by default, the live-point covariance).</span>
+<span class="sd">        ``(rng_key, state, info, params) -&gt; params``. When ``None``, uses</span>
+<span class="sd">        :func:`live_covariance_factor` with the default proposal and</span>
+<span class="sd">        :func:`live_covariance` with a custom proposal, preserving the existing</span>
+<span class="sd">        covariance-based extension seam.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inner_kernel_params</span> <span class="o">=</span> <span class="n">_resolve_inner_kernel_params</span><span class="p">(</span><span class="n">proposal</span><span class="p">,</span> <span class="n">inner_kernel_params</span><span class="p">)</span>
     <span class="n">slice_kernel</span> <span class="o">=</span> <span class="n">build_slice_kernel</span><span class="p">(</span>
         <span class="n">interval</span><span class="o">=</span><span class="n">stepping_out</span><span class="p">,</span>
         <span class="n">max_expansions</span><span class="o">=</span><span class="n">max_steps</span><span class="p">,</span>
@@ -800,7 +944,7 @@
     <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">covariance_proposal</span><span class="p">,</span>
-    <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">live_covariance</span><span class="p">,</span>
+    <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a Nested Slice Sampling (NSS) algorithm, ``blackjax.nss``.</span>
 
@@ -827,13 +971,16 @@
 <span class="sd">    max_shrinkage</span>
 <span class="sd">        Cap on shrinkage evaluations per slice (default 100).</span>
 <span class="sd">    proposal</span>
-<span class="sd">        Proposal factory ``(init_state_fn, loglikelihood_0, cov) -&gt;</span>
-<span class="sd">        proposal_generator`` (:func:`covariance_proposal` by default). Override</span>
+<span class="sd">        Proposal factory ``(init_state_fn, loglikelihood_0, **params) -&gt;</span>
+<span class="sd">        proposal_generator`` (:func:`covariance_proposal` by default). The</span>
+<span class="sd">        default proposal consumes a precomputed ``covariance_factor``. Override</span>
 <span class="sd">        to write a custom nested stepper.</span>
 <span class="sd">    inner_kernel_params</span>
 <span class="sd">        Computes the inner-kernel parameters from the live points,</span>
-<span class="sd">        ``(rng_key, state, info, params) -&gt; params`` (:func:`live_covariance`</span>
-<span class="sd">        by default). Used both to seed ``init`` and to update each step.</span>
+<span class="sd">        ``(rng_key, state, info, params) -&gt; params``. When ``None``, uses</span>
+<span class="sd">        :func:`live_covariance_factor` with the default proposal and</span>
+<span class="sd">        :func:`live_covariance` with a custom proposal. Used both to seed</span>
+<span class="sd">        ``init`` and to update each step.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -854,6 +1001,7 @@
 <span class="sd">    weighted correctly in the resampled posterior, but may be absent from the final</span>
 <span class="sd">    live set.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inner_kernel_params</span> <span class="o">=</span> <span class="n">_resolve_inner_kernel_params</span><span class="p">(</span><span class="n">proposal</span><span class="p">,</span> <span class="n">inner_kernel_params</span><span class="p">)</span>
     <span class="n">init_state_fn</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span>
         <span class="n">init_state_strategy</span><span class="p">,</span>
         <span class="n">logprior_fn</span><span class="o">=</span><span class="n">logprior_fn</span><span class="p">,</span>

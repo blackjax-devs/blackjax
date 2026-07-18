@@ -22,6 +22,7 @@ Functions
    blackjax.ns.nss.covariance_proposal
    blackjax.ns.nss.coordinate_proposal
    blackjax.ns.nss.live_covariance
+   blackjax.ns.nss.live_covariance_factor
    blackjax.ns.nss.live_widths
    blackjax.ns.nss.slice_constrained_step
    blackjax.ns.nss.build_kernel
@@ -34,7 +35,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: covariance_proposal(init_state_fn: Callable, loglikelihood_0: blackjax.types.Array, cov: blackjax.types.Array) -> Callable
+.. py:function:: covariance_proposal(init_state_fn: Callable, loglikelihood_0: blackjax.types.Array, cov: blackjax.types.Array | None = None, *, covariance_factor: blackjax.types.Array | None = None) -> Callable
 
    Proposal generator for nested slice sampling.
 
@@ -45,6 +46,18 @@ Module Contents
    (recording its log-likelihood, computed once) and reports it admissible only
    when ``loglikelihood > loglikelihood_0``. Override it to write a custom
    nested stepper.
+
+   The default NSS kernel supplies ``covariance_factor`` so the Cholesky
+   factorization is shared by all inner steps. ``cov`` remains supported for
+   covariance-based custom parameter callbacks and direct callers.
+
+   :param init_state_fn: Builds a particle state from a position and birth log-likelihood.
+   :param loglikelihood_0: Hard lower likelihood threshold for valid proposals.
+   :param cov: Live-point covariance matrix. Used only when ``covariance_factor`` is
+               not supplied.
+   :param covariance_factor: Precomputed lower-triangular Cholesky factor of the live covariance.
+
+   :rtype: A proposal generator consumed by the univariate slice kernel.
 
 
 .. py:function:: coordinate_proposal(init_state_fn: Callable, loglikelihood_0: blackjax.types.Array, i: blackjax.types.Array, width: blackjax.types.Array) -> Callable
@@ -64,18 +77,37 @@ Module Contents
 
 .. py:function:: live_covariance(rng_key: blackjax.types.PRNGKey, state: blackjax.ns.base.NSState, info: blackjax.ns.base.NSInfo, params: dict[str, blackjax.types.ArrayTree] | None = None) -> dict[str, blackjax.types.ArrayTree]
 
-   Live-point covariance, recomputed each step to shape the direction.
+   Compute the live-point covariance for covariance-based custom proposals.
+
+   :param rng_key: Unused key required by the adaptive-kernel callback protocol.
+   :param state: Nested-sampling state containing the current live particles.
+   :param info: Unused transition information required by the callback protocol.
+   :param params: Unused previous parameters required by the callback protocol.
+
+   :rtype: A parameter dictionary containing the live-point covariance.
+
+
+.. py:function:: live_covariance_factor(rng_key: blackjax.types.PRNGKey, state: blackjax.ns.base.NSState, info: blackjax.ns.base.NSInfo, params: dict[str, blackjax.types.ArrayTree] | None = None) -> dict[str, blackjax.types.ArrayTree]
+
+   Factor the live-point covariance once per nested-sampling step.
+
+   :param rng_key: Unused key required by the adaptive-kernel callback protocol.
+   :param state: Nested-sampling state containing the current live particles.
+   :param info: Unused transition information required by the callback protocol.
+   :param params: Unused previous parameters required by the callback protocol.
+
+   :rtype: A parameter dictionary containing the lower-triangular Cholesky factor.
 
 
 .. py:function:: live_widths(rng_key: blackjax.types.PRNGKey, state: blackjax.ns.base.NSState, info: blackjax.ns.base.NSInfo, params: dict[str, blackjax.types.ArrayTree] | None = None) -> dict[str, blackjax.types.ArrayTree]
 
    Per-axis live-point spread (std): the per-coordinate slice widths for SwiG.
 
-   The coordinate counterpart of :func:`live_covariance`: only the marginal
+   The coordinate counterpart of :func:`live_covariance_factor`: only the marginal
    per-axis spread is used, so axis correlations are deliberately ignored -- the
    defining trait of a coordinate (slice-within-Gibbs) move. Overridable via the
    ``inner_kernel_params`` seam of :func:`build_swig_kernel` and
-   :func:`swig_as_top_level_api`, mirroring :func:`live_covariance`.
+   :func:`swig_as_top_level_api`, mirroring :func:`live_covariance_factor`.
 
 
 .. py:function:: slice_constrained_step(init_state_fn: Callable, slice_kernel: Callable, proposal: Callable) -> Callable
@@ -90,7 +122,7 @@ Module Contents
    :func:`~blackjax.ns.from_mcmc.build_kernel`.
 
 
-.. py:function:: build_kernel(init_state_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable = live_covariance) -> Callable
+.. py:function:: build_kernel(init_state_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable | None = None) -> Callable
 
    Build the Nested Slice Sampling kernel.
 
@@ -101,12 +133,15 @@ Module Contents
    :param num_delete: Number of particles deleted and replaced per step (default 1).
    :param max_steps: Cap on stepping-out expansions per slice (default 10).
    :param max_shrinkage: Cap on shrinkage evaluations per slice (default 100).
-   :param proposal: Proposal factory ``(init_state_fn, loglikelihood_0, cov) ->
-                    proposal_generator`` (:func:`covariance_proposal` by default). Override
+   :param proposal: Proposal factory ``(init_state_fn, loglikelihood_0, **params) ->
+                    proposal_generator`` (:func:`covariance_proposal` by default). The
+                    default proposal consumes a precomputed ``covariance_factor``. Override
                     to write a custom nested stepper.
    :param inner_kernel_params: Computes the inner-kernel parameters from the live points each step,
-                               ``(rng_key, state, info, params) -> params`` (:func:`live_covariance`
-                               by default, the live-point covariance).
+                               ``(rng_key, state, info, params) -> params``. When ``None``, uses
+                               :func:`live_covariance_factor` with the default proposal and
+                               :func:`live_covariance` with a custom proposal, preserving the existing
+                               covariance-based extension seam.
 
    :rtype: A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.
 
@@ -159,7 +194,7 @@ Module Contents
    :rtype: A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.
 
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable = live_covariance) -> blackjax.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable | None = None) -> blackjax.SamplingAlgorithm
 
    Creates a Nested Slice Sampling (NSS) algorithm, ``blackjax.nss``.
 
@@ -177,12 +212,15 @@ Module Contents
    :param num_delete: Number of particles deleted and replaced per step (default 1).
    :param max_steps: Cap on stepping-out expansions per slice (default 10).
    :param max_shrinkage: Cap on shrinkage evaluations per slice (default 100).
-   :param proposal: Proposal factory ``(init_state_fn, loglikelihood_0, cov) ->
-                    proposal_generator`` (:func:`covariance_proposal` by default). Override
+   :param proposal: Proposal factory ``(init_state_fn, loglikelihood_0, **params) ->
+                    proposal_generator`` (:func:`covariance_proposal` by default). The
+                    default proposal consumes a precomputed ``covariance_factor``. Override
                     to write a custom nested stepper.
    :param inner_kernel_params: Computes the inner-kernel parameters from the live points,
-                               ``(rng_key, state, info, params) -> params`` (:func:`live_covariance`
-                               by default). Used both to seed ``init`` and to update each step.
+                               ``(rng_key, state, info, params) -> params``. When ``None``, uses
+                               :func:`live_covariance_factor` with the default proposal and
+                               :func:`live_covariance` with a custom proposal. Used both to seed
+                               ``init`` and to update each step.
 
    :returns: * A ``SamplingAlgorithm`` whose ``step(rng_key, state)`` returns
              * ``(new_state, info)``.
