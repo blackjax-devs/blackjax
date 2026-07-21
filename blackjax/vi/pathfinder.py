@@ -148,34 +148,42 @@ def approximate(
     # Pad 0 to leading dimension so we have constant shape output
     s_padded = jnp.pad(s_masked, ((maxcor, 0), (0, 0)), mode="constant")
     z_padded = jnp.pad(z_masked, ((maxcor, 0), (0, 0)), mode="constant")
-
-    def path_finder_body_fn(rng_key, S, Z, alpha_l, theta, theta_grad):
+    
+    def path_finder_body_fn(args: tuple[int, jax.Array]):
         """The for loop body in Algorithm 1 of the Pathfinder paper."""
+        
+        i, key_i = args
+        
+        # lazy sliding window
+        window_idx = i + jnp.arange(maxcor)
+        S = s_padded[window_idx].reshape(maxcor, -1)
+        Z = z_padded[window_idx].reshape(maxcor, -1)
+        theta = position[i]
+        theta_grad = grad_position[i]
+        alpha_l = alpha[i]
+        
         beta, gamma = lbfgs_inverse_hessian_factors(S.T, Z.T, alpha_l)
         phi, logq = bfgs_sample(
-            rng_key=rng_key,
-            num_samples=num_samples,
-            position=theta,
+            rng_key=key_i, 
+            num_samples=num_samples, 
+            position=theta, 
             grad_position=theta_grad,
-            alpha=alpha_l,
-            beta=beta,
-            gamma=gamma,
+            alpha=alpha_l, 
+            beta=beta, 
+            gamma=gamma
         )
+        
         logp = -jax.vmap(objective_fn)(phi)
-        elbo = (logp - logq).mean()  # Algorithm 7 of the paper
+        elbo = (logp - logq).mean()
+        
         return elbo, beta, gamma
-
-    # Index and reshape S and Z to be sliding window view shape=(maxiter,
-    # maxcor, param_dim), so we can vmap over all the iterations.
-    # This is in effect numpy.lib.stride_tricks.sliding_window_view
+        
     path_size = maxiter + 1
-    index = jnp.arange(path_size)[:, None] + jnp.arange(maxcor)[None, :]
-    s_j = s_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
-    z_j = z_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
     rng_keys = jax.random.split(rng_key, path_size)
-    elbo, beta, gamma = jax.vmap(path_finder_body_fn)(
-        rng_keys, s_j, z_j, alpha, position, grad_position
-    )
+    path_indices = jnp.arange(path_size)    
+    
+    elbo, beta, gamma = jax.vmap(path_finder_body_fn)((path_indices, rng_keys))
+        
     elbo = jnp.where(
         (jnp.arange(path_size) < (status.iter_num)) & jnp.isfinite(elbo),
         elbo,
