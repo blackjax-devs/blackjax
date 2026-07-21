@@ -339,9 +339,7 @@ def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
         b = jnp.dot(z_l, s_l)
         c = jnp.sum(s_l**2 / alpha_lm1)
         inv_alpha_l = (
-            a / (b * alpha_lm1)
-            + z_l**2 / b
-            - (a * s_l**2) / (b * c * alpha_lm1**2)
+            a / (b * alpha_lm1) + z_l**2 / b - (a * s_l**2) / (b * c * alpha_lm1**2)
         )
         return 1.0 / inv_alpha_l
 
@@ -426,11 +424,7 @@ def bfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gamm
     L = jnp.linalg.cholesky(Id + R @ gamma @ R.T)
 
     logdet = jnp.sum(jnp.log(alpha)) + 2.0 * jnp.sum(jnp.log(jnp.diag(L)))
-    mu = (
-        position
-        + alpha * grad_position
-        + beta @ (gamma @ (beta.T @ grad_position))
-    )
+    mu = position + alpha * grad_position + beta @ (gamma @ (beta.T @ grad_position))
 
     u = jax.random.normal(rng_key, num_samples + (param_dims, 1))
     phi = mu[..., None] + jnp.sqrt(alpha)[:, None] * (Q @ (L - Id) @ (Q.T @ u) + u)
