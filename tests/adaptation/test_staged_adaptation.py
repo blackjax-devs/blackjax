@@ -626,6 +626,9 @@ class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
 
         The assertion tolerates ~5% Monte-Carlo error (house standard) to robustly
         survive variation in the date-derived seed.
+
+        num_steps=1000 (was 300) stabilises the Welford estimate: 300 steps
+        flaked ~13% across date-seeds, 1000 → 0.38% (#989/#1006 flake class).
         """
         logdensity_fn, _ = self._setup_target()
         rng_key = self.next_key()
@@ -645,7 +648,7 @@ class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
             initial_step_size=0.5,
         )
         (_, params_no_shrink), _ = warmup_no_shrink.run(
-            rng_key, jnp.zeros(3), num_steps=300
+            rng_key, jnp.zeros(3), num_steps=1000
         )
         imm_no_shrink = params_no_shrink["inverse_mass_matrix"]
 
@@ -660,7 +663,7 @@ class StagedAdaptationIMMSeedBehavioralTest(BlackJAXTest):
             initial_step_size=0.5,
         )
         (_, params_with_shrink), _ = warmup_with_shrink.run(
-            rng_key, jnp.zeros(3), num_steps=300
+            rng_key, jnp.zeros(3), num_steps=1000
         )
         imm_with_shrink = params_with_shrink["inverse_mass_matrix"]
 
