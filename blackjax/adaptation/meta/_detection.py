@@ -83,9 +83,18 @@ def _between_chain_detection(
 ) -> tuple[Array, Array, Array]:
     """Between-chain detection statistic via the M×M Gram.
 
-    Computes T = (n/(M−1))·ZᵀZ (rank ≤ M−1) via the M×M Gram ZZᵀ.
-    T's eigenvalues are the per-direction Gelman–Rubin B/W ratios (R̂²).
-    Null distribution has top eigenvalue → (1+√(d/(M−1)))² (the detection edge).
+    Computes T = (n/(M−1))·ZᵀZ (rank ≤ M−1) via the M×M Gram ZZᵀ,
+    where Z contains chain-mean deviations standardized by the diagonal of the
+    pooled within-chain covariance.  Equivalently,
+    T = D_W^{-1/2} B D_W^{-1/2}, where
+    B = n/(M−1) Σ_m (μ_m−μ̄)(μ_m−μ̄)ᵀ and D_W = diag(W).
+
+    T's eigenvalues measure diagonal-within-standardized between-chain scatter.
+    They are generally neither raw directional B/W ratios nor R̂²: the full
+    within-chain covariance is not used for whitening, and R̂² additionally
+    combines within- and between-chain terms with their finite-n weights.
+    Under the iid null, T's top eigenvalue approaches
+    (1+√(d/(M−1)))² (the detection edge).
 
     Parameters
     ----------
@@ -103,7 +112,8 @@ def _between_chain_detection(
     T_eigenvalues
         Shape ``(M,)`` — eigenvalues of T in descending order (last M−rank ≈ 0).
     V_top
-        Shape ``(d, M−1)`` — top M−1 directions of T in whitened space (columns).
+        Shape ``(d, min(M−1, d))`` — leading directions of T in whitened
+        space (columns).
     f1
         float32 scalar — collinearity score: fraction of total between-chain
         scatter variance in the leading direction (→1 for genuine slow dir,

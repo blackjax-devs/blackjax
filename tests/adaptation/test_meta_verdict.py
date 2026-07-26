@@ -16,6 +16,7 @@
 Coverage:
 - TestEffectiveRankHonesty: effective_rank vs nominal_rank reporting.
 - TestExtractMultiChainVerdictNewFields: v2.1 diagnostic flags in multi-chain verdict.
+- TestEvidenceSemantics: one-sided metric, equilibrium, and exploration evidence.
 """
 import jax
 import jax.numpy as jnp
@@ -26,6 +27,10 @@ from blackjax.adaptation.meta import (
     build_multi_chain_meta_core,
     extract_meta_verdict,
     extract_multi_chain_verdict,
+)
+from blackjax.adaptation.meta._calibration import (
+    _DETECTION_BRANCH_BETWEEN_MEANS,
+    _DETECTION_BRANCH_POOLED_WITHIN,
 )
 from tests.adaptation._meta_fixtures import _fill_mc_state, _make_mc_deep_spread
 from tests.fixtures import BlackJAXTest
@@ -203,3 +208,173 @@ class TestExtractMultiChainVerdictNewFields(BlackJAXTest):
             state, max_grad_budget=40000, num_warmup_steps=1000
         )
         self.assertEqual(verdict.flags["detection_branch"], "none")
+
+
+class TestEvidenceSemantics(BlackJAXTest):
+    """Verdicts separate route history, observed disagreement, and exploration."""
+
+    @staticmethod
+    def _single_verdict(state):
+        return extract_meta_verdict(state, max_grad_budget=40000, num_warmup_steps=1000)
+
+    @staticmethod
+    def _multi_verdict(state):
+        return extract_multi_chain_verdict(
+            state, max_grad_budget=40000, num_warmup_steps=1000
+        )
+
+    def test_single_chain_init_is_unassessed(self):
+        state = build_meta_adaptation_core(40000).init(10)
+        verdict = self._single_verdict(state)
+
+        self.assertEqual(verdict.confidence, "low")
+        self.assertEqual(verdict.flags["metric_route_status"], "unassessed")
+        self.assertEqual(verdict.flags["metric_route_basis"], "none")
+        self.assertEqual(verdict.flags["metric_scope"], "unassessed")
+        self.assertEqual(verdict.flags["observed_ensemble_evidence"], "unassessed")
+        self.assertEqual(verdict.flags["global_exploration"], "not_established")
+        self.assertEqual(verdict.flags["handoff"], "none")
+        self.assertEqual(
+            verdict.flags["initialization_design"], "not_recorded_by_controller"
+        )
+
+    def test_single_chain_reparameterization_handoff_after_evidence(self):
+        state = (
+            build_meta_adaptation_core(40000)
+            .init(10)
+            ._replace(
+                s_gap_curr=jnp.array(3.0, dtype=jnp.float32),
+                r2_latest=jnp.array(0.1, dtype=jnp.float32),
+            )
+        )
+        verdict = self._single_verdict(state)
+
+        self.assertEqual(verdict.route, "reparam_suggested")
+        self.assertEqual(verdict.flags["metric_route_status"], "not_selected")
+        self.assertEqual(verdict.flags["metric_scope"], "unassessed")
+        self.assertEqual(verdict.flags["handoff"], "reparameterize")
+        self.assertEqual(verdict.flags["global_exploration"], "not_established")
+
+    def test_single_chain_historical_escalation_supports_only_metric(self):
+        state = (
+            build_meta_adaptation_core(40000)
+            .init(10)
+            ._replace(
+                has_escalated=jnp.array(True, dtype=jnp.bool_),
+                escalation_rank=jnp.array(1, dtype=jnp.int32),
+            )
+        )
+        verdict = self._single_verdict(state)
+
+        self.assertEqual(verdict.confidence, "high")
+        self.assertEqual(
+            verdict.flags["confidence_scope"],
+            "historical_route_selection_heuristic",
+        )
+        self.assertEqual(verdict.flags["metric_route_status"], "historical_gate_pass")
+        self.assertEqual(verdict.flags["metric_route_basis"], "single_chain_spectrum")
+        self.assertEqual(verdict.flags["metric_scope"], "route_conditional")
+        self.assertEqual(verdict.flags["observed_ensemble_evidence"], "unassessed")
+        self.assertEqual(verdict.flags["global_exploration"], "not_established")
+
+    def test_multi_chain_init_is_unassessed_and_never_certified(self):
+        state = build_multi_chain_meta_core(40000, n_chains=8).init(10)
+        verdict = self._multi_verdict(state)
+
+        self.assertEqual(verdict.confidence, "low")
+        self.assertEqual(verdict.flags["metric_route_status"], "unassessed")
+        self.assertEqual(verdict.flags["metric_scope"], "unassessed")
+        self.assertEqual(verdict.flags["observed_ensemble_evidence"], "unassessed")
+        self.assertEqual(verdict.flags["global_exploration"], "not_established")
+        self.assertEqual(verdict.flags["mode_coverage"], "multi_chain_uncertified")
+        self.assertEqual(verdict.flags["start_dispersion_adequacy"], "not_assessed")
+        self.assertEqual(
+            verdict.flags["initialization_design"], "not_recorded_by_controller"
+        )
+
+    def test_observed_disagreement_scopes_pooled_metric_to_within_chain(self):
+        state = (
+            build_multi_chain_meta_core(40000, n_chains=8)
+            .init(10)
+            ._replace(
+                has_escalated=jnp.array(True, dtype=jnp.bool_),
+                escalation_rank=jnp.array(1, dtype=jnp.int32),
+                chain_collinearity=jnp.array(0.4, dtype=jnp.float32),
+                unimodality_passed=jnp.array(True, dtype=jnp.bool_),
+                unimodality_flag_count=jnp.array(1, dtype=jnp.int32),
+                deferred_to_ensemble=jnp.array(True, dtype=jnp.bool_),
+                detection_branch=jnp.array(
+                    _DETECTION_BRANCH_POOLED_WITHIN, dtype=jnp.int32
+                ),
+            )
+        )
+        verdict = self._multi_verdict(state)
+
+        self.assertEqual(verdict.route, "low_rank")
+        self.assertEqual(verdict.confidence, "high")
+        self.assertEqual(verdict.flags["metric_route_status"], "historical_gate_pass")
+        self.assertEqual(verdict.flags["metric_route_basis"], "pooled_within")
+        self.assertEqual(verdict.flags["metric_scope"], "within_chain_conditional")
+        self.assertEqual(
+            verdict.flags["observed_ensemble_evidence"],
+            "persistent_disagreement_signal",
+        )
+        self.assertEqual(verdict.flags["global_exploration"], "not_established")
+        self.assertEqual(verdict.flags["handoff"], "population")
+        self.assertEqual(verdict.flags["mode_coverage"], "multi_chain_uncertified")
+
+    def test_no_observed_disagreement_is_only_descriptive(self):
+        state = (
+            build_multi_chain_meta_core(40000, n_chains=8)
+            .init(10)
+            ._replace(
+                has_escalated=jnp.array(True, dtype=jnp.bool_),
+                escalation_rank=jnp.array(1, dtype=jnp.int32),
+                chain_collinearity=jnp.array(0.9, dtype=jnp.float32),
+                unimodality_passed=jnp.array(True, dtype=jnp.bool_),
+                unimodality_flag_count=jnp.array(0, dtype=jnp.int32),
+                deferred_to_ensemble=jnp.array(False, dtype=jnp.bool_),
+                detection_branch=jnp.array(
+                    _DETECTION_BRANCH_BETWEEN_MEANS, dtype=jnp.int32
+                ),
+            )
+        )
+        verdict = self._multi_verdict(state)
+
+        self.assertEqual(verdict.flags["metric_route_status"], "historical_gate_pass")
+        self.assertEqual(verdict.flags["metric_route_basis"], "between_means")
+        self.assertEqual(verdict.flags["metric_scope"], "route_conditional")
+        self.assertEqual(
+            verdict.flags["observed_ensemble_evidence"],
+            "no_disagreement_detected",
+        )
+        self.assertEqual(verdict.flags["global_exploration"], "not_established")
+        self.assertEqual(verdict.flags["handoff"], "none")
+        self.assertEqual(verdict.flags["mode_coverage"], "multi_chain_uncertified")
+
+    def test_historical_between_route_can_coexist_with_later_defer(self):
+        """A historical T-route selection does not constrain a later window."""
+        state = (
+            build_multi_chain_meta_core(40000, n_chains=8)
+            .init(10)
+            ._replace(
+                has_escalated=jnp.array(True, dtype=jnp.bool_),
+                escalation_rank=jnp.array(1, dtype=jnp.int32),
+                chain_collinearity=jnp.array(0.9, dtype=jnp.float32),
+                unimodality_passed=jnp.array(False, dtype=jnp.bool_),
+                unimodality_flag_count=jnp.array(2, dtype=jnp.int32),
+                deferred_to_ensemble=jnp.array(True, dtype=jnp.bool_),
+                detection_branch=jnp.array(
+                    _DETECTION_BRANCH_BETWEEN_MEANS, dtype=jnp.int32
+                ),
+            )
+        )
+
+        verdict = self._multi_verdict(state)
+
+        self.assertEqual(verdict.flags["metric_route_basis"], "between_means")
+        self.assertEqual(
+            verdict.flags["observed_ensemble_evidence"],
+            "persistent_disagreement_signal",
+        )
+        self.assertEqual(verdict.flags["handoff"], "population")
