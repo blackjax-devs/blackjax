@@ -470,7 +470,7 @@ class TestMultiChainGate(BlackJAXTest):
 
         After running overdispersed slow-chain data through final():
         - Non-escalated state: mode_coverage = 'multi_chain_uncertified' (M > 1)
-        - Escalated state: mode_coverage = 'multi_chain_certified'
+        - Escalated state: mode_coverage remains 'multi_chain_uncertified'
         - start_dispersion_adequacy and unimodality_gate keys are present
         """
         d, n, M = 20, 500, 8
@@ -502,7 +502,7 @@ class TestMultiChainGate(BlackJAXTest):
             "Non-escalated M>1 verdict: mode_coverage should be 'multi_chain_uncertified'",
         )
 
-        # Overdispersed slow chains → escalation → multi_chain_certified
+        # Overdispersed slow chains may support a metric, but never certify coverage.
         draws_ov, grads_ov = _make_overdispersed_slow_chains(
             d, n, M, slow_offset_scale=5.0, seed=221
         )
@@ -515,8 +515,8 @@ class TestMultiChainGate(BlackJAXTest):
         if bool(np.asarray(state_esc.has_escalated)):
             self.assertEqual(
                 verdict_esc.flags["mode_coverage"],
-                "multi_chain_certified",
-                "Escalated overdispersed verdict should be 'multi_chain_certified'",
+                "multi_chain_uncertified",
+                "Metric escalation must not certify global mode coverage",
             )
 
     def test_mode_split_no_false_escalate(self):
@@ -612,7 +612,7 @@ class TestMultiChainGate(BlackJAXTest):
 
         Checks:
         - has_escalated = False (conservative)
-        - start_dispersion_adequacy flag = 'adequate_if_overdispersed' (honesty layer)
+        - start_dispersion_adequacy flag = 'not_assessed'
         - mode_coverage = 'multi_chain_uncertified' (M > 1, no escalation)
         """
         d, n, M = 20, 500, 8
@@ -635,9 +635,9 @@ class TestMultiChainGate(BlackJAXTest):
         )
         self.assertEqual(
             verdict.flags["start_dispersion_adequacy"],
-            "adequate_if_overdispersed",
+            "not_assessed",
             "Non-escalation verdict must report start_dispersion_adequacy = "
-            "'adequate_if_overdispersed' (not a certificate of diagonal sufficiency)",
+            "'not_assessed' because the controller does not record the initialization design",
         )
         self.assertEqual(
             verdict.flags["mode_coverage"],

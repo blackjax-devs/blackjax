@@ -17,7 +17,7 @@
 Coverage:
 - TestEscalationDecisionTable, TestStructuralE2ESmoke, TestRecovershClassical,
   TestDefaultWiringAndBudgetWarning: single-chain core tests.
-- TestImpossibleComboInvariant, TestNewStateFieldsPopulated, TestSharedEpsilonDA,
+- TestBranchCompatibilityInvariants, TestNewStateFieldsPopulated, TestSharedEpsilonDA,
   TestWBranchE2ESmoke, TestEndToEndEscalation: multi-chain e2e tests.
 """
 import warnings
@@ -32,6 +32,7 @@ from blackjax.adaptation.meta import (
     build_meta_adaptation_core,
     build_multi_chain_meta_core,
     extract_meta_verdict,
+    extract_multi_chain_verdict,
 )
 from blackjax.adaptation.meta._calibration import (
     _ASSUMED_AVG_LEAPFROGS_PER_STEP,
@@ -66,6 +67,7 @@ from tests.adaptation._meta_fixtures import (
     _make_mc_even_spread,
     _make_mc_isotropic,
     _make_mc_split_means,
+    _make_overdispersed_slow_chains,
 )
 from tests.fixtures import BlackJAXTest
 
@@ -1118,12 +1120,12 @@ class TestDefaultWiringAndBudgetWarning(BlackJAXTest):
             warmup.run(key, pos, num_steps=50)
 
 
-class TestImpossibleComboInvariant(BlackJAXTest):
-    """Impossible combo + legal coexistence invariants from the scoped latch rule.
+class TestBranchCompatibilityInvariants(BlackJAXTest):
+    """Regression checks for branch-local exclusion and legal coexistence.
 
-    The ONLY impossible combo: escalated=True AND detection_branch=between_means
-    AND deferred=True.  (T-branch escalation requires confirmed_split=True, but
-    confirmed_split=True ⟹ new_deferred=False algebraically.)
+    A T-branch escalation and deferral cannot fire in the same window under the
+    current latch.  Because ``detection_branch`` is historical, that local fact
+    must not be promoted to a theorem about all later windows.
 
     Cross-branch coexistence IS LEGAL: W-escalation (pooled_within) + T-defer.
     """
@@ -1218,14 +1220,29 @@ class TestImpossibleComboInvariant(BlackJAXTest):
             f"(W fired in window 1 -- T never escalated) -- got {branch}",
         )
 
-    def test_impossible_combo_never_occurs_over_windows(self):
-        """Three-window scan: escalated+between_means+deferred NEVER appears (F5).
+        verdict = extract_multi_chain_verdict(
+            result, max_grad_budget=80000, num_warmup_steps=2 * n
+        )
+        self.assertEqual(verdict.route, "low_rank")
+        self.assertEqual(verdict.flags["metric_route_status"], "historical_gate_pass")
+        self.assertEqual(verdict.flags["metric_route_basis"], "pooled_within")
+        self.assertEqual(verdict.flags["metric_scope"], "within_chain_conditional")
+        self.assertEqual(
+            verdict.flags["observed_ensemble_evidence"],
+            "persistent_disagreement_signal",
+        )
+        self.assertEqual(verdict.flags["global_exploration"], "not_established")
+        self.assertEqual(verdict.flags["handoff"], "population")
+        self.assertEqual(verdict.flags["mode_coverage"], "multi_chain_uncertified")
+
+    def test_repeated_split_fixture_does_not_t_escalate_while_deferred(self):
+        """Repeated split evidence does not trigger T escalation in this fixture.
 
         Runs split-means draws through 3 consecutive windows.  Each window's
-        output is checked: IF has_escalated AND detection_branch=between_means
-        THEN deferred must be False.  The test is structurally rigorous because
-        we RUN windows until between_means escalation could reasonably occur
-        (not just checking a never-reached condition).
+        output checks that this persistent disagreement fixture never reports
+        simultaneous T-route support and deferral.  This is a fixture-level
+        regression check, not a claim about a historical T route followed by
+        different evidence in a later window.
         """
         M, n, d = 8, 150, 10
         core = build_multi_chain_meta_core(max_grad_budget=80000, n_chains=M)
@@ -1248,6 +1265,47 @@ class TestImpossibleComboInvariant(BlackJAXTest):
                     f"Window {window + 1}: impossible combo "
                     f"between_means+escalated+deferred occurred",
                 )
+
+    def test_historical_t_escalation_can_defer_on_later_split(self):
+        """A prior T-route selection may coexist with later split evidence."""
+        M, n, d = 8, 500, 20
+        core = build_multi_chain_meta_core(max_grad_budget=120000, n_chains=M)
+
+        draws_slow, grads_slow = _make_overdispersed_slow_chains(
+            d,
+            n,
+            M,
+            slow_offset_scale=5.0,
+            within_chain_noise=0.1,
+            seed=210,
+        )
+        state = _fill_mc_state(core.init(d), draws_slow, grads_slow)
+        state = core.final(state)
+        self.assertTrue(bool(np.asarray(state.has_escalated)))
+        self.assertEqual(
+            int(np.asarray(state.detection_branch)),
+            _DETECTION_BRANCH_BETWEEN_MEANS,
+        )
+
+        draws_split, grads_split = _make_mc_split_means(
+            M, n, d, split_scale=10.0, seed=45
+        )
+        for _ in range(2):
+            state = _fill_mc_state(state, draws_split, grads_split)
+            state = core.final(state)
+
+        self.assertTrue(bool(np.asarray(state.has_escalated)))
+        self.assertTrue(bool(np.asarray(state.deferred_to_ensemble)))
+        self.assertEqual(
+            int(np.asarray(state.detection_branch)),
+            _DETECTION_BRANCH_BETWEEN_MEANS,
+        )
+
+        verdict = extract_multi_chain_verdict(
+            state, max_grad_budget=120000, num_warmup_steps=3 * n
+        )
+        self.assertEqual(verdict.route, "low_rank")
+        self.assertEqual(verdict.flags["handoff"], "population")
 
 
 class TestNewStateFieldsPopulated(BlackJAXTest):

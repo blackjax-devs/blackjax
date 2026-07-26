@@ -721,9 +721,9 @@ def build_multi_chain_meta_core(
         # is mutually exclusive with defer (confirmed_split resets flag_count → deferred=False).
         #
         # Non-monotone: recomputed each window; if mode flags clear, defer resets to False.
-        # Impossible combo (route=low_rank ∧ deferred ∧ detection_branch=between_means)
-        # remains impossible: T-escalation requires t_unimodality=True → any_mode_flag
-        # drives flag_count to 0 via the False branch → confirmed_split=False. ✓
+        # T escalation and T deferral are mutually exclusive within this update.
+        # ``detection_branch`` is historical, however, so a between-means route
+        # selected in an earlier window may legally coexist with later deferral.
         multimodality_signal = any_mode_flag | ~is_unimodal
         new_flag_count = jnp.where(
             multimodality_signal,

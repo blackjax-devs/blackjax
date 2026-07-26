@@ -32,6 +32,7 @@ from blackjax.adaptation.meta._calibration import (
     _DETECTION_BRANCH_POOLED_WITHIN,
     _LAM_NONTRIVIAL_TOL,
     _MC_COLLINEARITY_TOL,
+    _MC_UNIMODALITY_CONFIRM_WINDOWS,
     _R2_DEFERRED,
     _R2_FULL_AFFINE,
     _R2_PROJECTED,
@@ -92,13 +93,10 @@ def extract_meta_verdict(
     else:
         route = "diagonal"
 
-    # Confidence
+    # Confidence is scoped narrowly to historical structured-metric support.
+    # It is not evidence of ensemble equilibrium or global exploration.
     s_gap_valid = not np.isnan(s_gap)
-    confidence = (
-        "high"
-        if (has_esc and not r2_nan and r2 >= _R_MIN and s_gap_valid and s_gap >= _S_MIN)
-        else "low"
-    )
+    confidence = "high" if has_esc else "low"
 
     # Exit reason and advisory budget return
     airm_converged = (airm_v_prev < _AIRM_VELOCITY_TOL) and (
@@ -134,12 +132,29 @@ def extract_meta_verdict(
         _R2_FULL_AFFINE: "full_affine",
     }.get(mode_int, "deferred")
     marginal_s_gap = (not has_esc) and s_gap_valid and (_S_MIN <= s_gap < 2.0 * _S_MIN)
+    evidence_completed = s_gap_valid or not r2_nan
+    metric_route_status = (
+        "historical_gate_pass"
+        if has_esc
+        else "not_selected"
+        if evidence_completed
+        else "unassessed"
+    )
+    handoff = "reparameterize" if route == "reparam_suggested" else "none"
     flags = {
         "reparam_hint": route == "reparam_suggested",
         "marginal_s_gap": marginal_s_gap,
         "wall_cost_discount": k > 0,
         "high_d_r2_mode": high_d_r2_mode,
         "mode_coverage": "single_chain_uncertified",
+        "metric_route_status": metric_route_status,
+        "metric_route_basis": "single_chain_spectrum" if has_esc else "none",
+        "metric_scope": "route_conditional" if has_esc else "unassessed",
+        "observed_ensemble_evidence": "unassessed",
+        "global_exploration": "not_established",
+        "handoff": handoff,
+        "confidence_scope": "historical_route_selection_heuristic",
+        "initialization_design": "not_recorded_by_controller",
         # nominal_rank is the pre-filter count from the spectrum rank selector;
         # effective_rank (the top-level field) is the deployed count from
         # the Fisher metric's lam array.  Both are provided for diagnostics.
@@ -192,9 +207,10 @@ def extract_multi_chain_verdict(
     Returns
     -------
     MetaAdaptationVerdict
-        Verdict with multi-chain–specific flags: ``n_chains``,
-        ``chain_collinearity``, ``unimodality_gate``, ``deferred_to_ensemble``,
-        and ``mode_coverage="multi_chain_certified"`` when all gates passed.
+        Verdict with multi-chain–specific flags separating historical metric
+        route selection, observed ensemble disagreement, global exploration, and
+        any downstream handoff.  Multi-chain warmup never certifies global mode
+        coverage.
     """
     import numpy as np
 
@@ -213,6 +229,7 @@ def extract_multi_chain_verdict(
     chain_collinearity_raw = float(np.asarray(final_state.chain_collinearity))
     unimodality_passed_raw = bool(np.asarray(final_state.unimodality_passed))
     deferred_raw = bool(np.asarray(final_state.deferred_to_ensemble))
+    unimodality_flag_count_raw = int(np.asarray(final_state.unimodality_flag_count))
     n_chains_actual: int = final_state.draws_buffer.shape[0]  # static
 
     lam_np = np.asarray(final_state.inverse_mass_matrix.lam)
@@ -229,16 +246,14 @@ def extract_multi_chain_verdict(
     else:
         route = "diagonal"
 
-    # Confidence — collinearity gate replaces s_gap stability for multi-chain path
+    # Current-window collinearity is a diagnostic, not historical evidence for
+    # every escalation branch.  In particular, the pooled-within branch does not
+    # require the between-means collinearity gate.
     collinearity_valid = not np.isnan(chain_collinearity_raw)
     collinearity_passed = (
         collinearity_valid and chain_collinearity_raw >= _MC_COLLINEARITY_TOL
     )
-    confidence = (
-        "high"
-        if (has_esc and not r2_nan and r2 >= _R_MIN and collinearity_passed)
-        else "low"
-    )
+    confidence = "high" if has_esc else "low"
 
     # Exit reason and advisory budget return
     airm_converged = (airm_v_prev < _AIRM_VELOCITY_TOL) and (
@@ -270,27 +285,8 @@ def extract_multi_chain_verdict(
         _R2_FULL_AFFINE: "full_affine",
     }.get(mode_int, "deferred")
 
-    # "need_more_chains": non-escalation with collinearity below threshold
-    # (magnitude may have been present but gate didn't pass; more chains or
-    # better-dispersed starts would help).
-    spike_marginal = (not has_esc) and (nominal_rank > 0) and (not collinearity_passed)
-
-    # mode_coverage: multi_chain_certified iff collinearity gate passed
-    mode_coverage = (
-        "multi_chain_certified"
-        if (has_esc and collinearity_passed)
-        else "multi_chain_uncertified"
-        if n_chains_actual > 1
-        else "single_chain_uncertified"
-    )
-
-    # start_dispersion_adequacy: non-escalation is one-sided-safe (conservative);
-    # under-dispersed starts can miss slow directions but never over-escalate.
-    start_dispersion_adequacy = (
-        "adequate_if_overdispersed" if not has_esc else "not_applicable"
-    )
-
-    # W-branch/T-branch diagnostic fields
+    # W-branch/T-branch diagnostic fields.  The branch is historical: it records
+    # the most recent escalation branch, while the other diagnostics are current.
     within_lam1_raw = float(np.asarray(final_state.within_lam1))
     chain_consistency_psi_raw = float(np.asarray(final_state.chain_consistency_psi))
     r1_top_raw = float(np.asarray(final_state.r1_top))
@@ -303,18 +299,89 @@ def extract_multi_chain_verdict(
     }
     detection_branch_name = _BRANCH_NAMES.get(detection_branch_raw, "unknown")
 
+    # "need_more_chains": non-escalation with collinearity below threshold
+    # (magnitude may have been present but gate didn't pass; more chains or
+    # better-dispersed starts would help).
+    spike_marginal = (not has_esc) and (nominal_rank > 0) and (not collinearity_passed)
+
+    # These are descriptive statuses for the observed ensemble, not calibrated
+    # equilibrium tests.  A warning needs two consecutive windows before it is
+    # called persistent; a quiet window never establishes global exploration.
+    persistent_disagreement = (
+        deferred_raw or unimodality_flag_count_raw >= _MC_UNIMODALITY_CONFIRM_WINDOWS
+    )
+    disagreement_warning = (
+        persistent_disagreement
+        or not unimodality_passed_raw
+        or unimodality_flag_count_raw > 0
+    )
+    observed_ensemble_evidence = (
+        "persistent_disagreement_signal"
+        if collinearity_valid and persistent_disagreement
+        else "disagreement_warning"
+        if collinearity_valid and disagreement_warning
+        else "no_disagreement_detected"
+        if collinearity_valid
+        else "unassessed"
+    )
+
+    metric_route_status = (
+        "historical_gate_pass"
+        if has_esc
+        else "not_selected"
+        if collinearity_valid
+        else "unassessed"
+    )
+    within_chain_conditional_metric = (
+        has_esc
+        and detection_branch_name
+        in {
+            "pooled_within",
+            "both",
+        }
+        and disagreement_warning
+    )
+    metric_scope = (
+        "within_chain_conditional"
+        if within_chain_conditional_metric
+        else "route_conditional"
+        if has_esc
+        else "unassessed"
+    )
+    handoff = (
+        "population"
+        if deferred_raw
+        else "reparameterize"
+        if route == "reparam_suggested"
+        else "none"
+    )
+
+    # Warmup diagnostics neither record the initialization protocol nor establish
+    # that the ensemble explored every relevant region.
+    mode_coverage = (
+        "multi_chain_uncertified" if n_chains_actual > 1 else "single_chain_uncertified"
+    )
+
     flags = {
         "reparam_hint": route == "reparam_suggested",
         "marginal_s_gap": False,  # s_gap not primary signal in multi-chain path
         "wall_cost_discount": k > 0,
         "high_d_r2_mode": high_d_r2_mode,
         "mode_coverage": mode_coverage,
+        "metric_route_status": metric_route_status,
+        "metric_route_basis": detection_branch_name if has_esc else "none",
+        "metric_scope": metric_scope,
+        "observed_ensemble_evidence": observed_ensemble_evidence,
+        "global_exploration": "not_established",
+        "handoff": handoff,
+        "confidence_scope": "historical_route_selection_heuristic",
         "nominal_rank": nominal_rank,
         # Multi-chain specific
         "n_chains": n_chains_actual,
         "chain_collinearity": chain_collinearity_raw,
         "need_more_chains": spike_marginal,
-        "start_dispersion_adequacy": start_dispersion_adequacy,
+        "start_dispersion_adequacy": "not_assessed",
+        "initialization_design": "not_recorded_by_controller",
         "unimodality_gate": "pass" if unimodality_passed_raw else "flag",
         "deferred_to_ensemble": deferred_raw,
         "pooled_draws_by_window": pooled_draws_by_window,
