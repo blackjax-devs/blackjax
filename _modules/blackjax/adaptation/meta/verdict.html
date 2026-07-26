@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gf8f7e3bfd" />
+  <meta name="docsearch:version" content="0.1.dev1+g2103a4275" />
   </head>
   
   
@@ -442,6 +442,7 @@
     <span class="n">_DETECTION_BRANCH_POOLED_WITHIN</span><span class="p">,</span>
     <span class="n">_LAM_NONTRIVIAL_TOL</span><span class="p">,</span>
     <span class="n">_MC_COLLINEARITY_TOL</span><span class="p">,</span>
+    <span class="n">_MC_UNIMODALITY_CONFIRM_WINDOWS</span><span class="p">,</span>
     <span class="n">_R2_DEFERRED</span><span class="p">,</span>
     <span class="n">_R2_FULL_AFFINE</span><span class="p">,</span>
     <span class="n">_R2_PROJECTED</span><span class="p">,</span>
@@ -504,13 +505,10 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;diagonal&quot;</span>
 
-    <span class="c1"># Confidence</span>
+    <span class="c1"># Confidence is scoped narrowly to historical structured-metric support.</span>
+    <span class="c1"># It is not evidence of ensemble equilibrium or global exploration.</span>
     <span class="n">s_gap_valid</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">s_gap</span><span class="p">)</span>
-    <span class="n">confidence</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;high&quot;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">has_esc</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">r2_nan</span> <span class="ow">and</span> <span class="n">r2</span> <span class="o">&gt;=</span> <span class="n">_R_MIN</span> <span class="ow">and</span> <span class="n">s_gap_valid</span> <span class="ow">and</span> <span class="n">s_gap</span> <span class="o">&gt;=</span> <span class="n">_S_MIN</span><span class="p">)</span>
-        <span class="k">else</span> <span class="s2">&quot;low&quot;</span>
-    <span class="p">)</span>
+    <span class="n">confidence</span> <span class="o">=</span> <span class="s2">&quot;high&quot;</span> <span class="k">if</span> <span class="n">has_esc</span> <span class="k">else</span> <span class="s2">&quot;low&quot;</span>
 
     <span class="c1"># Exit reason and advisory budget return</span>
     <span class="n">airm_converged</span> <span class="o">=</span> <span class="p">(</span><span class="n">airm_v_prev</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
@@ -546,12 +544,29 @@
         <span class="n">_R2_FULL_AFFINE</span><span class="p">:</span> <span class="s2">&quot;full_affine&quot;</span><span class="p">,</span>
     <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mode_int</span><span class="p">,</span> <span class="s2">&quot;deferred&quot;</span><span class="p">)</span>
     <span class="n">marginal_s_gap</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_esc</span><span class="p">)</span> <span class="ow">and</span> <span class="n">s_gap_valid</span> <span class="ow">and</span> <span class="p">(</span><span class="n">_S_MIN</span> <span class="o">&lt;=</span> <span class="n">s_gap</span> <span class="o">&lt;</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">_S_MIN</span><span class="p">)</span>
+    <span class="n">evidence_completed</span> <span class="o">=</span> <span class="n">s_gap_valid</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">r2_nan</span>
+    <span class="n">metric_route_status</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;historical_gate_pass&quot;</span>
+        <span class="k">if</span> <span class="n">has_esc</span>
+        <span class="k">else</span> <span class="s2">&quot;not_selected&quot;</span>
+        <span class="k">if</span> <span class="n">evidence_completed</span>
+        <span class="k">else</span> <span class="s2">&quot;unassessed&quot;</span>
+    <span class="p">)</span>
+    <span class="n">handoff</span> <span class="o">=</span> <span class="s2">&quot;reparameterize&quot;</span> <span class="k">if</span> <span class="n">route</span> <span class="o">==</span> <span class="s2">&quot;reparam_suggested&quot;</span> <span class="k">else</span> <span class="s2">&quot;none&quot;</span>
     <span class="n">flags</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;reparam_hint&quot;</span><span class="p">:</span> <span class="n">route</span> <span class="o">==</span> <span class="s2">&quot;reparam_suggested&quot;</span><span class="p">,</span>
         <span class="s2">&quot;marginal_s_gap&quot;</span><span class="p">:</span> <span class="n">marginal_s_gap</span><span class="p">,</span>
         <span class="s2">&quot;wall_cost_discount&quot;</span><span class="p">:</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
         <span class="s2">&quot;high_d_r2_mode&quot;</span><span class="p">:</span> <span class="n">high_d_r2_mode</span><span class="p">,</span>
         <span class="s2">&quot;mode_coverage&quot;</span><span class="p">:</span> <span class="s2">&quot;single_chain_uncertified&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;metric_route_status&quot;</span><span class="p">:</span> <span class="n">metric_route_status</span><span class="p">,</span>
+        <span class="s2">&quot;metric_route_basis&quot;</span><span class="p">:</span> <span class="s2">&quot;single_chain_spectrum&quot;</span> <span class="k">if</span> <span class="n">has_esc</span> <span class="k">else</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;metric_scope&quot;</span><span class="p">:</span> <span class="s2">&quot;route_conditional&quot;</span> <span class="k">if</span> <span class="n">has_esc</span> <span class="k">else</span> <span class="s2">&quot;unassessed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;observed_ensemble_evidence&quot;</span><span class="p">:</span> <span class="s2">&quot;unassessed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;global_exploration&quot;</span><span class="p">:</span> <span class="s2">&quot;not_established&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;handoff&quot;</span><span class="p">:</span> <span class="n">handoff</span><span class="p">,</span>
+        <span class="s2">&quot;confidence_scope&quot;</span><span class="p">:</span> <span class="s2">&quot;historical_route_selection_heuristic&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;initialization_design&quot;</span><span class="p">:</span> <span class="s2">&quot;not_recorded_by_controller&quot;</span><span class="p">,</span>
         <span class="c1"># nominal_rank is the pre-filter count from the spectrum rank selector;</span>
         <span class="c1"># effective_rank (the top-level field) is the deployed count from</span>
         <span class="c1"># the Fisher metric&#39;s lam array.  Both are provided for diagnostics.</span>
@@ -607,9 +622,10 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    MetaAdaptationVerdict</span>
-<span class="sd">        Verdict with multi-chain–specific flags: ``n_chains``,</span>
-<span class="sd">        ``chain_collinearity``, ``unimodality_gate``, ``deferred_to_ensemble``,</span>
-<span class="sd">        and ``mode_coverage=&quot;multi_chain_certified&quot;`` when all gates passed.</span>
+<span class="sd">        Verdict with multi-chain–specific flags separating historical metric</span>
+<span class="sd">        route selection, observed ensemble disagreement, global exploration, and</span>
+<span class="sd">        any downstream handoff.  Multi-chain warmup never certifies global mode</span>
+<span class="sd">        coverage.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
@@ -628,6 +644,7 @@
     <span class="n">chain_collinearity_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">chain_collinearity</span><span class="p">))</span>
     <span class="n">unimodality_passed_raw</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">unimodality_passed</span><span class="p">))</span>
     <span class="n">deferred_raw</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">deferred_to_ensemble</span><span class="p">))</span>
+    <span class="n">unimodality_flag_count_raw</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">unimodality_flag_count</span><span class="p">))</span>
     <span class="n">n_chains_actual</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">final_state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># static</span>
 
     <span class="n">lam_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">lam</span><span class="p">)</span>
@@ -644,16 +661,14 @@
     <span class="k">else</span><span class="p">:</span>
         <span class="n">route</span> <span class="o">=</span> <span class="s2">&quot;diagonal&quot;</span>
 
-    <span class="c1"># Confidence — collinearity gate replaces s_gap stability for multi-chain path</span>
+    <span class="c1"># Current-window collinearity is a diagnostic, not historical evidence for</span>
+    <span class="c1"># every escalation branch.  In particular, the pooled-within branch does not</span>
+    <span class="c1"># require the between-means collinearity gate.</span>
     <span class="n">collinearity_valid</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">chain_collinearity_raw</span><span class="p">)</span>
     <span class="n">collinearity_passed</span> <span class="o">=</span> <span class="p">(</span>
         <span class="n">collinearity_valid</span> <span class="ow">and</span> <span class="n">chain_collinearity_raw</span> <span class="o">&gt;=</span> <span class="n">_MC_COLLINEARITY_TOL</span>
     <span class="p">)</span>
-    <span class="n">confidence</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;high&quot;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">has_esc</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">r2_nan</span> <span class="ow">and</span> <span class="n">r2</span> <span class="o">&gt;=</span> <span class="n">_R_MIN</span> <span class="ow">and</span> <span class="n">collinearity_passed</span><span class="p">)</span>
-        <span class="k">else</span> <span class="s2">&quot;low&quot;</span>
-    <span class="p">)</span>
+    <span class="n">confidence</span> <span class="o">=</span> <span class="s2">&quot;high&quot;</span> <span class="k">if</span> <span class="n">has_esc</span> <span class="k">else</span> <span class="s2">&quot;low&quot;</span>
 
     <span class="c1"># Exit reason and advisory budget return</span>
     <span class="n">airm_converged</span> <span class="o">=</span> <span class="p">(</span><span class="n">airm_v_prev</span> <span class="o">&lt;</span> <span class="n">_AIRM_VELOCITY_TOL</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
@@ -685,27 +700,8 @@
         <span class="n">_R2_FULL_AFFINE</span><span class="p">:</span> <span class="s2">&quot;full_affine&quot;</span><span class="p">,</span>
     <span class="p">}</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">mode_int</span><span class="p">,</span> <span class="s2">&quot;deferred&quot;</span><span class="p">)</span>
 
-    <span class="c1"># &quot;need_more_chains&quot;: non-escalation with collinearity below threshold</span>
-    <span class="c1"># (magnitude may have been present but gate didn&#39;t pass; more chains or</span>
-    <span class="c1"># better-dispersed starts would help).</span>
-    <span class="n">spike_marginal</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_esc</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">nominal_rank</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">collinearity_passed</span><span class="p">)</span>
-
-    <span class="c1"># mode_coverage: multi_chain_certified iff collinearity gate passed</span>
-    <span class="n">mode_coverage</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;multi_chain_certified&quot;</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">has_esc</span> <span class="ow">and</span> <span class="n">collinearity_passed</span><span class="p">)</span>
-        <span class="k">else</span> <span class="s2">&quot;multi_chain_uncertified&quot;</span>
-        <span class="k">if</span> <span class="n">n_chains_actual</span> <span class="o">&gt;</span> <span class="mi">1</span>
-        <span class="k">else</span> <span class="s2">&quot;single_chain_uncertified&quot;</span>
-    <span class="p">)</span>
-
-    <span class="c1"># start_dispersion_adequacy: non-escalation is one-sided-safe (conservative);</span>
-    <span class="c1"># under-dispersed starts can miss slow directions but never over-escalate.</span>
-    <span class="n">start_dispersion_adequacy</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="s2">&quot;adequate_if_overdispersed&quot;</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">has_esc</span> <span class="k">else</span> <span class="s2">&quot;not_applicable&quot;</span>
-    <span class="p">)</span>
-
-    <span class="c1"># W-branch/T-branch diagnostic fields</span>
+    <span class="c1"># W-branch/T-branch diagnostic fields.  The branch is historical: it records</span>
+    <span class="c1"># the most recent escalation branch, while the other diagnostics are current.</span>
     <span class="n">within_lam1_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">within_lam1</span><span class="p">))</span>
     <span class="n">chain_consistency_psi_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">chain_consistency_psi</span><span class="p">))</span>
     <span class="n">r1_top_raw</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">final_state</span><span class="o">.</span><span class="n">r1_top</span><span class="p">))</span>
@@ -718,18 +714,89 @@
     <span class="p">}</span>
     <span class="n">detection_branch_name</span> <span class="o">=</span> <span class="n">_BRANCH_NAMES</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">detection_branch_raw</span><span class="p">,</span> <span class="s2">&quot;unknown&quot;</span><span class="p">)</span>
 
+    <span class="c1"># &quot;need_more_chains&quot;: non-escalation with collinearity below threshold</span>
+    <span class="c1"># (magnitude may have been present but gate didn&#39;t pass; more chains or</span>
+    <span class="c1"># better-dispersed starts would help).</span>
+    <span class="n">spike_marginal</span> <span class="o">=</span> <span class="p">(</span><span class="ow">not</span> <span class="n">has_esc</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">nominal_rank</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">collinearity_passed</span><span class="p">)</span>
+
+    <span class="c1"># These are descriptive statuses for the observed ensemble, not calibrated</span>
+    <span class="c1"># equilibrium tests.  A warning needs two consecutive windows before it is</span>
+    <span class="c1"># called persistent; a quiet window never establishes global exploration.</span>
+    <span class="n">persistent_disagreement</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">deferred_raw</span> <span class="ow">or</span> <span class="n">unimodality_flag_count_raw</span> <span class="o">&gt;=</span> <span class="n">_MC_UNIMODALITY_CONFIRM_WINDOWS</span>
+    <span class="p">)</span>
+    <span class="n">disagreement_warning</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">persistent_disagreement</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="n">unimodality_passed_raw</span>
+        <span class="ow">or</span> <span class="n">unimodality_flag_count_raw</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="p">)</span>
+    <span class="n">observed_ensemble_evidence</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;persistent_disagreement_signal&quot;</span>
+        <span class="k">if</span> <span class="n">collinearity_valid</span> <span class="ow">and</span> <span class="n">persistent_disagreement</span>
+        <span class="k">else</span> <span class="s2">&quot;disagreement_warning&quot;</span>
+        <span class="k">if</span> <span class="n">collinearity_valid</span> <span class="ow">and</span> <span class="n">disagreement_warning</span>
+        <span class="k">else</span> <span class="s2">&quot;no_disagreement_detected&quot;</span>
+        <span class="k">if</span> <span class="n">collinearity_valid</span>
+        <span class="k">else</span> <span class="s2">&quot;unassessed&quot;</span>
+    <span class="p">)</span>
+
+    <span class="n">metric_route_status</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;historical_gate_pass&quot;</span>
+        <span class="k">if</span> <span class="n">has_esc</span>
+        <span class="k">else</span> <span class="s2">&quot;not_selected&quot;</span>
+        <span class="k">if</span> <span class="n">collinearity_valid</span>
+        <span class="k">else</span> <span class="s2">&quot;unassessed&quot;</span>
+    <span class="p">)</span>
+    <span class="n">within_chain_conditional_metric</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">has_esc</span>
+        <span class="ow">and</span> <span class="n">detection_branch_name</span>
+        <span class="ow">in</span> <span class="p">{</span>
+            <span class="s2">&quot;pooled_within&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;both&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="ow">and</span> <span class="n">disagreement_warning</span>
+    <span class="p">)</span>
+    <span class="n">metric_scope</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;within_chain_conditional&quot;</span>
+        <span class="k">if</span> <span class="n">within_chain_conditional_metric</span>
+        <span class="k">else</span> <span class="s2">&quot;route_conditional&quot;</span>
+        <span class="k">if</span> <span class="n">has_esc</span>
+        <span class="k">else</span> <span class="s2">&quot;unassessed&quot;</span>
+    <span class="p">)</span>
+    <span class="n">handoff</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;population&quot;</span>
+        <span class="k">if</span> <span class="n">deferred_raw</span>
+        <span class="k">else</span> <span class="s2">&quot;reparameterize&quot;</span>
+        <span class="k">if</span> <span class="n">route</span> <span class="o">==</span> <span class="s2">&quot;reparam_suggested&quot;</span>
+        <span class="k">else</span> <span class="s2">&quot;none&quot;</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Warmup diagnostics neither record the initialization protocol nor establish</span>
+    <span class="c1"># that the ensemble explored every relevant region.</span>
+    <span class="n">mode_coverage</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="s2">&quot;multi_chain_uncertified&quot;</span> <span class="k">if</span> <span class="n">n_chains_actual</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;single_chain_uncertified&quot;</span>
+    <span class="p">)</span>
+
     <span class="n">flags</span> <span class="o">=</span> <span class="p">{</span>
         <span class="s2">&quot;reparam_hint&quot;</span><span class="p">:</span> <span class="n">route</span> <span class="o">==</span> <span class="s2">&quot;reparam_suggested&quot;</span><span class="p">,</span>
         <span class="s2">&quot;marginal_s_gap&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>  <span class="c1"># s_gap not primary signal in multi-chain path</span>
         <span class="s2">&quot;wall_cost_discount&quot;</span><span class="p">:</span> <span class="n">k</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">,</span>
         <span class="s2">&quot;high_d_r2_mode&quot;</span><span class="p">:</span> <span class="n">high_d_r2_mode</span><span class="p">,</span>
         <span class="s2">&quot;mode_coverage&quot;</span><span class="p">:</span> <span class="n">mode_coverage</span><span class="p">,</span>
+        <span class="s2">&quot;metric_route_status&quot;</span><span class="p">:</span> <span class="n">metric_route_status</span><span class="p">,</span>
+        <span class="s2">&quot;metric_route_basis&quot;</span><span class="p">:</span> <span class="n">detection_branch_name</span> <span class="k">if</span> <span class="n">has_esc</span> <span class="k">else</span> <span class="s2">&quot;none&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;metric_scope&quot;</span><span class="p">:</span> <span class="n">metric_scope</span><span class="p">,</span>
+        <span class="s2">&quot;observed_ensemble_evidence&quot;</span><span class="p">:</span> <span class="n">observed_ensemble_evidence</span><span class="p">,</span>
+        <span class="s2">&quot;global_exploration&quot;</span><span class="p">:</span> <span class="s2">&quot;not_established&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;handoff&quot;</span><span class="p">:</span> <span class="n">handoff</span><span class="p">,</span>
+        <span class="s2">&quot;confidence_scope&quot;</span><span class="p">:</span> <span class="s2">&quot;historical_route_selection_heuristic&quot;</span><span class="p">,</span>
         <span class="s2">&quot;nominal_rank&quot;</span><span class="p">:</span> <span class="n">nominal_rank</span><span class="p">,</span>
         <span class="c1"># Multi-chain specific</span>
         <span class="s2">&quot;n_chains&quot;</span><span class="p">:</span> <span class="n">n_chains_actual</span><span class="p">,</span>
         <span class="s2">&quot;chain_collinearity&quot;</span><span class="p">:</span> <span class="n">chain_collinearity_raw</span><span class="p">,</span>
         <span class="s2">&quot;need_more_chains&quot;</span><span class="p">:</span> <span class="n">spike_marginal</span><span class="p">,</span>
-        <span class="s2">&quot;start_dispersion_adequacy&quot;</span><span class="p">:</span> <span class="n">start_dispersion_adequacy</span><span class="p">,</span>
+        <span class="s2">&quot;start_dispersion_adequacy&quot;</span><span class="p">:</span> <span class="s2">&quot;not_assessed&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;initialization_design&quot;</span><span class="p">:</span> <span class="s2">&quot;not_recorded_by_controller&quot;</span><span class="p">,</span>
         <span class="s2">&quot;unimodality_gate&quot;</span><span class="p">:</span> <span class="s2">&quot;pass&quot;</span> <span class="k">if</span> <span class="n">unimodality_passed_raw</span> <span class="k">else</span> <span class="s2">&quot;flag&quot;</span><span class="p">,</span>
         <span class="s2">&quot;deferred_to_ensemble&quot;</span><span class="p">:</span> <span class="n">deferred_raw</span><span class="p">,</span>
         <span class="s2">&quot;pooled_draws_by_window&quot;</span><span class="p">:</span> <span class="n">pooled_draws_by_window</span><span class="p">,</span>

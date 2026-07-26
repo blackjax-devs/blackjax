@@ -56,9 +56,10 @@ Module Contents
                                   — passed through as ``flags["pooled_draws_by_window"]`` for the
                                   evaluation layer.
 
-   :returns: Verdict with multi-chain–specific flags: ``n_chains``,
-             ``chain_collinearity``, ``unimodality_gate``, ``deferred_to_ensemble``,
-             and ``mode_coverage="multi_chain_certified"`` when all gates passed.
+   :returns: Verdict with multi-chain–specific flags separating historical metric
+             route selection, observed ensemble disagreement, global exploration, and
+             any downstream handoff.  Multi-chain warmup never certifies global mode
+             coverage.
    :rtype: MetaAdaptationVerdict
 
 

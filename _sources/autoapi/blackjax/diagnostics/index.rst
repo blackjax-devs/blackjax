@@ -41,7 +41,7 @@ Module Contents
 
    The diagnostic is computed by:
 
-   .. math:: \hat{R} = \frac{\hat{V}}{W}
+   .. math:: \hat{R} = \sqrt{\frac{\hat{V}}{W}}
 
    where :math:`W` is the within-chain variance and :math:`\hat{V}` is the posterior variance
    estimate for the pooled traces. This is the potential scale reduction factor, which

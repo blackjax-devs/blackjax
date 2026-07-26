@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gf8f7e3bfd" />
+  <meta name="docsearch:version" content="0.1.dev1+g2103a4275" />
   </head>
   
   
@@ -1136,9 +1136,9 @@
         <span class="c1"># is mutually exclusive with defer (confirmed_split resets flag_count → deferred=False).</span>
         <span class="c1">#</span>
         <span class="c1"># Non-monotone: recomputed each window; if mode flags clear, defer resets to False.</span>
-        <span class="c1"># Impossible combo (route=low_rank ∧ deferred ∧ detection_branch=between_means)</span>
-        <span class="c1"># remains impossible: T-escalation requires t_unimodality=True → any_mode_flag</span>
-        <span class="c1"># drives flag_count to 0 via the False branch → confirmed_split=False. ✓</span>
+        <span class="c1"># T escalation and T deferral are mutually exclusive within this update.</span>
+        <span class="c1"># ``detection_branch`` is historical, however, so a between-means route</span>
+        <span class="c1"># selected in an earlier window may legally coexist with later deferral.</span>
         <span class="n">multimodality_signal</span> <span class="o">=</span> <span class="n">any_mode_flag</span> <span class="o">|</span> <span class="o">~</span><span class="n">is_unimodal</span>
         <span class="n">new_flag_count</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
             <span class="n">multimodality_signal</span><span class="p">,</span>

@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.adaptation.meta.builders" href="../builders/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gf8f7e3bfd" />
+  <meta name="docsearch:version" content="0.1.dev1+g2103a4275" />
   </head>
   
   
@@ -483,9 +483,10 @@ evaluation layer.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Verdict with multi-chain–specific flags: <code class="docutils literal notranslate"><span class="pre">n_chains</span></code>,
-<code class="docutils literal notranslate"><span class="pre">chain_collinearity</span></code>, <code class="docutils literal notranslate"><span class="pre">unimodality_gate</span></code>, <code class="docutils literal notranslate"><span class="pre">deferred_to_ensemble</span></code>,
-and <code class="docutils literal notranslate"><span class="pre">mode_coverage=&quot;multi_chain_certified&quot;</span></code> when all gates passed.</p>
+<dd class="field-even"><p>Verdict with multi-chain–specific flags separating historical metric
+route selection, observed ensemble disagreement, global exploration, and
+any downstream handoff.  Multi-chain warmup never certifies global mode
+coverage.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>MetaAdaptationVerdict</p>
