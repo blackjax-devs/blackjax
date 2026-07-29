@@ -120,7 +120,6 @@ class _PartialPreconditioningFixture(NamedTuple):
     """
 
     dim: int
-    kappa: float
     kappa_res: float
     step_size: float
     metric: metrics.Metric
@@ -171,7 +170,6 @@ def _partial_preconditioning_fixture():
 
     return _PartialPreconditioningFixture(
         dim=d,
-        kappa=float(np.linalg.cond(Sigma)),
         kappa_res=float(residual_eigvals.max() / residual_eigvals.min()),
         step_size=step_size,
         metric=metrics.default_metric(jnp.asarray(np.diag(Sigma))),
