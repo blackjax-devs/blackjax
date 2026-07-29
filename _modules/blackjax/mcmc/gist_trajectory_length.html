@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g2103a4275" />
+  <meta name="docsearch:version" content="0.1.dev1+gb12bedcf2" />
   </head>
   
   
@@ -561,16 +561,16 @@
 <span class="sd">    -- no tree/doubling data structure, no recursion, no sub-U-turn</span>
 <span class="sd">    bookkeeping, unlike NUTS&#39;s ``1sub-U-turn`` criterion (section 3.5).</span>
 
-<span class="sd">    The dot product uses the **metric-corrected velocity**</span>
-<span class="sd">    ``M^{-1} rho`` (the gradient of the kinetic energy) rather than the raw</span>
-<span class="sd">    momentum, so the criterion generalizes correctly to a non-identity</span>
-<span class="sd">    ``inverse_mass_matrix`` (diagonal / dense / low-rank). This is eq. 33&#39;s</span>
-<span class="sd">    position-displacement-times-velocity condition, a *different* turning</span>
-<span class="sd">    criterion from NUTS&#39;s momentum-sum ``check_turning`` -- the analogy to</span>
-<span class="sd">    ``metrics.gaussian_euclidean``&#39;s ``check_turning`` is only in *how* it</span>
-<span class="sd">    substitutes ``M^{-1} rho`` for raw momentum in a dot product, not that</span>
-<span class="sd">    the two criteria coincide. This changes no formula for the</span>
-<span class="sd">    identity-metric case the paper&#39;s own experiments use.</span>
+<span class="sd">    The dot product pairs the position displacement with the **raw momentum**</span>
+<span class="sd">    ``rho`` (GIST paper eq. 33), so the criterion generalizes correctly to</span>
+<span class="sd">    a non-identity ``inverse_mass_matrix`` (diagonal / dense / low-rank) in</span>
+<span class="sd">    an affine-equivariant manner: with p ~ N(0, G^-1) and K(p) = ½ pᵀGp,</span>
+<span class="sd">    whitening φ = G^{-1/2}θ and p_φ = G^{1/2}p gives (Δθ)ᵀp = Δφᵀp_φ,</span>
+<span class="sd">    which is exactly invariant under any change of basis G. This is a</span>
+<span class="sd">    *different* criterion from NUTS&#39;s momentum-sum ``check_turning``, which</span>
+<span class="sd">    uses the momentum sum (not position displacement) in the pairing. This</span>
+<span class="sd">    changes no formula for the identity-metric case the paper&#39;s own</span>
+<span class="sd">    experiments use.</span>
 
 <span class="sd">    ``max_num_steps`` is a hard cap, exactly analogous to NUTS&#39;s</span>
 <span class="sd">    ``max_num_doublings`` (except here it bounds a *linear* rollout, not</span>
@@ -597,7 +597,6 @@
 <span class="sd">    ``uturn_fn(state: IntegratorState, logdensity_fn) -&gt; Array``, the</span>
 <span class="sd">    (possibly capped) number of leapfrog steps to the no-return condition.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">velocity_fn</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">grad</span><span class="p">(</span><span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">uturn_fn</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">IntegratorState</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
         <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">)</span>
@@ -611,8 +610,8 @@
             <span class="n">n</span><span class="p">,</span> <span class="n">current</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">carry</span>
             <span class="n">nxt</span> <span class="o">=</span> <span class="n">symplectic_integrator</span><span class="p">(</span><span class="n">current</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)</span>
             <span class="n">delta</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">nxt</span><span class="o">.</span><span class="n">position</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">theta0</span>
-            <span class="n">velocity</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">velocity_fn</span><span class="p">(</span><span class="n">nxt</span><span class="o">.</span><span class="n">momentum</span><span class="p">,</span> <span class="n">nxt</span><span class="o">.</span><span class="n">position</span><span class="p">))</span>
-            <span class="n">no_return</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">velocity</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.0</span>
+            <span class="n">momentum</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">nxt</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span>
+            <span class="n">no_return</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">momentum</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.0</span>
             <span class="k">return</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nxt</span><span class="p">,</span> <span class="n">no_return</span>
 
         <span class="n">n_final</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span>

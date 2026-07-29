@@ -131,16 +131,16 @@ Module Contents
    -- no tree/doubling data structure, no recursion, no sub-U-turn
    bookkeeping, unlike NUTS's ``1sub-U-turn`` criterion (section 3.5).
 
-   The dot product uses the **metric-corrected velocity**
-   ``M^{-1} rho`` (the gradient of the kinetic energy) rather than the raw
-   momentum, so the criterion generalizes correctly to a non-identity
-   ``inverse_mass_matrix`` (diagonal / dense / low-rank). This is eq. 33's
-   position-displacement-times-velocity condition, a *different* turning
-   criterion from NUTS's momentum-sum ``check_turning`` -- the analogy to
-   ``metrics.gaussian_euclidean``'s ``check_turning`` is only in *how* it
-   substitutes ``M^{-1} rho`` for raw momentum in a dot product, not that
-   the two criteria coincide. This changes no formula for the
-   identity-metric case the paper's own experiments use.
+   The dot product pairs the position displacement with the **raw momentum**
+   ``rho`` (GIST paper eq. 33), so the criterion generalizes correctly to
+   a non-identity ``inverse_mass_matrix`` (diagonal / dense / low-rank) in
+   an affine-equivariant manner: with p ~ N(0, G^-1) and K(p) = ½ pᵀGp,
+   whitening φ = G^{-1/2}θ and p_φ = G^{1/2}p gives (Δθ)ᵀp = Δφᵀp_φ,
+   which is exactly invariant under any change of basis G. This is a
+   *different* criterion from NUTS's momentum-sum ``check_turning``, which
+   uses the momentum sum (not position displacement) in the pairing. This
+   changes no formula for the identity-metric case the paper's own
+   experiments use.
 
    ``max_num_steps`` is a hard cap, exactly analogous to NUTS's
    ``max_num_doublings`` (except here it bounds a *linear* rollout, not

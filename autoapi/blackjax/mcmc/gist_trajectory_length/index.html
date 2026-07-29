@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.gist_step_size" href="../gist_step_size/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g2103a4275" />
+  <meta name="docsearch:version" content="0.1.dev1+gb12bedcf2" />
   </head>
   
   
@@ -593,16 +593,16 @@ rejection.</p>
 the sign of the (metric-corrected) no-return condition after every step
 – no tree/doubling data structure, no recursion, no sub-U-turn
 bookkeeping, unlike NUTS’s <code class="docutils literal notranslate"><span class="pre">1sub-U-turn</span></code> criterion (section 3.5).</p>
-<p>The dot product uses the <strong>metric-corrected velocity</strong>
-<code class="docutils literal notranslate"><span class="pre">M^{-1}</span> <span class="pre">rho</span></code> (the gradient of the kinetic energy) rather than the raw
-momentum, so the criterion generalizes correctly to a non-identity
-<code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> (diagonal / dense / low-rank). This is eq. 33’s
-position-displacement-times-velocity condition, a <em>different</em> turning
-criterion from NUTS’s momentum-sum <code class="docutils literal notranslate"><span class="pre">check_turning</span></code> – the analogy to
-<code class="docutils literal notranslate"><span class="pre">metrics.gaussian_euclidean</span></code>’s <code class="docutils literal notranslate"><span class="pre">check_turning</span></code> is only in <em>how</em> it
-substitutes <code class="docutils literal notranslate"><span class="pre">M^{-1}</span> <span class="pre">rho</span></code> for raw momentum in a dot product, not that
-the two criteria coincide. This changes no formula for the
-identity-metric case the paper’s own experiments use.</p>
+<p>The dot product pairs the position displacement with the <strong>raw momentum</strong>
+<code class="docutils literal notranslate"><span class="pre">rho</span></code> (GIST paper eq. 33), so the criterion generalizes correctly to
+a non-identity <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> (diagonal / dense / low-rank) in
+an affine-equivariant manner: with p ~ N(0, G^-1) and K(p) = ½ pᵀGp,
+whitening φ = G^{-1/2}θ and p_φ = G^{1/2}p gives (Δθ)ᵀp = Δφᵀp_φ,
+which is exactly invariant under any change of basis G. This is a
+<em>different</em> criterion from NUTS’s momentum-sum <code class="docutils literal notranslate"><span class="pre">check_turning</span></code>, which
+uses the momentum sum (not position displacement) in the pairing. This
+changes no formula for the identity-metric case the paper’s own
+experiments use.</p>
 <p><code class="docutils literal notranslate"><span class="pre">max_num_steps</span></code> is a hard cap, exactly analogous to NUTS’s
 <code class="docutils literal notranslate"><span class="pre">max_num_doublings</span></code> (except here it bounds a <em>linear</em> rollout, not
 <code class="docutils literal notranslate"><span class="pre">2**max</span></code> leapfrog steps). Capping is not an approximation: as long as
