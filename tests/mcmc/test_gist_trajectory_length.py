@@ -8,12 +8,15 @@ pytest-benchmark x xdist under this project's ``filterwarnings = error``
 issue in this module; the documented blackjax test command already
 includes ``--benchmark-disable``.
 """
+from typing import Callable, NamedTuple
+
 import chex
 import jax
 import jax.numpy as jnp
 import jax.scipy.stats as st
 import numpy as np
 from absl.testing import absltest, parameterized
+from jax.flatten_util import ravel_pytree
 
 import blackjax
 from blackjax.mcmc import gist, gist_trajectory_length, integrators, metrics
@@ -35,6 +38,147 @@ def run_chain(algo, position, key, n):
 
     _, (positions, infos) = jax.lax.scan(body, state, jax.random.split(key, n))
     return positions, infos
+
+
+def uturn_count_reference(metric, step_size, max_num_steps, pairing):
+    """Reference U-turn rollout with an explicit choice of dot-product pairing.
+
+    ``pairing="momentum"`` reproduces the shipped criterion (GIST eq. 33);
+    ``pairing="velocity"`` reproduces the pre-fix criterion that paired the
+    displacement with ``G rho``. Everything else -- integrator, cap, and in
+    particular the **counting convention** -- mirrors
+    ``num_steps_to_uturn``: ``n`` is incremented on the step at which the
+    condition fires.
+
+    Getting that convention right is the whole point of this helper. The
+    hand-rolled rollout it replaces counted one step *fewer* than the
+    kernel, so its ``assertNotEqual`` against the kernel was satisfied by
+    the off-by-one alone and would have passed under either pairing.
+    """
+    velocity_fn = jax.grad(metric.kinetic_energy)
+
+    def count_fn(state, logdensity_fn):
+        symplectic_integrator = integrators.velocity_verlet(
+            logdensity_fn, metric.kinetic_energy
+        )
+        theta0, _ = ravel_pytree(state.position)
+
+        def cond_fn(carry):
+            n, _, no_return = carry
+            return jnp.logical_not(no_return) & (n < max_num_steps)
+
+        def body_fn(carry):
+            n, current, _ = carry
+            nxt = symplectic_integrator(current, step_size)
+            delta = ravel_pytree(nxt.position)[0] - theta0
+            if pairing == "velocity":
+                paired, _ = ravel_pytree(velocity_fn(nxt.momentum, nxt.position))
+            else:
+                paired, _ = ravel_pytree(nxt.momentum)
+            return n + 1, nxt, jnp.dot(delta, paired) < 0.0
+
+        n_final, _, _ = jax.lax.while_loop(
+            cond_fn, body_fn, (jnp.asarray(0), state, jnp.asarray(False))
+        )
+        return n_final
+
+    return count_fn
+
+
+# Fixed constants for the partial-preconditioning fixture below. Found with a
+# scratch sweep over d in {12, 16}, kappa(Sigma) in {1e3, 1e4} and step-size
+# fractions {0.15, 0.3}: every combination separated the two pairings on
+# >=90% of momentum seeds, and this is the cheapest of them (longest rollout
+# 299 steps). Measured at these constants: kappa(Sigma) = 1000.0, residual
+# kappa_res = 788.4, kernel == whitened ground truth on 20/20 momentum seeds,
+# velocity pairing == ground truth on only 1/20. The counts are bit-identical
+# under ``jax.enable_x64()``, so the exact-equality assertions below do not
+# rest on float32 coincidence.
+_PRECOND_DIM = 12
+_PRECOND_SIGMA_SEED = 1000
+_PRECOND_KAPPA = 1e3
+_PRECOND_STEP_FRACTION = 0.3
+_PRECOND_MAX_STEPS = 600
+_PRECOND_MOMENTUM_SEEDS = tuple(50_000 + s for s in range(20))
+
+
+class _PartialPreconditioningFixture(NamedTuple):
+    """A correlated Gaussian target paired with a *diagonal* preconditioner.
+
+    ``G = diag(Sigma)`` is what real diagonal window adaptation produces
+    against a correlated target: it removes the marginal scales but leaves
+    the correlation structure, i.e. a large residual anisotropy
+    ``kappa_res = cond(G^{-1/2} Sigma G^{-1/2})``. That residual is exactly
+    what separates the two candidate U-turn pairings -- under *exact*
+    preconditioning (``G = Sigma``, kappa_res = 1) they agree by
+    construction, which is why a whitening-based test cannot discriminate.
+
+    The fixture also carries the equivalent whitened problem
+    (``phi = G^{-1/2} theta``, target covariance ``G^{-1/2} Sigma G^{-1/2}``,
+    metric ``I``). In an identity metric the two pairings coincide, so the
+    identity-metric rollout is an unambiguous ground truth.
+    """
+
+    dim: int
+    kappa_res: float
+    step_size: float
+    metric: metrics.Metric
+    whitened_metric: metrics.Metric
+    logdensity_fn: Callable
+    whitened_logdensity_fn: Callable
+    sigma_sqrt: np.ndarray
+    diag_scale: np.ndarray
+
+    def states(self, seed):
+        """``(state, whitened_state)`` for one fixed momentum seed."""
+        rng = np.random.default_rng(seed)
+        theta0 = jnp.asarray(self.sigma_sqrt @ rng.standard_normal(self.dim))
+        rho0 = jnp.asarray(rng.standard_normal(self.dim) / self.diag_scale)
+        sqrt_g = jnp.asarray(self.diag_scale)
+
+        logdensity, grad = jax.value_and_grad(self.logdensity_fn)(theta0)
+        state = integrators.IntegratorState(theta0, rho0, logdensity, grad)
+
+        phi0 = theta0 / sqrt_g
+        rho_phi0 = sqrt_g * rho0
+        logdensity_w, grad_w = jax.value_and_grad(self.whitened_logdensity_fn)(phi0)
+        whitened_state = integrators.IntegratorState(
+            phi0, rho_phi0, logdensity_w, grad_w
+        )
+        return state, whitened_state
+
+
+def _partial_preconditioning_fixture():
+    d = _PRECOND_DIM
+    rng = np.random.default_rng(_PRECOND_SIGMA_SEED)
+    Q, _ = np.linalg.qr(rng.standard_normal((d, d)))
+    eigvals = np.exp(np.linspace(0.0, np.log(_PRECOND_KAPPA), d))
+    Sigma = Q @ np.diag(eigvals) @ Q.T
+    Sigma = 0.5 * (Sigma + Sigma.T)
+
+    sqrt_g = np.sqrt(np.diag(Sigma))
+    Sigma_w = Sigma / np.outer(sqrt_g, sqrt_g)  # G^{-1/2} Sigma G^{-1/2}
+    residual_eigvals = np.linalg.eigvalsh(Sigma_w)
+
+    # Step size as a fraction of the shortest oscillation period present in
+    # the preconditioned system, so the rollout resolves every mode.
+    step_size = float(_PRECOND_STEP_FRACTION * np.sqrt(residual_eigvals.min()))
+
+    Sigma_inv = jnp.asarray(np.linalg.inv(Sigma))
+    Sigma_w_inv = jnp.asarray(np.linalg.inv(Sigma_w))
+    sigma_eigvals, sigma_eigvecs = np.linalg.eigh(Sigma)
+
+    return _PartialPreconditioningFixture(
+        dim=d,
+        kappa_res=float(residual_eigvals.max() / residual_eigvals.min()),
+        step_size=step_size,
+        metric=metrics.default_metric(jnp.asarray(np.diag(Sigma))),
+        whitened_metric=metrics.default_metric(jnp.ones(d)),
+        logdensity_fn=lambda x: -0.5 * x @ Sigma_inv @ x,
+        whitened_logdensity_fn=lambda x: -0.5 * x @ Sigma_w_inv @ x,
+        sigma_sqrt=sigma_eigvecs @ np.diag(np.sqrt(sigma_eigvals)) @ sigma_eigvecs.T,
+        diag_scale=sqrt_g,
+    )
 
 
 class InitTest(chex.TestCase):
@@ -234,6 +378,100 @@ class MomentRecoveryTest(BlackJAXTest):
         self.assertTrue(np.all(np.isfinite(np.asarray(ys))))
 
 
+class AffineEquivarianceRegressionTest(chex.TestCase):
+    """Regression guard: the no-U-turn rollout must be affine-equivariant.
+
+    ``num_steps_to_uturn`` pairs the position displacement with the **raw
+    momentum** ``rho`` (GIST eq. 33). With ``p ~ N(0, G^-1)`` and
+    ``K(p) = ½ pᵀGp``, whitening ``phi = G^{-1/2}theta`` and
+    ``p_phi = G^{1/2}p`` gives ``(Δtheta)ᵀp = (Δphi)ᵀp_phi`` -- exactly
+    invariant under a change of metric. Pairing with the metric-corrected
+    velocity ``G rho`` instead gives ``(Δphi)ᵀ G p_phi``, which re-weights
+    the whitened modes and is NOT invariant.
+
+    So the test is: run the kernel's rollout on a preconditioned problem,
+    run it again on the equivalent whitened problem under an identity
+    metric (where the two pairings provably coincide, making it an
+    unambiguous ground truth), and demand the two integer counts are
+    **exactly** equal. No tolerance: the correct pairing is exactly
+    equivariant, so exactness is the entire signal and a tolerance would
+    destroy the test's power.
+
+    Two earlier attempts at this guard both passed on the unfixed code:
+
+    * ``test_uturn_invariant_to_whitening`` whitened *exactly* (``G = Σ``),
+      i.e. ``kappa_res = 1`` -- precisely the regime where both pairings
+      agree, because after exact whitening every coordinate shares one
+      period and re-weighting in-phase sines rescales the sum without
+      moving its zero crossing. (Its comment claiming ``kappa_res ≈ 72``
+      confused ``cond(Σ)`` with the residual.) Structurally incapable of
+      failing.
+    * ``test_uturn_with_partial_preconditioning_identity_metric`` had the
+      right setup but only asserted non-degeneracy (``0 < n < max_steps``,
+      ``5 < mean < 100``) -- properties both pairings satisfy. It never
+      compared against a ground truth.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.fixture = _partial_preconditioning_fixture()
+
+    def _counts(self, pairing=None):
+        f = self.fixture
+        if pairing is None:
+            rollout = gist_trajectory_length.num_steps_to_uturn(
+                integrators.velocity_verlet, f.step_size, f.metric, _PRECOND_MAX_STEPS
+            )
+        else:
+            rollout = uturn_count_reference(
+                f.metric, f.step_size, _PRECOND_MAX_STEPS, pairing
+            )
+        ground_truth = gist_trajectory_length.num_steps_to_uturn(
+            integrators.velocity_verlet,
+            f.step_size,
+            f.whitened_metric,
+            _PRECOND_MAX_STEPS,
+        )
+        # jit once and reuse across seeds: only the initial state varies.
+        count_fn = jax.jit(lambda s: rollout(s, f.logdensity_fn))
+        truth_fn = jax.jit(lambda s: ground_truth(s, f.whitened_logdensity_fn))
+
+        counts, truths = [], []
+        for seed in _PRECOND_MOMENTUM_SEEDS:
+            state, whitened_state = f.states(seed)
+            counts.append(int(count_fn(state)))
+            truths.append(int(truth_fn(whitened_state)))
+        return counts, truths
+
+    def test_uturn_count_matches_whitened_ground_truth(self):
+        # The guards come first, in the same test rather than a separate one:
+        # a standalone fixture-guard would pass on the unfixed kernel (it
+        # never calls it), and a test that passes on the unfixed kernel is
+        # exactly what this file already had two of.
+        #
+        # Guard 1 -- the fixture must leave a large RESIDUAL anisotropy after
+        # diagonal preconditioning. That, not cond(Sigma), is the quantity
+        # the velocity-pairing bias scales with: at kappa_res ~ 10 the two
+        # pairings are indistinguishable, and the separation only appears
+        # from kappa_res in the hundreds upward.
+        self.assertGreater(self.fixture.kappa_res, 500.0)
+
+        # Guard 2 -- and it must actually separate them here. The velocity
+        # pairing disagrees with the ground truth on 19 of these 20 momentum
+        # seeds (measured); assert a comfortable majority so the check
+        # documents the discriminating power without being brittle.
+        velocity_counts, truths = self._counts(pairing="velocity")
+        n_disagree = sum(n != t for n, t in zip(velocity_counts, truths))
+        self.assertGreaterEqual(n_disagree, 15)
+
+        # Guard 3 -- a capped rollout would agree vacuously on both sides.
+        counts, truths = self._counts()
+        self.assertTrue(all(n < _PRECOND_MAX_STEPS for n in counts + truths))
+
+        # The regression assertion. Exact equality on every seed.
+        self.assertEqual(counts, truths)
+
+
 class ClosedFormCrossCheckTest(BlackJAXTest):
     """Section 4.3: cheap, exact-to-float-tolerance derivation cross-checks."""
 
@@ -288,42 +526,50 @@ class ClosedFormCrossCheckTest(BlackJAXTest):
         expected = float(jnp.pi / 2) / step_size
         np.testing.assert_allclose(n, expected, rtol=0.05)
 
-    def test_metric_corrected_velocity_used_not_raw_momentum(self):
-        # `[DECISION -- TL ratify]` option (ii): the no-U-turn dot product
-        # must use the metric-corrected velocity M^{-1} rho, not raw
-        # momentum. A strongly anisotropic diagonal metric makes the two
-        # disagree -- confirms the correction is load-bearing, not a no-op.
-        inv_mass = jnp.array([100.0, 0.01])
-        metric = metrics.default_metric(inv_mass)
-        state = integrators.IntegratorState(
-            jnp.array([0.0, 0.0]),
-            jnp.array([1.0, 1.0]),
-            jnp.array(0.0),
-            jnp.array([0.0, 0.0]),
-        )
-        uturn_fn = gist_trajectory_length.num_steps_to_uturn(
-            integrators.velocity_verlet,
-            step_size=0.05,
-            metric=metric,
-            max_num_steps=200,
-        )
-        corrected = int(uturn_fn(state, std_normal_logdensity))
+    def test_raw_momentum_pairing_used_not_metric_corrected_velocity(self):
+        """The rollout pairs the displacement with ``rho``, not ``G rho``.
 
-        symplectic_integrator = integrators.velocity_verlet(
-            std_normal_logdensity, metric.kinetic_energy
-        )
-        theta0 = state.position
-        current = state
-        n_raw = 0
-        while n_raw < 200:
-            nxt = symplectic_integrator(current, 0.05)
-            delta = nxt.position - theta0
-            if float(jnp.dot(delta, nxt.momentum)) < 0.0:  # raw momentum, not velocity
-                break
-            current = nxt
-            n_raw += 1
+        This **reverses** the earlier ``[DECISION -- TL ratify] option (ii)``,
+        which selected the metric-corrected velocity ``G rho``. That decision
+        was ratified on the strength of a test that never verified it -- the
+        test asserted only ``assertNotEqual(corrected, n_raw)`` between the
+        kernel and a hand-rolled rollout that counted one step fewer, so the
+        off-by-one satisfied the assertion under *either* pairing. It also
+        stated a premise that is empirically false at its own construction:
+        at ``inverse_mass_matrix = [100.0, 0.01]`` on a standard normal, the
+        two pairings give the *same* count (both 3), so d=2 with a ~3-step
+        rollout had no discriminating power at all -- the effect is
+        distributional and scales with residual anisotropy.
 
-        self.assertNotEqual(corrected, n_raw)
+        The reason for the reversal is affine equivariance: only ``Δthetaᵀrho``
+        is invariant under a change of metric (GIST eq. 33), and it is
+        exactly the criterion Stan and BlackJAX's own HMC/NUTS use. See
+        ``AffineEquivarianceRegressionTest`` for the ground-truth comparison;
+        this test pins the pairing directly.
+        """
+        fixture = _partial_preconditioning_fixture()
+        state, _ = fixture.states(_PRECOND_MOMENTUM_SEEDS[0])
+        kernel_count = int(
+            gist_trajectory_length.num_steps_to_uturn(
+                integrators.velocity_verlet,
+                fixture.step_size,
+                fixture.metric,
+                _PRECOND_MAX_STEPS,
+            )(state, fixture.logdensity_fn)
+        )
+        by_pairing = {
+            pairing: int(
+                uturn_count_reference(
+                    fixture.metric, fixture.step_size, _PRECOND_MAX_STEPS, pairing
+                )(state, fixture.logdensity_fn)
+            )
+            for pairing in ("momentum", "velocity")
+        }
+
+        # Guard first: the two pairings must actually disagree here, or the
+        # assertion below would be vacuous (as it was in the original).
+        self.assertNotEqual(by_pairing["momentum"], by_pairing["velocity"])
+        self.assertEqual(kernel_count, by_pairing["momentum"])
 
 
 class EdgeCaseTest(BlackJAXTest):
