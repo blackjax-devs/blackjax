@@ -234,6 +234,78 @@ class MomentRecoveryTest(BlackJAXTest):
         self.assertTrue(np.all(np.isfinite(np.asarray(ys))))
 
 
+class RegressionNonIdentityMetricTest(BlackJAXTest):
+    """Regression test for affine-equivariant U-turn momentum pairing.
+
+    The no-U-turn condition must pair position displacement with raw momentum
+    (not metric-corrected velocity) to be affine-equivariant. With p ~ N(0, G^-1),
+    whitening φ = G^{-1/2}θ and p_φ = G^{1/2}p gives (Δθ)ᵀp = Δφᵀp_φ, which
+    is exactly invariant under change of basis G.
+
+    This test runs the same Gaussian target in two forms:
+    1. With a non-identity anisotropic mass matrix Σ
+    2. Whitened version with G = I (equivalent problem in rotated coordinates)
+
+    The no-U-turn step counts must agree (within the rounding of capping).
+    Under the old velocity-pairing code, they diverge.
+    """
+
+    def test_uturn_invariant_to_whitening(self):
+        # Anisotropic Gaussian: Σ = [[2.0, 1.2], [1.2, 1.0]], κ_res ≈ 72
+        # (high anisotropy; the velocity form biases SHORT proportionally).
+        Sigma = jnp.array([[2.0, 1.2], [1.2, 1.0]])
+        Sinv = jnp.linalg.inv(Sigma)
+        logp_aniso = lambda x: -0.5 * x @ Sinv @ x
+
+        # Whitened problem: solve in rotated coords
+        # L = chol(Sigma); then θ_aniso = L @ φ_white
+        L = jnp.linalg.cholesky(Sigma)
+        logp_white = lambda phi: -0.5 * jnp.sum(phi**2)  # N(0, I) in rotated coords
+
+        # Both at the same momentum (identity in their respective metrics)
+        rho_aniso = jnp.array([1.0, 0.5])
+        rho_white = L.T @ rho_aniso  # momentum transforms as G^{-1/2} p_aniso
+
+        # Build initial states
+        theta0_aniso = jnp.zeros(2)
+        phi0_white = jnp.zeros(2)
+        state_aniso = integrators.IntegratorState(
+            theta0_aniso, rho_aniso, logp_aniso(theta0_aniso), jnp.zeros(2)
+        )
+        state_white = integrators.IntegratorState(
+            phi0_white, rho_white, logp_white(phi0_white), jnp.zeros(2)
+        )
+
+        # Build U-turn functions
+        metric_aniso = metrics.default_metric(Sigma)
+        metric_white = metrics.default_metric(jnp.ones(2))
+        step_size = 0.1
+        max_steps = 200
+
+        uturn_aniso = gist_trajectory_length.num_steps_to_uturn(
+            integrators.velocity_verlet,
+            step_size,
+            metric_aniso,
+            max_steps,
+        )
+        uturn_white = gist_trajectory_length.num_steps_to_uturn(
+            integrators.velocity_verlet,
+            step_size,
+            metric_white,
+            max_steps,
+        )
+
+        # Run both and compare step counts
+        n_aniso = int(uturn_aniso(state_aniso, logp_aniso))
+        n_white = int(uturn_white(state_white, logp_white))
+
+        # Under the fix (momentum pairing), these must be very close.
+        # Allow a small tolerance for rounding/capping differences.
+        # Under the old code (velocity pairing), n_aniso would be significantly
+        # smaller (biased SHORT) due to anisotropy.
+        np.testing.assert_allclose(n_aniso, n_white, atol=2)
+
+
 class ClosedFormCrossCheckTest(BlackJAXTest):
     """Section 4.3: cheap, exact-to-float-tolerance derivation cross-checks."""
 
