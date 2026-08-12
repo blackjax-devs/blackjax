@@ -800,8 +800,11 @@ def staged_adaptation(
                 _MIN_TRAIN_K_RATIO,
             )
 
-            # For multi-chain, position has shape (M, d); use one chain's size.
-            _pos_for_size = jnp.asarray(position)[0] if _is_multi_chain else position
+            # One chain's slice via jax.tree.map: works for bare (M, d) Arrays
+            # AND structured PyTree positions (jnp.asarray crashes on a dict).
+            _pos_for_size = (
+                jax.tree.map(lambda x: x[0], position) if _is_multi_chain else position
+            )
             d = pytree_size(_pos_for_size)
             _actual_rank = min(_MAX_RANK_CAP, max(d // 2, 1))
             _min_rank_support = 2 * _MIN_TRAIN_K_RATIO * (_actual_rank + 1)
@@ -903,9 +906,10 @@ def staged_adaptation(
             init_states = jax.vmap(lambda pos: algorithm.init(pos, logdensity_fn))(
                 position
             )
-            # Adapt init uses one chain's position so pytree_size → d (not M*d).
+            # Adapt init uses one chain's position so pytree_size → d (not M*d);
+            # jax.tree.map for PyTree positions (see the rank-support check above).
             init_adaptation_state = adapt_init(
-                jnp.asarray(position)[0], initial_step_size
+                jax.tree.map(lambda x: x[0], position), initial_step_size
             )
 
             def one_step_mc(carry, xs):

@@ -1825,3 +1825,46 @@ class TestEndToEndEscalation(BlackJAXTest):
             f"escalation-eligible window.  Check _build_mc_window_schedule wiring in "
             f"staged_adaptation.py and the budget_remaining gate in final().",
         )
+
+
+class TestMultiChainAutoMetricPyTreePosition(BlackJAXTest):
+    """Regression: metric='auto' + n_chains>1 must accept a PyTree position.
+
+    ``run()``'s rank-detection support-floor warning check computed
+    ``jnp.asarray(position)[0]`` to get one chain's slice for a
+    ``pytree_size`` call.  ``jnp.asarray`` cannot convert a dict/PyTree
+    position (e.g. every NumPyro-model position used throughout tuningfork,
+    of the form ``{"x": array, ...}``) and raised ``ValueError: entry not a
+    2- or 3- tuple`` before any JAX tracing ever started — so
+    ``metric="auto"`` + multi-chain was unusable for any structured position,
+    only for a bare flat array.  Every existing e2e test in this file uses a
+    flat ``jnp.zeros(n_dims)`` position, so this gap went uncaught.
+    """
+
+    def test_dict_position_does_not_raise(self):
+        """A dict-of-arrays position must not crash the rank-support warning check."""
+        M, d1, d2 = 8, 3, 2
+
+        def logdensity_fn(position):
+            return -0.5 * jnp.sum(position["a"] ** 2) - 0.5 * jnp.sum(
+                position["b"] ** 2
+            )
+
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=5000,
+            n_chains=M,
+        )
+        key = jax.random.key(7)
+        position = {
+            "a": jnp.zeros((M, d1)),
+            "b": jnp.zeros((M, d2)),
+        }
+        # Must not raise; num_steps kept small for test speed.
+        results, _ = warmup.run(key, position, num_steps=20)
+
+        imm = results.parameters["inverse_mass_matrix"]
+        self.assertIsInstance(imm, LowRankInverseMassMatrix)
+        self.assertEqual(imm.sigma.shape, (d1 + d2,))
