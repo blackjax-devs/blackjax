@@ -25,6 +25,38 @@ resulting kernel is automatic (Corollary 4); the only thing the acceptance
 ratio has to account for is that the forward and reverse draws are uniform
 over *different-width* intervals containing the same ``L`` (section 2.2.4).
 
+Forward-rollout caching
+------------------------
+The forward ``U(theta, rho)`` search already integrates every state on
+``[1 : U]`` one leapfrog step at a time (the ``while_loop`` in
+:func:`num_steps_to_uturn`); the selected proposal is always one of those
+states (some ``L <= U``). Rather than throw them away and re-integrate ``L``
+steps from scratch via ``trajectory.static_integration`` (the original
+implementation), :func:`_tuning_parameter_fn` buffers every rolled-out state
+as it goes (:func:`_num_steps_to_uturn_with_rollout`) and threads the buffer
+to :func:`_apply_fn` as GIST's ``aux``, so building the proposal is an
+``O(1)`` gather rather than an ``O(L)`` re-integration. Per transition this
+drops the cost from roughly ``U + L + U_rev`` leapfrog/gradient evaluations
+(``~2.75 U`` empirically, averaging over ``L``'s distribution) to roughly
+``U + U_rev`` (``~1.25 U``) -- see Issue#1058. The reverse rollout
+``U_rev(theta', rho')`` (section 2.2.4) has nothing to gather from (its own
+states are never selected as the proposal) and is left as an ordinary,
+unbuffered :func:`num_steps_to_uturn` call.
+
+The buffer is ``max_num_steps`` copies of the full leapfrog state
+(position, momentum, logdensity, logdensity_grad) -- the same asymptotic
+memory scale as the states NUTS's own trajectory-doubling machinery holds
+live during tree building (:mod:`blackjax.mcmc.trajectory`), and it is
+allocated fresh on every kernel call (not carried across transitions), so
+steady-state memory is ``O(max_num_steps * dim)`` on top of the chain state
+itself, not ``O(num_samples * max_num_steps * dim)``. This makes
+``max_num_steps`` (default 1024, mirroring NUTS's ``max_num_doublings=10``
+cap of 1023 steps) a *memory* knob as well as a compute-cap knob: sizing it
+much larger than the rollout lengths a target actually needs pays for unused
+buffer capacity on every transition, so prefer capping it near the largest
+``U`` the warmup/pilot run actually observes rather than leaving the default
+untouched on very high-dimensional targets.
+
 References
 ----------
 .. [1] Bou-Rabee, Carpenter, Marsden, "GIST: Gibbs self-tuning for locally
@@ -42,7 +74,6 @@ import blackjax.mcmc.gist as gist
 import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-import blackjax.mcmc.trajectory as trajectory
 from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.integrators import IntegratorState
 from blackjax.types import Array, PRNGKey
@@ -174,6 +205,93 @@ def num_steps_to_uturn(
     return uturn_fn
 
 
+class _ForwardRollout(NamedTuple):
+    """Cached forward rollout, threaded from :func:`_tuning_parameter_fn` to
+    :func:`_apply_fn` as GIST's ``aux`` (Issue#1058).
+
+    num_steps_to_uturn
+        ``U(theta, rho)`` -- the same value :func:`num_steps_to_uturn` would
+        return for this state.
+    states
+        ``IntegratorState`` pytree with an added leading ``max_num_steps``
+        axis. ``states[k]`` is the state after ``k + 1`` leapfrog steps from
+        the initial state, written for every ``k < num_steps_to_uturn``.
+        Entries at or beyond ``num_steps_to_uturn`` are never written by the
+        rollout (left at their zero fill) and must not be read -- every
+        ``alpha`` this module's own ``tuning_parameter_fn`` ever draws
+        satisfies ``alpha <= num_steps_to_uturn`` by construction (see
+        ``_step_distribution``), so this precondition always holds for
+        proposals built by the shipped kernel.
+    """
+
+    num_steps_to_uturn: Array
+    states: IntegratorState
+
+
+def _num_steps_to_uturn_with_rollout(
+    integrator: Callable,
+    step_size: float,
+    metric: metrics.Metric,
+    max_num_steps: int,
+) -> Callable:
+    """Forward-only variant of :func:`num_steps_to_uturn` that additionally
+    buffers every rolled-out state (Issue#1058), so :func:`_apply_fn` can
+    gather the selected-``L`` proposal instead of re-integrating it.
+
+    Only used for the forward rollout, in :func:`_tuning_parameter_fn`: the
+    reverse rollout in :func:`_apply_fn` has no selected state to gather
+    (its own count is the only thing used) and keeps calling the plain,
+    unbuffered :func:`num_steps_to_uturn` directly -- buffering it would
+    only add memory traffic for states that are never read.
+
+    Same control flow, same floating-point operations, same iteration order
+    as :func:`num_steps_to_uturn` (the buffer writes are a side effect that
+    does not influence ``no_return`` or the final count), so the returned
+    ``num_steps_to_uturn`` is bit-identical to calling the unbuffered
+    version on the same state, and ``states[k]`` is bit-identical to what
+    ``trajectory.static_integration`` would produce after ``k + 1`` steps
+    from the same initial state at the same step size.
+    """
+
+    def uturn_fn(state: IntegratorState, logdensity_fn: Callable) -> _ForwardRollout:
+        symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
+        theta0, _ = ravel_pytree(state.position)
+        rollout_buffer = jax.tree.map(
+            lambda leaf: jnp.zeros(
+                (max_num_steps,) + jnp.shape(leaf), dtype=leaf.dtype
+            ),
+            state,
+        )
+
+        def cond_fn(carry):
+            n, _, no_return, _ = carry
+            return jnp.logical_not(no_return) & (n < max_num_steps)
+
+        def body_fn(carry):
+            n, current, _, buffer = carry
+            nxt = symplectic_integrator(current, step_size)
+            delta = ravel_pytree(nxt.position)[0] - theta0
+            momentum, _ = ravel_pytree(nxt.momentum)
+            no_return = jnp.dot(delta, momentum) < 0.0
+            buffer = jax.tree.map(
+                lambda buf, leaf: jax.lax.dynamic_update_index_in_dim(
+                    buf, leaf, n, axis=0
+                ),
+                buffer,
+                nxt,
+            )
+            return n + 1, nxt, no_return, buffer
+
+        n_final, _, _, rollout_buffer = jax.lax.while_loop(
+            cond_fn,
+            body_fn,
+            (jnp.asarray(0), state, jnp.asarray(False), rollout_buffer),
+        )
+        return _ForwardRollout(n_final, rollout_buffer)
+
+    return uturn_fn
+
+
 def _step_distribution(num_steps_to_uturn_value: Array, path_fraction: float):
     """``Lo(theta,rho)`` and ``W(theta,rho)``, section 2.2.3 (eq. 34-35)."""
     lo = jnp.maximum(
@@ -187,11 +305,15 @@ def _tuning_parameter_fn(
     integrator: Callable, step_size: float, max_num_steps: int, path_fraction: float
 ) -> Callable:
     def tuning_parameter_fn(rng_key, state, logdensity_fn, metric):
-        uturn_fn = num_steps_to_uturn(integrator, step_size, metric, max_num_steps)
-        forward = uturn_fn(state, logdensity_fn)
-        lo, _ = _step_distribution(forward, path_fraction)
-        num_steps = jax.random.randint(rng_key, shape=(), minval=lo, maxval=forward + 1)
-        return num_steps, forward
+        uturn_fn = _num_steps_to_uturn_with_rollout(
+            integrator, step_size, metric, max_num_steps
+        )
+        rollout = uturn_fn(state, logdensity_fn)
+        lo, _ = _step_distribution(rollout.num_steps_to_uturn, path_fraction)
+        num_steps = jax.random.randint(
+            rng_key, shape=(), minval=lo, maxval=rollout.num_steps_to_uturn + 1
+        )
+        return num_steps, rollout
 
     return tuning_parameter_fn
 
@@ -201,11 +323,23 @@ def _apply_fn(
 ) -> Callable:
     def apply_fn(state, alpha, aux, logdensity_fn, metric):
         num_steps = alpha
-        forward = aux
+        rollout: _ForwardRollout = aux
+        forward = rollout.num_steps_to_uturn
 
-        symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
-        build_trajectory = trajectory.static_integration(symplectic_integrator)
-        proposal_state = build_trajectory(state, step_size, num_steps)
+        # GATHER, not a re-integration (Issue#1058): `num_steps` (`alpha`) is
+        # always <= `forward` by construction of `_tuning_parameter_fn`'s
+        # draw, so `rollout.states[num_steps - 1]` was written by the
+        # forward rollout above and is bit-identical to what
+        # `trajectory.static_integration` would (re-)compute here.
+        proposal_state = cast(
+            IntegratorState,
+            jax.tree.map(
+                lambda buf: jax.lax.dynamic_index_in_dim(
+                    buf, num_steps - 1, axis=0, keepdims=False
+                ),
+                rollout.states,
+            ),
+        )
         proposal_state = hmc.flip_momentum(proposal_state)
 
         uturn_fn = num_steps_to_uturn(integrator, step_size, metric, max_num_steps)
@@ -255,7 +389,9 @@ def build_kernel(
     max_num_steps
         Hard cap on each U-turn rollout (forward and reverse); analogous to
         NUTS's ``max_num_doublings``, but bounds a *linear* rollout here,
-        not ``2**max`` leapfrog steps.
+        not ``2**max`` leapfrog steps. Also sizes the forward-rollout buffer
+        (module docstring, "Forward-rollout caching") -- ``O(max_num_steps)``
+        leapfrog states are allocated per transition.
 
     Returns
     -------
@@ -353,7 +489,10 @@ def as_top_level_api(
         NUTS's ``max_num_doublings``, but bounds a *linear* rollout here,
         not ``2**max`` leapfrog steps -- size accordingly (NUTS's default of
         10 doublings caps at 1023 steps; a directly-comparable cap here is
-        ``max_num_steps ~= 1024``).
+        ``max_num_steps ~= 1024``). Also sizes the forward-rollout buffer
+        (module docstring, "Forward-rollout caching") -- ``O(max_num_steps)``
+        leapfrog states are allocated per transition, so an oversized cap on
+        a high-dimensional target trades unused memory for compute.
     divergence_threshold
         The absolute value of the difference in energy between two states
         above which we say that the transition is divergent.
