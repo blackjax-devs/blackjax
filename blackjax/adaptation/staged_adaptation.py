@@ -516,6 +516,228 @@ def _resolve_metric_and_schedule(
     return metric_core, resolved_schedule
 
 
+# ---------------------------------------------------------------------------
+# Start-state probation (multi-chain post-warmup safety margin; Issue#1064).
+# Stages 1 (ensemble-calibrated typical-region gate) and 2a (redraw near a
+# healthy anchor) are pure functions in blackjax.adaptation.meta._start_state
+# -- no kernel access needed there.  Stage 2b (the per-chain probation scan)
+# needs the built kernel and an rng stream, so it lives here.
+# ---------------------------------------------------------------------------
+
+
+def _apply_start_state_probation(
+    rng_key: PRNGKey,
+    last_chain_state: Any,
+    mcmc_kernel: Callable,
+    algorithm_init: Callable,
+    logdensity_fn: Callable,
+    step_size: Array,
+    inverse_mass_matrix: Any,
+    n_chains: int,
+    window: int,
+    extra_parameters: dict,
+    adaptation_info_fn: Callable,
+    frozen_adaptation_state: Any,
+) -> tuple[Any, Any, dict]:
+    """Post-warmup per-chain start-state safety (Issue#1064).
+
+    Runs once, after the shared warmup products (``step_size``,
+    ``inverse_mass_matrix``) are finalised.  Three stages:
+
+    **Stage 1 -- ensemble-calibrated state gate (proactive).**
+    :func:`~blackjax.adaptation.meta._start_state.loo_state_gate` compares
+    each chain's ALREADY-CACHED post-warmup potential energy
+    (``-logdensity``) against a leave-one-out reference typical region built
+    from the OTHER ``n_chains - 1`` chains -- the same calibration principle
+    the controller already applies at the route level (between-chain
+    magnitude/collinearity/leave-one-out gates), one level down: route ->
+    parameter -> state.  Zero extra gradient cost.  This is a proactive
+    GATE, not a decision that skips stage 2b -- stage 2b always runs
+    regardless of this gate's verdict (see below).
+
+    **Stage 2a -- redraw near a healthy anchor (reactive, primary
+    correction).** A chain flagged by stage 1 is re-initialised at the
+    ACTUAL position of the healthiest non-flagged chain plus a small
+    mass-matrix-consistent jitter
+    (:func:`~blackjax.adaptation.meta._start_state.redraw_flagged_chains`).
+    Costs one extra ``(logdensity, grad)`` evaluation per chain (computed
+    for all ``n_chains`` for simplicity -- the non-flagged chains' values
+    are bit-identical to what they already had, since redraw is a
+    ``jnp.where`` selection on position before re-evaluating).
+
+    **Stage 2b -- per-chain probation (reactive, unconditional fallback).**
+    Every chain -- flagged or not -- runs ``window`` extra real kernel steps
+    at the FROZEN shared metric, with a per-chain step size that backs off
+    by :data:`~blackjax.adaptation.meta._calibration._PROBATION_BACKOFF_FACTOR`
+    immediately after that chain diverges and recovers geometrically at
+    :data:`~blackjax.adaptation.meta._calibration._PROBATION_RECOVERY_RATE`
+    per step, capped at the shared step size.  This runs unconditionally
+    (not just for flagged chains) because under ``vmap`` all chains execute
+    in lockstep regardless of masking, and because stage 1's energy proxy is
+    necessarily imperfect -- a chain can sit at a perfectly typical energy
+    level while still being in a locally stiff neighbourhood (e.g.
+    heteroskedastic volatility states in stochastic-volatility models).
+    Stage 2b is the reactive complement to stage 1's proactive correction,
+    not an alternative to it.
+
+    The deployed ``step_size`` / ``inverse_mass_matrix`` this function is
+    called with are NEVER changed or returned differently -- only the
+    per-chain STARTING POSITION handed to sampling is touched.  Every
+    probation-phase kernel call's info record (built via the caller's own
+    ``adaptation_info_fn``, so any custom slimming is respected) is
+    concatenated onto the caller's main-loop ``info`` stream on the step
+    axis, so a caller already computing
+    ``sum(info.info.num_integration_steps)`` for a gradient ledger, or
+    ``sum(info.info.is_divergent)`` for a warmup-divergence count,
+    automatically and correctly charges this phase as WARMUP cost -- no
+    caller-side ledger changes are required.
+
+    RNG discipline: ``rng_key`` is split HERE, independently of whatever the
+    caller already derived from it for the main warmup scan (this function
+    is only ever invoked when the feature is enabled, so the main scan's own
+    key derivation is never perturbed by this call existing).
+
+    ``n_chains_unresolved`` in the diagnostics dict means: this chain's
+    probation step size had NOT recovered to
+    :data:`~blackjax.adaptation.meta._calibration._PROBATION_RESOLVED_TOL`
+    of the shared step size by the end of the window, i.e. it kept
+    re-triggering the backoff.  This is the routine's LOUD FAILURE CHANNEL
+    for that chain: a practitioner seeing it set should not trust that
+    chain's early sampling draws at face value.  The recommended action is
+    to re-run warmup with a larger ``probation_window``, or inspect that
+    chain's post-warmup trajectory directly (e.g. via the ``is_divergent``
+    trace in the concatenated ``info``) -- not to silently proceed as if
+    nothing happened.
+
+    Returns
+    -------
+    tuple[Any, Any, dict]
+        ``(rehabilitated_chain_state, probation_info, diagnostics)`` where
+        ``probation_info`` has the same PyTree structure as one step of the
+        caller's main-loop ``info`` (leading axis = ``window``), ready to be
+        concatenated onto it, and ``diagnostics`` is a JSON-safe dict.
+    """
+    import numpy as np
+
+    from blackjax.adaptation.meta._calibration import (
+        _PROBATION_BACKOFF_FACTOR,
+        _PROBATION_RECOVERY_RATE,
+        _PROBATION_RESOLVED_TOL,
+        _STATE_GATE_LOO_Z_THRESHOLD,
+        _STATE_GATE_MIN_CHAINS,
+        _STATE_GATE_REDRAW_JITTER_SCALE,
+    )
+    from blackjax.adaptation.meta._start_state import (
+        compute_chain_energies,
+        loo_state_gate,
+        redraw_flagged_chains,
+        select_healthy_anchor,
+    )
+
+    M = n_chains
+    logdensities = last_chain_state.logdensity  # (M,), already cached -- free
+
+    # ---- Stage 1: ensemble-calibrated state gate ----
+    flagged_mask = loo_state_gate(
+        logdensities, _STATE_GATE_LOO_Z_THRESHOLD, _STATE_GATE_MIN_CHAINS
+    )
+    anchor_idx = select_healthy_anchor(logdensities, flagged_mask)
+
+    (
+        redraw_key,
+        energy_key_pre,
+        energy_key_post,
+        probation_master_key,
+    ) = jax.random.split(rng_key, 4)
+
+    pre_energy = compute_chain_energies(
+        last_chain_state.position, logdensities, inverse_mass_matrix, energy_key_pre
+    )
+
+    # ---- Stage 2a: redraw flagged chains near the healthy anchor ----
+    redrawn_position = redraw_flagged_chains(
+        last_chain_state.position,
+        flagged_mask,
+        anchor_idx,
+        inverse_mass_matrix,
+        redraw_key,
+        _STATE_GATE_REDRAW_JITTER_SCALE,
+    )
+    rehabilitated_state = jax.vmap(lambda pos: algorithm_init(pos, logdensity_fn))(
+        redrawn_position
+    )
+
+    # ---- Stage 2b: per-chain probation with divergence-triggered backoff ----
+    probation_keys = jax.random.split(probation_master_key, window)
+    init_step_sizes = jnp.full((M,), step_size, dtype=jnp.asarray(step_size).dtype)
+    init_ever_diverged = jnp.zeros((M,), dtype=jnp.bool_)
+
+    def _probation_step(carry, key):
+        states_p, step_sizes_p, ever_diverged_p = carry
+        chain_keys = jax.random.split(key, M)
+
+        def _step_one(k, state, h_i):
+            return mcmc_kernel(
+                k, state, logdensity_fn, h_i, inverse_mass_matrix, **extra_parameters
+            )
+
+        new_states_p, infos_p = jax.vmap(_step_one)(chain_keys, states_p, step_sizes_p)
+        is_div = infos_p.is_divergent
+        backed_off = jnp.where(
+            is_div, step_sizes_p * jnp.asarray(_PROBATION_BACKOFF_FACTOR), step_sizes_p
+        )
+        recovered = jnp.minimum(
+            backed_off * jnp.asarray(_PROBATION_RECOVERY_RATE), step_size
+        )
+        new_ever_diverged = ever_diverged_p | is_div
+        record = adaptation_info_fn(new_states_p, infos_p, frozen_adaptation_state)
+        return (new_states_p, recovered, new_ever_diverged), record
+
+    (final_states, final_step_sizes, ever_diverged), probation_info = jax.lax.scan(
+        _probation_step,
+        (rehabilitated_state, init_step_sizes, init_ever_diverged),
+        probation_keys,
+    )
+
+    post_energy = compute_chain_energies(
+        final_states.position,
+        final_states.logdensity,
+        inverse_mass_matrix,
+        energy_key_post,
+    )
+
+    unresolved = final_step_sizes < (jnp.asarray(_PROBATION_RESOLVED_TOL) * step_size)
+
+    try:
+        extra_grad_evals = int(jnp.sum(probation_info.info.num_integration_steps))
+    except AttributeError:
+        extra_grad_evals = -1
+
+    diagnostics = {
+        "enabled": True,
+        "window": window,
+        "backoff_factor": _PROBATION_BACKOFF_FACTOR,
+        "recovery_rate": _PROBATION_RECOVERY_RATE,
+        "resolved_tol": _PROBATION_RESOLVED_TOL,
+        "state_gate_z_threshold": _STATE_GATE_LOO_Z_THRESHOLD,
+        "n_chains_flagged_by_state_gate": int(jnp.sum(flagged_mask)),
+        "flagged_chain_idx": tuple(
+            int(i) for i in np.nonzero(np.asarray(flagged_mask))[0]
+        ),
+        "redraw_applied": bool(jnp.any(flagged_mask)),
+        "n_chains_diverged_during_probation": int(jnp.sum(ever_diverged)),
+        "n_chains_unresolved": int(jnp.sum(unresolved)),
+        "unresolved_chain_idx": tuple(
+            int(i) for i in np.nonzero(np.asarray(unresolved))[0]
+        ),
+        "pre_probation_energy": np.asarray(pre_energy).tolist(),
+        "post_probation_energy": np.asarray(post_energy).tolist(),
+        "extra_grad_evals": extra_grad_evals,
+    }
+
+    return final_states, probation_info, diagnostics
+
+
 def staged_adaptation(
     algorithm,
     logdensity_fn: Callable,
@@ -531,6 +753,8 @@ def staged_adaptation(
     integrator=mcmc.integrators.velocity_verlet,
     schedule_fn: Callable | None = None,
     initial_metric_state: Any = None,
+    start_state_probation: bool = False,
+    probation_window: int | None = None,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the step size and inverse mass matrix for HMC-family algorithms.
@@ -631,6 +855,40 @@ def staged_adaptation(
         that seed the initial state from external data (e.g., gradient-based
         diagonal-scale initialisation); ``None`` (the default) reproduces
         the standard identity/zero initialisation.
+    start_state_probation
+        Opt-in (default ``False``) per-chain post-warmup start-state safety
+        margin for the multi-chain path (Issue#1064).  Requires ``n_chains >
+        1`` (raises ``ValueError`` otherwise).  When enabled, after the
+        shared ``step_size`` / ``inverse_mass_matrix`` are finalised: (1) an
+        ensemble-calibrated leave-one-out gate flags any chain whose
+        post-warmup potential energy falls outside the region the other
+        chains corroborate as typical; (2) a flagged chain's position is
+        redrawn near the healthiest chain's actual position; (3)
+        UNCONDITIONALLY (regardless of stage 1's verdict), every chain runs
+        ``probation_window`` extra real kernel steps at the frozen shared
+        metric with a per-chain step size that backs off on divergence and
+        anneals back toward the shared value.  See
+        :func:`~blackjax.adaptation.staged_adaptation._apply_start_state_probation`
+        for the full mechanism.  The deployed ``step_size`` /
+        ``inverse_mass_matrix`` returned in ``parameters`` are never changed
+        by this — only the starting position for sampling is.  All extra
+        kernel calls are folded into the returned ``info`` stream (same step
+        axis as the main warmup loop), so any caller already summing
+        ``info.info.num_integration_steps`` for a gradient ledger, or
+        ``info.info.is_divergent`` for a warmup-divergence count,
+        automatically and correctly charges this phase as warmup cost.
+        Diagnostics land at ``parameters["start_state_probation"]`` (present
+        only when enabled); see
+        :func:`~blackjax.adaptation.meta.verdict.extract_multi_chain_verdict`'s
+        ``probation_result`` argument to fold them into a verdict's
+        ``flags``.  Requires the algorithm's kernel info to expose
+        ``is_divergent`` (true for HMC and NUTS, the only algorithms
+        currently exercised through the multi-chain path).
+    probation_window
+        Number of extra per-chain steps for the ``start_state_probation``
+        window.  ``None`` (default) uses
+        :data:`~blackjax.adaptation.meta._calibration._PROBATION_WINDOW_DEFAULT`.
+        Ignored when ``start_state_probation=False``.
     **extra_parameters
         Algorithm-specific parameters forwarded to the MCMC kernel at every step,
         e.g. ``num_integration_steps`` for HMC/MHMC (divides budget when
@@ -670,6 +928,13 @@ def staged_adaptation(
             "(the multi-chain pooled gate is implemented in the meta-adaptation "
             "controller). For other metric strings pass n_chains=1 (default) and "
             "vmap the warmup call externally."
+        )
+    if start_state_probation and n_chains <= 1:
+        raise ValueError(
+            "staged_adaptation: start_state_probation=True requires n_chains > 1 "
+            "-- per-chain rehabilitation needs a multi-chain ensemble to supply "
+            "the reference typical region. Pass n_chains>1 (with metric='auto') "
+            "or leave start_state_probation at its default False."
         )
 
     metric_core, _resolved_schedule_fn = _resolve_metric_and_schedule(
@@ -966,11 +1231,52 @@ def staged_adaptation(
             last_chain_state, last_warmup_state, *_ = last_state
 
         step_size, inverse_mass_matrix = adapt_final(last_warmup_state)
+
+        probation_diagnostics: dict | None = None
+        if start_state_probation:
+            from blackjax.adaptation.meta._calibration import _PROBATION_WINDOW_DEFAULT
+
+            _probation_window = (
+                probation_window
+                if probation_window is not None
+                else _PROBATION_WINDOW_DEFAULT
+            )
+            # Independent derivation from rng_key -- only ever taken when this
+            # feature is enabled, so the main scan's own key derivation above
+            # (`keys = jax.random.split(rng_key, num_steps)`) is never
+            # perturbed by this branch existing.
+            probation_key = jax.random.fold_in(rng_key, 0x1064)
+            (
+                last_chain_state,
+                probation_info,
+                probation_diagnostics,
+            ) = _apply_start_state_probation(
+                probation_key,
+                last_chain_state,
+                mcmc_kernel,
+                algorithm.init,
+                logdensity_fn,
+                step_size,
+                inverse_mass_matrix,
+                _n_chains,
+                _probation_window,
+                _warmup_extra_params,
+                adaptation_info_fn,
+                last_warmup_state,
+            )
+            info = jax.tree.map(
+                lambda main, extra: jnp.concatenate([main, extra], axis=0),
+                info,
+                probation_info,
+            )
+
         parameters = {
             "step_size": step_size,
             "inverse_mass_matrix": inverse_mass_matrix,
             **extra_parameters,
         }
+        if probation_diagnostics is not None:
+            parameters["start_state_probation"] = probation_diagnostics
 
         return (
             AdaptationResults(

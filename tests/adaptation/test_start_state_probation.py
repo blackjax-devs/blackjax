@@ -11,20 +11,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for the post-warmup per-chain start-state safety mechanism (Issue#1064).
+"""Tests for the post-warmup per-chain start-state probation mechanism (Issue#1064).
 
-Coverage (this file grows in a follow-up commit that wires the mechanism into
-:mod:`blackjax.adaptation.staged_adaptation`):
+Coverage:
 - TestLooStateGate: stage 1 (ensemble-calibrated LOO gate) as a pure function.
 - TestRedrawFlaggedChains: stage 2a (redraw near a healthy anchor), including
   a dict/PyTree position case (guards the blind spot fixed in PR #1013).
 - TestComputeChainEnergies: the energy OBSERVABLE (amendment A; not a trigger).
+- TestStagedAdaptationProbationWiring: opt-in validation, RNG-disable-path
+  identity (amendment B), and a dict-position smoke test through the full
+  vmapped probation scan (amendment C).
+- TestApplyStartStateProbationRedCheck: the red-check promised in the
+  ratified design note -- an engineered bad post-warmup start state (i)
+  reproduces a divergence-storm transient in miniature when the mechanism is
+  disabled, and (ii) is materially rehabilitated when it is enabled.
+- TestExtractMultiChainVerdictProbationResult: the verdict/flags fold-in.
 """
 import jax
 import jax.numpy as jnp
 import numpy as np
 
+import blackjax
+from blackjax.adaptation.base import return_all_adapt_info
 from blackjax.adaptation.meta._calibration import (
+    _PROBATION_WINDOW_DEFAULT,
     _STATE_GATE_LOO_Z_THRESHOLD,
     _STATE_GATE_MIN_CHAINS,
 )
@@ -34,6 +44,8 @@ from blackjax.adaptation.meta._start_state import (
     redraw_flagged_chains,
     select_healthy_anchor,
 )
+from blackjax.adaptation.meta.verdict import extract_multi_chain_verdict
+from blackjax.adaptation.staged_adaptation import _apply_start_state_probation
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.adaptation._meta_fixtures import _make_mc_isotropic
 from tests.fixtures import BlackJAXTest
@@ -158,3 +170,294 @@ class TestComputeChainEnergies(BlackJAXTest):
 
         self.assertEqual(energies.shape, (M,))
         self.assertTrue(bool(jnp.all(jnp.isfinite(energies))))
+
+
+# ---------------------------------------------------------------------------
+# staged_adaptation wiring: validation, RNG discipline, dict-position smoke
+# ---------------------------------------------------------------------------
+
+
+class TestStagedAdaptationProbationWiring(BlackJAXTest):
+    def _logdensity(self, x):
+        return -0.5 * jnp.sum(x**2)
+
+    def test_requires_multichain(self):
+        with self.assertRaisesRegex(ValueError, "start_state_probation"):
+            blackjax.staged_adaptation(
+                blackjax.nuts,
+                self._logdensity,
+                metric="auto",
+                max_grad_budget=5000,
+                n_chains=1,
+                start_state_probation=True,
+            )
+
+    def test_disabled_path_bit_identical_kwarg_omitted_vs_explicit_false(self):
+        """RNG discipline (amendment B): the disabled path never touches the
+        probation-only RNG split, so omitting the kwarg and passing it
+        explicitly as False must give bit-identical results."""
+        n_dims, n_chains = 5, 8
+        key = jax.random.key(20)
+        pos = jnp.zeros((n_chains, n_dims))
+
+        warmup_omitted = blackjax.staged_adaptation(
+            blackjax.nuts,
+            self._logdensity,
+            metric="auto",
+            max_grad_budget=8000,
+            n_chains=n_chains,
+        )
+        warmup_explicit = blackjax.staged_adaptation(
+            blackjax.nuts,
+            self._logdensity,
+            metric="auto",
+            max_grad_budget=8000,
+            n_chains=n_chains,
+            start_state_probation=False,
+        )
+
+        results_omitted, info_omitted = warmup_omitted.run(key, pos, num_steps=40)
+        results_explicit, info_explicit = warmup_explicit.run(key, pos, num_steps=40)
+
+        np.testing.assert_array_equal(
+            np.asarray(results_omitted.state.position),
+            np.asarray(results_explicit.state.position),
+            err_msg="Disabled path: omitted vs explicit False must be bit-identical",
+        )
+        np.testing.assert_array_equal(
+            np.asarray(results_omitted.parameters["step_size"]),
+            np.asarray(results_explicit.parameters["step_size"]),
+        )
+        self.assertNotIn("start_state_probation", results_omitted.parameters)
+        self.assertNotIn("start_state_probation", results_explicit.parameters)
+        # Same leading (step) dim on both -- no extra steps folded in when disabled.
+        self.assertEqual(
+            jax.tree.leaves(info_omitted)[0].shape[0],
+            jax.tree.leaves(info_explicit)[0].shape[0],
+        )
+
+    def test_enabled_dict_position_smoke(self):
+        """Dict/PyTree position through the FULL vmapped probation scan
+        (amendment C) -- guards the blind spot fixed in PR #1013."""
+        n_chains = 8
+
+        def logdensity_fn(x):
+            return -0.5 * jnp.sum(x["a"] ** 2) - 0.5 * jnp.sum(x["b"] ** 2)
+
+        position = {
+            "a": jnp.zeros((n_chains, 3)),
+            "b": jnp.zeros((n_chains, 2)),
+        }
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=8000,
+            n_chains=n_chains,
+            start_state_probation=True,
+            probation_window=10,
+        )
+        key = jax.random.key(21)
+        results, info = warmup.run(key, position, num_steps=40)
+
+        self.assertEqual(set(results.state.position.keys()), {"a", "b"})
+        self.assertEqual(results.state.position["a"].shape, (n_chains, 3))
+        self.assertEqual(results.state.position["b"].shape, (n_chains, 2))
+        diag = results.parameters["start_state_probation"]
+        self.assertTrue(diag["enabled"])
+        self.assertEqual(diag["window"], 10)
+        self.assertEqual(
+            jax.tree.leaves(info)[0].shape[0],
+            40 + 10,
+            "info stream must be the main warmup steps plus the probation window",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Red-check: engineered bad post-warmup start state (ratified design note)
+# ---------------------------------------------------------------------------
+
+
+class TestApplyStartStateProbationRedCheck(BlackJAXTest):
+    """One chain is placed deep in a funnel's neck (tight local curvature)
+    while the other 7 sit near the mouth -- mirroring "a single chain handed
+    a bad post-warmup start state" from Issue#1064.  A step size fine for
+    the mouth is engineered to reliably diverge the neck chain.
+    """
+
+    _D = 6
+    _N_HEALTHY = 7
+    _STEP_SIZE = 0.5
+
+    def _funnel_logdensity(self, x):
+        x0 = x[0]
+        tail = x[1:]
+        return (
+            -0.5 * (x0 / 3.0) ** 2
+            - 0.5 * (self._D - 1) * x0
+            - 0.5 * jnp.sum(tail**2) * jnp.exp(-x0)
+        )
+
+    def _make_states(self):
+        key = jax.random.key(7)
+        healthy_key, bad_key = jax.random.split(key)
+        healthy_keys = jax.random.split(healthy_key, self._N_HEALTHY)
+
+        def _mk_healthy(k):
+            k0, k1 = jax.random.split(k)
+            return jnp.concatenate(
+                [
+                    jax.random.normal(k0, (1,)) * 0.3,
+                    jax.random.normal(k1, (self._D - 1,)),
+                ]
+            )
+
+        healthy_positions = jax.vmap(_mk_healthy)(healthy_keys)
+        # Deep in the neck (x0=-5: conditional std exp(-2.5)~=0.08) but with
+        # a MOUTH-scale tail -- both a logdensity outlier (stage 1 target)
+        # and a locally stiff / divergence-prone point under a
+        # mouth-calibrated step size (stage 2b target).
+        bad_position = jnp.concatenate(
+            [jnp.array([-5.0]), jax.random.normal(bad_key, (self._D - 1,))]
+        )
+        positions = jnp.concatenate([healthy_positions, bad_position[None]], axis=0)
+        states = jax.vmap(lambda pos: blackjax.nuts.init(pos, self._funnel_logdensity))(
+            positions
+        )
+        return states
+
+    def _divergence_rate(self, states, mcmc_kernel, metric, key, n_steps, M):
+        keys = jax.random.split(key, n_steps)
+
+        def _step(carry, k):
+            chain_keys = jax.random.split(k, M)
+            new_states, infos = jax.vmap(
+                lambda ck, s: mcmc_kernel(
+                    ck, s, self._funnel_logdensity, self._STEP_SIZE, metric
+                )
+            )(chain_keys, carry)
+            return new_states, infos.is_divergent
+
+        _, divergences = jax.lax.scan(_step, states, keys)
+        return jnp.mean(divergences, axis=0)
+
+    def test_disabled_transient_reproduces_in_miniature(self):
+        """Mechanism disabled: naively sampling from the raw post-warmup
+        state at the shared step size reproduces the divergence storm on the
+        engineered bad chain, while every healthy chain stays clean."""
+        states = self._make_states()
+        M = self._N_HEALTHY + 1
+        bad_idx = M - 1
+        mcmc_kernel = blackjax.nuts.build_kernel()
+        metric = _IDENTITY_METRIC(self._D)
+
+        naive_rate = self._divergence_rate(
+            states, mcmc_kernel, metric, jax.random.key(11), 80, M
+        )
+
+        self.assertGreater(
+            float(naive_rate[bad_idx]),
+            0.5,
+            "Engineered bad chain must show a high naive divergence rate "
+            "(mechanism disabled); got "
+            f"{float(naive_rate[bad_idx]):.2f}",  # noqa: E231
+        )
+        self.assertEqual(
+            float(jnp.max(naive_rate[:bad_idx])),
+            0.0,
+            "Healthy chains must stay clean at this step size (isolation check)",
+        )
+
+    def test_enabled_rehabilitates_bad_chain(self):
+        """Mechanism enabled: stage 1 flags the bad chain, stage 2a/2b
+        rehabilitate it, and re-sampling from the rehabilitated state at the
+        SAME shared step size no longer diverges."""
+        states = self._make_states()
+        M = self._N_HEALTHY + 1
+        bad_idx = M - 1
+        mcmc_kernel = blackjax.nuts.build_kernel()
+        metric = _IDENTITY_METRIC(self._D)
+        step_size = jnp.asarray(self._STEP_SIZE)
+
+        naive_rate = self._divergence_rate(
+            states, mcmc_kernel, metric, jax.random.key(11), 80, M
+        )
+
+        rehab_states, _probation_info, diagnostics = _apply_start_state_probation(
+            jax.random.key(12),
+            states,
+            mcmc_kernel,
+            blackjax.nuts.init,
+            self._funnel_logdensity,
+            step_size,
+            metric,
+            M,
+            _PROBATION_WINDOW_DEFAULT,
+            {},
+            return_all_adapt_info,
+            states,
+        )
+
+        self.assertIn(
+            bad_idx,
+            diagnostics["flagged_chain_idx"],
+            "Stage 1 must flag the engineered bad chain",
+        )
+        self.assertTrue(diagnostics["redraw_applied"])
+
+        post_rate = self._divergence_rate(
+            rehab_states, mcmc_kernel, metric, jax.random.key(13), 80, M
+        )
+
+        self.assertLess(
+            float(post_rate[bad_idx]),
+            float(naive_rate[bad_idx]),
+            "Probation must reduce the previously-bad chain's divergence rate",
+        )
+        self.assertLessEqual(
+            float(post_rate[bad_idx]),
+            0.1,
+            "Rehabilitated chain should sample cleanly at the shared step size",
+        )
+
+
+# ---------------------------------------------------------------------------
+# Verdict fold-in (no silent interventions)
+# ---------------------------------------------------------------------------
+
+
+class TestExtractMultiChainVerdictProbationResult(BlackJAXTest):
+    def test_probation_result_none_is_backward_compatible(self):
+        """Omitting probation_result leaves flags exactly as before (no new keys)."""
+        from blackjax.adaptation.meta.builders import build_multi_chain_meta_core
+
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=8)
+        state = core.init(10)
+        verdict = extract_multi_chain_verdict(
+            state, max_grad_budget=40000, num_warmup_steps=100
+        )
+        self.assertFalse(
+            any(k.startswith("start_state_probation_") for k in verdict.flags)
+        )
+
+    def test_probation_result_folded_into_flags(self):
+        from blackjax.adaptation.meta.builders import build_multi_chain_meta_core
+
+        core = build_multi_chain_meta_core(max_grad_budget=40000, n_chains=8)
+        state = core.init(10)
+        probation_result = {
+            "enabled": True,
+            "n_chains_flagged_by_state_gate": 1,
+            "n_chains_unresolved": 0,
+        }
+        verdict = extract_multi_chain_verdict(
+            state,
+            max_grad_budget=40000,
+            num_warmup_steps=100,
+            probation_result=probation_result,
+        )
+        self.assertEqual(verdict.flags["start_state_probation_enabled"], True)
+        self.assertEqual(
+            verdict.flags["start_state_probation_n_chains_flagged_by_state_gate"], 1
+        )
+        self.assertEqual(verdict.flags["start_state_probation_n_chains_unresolved"], 0)

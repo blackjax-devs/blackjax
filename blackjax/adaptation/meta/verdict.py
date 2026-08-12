@@ -185,6 +185,7 @@ def extract_multi_chain_verdict(
     adaptation_info: Any = None,
     *,
     pooled_draws_by_window: Any = None,
+    probation_result: dict | None = None,
 ) -> MetaAdaptationVerdict:
     """Build a :class:`~blackjax.adaptation.meta._state.MetaAdaptationVerdict` from a multi-chain final core state.
 
@@ -203,6 +204,19 @@ def extract_multi_chain_verdict(
         (shape ``(n_chains, n_per_window, d)`` per window).  Not used internally
         — passed through as ``flags["pooled_draws_by_window"]`` for the
         evaluation layer.
+    probation_result
+        Optional diagnostics dict from
+        :func:`~blackjax.adaptation.staged_adaptation._apply_start_state_probation`
+        (i.e. ``results.parameters.get("start_state_probation")`` after a
+        ``staged_adaptation(..., start_state_probation=True)`` run).  ``None``
+        (default) — no change to ``flags`` for any existing caller.  When
+        provided, its fields are folded into ``flags`` under a
+        ``start_state_probation_*`` prefix — the "no silent interventions"
+        surface for this mechanism: whether the ensemble-calibrated state
+        gate flagged any chain, whether a redraw was applied, and whether any
+        chain's probation step size never recovered
+        (``start_state_probation_n_chains_unresolved`` — see that function's
+        docstring for what a practitioner should do when this is nonzero).
 
     Returns
     -------
@@ -391,6 +405,10 @@ def extract_multi_chain_verdict(
         "r1_top": r1_top_raw,
         "detection_branch": detection_branch_name,
     }
+
+    if probation_result is not None:
+        for _key, _val in probation_result.items():
+            flags[f"start_state_probation_{_key}"] = _val
 
     return MetaAdaptationVerdict(
         route=route,
