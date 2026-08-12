@@ -35,6 +35,11 @@ Router: _GAIN_THRESHOLD, _GAIN_READABILITY_FLOOR.
 Detection-branch codes: _DETECTION_BRANCH_NONE/POOLED_WITHIN/BETWEEN_MEANS/BOTH.
 R²-mode codes: _R2_DEFERRED/PROJECTED/FULL_AFFINE.
 
+Start-state probation (multi-chain post-warmup safety, Issue#1064):
+_STATE_GATE_LOO_Z_THRESHOLD, _STATE_GATE_MIN_CHAINS, _STATE_GATE_REDRAW_JITTER_SCALE,
+_PROBATION_WINDOW_DEFAULT, _PROBATION_BACKOFF_FACTOR, _PROBATION_RECOVERY_RATE,
+_PROBATION_RESOLVED_TOL.
+
 Swappable calibration functions
 --------------------------------
 :func:`_mc_detection_edge`, :func:`_mc_unimodality_threshold`,
@@ -208,6 +213,75 @@ Below this threshold the fits are garbage (starved / transient chains) and
 the result is abstain (route = diagonal, confidence = low) rather than
 reparam.  Equals _R_MIN by construction (same curvature semantics).
 """
+
+
+# ---------------------------------------------------------------------------
+# Start-state probation (multi-chain post-warmup safety margin; Issue#1064).
+#
+# Stage 1 (proactive): a leave-one-out calibrated typical-region gate on each
+# chain's post-warmup potential energy, applying the SAME LOO-reference
+# principle the T-branch magnitude gate already uses at the route level
+# (see meta/_detection.py:_loo_detection_passes), one level down (route ->
+# parameter -> state calibration).
+# Stage 2a (reactive, primary correction): re-draw a flagged chain near the
+# healthiest chain's actual position.
+# Stage 2b (reactive, unconditional fallback): per-chain probation window
+# with divergence-triggered step-size backoff and exponential recovery to
+# the shared step size.  See blackjax.adaptation.meta._start_state and
+# blackjax.adaptation.staged_adaptation._apply_start_state_probation.
+# ---------------------------------------------------------------------------
+
+_STATE_GATE_LOO_Z_THRESHOLD: float = 3.0
+"""Leave-one-out z-score magnitude above which a chain's post-warmup
+potential energy (-logdensity) is flagged as outside the ensemble-calibrated
+typical region.  Reference mean/std is built from the OTHER M-1 chains only
+(never includes the chain under test), matching the LOO convention already
+used by :func:`~blackjax.adaptation.meta._detection._loo_detection_passes`.
+z=3.0 with dof=M-2 (M=8 default -> dof=6) is close to the two-sided
+t_{0.995,6}=3.71 critical value -- moderately conservative, favoring few
+false positives (each one costs a redraw + relies on stage 2b to catch
+anything still wrong) over aggressive flagging.
+"""
+
+_STATE_GATE_MIN_CHAINS: int = 4
+"""Minimum chain count for the state gate to fire at all (dof = M-2 >= 2).
+Below this the leave-one-out variance estimate from only 1-2 other chains is
+too noisy to be a meaningful reference region; the gate is skipped (all
+chains pass) rather than act on a degenerate statistic."""
+
+_STATE_GATE_REDRAW_JITTER_SCALE: float = 0.1
+"""Fraction of the shared metric's mass-matrix-consistent scale used to
+jitter a re-drawn chain away from its healthy anchor.  Large enough to avoid
+placing two chains at a literally identical point (which would break the
+independent-chains assumption early sampling diagnostics rely on); small
+enough that the redraw stays in the anchor's neighborhood rather than
+wandering back toward an arbitrary new region."""
+
+_PROBATION_WINDOW_DEFAULT: int = 50
+"""Default number of extra per-chain kernel steps run after warmup, at the
+frozen shared metric, before start-state probation hands off to sampling.
+Same order of magnitude as the existing `_STEP_SIZE_READAPT_BUFFER=50`
+budget-reserve convention in this file -- a small, fixed, honestly-charged
+warmup-cost tax (concatenated into the returned info stream) regardless of
+whether any chain actually needed rehabilitation."""
+
+_PROBATION_BACKOFF_FACTOR: float = 0.3
+"""Multiplicative step-size shrink applied to a chain's OWN probation step
+size the step immediately after that chain diverges."""
+
+_PROBATION_RECOVERY_RATE: float = 1.15
+"""Multiplicative growth applied to a chain's probation step size every
+probation step (capped at the shared step size).  ~9-10 steps to recover
+from one full backoff, well inside a `_PROBATION_WINDOW_DEFAULT`-step
+window even after a couple of re-triggered divergences."""
+
+_PROBATION_RESOLVED_TOL: float = 0.95
+"""A chain's probation step size must reach at least this fraction of the
+shared step size by the end of the window to count as "resolved"; chains
+that don't are reported as `n_chains_unresolved` in the probation
+diagnostics -- the routine's loud failure channel for that chain (see
+:func:`~blackjax.adaptation.staged_adaptation._apply_start_state_probation`
+docstring for what a practitioner should do when this fires)."""
 
 
 # ---------------------------------------------------------------------------
