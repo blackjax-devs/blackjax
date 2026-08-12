@@ -207,17 +207,24 @@ Module Contents
              * Because ``tuning_parameter_fn`` and ``apply_fn`` each receive
              * ``logdensity_fn``/``metric`` fresh from this seam (not a shared
              * pre-built trajectory function), an instance whose ``apply_fn`` re-runs
-             * *the tuning-parameter search at the proposal (as both shipped instances*
-             * *do, for the reversibility/no-return check) pays one extra*
-             * ``logdensity_fn`` trace for that re-check, on top of the forward
-             * *search and the accepted-move build -- three per kernel call, not the*
-             * *two of a single-forward-pass sampler like hmc/nuts. This is a*
-             * **deliberate seam-simplicity tradeoff, not a retracing bug** (*threading a*)
-             * *shared pre-built trajectory function through this seam could bring it*
-             * *down to two, at the cost of a more complex seam contract. See*
-             * ``gist_step_size``/``gist_trajectory_length``'s own
-             * ``chex.assert_max_traces(n=4)`` tests (1 at ``init`` + 3 per kernel
-             * *trace) for the empirically-verified count.*
+             * the tuning-parameter search at the proposal (as ``gist_step_size`` does,
+             * for the reversibility check) pays one extra ``logdensity_fn`` trace for
+             * *that re-check, on top of the forward search and the accepted-move build*
+             * *-- three per kernel call, not the two of a single-forward-pass sampler*
+             * *like hmc/nuts. This is a deliberate seam-simplicity tradeoff, not a*
+             * **retracing bug** (*threading a shared pre-built trajectory function through*)
+             * *this seam could bring it down to two, at the cost of a more complex seam*
+             * contract. ``gist_trajectory_length`` takes exactly this route for its
+             * **own accepted-move build** (*it caches the forward rollout's leapfrog states*)
+             * *in a buffer (see its module docstring, "Forward-rollout caching",*
+             * Issue#1058) so the proposal for the selected ``alpha`` is a gather, not
+             * *a re-integration, dropping it to two per kernel call -- the forward*
+             * *search plus the still-necessary reverse-direction re-check (there is*
+             * *nothing to gather for the reverse rollout; only its count is used). See*
+             * ``gist_step_size``'s own ``chex.assert_max_traces(n=4)`` test (1 at
+             * ``init`` + 3 per kernel trace) and ``gist_trajectory_length``'s own
+             * ``chex.assert_max_traces(n=3)`` test (1 at ``init`` + 2 per kernel
+             * *trace) for the empirically-verified counts.*
 
 
 .. py:function:: as_top_level_api(logdensity_fn: Callable, inverse_mass_matrix: blackjax.mcmc.metrics.MetricTypes, tuning_parameter_fn: Callable, apply_fn: Callable, *, divergence_threshold: float = 1000) -> blackjax.base.SamplingAlgorithm

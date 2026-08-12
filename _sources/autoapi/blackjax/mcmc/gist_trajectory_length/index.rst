@@ -19,6 +19,38 @@ blackjax.mcmc.gist_trajectory_length
    ratio has to account for is that the forward and reverse draws are uniform
    over *different-width* intervals containing the same ``L`` (section 2.2.4).
 
+   Forward-rollout caching
+   ------------------------
+   The forward ``U(theta, rho)`` search already integrates every state on
+   ``[1 : U]`` one leapfrog step at a time (the ``while_loop`` in
+   :func:`num_steps_to_uturn`); the selected proposal is always one of those
+   states (some ``L <= U``). Rather than throw them away and re-integrate ``L``
+   steps from scratch via ``trajectory.static_integration`` (the original
+   implementation), :func:`_tuning_parameter_fn` buffers every rolled-out state
+   as it goes (:func:`_num_steps_to_uturn_with_rollout`) and threads the buffer
+   to :func:`_apply_fn` as GIST's ``aux``, so building the proposal is an
+   ``O(1)`` gather rather than an ``O(L)`` re-integration. Per transition this
+   drops the cost from roughly ``U + L + U_rev`` leapfrog/gradient evaluations
+   (``~2.75 U`` empirically, averaging over ``L``'s distribution) to roughly
+   ``U + U_rev`` (``~1.25 U``) -- see Issue#1058. The reverse rollout
+   ``U_rev(theta', rho')`` (section 2.2.4) has nothing to gather from (its own
+   states are never selected as the proposal) and is left as an ordinary,
+   unbuffered :func:`num_steps_to_uturn` call.
+
+   The buffer is ``max_num_steps`` copies of the full leapfrog state
+   (position, momentum, logdensity, logdensity_grad) -- the same asymptotic
+   memory scale as the states NUTS's own trajectory-doubling machinery holds
+   live during tree building (:mod:`blackjax.mcmc.trajectory`), and it is
+   allocated fresh on every kernel call (not carried across transitions), so
+   steady-state memory is ``O(max_num_steps * dim)`` on top of the chain state
+   itself, not ``O(num_samples * max_num_steps * dim)``. This makes
+   ``max_num_steps`` (default 1024, mirroring NUTS's ``max_num_doublings=10``
+   cap of 1023 steps) a *memory* knob as well as a compute-cap knob: sizing it
+   much larger than the rollout lengths a target actually needs pays for unused
+   buffer capacity on every transition, so prefer capping it near the largest
+   ``U`` the warmup/pilot run actually observes rather than leaving the default
+   untouched on very high-dimensional targets.
+
    .. rubric:: References
 
    .. [1] Bou-Rabee, Carpenter, Marsden, "GIST: Gibbs self-tuning for locally
@@ -173,7 +205,9 @@ Module Contents
                          ``psi=0`` is the simpler eq. 34 special case).
    :param max_num_steps: Hard cap on each U-turn rollout (forward and reverse); analogous to
                          NUTS's ``max_num_doublings``, but bounds a *linear* rollout here,
-                         not ``2**max`` leapfrog steps.
+                         not ``2**max`` leapfrog steps. Also sizes the forward-rollout buffer
+                         (module docstring, "Forward-rollout caching") -- ``O(max_num_steps)``
+                         leapfrog states are allocated per transition.
 
    :returns: * *A kernel that takes a rng_key and a Pytree that contains the current*
              * *state of the chain and that returns a new state of the chain along with*
@@ -210,7 +244,10 @@ Module Contents
                          NUTS's ``max_num_doublings``, but bounds a *linear* rollout here,
                          not ``2**max`` leapfrog steps -- size accordingly (NUTS's default of
                          10 doublings caps at 1023 steps; a directly-comparable cap here is
-                         ``max_num_steps ~= 1024``).
+                         ``max_num_steps ~= 1024``). Also sizes the forward-rollout buffer
+                         (module docstring, "Forward-rollout caching") -- ``O(max_num_steps)``
+                         leapfrog states are allocated per transition, so an oversized cap on
+                         a high-dimensional target trades unused memory for compute.
    :param divergence_threshold: The absolute value of the difference in energy between two states
                                 above which we say that the transition is divergent.
    :param integrator: (algorithm parameter) The symplectic integrator to use to integrate

@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ge2c1d2f66" />
+  <meta name="docsearch:version" content="0.1.dev1+g8cb85cd87" />
   </head>
   
   
@@ -701,17 +701,24 @@
 <span class="sd">    Because ``tuning_parameter_fn`` and ``apply_fn`` each receive</span>
 <span class="sd">    ``logdensity_fn``/``metric`` fresh from this seam (not a shared</span>
 <span class="sd">    pre-built trajectory function), an instance whose ``apply_fn`` re-runs</span>
-<span class="sd">    the tuning-parameter search at the proposal (as both shipped instances</span>
-<span class="sd">    do, for the reversibility/no-return check) pays one extra</span>
-<span class="sd">    ``logdensity_fn`` trace for that re-check, on top of the forward</span>
-<span class="sd">    search and the accepted-move build -- three per kernel call, not the</span>
-<span class="sd">    two of a single-forward-pass sampler like hmc/nuts. This is a</span>
-<span class="sd">    deliberate seam-simplicity tradeoff, not a retracing bug: threading a</span>
-<span class="sd">    shared pre-built trajectory function through this seam could bring it</span>
-<span class="sd">    down to two, at the cost of a more complex seam contract. See</span>
-<span class="sd">    ``gist_step_size``/``gist_trajectory_length``&#39;s own</span>
-<span class="sd">    ``chex.assert_max_traces(n=4)`` tests (1 at ``init`` + 3 per kernel</span>
-<span class="sd">    trace) for the empirically-verified count.</span>
+<span class="sd">    the tuning-parameter search at the proposal (as ``gist_step_size`` does,</span>
+<span class="sd">    for the reversibility check) pays one extra ``logdensity_fn`` trace for</span>
+<span class="sd">    that re-check, on top of the forward search and the accepted-move build</span>
+<span class="sd">    -- three per kernel call, not the two of a single-forward-pass sampler</span>
+<span class="sd">    like hmc/nuts. This is a deliberate seam-simplicity tradeoff, not a</span>
+<span class="sd">    retracing bug: threading a shared pre-built trajectory function through</span>
+<span class="sd">    this seam could bring it down to two, at the cost of a more complex seam</span>
+<span class="sd">    contract. ``gist_trajectory_length`` takes exactly this route for its</span>
+<span class="sd">    own accepted-move build: it caches the forward rollout&#39;s leapfrog states</span>
+<span class="sd">    in a buffer (see its module docstring, &quot;Forward-rollout caching&quot;,</span>
+<span class="sd">    Issue#1058) so the proposal for the selected ``alpha`` is a gather, not</span>
+<span class="sd">    a re-integration, dropping it to two per kernel call -- the forward</span>
+<span class="sd">    search plus the still-necessary reverse-direction re-check (there is</span>
+<span class="sd">    nothing to gather for the reverse rollout; only its count is used). See</span>
+<span class="sd">    ``gist_step_size``&#39;s own ``chex.assert_max_traces(n=4)`` test (1 at</span>
+<span class="sd">    ``init`` + 3 per kernel trace) and ``gist_trajectory_length``&#39;s own</span>
+<span class="sd">    ``chex.assert_max_traces(n=3)`` test (1 at ``init`` + 2 per kernel</span>
+<span class="sd">    trace) for the empirically-verified counts.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>

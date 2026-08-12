@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.ghmc" href="../ghmc/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+ge2c1d2f66" />
+  <meta name="docsearch:version" content="0.1.dev1+g8cb85cd87" />
   </head>
   
   
@@ -665,17 +665,24 @@ field.</p></li>
 <li><p>Because <code class="docutils literal notranslate"><span class="pre">tuning_parameter_fn</span></code> and <code class="docutils literal notranslate"><span class="pre">apply_fn</span></code> each receive</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">logdensity_fn</span></code>/<code class="docutils literal notranslate"><span class="pre">metric</span></code> fresh from this seam (not a shared</p></li>
 <li><p>pre-built trajectory function), an instance whose <code class="docutils literal notranslate"><span class="pre">apply_fn</span></code> re-runs</p></li>
-<li><p><em>the tuning-parameter search at the proposal (as both shipped instances</em></p></li>
-<li><p><em>do, for the reversibility/no-return check) pays one extra</em></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">logdensity_fn</span></code> trace for that re-check, on top of the forward</p></li>
-<li><p><em>search and the accepted-move build – three per kernel call, not the</em></p></li>
-<li><p><em>two of a single-forward-pass sampler like hmc/nuts. This is a</em></p></li>
-<li><p><strong>deliberate seam-simplicity tradeoff, not a retracing bug</strong> (<em>threading a</em>)</p></li>
-<li><p><em>shared pre-built trajectory function through this seam could bring it</em></p></li>
-<li><p><em>down to two, at the cost of a more complex seam contract. See</em></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">gist_step_size</span></code>/<code class="docutils literal notranslate"><span class="pre">gist_trajectory_length</span></code>’s own</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">chex.assert_max_traces(n=4)</span></code> tests (1 at <code class="docutils literal notranslate"><span class="pre">init</span></code> + 3 per kernel</p></li>
-<li><p><em>trace) for the empirically-verified count.</em></p></li>
+<li><p>the tuning-parameter search at the proposal (as <code class="docutils literal notranslate"><span class="pre">gist_step_size</span></code> does,</p></li>
+<li><p>for the reversibility check) pays one extra <code class="docutils literal notranslate"><span class="pre">logdensity_fn</span></code> trace for</p></li>
+<li><p><em>that re-check, on top of the forward search and the accepted-move build</em></p></li>
+<li><p><em>– three per kernel call, not the two of a single-forward-pass sampler</em></p></li>
+<li><p><em>like hmc/nuts. This is a deliberate seam-simplicity tradeoff, not a</em></p></li>
+<li><p><strong>retracing bug</strong> (<em>threading a shared pre-built trajectory function through</em>)</p></li>
+<li><p><em>this seam could bring it down to two, at the cost of a more complex seam</em></p></li>
+<li><p>contract. <code class="docutils literal notranslate"><span class="pre">gist_trajectory_length</span></code> takes exactly this route for its</p></li>
+<li><p><strong>own accepted-move build</strong> (<em>it caches the forward rollout’s leapfrog states</em>)</p></li>
+<li><p><em>in a buffer (see its module docstring, “Forward-rollout caching”,</em></p></li>
+<li><p>Issue#1058) so the proposal for the selected <code class="docutils literal notranslate"><span class="pre">alpha</span></code> is a gather, not</p></li>
+<li><p><em>a re-integration, dropping it to two per kernel call – the forward</em></p></li>
+<li><p><em>search plus the still-necessary reverse-direction re-check (there is</em></p></li>
+<li><p><em>nothing to gather for the reverse rollout; only its count is used). See</em></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gist_step_size</span></code>’s own <code class="docutils literal notranslate"><span class="pre">chex.assert_max_traces(n=4)</span></code> test (1 at</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">init</span></code> + 3 per kernel trace) and <code class="docutils literal notranslate"><span class="pre">gist_trajectory_length</span></code>’s own</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chex.assert_max_traces(n=3)</span></code> test (1 at <code class="docutils literal notranslate"><span class="pre">init</span></code> + 2 per kernel</p></li>
+<li><p><em>trace) for the empirically-verified counts.</em></p></li>
 </ul>
 </p>
 </dd>
