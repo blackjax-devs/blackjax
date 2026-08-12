@@ -800,14 +800,8 @@ def staged_adaptation(
                 _MIN_TRAIN_K_RATIO,
             )
 
-            # For multi-chain, position has a leading M axis (on every leaf,
-            # for a general PyTree position); use one chain's size. Index via
-            # jax.tree.map rather than jnp.asarray(position)[0]: the latter
-            # crashes for a dict/PyTree position (e.g. every NumPyro-model
-            # position in tuningfork) because jnp.asarray cannot convert a
-            # dict of arrays directly -- jax.tree.map works uniformly for
-            # both a bare Array (a trivial one-leaf PyTree) and a structured
-            # PyTree.
+            # One chain's slice via jax.tree.map: works for bare (M, d) Arrays
+            # AND structured PyTree positions (jnp.asarray crashes on a dict).
             _pos_for_size = (
                 jax.tree.map(lambda x: x[0], position) if _is_multi_chain else position
             )
@@ -912,10 +906,8 @@ def staged_adaptation(
             init_states = jax.vmap(lambda pos: algorithm.init(pos, logdensity_fn))(
                 position
             )
-            # Adapt init uses one chain's position so pytree_size → d (not M*d).
-            # jax.tree.map (not jnp.asarray(position)[0]) so this also works for
-            # a dict/PyTree position -- see the identical fix + rationale above
-            # for the rank-detection support-floor warning check.
+            # Adapt init uses one chain's position so pytree_size → d (not M*d);
+            # jax.tree.map for PyTree positions (see the rank-support check above).
             init_adaptation_state = adapt_init(
                 jax.tree.map(lambda x: x[0], position), initial_step_size
             )
