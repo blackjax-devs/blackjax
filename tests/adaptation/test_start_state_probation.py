@@ -272,6 +272,68 @@ class TestStagedAdaptationProbationWiring(BlackJAXTest):
             "info stream must be the main warmup steps plus the probation window",
         )
 
+    def test_dict_position_engineered_outlier_through_stage1_2a_2b(self):
+        """Amendment C (v2): a dict/PyTree position with an ENGINEERED outlier
+        chain driven through stage 1 + 2a + 2b end-to-end via
+        _apply_start_state_probation directly -- confirms stage 2a's jitter
+        and redraw are pytree-correct PER KEY (not just structurally
+        non-crashing, which test_enabled_dict_position_smoke above already
+        covers for the identical-start case where nothing gets flagged)."""
+        M = 8
+
+        def logdensity_fn(x):
+            return -0.5 * jnp.sum(x["a"] ** 2) - 0.5 * jnp.sum(x["b"] ** 2)
+
+        position = {
+            "a": jnp.zeros((M, 3)).at[7].set(30.0),
+            "b": jnp.zeros((M, 2)).at[7].set(-30.0),
+        }
+        states = jax.vmap(lambda pos: blackjax.nuts.init(pos, logdensity_fn))(position)
+        mcmc_kernel = blackjax.nuts.build_kernel()
+        step_size = jnp.asarray(0.5)
+        metric = _IDENTITY_METRIC(5)
+
+        rehab_states, _probation_info, diagnostics = _apply_start_state_probation(
+            jax.random.key(30),
+            states,
+            mcmc_kernel,
+            blackjax.nuts.init,
+            logdensity_fn,
+            step_size,
+            metric,
+            M,
+            _PROBATION_WINDOW_DEFAULT,
+            {},
+            return_all_adapt_info,
+            states,
+        )
+
+        self.assertIn(
+            7, diagnostics["flagged_chain_idx"], "Engineered outlier must be flagged"
+        )
+        self.assertTrue(diagnostics["redraw_applied"])
+        self.assertEqual(set(rehab_states.position.keys()), {"a", "b"})
+        self.assertEqual(rehab_states.position["a"].shape, (M, 3))
+        self.assertEqual(rehab_states.position["b"].shape, (M, 2))
+
+        # Amendment A': pre/post logdensity pair is auditable against stage
+        # 1's own decision -- the outlier chain's logdensity must move
+        # substantially toward the healthy ensemble's range in BOTH dict
+        # keys' worth of mass (a single flat number, but only reachable if
+        # both "a" and "b" were correctly redrawn -- a pytree bug that only
+        # fixed one key would leave the other contributing -450 alone).
+        pre_ld = diagnostics["pre_probation_logdensity"]
+        post_ld = diagnostics["post_probation_logdensity"]
+        self.assertLess(
+            pre_ld[7], -500.0, "sanity: engineered chain must be a clear outlier"
+        )
+        self.assertGreater(
+            post_ld[7],
+            pre_ld[7] + 400.0,
+            "Rehabilitated chain's logdensity must move substantially "
+            "toward the ensemble in both pytree keys",
+        )
+
 
 # ---------------------------------------------------------------------------
 # Red-check: engineered bad post-warmup start state (ratified design note)

@@ -565,6 +565,20 @@ def _apply_start_state_probation(
     are bit-identical to what they already had, since redraw is a
     ``jnp.where`` selection on position before re-evaluating).
 
+    Honest caveat: a redrawn chain starts CORRELATED with its anchor (same
+    position plus a small jitter), so any early-window between-chain
+    diagnostic computed on a short post-warmup prefix (e.g. split-R-hat on
+    the first few sampling draws) is ANTI-CONSERVATIVE for that specific
+    pair of chains -- it will underestimate their disagreement because they
+    are not yet independent draws.  This is not silently swept under the
+    rug: ``diagnostics["flagged_chain_idx"]`` identifies exactly which
+    chain(s) started this way, so a practitioner computing early-window
+    diagnostics can exclude or down-weight that chain if it matters for
+    their use case.  The correlation is a transient of the redrawn chain's
+    OWN subsequent dynamics (not of the anchor, which is untouched) and
+    washes out as the chain decorrelates from its start over the run, the
+    same way any single chain forgets its initialisation.
+
     **Stage 2b -- per-chain probation (reactive, unconditional fallback).**
     Every chain -- flagged or not -- runs ``window`` extra real kernel steps
     at the FROZEN shared metric, with a per-chain step size that backs off
@@ -597,17 +611,41 @@ def _apply_start_state_probation(
     is only ever invoked when the feature is enabled, so the main scan's own
     key derivation is never perturbed by this call existing).
 
-    ``n_chains_unresolved`` in the diagnostics dict means: this chain's
-    probation step size had NOT recovered to
-    :data:`~blackjax.adaptation.meta._calibration._PROBATION_RESOLVED_TOL`
-    of the shared step size by the end of the window, i.e. it kept
-    re-triggering the backoff.  This is the routine's LOUD FAILURE CHANNEL
-    for that chain: a practitioner seeing it set should not trust that
-    chain's early sampling draws at face value.  The recommended action is
-    to re-run warmup with a larger ``probation_window``, or inspect that
-    chain's post-warmup trajectory directly (e.g. via the ``is_divergent``
-    trace in the concatenated ``info``) -- not to silently proceed as if
-    nothing happened.
+    Actionable diagnostics -- what a practitioner should DO when each fires:
+
+    - ``n_chains_flagged_by_state_gate > 0`` -- stage 1 found a chain whose
+      post-warmup potential energy the rest of the ensemble does not
+      corroborate as typical.  This is informational once stage 2a/2b have
+      run (the chain was already corrected); a practitioner auditing a run
+      should treat it as confirmation the mechanism found something to fix,
+      and can cross-check ``pre_probation_logdensity`` /
+      ``post_probation_logdensity`` (below) for that chain to see the
+      before/after.
+    - ``redraw_applied`` -- ``True`` means stage 2a actually rewrote a
+      chain's starting position (not just a no-op pass-through).  See the
+      correlated-anchor caveat above for what this implies for early-window
+      diagnostics on that specific chain.
+    - ``n_chains_unresolved`` -- this chain's probation step size had NOT
+      recovered to
+      :data:`~blackjax.adaptation.meta._calibration._PROBATION_RESOLVED_TOL`
+      of the shared step size by the end of the window, i.e. it kept
+      re-triggering the backoff.  This is the routine's LOUD FAILURE CHANNEL
+      for that chain: a practitioner seeing it set should not trust that
+      chain's early sampling draws at face value.  The recommended action
+      is to re-run warmup with a larger ``probation_window``, or inspect
+      that chain's post-warmup trajectory directly (e.g. via the
+      ``is_divergent`` trace in the concatenated ``info``) -- not to
+      silently proceed as if nothing happened.
+
+    ``pre_probation_logdensity`` / ``post_probation_logdensity`` in the
+    diagnostics dict are the per-chain ``(M,)`` logdensity values BEFORE
+    stage 1 acts and AFTER stage 2b completes -- both free (already cached
+    on the relevant ``HMCState``, no extra evaluation).  Unlike an energy
+    computed from a freshly resampled momentum, these are EXACTLY the
+    quantity stage 1's gate itself operates on, so the pair is directly
+    auditable against the gate's own decision: a practitioner can confirm a
+    flagged chain's logdensity actually moved toward the ensemble's range
+    after rehabilitation.
 
     Returns
     -------
@@ -730,6 +768,13 @@ def _apply_start_state_probation(
         "unresolved_chain_idx": tuple(
             int(i) for i in np.nonzero(np.asarray(unresolved))[0]
         ),
+        # Free (already cached), and exactly the quantity stage 1's gate
+        # acts on -- directly auditable against the gate's own decision.
+        "pre_probation_logdensity": np.asarray(logdensities).tolist(),
+        "post_probation_logdensity": np.asarray(final_states.logdensity).tolist(),
+        # Hamiltonian energy (logdensity + kinetic at a freshly resampled
+        # momentum) -- a supplementary, noisier observable kept alongside
+        # the logdensity pair above (not a trigger for either stage).
         "pre_probation_energy": np.asarray(pre_energy).tolist(),
         "post_probation_energy": np.asarray(post_energy).tolist(),
         "extra_grad_evals": extra_grad_evals,
