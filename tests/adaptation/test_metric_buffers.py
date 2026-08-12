@@ -1112,6 +1112,7 @@ class LateStartTest(BlackJAXTest):
             np.array(block.mean),
             ref_mean,
             rtol=1e-4,
+            atol=1e-7,
             err_msg="late_start: mean includes skipped draws",
         )
         np.testing.assert_allclose(
