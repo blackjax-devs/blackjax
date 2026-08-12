@@ -19,7 +19,14 @@ from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
 
 import blackjax
-from blackjax.mcmc import gist, gist_trajectory_length, integrators, metrics
+from blackjax.mcmc import (
+    gist,
+    gist_trajectory_length,
+    hmc,
+    integrators,
+    metrics,
+    trajectory,
+)
 from tests.fixtures import (
     BlackJAXTest,
     assert_grand_mean_within_robust_tolerance,
@@ -83,6 +90,222 @@ def uturn_count_reference(metric, step_size, max_num_steps, pairing):
         return n_final
 
     return count_fn
+
+
+def _reference_tuning_parameter_fn(
+    integrator: Callable, step_size: float, max_num_steps: int, path_fraction: float
+) -> Callable:
+    """The forward GIBBS seam exactly as ``gist_trajectory_length.py``
+    implemented it *before* Issue#1058's rollout-caching fix: only the
+    no-U-turn count is kept, every intermediate leapfrog state is discarded.
+    """
+
+    def tuning_parameter_fn(rng_key, state, logdensity_fn, metric):
+        uturn_fn = gist_trajectory_length.num_steps_to_uturn(
+            integrator, step_size, metric, max_num_steps
+        )
+        forward = uturn_fn(state, logdensity_fn)
+        lo, _ = gist_trajectory_length._step_distribution(forward, path_fraction)
+        num_steps = jax.random.randint(rng_key, shape=(), minval=lo, maxval=forward + 1)
+        return num_steps, forward
+
+    return tuning_parameter_fn
+
+
+def _reference_apply_fn(
+    integrator: Callable, step_size: float, max_num_steps: int, path_fraction: float
+) -> Callable:
+    """The involution seam exactly as ``gist_trajectory_length.py``
+    implemented it *before* Issue#1058: the accepted-move proposal is built
+    by re-integrating ``num_steps`` leapfrog steps from scratch via
+    ``trajectory.static_integration``, not gathered from a cache.
+    """
+
+    def apply_fn(state, alpha, aux, logdensity_fn, metric):
+        num_steps = alpha
+        forward = aux
+
+        symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
+        build_trajectory = trajectory.static_integration(symplectic_integrator)
+        proposal_state = build_trajectory(state, step_size, num_steps)
+        proposal_state = hmc.flip_momentum(proposal_state)
+
+        uturn_fn = gist_trajectory_length.num_steps_to_uturn(
+            integrator, step_size, metric, max_num_steps
+        )
+        reverse = uturn_fn(proposal_state, logdensity_fn)
+
+        _, width_forward = gist_trajectory_length._step_distribution(
+            forward, path_fraction
+        )
+        lo_reverse, width_reverse = gist_trajectory_length._step_distribution(
+            reverse, path_fraction
+        )
+
+        is_in_reverse_interval = (num_steps >= lo_reverse) & (num_steps <= reverse)
+        log_tuning_density_ratio = jnp.where(
+            is_in_reverse_interval,
+            jnp.log(width_forward.astype(jnp.float32))
+            - jnp.log(width_reverse.astype(jnp.float32)),
+            -jnp.inf,
+        )
+        extra_info = gist_trajectory_length._TrajectoryLengthExtra(
+            num_integration_steps=num_steps,
+            num_steps_to_uturn_forward=forward,
+            num_steps_to_uturn_reverse=reverse,
+            is_no_return_rejected=jnp.logical_not(is_in_reverse_interval),
+        )
+        return proposal_state, log_tuning_density_ratio, extra_info
+
+    return apply_fn
+
+
+def _reference_build_kernel(
+    integrator: Callable,
+    divergence_threshold: float,
+    path_fraction: float,
+    max_num_steps: int,
+) -> Callable:
+    """Mirrors ``gist_trajectory_length.build_kernel`` exactly, wired to the
+    pre-Issue#1058 (uncached) ``tuning_parameter_fn``/``apply_fn`` pair
+    above instead of the shipped, cached ones.
+    """
+
+    def kernel(rng_key, state, logdensity_fn, step_size, inverse_mass_matrix):
+        tuning_parameter_fn = _reference_tuning_parameter_fn(
+            integrator, step_size, max_num_steps, path_fraction
+        )
+        apply_fn = _reference_apply_fn(
+            integrator, step_size, max_num_steps, path_fraction
+        )
+        new_state, info, raw_extra_info = gist._step(
+            rng_key,
+            state,
+            logdensity_fn,
+            tuning_parameter_fn,
+            apply_fn,
+            inverse_mass_matrix,
+            divergence_threshold,
+        )
+        extra_info = raw_extra_info
+        trajectory_length_info = gist_trajectory_length.GISTTrajectoryLengthInfo(
+            info.momentum,
+            info.tuning_parameter,
+            info.is_accepted,
+            info.is_divergent,
+            info.acceptance_rate,
+            info.energy,
+            info.num_integration_steps,
+            extra_info.num_steps_to_uturn_forward,
+            extra_info.num_steps_to_uturn_reverse,
+            extra_info.is_no_return_rejected,
+        )
+        return new_state, trajectory_length_info
+
+    return kernel
+
+
+def _dict_position_logdensity(x):
+    """A dict-pytree-position standard normal, for the pytree regression case."""
+    return -0.5 * (x["a"] ** 2 + jnp.sum(x["b"] ** 2))
+
+
+class DrawIdentityRegressionTest(chex.TestCase):
+    """Regression guard for Issue#1058: caching the forward rollout must not
+    change a single bit of the kernel's output.
+
+    Compares the shipped (cached, buffer-gather) ``build_kernel`` against
+    ``_reference_build_kernel`` above, which reimplements this module's
+    ``tuning_parameter_fn``/``apply_fn`` pair exactly as it stood before
+    Issue#1058 (a fresh ``trajectory.static_integration`` re-integration for
+    every accepted move). Both kernels share ``num_steps_to_uturn``
+    (untouched by this change) and ``gist._step``'s Gibbs-refresh /
+    Metropolis-test machinery (also untouched) -- the *only* code path that
+    differs between them is how the ``alpha``-length proposal state itself
+    is built (buffer gather vs. re-integration), so any exact-equality
+    mismatch here can only be attributed to that.
+
+    Both sides are jitted identically (rather than comparing a jitted cached
+    kernel against an un-jitted reference, or vice versa) so a difference
+    cannot be a jit-vs-eager operation-fusion artifact unrelated to the
+    caching change itself.
+    """
+
+    @parameterized.named_parameters(
+        (
+            "identity_metric",
+            jnp.zeros(3),
+            jnp.ones(3),
+            std_normal_logdensity,
+        ),
+        (
+            "diagonal_metric",
+            jnp.zeros(3),
+            jnp.array([0.3, 1.0, 2.5]),
+            std_normal_logdensity,
+        ),
+        (
+            "dense_metric",
+            jnp.zeros(2),
+            jnp.array([[2.0, 1.2], [1.2, 1.0]]),
+            lambda x: -0.5
+            * x
+            @ jnp.linalg.inv(jnp.array([[2.0, 1.2], [1.2, 1.0]]))
+            @ x,
+        ),
+        (
+            "dict_pytree_position",
+            {"a": jnp.array(0.0), "b": jnp.array([1.0, -0.5])},
+            jnp.ones(3),
+            _dict_position_logdensity,
+        ),
+    )
+    def test_bit_identical_to_uncached_reference(
+        self, init_position, inverse_mass_matrix, logdensity_fn
+    ):
+        step_size = 0.3
+        max_num_steps = 64
+        path_fraction = 0.5
+        divergence_threshold = 1000.0
+
+        cached_kernel = gist_trajectory_length.build_kernel(
+            integrators.velocity_verlet,
+            divergence_threshold,
+            path_fraction,
+            max_num_steps,
+        )
+        reference_kernel = _reference_build_kernel(
+            integrators.velocity_verlet,
+            divergence_threshold,
+            path_fraction,
+            max_num_steps,
+        )
+        # Close over the non-array arguments (logdensity_fn, step_size,
+        # inverse_mass_matrix) rather than passing logdensity_fn through
+        # jax.jit positionally, so both sides jit with the same, simplest
+        # signature.
+        cached_step = jax.jit(
+            lambda key, state: cached_kernel(
+                key, state, logdensity_fn, step_size, inverse_mass_matrix
+            )
+        )
+        reference_step = jax.jit(
+            lambda key, state: reference_kernel(
+                key, state, logdensity_fn, step_size, inverse_mass_matrix
+            )
+        )
+
+        cached_state = gist_trajectory_length.init(init_position, logdensity_fn)
+        reference_state = gist_trajectory_length.init(init_position, logdensity_fn)
+        chex.assert_trees_all_equal(cached_state, reference_state)
+
+        rng_key = jax.random.key(0)
+        for i in range(50):
+            step_key = jax.random.fold_in(rng_key, i)
+            cached_state, cached_info = cached_step(step_key, cached_state)
+            reference_state, reference_info = reference_step(step_key, reference_state)
+            chex.assert_trees_all_equal(cached_state, reference_state)
+            chex.assert_trees_all_equal(cached_info, reference_info)
 
 
 # Fixed constants for the partial-preconditioning fixture below. Found with a
@@ -223,16 +446,22 @@ class SingleStepTest(chex.TestCase):
 
 class CompilationTest(chex.TestCase):
     def test_no_excess_retracing(self):
-        """The logdensity should compile at most 4 times: init, plus 3
-        within one kernel trace -- the forward U-turn rollout, the accepted
-        trajectory build, and the reverse U-turn rollout (section 2.2.4)
-        each need their own gradient evaluation, unlike hmc/nuts's single
-        forward trajectory (n=2 there). Verified empirically: the count
-        stabilizes at 4 after the first `step()` call and does not grow on
-        further calls with the same shapes.
+        """The logdensity should compile at most 3 times: init, plus 2
+        within one kernel trace -- the forward U-turn rollout and the
+        reverse U-turn rollout (section 2.2.4) each need their own gradient
+        evaluation, unlike hmc/nuts's single forward trajectory (n=2 there).
+        There is no longer a third, separate trace for the accepted-move
+        build (Issue#1058): the forward rollout now buffers every state it
+        visits, so the proposal for the selected `alpha` is a gather from
+        that buffer, not a fresh `static_integration` call with its own
+        `symplectic_integrator` closure. Regression guard for the caching
+        change -- this count going back up to 4 would mean a re-integration
+        path crept back in. Verified empirically: the count stabilizes at 3
+        after the first `step()` call and does not grow on further calls
+        with the same shapes.
         """
 
-        @chex.assert_max_traces(n=4)
+        @chex.assert_max_traces(n=3)
         def logdensity_fn(x):
             return jnp.sum(st.norm.logpdf(x))
 
@@ -485,10 +714,14 @@ class ClosedFormCrossCheckTest(BlackJAXTest):
         integrator_state = integrators.IntegratorState(
             jnp.zeros(2), jnp.array([1.0, 0.5]), state.logdensity, state.logdensity_grad
         )
-        uturn_fn = gist_trajectory_length.num_steps_to_uturn(
+        # `_apply_fn`'s `aux` is now the cached `_ForwardRollout` (Issue#1058),
+        # not the bare `forward` scalar -- build it with the real forward
+        # rollout so `rollout.states` is actually populated up to `forward`.
+        uturn_fn = gist_trajectory_length._num_steps_to_uturn_with_rollout(
             integrators.velocity_verlet, step_size=0.3, metric=metric, max_num_steps=50
         )
-        forward = uturn_fn(integrator_state, std_normal_logdensity)
+        rollout = uturn_fn(integrator_state, std_normal_logdensity)
+        forward = rollout.num_steps_to_uturn
         L = jnp.minimum(forward, jnp.asarray(2))
 
         apply_fn = gist_trajectory_length._apply_fn(
@@ -498,7 +731,7 @@ class ClosedFormCrossCheckTest(BlackJAXTest):
             path_fraction=0.0,
         )
         _, log_ratio, extra = apply_fn(
-            integrator_state, L, forward, std_normal_logdensity, metric
+            integrator_state, L, rollout, std_normal_logdensity, metric
         )
         reverse = extra.num_steps_to_uturn_reverse
         expected = jnp.where(
@@ -605,25 +838,48 @@ class EdgeCaseTest(BlackJAXTest):
     def test_no_return_rejection_direct(self):
         # Direct unit test: pick L far larger than any plausible reverse
         # U-turn count N, so L must fall outside [Lo', N].
+        #
+        # `aux` is now the cached `_ForwardRollout` (Issue#1058): `apply_fn`
+        # gathers `rollout.states[L - 1]` instead of re-integrating, so the
+        # synthetic `aux` must have a buffer entry there. Hand-construct one
+        # by broadcasting `integrator_state` itself (position exactly at the
+        # origin) across every buffer slot -- `test_num_steps_to_uturn_quarter_
+        # period_anchor_d1` above establishes that at position 0 the no-return
+        # rollout fires after a step-size-independent ~(pi/2)/step_size steps
+        # *regardless* of the momentum's magnitude or direction, so the
+        # reverse rollout from this hand-picked proposal deterministically
+        # returns a small count (~5 at step_size=0.3), guaranteed far below
+        # `implausibly_large_L`.
         state = gist.init(jnp.zeros(2), std_normal_logdensity)
         metric = metrics.default_metric(jnp.ones(2))
         integrator_state = integrators.IntegratorState(
             jnp.zeros(2), jnp.array([1.0, 0.5]), state.logdensity, state.logdensity_grad
         )
+        max_num_steps = 50
+        implausibly_large_L = jnp.asarray(max_num_steps)
+        rollout = gist_trajectory_length._ForwardRollout(
+            num_steps_to_uturn=implausibly_large_L,
+            states=jax.tree.map(
+                lambda leaf: jnp.broadcast_to(leaf, (max_num_steps,) + leaf.shape),
+                integrator_state,
+            ),
+        )
         apply_fn = gist_trajectory_length._apply_fn(
             integrators.velocity_verlet,
             step_size=0.3,
-            max_num_steps=50,
+            max_num_steps=max_num_steps,
             path_fraction=0.5,
         )
-        implausibly_large_L = jnp.asarray(50)
         _, log_ratio, extra = apply_fn(
             integrator_state,
             implausibly_large_L,
-            jnp.asarray(3),
+            rollout,
             std_normal_logdensity,
             metric,
         )
+        # Guard: the reverse count must actually be far below L, or the
+        # rejection below would be checking nothing.
+        self.assertLess(int(extra.num_steps_to_uturn_reverse), max_num_steps // 2)
         self.assertTrue(bool(extra.is_no_return_rejected))
         self.assertEqual(float(log_ratio), float("-inf"))
 
