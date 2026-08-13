@@ -45,7 +45,10 @@ from blackjax.adaptation.meta._start_state import (
     select_healthy_anchor,
 )
 from blackjax.adaptation.meta.verdict import extract_multi_chain_verdict
-from blackjax.adaptation.staged_adaptation import _apply_start_state_probation
+from blackjax.adaptation.staged_adaptation import (
+    StagedAdaptationInfo,
+    _apply_start_state_probation,
+)
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from tests.adaptation._meta_fixtures import _make_mc_isotropic
 from tests.fixtures import BlackJAXTest
@@ -263,13 +266,17 @@ class TestStagedAdaptationProbationWiring(BlackJAXTest):
         self.assertEqual(set(results.state.position.keys()), {"a", "b"})
         self.assertEqual(results.state.position["a"].shape, (n_chains, 3))
         self.assertEqual(results.state.position["b"].shape, (n_chains, 2))
-        diag = results.parameters["start_state_probation"]
+        # Issue#1090 fix 1: diagnostics never land in `parameters` -- it must
+        # stay a pure sampler-kwargs dict.
+        self.assertNotIn("start_state_probation", results.parameters)
+        self.assertIsInstance(info, StagedAdaptationInfo)
+        diag = info.diagnostics
         self.assertTrue(diag["enabled"])
         self.assertEqual(diag["window"], 10)
         self.assertEqual(
-            jax.tree.leaves(info)[0].shape[0],
+            jax.tree.leaves(info.trace)[0].shape[0],
             40 + 10,
-            "info stream must be the main warmup steps plus the probation window",
+            "info.trace must be the main warmup steps plus the probation window",
         )
 
     def test_dict_position_engineered_outlier_through_stage1_2a_2b(self):
@@ -333,6 +340,180 @@ class TestStagedAdaptationProbationWiring(BlackJAXTest):
             "Rehabilitated chain's logdensity must move substantially "
             "toward the ensemble in both pytree keys",
         )
+
+
+# ---------------------------------------------------------------------------
+# Issue#1090: PR #1015 integration defects found by the P1 corpus-rerun
+# consumer.  Each class below reproduces one of the two repro patterns +
+# the tuple-shaped info_fn regression named in the issue.
+# ---------------------------------------------------------------------------
+
+
+class TestIssue1090ParametersDeployPatternRegression(BlackJAXTest):
+    """Fix 1 red-check: PR #1015 injected a diagnostics dict under
+    ``parameters["start_state_probation"]``, so the standard sampler-deploy
+    pattern ``algorithm(logdensity_fn, **result.parameters)`` -- used
+    throughout BlackJAX's own docs and by Paper 1's fixed-suite harness --
+    raised ``TypeError: unexpected keyword argument 'start_state_probation'``
+    whenever ``start_state_probation=True``.  Reproduces exactly that call."""
+
+    def test_deploy_pattern_does_not_raise(self):
+        n_chains = 8
+
+        def logdensity_fn(x):
+            return -0.5 * jnp.sum(x**2)
+
+        position = jnp.zeros((n_chains, 4))
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=8000,
+            n_chains=n_chains,
+            start_state_probation=True,
+            probation_window=10,
+        )
+        results, info = warmup.run(jax.random.key(40), position, num_steps=40)
+
+        self.assertNotIn("start_state_probation", results.parameters)
+
+        # The documented deploy pattern -- must not raise TypeError.
+        sampler = blackjax.nuts(logdensity_fn, **results.parameters)
+        keys = jax.random.split(jax.random.key(41), n_chains)
+        new_state, sample_info = jax.vmap(sampler.step)(keys, results.state)
+
+        self.assertEqual(new_state.position.shape, (n_chains, 4))
+
+
+class TestIssue1090ScheduleBoundaryRegression(BlackJAXTest):
+    """Fix 2 red-check: the probation window's extra steps were
+    concatenated onto the info stream past the caller's declared
+    ``num_steps`` with no explicit boundary exposed, so a
+    prescribed-schedule-length consumer (e.g. Paper 1's
+    ``extract_schedule_events``, which asserts an exact-length trace against
+    ``num_warmup_steps``) broke.  Reproduces a boundary-aware trace
+    consumer against ``info.diagnostics["warmup_boundary_index"]``."""
+
+    def test_boundary_index_recovers_prescribed_length(self):
+        n_chains, num_steps, window = 8, 40, 10
+
+        def logdensity_fn(x):
+            return -0.5 * jnp.sum(x**2)
+
+        position = jnp.zeros((n_chains, 4))
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=8000,
+            n_chains=n_chains,
+            start_state_probation=True,
+            probation_window=window,
+        )
+        results, info = warmup.run(jax.random.key(42), position, num_steps=num_steps)
+
+        self.assertIsInstance(info, StagedAdaptationInfo)
+        boundary = info.diagnostics["warmup_boundary_index"]
+        self.assertEqual(boundary, num_steps)
+
+        full_trace_len = jax.tree.leaves(info.trace)[0].shape[0]
+        self.assertEqual(full_trace_len, num_steps + window)
+
+        # A prescribed-boundary trace consumer (mirrors Paper 1's
+        # extract_schedule_events) slices to the boundary and recovers
+        # exactly the caller's declared num_warmup_steps.
+        prescribed_trace = jax.tree.map(lambda x: x[:boundary], info.trace)
+        self.assertEqual(
+            jax.tree.leaves(prescribed_trace)[0].shape[0],
+            num_steps,
+            "trace sliced at warmup_boundary_index must equal num_warmup_steps",
+        )
+
+
+class TestIssue1090ExtraGradEvalsTupleInfoFnRegression(BlackJAXTest):
+    """Fix 3 red-check: ``extra_grad_evals`` fell back to a silent ``-1``
+    sentinel whenever the caller's ``adaptation_info_fn`` didn't shape its
+    record with a ``.info`` attribute -- e.g. a bare-tuple info_fn, which is
+    a valid ``adaptation_info_fn`` per the documented ``(state, info,
+    adaptation_state) -> Any`` signature (``return_all_adapt_info``'s
+    ``AdaptationInfo`` NamedTuple is only the default, not a requirement)."""
+
+    def test_tuple_shaped_info_fn_does_not_silently_zero_the_ledger(self):
+        n_chains = 8
+
+        def logdensity_fn(x):
+            return -0.5 * jnp.sum(x**2)
+
+        def tuple_info_fn(state, info, adaptation_state):
+            # A bare tuple has no `.info` attribute at all, unlike the
+            # default return_all_adapt_info's AdaptationInfo(state, info,
+            # adaptation_state) NamedTuple.
+            return (state, info)
+
+        position = jnp.zeros((n_chains, 4))
+        warmup = blackjax.staged_adaptation(
+            blackjax.nuts,
+            logdensity_fn,
+            metric="auto",
+            max_grad_budget=8000,
+            n_chains=n_chains,
+            adaptation_info_fn=tuple_info_fn,
+            start_state_probation=True,
+            probation_window=10,
+        )
+        results, info = warmup.run(jax.random.key(43), position, num_steps=40)
+
+        self.assertIsInstance(info, StagedAdaptationInfo)
+        extra_grad_evals = info.diagnostics["extra_grad_evals"]
+        self.assertGreater(
+            extra_grad_evals,
+            0,
+            "extra_grad_evals must be a real positive count, not the silent "
+            "-1 sentinel, regardless of adaptation_info_fn's return shape",
+        )
+
+
+class TestIssue1090ExtraGradEvalsX64Regression(BlackJAXTest):
+    """Regression for a scan-carry dtype mismatch caught by the downstream
+    consumer's own repro convention (``JAX_ENABLE_X64=1``, matching the
+    paper1 harness).  An earlier version of the fix 3 patch accumulated
+    ``extra_grad_evals`` in the probation scan's CARRY
+    (``grad_evals_p + jnp.sum(infos_p.num_integration_steps)``), which raised
+    ``jax.lax.scan``'s "carry input and carry output must have equal types"
+    (``int32[]`` in, ``int64[]`` out) once 64-bit ints were enabled --
+    ``jnp.sum``'s integer-promotion result dtype does not match a hardcoded
+    ``jnp.int32`` carry dtype under x64.  Exercises the full multi-chain
+    probation path inside ``jax.enable_x64()`` (the repo's established x64
+    test idiom; see ``StagedAdaptationX64SmokeTest`` in
+    ``test_staged_adaptation.py``)."""
+
+    def test_probation_scan_does_not_raise_under_x64(self):
+        n_chains = 8
+
+        def logdensity_fn(x):
+            return -0.5 * jnp.sum(x**2)
+
+        with jax.enable_x64():
+            position = jnp.zeros((n_chains, 4), dtype=jnp.float64)
+            warmup = blackjax.staged_adaptation(
+                blackjax.nuts,
+                logdensity_fn,
+                metric="auto",
+                max_grad_budget=8000,
+                n_chains=n_chains,
+                start_state_probation=True,
+                probation_window=10,
+            )
+            results, info = warmup.run(jax.random.key(44), position, num_steps=40)
+
+            self.assertIsInstance(info, StagedAdaptationInfo)
+            extra_grad_evals = info.diagnostics["extra_grad_evals"]
+            self.assertGreater(
+                extra_grad_evals,
+                0,
+                "the probation scan must complete under x64 and produce a "
+                "real positive grad-eval count",
+            )
 
 
 # ---------------------------------------------------------------------------

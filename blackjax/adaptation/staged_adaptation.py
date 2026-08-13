@@ -55,6 +55,7 @@ from blackjax.util import pytree_size
 
 __all__ = [
     "StagedAdaptationState",
+    "StagedAdaptationInfo",
     "build_schedule",
     "staged_adaptation",
 ]
@@ -525,6 +526,75 @@ def _resolve_metric_and_schedule(
 # ---------------------------------------------------------------------------
 
 
+class StagedAdaptationInfo(NamedTuple):
+    """Second return value of ``run()`` when ``start_state_probation=True``.
+
+    Routes the start-state-probation diagnostics dict alongside the info
+    stream instead of polluting ``AdaptationResults.parameters`` (Issue#1090
+    fix 1) -- ``parameters`` is fed directly into ``algorithm(logdensity_fn,
+    **result.parameters)`` (the documented sampler-deploy pattern), and a
+    ``"start_state_probation"`` dict value there is not a valid sampler
+    kwarg, so it must live on the OTHER side of ``run()``'s ``(results,
+    info)`` return pair, not inside ``results``.  Extending
+    ``AdaptationResults`` itself (adding a third field) was considered and
+    rejected: ``state, params = result`` positional-unpacking of
+    ``AdaptationResults`` is a documented pattern already in the wild, and a
+    third field breaks that 2-unpack regardless of any default value: this
+    wrapper instead grows the SECOND element of ``run()``'s own top-level
+    ``(results, info)`` pair, whose arity is untouched (``results, info =
+    warmup.run(...)`` still 2-unpacks correctly; only ``info``'s internal
+    type varies with ``start_state_probation``, and only for this brand-new,
+    still-unreleased opt-in feature -- no caller of the disabled path can
+    observe this).
+
+    When ``start_state_probation=False`` (the default), ``run()``'s second
+    return value is the bare ``info`` stream (bit-identical to the pre-#1064
+    contract) -- this wrapper is NEVER constructed on the disabled path.
+
+    Parameters
+    ----------
+    trace
+        The concatenated per-step adaptation info stream: the caller's
+        ``adaptation_info_fn`` applied to every main-warmup step AND every
+        probation step -- same PyTree structure ``run()`` returns when the
+        feature is disabled.  Its leading (step) axis has length
+        ``num_steps + probation_window``, longer than the caller's declared
+        ``num_steps`` (Issue#1090 fix 2).  A consumer that needs exactly the
+        prescribed-schedule prefix (e.g. to index schedule boundaries) MUST
+        slice ``trace`` to ``diagnostics["warmup_boundary_index"]`` first,
+        e.g. ``jax.tree.map(lambda x: x[:diagnostics["warmup_boundary_index"]],
+        trace)``.  A caller that wants the automatic warmup-cost ledger
+        (e.g. ``sum(trace.info.num_integration_steps)`` charging the
+        probation phase as warmup cost too) uses ``trace`` unsliced.
+
+        Design note: a separately-shaped ``(main_trace, probation_trace)``
+        pair -- instead of one concatenated ``trace`` plus a boundary index
+        -- was considered and rejected.  Concatenation is not a defect for a
+        SUMMING consumer (a caller reducing over the full step axis, e.g. a
+        gradient ledger, gets the probation phase folded in automatically,
+        exactly as documented above); it only breaks a schedule-boundary
+        INDEXING consumer that implicitly assumes ``trace.shape[0] ==
+        num_steps``.  Splitting the return in two would force EVERY caller,
+        including the summing ones, to explicitly concatenate before
+        reducing, in exchange for saving the (one-line) slice only the
+        indexing consumers need.  Keeping ``trace`` concatenated and adding
+        ``warmup_boundary_index`` gives both consumer shapes a supported,
+        one-line path with no default-case regression for the common
+        (summing) one.
+    diagnostics
+        The start-state-probation diagnostics dict from
+        :func:`_apply_start_state_probation`, plus ``warmup_boundary_index``
+        (the index into ``trace`` where the probation tail begins -- i.e.
+        ``trace[:warmup_boundary_index]`` is exactly the prescribed
+        schedule).  Pass this dict as
+        :func:`~blackjax.adaptation.meta.verdict.extract_multi_chain_verdict`'s
+        ``probation_result`` argument to fold it into a verdict's ``flags``.
+    """
+
+    trace: Any
+    diagnostics: dict
+
+
 def _apply_start_state_probation(
     rng_key: PRNGKey,
     last_chain_state: Any,
@@ -728,10 +798,38 @@ def _apply_start_state_probation(
             backed_off * jnp.asarray(_PROBATION_RECOVERY_RATE), step_size
         )
         new_ever_diverged = ever_diverged_p | is_div
+        # Read from infos_p -- the algorithm's OWN raw kernel Info
+        # (HMCInfo/NUTSInfo, the only two algorithms this multi-chain path
+        # supports; see the start_state_probation docstring) -- never from
+        # `record` below.  `record` is shaped by the caller's
+        # adaptation_info_fn and can be a bare tuple or a slimmed NamedTuple
+        # (e.g. via get_filter_adapt_info_fn) that drops
+        # num_integration_steps entirely; deriving the grad ledger from it
+        # made this silently fall back to a -1 sentinel whenever a caller's
+        # info_fn shape didn't match (Issue#1090 fix 3 -- "no silent
+        # interventions" failing silently itself). infos_p is unaffected by
+        # adaptation_info_fn by construction, so this ledger is now correct
+        # regardless of what the caller passes there. Returned as a scan
+        # OUTPUT (stacked, summed after the scan) rather than folded into the
+        # carry: a carry component's output dtype must exactly match its
+        # input dtype every iteration, and jnp.sum's integer-promotion rules
+        # differ from the per-step field's own dtype under
+        # jax.config.jax_enable_x64 -- accumulating in the carry raised
+        # "carry input and carry output must have equal types" (int32 in,
+        # int64 out) under x64. A stacked scan output has no such
+        # input/output dtype constraint.
+        per_step_grad_evals = jnp.sum(infos_p.num_integration_steps)
         record = adaptation_info_fn(new_states_p, infos_p, frozen_adaptation_state)
-        return (new_states_p, recovered, new_ever_diverged), record
+        return (new_states_p, recovered, new_ever_diverged), (
+            record,
+            per_step_grad_evals,
+        )
 
-    (final_states, final_step_sizes, ever_diverged), probation_info = jax.lax.scan(
+    (
+        final_states,
+        final_step_sizes,
+        ever_diverged,
+    ), (probation_info, grad_evals_per_step) = jax.lax.scan(
         _probation_step,
         (rehabilitated_state, init_step_sizes, init_ever_diverged),
         probation_keys,
@@ -746,10 +844,10 @@ def _apply_start_state_probation(
 
     unresolved = final_step_sizes < (jnp.asarray(_PROBATION_RESOLVED_TOL) * step_size)
 
-    try:
-        extra_grad_evals = int(jnp.sum(probation_info.info.num_integration_steps))
-    except AttributeError:
-        extra_grad_evals = -1
+    # Computed above from the raw kernel info (infos_p), independent of
+    # adaptation_info_fn's shape -- always a real count, never a -1 sentinel
+    # (Issue#1090 fix 3).
+    extra_grad_evals = int(jnp.sum(grad_evals_per_step))
 
     diagnostics = {
         "enabled": True,
@@ -916,19 +1014,34 @@ def staged_adaptation(
         :func:`~blackjax.adaptation.staged_adaptation._apply_start_state_probation`
         for the full mechanism.  The deployed ``step_size`` /
         ``inverse_mass_matrix`` returned in ``parameters`` are never changed
-        by this — only the starting position for sampling is.  All extra
-        kernel calls are folded into the returned ``info`` stream (same step
-        axis as the main warmup loop), so any caller already summing
-        ``info.info.num_integration_steps`` for a gradient ledger, or
-        ``info.info.is_divergent`` for a warmup-divergence count,
-        automatically and correctly charges this phase as warmup cost.
-        Diagnostics land at ``parameters["start_state_probation"]`` (present
-        only when enabled); see
+        by this — only the starting position for sampling is, and
+        ``parameters`` stays a pure sampler-kwargs dict either way (safe to
+        splat as ``algorithm(logdensity_fn, **result.parameters)``, the
+        documented deploy pattern; Issue#1090 fix 1).
+
+        **Return-value contract change when enabled** (Issue#1090 fix 1 &
+        2): ``run()``'s second return value becomes a
+        :class:`StagedAdaptationInfo` instead of the bare info stream.
+        ``info.trace`` is the concatenated per-step stream (same PyTree
+        structure as the disabled-path ``info``, so
+        ``info.trace.info.num_integration_steps`` /
+        ``info.trace.info.is_divergent`` sums still automatically and
+        correctly charge the probation phase as warmup cost); ``info.trace``
+        is ``probation_window`` steps LONGER than the caller's declared
+        ``num_steps`` — a consumer that indexes prescribed schedule
+        boundaries must first slice ``info.trace`` to
+        ``info.diagnostics["warmup_boundary_index"]``.
+        ``info.diagnostics`` carries the probation diagnostics dict
+        (``parameters["start_state_probation"]`` no longer exists — see
         :func:`~blackjax.adaptation.meta.verdict.extract_multi_chain_verdict`'s
-        ``probation_result`` argument to fold them into a verdict's
-        ``flags``.  Requires the algorithm's kernel info to expose
-        ``is_divergent`` (true for HMC and NUTS, the only algorithms
-        currently exercised through the multi-chain path).
+        ``probation_result`` argument to fold ``info.diagnostics`` into a
+        verdict's ``flags``).  When disabled (the default), ``info`` is the
+        bare stream, bit-identical to the pre-#1064 contract —
+        :class:`StagedAdaptationInfo` is never constructed on the disabled
+        path.  Requires the algorithm's kernel info to expose
+        ``is_divergent`` and ``num_integration_steps`` (true for HMC and
+        NUTS, the only algorithms currently exercised through the
+        multi-chain path).
     probation_window
         Number of extra per-chain steps for the ``start_state_probation``
         window.  ``None`` (default) uses
@@ -944,7 +1057,10 @@ def staged_adaptation(
     AdaptationAlgorithm
         An :class:`~blackjax.base.AdaptationAlgorithm` wrapping a ``run``
         function with signature ``(rng_key, position, num_steps=1000)`` that
-        returns ``(AdaptationResults, info)``.
+        returns ``(AdaptationResults, info)``.  ``info`` is the bare
+        per-step info stream, or a :class:`StagedAdaptationInfo` when
+        ``start_state_probation=True`` — see that parameter's docstring for
+        the contract.
 
     Notes
     -----
@@ -1320,8 +1436,22 @@ def staged_adaptation(
             "inverse_mass_matrix": inverse_mass_matrix,
             **extra_parameters,
         }
+
         if probation_diagnostics is not None:
-            parameters["start_state_probation"] = probation_diagnostics
+            # Route diagnostics through `info` (the run's dedicated
+            # auxiliary-info channel), never through `parameters` --
+            # `parameters` must stay a pure sampler-kwargs dict so the
+            # documented deploy pattern `algorithm(logdensity_fn,
+            # **result.parameters)` keeps working (Issue#1090 fix 1; see
+            # StagedAdaptationInfo's docstring for the full argument).
+            # `num_steps` here is the per-chain main-warmup step count --
+            # the index in `info` where the probation tail begins
+            # (Issue#1090 fix 2).
+            probation_diagnostics = {
+                **probation_diagnostics,
+                "warmup_boundary_index": num_steps,
+            }
+            info = StagedAdaptationInfo(trace=info, diagnostics=probation_diagnostics)
 
         return (
             AdaptationResults(
