@@ -638,6 +638,14 @@ class DivergenceConcentrationTest(chex.TestCase):
         assert bool(report_default.warn) is True
         assert bool(report_high.warn) is False
 
+    def test_single_chain_input_is_handled_gracefully(self):
+        # num_chains=1 has no "other" chains to compare against -- must
+        # not crash, just report cleanly.
+        report = diagnostics.divergence_concentration_from_counts(
+            jnp.array([5]), self._N_DRAWS
+        )
+        assert bool(report.warn) is False
+
 
 if __name__ == "__main__":
     absltest.main()
