@@ -32,6 +32,7 @@ from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk
 from .mcmc import rmhmc as _rmhmc
 from .mcmc import slice as _slice
+from .mcmc.composed import _kernel as _gist_composed
 from .mcmc.composed import step_size as _gist_step_size
 from .mcmc.composed import trajectory_length as _gist_trajectory_length
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
@@ -141,6 +142,7 @@ barker = generate_top_level_api_from(_barker)
 barker_proposal = barker  # backwards-compatible alias
 gist_step_size = generate_top_level_api_from(_gist_step_size)
 gist_trajectory_length = generate_top_level_api_from(_gist_trajectory_length)
+gist_composed = generate_top_level_api_from(_gist_composed)
 
 mhmc = GenerateSamplingAPI(
     functools.partial(
@@ -266,6 +268,7 @@ __all__ = [
     "coordinate_slice",
     "gist_step_size",
     "gist_trajectory_length",
+    "gist_composed",
     "mclmc",
     "adjusted_mclmc",
     "adjusted_mclmc_dynamic",
