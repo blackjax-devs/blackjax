@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.gist_step_size" href="../gist_step_size/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8cb85cd87" />
+  <meta name="docsearch:version" content="0.1.dev1+g5ac4987cf" />
   </head>
   
   
@@ -211,6 +211,11 @@
 <li class="toctree-l3"><a class="reference internal" href="../adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../composed/index.html">blackjax.mcmc.composed</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../composed/step_size/index.html">blackjax.mcmc.composed.step_size</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../composed/trajectory_length/index.html">blackjax.mcmc.composed.trajectory_length</a></li>
+</ul>
+</details></li>
 <li class="toctree-l3"><a class="reference internal" href="../diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
@@ -383,9 +388,7 @@
 <button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
     <i class="fa-solid fa-magnifying-glass fa-lg"></i>
 </button>
-<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
-    <span class="fa-solid fa-list"></span>
-</button>
+
 </div></div>
       
     </div>
@@ -401,37 +404,6 @@
     <div id="print-main-content">
         <div id="jb-print-toc">
             
-            <div>
-                <h2> Contents </h2>
-            </div>
-            <nav aria-label="Page">
-                <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#forward-rollout-caching">Forward-rollout caching</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.init"><code class="docutils literal notranslate"><span class="pre">init</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.momentum"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.momentum</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.tuning_parameter"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.tuning_parameter</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_accepted"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.is_accepted</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_divergent"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.is_divergent</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.acceptance_rate"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.acceptance_rate</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.energy"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.energy</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_integration_steps"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.num_integration_steps</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_steps_to_uturn_forward"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.num_steps_to_uturn_forward</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_steps_to_uturn_reverse"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.num_steps_to_uturn_reverse</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_no_return_rejected"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.is_no_return_rejected</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn"><code class="docutils literal notranslate"><span class="pre">num_steps_to_uturn()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
-</ul>
-</li>
-</ul>
-            </nav>
         </div>
     </div>
 </div>
@@ -443,304 +415,17 @@
                   
   <section id="module-blackjax.mcmc.gist_trajectory_length">
 <span id="blackjax-mcmc-gist-trajectory-length"></span><h1>blackjax.mcmc.gist_trajectory_length<a class="headerlink" href="#module-blackjax.mcmc.gist_trajectory_length" title="Link to this heading">#</a></h1>
-<p>GIST instance (b): self-tuning trajectory length (no-U-turn, GIST paper
-section 5) – NOT NUTS’s recursive doubling.</p>
-<p>The tuning parameter is <code class="docutils literal notranslate"><span class="pre">alpha</span> <span class="pre">=</span> <span class="pre">L</span></code>, the number of leapfrog steps at a
-<em>fixed</em> step size <code class="docutils literal notranslate"><span class="pre">h</span></code>. <code class="docutils literal notranslate"><span class="pre">L</span></code> is drawn uniformly from <code class="docutils literal notranslate"><span class="pre">[Lo(theta,</span> <span class="pre">rho)</span> <span class="pre">:</span>
-<span class="pre">U(theta,</span> <span class="pre">rho)]</span></code> where <code class="docutils literal notranslate"><span class="pre">U(theta,</span> <span class="pre">rho)</span></code> is the number of leapfrog steps
-until the no-U-turn condition first fires (a single forward <code class="docutils literal notranslate"><span class="pre">while_loop</span></code>
-rollout, materially simpler than NUTS’s recursive-doubling tree, section
-2.2.2) and <code class="docutils literal notranslate"><span class="pre">Lo</span></code> shifts the lower end of that range by a fixed path
-fraction <code class="docutils literal notranslate"><span class="pre">psi</span></code>. Because <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">=</span> <span class="pre">identity</span></code> on <code class="docutils literal notranslate"><span class="pre">L</span></code>, the reversibility of the
-resulting kernel is automatic (Corollary 4); the only thing the acceptance
-ratio has to account for is that the forward and reverse draws are uniform
-over <em>different-width</em> intervals containing the same <code class="docutils literal notranslate"><span class="pre">L</span></code> (section 2.2.4).</p>
-<section id="forward-rollout-caching">
-<h2>Forward-rollout caching<a class="headerlink" href="#forward-rollout-caching" title="Link to this heading">#</a></h2>
-<p>The forward <code class="docutils literal notranslate"><span class="pre">U(theta,</span> <span class="pre">rho)</span></code> search already integrates every state on
-<code class="docutils literal notranslate"><span class="pre">[1</span> <span class="pre">:</span> <span class="pre">U]</span></code> one leapfrog step at a time (the <code class="docutils literal notranslate"><span class="pre">while_loop</span></code> in
-<a class="reference internal" href="#blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn" title="blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn"><code class="xref py py-func docutils literal notranslate"><span class="pre">num_steps_to_uturn()</span></code></a>); the selected proposal is always one of those
-states (some <code class="docutils literal notranslate"><span class="pre">L</span> <span class="pre">&lt;=</span> <span class="pre">U</span></code>). Rather than throw them away and re-integrate <code class="docutils literal notranslate"><span class="pre">L</span></code>
-steps from scratch via <code class="docutils literal notranslate"><span class="pre">trajectory.static_integration</span></code> (the original
-implementation), <code class="xref py py-func docutils literal notranslate"><span class="pre">_tuning_parameter_fn()</span></code> buffers every rolled-out state
-as it goes (<code class="xref py py-func docutils literal notranslate"><span class="pre">_num_steps_to_uturn_with_rollout()</span></code>) and threads the buffer
-to <code class="xref py py-func docutils literal notranslate"><span class="pre">_apply_fn()</span></code> as GIST’s <code class="docutils literal notranslate"><span class="pre">aux</span></code>, so building the proposal is an
-<code class="docutils literal notranslate"><span class="pre">O(1)</span></code> gather rather than an <code class="docutils literal notranslate"><span class="pre">O(L)</span></code> re-integration. Per transition this
-drops the cost from roughly <code class="docutils literal notranslate"><span class="pre">U</span> <span class="pre">+</span> <span class="pre">L</span> <span class="pre">+</span> <span class="pre">U_rev</span></code> leapfrog/gradient evaluations
-(<code class="docutils literal notranslate"><span class="pre">~2.75</span> <span class="pre">U</span></code> empirically, averaging over <code class="docutils literal notranslate"><span class="pre">L</span></code>’s distribution) to roughly
-<code class="docutils literal notranslate"><span class="pre">U</span> <span class="pre">+</span> <span class="pre">U_rev</span></code> (<code class="docutils literal notranslate"><span class="pre">~1.25</span> <span class="pre">U</span></code>) – see Issue#1058. The reverse rollout
-<code class="docutils literal notranslate"><span class="pre">U_rev(theta',</span> <span class="pre">rho')</span></code> (section 2.2.4) has nothing to gather from (its own
-states are never selected as the proposal) and is left as an ordinary,
-unbuffered <a class="reference internal" href="#blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn" title="blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn"><code class="xref py py-func docutils literal notranslate"><span class="pre">num_steps_to_uturn()</span></code></a> call.</p>
-<p>The buffer is <code class="docutils literal notranslate"><span class="pre">max_num_steps</span></code> copies of the full leapfrog state
-(position, momentum, logdensity, logdensity_grad) – the same asymptotic
-memory scale as the states NUTS’s own trajectory-doubling machinery holds
-live during tree building (<a class="reference internal" href="../trajectory/index.html#module-blackjax.mcmc.trajectory" title="blackjax.mcmc.trajectory"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.trajectory</span></code></a>), and it is
-allocated fresh on every kernel call (not carried across transitions), so
-steady-state memory is <code class="docutils literal notranslate"><span class="pre">O(max_num_steps</span> <span class="pre">*</span> <span class="pre">dim)</span></code> on top of the chain state
-itself, not <code class="docutils literal notranslate"><span class="pre">O(num_samples</span> <span class="pre">*</span> <span class="pre">max_num_steps</span> <span class="pre">*</span> <span class="pre">dim)</span></code>. This makes
-<code class="docutils literal notranslate"><span class="pre">max_num_steps</span></code> (default 1024, mirroring NUTS’s <code class="docutils literal notranslate"><span class="pre">max_num_doublings=10</span></code>
-cap of 1023 steps) a <em>memory</em> knob as well as a compute-cap knob: sizing it
-much larger than the rollout lengths a target actually needs pays for unused
-buffer capacity on every transition, so prefer capping it near the largest
-<code class="docutils literal notranslate"><span class="pre">U</span></code> the warmup/pilot run actually observes rather than leaving the default
-untouched on very high-dimensional targets.</p>
-<p class="rubric">References</p>
-<aside class="footnote-list brackets">
-<aside class="footnote brackets" id="id1" role="doc-footnote">
-<span class="label"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></span>
-<p>Bou-Rabee, Carpenter, Marsden, “GIST: Gibbs self-tuning for locally
-adaptive Hamiltonian Monte Carlo”, arXiv:2404.15253, section 5 (p.20-25),
-Algorithm 2 (p.21), eq. 33 (the no-U-turn condition), eq. 34-35 (the step
-distributions).</p>
-</aside>
-</aside>
-</section>
-<section id="attributes">
-<h2>Attributes<a class="headerlink" href="#attributes" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.gist_trajectory_length.init" title="blackjax.mcmc.gist_trajectory_length.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a></p></td>
-<td><p></p></td>
-</tr>
-</tbody>
-</table>
+<p>Back-compatibility shim — use <a class="reference internal" href="../composed/trajectory_length/index.html#module-blackjax.mcmc.composed.trajectory_length" title="blackjax.mcmc.composed.trajectory_length"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.composed.trajectory_length</span></code></a> instead.</p>
+<div class="deprecated">
+<p><span class="versionmodified deprecated">Deprecated since version Importing: </span>from <code class="docutils literal notranslate"><span class="pre">blackjax.mcmc.gist_trajectory_length</span></code> is deprecated.
+The module has been reorganised into the <a class="reference internal" href="../composed/index.html#module-blackjax.mcmc.composed" title="blackjax.mcmc.composed"><code class="xref py py-mod docutils literal notranslate"><span class="pre">blackjax.mcmc.composed</span></code></a>
+sub-package. All public names are still importable; update your imports
+to use the new location:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">blackjax.mcmc.composed</span> <span class="pre">import</span> <span class="pre">trajectory_length</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">blackjax.mcmc.composed.trajectory_length</span> <span class="pre">import</span> <span class="pre">GISTTrajectoryLengthInfo</span></code></p></li>
+</ul>
 </div>
-</section>
-<section id="classes">
-<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo" title="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo</span></code></a></p></td>
-<td><p>Additional information for a <code class="docutils literal notranslate"><span class="pre">gist_trajectory_length</span></code> transition.</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn" title="blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn"><code class="xref py py-obj docutils literal notranslate"><span class="pre">num_steps_to_uturn</span></code></a>(→ Callable)</p></td>
-<td><p>Build the <code class="docutils literal notranslate"><span class="pre">U(theta,</span> <span class="pre">rho)</span></code> forward-rollout function, section 2.2.2.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.gist_trajectory_length.build_kernel" title="blackjax.mcmc.gist_trajectory_length.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>(→ Callable)</p></td>
-<td><p>Build a <code class="docutils literal notranslate"><span class="pre">gist_trajectory_length</span></code> kernel.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.gist_trajectory_length.as_top_level_api" title="blackjax.mcmc.gist_trajectory_length.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">blackjax.gist_trajectory_length</span></code> -- GIST self-tuning path length</p></td>
-</tr>
-</tbody>
-</table>
-</div>
-</section>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
-<dl class="py data">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.init">
-<span class="sig-name descname"><span class="pre">init</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.init" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py class">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">GISTTrajectoryLengthInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo" title="Link to this definition">#</a></dt>
-<dd><p>Additional information for a <code class="docutils literal notranslate"><span class="pre">gist_trajectory_length</span></code> transition.</p>
-<p>momentum, tuning_parameter, is_accepted, is_divergent, acceptance_rate,
-energy, num_integration_steps</p>
-<blockquote>
-<div><p>Same convention as <a class="reference internal" href="../gist_step_size/index.html#blackjax.mcmc.gist_step_size.GISTStepSizeInfo" title="blackjax.mcmc.gist_step_size.GISTStepSizeInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">GISTStepSizeInfo</span></code></a>
-(flat extension, not nesting). <code class="docutils literal notranslate"><span class="pre">tuning_parameter</span></code> is <code class="docutils literal notranslate"><span class="pre">L</span></code> itself
-(an integer, not a compound PyTree, since <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">=</span> <span class="pre">identity</span></code> is the
-only tuning-parameter component here).</p>
-</div></blockquote>
-<dl class="simple">
-<dt>num_steps_to_uturn_forward, num_steps_to_uturn_reverse</dt><dd><p><code class="docutils literal notranslate"><span class="pre">U(theta,</span> <span class="pre">rho)</span> <span class="pre">=</span> <span class="pre">M</span></code> and <code class="docutils literal notranslate"><span class="pre">U(theta',</span> <span class="pre">rho')</span> <span class="pre">=</span> <span class="pre">N</span></code>, section 2.2.2 –
-the (possibly capped) leapfrog-step counts to the no-return
-condition, forward from the current state and from the proposal.</p>
-</dd>
-<dt>is_no_return_rejected</dt><dd><p>True when <code class="docutils literal notranslate"><span class="pre">L</span></code> fell outside <code class="docutils literal notranslate"><span class="pre">[Lo(theta',</span> <span class="pre">rho'),</span> <span class="pre">N]</span></code> – the
-paper’s own “no-return” rejection category (Fig. 5, section 2.2.4),
-tracked separately from an ordinary energy-based Metropolis
-rejection.</p>
-</dd>
-</dl>
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.momentum">
-<span class="sig-name descname"><span class="pre">momentum</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.momentum"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.momentum" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.tuning_parameter">
-<span class="sig-name descname"><span class="pre">tuning_parameter</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.tuning_parameter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.tuning_parameter" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_accepted">
-<span class="sig-name descname"><span class="pre">is_accepted</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.is_accepted"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_accepted" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_divergent">
-<span class="sig-name descname"><span class="pre">is_divergent</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.is_divergent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_divergent" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.acceptance_rate">
-<span class="sig-name descname"><span class="pre">acceptance_rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.acceptance_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.acceptance_rate" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.energy">
-<span class="sig-name descname"><span class="pre">energy</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.energy"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.energy" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_integration_steps">
-<span class="sig-name descname"><span class="pre">num_integration_steps</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.num_integration_steps"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_integration_steps" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_steps_to_uturn_forward">
-<span class="sig-name descname"><span class="pre">num_steps_to_uturn_forward</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.num_steps_to_uturn_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_steps_to_uturn_forward" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_steps_to_uturn_reverse">
-<span class="sig-name descname"><span class="pre">num_steps_to_uturn_reverse</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.num_steps_to_uturn_reverse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_steps_to_uturn_reverse" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-<dl class="py attribute">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_no_return_rejected">
-<span class="sig-name descname"><span class="pre">is_no_return_rejected</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#GISTTrajectoryLengthInfo.is_no_return_rejected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_no_return_rejected" title="Link to this definition">#</a></dt>
-<dd></dd></dl>
-
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn">
-<span class="sig-name descname"><span class="pre">num_steps_to_uturn</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">metric</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.mcmc.metrics.Metric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#num_steps_to_uturn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn" title="Link to this definition">#</a></dt>
-<dd><p>Build the <code class="docutils literal notranslate"><span class="pre">U(theta,</span> <span class="pre">rho)</span></code> forward-rollout function, section 2.2.2.</p>
-<p>A single forward <code class="docutils literal notranslate"><span class="pre">while_loop</span></code>, one leapfrog step at a time, checking
-the sign of the (metric-corrected) no-return condition after every step
-– no tree/doubling data structure, no recursion, no sub-U-turn
-bookkeeping, unlike NUTS’s <code class="docutils literal notranslate"><span class="pre">1sub-U-turn</span></code> criterion (section 3.5).</p>
-<p>The dot product pairs the position displacement with the <strong>raw momentum</strong>
-<code class="docutils literal notranslate"><span class="pre">rho</span></code> (GIST paper eq. 33), so the criterion generalizes correctly to
-a non-identity <code class="docutils literal notranslate"><span class="pre">inverse_mass_matrix</span></code> (diagonal / dense / low-rank) in
-an affine-equivariant manner: with p ~ N(0, G^-1) and K(p) = ½ pᵀGp,
-whitening φ = G^{-1/2}θ and p_φ = G^{1/2}p gives (Δθ)ᵀp = Δφᵀp_φ,
-which is exactly invariant under any change of basis G. This is a
-<em>different</em> criterion from NUTS’s momentum-sum <code class="docutils literal notranslate"><span class="pre">check_turning</span></code>, which
-uses the momentum sum (not position displacement) in the pairing. This
-changes no formula for the identity-metric case the paper’s own
-experiments use.</p>
-<p><code class="docutils literal notranslate"><span class="pre">max_num_steps</span></code> is a hard cap, exactly analogous to NUTS’s
-<code class="docutils literal notranslate"><span class="pre">max_num_doublings</span></code> (except here it bounds a <em>linear</em> rollout, not
-<code class="docutils literal notranslate"><span class="pre">2**max</span></code> leapfrog steps). Capping is not an approximation: as long as
-<code class="docutils literal notranslate"><span class="pre">p(L|theta,rho)</span></code> and the acceptance ratio consistently use this capped
-<code class="docutils literal notranslate"><span class="pre">U</span></code>, the resulting <code class="docutils literal notranslate"><span class="pre">p(L|theta,rho)</span></code> is still an exact, well-defined,
-strictly-positive conditional density (the GIST reversibility guarantee,
-Theorem 3, does not care that <code class="docutils literal notranslate"><span class="pre">U</span></code> is a capped version of the “true”
-U-turn step count).</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>integrator</strong> – Symplectic integrator used for the one-leapfrog-at-a-time rollout.</p></li>
-<li><p><strong>step_size</strong> – <code class="docutils literal notranslate"><span class="pre">h</span></code>, the fixed step size (not GIST-adapted in this instance).</p></li>
-<li><p><strong>metric</strong> – The (already-resolved) <code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code>.</p></li>
-<li><p><strong>max_num_steps</strong> – Hard cap on the rollout length.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">uturn_fn(state:</span> <span class="pre">IntegratorState,</span> <span class="pre">logdensity_fn)</span> <span class="pre">-&gt;</span> <span class="pre">Array</span></code>, the</p></li>
-<li><p><em>(possibly capped) number of leapfrog steps to the no-return condition.</em></p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.build_kernel">
-<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Callable</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.build_kernel" title="Link to this definition">#</a></dt>
-<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">gist_trajectory_length</span></code> kernel.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>integrator</strong> – The symplectic integrator to use to integrate the Hamiltonian
-dynamics.</p></li>
-<li><p><strong>divergence_threshold</strong> – Value of the difference in energy above which we consider that the
-transition is divergent.</p></li>
-<li><p><strong>path_fraction</strong> – <code class="docutils literal notranslate"><span class="pre">psi</span></code> in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>, section 2.2.3. Default 0.5 per the paper’s
-own recommendation (comparable leapfrog-step counts to NUTS;
-<code class="docutils literal notranslate"><span class="pre">psi=0</span></code> is the simpler eq. 34 special case).</p></li>
-<li><p><strong>max_num_steps</strong> – Hard cap on each U-turn rollout (forward and reverse); analogous to
-NUTS’s <code class="docutils literal notranslate"><span class="pre">max_num_doublings</span></code>, but bounds a <em>linear</em> rollout here,
-not <code class="docutils literal notranslate"><span class="pre">2**max</span></code> leapfrog steps. Also sizes the forward-rollout buffer
-(module docstring, “Forward-rollout caching”) – <code class="docutils literal notranslate"><span class="pre">O(max_num_steps)</span></code>
-leapfrog states are allocated per transition.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><ul class="simple">
-<li><p><em>A kernel that takes a rng_key and a Pytree that contains the current</em></p></li>
-<li><p><em>state of the chain and that returns a new state of the chain along with</em></p></li>
-<li><p><em>information about the transition.</em></p></li>
-</ul>
-</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="blackjax.mcmc.gist_trajectory_length.as_top_level_api">
-<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.mcmc.metrics.MetricTypes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">path_fraction</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_num_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/gist_trajectory_length.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.gist_trajectory_length.as_top_level_api" title="Link to this definition">#</a></dt>
-<dd><p><code class="docutils literal notranslate"><span class="pre">blackjax.gist_trajectory_length</span></code> – GIST self-tuning path length
-(no-U-turn condition, section 2.2; NOT NUTS’s recursive doubling).</p>
-<p class="rubric">Examples</p>
-<p>A new <code class="docutils literal notranslate"><span class="pre">gist_trajectory_length</span></code> kernel can be initialized and used with
-the following code:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">gist_trajectory_length</span> <span class="o">=</span> <span class="n">blackjax</span><span class="o">.</span><span class="n">gist_trajectory_length</span><span class="p">(</span>
-    <span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">step_size</span><span class="o">=</span><span class="mf">0.1</span>
-<span class="p">)</span>
-<span class="n">state</span> <span class="o">=</span> <span class="n">gist_trajectory_length</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
-<span class="n">new_state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">gist_trajectory_length</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
-</pre></div>
-</div>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>logdensity_fn</strong> – The log-density function we wish to draw samples from.</p></li>
-<li><p><strong>inverse_mass_matrix</strong> – The value to use for the inverse mass matrix when drawing a value
-for the momentum and computing the kinetic energy.</p></li>
-<li><p><strong>step_size</strong> – <code class="docutils literal notranslate"><span class="pre">h</span></code>, fixed (not GIST-adapted in this instance; see the module
-docstring for composing with <code class="docutils literal notranslate"><span class="pre">gist_step_size</span></code>).</p></li>
-<li><p><strong>path_fraction</strong> – <code class="docutils literal notranslate"><span class="pre">psi</span></code> in <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>, section 2.2.3. Default 0.5 per the paper’s
-own recommendation (comparable leapfrog-step counts to NUTS;
-<code class="docutils literal notranslate"><span class="pre">psi=0</span></code> is the simpler eq. 34 special case).</p></li>
-<li><p><strong>max_num_steps</strong> – Hard cap on each U-turn rollout (forward and reverse); analogous to
-NUTS’s <code class="docutils literal notranslate"><span class="pre">max_num_doublings</span></code>, but bounds a <em>linear</em> rollout here,
-not <code class="docutils literal notranslate"><span class="pre">2**max</span></code> leapfrog steps – size accordingly (NUTS’s default of
-10 doublings caps at 1023 steps; a directly-comparable cap here is
-<code class="docutils literal notranslate"><span class="pre">max_num_steps</span> <span class="pre">~=</span> <span class="pre">1024</span></code>). Also sizes the forward-rollout buffer
-(module docstring, “Forward-rollout caching”) – <code class="docutils literal notranslate"><span class="pre">O(max_num_steps)</span></code>
-leapfrog states are allocated per transition, so an oversized cap on
-a high-dimensional target trades unused memory for compute.</p></li>
-<li><p><strong>divergence_threshold</strong> – The absolute value of the difference in energy between two states
-above which we say that the transition is divergent.</p></li>
-<li><p><strong>integrator</strong> – (algorithm parameter) The symplectic integrator to use to integrate
-the trajectory.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code>.</p>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
 </section>
 
 
@@ -778,46 +463,6 @@ the trajectory.</p></li>
             </div>
             
             
-              
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
-                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
-
-
-  <div class="sidebar-secondary-item"><div
-    id="pst-page-navigation-heading-2"
-    class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> Contents
-  </div>
-  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
-    <ul class="visible nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#forward-rollout-caching">Forward-rollout caching</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#attributes">Attributes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.init"><code class="docutils literal notranslate"><span class="pre">init</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo</span></code></a><ul class="nav section-nav flex-column">
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.momentum"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.momentum</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.tuning_parameter"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.tuning_parameter</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_accepted"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.is_accepted</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_divergent"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.is_divergent</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.acceptance_rate"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.acceptance_rate</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.energy"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.energy</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_integration_steps"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.num_integration_steps</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_steps_to_uturn_forward"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.num_steps_to_uturn_forward</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.num_steps_to_uturn_reverse"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.num_steps_to_uturn_reverse</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.GISTTrajectoryLengthInfo.is_no_return_rejected"><code class="docutils literal notranslate"><span class="pre">GISTTrajectoryLengthInfo.is_no_return_rejected</span></code></a></li>
-</ul>
-</li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.num_steps_to_uturn"><code class="docutils literal notranslate"><span class="pre">num_steps_to_uturn()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.gist_trajectory_length.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
-</ul>
-</li>
-</ul>
-  </nav></div>
-
-</div></div>
               
             
           </div>

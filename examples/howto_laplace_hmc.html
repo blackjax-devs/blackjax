@@ -55,7 +55,7 @@
     <link rel="prev" title="How to build a Metropolis-Within-Gibbs sampler?" href="howto_metropolis_within_gibbs.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8cb85cd87" />
+  <meta name="docsearch:version" content="0.1.dev1+g5ac4987cf" />
   </head>
   
   
@@ -211,6 +211,11 @@
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../autoapi/blackjax/mcmc/composed/index.html">blackjax.mcmc.composed</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/blackjax/mcmc/composed/step_size/index.html">blackjax.mcmc.composed.step_size</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../autoapi/blackjax/mcmc/composed/trajectory_length/index.html">blackjax.mcmc.composed.trajectory_length</a></li>
+</ul>
+</details></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
@@ -557,9 +562,9 @@ for the L-BFGS solver.</p></li>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate:  0.82
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Acceptance rate:  0.85
 Divergences:      0
-phi posterior mean:  0.638  (true log_sigma=0.693)
+phi posterior mean:  0.391  (true log_sigma=0.693)
 </pre></div>
 </div>
 </div>
@@ -593,7 +598,7 @@ against the true marginal log-density:</p>
 </div>
 </details>
 <div class="cell_output docutils container">
-<img alt="../_images/127fb4a941c6cf94be025915883a24f5295ced6e329566c50d17884292018357.png" src="../_images/127fb4a941c6cf94be025915883a24f5295ced6e329566c50d17884292018357.png" />
+<img alt="../_images/00ad9c0ba23c46637bbfc779c5d71dc9e759f5a24a50558093210e0d0d2f466d.png" src="../_images/00ad9c0ba23c46637bbfc779c5d71dc9e759f5a24a50558093210e0d0d2f466d.png" />
 </div>
 </div>
 </section>
@@ -619,7 +624,7 @@ use <code class="docutils literal notranslate"><span class="pre">laplace.sample_
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>theta posterior mean (first 5): [-0.33080456 -0.07626342 -0.19307576 -0.12108634 -0.9945997 ]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>theta posterior mean (first 5): [-1.0157036  1.3220372 -0.9511636 -1.0936791 -1.0367135]
 </pre></div>
 </div>
 </div>
@@ -659,8 +664,8 @@ accepting (no rejection):</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ESS laplace_hmc:  1500.3
-ESS laplace_mhmc: 897.3
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>ESS laplace_hmc:  221.6
+ESS laplace_mhmc: 805.7
 </pre></div>
 </div>
 </div>

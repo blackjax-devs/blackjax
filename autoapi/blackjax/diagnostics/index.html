@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.window_adaptation" href="../adaptation/window_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8cb85cd87" />
+  <meta name="docsearch:version" content="0.1.dev1+g5ac4987cf" />
   </head>
   
   
@@ -212,6 +212,11 @@
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../mcmc/composed/index.html">blackjax.mcmc.composed</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../mcmc/composed/step_size/index.html">blackjax.mcmc.composed.step_size</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../mcmc/composed/trajectory_length/index.html">blackjax.mcmc.composed.trajectory_length</a></li>
+</ul>
+</details></li>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
@@ -407,6 +412,7 @@
             </div>
             <nav aria-label="Page">
                 <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.potential_scale_reduction"><code class="docutils literal notranslate"><span class="pre">potential_scale_reduction()</span></code></a></li>
@@ -416,6 +422,32 @@
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.ess_tail"><code class="docutils literal notranslate"><span class="pre">ess_tail()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.pareto_khat"><code class="docutils literal notranslate"><span class="pre">pareto_khat()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.psis_weights"><code class="docutils literal notranslate"><span class="pre">psis_weights()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.warn"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.warn</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.flagged"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.flagged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.num_flagged"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.num_flagged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.rates"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.rates</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.median_other_rate"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.median_other_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.total_divergences"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.total_divergences</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.num_chains"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.num_chains</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.rate_threshold"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.rate_threshold</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.multinomial_p_value"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.multinomial_p_value</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.warn</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.flagged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.num_flagged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.rates</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.early_rate"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.early_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.late_rate"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.late_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.median_other_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id9"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.total_divergences</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.num_chains</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id11"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.rate_threshold</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id12"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.multinomial_p_value</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.divergence_concentration"><code class="docutils literal notranslate"><span class="pre">divergence_concentration()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.divergence_concentration_from_counts"><code class="docutils literal notranslate"><span class="pre">divergence_concentration_from_counts()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.format_divergence_warning"><code class="docutils literal notranslate"><span class="pre">format_divergence_warning()</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -432,6 +464,17 @@
   <section id="module-blackjax.diagnostics">
 <span id="blackjax-diagnostics"></span><h1>blackjax.diagnostics<a class="headerlink" href="#module-blackjax.diagnostics" title="Link to this heading">#</a></h1>
 <p>MCMC diagnostics.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.diagnostics.DivergenceConcentrationReport" title="blackjax.diagnostics.DivergenceConcentrationReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DivergenceConcentrationReport</span></code></a></p></td>
+<td><p>Per-run divergence-concentration diagnostic report.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
 <section id="functions">
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
@@ -456,6 +499,15 @@
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.diagnostics.psis_weights" title="blackjax.diagnostics.psis_weights"><code class="xref py py-obj docutils literal notranslate"><span class="pre">psis_weights</span></code></a>(→ tuple[blackjax.types.Array, ...)</p></td>
 <td><p>Pareto Smoothed Importance Sampling (PSIS) log weights.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.diagnostics.divergence_concentration" title="blackjax.diagnostics.divergence_concentration"><code class="xref py py-obj docutils literal notranslate"><span class="pre">divergence_concentration</span></code></a>(→ DivergenceConcentrationReport)</p></td>
+<td><p>Flag a run where sampling-phase divergences concentrate on a minority of chains.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.diagnostics.divergence_concentration_from_counts" title="blackjax.diagnostics.divergence_concentration_from_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">divergence_concentration_from_counts</span></code></a>(...)</p></td>
+<td><p>Same as <a class="reference internal" href="#blackjax.diagnostics.divergence_concentration" title="blackjax.diagnostics.divergence_concentration"><code class="xref py py-func docutils literal notranslate"><span class="pre">divergence_concentration()</span></code></a>, from precomputed per-chain counts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.diagnostics.format_divergence_warning" title="blackjax.diagnostics.format_divergence_warning"><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_divergence_warning</span></code></a>(→ str)</p></td>
+<td><p>Render a <a class="reference internal" href="#blackjax.diagnostics.DivergenceConcentrationReport" title="blackjax.diagnostics.DivergenceConcentrationReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">DivergenceConcentrationReport</span></code></a> as a human-readable message.</p></td>
 </tr>
 </tbody>
 </table>
@@ -708,6 +760,217 @@ unsmoothed (only normalised).  Fitting uses empirical Bayes in
 importance-ratio space, the same approach as ArviZ.</p>
 </dd></dl>
 
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">DivergenceConcentrationReport</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport" title="Link to this definition">#</a></dt>
+<dd><p>Per-run divergence-concentration diagnostic report.</p>
+<p>All fields are plain JAX numerics — no strings — so the statistic
+itself stays JIT-compilable.  Pass the report to
+<a class="reference internal" href="#blackjax.diagnostics.format_divergence_warning" title="blackjax.diagnostics.format_divergence_warning"><code class="xref py py-func docutils literal notranslate"><span class="pre">format_divergence_warning()</span></code></a> to render a human-readable message
+from concrete (non-traced) values.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.warn">
+<span class="sig-name descname"><span class="pre">warn</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.warn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.warn" title="Link to this definition">#</a></dt>
+<dd><p>Bool. Whether a minority of chains (see the module notes on
+<a class="reference internal" href="#blackjax.diagnostics.divergence_concentration" title="blackjax.diagnostics.divergence_concentration"><code class="xref py py-func docutils literal notranslate"><span class="pre">divergence_concentration()</span></code></a>) crossed <code class="docutils literal notranslate"><span class="pre">rate_threshold</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.flagged">
+<span class="sig-name descname"><span class="pre">flagged</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.flagged"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.flagged" title="Link to this definition">#</a></dt>
+<dd><p>Bool array, shape <code class="docutils literal notranslate"><span class="pre">(n_chains,)</span></code>. Which chains crossed
+<code class="docutils literal notranslate"><span class="pre">rate_threshold</span></code>, independent of whether <code class="docutils literal notranslate"><span class="pre">warn</span></code> ends up true.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.num_flagged">
+<span class="sig-name descname"><span class="pre">num_flagged</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.num_flagged"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.num_flagged" title="Link to this definition">#</a></dt>
+<dd><p>Number of flagged chains, <code class="docutils literal notranslate"><span class="pre">flagged.sum()</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.rates">
+<span class="sig-name descname"><span class="pre">rates</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.rates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.rates" title="Link to this definition">#</a></dt>
+<dd><p>Per-chain sampling-phase divergence rate, shape <code class="docutils literal notranslate"><span class="pre">(n_chains,)</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py">
+<span class="sig-name descname"><span class="pre">early_rate,</span> <span class="pre">late_rate</span></span></dt>
+<dd><p>Per-chain divergence rate in the first and last quarter of the
+sampling draws, shape <code class="docutils literal notranslate"><span class="pre">(n_chains,)</span></code>. <code class="docutils literal notranslate"><span class="pre">NaN</span></code> when computed from
+<a class="reference internal" href="#blackjax.diagnostics.divergence_concentration_from_counts" title="blackjax.diagnostics.divergence_concentration_from_counts"><code class="xref py py-func docutils literal notranslate"><span class="pre">divergence_concentration_from_counts()</span></code></a> (no per-draw
+resolution available).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.median_other_rate">
+<span class="sig-name descname"><span class="pre">median_other_rate</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.median_other_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.median_other_rate" title="Link to this definition">#</a></dt>
+<dd><p>For each chain, the median <code class="docutils literal notranslate"><span class="pre">rates</span></code> value across the <em>other</em>
+<code class="docutils literal notranslate"><span class="pre">n_chains</span> <span class="pre">-</span> <span class="pre">1</span></code> chains, shape <code class="docutils literal notranslate"><span class="pre">(n_chains,)</span></code>. <code class="docutils literal notranslate"><span class="pre">NaN</span></code> when
+<code class="docutils literal notranslate"><span class="pre">n_chains</span> <span class="pre">&lt;=</span> <span class="pre">1</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.total_divergences">
+<span class="sig-name descname"><span class="pre">total_divergences</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.total_divergences"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.total_divergences" title="Link to this definition">#</a></dt>
+<dd><p>Total divergence count <code class="docutils literal notranslate"><span class="pre">D</span></code> summed over all chains.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.num_chains">
+<span class="sig-name descname"><span class="pre">num_chains</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.num_chains"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.num_chains" title="Link to this definition">#</a></dt>
+<dd><p>Number of chains <code class="docutils literal notranslate"><span class="pre">M</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.rate_threshold">
+<span class="sig-name descname"><span class="pre">rate_threshold</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.rate_threshold"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.rate_threshold" title="Link to this definition">#</a></dt>
+<dd><p>The threshold that was applied (echoed back for the message /
+for callers that only keep the report).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.multinomial_p_value">
+<span class="sig-name descname"><span class="pre">multinomial_p_value</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.multinomial_p_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.multinomial_p_value" title="Link to this definition">#</a></dt>
+<dd><p>Bonferroni-corrected exchangeable-null tail probability for the
+single worst chain, <code class="docutils literal notranslate"><span class="pre">min(1,</span> <span class="pre">M</span> <span class="pre">*</span> <span class="pre">P(Binomial(D,</span> <span class="pre">1/M)</span> <span class="pre">&gt;=</span> <span class="pre">d_max))</span></code>.
+Context only; never drives <code class="docutils literal notranslate"><span class="pre">warn</span></code>. <code class="docutils literal notranslate"><span class="pre">NaN</span></code> when <code class="docutils literal notranslate"><span class="pre">D=0</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id0">
+<span class="sig-name descname"><span class="pre">warn</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.warn"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id0" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id5">
+<span class="sig-name descname"><span class="pre">flagged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.flagged"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id5" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id6">
+<span class="sig-name descname"><span class="pre">num_flagged</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.num_flagged"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id6" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id7">
+<span class="sig-name descname"><span class="pre">rates</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.rates"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id7" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.early_rate">
+<span class="sig-name descname"><span class="pre">early_rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.early_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.early_rate" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.diagnostics.DivergenceConcentrationReport.late_rate">
+<span class="sig-name descname"><span class="pre">late_rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.late_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.DivergenceConcentrationReport.late_rate" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id8">
+<span class="sig-name descname"><span class="pre">median_other_rate</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.median_other_rate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id8" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id9">
+<span class="sig-name descname"><span class="pre">total_divergences</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.total_divergences"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id9" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id10">
+<span class="sig-name descname"><span class="pre">num_chains</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.num_chains"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id10" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id11">
+<span class="sig-name descname"><span class="pre">rate_threshold</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.rate_threshold"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id11" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="id12">
+<span class="sig-name descname"><span class="pre">multinomial_p_value</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#DivergenceConcentrationReport.multinomial_p_value"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#id12" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.diagnostics.divergence_concentration">
+<span class="sig-name descname"><span class="pre">divergence_concentration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">is_divergent</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLike</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.02</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.diagnostics.DivergenceConcentrationReport" title="blackjax.diagnostics.DivergenceConcentrationReport"><span class="pre">DivergenceConcentrationReport</span></a></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#divergence_concentration"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.divergence_concentration" title="Link to this definition">#</a></dt>
+<dd><p>Flag a run where sampling-phase divergences concentrate on a minority of chains.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>is_divergent</strong> – Per-draw divergence flags (bool or 0/1) for the sampling
+(post-warmup) phase only, shape <code class="docutils literal notranslate"><span class="pre">(n_chains,</span> <span class="pre">n_draws)</span></code>.</p></li>
+<li><p><strong>rate_threshold</strong> – Minimum per-chain divergence rate for chain <code class="docutils literal notranslate"><span class="pre">k</span></code> to count as
+flagged. Default <code class="docutils literal notranslate"><span class="pre">0.02</span></code> (2%).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><a class="reference internal" href="#blackjax.diagnostics.DivergenceConcentrationReport" title="blackjax.diagnostics.DivergenceConcentrationReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">DivergenceConcentrationReport</span></code></a>. <code class="docutils literal notranslate"><span class="pre">warn</span></code> is true iff between</p></li>
+<li><p>1 and <code class="docutils literal notranslate"><span class="pre">max(1,</span> <span class="pre">n_chains</span> <span class="pre">//</span> <span class="pre">4)</span></code> chains are flagged – a</p></li>
+<li><p><em>minority-outlier trigger; an ensemble where most/all chains cross the</em></p></li>
+<li><p><em>threshold returns populated fields but no warning.</em></p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Counting is sampling-phase only; warmup divergences are out of scope.</p></li>
+<li><p>Concatenating warmup draws in front of sampling draws dilutes a real
+signal below threshold rather than raising a false alarm – slice to
+sampling draws only before calling this.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">multinomial_p_value</span></code> is context only; it never decides <code class="docutils literal notranslate"><span class="pre">warn</span></code>.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.diagnostics.divergence_concentration_from_counts">
+<span class="sig-name descname"><span class="pre">divergence_concentration_from_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">chain_divergence_counts</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.types.ArrayLike</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_draws</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">rate_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.02</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.diagnostics.DivergenceConcentrationReport" title="blackjax.diagnostics.DivergenceConcentrationReport"><span class="pre">DivergenceConcentrationReport</span></a></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#divergence_concentration_from_counts"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.divergence_concentration_from_counts" title="Link to this definition">#</a></dt>
+<dd><p>Same as <a class="reference internal" href="#blackjax.diagnostics.divergence_concentration" title="blackjax.diagnostics.divergence_concentration"><code class="xref py py-func docutils literal notranslate"><span class="pre">divergence_concentration()</span></code></a>, from precomputed per-chain counts.</p>
+<p>Use when per-draw flags are not retained but per-chain totals are.
+<code class="docutils literal notranslate"><span class="pre">early_rate</span></code> / <code class="docutils literal notranslate"><span class="pre">late_rate</span></code> are <code class="docutils literal notranslate"><span class="pre">NaN</span></code> (no per-draw resolution for
+a quarter profile); <a class="reference internal" href="#blackjax.diagnostics.format_divergence_warning" title="blackjax.diagnostics.format_divergence_warning"><code class="xref py py-func docutils literal notranslate"><span class="pre">format_divergence_warning()</span></code></a> omits that part
+of the message rather than printing “nan%”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>chain_divergence_counts</strong> – Per-chain divergence counts for the sampling phase, shape
+<code class="docutils literal notranslate"><span class="pre">(n_chains,)</span></code>.</p></li>
+<li><p><strong>n_draws</strong> – Number of sampling draws per chain.</p></li>
+<li><p><strong>rate_threshold</strong> – See <a class="reference internal" href="#blackjax.diagnostics.divergence_concentration" title="blackjax.diagnostics.divergence_concentration"><code class="xref py py-func docutils literal notranslate"><span class="pre">divergence_concentration()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#blackjax.diagnostics.DivergenceConcentrationReport" title="blackjax.diagnostics.DivergenceConcentrationReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">DivergenceConcentrationReport</span></code></a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.diagnostics.format_divergence_warning">
+<span class="sig-name descname"><span class="pre">format_divergence_warning</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#blackjax.diagnostics.DivergenceConcentrationReport" title="blackjax.diagnostics.DivergenceConcentrationReport"><span class="pre">DivergenceConcentrationReport</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span></span><a class="reference internal" href="../../../_modules/blackjax/diagnostics.html#format_divergence_warning"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.diagnostics.format_divergence_warning" title="Link to this definition">#</a></dt>
+<dd><p>Render a <a class="reference internal" href="#blackjax.diagnostics.DivergenceConcentrationReport" title="blackjax.diagnostics.DivergenceConcentrationReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">DivergenceConcentrationReport</span></code></a> as a human-readable message.</p>
+<p>Returns <code class="docutils literal notranslate"><span class="pre">&quot;&quot;</span></code> when <code class="docutils literal notranslate"><span class="pre">report.warn</span></code> is false. Otherwise returns one
+sentence per flagged chain (newline-separated when more than one
+chain is flagged). Not JIT-compatible by design — call it on concrete
+report values (e.g. after a sampling run has completed), not inside
+traced code.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>report</strong> – A report produced by <a class="reference internal" href="#blackjax.diagnostics.divergence_concentration" title="blackjax.diagnostics.divergence_concentration"><code class="xref py py-func docutils literal notranslate"><span class="pre">divergence_concentration()</span></code></a> or
+<a class="reference internal" href="#blackjax.diagnostics.divergence_concentration_from_counts" title="blackjax.diagnostics.divergence_concentration_from_counts"><code class="xref py py-func docutils literal notranslate"><span class="pre">divergence_concentration_from_counts()</span></code></a>.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">str</span></code>, empty when there is nothing to warn about.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -758,6 +1021,7 @@ importance-ratio space, the same approach as ArviZ.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.potential_scale_reduction"><code class="docutils literal notranslate"><span class="pre">potential_scale_reduction()</span></code></a></li>
@@ -767,6 +1031,32 @@ importance-ratio space, the same approach as ArviZ.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.ess_tail"><code class="docutils literal notranslate"><span class="pre">ess_tail()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.pareto_khat"><code class="docutils literal notranslate"><span class="pre">pareto_khat()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.psis_weights"><code class="docutils literal notranslate"><span class="pre">psis_weights()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.warn"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.warn</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.flagged"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.flagged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.num_flagged"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.num_flagged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.rates"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.rates</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.median_other_rate"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.median_other_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.total_divergences"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.total_divergences</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.num_chains"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.num_chains</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.rate_threshold"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.rate_threshold</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.multinomial_p_value"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.multinomial_p_value</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id0"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.warn</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id5"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.flagged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id6"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.num_flagged</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id7"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.rates</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.early_rate"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.early_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.DivergenceConcentrationReport.late_rate"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.late_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id8"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.median_other_rate</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id9"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.total_divergences</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id10"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.num_chains</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id11"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.rate_threshold</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#id12"><code class="docutils literal notranslate"><span class="pre">DivergenceConcentrationReport.multinomial_p_value</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.divergence_concentration"><code class="docutils literal notranslate"><span class="pre">divergence_concentration()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.divergence_concentration_from_counts"><code class="docutils literal notranslate"><span class="pre">divergence_concentration_from_counts()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.diagnostics.format_divergence_warning"><code class="docutils literal notranslate"><span class="pre">format_divergence_warning()</span></code></a></li>
 </ul>
 </li>
 </ul>

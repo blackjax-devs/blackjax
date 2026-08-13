@@ -9,6 +9,14 @@ blackjax.diagnostics
 
 
 
+Classes
+-------
+
+.. autoapisummary::
+
+   blackjax.diagnostics.DivergenceConcentrationReport
+
+
 Functions
 ---------
 
@@ -21,6 +29,9 @@ Functions
    blackjax.diagnostics.ess_tail
    blackjax.diagnostics.pareto_khat
    blackjax.diagnostics.psis_weights
+   blackjax.diagnostics.divergence_concentration
+   blackjax.diagnostics.divergence_concentration_from_counts
+   blackjax.diagnostics.format_divergence_warning
 
 
 Module Contents
@@ -242,5 +253,167 @@ Module Contents
    The GPD is only applied when ``k >= 1/3``; lighter tails are left
    unsmoothed (only normalised).  Fitting uses empirical Bayes in
    importance-ratio space, the same approach as ArviZ.
+
+
+.. py:class:: DivergenceConcentrationReport
+
+
+
+   Per-run divergence-concentration diagnostic report.
+
+   All fields are plain JAX numerics — no strings — so the statistic
+   itself stays JIT-compilable.  Pass the report to
+   :func:`format_divergence_warning` to render a human-readable message
+   from concrete (non-traced) values.
+
+   .. attribute:: warn
+
+      Bool. Whether a minority of chains (see the module notes on
+      :func:`divergence_concentration`) crossed ``rate_threshold``.
+
+   .. attribute:: flagged
+
+      Bool array, shape ``(n_chains,)``. Which chains crossed
+      ``rate_threshold``, independent of whether ``warn`` ends up true.
+
+   .. attribute:: num_flagged
+
+      Number of flagged chains, ``flagged.sum()``.
+
+   .. attribute:: rates
+
+      Per-chain sampling-phase divergence rate, shape ``(n_chains,)``.
+
+   .. attribute:: early_rate, late_rate
+
+      Per-chain divergence rate in the first and last quarter of the
+      sampling draws, shape ``(n_chains,)``. ``NaN`` when computed from
+      :func:`divergence_concentration_from_counts` (no per-draw
+      resolution available).
+
+   .. attribute:: median_other_rate
+
+      For each chain, the median ``rates`` value across the *other*
+      ``n_chains - 1`` chains, shape ``(n_chains,)``. ``NaN`` when
+      ``n_chains <= 1``.
+
+   .. attribute:: total_divergences
+
+      Total divergence count ``D`` summed over all chains.
+
+   .. attribute:: num_chains
+
+      Number of chains ``M``.
+
+   .. attribute:: rate_threshold
+
+      The threshold that was applied (echoed back for the message /
+      for callers that only keep the report).
+
+   .. attribute:: multinomial_p_value
+
+      Bonferroni-corrected exchangeable-null tail probability for the
+      single worst chain, ``min(1, M * P(Binomial(D, 1/M) >= d_max))``.
+      Context only; never drives ``warn``. ``NaN`` when ``D=0``.
+
+
+   .. py:attribute:: warn
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: flagged
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: num_flagged
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: rates
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: early_rate
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: late_rate
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: median_other_rate
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: total_divergences
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: num_chains
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: rate_threshold
+      :type:  blackjax.types.Array
+
+
+   .. py:attribute:: multinomial_p_value
+      :type:  blackjax.types.Array
+
+
+.. py:function:: divergence_concentration(is_divergent: blackjax.types.ArrayLike, *, rate_threshold: float = 0.02) -> DivergenceConcentrationReport
+
+   Flag a run where sampling-phase divergences concentrate on a minority of chains.
+
+   :param is_divergent: Per-draw divergence flags (bool or 0/1) for the sampling
+                        (post-warmup) phase only, shape ``(n_chains, n_draws)``.
+   :param rate_threshold: Minimum per-chain divergence rate for chain ``k`` to count as
+                          flagged. Default ``0.02`` (2%).
+
+   :returns: * :class:`DivergenceConcentrationReport`. ``warn`` is true iff between
+             * 1 and ``max(1, n_chains // 4)`` chains are flagged -- a
+             * *minority-outlier trigger; an ensemble where most/all chains cross the*
+             * *threshold returns populated fields but no warning.*
+
+   .. rubric:: Notes
+
+   - Counting is sampling-phase only; warmup divergences are out of scope.
+   - Concatenating warmup draws in front of sampling draws dilutes a real
+     signal below threshold rather than raising a false alarm -- slice to
+     sampling draws only before calling this.
+   - ``multinomial_p_value`` is context only; it never decides ``warn``.
+
+
+.. py:function:: divergence_concentration_from_counts(chain_divergence_counts: blackjax.types.ArrayLike, n_draws: int, *, rate_threshold: float = 0.02) -> DivergenceConcentrationReport
+
+   Same as :func:`divergence_concentration`, from precomputed per-chain counts.
+
+   Use when per-draw flags are not retained but per-chain totals are.
+   ``early_rate`` / ``late_rate`` are ``NaN`` (no per-draw resolution for
+   a quarter profile); :func:`format_divergence_warning` omits that part
+   of the message rather than printing "nan%".
+
+   :param chain_divergence_counts: Per-chain divergence counts for the sampling phase, shape
+                                   ``(n_chains,)``.
+   :param n_draws: Number of sampling draws per chain.
+   :param rate_threshold: See :func:`divergence_concentration`.
+
+   :rtype: :class:`DivergenceConcentrationReport`
+
+
+.. py:function:: format_divergence_warning(report: DivergenceConcentrationReport) -> str
+
+   Render a :class:`DivergenceConcentrationReport` as a human-readable message.
+
+   Returns ``""`` when ``report.warn`` is false. Otherwise returns one
+   sentence per flagged chain (newline-separated when more than one
+   chain is flagged). Not JIT-compatible by design — call it on concrete
+   report values (e.g. after a sampling run has completed), not inside
+   traced code.
+
+   :param report: A report produced by :func:`divergence_concentration` or
+                  :func:`divergence_concentration_from_counts`.
+
+   :rtype: ``str``, empty when there is nothing to warn about.
 
 

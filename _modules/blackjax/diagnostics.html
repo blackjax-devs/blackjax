@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g8cb85cd87" />
+  <meta name="docsearch:version" content="0.1.dev1+g5ac4987cf" />
   </head>
   
   
@@ -210,6 +210,11 @@
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../autoapi/blackjax/mcmc/composed/index.html">blackjax.mcmc.composed</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../autoapi/blackjax/mcmc/composed/step_size/index.html">blackjax.mcmc.composed.step_size</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../autoapi/blackjax/mcmc/composed/trajectory_length/index.html">blackjax.mcmc.composed.trajectory_length</a></li>
+</ul>
+</details></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
@@ -422,6 +427,8 @@
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
 <span class="sd">&quot;&quot;&quot;MCMC diagnostics.&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">NamedTuple</span>
+
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
@@ -437,6 +444,10 @@
     <span class="s2">&quot;ess_tail&quot;</span><span class="p">,</span>
     <span class="s2">&quot;pareto_khat&quot;</span><span class="p">,</span>
     <span class="s2">&quot;psis_weights&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DivergenceConcentrationReport&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;divergence_concentration&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;divergence_concentration_from_counts&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;format_divergence_warning&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -1121,6 +1132,312 @@
     <span class="n">lw_orig</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">lw_smooth</span><span class="p">)</span><span class="o">.</span><span class="n">at</span><span class="p">[</span><span class="n">sorted_idx</span><span class="p">]</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">lw_smooth</span><span class="p">)</span>
     <span class="n">log_w</span> <span class="o">=</span> <span class="n">lw_orig</span> <span class="o">-</span> <span class="n">jax</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">logsumexp</span><span class="p">(</span><span class="n">lw_orig</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">log_w</span><span class="p">,</span> <span class="n">k</span></div>
+
+
+
+<div class="viewcode-block" id="DivergenceConcentrationReport">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DivergenceConcentrationReport</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-run divergence-concentration diagnostic report.</span>
+
+<span class="sd">    All fields are plain JAX numerics — no strings — so the statistic</span>
+<span class="sd">    itself stays JIT-compilable.  Pass the report to</span>
+<span class="sd">    :func:`format_divergence_warning` to render a human-readable message</span>
+<span class="sd">    from concrete (non-traced) values.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    warn</span>
+<span class="sd">        Bool. Whether a minority of chains (see the module notes on</span>
+<span class="sd">        :func:`divergence_concentration`) crossed ``rate_threshold``.</span>
+<span class="sd">    flagged</span>
+<span class="sd">        Bool array, shape ``(n_chains,)``. Which chains crossed</span>
+<span class="sd">        ``rate_threshold``, independent of whether ``warn`` ends up true.</span>
+<span class="sd">    num_flagged</span>
+<span class="sd">        Number of flagged chains, ``flagged.sum()``.</span>
+<span class="sd">    rates</span>
+<span class="sd">        Per-chain sampling-phase divergence rate, shape ``(n_chains,)``.</span>
+<span class="sd">    early_rate, late_rate</span>
+<span class="sd">        Per-chain divergence rate in the first and last quarter of the</span>
+<span class="sd">        sampling draws, shape ``(n_chains,)``. ``NaN`` when computed from</span>
+<span class="sd">        :func:`divergence_concentration_from_counts` (no per-draw</span>
+<span class="sd">        resolution available).</span>
+<span class="sd">    median_other_rate</span>
+<span class="sd">        For each chain, the median ``rates`` value across the *other*</span>
+<span class="sd">        ``n_chains - 1`` chains, shape ``(n_chains,)``. ``NaN`` when</span>
+<span class="sd">        ``n_chains &lt;= 1``.</span>
+<span class="sd">    total_divergences</span>
+<span class="sd">        Total divergence count ``D`` summed over all chains.</span>
+<span class="sd">    num_chains</span>
+<span class="sd">        Number of chains ``M``.</span>
+<span class="sd">    rate_threshold</span>
+<span class="sd">        The threshold that was applied (echoed back for the message /</span>
+<span class="sd">        for callers that only keep the report).</span>
+<span class="sd">    multinomial_p_value</span>
+<span class="sd">        Bonferroni-corrected exchangeable-null tail probability for the</span>
+<span class="sd">        single worst chain, ``min(1, M * P(Binomial(D, 1/M) &gt;= d_max))``.</span>
+<span class="sd">        Context only; never drives ``warn``. ``NaN`` when ``D=0``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.warn">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.warn">[docs]</a>
+    <span class="n">warn</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.flagged">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.flagged">[docs]</a>
+    <span class="n">flagged</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.num_flagged">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.num_flagged">[docs]</a>
+    <span class="n">num_flagged</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.rates">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.rates">[docs]</a>
+    <span class="n">rates</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.early_rate">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.early_rate">[docs]</a>
+    <span class="n">early_rate</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.late_rate">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.late_rate">[docs]</a>
+    <span class="n">late_rate</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.median_other_rate">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.median_other_rate">[docs]</a>
+    <span class="n">median_other_rate</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.total_divergences">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.total_divergences">[docs]</a>
+    <span class="n">total_divergences</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.num_chains">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.num_chains">[docs]</a>
+    <span class="n">num_chains</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.rate_threshold">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.rate_threshold">[docs]</a>
+    <span class="n">rate_threshold</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="DivergenceConcentrationReport.multinomial_p_value">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.DivergenceConcentrationReport.multinomial_p_value">[docs]</a>
+    <span class="n">multinomial_p_value</span><span class="p">:</span> <span class="n">Array</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="divergence_concentration">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.divergence_concentration">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">divergence_concentration</span><span class="p">(</span>
+    <span class="n">is_divergent</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">rate_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DivergenceConcentrationReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flag a run where sampling-phase divergences concentrate on a minority of chains.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    is_divergent</span>
+<span class="sd">        Per-draw divergence flags (bool or 0/1) for the sampling</span>
+<span class="sd">        (post-warmup) phase only, shape ``(n_chains, n_draws)``.</span>
+<span class="sd">    rate_threshold</span>
+<span class="sd">        Minimum per-chain divergence rate for chain ``k`` to count as</span>
+<span class="sd">        flagged. Default ``0.02`` (2%).</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :class:`DivergenceConcentrationReport`. ``warn`` is true iff between</span>
+<span class="sd">    1 and ``max(1, n_chains // 4)`` chains are flagged -- a</span>
+<span class="sd">    minority-outlier trigger; an ensemble where most/all chains cross the</span>
+<span class="sd">    threshold returns populated fields but no warning.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    - Counting is sampling-phase only; warmup divergences are out of scope.</span>
+<span class="sd">    - Concatenating warmup draws in front of sampling draws dilutes a real</span>
+<span class="sd">      signal below threshold rather than raising a false alarm -- slice to</span>
+<span class="sd">      sampling draws only before calling this.</span>
+<span class="sd">    - ``multinomial_p_value`` is context only; it never decides ``warn``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># NaN must flag, not silently pass.</span>
+    <span class="n">is_divergent</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">is_divergent</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">n_draws</span> <span class="o">=</span> <span class="n">is_divergent</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">num_chains</span> <span class="o">=</span> <span class="n">is_divergent</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">is_divergent</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">quarter</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_draws</span> <span class="o">//</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">early_rate</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">is_divergent</span><span class="p">[:,</span> <span class="p">:</span><span class="n">quarter</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">quarter</span>
+    <span class="n">late_rate</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">is_divergent</span><span class="p">[:,</span> <span class="n">n_draws</span> <span class="o">-</span> <span class="n">quarter</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="n">quarter</span>
+
+    <span class="k">return</span> <span class="n">_divergence_concentration_core</span><span class="p">(</span>
+        <span class="n">counts</span><span class="p">,</span>
+        <span class="n">n_draws</span><span class="p">,</span>
+        <span class="n">num_chains</span><span class="p">,</span>
+        <span class="n">early_rate</span><span class="p">,</span>
+        <span class="n">late_rate</span><span class="p">,</span>
+        <span class="n">rate_threshold</span><span class="o">=</span><span class="n">rate_threshold</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="divergence_concentration_from_counts">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.divergence_concentration_from_counts">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">divergence_concentration_from_counts</span><span class="p">(</span>
+    <span class="n">chain_divergence_counts</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+    <span class="n">n_draws</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">rate_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.02</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DivergenceConcentrationReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Same as :func:`divergence_concentration`, from precomputed per-chain counts.</span>
+
+<span class="sd">    Use when per-draw flags are not retained but per-chain totals are.</span>
+<span class="sd">    ``early_rate`` / ``late_rate`` are ``NaN`` (no per-draw resolution for</span>
+<span class="sd">    a quarter profile); :func:`format_divergence_warning` omits that part</span>
+<span class="sd">    of the message rather than printing &quot;nan%&quot;.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    chain_divergence_counts</span>
+<span class="sd">        Per-chain divergence counts for the sampling phase, shape</span>
+<span class="sd">        ``(n_chains,)``.</span>
+<span class="sd">    n_draws</span>
+<span class="sd">        Number of sampling draws per chain.</span>
+<span class="sd">    rate_threshold</span>
+<span class="sd">        See :func:`divergence_concentration`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    :class:`DivergenceConcentrationReport`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># NaN must flag (as fully divergent), not silently pass.</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">chain_divergence_counts</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+    <span class="n">counts</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">nan_to_num</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">nan</span><span class="o">=</span><span class="nb">float</span><span class="p">(</span><span class="n">n_draws</span><span class="p">)),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">n_draws</span><span class="p">))</span>
+    <span class="n">num_chains</span> <span class="o">=</span> <span class="n">counts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">nan_quarters</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">num_chains</span><span class="p">,),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_divergence_concentration_core</span><span class="p">(</span>
+        <span class="n">counts</span><span class="p">,</span>
+        <span class="n">n_draws</span><span class="p">,</span>
+        <span class="n">num_chains</span><span class="p">,</span>
+        <span class="n">nan_quarters</span><span class="p">,</span>
+        <span class="n">nan_quarters</span><span class="p">,</span>
+        <span class="n">rate_threshold</span><span class="o">=</span><span class="n">rate_threshold</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_divergence_concentration_core</span><span class="p">(</span>
+    <span class="n">counts</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">n_draws</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">num_chains</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">early_rate</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="n">late_rate</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">rate_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DivergenceConcentrationReport</span><span class="p">:</span>
+    <span class="n">total</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">max_count</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">counts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">rates</span> <span class="o">=</span> <span class="n">counts</span> <span class="o">/</span> <span class="n">n_draws</span>
+    <span class="n">flagged</span> <span class="o">=</span> <span class="n">rates</span> <span class="o">&gt;=</span> <span class="n">rate_threshold</span>
+    <span class="n">num_flagged</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">flagged</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">cap</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_chains</span> <span class="o">//</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="n">warn</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_flagged</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">num_flagged</span> <span class="o">&lt;=</span> <span class="n">cap</span><span class="p">)</span>
+
+    <span class="c1"># Static per-chain index gather keeps this jit-safe (num_chains is a</span>
+    <span class="c1"># Python int); no &quot;others&quot; exist when num_chains == 1.</span>
+    <span class="k">if</span> <span class="n">num_chains</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">median_other_rate</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">median</span><span class="p">(</span>
+                    <span class="n">rates</span><span class="p">[</span>
+                        <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">k</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num_chains</span><span class="p">)])</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_chains</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">median_other_rate</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">num_chains</span><span class="p">,),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+    <span class="c1"># Exact binomial tail via the regularized incomplete beta function;</span>
+    <span class="c1"># D == 0 is guarded so betainc never sees a == 0.</span>
+    <span class="n">has_divergences</span> <span class="o">=</span> <span class="n">total</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">safe_total</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">has_divergences</span><span class="p">,</span> <span class="n">total</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">safe_max</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">has_divergences</span><span class="p">,</span> <span class="n">max_count</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">tail</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">betainc</span><span class="p">(</span>
+        <span class="n">safe_max</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">safe_total</span> <span class="o">-</span> <span class="n">safe_max</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">),</span>
+        <span class="mf">1.0</span> <span class="o">/</span> <span class="n">num_chains</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">p_value</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+        <span class="n">has_divergences</span><span class="p">,</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">num_chains</span> <span class="o">*</span> <span class="n">tail</span><span class="p">),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">DivergenceConcentrationReport</span><span class="p">(</span>
+        <span class="n">warn</span><span class="o">=</span><span class="n">warn</span><span class="p">,</span>
+        <span class="n">flagged</span><span class="o">=</span><span class="n">flagged</span><span class="p">,</span>
+        <span class="n">num_flagged</span><span class="o">=</span><span class="n">num_flagged</span><span class="p">,</span>
+        <span class="n">rates</span><span class="o">=</span><span class="n">rates</span><span class="p">,</span>
+        <span class="n">early_rate</span><span class="o">=</span><span class="n">early_rate</span><span class="p">,</span>
+        <span class="n">late_rate</span><span class="o">=</span><span class="n">late_rate</span><span class="p">,</span>
+        <span class="n">median_other_rate</span><span class="o">=</span><span class="n">median_other_rate</span><span class="p">,</span>
+        <span class="n">total_divergences</span><span class="o">=</span><span class="n">total</span><span class="p">,</span>
+        <span class="n">num_chains</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">num_chains</span><span class="p">),</span>
+        <span class="n">rate_threshold</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">rate_threshold</span><span class="p">),</span>
+        <span class="n">multinomial_p_value</span><span class="o">=</span><span class="n">p_value</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<div class="viewcode-block" id="format_divergence_warning">
+<a class="viewcode-back" href="../../autoapi/blackjax/diagnostics/index.html#blackjax.diagnostics.format_divergence_warning">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">format_divergence_warning</span><span class="p">(</span><span class="n">report</span><span class="p">:</span> <span class="n">DivergenceConcentrationReport</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Render a :class:`DivergenceConcentrationReport` as a human-readable message.</span>
+
+<span class="sd">    Returns ``&quot;&quot;`` when ``report.warn`` is false. Otherwise returns one</span>
+<span class="sd">    sentence per flagged chain (newline-separated when more than one</span>
+<span class="sd">    chain is flagged). Not JIT-compatible by design — call it on concrete</span>
+<span class="sd">    report values (e.g. after a sampling run has completed), not inside</span>
+<span class="sd">    traced code.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    report</span>
+<span class="sd">        A report produced by :func:`divergence_concentration` or</span>
+<span class="sd">        :func:`divergence_concentration_from_counts`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ``str``, empty when there is nothing to warn about.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">warn</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">flagged</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">flagged</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">flatnonzero</span><span class="p">(</span><span class="n">flagged</span><span class="p">):</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">k</span><span class="p">)</span>
+        <span class="n">pct</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">rates</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
+        <span class="n">median</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">median_other_rate</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
+        <span class="n">early</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">early_rate</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="n">late</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">late_rate</span><span class="p">[</span><span class="n">k</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">early</span><span class="p">)</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">late</span><span class="p">):</span>
+            <span class="n">early_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">early</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
+            <span class="n">late_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%.1f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">late</span> <span class="o">*</span> <span class="mf">100.0</span><span class="p">)</span>
+            <span class="n">quarters</span> <span class="o">=</span> <span class="s2">&quot; (</span><span class="si">{}% i</span><span class="s2">n the first quarter, </span><span class="si">{}% i</span><span class="s2">n the last)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">early_str</span><span class="p">,</span>
+                <span class="n">late_str</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">quarters</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;chain </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">pct</span><span class="si">}</span><span class="s2">% of its sampling draws diverged</span><span class="si">{</span><span class="n">quarters</span><span class="si">}</span><span class="s2"> — &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;significantly more than the other chains (</span><span class="si">{</span><span class="n">median</span><span class="si">}</span><span class="s2">% median)&quot;</span>
+            <span class="s2">&quot;; draws from this chain, especially early ones, may be &quot;</span>
+            <span class="s2">&quot;untrustworthy.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
 
 </pre></div>
 
