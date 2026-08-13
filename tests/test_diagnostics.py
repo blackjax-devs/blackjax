@@ -757,6 +757,52 @@ class DivergenceConcentrationTest(chex.TestCase):
         )
         assert np.isnan(float(report.multinomial_p_value))
 
+    def test_nan_in_is_divergent_flags_loud_not_silent(self):
+        # A stray NaN (e.g. from upstream float arithmetic) in a
+        # supposedly-boolean array must not silently vanish into a
+        # NaN rate that then compares False against rate_threshold --
+        # it must become a flagged (True) draw instead.
+        is_divergent = jnp.array([[0.0, 1.0, float("nan"), 0.0]] * 4, dtype=jnp.float32)
+        report = diagnostics.divergence_concentration(is_divergent)
+        assert not np.any(np.isnan(np.asarray(report.rates))), "NaN must not survive"
+        np.testing.assert_allclose(np.asarray(report.rates), 0.5)
+        assert bool(np.all(np.asarray(report.flagged)))
+
+    def test_nan_count_sanitized_to_n_draws(self):
+        # Same fail-loud principle for the counts-only entry point: a NaN
+        # count becomes n_draws (worst case), not a silently-dropped 0.
+        report = diagnostics.divergence_concentration_from_counts(
+            jnp.array([1.0, 2.0, float("nan"), 0.0]), self._N_DRAWS
+        )
+        assert not np.isnan(float(report.rates[2]))
+        np.testing.assert_allclose(float(report.rates[2]), 1.0)
+        assert bool(report.flagged[2])
+
+    def test_out_of_range_counts_are_clipped(self):
+        # Negative and over-n_draws counts are clamped into [0, n_draws]
+        # rather than producing a nonsensical negative or >100% rate.
+        report = diagnostics.divergence_concentration_from_counts(
+            jnp.array([-5.0, 9999.0, 0.0, 0.0]), self._N_DRAWS
+        )
+        np.testing.assert_allclose(float(report.rates[0]), 0.0)
+        np.testing.assert_allclose(float(report.rates[1]), 1.0)
+
+    def test_warmup_dilution_hides_a_genuine_signal(self):
+        # Documents (as a regression test, not just prose) the one risk
+        # this function cannot detect in code: concatenating a clean
+        # warmup segment in front of sampling draws dilutes a real signal
+        # below threshold.
+        n = 1000
+        sampling = np.zeros((8, n), dtype=bool)
+        sampling[3, :25] = True  # 2.5% >= default threshold
+        warmup_clean = np.zeros((8, n), dtype=bool)
+        correct = diagnostics.divergence_concentration(jnp.asarray(sampling))
+        diluted = diagnostics.divergence_concentration(
+            jnp.asarray(np.concatenate([warmup_clean, sampling], axis=1))
+        )
+        assert bool(correct.warn) is True
+        assert bool(diluted.warn) is False
+
 
 if __name__ == "__main__":
     absltest.main()

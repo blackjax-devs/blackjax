@@ -811,6 +811,19 @@ def divergence_concentration(
     by this function; it neither reads nor writes anything warmup
     produces.
 
+    There is no way for this function to detect a caller accidentally
+    passing warmup-inclusive divergence flags — a boolean array carries no
+    phase label — so getting this wrong fails silently, and in the
+    dangerous direction: mixing in warmup draws dilutes a genuine chain's
+    rate downward rather than raising a false alarm, because the extra
+    draws lengthen the denominator without (typically) contributing at
+    the same rate. Concretely: a chain diverging on 25 of 1000 sampling
+    draws (2.5%, above the default threshold) reads as the same 25
+    divergences over a doubled, 2000-draw denominator — 1.25%, below
+    threshold, no warning at all — once an equal-length, divergence-free
+    warmup segment is concatenated in front of it. Slice to sampling
+    draws only before calling this function.
+
     **What the message reports.** For each flagged chain the report
     carries factual, non-causal fields: the chain's overall rate, its
     divergence rate restricted to the first and last quarter of the
@@ -856,11 +869,27 @@ def divergence_concentration(
     retain a scalar divergence total (a single witness chain, or draws
     pooled across chains before counting) cannot be diagnosed here.
 
+    **Corrupted input fails loud, not silent.** ``is_divergent`` is cast
+    to bool: any non-finite value (e.g. a stray ``NaN`` from upstream
+    float arithmetic) becomes a flagged draw rather than silently
+    dropping out of a rate computation and comparing false against
+    ``rate_threshold`` — a numeric comparison against ``NaN`` is always
+    false, which would otherwise report a corrupted chain as clean.
+    :func:`divergence_concentration_from_counts` applies the same
+    principle to its counts: ``NaN`` becomes ``n_draws`` (worst case) and
+    out-of-range values are clipped into ``[0, n_draws]``.
+
     **Non-goal.** This function observes and describes; it does not
     extend warmup, redraw, back off the step size, or drop a chain. Any
     remedy is left entirely to the caller.
     """
-    is_divergent = jnp.asarray(is_divergent)
+    # Cast to bool rather than trust the caller's dtype: any non-finite or
+    # non-zero value (including NaN, which is neither True nor False under
+    # a numeric comparison) becomes a flagged draw. This fails loud
+    # (over-counts) rather than silent (NaN would otherwise propagate into
+    # `rates` and compare False against `rate_threshold`, silently hiding
+    # a corrupted chain behind a clean-looking report).
+    is_divergent = jnp.asarray(is_divergent).astype(bool)
     n_draws = is_divergent.shape[-1]
     num_chains = is_divergent.shape[-2]
     counts = jnp.sum(is_divergent, axis=-1)
@@ -909,7 +938,15 @@ def divergence_concentration_from_counts(
     -------
     :class:`DivergenceConcentrationReport`
     """
-    counts = jnp.asarray(chain_divergence_counts)
+    # Sanitize rather than trust the caller's values: NaN becomes n_draws
+    # (worst case, fully divergent) and out-of-range values are clipped
+    # into [0, n_draws]. Fails loud -- an implausibly high reported rate
+    # is visible -- rather than silent, since an un-sanitized NaN would
+    # otherwise propagate into `rates` and compare False against
+    # `rate_threshold`, hiding a corrupted chain behind a clean-looking
+    # report (mirrors the boolean-cast guard in divergence_concentration).
+    counts = jnp.asarray(chain_divergence_counts).astype(float)
+    counts = jnp.clip(jnp.nan_to_num(counts, nan=float(n_draws)), 0.0, float(n_draws))
     num_chains = counts.shape[-1]
     nan_quarters = jnp.full((num_chains,), jnp.nan)
     return _divergence_concentration_core(
