@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.window_adaptation" href="../adaptation/window_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gaebf3a284" />
+  <meta name="docsearch:version" content="0.1.dev1+g171f9f31e" />
   </head>
   
   
@@ -597,8 +597,13 @@ contains a chain dimension and a sample dimension.</p></li>
 <li><p><strong>sample_axis</strong> – The axis indicating a single chain of MCMC samples. Default to 1.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type<span class="colon">:</span></dt>
-<dd class="field-even"><p>NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.</em></p></li>
+<li><p><em>Variables whose within-chain variance is numerically zero have an effective</em></p></li>
+<li><p><em>sample size of zero.</em></p></li>
+</ul>
+</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>

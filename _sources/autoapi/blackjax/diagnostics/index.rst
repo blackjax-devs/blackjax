@@ -107,7 +107,9 @@ Module Contents
    :param chain_axis: The axis indicating the multiple chains. Default to 0.
    :param sample_axis: The axis indicating a single chain of MCMC samples. Default to 1.
 
-   :rtype: NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.
+   :returns: * *NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.*
+             * *Variables whose within-chain variance is numerically zero have an effective*
+             * *sample size of zero.*
 
    .. rubric:: Notes
 
