@@ -710,42 +710,49 @@ class DivergenceConcentrationReport(NamedTuple):
     Attributes
     ----------
     warn
-        Bool. Whether the run's worst chain crossed ``rate_threshold``.
-    concentrated
-        Bool. When ``warn`` is true, whether the divergences are
-        concentrated on one chain (``True``) or elevated across the
-        ensemble (``False``). Meaningless when ``warn`` is false.
-    chain
-        Index (0-based) of the chain with the most divergences.
-    num_chains_elevated
-        Number of chains whose own divergence rate is at or above
-        ``rate_threshold``.
+        Bool. Whether a minority of chains (see the module notes on
+        :func:`divergence_concentration`) crossed ``rate_threshold``.
+    flagged
+        Bool array, shape ``(n_chains,)``. Which chains crossed
+        ``rate_threshold``, independent of whether ``warn`` ends up true.
+    num_flagged
+        Number of flagged chains, ``flagged.sum()``.
+    rates
+        Per-chain sampling-phase divergence rate, shape ``(n_chains,)``.
+    early_rate, late_rate
+        Per-chain divergence rate in the first and last quarter of the
+        sampling draws, shape ``(n_chains,)``. ``NaN`` when computed from
+        :func:`divergence_concentration_from_counts` (no per-draw
+        resolution available).
+    median_other_rate
+        For each chain, the median ``rates`` value across the *other*
+        ``n_chains - 1`` chains, shape ``(n_chains,)``. ``NaN`` when
+        ``n_chains <= 1``.
     total_divergences
         Total divergence count ``D`` summed over all chains.
     num_chains
         Number of chains ``M``.
-    max_rate
-        Divergence rate of the worst chain, ``d_max / n_draws``.
-    mean_rate
-        Ensemble-mean per-chain divergence rate, ``D / (M * n_draws)``.
-    ratio
-        ``max_rate / mean_rate`` (0 when ``mean_rate`` is 0, i.e. ``D=0``).
+    rate_threshold
+        The threshold that was applied (echoed back for the message /
+        for callers that only keep the report).
     multinomial_p_value
-        Bonferroni-corrected exchangeable-null tail probability
-        ``min(1, M * P(Binomial(D, 1/M) >= d_max))``. Reported as context
-        only — see the module-level notes on :func:`divergence_concentration`
-        for why this does not drive the warning. ``NaN`` when ``D=0``.
+        Bonferroni-corrected exchangeable-null tail probability for the
+        single worst chain, ``min(1, M * P(Binomial(D, 1/M) >= d_max))``.
+        Reported as context only — see the module-level notes on
+        :func:`divergence_concentration` for why this does not drive the
+        warning. ``NaN`` when ``D=0``.
     """
 
     warn: Array
-    concentrated: Array
-    chain: Array
-    num_chains_elevated: Array
+    flagged: Array
+    num_flagged: Array
+    rates: Array
+    early_rate: Array
+    late_rate: Array
+    median_other_rate: Array
     total_divergences: Array
     num_chains: Array
-    max_rate: Array
-    mean_rate: Array
-    ratio: Array
+    rate_threshold: Array
     multinomial_p_value: Array
 
 
@@ -753,31 +760,19 @@ def divergence_concentration(
     is_divergent: ArrayLike,
     *,
     rate_threshold: float = 0.02,
-    ratio_cutoff: float = 3.0,
 ) -> DivergenceConcentrationReport:
-    """Flag a sampling run whose divergences concentrate on one or a few chains.
-
-    A multi-chain sampling run can end up with the same total divergence
-    count reached in very different ways: one chain landing on a bad
-    post-warmup start state and diverging heavily while the rest are clean,
-    versus every chain diverging moderately because the model geometry
-    itself is hard. The two call for different remedies, so this function
-    reports which pattern (if either) is present — it never intervenes.
+    """Flag a run where sampling-phase divergences concentrate on a minority of chains.
 
     Parameters
     ----------
     is_divergent
-        Per-draw divergence flags (bool or 0/1), shape ``(n_chains,
-        n_draws)``. Any leading batch dimensions are treated as extra chain
-        axes only if they are the true chain axis; this function assumes
-        the array is exactly 2-D, chains on axis 0.
+        Per-draw divergence flags (bool or 0/1) for the **sampling
+        (post-warmup) phase only**, shape ``(n_chains, n_draws)``. Warmup
+        divergences must not be included — see the module notes below.
     rate_threshold
-        Minimum per-chain divergence rate (``d_max / n_draws``) that
-        triggers a warning. Default ``0.02`` (2%).
-    ratio_cutoff
-        Minimum ``max_rate / mean_rate`` ratio to classify a warning as
-        chain-concentrated (``report.concentrated=True``) rather than
-        ensemble-wide elevation. Default ``3.0``.
+        Minimum per-chain divergence rate (``d_k / n_draws``) for chain
+        ``k`` to count as flagged. Default ``0.02`` (2%), the validated
+        default (see Notes).
 
     Returns
     -------
@@ -785,20 +780,54 @@ def divergence_concentration(
 
     Notes
     -----
+    **Scope: a minority-outlier trigger, not a general divergence
+    monitor.** ``report.warn`` is true iff between 1 and
+    ``max(1, n_chains // 4)`` chains are flagged (e.g. 1-2 chains out of
+    8). This function targets exactly one validated pattern — one or a
+    couple of chains landing on a bad post-warmup start state while the
+    rest of the ensemble stays clean. It deliberately does **not** warn
+    when most or all chains are flagged together: that pattern is already
+    visible in the run's aggregate divergence count and whatever verdict
+    a routing/warmup layer already derives from it, and this function's
+    per-chain remedy language (see below) would misdescribe a
+    whole-ensemble issue as a single bad chain. ``report.flagged`` and
+    ``report.num_flagged`` are populated in that case too, so a caller
+    who wants the raw counts can still read them — only the message-worthy
+    ``warn`` flag is withheld.
+
+    **Counting is sampling-phase only.** Divergences that occur during
+    warmup are out of scope for this diagnostic; feed it post-warmup
+    draws only. This also determines where the function is meant to be
+    called from: it is a standalone, kernel-agnostic function that
+    operates purely on completed sampling output — the same shape as
+    :func:`rhat` or :func:`effective_sample_size` next to it in this
+    module — and is intended to be read from a post-sampling
+    routing/verdict layer (whatever code decides what to do with a
+    finished run), not from a warmup/adaptation routine: warmup
+    algorithms return before any sampling divergence exists to diagnose.
+    Existing warmup-adaptation algorithms in this library (e.g.
+    :func:`window_adaptation`) are unaffected by this function.
+
+    **What the message reports.** For each flagged chain the report
+    carries factual, non-causal fields: the chain's overall rate, its
+    divergence rate restricted to the first and last quarter of the
+    sampling draws (``early_rate`` / ``late_rate`` — a chain that
+    diverges heavily early and recovers looks different from one that
+    degrades throughout), and the median rate of the other chains for
+    comparison. :func:`format_divergence_warning` turns these into a
+    sentence per flagged chain with no causal or remedial claims baked
+    into the wording itself (see below for remedies as documentation).
+
     **Evidence basis.** Validated retrospectively (no gating, no
     intervention — a pure read of existing per-chain divergence records)
     across 120 (model, warmup arm, seed) cells spanning several models,
     warmup strategies, and seeds. At the default 2% threshold, 7 of the 8
     flagged non-degenerate cells were independently substantiated true
     positives — textbook funnel-neck geometry, a near-storm single-chain
-    concentration at ~7x the ensemble mean, and ensembles with every chain
-    globally elevated; the most severe cell in the corpus (worst-chain rate
-    18.75%) was flagged with a roughly 9x margin over the threshold. The
-    ``max_rate / mean_rate`` ratio was found, after the fact rather than by
-    design, to separate the two failure signatures cleanly: single
-    bad-start chains cluster around 4-7x, ensemble-wide elevation around
-    1.6-1.8x — hence the ``ratio_cutoff`` default of 3.0, placed between
-    the two clusters.
+    concentration, and ensembles with every chain globally elevated (the
+    case this function now declines to warn on, per the scope note
+    above); the most severe cell in the corpus (worst-chain rate 18.75%)
+    was flagged with a roughly 9x margin over the threshold.
 
     **Why the multinomial tail is reported as context only, never as the
     trigger.** An earlier design tried triggering on
@@ -812,24 +841,38 @@ def divergence_concentration(
     the same validation corpus, so the p-value is computed and returned for
     interested callers but never decides ``warn``.
 
+    **Remedies are documentation, not part of the message.** If
+    ``report.warn`` is true, this-run options include treating the
+    flagged chain's early draws as untrustworthy, or excluding the
+    flagged chain when recomputing shared summaries/expectations that
+    pool across chains. The message text itself asserts neither a cause
+    nor a fix — only the observed rates.
+
     **Coverage caveat.** This diagnostic needs per-chain divergence
-    records. Sampling setups that only retain a scalar divergence total
-    (a single witness chain, or draws pooled across chains before
-    counting) cannot be diagnosed here — feed per-chain ``is_divergent``
-    flags (or precomputed per-chain counts via
-    :func:`divergence_concentration_from_counts`) from a genuinely
-    multi-chain run.
+    records from a genuinely multi-chain run. Sampling setups that only
+    retain a scalar divergence total (a single witness chain, or draws
+    pooled across chains before counting) cannot be diagnosed here.
 
     **Non-goal.** This function observes and describes; it does not
     extend warmup, redraw, back off the step size, or drop a chain. Any
-    remedy is left to the caller — see :func:`format_divergence_warning`
-    for the suggested-next-step text.
+    remedy is left entirely to the caller.
     """
     is_divergent = jnp.asarray(is_divergent)
     n_draws = is_divergent.shape[-1]
+    num_chains = is_divergent.shape[-2]
     counts = jnp.sum(is_divergent, axis=-1)
-    return divergence_concentration_from_counts(
-        counts, n_draws, rate_threshold=rate_threshold, ratio_cutoff=ratio_cutoff
+
+    quarter = max(n_draws // 4, 1)
+    early_rate = jnp.sum(is_divergent[:, :quarter], axis=-1) / quarter
+    late_rate = jnp.sum(is_divergent[:, n_draws - quarter :], axis=-1) / quarter
+
+    return _divergence_concentration_core(
+        counts,
+        n_draws,
+        num_chains,
+        early_rate,
+        late_rate,
+        rate_threshold=rate_threshold,
     )
 
 
@@ -838,21 +881,25 @@ def divergence_concentration_from_counts(
     n_draws: int,
     *,
     rate_threshold: float = 0.02,
-    ratio_cutoff: float = 3.0,
 ) -> DivergenceConcentrationReport:
     """Same as :func:`divergence_concentration`, from precomputed per-chain counts.
 
     Use this entry point when per-draw flags are not retained but
     per-chain divergence totals are (e.g. counted incrementally during
-    sampling rather than stored).
+    sampling rather than stored). ``report.early_rate`` and
+    ``report.late_rate`` are ``NaN`` throughout — the temporal quarter
+    profile needs per-draw resolution that this entry point does not
+    have; :func:`format_divergence_warning` degrades gracefully and omits
+    that part of the message.
 
     Parameters
     ----------
     chain_divergence_counts
-        Per-chain divergence counts, shape ``(n_chains,)``.
+        Per-chain divergence counts for the sampling phase, shape
+        ``(n_chains,)``.
     n_draws
-        Number of post-warmup draws per chain.
-    rate_threshold, ratio_cutoff
+        Number of post-warmup (sampling) draws per chain.
+    rate_threshold
         See :func:`divergence_concentration`.
 
     Returns
@@ -861,30 +908,59 @@ def divergence_concentration_from_counts(
     """
     counts = jnp.asarray(chain_divergence_counts)
     num_chains = counts.shape[-1]
+    nan_quarters = jnp.full((num_chains,), jnp.nan)
+    return _divergence_concentration_core(
+        counts,
+        n_draws,
+        num_chains,
+        nan_quarters,
+        nan_quarters,
+        rate_threshold=rate_threshold,
+    )
 
+
+def _divergence_concentration_core(
+    counts: Array,
+    n_draws: int,
+    num_chains: int,
+    early_rate: Array,
+    late_rate: Array,
+    *,
+    rate_threshold: float,
+) -> DivergenceConcentrationReport:
     total = jnp.sum(counts, axis=-1)
     max_count = jnp.max(counts, axis=-1)
-    argmax_chain = jnp.argmax(counts, axis=-1)
-    mean_count = total / num_chains
 
     rates = counts / n_draws
-    max_rate = max_count / n_draws
-    mean_rate = mean_count / n_draws
-    num_chains_elevated = jnp.sum(rates >= rate_threshold, axis=-1)
+    flagged = rates >= rate_threshold
+    num_flagged = jnp.sum(flagged, axis=-1)
+    cap = jnp.maximum(1, num_chains // 4)
+    warn = (num_flagged >= 1) & (num_flagged <= cap)
 
-    # Guard mean_count == 0 (only possible when D == 0, i.e. no
-    # divergences at all): report ratio=0 rather than 0/0.
-    safe_mean_count = jnp.where(mean_count > 0, mean_count, 1.0)
-    ratio = jnp.where(mean_count > 0, max_count / safe_mean_count, 0.0)
-
-    has_divergences = total > 0
-    warn = has_divergences & (max_rate >= rate_threshold)
-    concentrated = warn & (ratio >= ratio_cutoff)
+    # Per-chain median of the *other* n_chains - 1 rates, via an explicit
+    # (static) index array per chain rather than boolean masking, so the
+    # gather shape stays static under jit. n_chains is a Python int here
+    # (it comes from a static array shape), so this loop unrolls at trace
+    # time. With a single chain there are no "others" to gather at all.
+    if num_chains > 1:
+        median_other_rate = jnp.stack(
+            [
+                jnp.median(
+                    rates[
+                        jnp.concatenate([jnp.arange(k), jnp.arange(k + 1, num_chains)])
+                    ]
+                )
+                for k in range(num_chains)
+            ]
+        )
+    else:
+        median_other_rate = jnp.full((num_chains,), jnp.nan)
 
     # Multinomial exchangeable-null tail: min(1, M * P(Binomial(D, 1/M) >= d_max)),
     # exact via the regularized incomplete beta function
     # (P(X >= k) = betainc(k, n-k+1, p) for X ~ Binomial(n, p)). Guard
     # D == 0 so betainc never sees a == 0.
+    has_divergences = total > 0
     safe_total = jnp.where(has_divergences, total, 1)
     safe_max = jnp.where(has_divergences, max_count, 1)
     tail = jax.scipy.special.betainc(
@@ -900,14 +976,15 @@ def divergence_concentration_from_counts(
 
     return DivergenceConcentrationReport(
         warn=warn,
-        concentrated=concentrated,
-        chain=argmax_chain,
-        num_chains_elevated=num_chains_elevated,
+        flagged=flagged,
+        num_flagged=num_flagged,
+        rates=rates,
+        early_rate=early_rate,
+        late_rate=late_rate,
+        median_other_rate=median_other_rate,
         total_divergences=total,
         num_chains=jnp.asarray(num_chains),
-        max_rate=max_rate,
-        mean_rate=mean_rate,
-        ratio=ratio,
+        rate_threshold=jnp.asarray(rate_threshold),
         multinomial_p_value=p_value,
     )
 
@@ -915,9 +992,11 @@ def divergence_concentration_from_counts(
 def format_divergence_warning(report: DivergenceConcentrationReport) -> str:
     """Render a :class:`DivergenceConcentrationReport` as a human-readable message.
 
-    Returns ``""`` when ``report.warn`` is false. Not JIT-compatible by
-    design — call it on concrete report values (e.g. after a sampling run
-    has completed), not inside traced code.
+    Returns ``""`` when ``report.warn`` is false. Otherwise returns one
+    sentence per flagged chain (newline-separated when more than one
+    chain is flagged). Not JIT-compatible by design — call it on concrete
+    report values (e.g. after a sampling run has completed), not inside
+    traced code.
 
     Parameters
     ----------
@@ -931,25 +1010,28 @@ def format_divergence_warning(report: DivergenceConcentrationReport) -> str:
     """
     if not bool(report.warn):
         return ""
-    if bool(report.concentrated):
-        # printf-style, not an f-string format spec: an f-string
-        # `{value:.1f}` is flagged by the linter as a missing-whitespace-
-        # after-colon error, indistinguishable from an actual dict/
-        # annotation colon, and pyupgrade rewrites `.format()` back into
-        # that same f-string form.
-        pct = "%.1f" % (float(report.max_rate) * 100.0)
-        multiple = "%.1f" % float(report.ratio)
-        chain = int(report.chain)
-        return (
-            f"chain {chain}: diverged on {pct}% of its draws "
-            f"({multiple}x the ensemble mean) — likely bad post-warmup "
-            "start state; consider extending warmup, re-running, or "
-            "excluding this chain when recomputing shared products"
+
+    lines = []
+    flagged = np.asarray(report.flagged)
+    for k in np.flatnonzero(flagged):
+        k = int(k)
+        pct = "%.1f" % (float(report.rates[k]) * 100.0)
+        median = "%.1f" % (float(report.median_other_rate[k]) * 100.0)
+        early = float(report.early_rate[k])
+        late = float(report.late_rate[k])
+        if np.isfinite(early) and np.isfinite(late):
+            early_str = "%.1f" % (early * 100.0)
+            late_str = "%.1f" % (late * 100.0)
+            quarters = " ({}% in the first quarter, {}% in the last)".format(
+                early_str,
+                late_str,
+            )
+        else:
+            quarters = ""
+        lines.append(
+            f"chain {k}: {pct}% of its sampling draws diverged{quarters} — "
+            f"significantly more than the other chains ({median}% median)"
+            "; draws from this chain, especially early ones, may be "
+            "untrustworthy."
         )
-    n_elevated = int(report.num_chains_elevated)
-    num_chains = int(report.num_chains)
-    return (
-        f"elevated divergence rate across {n_elevated} of {num_chains} "
-        "chains — likely model geometry, not a single chain's start; "
-        "consider reparameterization or reviewing the warmup verdict"
-    )
+    return "\n".join(lines)

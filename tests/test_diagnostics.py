@@ -511,93 +511,173 @@ class ParetoKhatTest(chex.TestCase):
         ), f"pareto_khat for Cauchy heavy tail expected >0.3 got {got_k}"
 
 
-class DivergenceConcentrationTest(chex.TestCase):
-    """Tests for the divergence-concentration warning.
+def _build_is_divergent(chain_specs, n_draws):
+    """Build a synthetic ``(n_chains, n_draws)`` boolean array from
+    ``(total, first_quarter_count, last_quarter_count)`` triples.
 
-    Fixtures are real per-chain divergence counts (not synthetic), pulled
-    from a retrospective 120-cell validation corpus of BlackJAX/tuningfork
-    benchmark runs — the same corpus the default ``rate_threshold=0.02``
-    and ``ratio_cutoff=3.0`` were calibrated against.
+    Reproduces exact real per-chain totals *and* first-/last-quarter
+    counts (the rest of a chain's divergences are placed in the middle
+    half, where placement is irrelevant to what these tests check) so the
+    quarter-profile fields can be tested against real validation-corpus
+    numbers without depending on any external file path.
+    """
+    quarter = n_draws // 4
+    rows = []
+    for total, first_q, last_q in chain_specs:
+        mid = total - first_q - last_q
+        assert 0 <= first_q <= quarter and 0 <= last_q <= quarter and mid >= 0
+        row = np.zeros(n_draws, dtype=bool)
+        row[:first_q] = True
+        if last_q:
+            row[n_draws - last_q :] = True
+        row[quarter : quarter + mid] = True
+        rows.append(row)
+    return jnp.asarray(np.stack(rows))
+
+
+class DivergenceConcentrationTest(chex.TestCase):
+    """Tests for the sampling-phase divergence-concentration warning.
+
+    Fixtures reproduce real per-chain divergence counts and (for the
+    flagged-chain quarter-profile tests) real first-/last-quarter counts,
+    pulled from a retrospective 120-cell validation corpus of
+    BlackJAX/tuningfork benchmark runs — the same corpus the default
+    ``rate_threshold=0.02`` and the ``num_chains // 4`` minority cap were
+    calibrated against.
     """
 
-    # A single chain (index 6 of 8) landing on a bad post-warmup start
-    # state and diverging heavily while the rest stay clean: rate 18.75%,
-    # ratio ~6.4x the ensemble mean. The most severe cell in the
-    # validation corpus.
-    _CONCENTRATED_COUNTS = [7, 6, 9, 44, 6, 9, 375, 15]
+    _N_DRAWS = 2000
+
+    # A minority-of-two case: one dominant chain (index 6) landing on a
+    # bad post-warmup start state (18.75% overall, 72.2% in just the
+    # first quarter, recovering to 0.2% in the last), plus one chain
+    # (index 3) barely over the 2% threshold. Both cross rate_threshold;
+    # num_flagged=2 == max(1, 8 // 4), the boundary of the minority cap.
+    # (total, first_quarter_count, last_quarter_count) per chain, quarter=500.
+    _STORM_SPECS = [
+        (7, 0, 1),
+        (6, 1, 2),
+        (9, 2, 4),
+        (44, 1, 0),
+        (6, 3, 1),
+        (9, 3, 4),
+        (375, 361, 1),
+        (15, 9, 1),
+    ]
+    _STORM_FLAGGED = (3, 6)
+
+    # A single-chain minority case at a much smaller D: chain 7 at 2.9%,
+    # right at the edge of the default 2% threshold, degrading rather
+    # than recovering (0% first quarter, 11.4% last quarter).
+    _SINGLE_FLAGGED_SPECS = [
+        (1, 0, 0),
+        (1, 0, 0),
+        (0, 0, 0),
+        (3, 0, 0),
+        (0, 0, 0),
+        (4, 0, 0),
+        (0, 0, 0),
+        (58, 0, 57),
+    ]
+    _SINGLE_FLAGGED_CHAIN = 7
 
     # Every chain in the ensemble globally elevated (12.85%-26.70% each):
-    # model-geometry signature, not a single bad chain. Ratio ~1.6x.
+    # a model-geometry signature, not a minority bad-start chain — all 8
+    # of 8 chains flagged, over the max(1, 8 // 4) = 2 minority cap, so
+    # this must NOT warn even though the fields are all populated.
     _ENSEMBLE_COUNTS = [316, 261, 257, 534, 272, 384, 302, 271]
-
-    # Same single-bad-chain signature as _CONCENTRATED_COUNTS but at much
-    # smaller D: chain 7 at 2.9% (ratio ~6.9x) — right at the edge of the
-    # default 2% threshold, independently substantiated as a genuine
-    # near-storm concentration rather than noise.
-    _NEAR_STORM_COUNTS = [1, 1, 0, 3, 0, 4, 0, 58]
 
     # Ordinary scattered divergences well below any threshold: healthy.
     _HEALTHY_COUNTS = [2, 6, 3, 4, 7, 3, 4, 7]
 
-    _N_DRAWS = 2000
-
     @chex.all_variants(with_pmap=False)
-    def test_concentrated_storm_warns(self):
-        core = self.variant(
-            functools.partial(
-                diagnostics.divergence_concentration_from_counts,
-                n_draws=self._N_DRAWS,
-            )
-        )
-        report = core(jnp.array(self._CONCENTRATED_COUNTS))
+    def test_storm_warns_minority_of_two(self):
+        is_divergent = _build_is_divergent(self._STORM_SPECS, self._N_DRAWS)
+        report = self.variant(diagnostics.divergence_concentration)(is_divergent)
         assert bool(report.warn) is True
-        assert bool(report.concentrated) is True
-        assert int(report.chain) == 6
+        assert int(report.num_flagged) == 2
+        np.testing.assert_array_equal(
+            np.asarray(report.flagged),
+            [False, False, False, True, False, False, True, False],
+        )
         assert int(report.total_divergences) == 471
-        np.testing.assert_allclose(float(report.max_rate), 375 / 2000, rtol=1e-6)
+        np.testing.assert_allclose(float(report.rates[6]), 375 / 2000, rtol=1e-6)
 
-    def test_concentrated_storm_message(self):
-        report = diagnostics.divergence_concentration_from_counts(
-            jnp.array(self._CONCENTRATED_COUNTS), self._N_DRAWS
+    def test_storm_quarter_profile_dominant_chain(self):
+        # Real evidence: chain 6 diverges heavily early and recovers.
+        is_divergent = _build_is_divergent(self._STORM_SPECS, self._N_DRAWS)
+        report = diagnostics.divergence_concentration(is_divergent)
+        np.testing.assert_allclose(float(report.early_rate[6]), 361 / 500, rtol=1e-6)
+        np.testing.assert_allclose(float(report.late_rate[6]), 1 / 500, rtol=1e-6)
+        assert float(report.early_rate[6]) > float(report.late_rate[6])
+
+    def test_storm_message_lists_both_flagged_chains_no_causal_claims(self):
+        is_divergent = _build_is_divergent(self._STORM_SPECS, self._N_DRAWS)
+        report = diagnostics.divergence_concentration(is_divergent)
+        msg = diagnostics.format_divergence_warning(report)
+        assert "chain 6:" in msg, msg
+        assert "chain 3:" in msg, msg
+        assert "first quarter" in msg and "in the last" in msg
+        assert "median" in msg
+        # Factual observation only -- no causal/remedy language in the
+        # message text itself (that stays in the docstring as documentation).
+        for banned in ("geometry", "post-warmup start", "reparameterization"):
+            assert banned not in msg, msg
+
+    def test_single_flagged_chain_warns(self):
+        is_divergent = _build_is_divergent(self._SINGLE_FLAGGED_SPECS, self._N_DRAWS)
+        report = diagnostics.divergence_concentration(is_divergent)
+        assert bool(report.warn) is True
+        assert int(report.num_flagged) == 1
+        assert bool(report.flagged[self._SINGLE_FLAGGED_CHAIN])
+        np.testing.assert_allclose(
+            float(report.rates[self._SINGLE_FLAGGED_CHAIN]), 58 / 2000, rtol=1e-6
+        )
+        np.testing.assert_allclose(
+            float(report.late_rate[self._SINGLE_FLAGGED_CHAIN]), 57 / 500, rtol=1e-6
         )
         msg = diagnostics.format_divergence_warning(report)
-        assert msg.startswith("chain 6:"), msg
-        assert "post-warmup start" in msg
-        assert "%" in msg and "x the ensemble mean" in msg
+        assert msg.startswith(f"chain {self._SINGLE_FLAGGED_CHAIN}" ":"), msg
 
-    def test_ensemble_elevated_warns(self):
+    def test_ensemble_wide_elevation_does_not_warn(self):
+        # 8 of 8 chains flagged > max(1, 8 // 4) = 2: fields are populated
+        # but this is out of scope for the minority-outlier trigger.
         report = diagnostics.divergence_concentration_from_counts(
             jnp.array(self._ENSEMBLE_COUNTS), self._N_DRAWS
         )
-        assert bool(report.warn) is True
-        assert bool(report.concentrated) is False
-        assert int(report.num_chains_elevated) == 8
+        assert bool(report.warn) is False
+        assert int(report.num_flagged) == 8
+        np.testing.assert_array_equal(np.asarray(report.flagged), [True] * 8)
+        assert int(report.total_divergences) == sum(self._ENSEMBLE_COUNTS)
+        assert diagnostics.format_divergence_warning(report) == ""
 
-    def test_ensemble_elevated_message(self):
-        report = diagnostics.divergence_concentration_from_counts(
-            jnp.array(self._ENSEMBLE_COUNTS), self._N_DRAWS
-        )
-        msg = diagnostics.format_divergence_warning(report)
-        assert "elevated divergence rate across 8 of 8 chains" in msg
-        assert "geometry" in msg
-        assert "chain 3:" not in msg  # not the single-chain phrasing
+    def test_minority_cap_boundary(self):
+        # num_chains=8 -> cap=2. Exactly 3 flagged chains must NOT warn,
+        # even though each individually clears rate_threshold.
+        counts = jnp.array([50, 50, 50, 0, 0, 0, 0, 0])  # 3 chains at 2.5%
+        report = diagnostics.divergence_concentration_from_counts(counts, self._N_DRAWS)
+        assert int(report.num_flagged) == 3
+        assert bool(report.warn) is False
 
-    def test_near_storm_warns_concentrated_at_default_threshold(self):
-        # rate = 58/2000 = 2.9% >= default 2% threshold -> warns.
-        report = diagnostics.divergence_concentration_from_counts(
-            jnp.array(self._NEAR_STORM_COUNTS), self._N_DRAWS
+    def test_minority_cap_at_small_num_chains(self):
+        # num_chains=4 -> cap=max(1, 1)=1. One flagged chain warns; two does not.
+        one_flagged = jnp.array([50, 0, 0, 0])
+        two_flagged = jnp.array([50, 50, 0, 0])
+        report_one = diagnostics.divergence_concentration_from_counts(
+            one_flagged, self._N_DRAWS
         )
-        assert bool(report.warn) is True
-        assert bool(report.concentrated) is True
-        assert int(report.chain) == 7
-        np.testing.assert_allclose(float(report.max_rate), 58 / 2000, rtol=1e-6)
-        assert float(report.ratio) > 3.0
+        report_two = diagnostics.divergence_concentration_from_counts(
+            two_flagged, self._N_DRAWS
+        )
+        assert bool(report_one.warn) is True
+        assert bool(report_two.warn) is False
 
     def test_healthy_scatter_no_warning(self):
         report = diagnostics.divergence_concentration_from_counts(
             jnp.array(self._HEALTHY_COUNTS), self._N_DRAWS
         )
         assert bool(report.warn) is False
+        assert int(report.num_flagged) == 0
         assert diagnostics.format_divergence_warning(report) == ""
 
     def test_zero_divergences_no_warning(self):
@@ -605,63 +685,66 @@ class DivergenceConcentrationTest(chex.TestCase):
             jnp.zeros(8, dtype=int), self._N_DRAWS
         )
         assert bool(report.warn) is False
+        assert int(report.num_flagged) == 0
         assert diagnostics.format_divergence_warning(report) == ""
 
-    def test_ratio_guard_at_zero_mean(self):
-        # D=0 -> mean_count=0; ratio must not be nan/inf, and no warning.
-        report = diagnostics.divergence_concentration_from_counts(
-            jnp.zeros(4, dtype=int), self._N_DRAWS
-        )
-        ratio = float(report.ratio)
-        assert np.isfinite(ratio), f"ratio must be finite at mean=0, got {ratio}"
-        assert ratio == 0.0
-        assert bool(report.warn) is False
+    def test_from_counts_quarters_are_nan_and_degrade_gracefully(self):
+        # The counts-only entry point has no per-draw resolution: quarter
+        # fields are NaN, and the message omits the quarter parenthetical
+        # rather than printing "nan%".
+        counts = jnp.array([1, 1, 0, 3, 0, 4, 0, 58])  # matches the single-flagged case
+        report = diagnostics.divergence_concentration_from_counts(counts, self._N_DRAWS)
+        assert bool(report.warn) is True
+        assert np.isnan(float(report.early_rate[7]))
+        assert np.isnan(float(report.late_rate[7]))
+        msg = diagnostics.format_divergence_warning(report)
+        assert "nan" not in msg.lower(), msg
+        assert "first quarter" not in msg, msg
+        assert msg.startswith("chain 7:"), msg
 
-    def test_from_is_divergent_matches_from_counts(self):
-        # Build a (chains, draws) boolean array with the same per-chain
-        # counts as the concentrated fixture and check both entry points agree.
-        counts = self._CONCENTRATED_COUNTS
-        is_divergent = jnp.zeros((len(counts), self._N_DRAWS), dtype=bool)
-        for k, c in enumerate(counts):
-            is_divergent = is_divergent.at[k, :c].set(True)
+    def test_from_is_divergent_matches_from_counts_trigger(self):
+        # Trigger-level fields (warn, flagged, rates, D) must agree between
+        # the two entry points for the same underlying counts; only the
+        # quarter fields differ (real vs NaN).
+        is_divergent = _build_is_divergent(self._STORM_SPECS, self._N_DRAWS)
         report_flags = diagnostics.divergence_concentration(is_divergent)
+        counts = [total for total, _, _ in self._STORM_SPECS]
         report_counts = diagnostics.divergence_concentration_from_counts(
             jnp.array(counts), self._N_DRAWS
         )
         assert bool(report_flags.warn) == bool(report_counts.warn)
-        assert bool(report_flags.concentrated) == bool(report_counts.concentrated)
-        assert int(report_flags.chain) == int(report_counts.chain)
+        assert int(report_flags.num_flagged) == int(report_counts.num_flagged)
         np.testing.assert_allclose(
-            float(report_flags.max_rate), float(report_counts.max_rate), rtol=1e-6
+            np.asarray(report_flags.rates), np.asarray(report_counts.rates), rtol=1e-6
+        )
+        assert int(report_flags.total_divergences) == int(
+            report_counts.total_divergences
         )
 
     def test_rate_threshold_override(self):
-        # Raising the threshold above the near-storm cell's rate silences it.
+        # Raising the threshold above the single-flagged cell's rate silences it.
+        counts = jnp.array([1, 1, 0, 3, 0, 4, 0, 58])
         report_default = diagnostics.divergence_concentration_from_counts(
-            jnp.array(self._NEAR_STORM_COUNTS), self._N_DRAWS
+            counts, self._N_DRAWS
         )
         report_high_threshold = diagnostics.divergence_concentration_from_counts(
-            jnp.array(self._NEAR_STORM_COUNTS), self._N_DRAWS, rate_threshold=0.05
+            counts, self._N_DRAWS, rate_threshold=0.05
         )
         assert bool(report_default.warn) is True
         assert bool(report_high_threshold.warn) is False
 
-    def test_ratio_cutoff_override(self):
-        # Lowering ratio_cutoff below the ensemble cell's ratio (~1.64x)
-        # reclassifies it from ensemble-wide to concentrated.
-        report_default = diagnostics.divergence_concentration_from_counts(
-            jnp.array(self._ENSEMBLE_COUNTS), self._N_DRAWS
+    def test_median_other_rate_single_chain_guard(self):
+        # num_chains=1: there are no "other" chains -- must not crash, and
+        # median_other_rate must be NaN rather than raising.
+        report = diagnostics.divergence_concentration_from_counts(
+            jnp.array([5]), self._N_DRAWS
         )
-        report_low_cutoff = diagnostics.divergence_concentration_from_counts(
-            jnp.array(self._ENSEMBLE_COUNTS), self._N_DRAWS, ratio_cutoff=1.5
-        )
-        assert bool(report_default.concentrated) is False
-        assert bool(report_low_cutoff.concentrated) is True
+        assert np.isnan(float(report.median_other_rate[0]))
 
     def test_multinomial_p_value_is_context_not_trigger(self):
-        # The healthy-scatter cell can still have a tiny multinomial
+        # The healthy-scatter cell can still have a small multinomial
         # p-value (real chains are not exchangeable) yet must not warn --
-        # the rate threshold, not the p-value, decides `warn`.
+        # the per-chain rate threshold, not the p-value, decides `warn`.
         report = diagnostics.divergence_concentration_from_counts(
             jnp.array(self._HEALTHY_COUNTS), self._N_DRAWS
         )
