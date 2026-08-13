@@ -566,6 +566,21 @@ class StagedAdaptationInfo(NamedTuple):
         trace)``.  A caller that wants the automatic warmup-cost ledger
         (e.g. ``sum(trace.info.num_integration_steps)`` charging the
         probation phase as warmup cost too) uses ``trace`` unsliced.
+
+        Design note: a separately-shaped ``(main_trace, probation_trace)``
+        pair -- instead of one concatenated ``trace`` plus a boundary index
+        -- was considered and rejected.  Concatenation is not a defect for a
+        SUMMING consumer (a caller reducing over the full step axis, e.g. a
+        gradient ledger, gets the probation phase folded in automatically,
+        exactly as documented above); it only breaks a schedule-boundary
+        INDEXING consumer that implicitly assumes ``trace.shape[0] ==
+        num_steps``.  Splitting the return in two would force EVERY caller,
+        including the summing ones, to explicitly concatenate before
+        reducing, in exchange for saving the (one-line) slice only the
+        indexing consumers need.  Keeping ``trace`` concatenated and adding
+        ``warmup_boundary_index`` gives both consumer shapes a supported,
+        one-line path with no default-case regression for the common
+        (summing) one.
     diagnostics
         The start-state-probation diagnostics dict from
         :func:`_apply_start_state_probation`, plus ``warmup_boundary_index``
@@ -764,10 +779,9 @@ def _apply_start_state_probation(
     probation_keys = jax.random.split(probation_master_key, window)
     init_step_sizes = jnp.full((M,), step_size, dtype=jnp.asarray(step_size).dtype)
     init_ever_diverged = jnp.zeros((M,), dtype=jnp.bool_)
-    init_grad_evals = jnp.asarray(0, dtype=jnp.int32)
 
     def _probation_step(carry, key):
-        states_p, step_sizes_p, ever_diverged_p, grad_evals_p = carry
+        states_p, step_sizes_p, ever_diverged_p = carry
         chain_keys = jax.random.split(key, M)
 
         def _step_one(k, state, h_i):
@@ -784,7 +798,7 @@ def _apply_start_state_probation(
             backed_off * jnp.asarray(_PROBATION_RECOVERY_RATE), step_size
         )
         new_ever_diverged = ever_diverged_p | is_div
-        # Accumulate from infos_p -- the algorithm's OWN raw kernel Info
+        # Read from infos_p -- the algorithm's OWN raw kernel Info
         # (HMCInfo/NUTSInfo, the only two algorithms this multi-chain path
         # supports; see the start_state_probation docstring) -- never from
         # `record` below.  `record` is shaped by the caller's
@@ -795,19 +809,29 @@ def _apply_start_state_probation(
         # info_fn shape didn't match (Issue#1090 fix 3 -- "no silent
         # interventions" failing silently itself). infos_p is unaffected by
         # adaptation_info_fn by construction, so this ledger is now correct
-        # regardless of what the caller passes there.
-        new_grad_evals = grad_evals_p + jnp.sum(infos_p.num_integration_steps)
+        # regardless of what the caller passes there. Returned as a scan
+        # OUTPUT (stacked, summed after the scan) rather than folded into the
+        # carry: a carry component's output dtype must exactly match its
+        # input dtype every iteration, and jnp.sum's integer-promotion rules
+        # differ from the per-step field's own dtype under
+        # jax.config.jax_enable_x64 -- accumulating in the carry raised
+        # "carry input and carry output must have equal types" (int32 in,
+        # int64 out) under x64. A stacked scan output has no such
+        # input/output dtype constraint.
+        per_step_grad_evals = jnp.sum(infos_p.num_integration_steps)
         record = adaptation_info_fn(new_states_p, infos_p, frozen_adaptation_state)
-        return (new_states_p, recovered, new_ever_diverged, new_grad_evals), record
+        return (new_states_p, recovered, new_ever_diverged), (
+            record,
+            per_step_grad_evals,
+        )
 
     (
         final_states,
         final_step_sizes,
         ever_diverged,
-        extra_grad_evals_total,
-    ), probation_info = jax.lax.scan(
+    ), (probation_info, grad_evals_per_step) = jax.lax.scan(
         _probation_step,
-        (rehabilitated_state, init_step_sizes, init_ever_diverged, init_grad_evals),
+        (rehabilitated_state, init_step_sizes, init_ever_diverged),
         probation_keys,
     )
 
@@ -823,7 +847,7 @@ def _apply_start_state_probation(
     # Computed above from the raw kernel info (infos_p), independent of
     # adaptation_info_fn's shape -- always a real count, never a -1 sentinel
     # (Issue#1090 fix 3).
-    extra_grad_evals = int(extra_grad_evals_total)
+    extra_grad_evals = int(jnp.sum(grad_evals_per_step))
 
     diagnostics = {
         "enabled": True,
