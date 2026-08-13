@@ -473,6 +473,49 @@ class TestIssue1090ExtraGradEvalsTupleInfoFnRegression(BlackJAXTest):
         )
 
 
+class TestIssue1090ExtraGradEvalsX64Regression(BlackJAXTest):
+    """Regression for a scan-carry dtype mismatch caught by the downstream
+    consumer's own repro convention (``JAX_ENABLE_X64=1``, matching the
+    paper1 harness).  An earlier version of the fix 3 patch accumulated
+    ``extra_grad_evals`` in the probation scan's CARRY
+    (``grad_evals_p + jnp.sum(infos_p.num_integration_steps)``), which raised
+    ``jax.lax.scan``'s "carry input and carry output must have equal types"
+    (``int32[]`` in, ``int64[]`` out) once 64-bit ints were enabled --
+    ``jnp.sum``'s integer-promotion result dtype does not match a hardcoded
+    ``jnp.int32`` carry dtype under x64.  Exercises the full multi-chain
+    probation path inside ``jax.enable_x64()`` (the repo's established x64
+    test idiom; see ``StagedAdaptationX64SmokeTest`` in
+    ``test_staged_adaptation.py``)."""
+
+    def test_probation_scan_does_not_raise_under_x64(self):
+        n_chains = 8
+
+        def logdensity_fn(x):
+            return -0.5 * jnp.sum(x**2)
+
+        with jax.enable_x64():
+            position = jnp.zeros((n_chains, 4), dtype=jnp.float64)
+            warmup = blackjax.staged_adaptation(
+                blackjax.nuts,
+                logdensity_fn,
+                metric="auto",
+                max_grad_budget=8000,
+                n_chains=n_chains,
+                start_state_probation=True,
+                probation_window=10,
+            )
+            results, info = warmup.run(jax.random.key(44), position, num_steps=40)
+
+            self.assertIsInstance(info, StagedAdaptationInfo)
+            extra_grad_evals = info.diagnostics["extra_grad_evals"]
+            self.assertGreater(
+                extra_grad_evals,
+                0,
+                "the probation scan must complete under x64 and produce a "
+                "real positive grad-eval count",
+            )
+
+
 # ---------------------------------------------------------------------------
 # Red-check: engineered bad post-warmup start state (ratified design note)
 # ---------------------------------------------------------------------------
