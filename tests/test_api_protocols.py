@@ -137,6 +137,11 @@ def _make_algorithm(name):
             inverse_mass_matrix=inv_mass,
             step_size=0.1,
         ),
+        "gist_composed": lambda: blackjax.gist_composed(
+            std_normal_logdensity,
+            inverse_mass_matrix=inv_mass,
+            initial_step_size=0.1,
+        ),
     }
 
     if name not in factories:
@@ -169,6 +174,7 @@ _MCMC_ALGORITHMS = [
     "coordinate_slice",
     "gist_step_size",
     "gist_trajectory_length",
+    "gist_composed",
 ]
 
 
