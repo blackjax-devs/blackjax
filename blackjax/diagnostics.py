@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """MCMC diagnostics."""
+from typing import NamedTuple
+
 import jax
 import jax.numpy as jnp
 import numpy as np
@@ -27,6 +29,10 @@ __all__ = [
     "ess_tail",
     "pareto_khat",
     "psis_weights",
+    "DivergenceConcentrationReport",
+    "divergence_concentration",
+    "divergence_concentration_from_counts",
+    "format_divergence_warning",
 ]
 
 
@@ -691,3 +697,264 @@ def psis_weights(log_ratios: Array, r_eff: float = 1.0) -> tuple[Array, Array]:
     lw_orig = jnp.zeros_like(lw_smooth).at[sorted_idx].set(lw_smooth)
     log_w = lw_orig - jax.nn.logsumexp(lw_orig)
     return log_w, k
+
+
+class DivergenceConcentrationReport(NamedTuple):
+    """Per-run divergence-concentration diagnostic report.
+
+    All fields are plain JAX numerics — no strings — so the statistic
+    itself stays JIT-compilable.  Pass the report to
+    :func:`format_divergence_warning` to render a human-readable message
+    from concrete (non-traced) values.
+
+    Attributes
+    ----------
+    warn
+        Bool. Whether a minority of chains (see the module notes on
+        :func:`divergence_concentration`) crossed ``rate_threshold``.
+    flagged
+        Bool array, shape ``(n_chains,)``. Which chains crossed
+        ``rate_threshold``, independent of whether ``warn`` ends up true.
+    num_flagged
+        Number of flagged chains, ``flagged.sum()``.
+    rates
+        Per-chain sampling-phase divergence rate, shape ``(n_chains,)``.
+    early_rate, late_rate
+        Per-chain divergence rate in the first and last quarter of the
+        sampling draws, shape ``(n_chains,)``. ``NaN`` when computed from
+        :func:`divergence_concentration_from_counts` (no per-draw
+        resolution available).
+    median_other_rate
+        For each chain, the median ``rates`` value across the *other*
+        ``n_chains - 1`` chains, shape ``(n_chains,)``. ``NaN`` when
+        ``n_chains <= 1``.
+    total_divergences
+        Total divergence count ``D`` summed over all chains.
+    num_chains
+        Number of chains ``M``.
+    rate_threshold
+        The threshold that was applied (echoed back for the message /
+        for callers that only keep the report).
+    multinomial_p_value
+        Bonferroni-corrected exchangeable-null tail probability for the
+        single worst chain, ``min(1, M * P(Binomial(D, 1/M) >= d_max))``.
+        Context only; never drives ``warn``. ``NaN`` when ``D=0``.
+    """
+
+    warn: Array
+    flagged: Array
+    num_flagged: Array
+    rates: Array
+    early_rate: Array
+    late_rate: Array
+    median_other_rate: Array
+    total_divergences: Array
+    num_chains: Array
+    rate_threshold: Array
+    multinomial_p_value: Array
+
+
+def divergence_concentration(
+    is_divergent: ArrayLike,
+    *,
+    rate_threshold: float = 0.02,
+) -> DivergenceConcentrationReport:
+    """Flag a run where sampling-phase divergences concentrate on a minority of chains.
+
+    Parameters
+    ----------
+    is_divergent
+        Per-draw divergence flags (bool or 0/1) for the sampling
+        (post-warmup) phase only, shape ``(n_chains, n_draws)``.
+    rate_threshold
+        Minimum per-chain divergence rate for chain ``k`` to count as
+        flagged. Default ``0.02`` (2%).
+
+    Returns
+    -------
+    :class:`DivergenceConcentrationReport`. ``warn`` is true iff between
+    1 and ``max(1, n_chains // 4)`` chains are flagged -- a
+    minority-outlier trigger; an ensemble where most/all chains cross the
+    threshold returns populated fields but no warning.
+
+    Notes
+    -----
+    - Counting is sampling-phase only; warmup divergences are out of scope.
+    - Concatenating warmup draws in front of sampling draws dilutes a real
+      signal below threshold rather than raising a false alarm -- slice to
+      sampling draws only before calling this.
+    - ``multinomial_p_value`` is context only; it never decides ``warn``.
+    """
+    # NaN must flag, not silently pass.
+    is_divergent = jnp.asarray(is_divergent).astype(bool)
+    n_draws = is_divergent.shape[-1]
+    num_chains = is_divergent.shape[-2]
+    counts = jnp.sum(is_divergent, axis=-1)
+
+    quarter = max(n_draws // 4, 1)
+    early_rate = jnp.sum(is_divergent[:, :quarter], axis=-1) / quarter
+    late_rate = jnp.sum(is_divergent[:, n_draws - quarter :], axis=-1) / quarter
+
+    return _divergence_concentration_core(
+        counts,
+        n_draws,
+        num_chains,
+        early_rate,
+        late_rate,
+        rate_threshold=rate_threshold,
+    )
+
+
+def divergence_concentration_from_counts(
+    chain_divergence_counts: ArrayLike,
+    n_draws: int,
+    *,
+    rate_threshold: float = 0.02,
+) -> DivergenceConcentrationReport:
+    """Same as :func:`divergence_concentration`, from precomputed per-chain counts.
+
+    Use when per-draw flags are not retained but per-chain totals are.
+    ``early_rate`` / ``late_rate`` are ``NaN`` (no per-draw resolution for
+    a quarter profile); :func:`format_divergence_warning` omits that part
+    of the message rather than printing "nan%".
+
+    Parameters
+    ----------
+    chain_divergence_counts
+        Per-chain divergence counts for the sampling phase, shape
+        ``(n_chains,)``.
+    n_draws
+        Number of sampling draws per chain.
+    rate_threshold
+        See :func:`divergence_concentration`.
+
+    Returns
+    -------
+    :class:`DivergenceConcentrationReport`
+    """
+    # NaN must flag (as fully divergent), not silently pass.
+    counts = jnp.asarray(chain_divergence_counts).astype(float)
+    counts = jnp.clip(jnp.nan_to_num(counts, nan=float(n_draws)), 0.0, float(n_draws))
+    num_chains = counts.shape[-1]
+    nan_quarters = jnp.full((num_chains,), jnp.nan)
+    return _divergence_concentration_core(
+        counts,
+        n_draws,
+        num_chains,
+        nan_quarters,
+        nan_quarters,
+        rate_threshold=rate_threshold,
+    )
+
+
+def _divergence_concentration_core(
+    counts: Array,
+    n_draws: int,
+    num_chains: int,
+    early_rate: Array,
+    late_rate: Array,
+    *,
+    rate_threshold: float,
+) -> DivergenceConcentrationReport:
+    total = jnp.sum(counts, axis=-1)
+    max_count = jnp.max(counts, axis=-1)
+
+    rates = counts / n_draws
+    flagged = rates >= rate_threshold
+    num_flagged = jnp.sum(flagged, axis=-1)
+    cap = jnp.maximum(1, num_chains // 4)
+    warn = (num_flagged >= 1) & (num_flagged <= cap)
+
+    # Static per-chain index gather keeps this jit-safe (num_chains is a
+    # Python int); no "others" exist when num_chains == 1.
+    if num_chains > 1:
+        median_other_rate = jnp.stack(
+            [
+                jnp.median(
+                    rates[
+                        jnp.concatenate([jnp.arange(k), jnp.arange(k + 1, num_chains)])
+                    ]
+                )
+                for k in range(num_chains)
+            ]
+        )
+    else:
+        median_other_rate = jnp.full((num_chains,), jnp.nan)
+
+    # Exact binomial tail via the regularized incomplete beta function;
+    # D == 0 is guarded so betainc never sees a == 0.
+    has_divergences = total > 0
+    safe_total = jnp.where(has_divergences, total, 1)
+    safe_max = jnp.where(has_divergences, max_count, 1)
+    tail = jax.scipy.special.betainc(
+        safe_max.astype(float),
+        (safe_total - safe_max + 1).astype(float),
+        1.0 / num_chains,
+    )
+    p_value = jnp.where(
+        has_divergences,
+        jnp.minimum(1.0, num_chains * tail),
+        jnp.asarray(jnp.nan),
+    )
+
+    return DivergenceConcentrationReport(
+        warn=warn,
+        flagged=flagged,
+        num_flagged=num_flagged,
+        rates=rates,
+        early_rate=early_rate,
+        late_rate=late_rate,
+        median_other_rate=median_other_rate,
+        total_divergences=total,
+        num_chains=jnp.asarray(num_chains),
+        rate_threshold=jnp.asarray(rate_threshold),
+        multinomial_p_value=p_value,
+    )
+
+
+def format_divergence_warning(report: DivergenceConcentrationReport) -> str:
+    """Render a :class:`DivergenceConcentrationReport` as a human-readable message.
+
+    Returns ``""`` when ``report.warn`` is false. Otherwise returns one
+    sentence per flagged chain (newline-separated when more than one
+    chain is flagged). Not JIT-compatible by design — call it on concrete
+    report values (e.g. after a sampling run has completed), not inside
+    traced code.
+
+    Parameters
+    ----------
+    report
+        A report produced by :func:`divergence_concentration` or
+        :func:`divergence_concentration_from_counts`.
+
+    Returns
+    -------
+    ``str``, empty when there is nothing to warn about.
+    """
+    if not bool(report.warn):
+        return ""
+
+    lines = []
+    flagged = np.asarray(report.flagged)
+    for k in np.flatnonzero(flagged):
+        k = int(k)
+        pct = "%.1f" % (float(report.rates[k]) * 100.0)
+        median = "%.1f" % (float(report.median_other_rate[k]) * 100.0)
+        early = float(report.early_rate[k])
+        late = float(report.late_rate[k])
+        if np.isfinite(early) and np.isfinite(late):
+            early_str = "%.1f" % (early * 100.0)
+            late_str = "%.1f" % (late * 100.0)
+            quarters = " ({}% in the first quarter, {}% in the last)".format(
+                early_str,
+                late_str,
+            )
+        else:
+            quarters = ""
+        lines.append(
+            f"chain {k}: {pct}% of its sampling draws diverged{quarters} — "
+            f"significantly more than the other chains ({median}% median)"
+            "; draws from this chain, especially early ones, may be "
+            "untrustworthy."
+        )
+    return "\n".join(lines)

@@ -511,5 +511,141 @@ class ParetoKhatTest(chex.TestCase):
         ), f"pareto_khat for Cauchy heavy tail expected >0.3 got {got_k}"
 
 
+def _build_is_divergent(chain_specs, n_draws):
+    """Build a ``(n_chains, n_draws)`` bool array from ``(total,
+    first_quarter_count, last_quarter_count)`` triples, reproducing real
+    validation-corpus per-chain and quarter counts without an external file.
+    """
+    quarter = n_draws // 4
+    rows = []
+    for total, first_q, last_q in chain_specs:
+        mid = total - first_q - last_q
+        row = np.zeros(n_draws, dtype=bool)
+        row[:first_q] = True
+        if last_q:
+            row[n_draws - last_q :] = True
+        row[quarter : quarter + mid] = True
+        rows.append(row)
+    return jnp.asarray(np.stack(rows))
+
+
+class DivergenceConcentrationTest(chex.TestCase):
+    """Tests for the sampling-phase divergence-concentration warning."""
+
+    _N_DRAWS = 2000
+
+    # Real validation-corpus counts: chain 6 dominant (18.75%, early-
+    # concentrated then recovers), chain 3 marginal (2.2%) -- num_flagged=2
+    # at the max(1, 8 // 4) minority-cap boundary.
+    _STORM_SPECS = [
+        (7, 0, 1),
+        (6, 1, 2),
+        (9, 2, 4),
+        (44, 1, 0),
+        (6, 3, 1),
+        (9, 3, 4),
+        (375, 361, 1),
+        (15, 9, 1),
+    ]
+
+    # Every chain elevated (12.85%-26.70%): 8 of 8 flagged, over the
+    # minority cap -- must NOT warn.
+    _ENSEMBLE_COUNTS = [316, 261, 257, 534, 272, 384, 302, 271]
+
+    _HEALTHY_COUNTS = [2, 6, 3, 4, 7, 3, 4, 7]
+    _SINGLE_CHAIN_COUNTS = jnp.array([1, 1, 0, 3, 0, 4, 0, 58])
+
+    def test_storm_minority_of_two(self):
+        is_divergent = _build_is_divergent(self._STORM_SPECS, self._N_DRAWS)
+        report = diagnostics.divergence_concentration(is_divergent)
+        assert bool(report.warn) is True
+        assert int(report.num_flagged) == 2
+        np.testing.assert_array_equal(
+            np.asarray(report.flagged),
+            [False, False, False, True, False, False, True, False],
+        )
+        np.testing.assert_allclose(float(report.early_rate[6]), 361 / 500, rtol=1e-6)
+        np.testing.assert_allclose(float(report.late_rate[6]), 1 / 500, rtol=1e-6)
+
+        msg = diagnostics.format_divergence_warning(report)
+        assert "chain 3:" in msg and "chain 6:" in msg, msg
+        assert "first quarter" in msg and "median" in msg
+        for banned in ("geometry", "post-warmup start", "reparameterization"):
+            assert banned not in msg, msg
+
+    def test_ensemble_wide_elevation_does_not_warn(self):
+        report = diagnostics.divergence_concentration_from_counts(
+            jnp.array(self._ENSEMBLE_COUNTS), self._N_DRAWS
+        )
+        assert bool(report.warn) is False
+        assert int(report.num_flagged) == 8
+        assert diagnostics.format_divergence_warning(report) == ""
+
+    def test_healthy_scatter_no_warning(self):
+        report = diagnostics.divergence_concentration_from_counts(
+            jnp.array(self._HEALTHY_COUNTS), self._N_DRAWS
+        )
+        assert bool(report.warn) is False
+        assert diagnostics.format_divergence_warning(report) == ""
+
+    def test_zero_divergences_no_warning(self):
+        report = diagnostics.divergence_concentration_from_counts(
+            jnp.zeros(8, dtype=int), self._N_DRAWS
+        )
+        assert bool(report.warn) is False
+        assert np.isnan(float(report.multinomial_p_value))
+
+    def test_from_counts_quarters_are_nan_and_degrade_gracefully(self):
+        report = diagnostics.divergence_concentration_from_counts(
+            self._SINGLE_CHAIN_COUNTS, self._N_DRAWS
+        )
+        assert bool(report.warn) is True
+        assert np.isnan(float(report.early_rate[7]))
+        msg = diagnostics.format_divergence_warning(report)
+        assert "nan" not in msg.lower() and "first quarter" not in msg, msg
+
+    def test_nan_input_flags_loud_not_silent(self):
+        # NaN must flag, not silently pass -- in both entry points.
+        is_divergent = jnp.array([[0.0, 1.0, float("nan"), 0.0]] * 4)
+        report = diagnostics.divergence_concentration(is_divergent)
+        assert not np.any(np.isnan(np.asarray(report.rates)))
+        assert bool(np.all(np.asarray(report.flagged)))
+
+        counts_report = diagnostics.divergence_concentration_from_counts(
+            jnp.array([1.0, 2.0, float("nan"), 0.0]), self._N_DRAWS
+        )
+        assert not np.isnan(float(counts_report.rates[2]))
+        assert bool(counts_report.flagged[2])
+
+    @chex.all_variants(with_pmap=False)
+    def test_jit_compilability(self):
+        core = self.variant(
+            functools.partial(
+                diagnostics.divergence_concentration_from_counts,
+                n_draws=self._N_DRAWS,
+            )
+        )
+        report = core(jnp.array([7, 6, 9, 44, 6, 9, 375, 15]))
+        assert bool(report.warn) is True
+
+    def test_rate_threshold_override(self):
+        report_default = diagnostics.divergence_concentration_from_counts(
+            self._SINGLE_CHAIN_COUNTS, self._N_DRAWS
+        )
+        report_high = diagnostics.divergence_concentration_from_counts(
+            self._SINGLE_CHAIN_COUNTS, self._N_DRAWS, rate_threshold=0.05
+        )
+        assert bool(report_default.warn) is True
+        assert bool(report_high.warn) is False
+
+    def test_single_chain_input_is_handled_gracefully(self):
+        # num_chains=1 has no "other" chains to compare against -- must
+        # not crash, just report cleanly.
+        report = diagnostics.divergence_concentration_from_counts(
+            jnp.array([5]), self._N_DRAWS
+        )
+        assert bool(report.warn) is False
+
+
 if __name__ == "__main__":
     absltest.main()
