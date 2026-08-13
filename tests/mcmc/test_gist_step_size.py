@@ -15,7 +15,9 @@ import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax
-from blackjax.mcmc import gist, gist_step_size, integrators, metrics
+from blackjax.mcmc import integrators, metrics
+from blackjax.mcmc.composed import _seam as gist
+from blackjax.mcmc.composed import step_size as gist_step_size
 from tests.fixtures import (
     BlackJAXTest,
     assert_grand_mean_within_robust_tolerance,
