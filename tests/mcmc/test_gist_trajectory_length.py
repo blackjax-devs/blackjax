@@ -19,14 +19,9 @@ from absl.testing import absltest, parameterized
 from jax.flatten_util import ravel_pytree
 
 import blackjax
-from blackjax.mcmc import (
-    gist,
-    gist_trajectory_length,
-    hmc,
-    integrators,
-    metrics,
-    trajectory,
-)
+from blackjax.mcmc import hmc, integrators, metrics, trajectory
+from blackjax.mcmc.composed import _seam as gist
+from blackjax.mcmc.composed import trajectory_length as gist_trajectory_length
 from tests.fixtures import (
     BlackJAXTest,
     assert_grand_mean_within_robust_tolerance,
