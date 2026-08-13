@@ -30,8 +30,6 @@ it is not user-facing on its own. Concrete instances plug in
 ``tuning_parameter_fn``/``apply_fn`` and are exposed as
 ``blackjax.gist_step_size`` (:mod:`blackjax.mcmc.composed.step_size`) and
 ``blackjax.gist_trajectory_length`` (:mod:`blackjax.mcmc.composed.trajectory_length`).
-See :mod:`blackjax.mcmc.composed` for the package's full instance/module
-layout.
 
 Both shipped instances take ``g(theta, rho) = identity`` on the tuning
 parameter, which is a sufficient condition for ``G`` to be a

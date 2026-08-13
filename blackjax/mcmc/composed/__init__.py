@@ -14,53 +14,19 @@
 """The GIST (Gibbs self-tuning) sampler family: general seam plus instances.
 
 Single-folder package (mirrors :mod:`blackjax.adaptation.meta`) bundling the
-general GIST kernel spine with its concrete instances, so the whole family
-reviews as one unit. Every instance shares the same seam: augment
-``(theta, rho)`` with a Gibbs-refreshed tuning parameter ``alpha``, apply a
-measure-preserving involution indexed by ``alpha``, one Metropolis test (see
-:mod:`~blackjax.mcmc.composed._seam` for the general kernel and the
-measure-preservation argument).
+general kernel spine (:mod:`~blackjax.mcmc.composed._seam`) with its shipped
+instances -- :mod:`~blackjax.mcmc.composed.step_size` (self-tuning step size,
+autoStep-style, ``blackjax.gist_step_size``) and
+:mod:`~blackjax.mcmc.composed.trajectory_length` (self-tuning trajectory
+length, no-U-turn, ``blackjax.gist_trajectory_length``). A composed
+step-size x trajectory-length instance is planned as this package's next
+addition.
 
-This package currently ships two independently-tunable instances -- a
-self-tuning step size (:mod:`~blackjax.mcmc.composed.step_size`, autoStep
--style) and a self-tuning trajectory length
-(:mod:`~blackjax.mcmc.composed.trajectory_length`, no-U-turn, not NUTS's
-recursive doubling). A third, *composed* instance that selects the step size
-first (``h``, via a reversibility-checked ladder) and then the trajectory
-length at that selected ``h`` (``L | h``, with the rollout built at ``h``) is
-planned as a follow-up addition to this same package -- this module is the
-substrate that instance builds on, not the instance itself.
-
-Cite, don't claim
-------------------
-The *composition principle* behind chaining a local step-size selector into a
-local trajectory-length selector is already published: adaptNUTS composes a
-GIST step-size selector with NUTS-style path construction [2], and the GIST
-survey itself frames the general seam this package implements [1]. Any future
-composed instance in this package is an *instance* of that published
-machinery -- with its own falsification suite and estimand-aware defaults --
-not a claim to the composition principle.
-
-Submodule layout
-----------------
-:mod:`~blackjax.mcmc.composed._seam`
-    The general kernel spine: ``GISTState``/``GISTInfo``, ``init``,
-    ``build_kernel``, ``as_top_level_api``. Not user-facing on its own.
-:mod:`~blackjax.mcmc.composed.step_size`
-    GIST instance (a): self-tuning step size (autoStep-style), exposed as
-    ``blackjax.gist_step_size``.
-:mod:`~blackjax.mcmc.composed.trajectory_length`
-    GIST instance (b): self-tuning trajectory length (no-U-turn), exposed as
-    ``blackjax.gist_trajectory_length``.
-
-References
-----------
-.. [1] Bou-Rabee, Carpenter, Marsden, "GIST: Gibbs self-tuning for locally
-   adaptive Hamiltonian Monte Carlo", arXiv:2404.15253, Statistical Surveys
-   2026, Vol. 20, pp. 135-179.
-.. [2] Bou-Rabee, Carpenter, Kleppe, Marsden, "Incorporating Local Step-Size
-   Adaptivity into the No-U-Turn Sampler using Gibbs Self Tuning",
-   arXiv:2408.08259, Journal of Chemical Physics.
+References: [1] Bou-Rabee, Carpenter, Marsden, "GIST: Gibbs self-tuning for
+locally adaptive Hamiltonian Monte Carlo", arXiv:2404.15253; [2] Bou-Rabee,
+Carpenter, Kleppe, Marsden, "Incorporating Local Step-Size Adaptivity into
+the No-U-Turn Sampler using Gibbs Self Tuning", arXiv:2408.08259 -- the
+published sources of the composition machinery.
 """
 from blackjax.mcmc.composed import step_size, trajectory_length
 from blackjax.mcmc.composed._seam import GISTInfo, GISTState, build_kernel, init
