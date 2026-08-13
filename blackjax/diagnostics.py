@@ -172,6 +172,8 @@ def effective_sample_size(
     Returns
     -------
     NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.
+    Variables whose within-chain variance is numerically zero have an effective
+    sample size of zero.
 
     Notes
     -----
@@ -198,6 +200,13 @@ def effective_sample_size(
         num_samples > 1
     ), f"The input array must have at least 2 samples, got only {num_samples}."
 
+    first_sample = jnp.take(input_array, jnp.array([0]), axis=sample_axis)
+    has_within_chain_variation = jnp.any(
+        input_array != first_sample,
+        axis=(chain_axis, sample_axis),
+        keepdims=True,
+    )
+
     mean_across_chain = input_array.mean(axis=sample_axis, keepdims=True)
     # Compute autocovariance estimates for every lag for the input array using FFT.
     centered_array = input_array - mean_across_chain
@@ -214,6 +223,9 @@ def effective_sample_size(
         * num_samples
         / (num_samples - 1.0)
     )
+    is_numerically_degenerate = jnp.isfinite(mean_var0) & (
+        ~has_within_chain_variation | (mean_var0 <= 0.0)
+    )
     weighted_var = mean_var0 * (num_samples - 1.0) / num_samples
     weighted_var = jax.lax.cond(
         num_chains > 1,
@@ -221,6 +233,9 @@ def effective_sample_size(
         + mean_across_chain.var(axis=chain_axis, ddof=1, keepdims=True),
         lambda _: weighted_var,
         operand=mean_across_chain,
+    )
+    weighted_var = jnp.where(
+        is_numerically_degenerate, jnp.ones_like(weighted_var), weighted_var
     )
 
     # Geyer's initial positive sequence
@@ -284,8 +299,9 @@ def effective_sample_size(
 
     tau_hat = jnp.maximum(tau_hat, 1 / np.log10(ess_raw))
     ess = ess_raw / tau_hat
+    ess = jnp.where(is_numerically_degenerate.squeeze(), 0.0, ess.squeeze())
 
-    return ess.squeeze()
+    return ess
 
 
 def splitR(position, num_chains, superchain_size, func_for_splitR=jnp.square):

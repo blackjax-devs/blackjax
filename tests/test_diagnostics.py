@@ -86,6 +86,43 @@ class DiagnosticsTest(chex.TestCase):
         np.testing.assert_array_equal(ess_val.shape, event_shape)
         np.testing.assert_allclose(ess_val, num_chains * self.num_samples, rtol=10)
 
+    @chex.all_variants(with_pmap=False)
+    @parameterized.parameters(1, 2)
+    def test_ess_returns_zero_for_numerically_degenerate_chains(self, num_chains):
+        num_samples = 2000
+        samples_shape = (num_chains, num_samples)
+        random_samples = jax.random.normal(
+            jax.random.key(self.test_seed), shape=samples_shape
+        )
+        constant_samples = jnp.zeros(samples_shape)
+        constant_with_different_chain_means = jnp.broadcast_to(
+            jnp.arange(num_chains)[:, None], samples_shape
+        )
+        near_constant_samples = 1e-30 * random_samples
+        samples = jnp.stack(
+            [
+                constant_samples,
+                constant_with_different_chain_means,
+                near_constant_samples,
+                random_samples,
+            ],
+            axis=-1,
+        )
+
+        effective_sample_size = self.variant(diagnostics.effective_sample_size)
+        ess = effective_sample_size(samples)
+
+        np.testing.assert_array_equal(ess[:3], jnp.zeros(3))
+        assert ess[3] > 0
+
+    def test_ess_can_exceed_draw_count_for_antithetic_chain(self):
+        num_samples = 2000
+        samples = jnp.tile(jnp.array([-1.0, 1.0]), num_samples // 2)[None, :]
+
+        ess = diagnostics.effective_sample_size(samples)
+
+        assert ess > num_samples
+
 
 # ---------------------------------------------------------------------------
 # Tests for ess_bulk, ess_tail, and pareto_khat
