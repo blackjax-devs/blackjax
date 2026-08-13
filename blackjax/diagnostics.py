@@ -738,9 +738,7 @@ class DivergenceConcentrationReport(NamedTuple):
     multinomial_p_value
         Bonferroni-corrected exchangeable-null tail probability for the
         single worst chain, ``min(1, M * P(Binomial(D, 1/M) >= d_max))``.
-        Reported as context only — see the module-level notes on
-        :func:`divergence_concentration` for why this does not drive the
-        warning. ``NaN`` when ``D=0``.
+        Context only; never drives ``warn``. ``NaN`` when ``D=0``.
     """
 
     warn: Array
@@ -766,129 +764,28 @@ def divergence_concentration(
     Parameters
     ----------
     is_divergent
-        Per-draw divergence flags (bool or 0/1) for the **sampling
-        (post-warmup) phase only**, shape ``(n_chains, n_draws)``. Warmup
-        divergences must not be included — see the module notes below.
+        Per-draw divergence flags (bool or 0/1) for the sampling
+        (post-warmup) phase only, shape ``(n_chains, n_draws)``.
     rate_threshold
-        Minimum per-chain divergence rate (``d_k / n_draws``) for chain
-        ``k`` to count as flagged. Default ``0.02`` (2%), the validated
-        default (see Notes).
+        Minimum per-chain divergence rate for chain ``k`` to count as
+        flagged. Default ``0.02`` (2%).
 
     Returns
     -------
-    :class:`DivergenceConcentrationReport`
+    :class:`DivergenceConcentrationReport`. ``warn`` is true iff between
+    1 and ``max(1, n_chains // 4)`` chains are flagged -- a
+    minority-outlier trigger; an ensemble where most/all chains cross the
+    threshold returns populated fields but no warning.
 
     Notes
     -----
-    **Scope: a minority-outlier trigger, not a general divergence
-    monitor.** ``report.warn`` is true iff between 1 and
-    ``max(1, n_chains // 4)`` chains are flagged (e.g. 1-2 chains out of
-    8). This function targets exactly one validated pattern — one or a
-    couple of chains landing on a bad post-warmup start state while the
-    rest of the ensemble stays clean. It deliberately does **not** warn
-    when most or all chains are flagged together: that pattern is already
-    visible in the run's aggregate divergence count and whatever verdict
-    a routing/warmup layer already derives from it, and this function's
-    per-chain remedy language (see below) would misdescribe a
-    whole-ensemble issue as a single bad chain. ``report.flagged`` and
-    ``report.num_flagged`` are populated in that case too, so a caller
-    who wants the raw counts can still read them — only the message-worthy
-    ``warn`` flag is withheld.
-
-    **Counting is sampling-phase only.** Divergences that occur during
-    warmup are out of scope for this diagnostic; feed it post-warmup
-    draws only. This also determines where the function is meant to be
-    called from: it is a standalone, kernel-agnostic function that
-    operates purely on completed sampling output — the same shape as
-    :func:`rhat` or :func:`effective_sample_size` next to it in this
-    module — and is intended to be read from a post-sampling
-    routing/verdict layer (whatever code decides what to do with a
-    finished run), not from a warmup/adaptation routine: warmup
-    algorithms return before any sampling divergence exists to diagnose,
-    so a warmup-time version of this check would have no data to act on.
-    Existing warmup-adaptation algorithms in this library — e.g.
-    :func:`window_adaptation` and ``staged_adaptation`` — are unaffected
-    by this function; it neither reads nor writes anything warmup
-    produces.
-
-    There is no way for this function to detect a caller accidentally
-    passing warmup-inclusive divergence flags — a boolean array carries no
-    phase label — so getting this wrong fails silently, and in the
-    dangerous direction: mixing in warmup draws dilutes a genuine chain's
-    rate downward rather than raising a false alarm, because the extra
-    draws lengthen the denominator without (typically) contributing at
-    the same rate. Concretely: a chain diverging on 25 of 1000 sampling
-    draws (2.5%, above the default threshold) reads as the same 25
-    divergences over a doubled, 2000-draw denominator — 1.25%, below
-    threshold, no warning at all — once an equal-length, divergence-free
-    warmup segment is concatenated in front of it. Slice to sampling
-    draws only before calling this function.
-
-    **What the message reports.** For each flagged chain the report
-    carries factual, non-causal fields: the chain's overall rate, its
-    divergence rate restricted to the first and last quarter of the
-    sampling draws (``early_rate`` / ``late_rate`` — a chain that
-    diverges heavily early and recovers looks different from one that
-    degrades throughout), and the median rate of the other chains for
-    comparison. :func:`format_divergence_warning` turns these into a
-    sentence per flagged chain with no causal or remedial claims baked
-    into the wording itself (see below for remedies as documentation).
-
-    **Evidence basis.** Validated retrospectively (no gating, no
-    intervention — a pure read of existing per-chain divergence records)
-    across 120 (model, warmup arm, seed) cells spanning several models,
-    warmup strategies, and seeds. At the default 2% threshold, 7 of the 8
-    flagged non-degenerate cells were independently substantiated true
-    positives — textbook funnel-neck geometry, a near-storm single-chain
-    concentration, and ensembles with every chain globally elevated (the
-    case this function now declines to warn on, per the scope note
-    above); the most severe cell in the corpus (worst-chain rate 18.75%)
-    was flagged with a roughly 9x margin over the threshold.
-
-    **Why the multinomial tail is reported as context only, never as the
-    trigger.** An earlier design tried triggering on
-    ``report.multinomial_p_value`` — a Bonferroni-corrected tail
-    probability under the null that divergences are exchangeable across
-    chains (every chain equally likely to produce the next divergence).
-    That null does not hold for real NUTS/HMC ensembles: distinct chains
-    settle into distinct post-warmup local geometries, so divergence
-    propensity is not exchangeable even on a perfectly healthy run.
-    Empirically this produced a 13% false-positive rate on healthy cells in
-    the same validation corpus, so the p-value is computed and returned for
-    interested callers but never decides ``warn``.
-
-    **Remedies are documentation, not part of the message.** If
-    ``report.warn`` is true, this-run options include treating the
-    flagged chain's early draws as untrustworthy, or excluding the
-    flagged chain when recomputing shared summaries/expectations that
-    pool across chains. The message text itself asserts neither a cause
-    nor a fix — only the observed rates.
-
-    **Coverage caveat.** This diagnostic needs per-chain divergence
-    records from a genuinely multi-chain run. Sampling setups that only
-    retain a scalar divergence total (a single witness chain, or draws
-    pooled across chains before counting) cannot be diagnosed here.
-
-    **Corrupted input fails loud, not silent.** ``is_divergent`` is cast
-    to bool: any non-finite value (e.g. a stray ``NaN`` from upstream
-    float arithmetic) becomes a flagged draw rather than silently
-    dropping out of a rate computation and comparing false against
-    ``rate_threshold`` — a numeric comparison against ``NaN`` is always
-    false, which would otherwise report a corrupted chain as clean.
-    :func:`divergence_concentration_from_counts` applies the same
-    principle to its counts: ``NaN`` becomes ``n_draws`` (worst case) and
-    out-of-range values are clipped into ``[0, n_draws]``.
-
-    **Non-goal.** This function observes and describes; it does not
-    extend warmup, redraw, back off the step size, or drop a chain. Any
-    remedy is left entirely to the caller.
+    - Counting is sampling-phase only; warmup divergences are out of scope.
+    - Concatenating warmup draws in front of sampling draws dilutes a real
+      signal below threshold rather than raising a false alarm -- slice to
+      sampling draws only before calling this.
+    - ``multinomial_p_value`` is context only; it never decides ``warn``.
     """
-    # Cast to bool rather than trust the caller's dtype: any non-finite or
-    # non-zero value (including NaN, which is neither True nor False under
-    # a numeric comparison) becomes a flagged draw. This fails loud
-    # (over-counts) rather than silent (NaN would otherwise propagate into
-    # `rates` and compare False against `rate_threshold`, silently hiding
-    # a corrupted chain behind a clean-looking report).
+    # NaN must flag, not silently pass.
     is_divergent = jnp.asarray(is_divergent).astype(bool)
     n_draws = is_divergent.shape[-1]
     num_chains = is_divergent.shape[-2]
@@ -916,13 +813,10 @@ def divergence_concentration_from_counts(
 ) -> DivergenceConcentrationReport:
     """Same as :func:`divergence_concentration`, from precomputed per-chain counts.
 
-    Use this entry point when per-draw flags are not retained but
-    per-chain divergence totals are (e.g. counted incrementally during
-    sampling rather than stored). ``report.early_rate`` and
-    ``report.late_rate`` are ``NaN`` throughout — the temporal quarter
-    profile needs per-draw resolution that this entry point does not
-    have; :func:`format_divergence_warning` degrades gracefully and omits
-    that part of the message.
+    Use when per-draw flags are not retained but per-chain totals are.
+    ``early_rate`` / ``late_rate`` are ``NaN`` (no per-draw resolution for
+    a quarter profile); :func:`format_divergence_warning` omits that part
+    of the message rather than printing "nan%".
 
     Parameters
     ----------
@@ -930,7 +824,7 @@ def divergence_concentration_from_counts(
         Per-chain divergence counts for the sampling phase, shape
         ``(n_chains,)``.
     n_draws
-        Number of post-warmup (sampling) draws per chain.
+        Number of sampling draws per chain.
     rate_threshold
         See :func:`divergence_concentration`.
 
@@ -938,13 +832,7 @@ def divergence_concentration_from_counts(
     -------
     :class:`DivergenceConcentrationReport`
     """
-    # Sanitize rather than trust the caller's values: NaN becomes n_draws
-    # (worst case, fully divergent) and out-of-range values are clipped
-    # into [0, n_draws]. Fails loud -- an implausibly high reported rate
-    # is visible -- rather than silent, since an un-sanitized NaN would
-    # otherwise propagate into `rates` and compare False against
-    # `rate_threshold`, hiding a corrupted chain behind a clean-looking
-    # report (mirrors the boolean-cast guard in divergence_concentration).
+    # NaN must flag (as fully divergent), not silently pass.
     counts = jnp.asarray(chain_divergence_counts).astype(float)
     counts = jnp.clip(jnp.nan_to_num(counts, nan=float(n_draws)), 0.0, float(n_draws))
     num_chains = counts.shape[-1]
@@ -977,11 +865,8 @@ def _divergence_concentration_core(
     cap = jnp.maximum(1, num_chains // 4)
     warn = (num_flagged >= 1) & (num_flagged <= cap)
 
-    # Per-chain median of the *other* n_chains - 1 rates, via an explicit
-    # (static) index array per chain rather than boolean masking, so the
-    # gather shape stays static under jit. n_chains is a Python int here
-    # (it comes from a static array shape), so this loop unrolls at trace
-    # time. With a single chain there are no "others" to gather at all.
+    # Static per-chain index gather keeps this jit-safe (num_chains is a
+    # Python int); no "others" exist when num_chains == 1.
     if num_chains > 1:
         median_other_rate = jnp.stack(
             [
@@ -996,10 +881,8 @@ def _divergence_concentration_core(
     else:
         median_other_rate = jnp.full((num_chains,), jnp.nan)
 
-    # Multinomial exchangeable-null tail: min(1, M * P(Binomial(D, 1/M) >= d_max)),
-    # exact via the regularized incomplete beta function
-    # (P(X >= k) = betainc(k, n-k+1, p) for X ~ Binomial(n, p)). Guard
-    # D == 0 so betainc never sees a == 0.
+    # Exact binomial tail via the regularized incomplete beta function;
+    # D == 0 is guarded so betainc never sees a == 0.
     has_divergences = total > 0
     safe_total = jnp.where(has_divergences, total, 1)
     safe_max = jnp.where(has_divergences, max_count, 1)
