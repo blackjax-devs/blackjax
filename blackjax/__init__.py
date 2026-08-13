@@ -22,8 +22,6 @@ from .mcmc import barker as _barker
 from .mcmc import dynamic_hmc as _dynamic_hmc
 from .mcmc import elliptical_slice as _elliptical_slice
 from .mcmc import ghmc as _ghmc
-from .mcmc import gist_step_size as _gist_step_size
-from .mcmc import gist_trajectory_length as _gist_trajectory_length
 from .mcmc import hmc as _hmc
 from .mcmc import laplace_dynamic_hmc as _laplace_dynamic_hmc
 from .mcmc import laplace_hmc as _laplace_hmc
@@ -34,6 +32,8 @@ from .mcmc import nuts as _nuts
 from .mcmc import periodic_orbital, random_walk
 from .mcmc import rmhmc as _rmhmc
 from .mcmc import slice as _slice
+from .mcmc.composed import step_size as _gist_step_size
+from .mcmc.composed import trajectory_length as _gist_trajectory_length
 from .mcmc.random_walk import additive_step_random_walk as _additive_step_random_walk
 from .mcmc.random_walk import (
     irmh_as_top_level_api,
