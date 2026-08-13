@@ -804,9 +804,12 @@ def divergence_concentration(
     module — and is intended to be read from a post-sampling
     routing/verdict layer (whatever code decides what to do with a
     finished run), not from a warmup/adaptation routine: warmup
-    algorithms return before any sampling divergence exists to diagnose.
-    Existing warmup-adaptation algorithms in this library (e.g.
-    :func:`window_adaptation`) are unaffected by this function.
+    algorithms return before any sampling divergence exists to diagnose,
+    so a warmup-time version of this check would have no data to act on.
+    Existing warmup-adaptation algorithms in this library — e.g.
+    :func:`window_adaptation` and ``staged_adaptation`` — are unaffected
+    by this function; it neither reads nor writes anything warmup
+    produces.
 
     **What the message reports.** For each flagged chain the report
     carries factual, non-causal fields: the chain's overall rate, its
