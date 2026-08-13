@@ -207,10 +207,14 @@ def extract_multi_chain_verdict(
     probation_result
         Optional diagnostics dict from
         :func:`~blackjax.adaptation.staged_adaptation._apply_start_state_probation`
-        (i.e. ``results.parameters.get("start_state_probation")`` after a
-        ``staged_adaptation(..., start_state_probation=True)`` run).  ``None``
-        (default) — no change to ``flags`` for any existing caller.  When
-        provided, its fields are folded into ``flags`` under a
+        (i.e. ``info.diagnostics``, where ``info`` is the
+        :class:`~blackjax.adaptation.staged_adaptation.StagedAdaptationInfo`
+        that ``staged_adaptation(..., start_state_probation=True)``'s
+        ``run()`` returns as its second value — NOT
+        ``results.parameters``, which stays a pure sampler-kwargs dict;
+        Issue#1090 fix 1).  ``None`` (default) — no change to ``flags`` for
+        any existing caller.  When provided, its fields are folded into
+        ``flags`` under a
         ``start_state_probation_*`` prefix — the "no silent interventions"
         surface for this mechanism: whether the ensemble-calibrated state
         gate flagged any chain, whether a redraw was applied, and whether any
