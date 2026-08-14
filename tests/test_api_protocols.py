@@ -26,7 +26,7 @@ import jax.numpy as jnp
 import pytest
 
 import blackjax
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import InitFn, SamplingAlgorithm
 from tests.fixtures import std_normal_logdensity
 
 # ---------------------------------------------------------------------------
@@ -34,6 +34,15 @@ from tests.fixtures import std_normal_logdensity
 # ---------------------------------------------------------------------------
 _DIM = 2
 _POSITION = jnp.ones(_DIM)
+
+
+def test_init_protocol_default_matches_hmc_init():
+    protocol_default = inspect.signature(InitFn.__call__).parameters["rng_key"].default
+    hmc_default = (
+        inspect.signature(_make_algorithm("hmc").init).parameters["rng_key"].default
+    )
+
+    assert protocol_default is hmc_default is None
 
 
 def _make_algorithm(name):
