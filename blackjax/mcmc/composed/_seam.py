@@ -259,9 +259,9 @@ def build_kernel(divergence_threshold: float = 1000) -> Callable:
     this seam could bring it down to two, at the cost of a more complex seam
     contract. ``gist_trajectory_length`` takes exactly this route for its
     own accepted-move build: it caches the forward rollout's leapfrog states
-    in a buffer (see its module docstring, "Forward-rollout caching",
-    Issue#1058) so the proposal for the selected ``alpha`` is a gather, not
-    a re-integration, dropping it to two per kernel call -- the forward
+    in a buffer (see its module docstring, "Forward-rollout caching") so the
+    proposal for the selected ``alpha`` is a gather, not a re-integration,
+    dropping it to two per kernel call -- the forward
     search plus the still-necessary reverse-direction re-check (there is
     nothing to gather for the reverse rollout; only its count is used). See
     ``gist_step_size``'s own ``chex.assert_max_traces(n=4)`` test (1 at
