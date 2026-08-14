@@ -38,7 +38,7 @@ to :func:`_apply_fn` as GIST's ``aux``, so building the proposal is an
 ``O(1)`` gather rather than an ``O(L)`` re-integration. Per transition this
 drops the cost from roughly ``U + L + U_rev`` leapfrog/gradient evaluations
 (``~2.75 U`` empirically, averaging over ``L``'s distribution) to roughly
-``U + U_rev`` (``~1.25 U``) -- see Issue#1058. The reverse rollout
+``U + U_rev`` (``~1.25 U``). The reverse rollout
 ``U_rev(theta', rho')`` (section 2.2.4) has nothing to gather from (its own
 states are never selected as the proposal) and is left as an ordinary,
 unbuffered :func:`num_steps_to_uturn` call.
@@ -207,7 +207,7 @@ def num_steps_to_uturn(
 
 class _ForwardRollout(NamedTuple):
     """Cached forward rollout, threaded from :func:`_tuning_parameter_fn` to
-    :func:`_apply_fn` as GIST's ``aux`` (Issue#1058).
+    :func:`_apply_fn` as GIST's ``aux``.
 
     num_steps_to_uturn
         ``U(theta, rho)`` -- the same value :func:`num_steps_to_uturn` would
@@ -235,8 +235,8 @@ def _num_steps_to_uturn_with_rollout(
     max_num_steps: int,
 ) -> Callable:
     """Forward-only variant of :func:`num_steps_to_uturn` that additionally
-    buffers every rolled-out state (Issue#1058), so :func:`_apply_fn` can
-    gather the selected-``L`` proposal instead of re-integrating it.
+    buffers every rolled-out state, so :func:`_apply_fn` can gather the
+    selected-``L`` proposal instead of re-integrating it.
 
     Only used for the forward rollout, in :func:`_tuning_parameter_fn`: the
     reverse rollout in :func:`_apply_fn` has no selected state to gather
@@ -326,7 +326,7 @@ def _apply_fn(
         rollout: _ForwardRollout = aux
         forward = rollout.num_steps_to_uturn
 
-        # GATHER, not a re-integration (Issue#1058): `num_steps` (`alpha`) is
+        # GATHER, not a re-integration: `num_steps` (`alpha`) is
         # always <= `forward` by construction of `_tuning_parameter_fn`'s
         # draw, so `rollout.states[num_steps - 1]` was written by the
         # forward rollout above and is bit-identical to what
