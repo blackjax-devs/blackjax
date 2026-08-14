@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.mcmc.composed.step_size" href="../step_size/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g171f9f31e" />
+  <meta name="docsearch:version" content="0.1.dev1+g63912a457" />
   </head>
   
   
@@ -473,7 +473,7 @@ to <code class="xref py py-func docutils literal notranslate"><span class="pre">
 <code class="docutils literal notranslate"><span class="pre">O(1)</span></code> gather rather than an <code class="docutils literal notranslate"><span class="pre">O(L)</span></code> re-integration. Per transition this
 drops the cost from roughly <code class="docutils literal notranslate"><span class="pre">U</span> <span class="pre">+</span> <span class="pre">L</span> <span class="pre">+</span> <span class="pre">U_rev</span></code> leapfrog/gradient evaluations
 (<code class="docutils literal notranslate"><span class="pre">~2.75</span> <span class="pre">U</span></code> empirically, averaging over <code class="docutils literal notranslate"><span class="pre">L</span></code>’s distribution) to roughly
-<code class="docutils literal notranslate"><span class="pre">U</span> <span class="pre">+</span> <span class="pre">U_rev</span></code> (<code class="docutils literal notranslate"><span class="pre">~1.25</span> <span class="pre">U</span></code>) – see Issue#1058. The reverse rollout
+<code class="docutils literal notranslate"><span class="pre">U</span> <span class="pre">+</span> <span class="pre">U_rev</span></code> (<code class="docutils literal notranslate"><span class="pre">~1.25</span> <span class="pre">U</span></code>). The reverse rollout
 <code class="docutils literal notranslate"><span class="pre">U_rev(theta',</span> <span class="pre">rho')</span></code> (section 2.2.4) has nothing to gather from (its own
 states are never selected as the proposal) and is left as an ordinary,
 unbuffered <a class="reference internal" href="#blackjax.mcmc.composed.trajectory_length.num_steps_to_uturn" title="blackjax.mcmc.composed.trajectory_length.num_steps_to_uturn"><code class="xref py py-func docutils literal notranslate"><span class="pre">num_steps_to_uturn()</span></code></a> call.</p>

@@ -32,7 +32,7 @@ blackjax.mcmc.composed.trajectory_length
    ``O(1)`` gather rather than an ``O(L)`` re-integration. Per transition this
    drops the cost from roughly ``U + L + U_rev`` leapfrog/gradient evaluations
    (``~2.75 U`` empirically, averaging over ``L``'s distribution) to roughly
-   ``U + U_rev`` (``~1.25 U``) -- see Issue#1058. The reverse rollout
+   ``U + U_rev`` (``~1.25 U``). The reverse rollout
    ``U_rev(theta', rho')`` (section 2.2.4) has nothing to gather from (its own
    states are never selected as the proposal) and is left as an ordinary,
    unbuffered :func:`num_steps_to_uturn` call.
