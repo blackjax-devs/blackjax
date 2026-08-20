@@ -393,6 +393,31 @@ class NestedSliceSamplingTest(chex.TestCase):
         new_state, _ = jax.jit(algo.step)(self.key, state)
         chex.assert_shape(new_state.particles.position, (20, 2))
 
+    @parameterized.parameters(nss.as_top_level_api, nss.swig_as_top_level_api)
+    def test_update_strategy_seam(self, api):
+        """update_strategy reaches the engine on both top-level APIs, built once
+        with the caller's num_inner_steps / num_delete."""
+        calls = []
+
+        def recording_strategy(step_fn, num_inner_steps, num_delete):
+            calls.append((num_inner_steps, num_delete))
+            return from_mcmc.update_with_mcmc_take_last(
+                step_fn, num_inner_steps, num_delete
+            )
+
+        algo = api(
+            gaussian_logprior,
+            gaussian_loglikelihood,
+            num_inner_steps=4,
+            num_delete=2,
+            update_strategy=recording_strategy,
+        )
+        # the strategy is a build-time seam: consulted once, with what we passed
+        self.assertEqual(calls, [(4, 2)])
+        state = algo.init(jnp.zeros((20, 2)))
+        new_state, _ = jax.jit(algo.step)(self.key, state)
+        chex.assert_shape(new_state.particles.position, (20, 2))
+
 
 class NestedSamplingStatisticalTest(chex.TestCase):
     """Statistical correctness tests for nested sampling algorithms."""
