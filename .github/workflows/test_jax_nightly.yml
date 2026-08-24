@@ -19,7 +19,18 @@ jobs:
       run: uv sync --group dev --extra progress
     - name: Install JAX nightly
       run: |
-        uv pip install --prerelease=allow --force-reinstall jax jaxlib \
-          -f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html
+        uv pip install --prerelease=allow --upgrade --force-reinstall jax jaxlib \
+          --index https://us-python.pkg.dev/ml-oss-artifacts-published/jax-public-nightly-artifacts-registry/simple/
+    - name: Verify JAX nightly versions
+      run: |
+        uv run --no-sync python - <<'PY'
+        import jax
+        import jaxlib
+
+        versions = {"jax": jax.__version__, "jaxlib": jaxlib.__version__}
+        print(" ".join(f"{package}={version}" for package, version in versions.items()))
+        if not all(".dev" in version for version in versions.values()):
+            raise RuntimeError(f"Expected nightly JAX builds, got {versions}")
+        PY
     - name: Run tests
-      run: uv run pytest -n 2 -vv --benchmark-disable tests
+      run: uv run --no-sync pytest -n 2 -vv --benchmark-disable tests
