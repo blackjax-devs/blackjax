@@ -209,7 +209,7 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "jax", specifier = ">=0.9.0" },
-    { name = "jax-tap", marker = "extra == 'progress'", specifier = ">=0.2.1" },
+    { name = "jax-tap", marker = "extra == 'progress'", specifier = ">=0.3.1" },
     { name = "jaxlib", specifier = ">=0.9.0" },
     { name = "numpy", specifier = ">=1.25" },
     { name = "optax", specifier = ">=0.2.3" },
@@ -1323,14 +1323,14 @@ wheels = [
 
 [[package]]
 name = "jax-tap"
-version = "0.2.1"
+version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jax" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/da/b2/094afbe93181282996fd07002cd08bf98a48b3e534a9c3b1f5dc1a76072d/jax_tap-0.2.1.tar.gz", hash = "sha256:9184d85b7cd1f1f4f17def2936d6ce1cc3e6530e73dc41a3a50f8f158984dbdc", size = 331917, upload-time = "2026-07-10T05:37:40.652Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/2a/6b/459d7e71340aa6566a18a11e7006e671ef91dd7d4b325559a443dc0cabf8/jax_tap-0.3.1.tar.gz", hash = "sha256:a2c8860918a0750f3e1fb15984890ddabfa381f11285117639269ae5be6749f5", size = 351405, upload-time = "2026-07-12T08:08:32.178Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d5/e6/2d3cdd4adc34f58238af2f1643ee850447e8491a25f8aa3e445faae0936d/jax_tap-0.2.1-py3-none-any.whl", hash = "sha256:71929f7c8ac5f7fe8dd2c0faa666dedaf097aff1f116f7277458cb063d7ef52f", size = 59781, upload-time = "2026-07-10T05:37:39.444Z" },
+    { url = "https://files.pythonhosted.org/packages/f0/a7/784d0aab42dbd3e71587f6e14abb3b152ff599b0dd5ae80328b039a6fcd7/jax_tap-0.3.1-py3-none-any.whl", hash = "sha256:0dd68dd445d30e5a9b61e66b9994e5898f91a52dc58eac837f394b550e42c12a", size = 65552, upload-time = "2026-07-12T08:08:30.804Z" },
 ]
 
 [[package]]
