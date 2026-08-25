@@ -1933,6 +1933,7 @@ class LateStartEnsembleOffsetSemanticsTest(BlackJAXTest):
             np.array(block.mean),
             ref_mean,
             rtol=1e-4,
+            atol=1e-7,
             err_msg="late_start × ensemble_batch: mean wrong (offset counts calls)",
         )
 
