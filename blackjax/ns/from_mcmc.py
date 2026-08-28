@@ -194,7 +194,22 @@ def build_kernel(
         Selects which particles to delete (default: the lowest-likelihood ones).
     update_strategy
         Inner-kernel factory ``(constrained_step_fn, num_inner_steps,
-        num_delete) -> update_fn`` (default: :func:`update_with_mcmc_take_last`)
+        num_delete) -> update_fn`` (default:
+        :func:`update_with_mcmc_take_last`). The returned ``update_fn`` is
+        called once per NS iteration as::
+
+            update_fn(rng_key, state, loglikelihood_0, **step_parameters)
+                -> (new_particles, update_info)
+
+        where ``loglikelihood_0`` is the likelihood contour being replaced and
+        ``step_parameters`` is the current ``state.inner_kernel_params``. It
+        must return exactly ``num_delete`` particle states whose pytree
+        structure and dtypes match ``state.particles``, since they are written
+        back by index, and each must satisfy ``loglikelihood >
+        loglikelihood_0`` with ``loglikelihood_birth`` set to
+        ``loglikelihood_0``. Driving the particles with ``constrained_step_fn``
+        gives the last two properties for free. ``update_info`` is passed
+        through to ``NSInfo.update_info`` unchanged and may be any pytree.
 
     Returns
     -------

@@ -357,9 +357,9 @@ def build_kernel(
         :func:`live_covariance` with a custom proposal, preserving the existing
         covariance-based extension seam.
     update_strategy
-        Inner-kernel factory ``(constrained_step_fn, num_inner_steps,
-        num_delete) -> update_fn``
-        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`)
+        Inner-kernel factory
+        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
     Returns
     -------
@@ -482,9 +482,9 @@ def build_swig_kernel(
         ``(rng_key, state, info, params) -> params`` (:func:`live_widths` by
         default, the per-axis live-point spread).
     update_strategy
-        Inner-kernel factory ``(constrained_step_fn, num_inner_steps,
-        num_delete) -> update_fn``
-        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`)
+        Inner-kernel factory
+        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
     Returns
     -------
@@ -557,9 +557,9 @@ def as_top_level_api(
         :func:`live_covariance` with a custom proposal. Used both to seed
         ``init`` and to update each step.
     update_strategy
-        Inner-kernel factory ``(constrained_step_fn, num_inner_steps,
-        num_delete) -> update_fn``
-        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`)
+        Inner-kernel factory
+        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
     Returns
     -------
@@ -661,9 +661,9 @@ def swig_as_top_level_api(
         ``(rng_key, state, info, params) -> params`` (:func:`live_widths` by
         default). Used both to seed ``init`` and to update each step.
     update_strategy
-        Inner-kernel factory ``(constrained_step_fn, num_inner_steps,
-        num_delete) -> update_fn``
-        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`)
+        Inner-kernel factory
+        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
     Returns
     -------
