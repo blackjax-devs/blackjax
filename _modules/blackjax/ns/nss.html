@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g62d7cb717" />
+  <meta name="docsearch:version" content="0.1.dev1+g16206a156" />
   </head>
   
   
@@ -448,6 +448,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.ns.adaptive</span><span class="w"> </span><span class="kn">import</span> <span class="n">init</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.ns.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">NSInfo</span><span class="p">,</span> <span class="n">NSState</span><span class="p">,</span> <span class="n">init_state_strategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.ns.from_mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">build_kernel</span> <span class="k">as</span> <span class="n">build_from_mcmc_kernel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.ns.from_mcmc</span><span class="w"> </span><span class="kn">import</span> <span class="n">update_with_mcmc_take_last</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.smc.tuning.from_particles</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">particles_covariance_matrix</span><span class="p">,</span>
     <span class="n">particles_stds</span><span class="p">,</span>
@@ -761,6 +762,7 @@
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">covariance_proposal</span><span class="p">,</span>
     <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">update_strategy</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">update_with_mcmc_take_last</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Nested Slice Sampling kernel.</span>
 
@@ -789,6 +791,10 @@
 <span class="sd">        :func:`live_covariance_factor` with the default proposal and</span>
 <span class="sd">        :func:`live_covariance` with a custom proposal, preserving the existing</span>
 <span class="sd">        covariance-based extension seam.</span>
+<span class="sd">    update_strategy</span>
+<span class="sd">        Inner-kernel factory</span>
+<span class="sd">        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).</span>
+<span class="sd">        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -806,6 +812,7 @@
         <span class="n">num_inner_steps</span><span class="p">,</span>
         <span class="n">inner_kernel_params</span><span class="p">,</span>
         <span class="n">num_delete</span><span class="p">,</span>
+        <span class="n">update_strategy</span><span class="o">=</span><span class="n">update_strategy</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -876,6 +883,7 @@
     <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">coordinate_proposal</span><span class="p">,</span>
     <span class="n">coordinate_order</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">random_order</span><span class="p">,</span>
     <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">live_widths</span><span class="p">,</span>
+    <span class="n">update_strategy</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">update_with_mcmc_take_last</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the Nested Slice-within-Gibbs (SwiG) kernel.</span>
 
@@ -914,6 +922,10 @@
 <span class="sd">        Computes the inner-kernel parameters from the live points each step,</span>
 <span class="sd">        ``(rng_key, state, info, params) -&gt; params`` (:func:`live_widths` by</span>
 <span class="sd">        default, the per-axis live-point spread).</span>
+<span class="sd">    update_strategy</span>
+<span class="sd">        Inner-kernel factory</span>
+<span class="sd">        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).</span>
+<span class="sd">        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -935,6 +947,7 @@
         <span class="n">num_inner_steps</span><span class="p">,</span>
         <span class="n">inner_kernel_params</span><span class="p">,</span>
         <span class="n">num_delete</span><span class="p">,</span>
+        <span class="n">update_strategy</span><span class="o">=</span><span class="n">update_strategy</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
@@ -950,6 +963,7 @@
     <span class="n">max_shrinkage</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
     <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">covariance_proposal</span><span class="p">,</span>
     <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">update_strategy</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">update_with_mcmc_take_last</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a Nested Slice Sampling (NSS) algorithm, ``blackjax.nss``.</span>
 
@@ -986,6 +1000,10 @@
 <span class="sd">        :func:`live_covariance_factor` with the default proposal and</span>
 <span class="sd">        :func:`live_covariance` with a custom proposal. Used both to seed</span>
 <span class="sd">        ``init`` and to update each step.</span>
+<span class="sd">    update_strategy</span>
+<span class="sd">        Inner-kernel factory</span>
+<span class="sd">        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).</span>
+<span class="sd">        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1020,6 +1038,7 @@
         <span class="n">max_shrinkage</span><span class="o">=</span><span class="n">max_shrinkage</span><span class="p">,</span>
         <span class="n">proposal</span><span class="o">=</span><span class="n">proposal</span><span class="p">,</span>
         <span class="n">inner_kernel_params</span><span class="o">=</span><span class="n">inner_kernel_params</span><span class="p">,</span>
+        <span class="n">update_strategy</span><span class="o">=</span><span class="n">update_strategy</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1049,6 +1068,7 @@
     <span class="n">proposal</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">coordinate_proposal</span><span class="p">,</span>
     <span class="n">coordinate_order</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">random_order</span><span class="p">,</span>
     <span class="n">inner_kernel_params</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">live_widths</span><span class="p">,</span>
+    <span class="n">update_strategy</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">update_with_mcmc_take_last</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Creates a Nested Slice-within-Gibbs (SwiG) sampling algorithm, ``blackjax.nsswig``.</span>
 
@@ -1087,6 +1107,10 @@
 <span class="sd">        Computes the inner-kernel parameters from the live points,</span>
 <span class="sd">        ``(rng_key, state, info, params) -&gt; params`` (:func:`live_widths` by</span>
 <span class="sd">        default). Used both to seed ``init`` and to update each step.</span>
+<span class="sd">    update_strategy</span>
+<span class="sd">        Inner-kernel factory</span>
+<span class="sd">        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).</span>
+<span class="sd">        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1120,6 +1144,7 @@
         <span class="n">proposal</span><span class="o">=</span><span class="n">proposal</span><span class="p">,</span>
         <span class="n">coordinate_order</span><span class="o">=</span><span class="n">coordinate_order</span><span class="p">,</span>
         <span class="n">inner_kernel_params</span><span class="o">=</span><span class="n">inner_kernel_params</span><span class="p">,</span>
+        <span class="n">update_strategy</span><span class="o">=</span><span class="n">update_strategy</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">rng_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>

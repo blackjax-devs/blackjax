@@ -122,7 +122,7 @@ Module Contents
    :func:`~blackjax.ns.from_mcmc.build_kernel`.
 
 
-.. py:function:: build_kernel(init_state_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable | None = None) -> Callable
+.. py:function:: build_kernel(init_state_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable | None = None, update_strategy: Callable = update_with_mcmc_take_last) -> Callable
 
    Build the Nested Slice Sampling kernel.
 
@@ -142,6 +142,9 @@ Module Contents
                                :func:`live_covariance_factor` with the default proposal and
                                :func:`live_covariance` with a custom proposal, preserving the existing
                                covariance-based extension seam.
+   :param update_strategy: Inner-kernel factory
+                           (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+                           See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
    :rtype: A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.
 
@@ -161,7 +164,7 @@ Module Contents
    :func:`~blackjax.ns.from_mcmc.build_kernel` exactly like the hit-and-run step.
 
 
-.. py:function:: build_swig_kernel(init_state_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = coordinate_proposal, coordinate_order: Callable = random_order, inner_kernel_params: Callable = live_widths) -> Callable
+.. py:function:: build_swig_kernel(init_state_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = coordinate_proposal, coordinate_order: Callable = random_order, inner_kernel_params: Callable = live_widths, update_strategy: Callable = update_with_mcmc_take_last) -> Callable
 
    Build the Nested Slice-within-Gibbs (SwiG) kernel.
 
@@ -190,11 +193,14 @@ Module Contents
    :param inner_kernel_params: Computes the inner-kernel parameters from the live points each step,
                                ``(rng_key, state, info, params) -> params`` (:func:`live_widths` by
                                default, the per-axis live-point spread).
+   :param update_strategy: Inner-kernel factory
+                           (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+                           See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
    :rtype: A kernel ``kernel(rng_key, state)`` that returns ``(new_state, info)``.
 
 
-.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable | None = None) -> blackjax.SamplingAlgorithm
+.. py:function:: as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = covariance_proposal, inner_kernel_params: Callable | None = None, update_strategy: Callable = update_with_mcmc_take_last) -> blackjax.SamplingAlgorithm
 
    Creates a Nested Slice Sampling (NSS) algorithm, ``blackjax.nss``.
 
@@ -221,6 +227,9 @@ Module Contents
                                :func:`live_covariance_factor` with the default proposal and
                                :func:`live_covariance` with a custom proposal. Used both to seed
                                ``init`` and to update each step.
+   :param update_strategy: Inner-kernel factory
+                           (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+                           See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
    :returns: * A ``SamplingAlgorithm`` whose ``step(rng_key, state)`` returns
              * ``(new_state, info)``.
@@ -240,7 +249,7 @@ Module Contents
    live set.
 
 
-.. py:function:: swig_as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = coordinate_proposal, coordinate_order: Callable = random_order, inner_kernel_params: Callable = live_widths) -> blackjax.SamplingAlgorithm
+.. py:function:: swig_as_top_level_api(logprior_fn: Callable, loglikelihood_fn: Callable, num_inner_steps: int, num_delete: int = 1, max_steps: int = 10, max_shrinkage: int = 100, proposal: Callable = coordinate_proposal, coordinate_order: Callable = random_order, inner_kernel_params: Callable = live_widths, update_strategy: Callable = update_with_mcmc_take_last) -> blackjax.SamplingAlgorithm
 
    Creates a Nested Slice-within-Gibbs (SwiG) sampling algorithm, ``blackjax.nsswig``.
 
@@ -268,6 +277,9 @@ Module Contents
    :param inner_kernel_params: Computes the inner-kernel parameters from the live points,
                                ``(rng_key, state, info, params) -> params`` (:func:`live_widths` by
                                default). Used both to seed ``init`` and to update each step.
+   :param update_strategy: Inner-kernel factory
+                           (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+                           See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
    :returns: * A ``SamplingAlgorithm`` whose ``step(rng_key, state)`` returns
              * ``(new_state, info)``.
