@@ -195,7 +195,7 @@ def _apply_length_floor(
     engaged: Array,
     enable: bool,
     max_leapfrog_steps: int = 1000,
-    step_size: float = 0.1,
+    step_size: float | Array = 0.1,
 ) -> tuple[Array, Array]:
     """Floor ``trajectory_length`` at
     ``CHEES_LENGTH_FLOOR_FACTOR * sqrt(lambda_max)`` -- the slow-direction
@@ -986,7 +986,7 @@ def chees_adaptation(
                 final_engaged,
                 _length_floor,
                 max_leapfrog_steps,
-                float(step_size_ma),
+                step_size_ma,
             )
             num_leapfrog_steps = consumed_trajectory_length_ma / step_size_ma
         else:
