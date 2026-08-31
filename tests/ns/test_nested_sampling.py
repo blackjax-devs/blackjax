@@ -393,6 +393,50 @@ class NestedSliceSamplingTest(chex.TestCase):
         new_state, _ = jax.jit(algo.step)(self.key, state)
         chex.assert_shape(new_state.particles.position, (20, 2))
 
+    @parameterized.parameters(nss.as_top_level_api, nss.swig_as_top_level_api)
+    def test_update_strategy_seam(self, api):
+        """update_strategy reaches the engine on both top-level APIs, built once
+        with the caller's num_inner_steps / num_delete, and the updater it
+        returns is the one the kernel actually runs."""
+        calls = []
+        sentinel = 1234.0
+
+        def recording_strategy(step_fn, num_inner_steps, num_delete):
+            calls.append((num_inner_steps, num_delete))
+            inner_update_fn = from_mcmc.update_with_mcmc_take_last(
+                step_fn, num_inner_steps, num_delete
+            )
+
+            def update_fn(rng_key, state, loglikelihood_0, **step_parameters):
+                particles, update_info = inner_update_fn(
+                    rng_key, state, loglikelihood_0, **step_parameters
+                )
+                # tagging the info distinguishes "this updater ran" from
+                # "the factory was called and its result discarded"
+                return particles, {
+                    "sentinel": jnp.full((num_delete,), sentinel),
+                    "inner": update_info,
+                }
+
+            return update_fn
+
+        algo = api(
+            gaussian_logprior,
+            gaussian_loglikelihood,
+            num_inner_steps=4,
+            num_delete=2,
+            update_strategy=recording_strategy,
+        )
+        # the strategy is a build-time seam: consulted once, with what we passed
+        self.assertEqual(calls, [(4, 2)])
+        state = algo.init(jnp.zeros((20, 2)))
+        new_state, info = jax.jit(algo.step)(self.key, state)
+        chex.assert_shape(new_state.particles.position, (20, 2))
+        # the returned updater is installed, not merely constructed
+        chex.assert_trees_all_close(
+            info.update_info["sentinel"], jnp.full((2,), sentinel)
+        )
+
 
 class NestedSamplingStatisticalTest(chex.TestCase):
     """Statistical correctness tests for nested sampling algorithms."""

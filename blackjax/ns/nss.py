@@ -33,6 +33,7 @@ from blackjax.mcmc.slice import random_order, stepping_out
 from blackjax.ns.adaptive import init
 from blackjax.ns.base import NSInfo, NSState, init_state_strategy
 from blackjax.ns.from_mcmc import build_kernel as build_from_mcmc_kernel
+from blackjax.ns.from_mcmc import update_with_mcmc_take_last
 from blackjax.smc.tuning.from_particles import (
     particles_covariance_matrix,
     particles_stds,
@@ -326,6 +327,7 @@ def build_kernel(
     max_shrinkage: int = 100,
     proposal: Callable = covariance_proposal,
     inner_kernel_params: Callable | None = None,
+    update_strategy: Callable = update_with_mcmc_take_last,
 ) -> Callable:
     """Build the Nested Slice Sampling kernel.
 
@@ -354,6 +356,10 @@ def build_kernel(
         :func:`live_covariance_factor` with the default proposal and
         :func:`live_covariance` with a custom proposal, preserving the existing
         covariance-based extension seam.
+    update_strategy
+        Inner-kernel factory
+        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
     Returns
     -------
@@ -371,6 +377,7 @@ def build_kernel(
         num_inner_steps,
         inner_kernel_params,
         num_delete,
+        update_strategy=update_strategy,
     )
 
 
@@ -435,6 +442,7 @@ def build_swig_kernel(
     proposal: Callable = coordinate_proposal,
     coordinate_order: Callable = random_order,
     inner_kernel_params: Callable = live_widths,
+    update_strategy: Callable = update_with_mcmc_take_last,
 ) -> Callable:
     """Build the Nested Slice-within-Gibbs (SwiG) kernel.
 
@@ -473,6 +481,10 @@ def build_swig_kernel(
         Computes the inner-kernel parameters from the live points each step,
         ``(rng_key, state, info, params) -> params`` (:func:`live_widths` by
         default, the per-axis live-point spread).
+    update_strategy
+        Inner-kernel factory
+        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
     Returns
     -------
@@ -494,6 +506,7 @@ def build_swig_kernel(
         num_inner_steps,
         inner_kernel_params,
         num_delete,
+        update_strategy=update_strategy,
     )
 
 
@@ -506,6 +519,7 @@ def as_top_level_api(
     max_shrinkage: int = 100,
     proposal: Callable = covariance_proposal,
     inner_kernel_params: Callable | None = None,
+    update_strategy: Callable = update_with_mcmc_take_last,
 ) -> SamplingAlgorithm:
     """Creates a Nested Slice Sampling (NSS) algorithm, ``blackjax.nss``.
 
@@ -542,6 +556,10 @@ def as_top_level_api(
         :func:`live_covariance_factor` with the default proposal and
         :func:`live_covariance` with a custom proposal. Used both to seed
         ``init`` and to update each step.
+    update_strategy
+        Inner-kernel factory
+        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
     Returns
     -------
@@ -576,6 +594,7 @@ def as_top_level_api(
         max_shrinkage=max_shrinkage,
         proposal=proposal,
         inner_kernel_params=inner_kernel_params,
+        update_strategy=update_strategy,
     )
 
     def init_fn(position, rng_key=None):
@@ -602,6 +621,7 @@ def swig_as_top_level_api(
     proposal: Callable = coordinate_proposal,
     coordinate_order: Callable = random_order,
     inner_kernel_params: Callable = live_widths,
+    update_strategy: Callable = update_with_mcmc_take_last,
 ) -> SamplingAlgorithm:
     """Creates a Nested Slice-within-Gibbs (SwiG) sampling algorithm, ``blackjax.nsswig``.
 
@@ -640,6 +660,10 @@ def swig_as_top_level_api(
         Computes the inner-kernel parameters from the live points,
         ``(rng_key, state, info, params) -> params`` (:func:`live_widths` by
         default). Used both to seed ``init`` and to update each step.
+    update_strategy
+        Inner-kernel factory
+        (default: :func:`~blackjax.ns.from_mcmc.update_with_mcmc_take_last`).
+        See :func:`~blackjax.ns.from_mcmc.build_kernel` for the contract.
 
     Returns
     -------
@@ -673,6 +697,7 @@ def swig_as_top_level_api(
         proposal=proposal,
         coordinate_order=coordinate_order,
         inner_kernel_params=inner_kernel_params,
+        update_strategy=update_strategy,
     )
 
     def init_fn(position, rng_key=None):
