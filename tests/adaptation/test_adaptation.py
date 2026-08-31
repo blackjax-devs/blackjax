@@ -212,6 +212,32 @@ def test_chees_mass_matrix_estimation_none_matches_omitted_bit_for_bit():
     assert params_none["step_size"] == params_none_no_floor["step_size"]
 
 
+def test_chees_mass_matrix_estimation_runs_under_jit():
+    """The diagonal mass-matrix path must keep its adapted step size traced."""
+    num_chains, num_dim = 8, 3
+    warmup = blackjax.chees_adaptation(
+        _chees_gaussian_logdensity(jnp.ones(num_dim)),
+        num_chains=num_chains,
+        mass_matrix_estimation="diagonal",
+    )
+    positions = jnp.zeros((num_chains, num_dim))
+    optim = optax.adam(0.1)
+
+    @jax.jit
+    def run(rng_key, initial_positions):
+        (state, _), _ = warmup.run(
+            rng_key,
+            initial_positions,
+            step_size=0.1,
+            optim=optim,
+            num_steps=40,
+        )
+        return state.position
+
+    final_positions = run(jax.random.key(0), positions)
+    assert jnp.all(jnp.isfinite(final_positions))
+
+
 def test_chees_mass_matrix_estimation_invalid_value_raises():
     with pytest.raises(ValueError, match="mass_matrix_estimation"):
         blackjax.chees_adaptation(
