@@ -54,6 +54,12 @@ Never read a clear ``gate_predicate_true`` bit as "failed" without checking
 whether it was applicable, and never read a clear applicability bit as "the
 controller did not compute this".
 
+The ``sc_`` / ``w_`` / ``t_`` name prefixes are a **routing key**, not
+decoration: :func:`extract_publication_chronology` selects which gates to decode
+from them, so a new predicate must carry the prefix of the controller it belongs
+to.  ``deadline`` is the sole unprefixed name, shared because both controllers
+apply the identical budget test.
+
 Stability
 ---------
 :data:`SCHEMA_VERSION` is **2**.  Consumers must read it and refuse a version
@@ -65,7 +71,11 @@ Units
 Counts here are **not** warmup scan steps.  ``core_updates_per_chain``
 counts calls to the metric core's ``update()``, which the host makes only on
 slow-window steps: under Stan's :func:`~blackjax.adaptation.staged_adaptation.build_schedule`
-it lags the scan index by the whole initial fast buffer (75 by default).
+it lags the scan index by the whole initial fast buffer.  Do not assume 75:
+that is the default ``initial_buffer_size``, but ``build_schedule`` rescales the
+buffers when they do not fit ``num_steps``, and the growing-window schedule the
+auto path uses by default has no fast prefix at all — the lag is then zero.
+Derive it from the schedule, never from the constant.
 ``warmup_step_index`` is the scan index and is stamped by the host.
 ``support_pooled_rows`` is a count of retained buffer rows; it is neither an
 effective sample size nor a count of independent observations.  The rows
@@ -178,6 +188,13 @@ class CandidateSummary(NamedTuple):
         (``U`` has orthonormal columns, so the non-unit eigenvalues are ``lam``).
     lam_max, lam_min, sigma_gm
         Eigenvalue extremes and the geometric mean of the diagonal scaling.
+
+        On the multi-chain path ``sigma_gm`` is necessarily EQUAL between
+        ``candidate_w`` and ``candidate_t``, for the same reason
+        ``sigma_log_ratio_rms_vs_deployed`` is: both candidates are built from
+        the same ``sigma_lr``.  The scalars that do differ between them are
+        ``logdet``, ``effective_rank`` and ``lam_max`` — and note that even
+        together those are summaries, not a metric identity test.
     sigma_log_ratio_rms_vs_deployed
         ``rms(log(this sigma) - log(deployed sigma))``.
 
@@ -339,6 +356,11 @@ class MetricPublicationRecord(NamedTuple):
     Exactly one of ``single_chain`` / ``multi_chain`` is populated; the other is
     ``None`` and contributes no pytree leaves.
 
+    **A single-chain record and a multi-chain record therefore have different
+    treedefs**, because the ``None`` sits in a different slot.  They cannot be
+    stacked, ``tree_map``-ed or concatenated together as pytrees; combine them
+    at the dict level, after :func:`extract_publication_chronology`.
+
     Between window boundaries the carry holds the previous record unchanged;
     deduplicate on ``window_index``, which is ``-1`` before the first
     publication.
@@ -418,10 +440,17 @@ class MetricPublicationRecord(NamedTuple):
         rank and from ``deployed_effective_rank``; on the multi-chain path it
         can even describe a different branch (see :class:`MultiChainDetail`).
     deployed_effective_rank, deployed_logdet, deployed_sigma_gm
-        The metric published for the next window.  Recomputable from the
-        low-rank payload the warmup already returns, under the declared
-        ``|lam - 1| > 1e-6`` convention; carried so the convention is stated
-        once and so a per-window series exists.
+        The metric published for the next window, under the declared
+        ``|lam - 1| > 1e-6`` convention.
+
+        Each is recomputable from a low-rank payload in principle, but the
+        per-window *series* is not: ``run()`` returns only the final
+        ``step_size`` and ``inverse_mass_matrix``, and under
+        :func:`publication_adapt_info_fn` nothing else is stacked.  Recovering
+        these three scalars per window otherwise means stacking ``O(d*k)``
+        factors at every step.  They are the compact form of a series that does
+        not otherwise exist, not a convenience copy of something you already
+        have.
     in_force_logdet
         The metric that drove the window just completed.
 
