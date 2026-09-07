@@ -600,39 +600,30 @@ class SingleChainCandidateTest(chex.TestCase):
         draws, grads = _make_isotropic_buffer(_D, 40)
         return core.final(_fill_state_from_buffer(state, draws, grads)).publication
 
-    def test_withheld_candidate_is_still_reported(self):
+    def test_default_record_reports_candidate_and_controller_summaries(self):
         record = self._record()
         self.assertFalse(bool(record.escalated_now))
         candidate = record.single_chain.candidate
         for name in ("logdet", "lam_max", "sigma_gm"):
             self.assertTrue(np.isfinite(np.asarray(getattr(candidate, name))), msg=name)
         self.assertGreater(float(candidate.lam_max), 0.0)
-
-    def test_the_three_ranks_are_reported_separately(self):
-        record = self._record()
         self.assertGreaterEqual(int(record.single_chain.detection_rank), 0)
         self.assertGreaterEqual(int(record.single_chain.candidate.effective_rank), 0)
         self.assertEqual(int(record.deployed_effective_rank), 0)  # not escalated
         self.assertGreaterEqual(int(record.escalation_rank_stored), 0)
-
-    def test_in_force_and_deployed_metrics_are_both_reported(self):
-        record = self._record()
         self.assertTrue(np.isfinite(np.asarray(record.in_force_logdet)))
         self.assertTrue(np.isfinite(np.asarray(record.deployed_logdet)))
-
-    def test_full_matrices_absent_by_default_present_when_asked(self):
-        self.assertIsNone(self._record().single_chain.candidate.full)
-        self.assertIsNone(self._record().deployed_full)
-        full = self._record(full_matrices=True)
-        self.assertIsNotNone(full.single_chain.candidate.full)
-        self.assertEqual(full.single_chain.candidate.full.sigma.shape, (_D,))
-
-    def test_epsilons_are_nan_when_final_is_called_without_the_host(self):
-        """The core cannot see the step size; it must not invent one."""
-        record = self._record()
         self.assertTrue(np.isnan(np.asarray(record.epsilon_in_force)))
         self.assertTrue(np.isnan(np.asarray(record.epsilon_next_window)))
         self.assertEqual(int(record.warmup_step_index), -1)
+
+    def test_full_matrices_absent_by_default_present_when_asked(self):
+        compact = self._record()
+        self.assertIsNone(compact.single_chain.candidate.full)
+        self.assertIsNone(compact.deployed_full)
+        full = self._record(full_matrices=True)
+        self.assertIsNotNone(full.single_chain.candidate.full)
+        self.assertEqual(full.single_chain.candidate.full.sigma.shape, (_D,))
 
 
 class MultiChainBranchTest(chex.TestCase):
@@ -665,9 +656,8 @@ class MultiChainBranchTest(chex.TestCase):
         self.assertEqual(int(record.multi_chain.detection_branch_history), BRANCH_NONE)
         self.assertEqual(int(record.multi_chain.branch_first_set_at_window), -1)
 
-    def test_both_candidates_are_reported_before_escalation(self):
-        """W and T candidates are built before routing and are not the same."""
-        record = _mc_record(_make_mc_isotropic)
+        # Both candidates are built before routing, even when neither is
+        # deployed, and their low-rank summaries must remain distinguishable.
         detail = record.multi_chain
         for candidate in (detail.candidate_w, detail.candidate_t):
             self.assertTrue(np.isfinite(np.asarray(candidate.logdet)))
@@ -677,7 +667,6 @@ class MultiChainBranchTest(chex.TestCase):
 
     def test_raw_and_routed_r2_are_separate_and_can_disagree(self):
         """The W branch uses the raw R2; the T branch uses the routed one."""
-        core = _mc_core(telemetry=True)
         warmup = staged_adaptation(
             blackjax.nuts,
             _logdensity_fn,
@@ -699,7 +688,22 @@ class MultiChainBranchTest(chex.TestCase):
             disagreements,
             msg="expected at least one window where raw and routed R2 differ",
         )
-        del core
+        # The raw and routed values must disagree in the same window as their
+        # own gate bits: raw R2 passes W while routed R2 is NaN and fails T.
+        split = [
+            e
+            for e in chronology
+            if e["gates_true"]["w_r2_raw"] != e["gates_true"]["t_r2_routed"]
+        ]
+        self.assertNotEmpty(
+            split,
+            msg="expected a window where the raw and routed R2 gates disagree",
+        )
+        for entry in split:
+            self.assertTrue(entry["gates_true"]["w_r2_raw"])
+            self.assertFalse(entry["gates_true"]["t_r2_routed"])
+            self.assertTrue(np.isnan(entry["multi_chain.r2_routed"]))
+            self.assertFalse(np.isnan(entry["r2_raw"]))
 
 
 class MultiChainEscalationSequenceTest(chex.TestCase):
@@ -814,42 +818,6 @@ class MultiChainEscalationSequenceTest(chex.TestCase):
         self.assertTrue(bool(detail.t_unimodality_resolved))
         self.assertLess(float(detail.t_contraction_stat), -2.365)
 
-    def test_r2_gate_bits_are_pinned_to_their_own_predicates(self):
-        """w_r2_raw is the raw R2 gate; t_r2_routed is the GAIN-overridden one.
-
-        In the hand-built fixtures both R2 values are 1.0, so the two gates are
-        numerically identical and swapping the bits would pass.  A real run
-        reaches windows where the routed value is NaN while the raw value is
-        finite and above threshold -- there the two bits must disagree, which
-        pins each to its own predicate.
-        """
-        warmup = staged_adaptation(
-            blackjax.nuts,
-            _logdensity_fn,
-            metric="auto",
-            max_grad_budget=16_000,
-            n_chains=_MC_M,
-            metric_telemetry=True,
-            adaptation_info_fn=publication_adapt_info_fn(),
-        )
-        x0 = jax.random.normal(jax.random.key(1), (_MC_M, _D))
-        _, records = warmup.run(jax.random.key(0), x0)
-        split = [
-            e
-            for e in extract_publication_chronology(records)
-            if e["gates_true"]["w_r2_raw"] != e["gates_true"]["t_r2_routed"]
-        ]
-        self.assertNotEmpty(
-            split,
-            msg="expected a window where the raw and routed R2 gates disagree",
-        )
-        for entry in split:
-            # raw finite and passing, routed NaN and therefore failing
-            self.assertTrue(entry["gates_true"]["w_r2_raw"])
-            self.assertFalse(entry["gates_true"]["t_r2_routed"])
-            self.assertTrue(np.isnan(entry["multi_chain.r2_routed"]))
-            self.assertFalse(np.isnan(entry["r2_raw"]))
-
     def test_stored_escalation_rank_is_the_t_detection_rank_even_when_w_fires(self):
         """Reported, not corrected: the controller stores k_new regardless.
 
@@ -875,25 +843,21 @@ class PayloadAndSchemaTest(chex.TestCase):
         state = _fill_state_from_buffer(core.init(_D), draws, grads)
         return core.final(state).publication
 
-    def test_compact_record_leaves_are_all_scalar(self):
-        for leaf in jax.tree.leaves(self._record()):
-            self.assertEqual(jnp.asarray(leaf).shape, ())
-
-    def test_compact_record_carries_no_buffers(self):
+    def test_compact_record_is_scalar_bounded_and_measured(self):
         record = self._record()
+        for leaf in jax.tree.leaves(record):
+            self.assertEqual(jnp.asarray(leaf).shape, ())
         total = sum(int(jnp.asarray(x).size) for x in jax.tree.leaves(record))
         self.assertEqual(total, len(jax.tree.leaves(record)))
-
-    def test_record_nbytes_reports_actual_leaf_bytes(self):
-        record = self._record()
         expected = sum(int(jnp.asarray(x).nbytes) for x in jax.tree.leaves(record))
         self.assertEqual(record_nbytes(record), expected)
         self.assertLess(record_nbytes(record), 1024)
 
     def test_full_matrices_cost_is_why_they_are_opt_in(self):
+        compact = self._record()
         self.assertGreater(
             record_nbytes(self._record(full_matrices=True)),
-            record_nbytes(self._record()),
+            record_nbytes(compact),
         )
 
     def test_exactly_one_detail_subrecord_is_populated(self):
