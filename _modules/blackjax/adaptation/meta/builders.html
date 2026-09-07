@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+geb9c6c81d" />
+  <meta name="docsearch:version" content="0.1.dev1+g112dae7b4" />
   </head>
   
   
@@ -494,7 +494,24 @@
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta._state</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">MetaAdaptationCoreState</span><span class="p">,</span>
+    <span class="n">MetaAdaptationTelemetryCoreState</span><span class="p">,</span>
     <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">,</span>
+    <span class="n">MultiChainMetaAdaptationTelemetryCoreState</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.meta._telemetry</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BRANCH_NONE</span><span class="p">,</span>
+    <span class="n">ROUTE_DIAGONAL</span><span class="p">,</span>
+    <span class="n">ROUTE_T</span><span class="p">,</span>
+    <span class="n">ROUTE_W</span><span class="p">,</span>
+    <span class="n">MetricPublicationRecord</span><span class="p">,</span>
+    <span class="n">MultiChainDetail</span><span class="p">,</span>
+    <span class="n">SingleChainDetail</span><span class="p">,</span>
+    <span class="n">_effective_rank</span><span class="p">,</span>
+    <span class="n">_logdet</span><span class="p">,</span>
+    <span class="n">_sigma_gm</span><span class="p">,</span>
+    <span class="n">candidate_summary</span><span class="p">,</span>
+    <span class="n">empty_record</span><span class="p">,</span>
+    <span class="n">encode_gates</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_estimators</span><span class="w"> </span><span class="kn">import</span> <span class="n">_compute_low_rank_metric</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.adaptation.metric_recipes</span><span class="w"> </span><span class="kn">import</span> <span class="n">MetricCore</span>
@@ -510,6 +527,8 @@
     <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
     <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+    <span class="n">telemetry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">full_matrices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricCore</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.</span>
 
@@ -522,22 +541,63 @@
 <span class="sd">        Maximum low-rank rank; ``None`` uses :data:`~blackjax.adaptation.meta._calibration._MAX_RANK_CAP`.</span>
 <span class="sd">    gamma, cutoff</span>
 <span class="sd">        Fisher-estimator parameters; defaults match ``fisher_low_rank`` recipe.</span>
+<span class="sd">    telemetry</span>
+<span class="sd">        When ``True`` the core carries a</span>
+<span class="sd">        :class:`~blackjax.adaptation.meta._telemetry.MetricPublicationRecord`</span>
+<span class="sd">        describing each window-boundary publication, and its state type is</span>
+<span class="sd">        :class:`~blackjax.adaptation.meta._state.MetaAdaptationTelemetryCoreState`</span>
+<span class="sd">        instead of :class:`~blackjax.adaptation.meta._state.MetaAdaptationCoreState`.</span>
+
+<span class="sd">        This is pure observation: no threshold, gate, ordering or published</span>
+<span class="sd">        metric changes.  ``telemetry=False`` (the default) is a Python-time</span>
+<span class="sd">        constant, so no record is built and nothing extra is traced -- the</span>
+<span class="sd">        default path keeps the original state type, treedef and arithmetic.</span>
+
+<span class="sd">        The record&#39;s four epsilon fields are left NaN by the core, which cannot</span>
+<span class="sd">        see the step-size state; the ``staged_adaptation`` host fills them in.</span>
+<span class="sd">        Calling ``final()`` directly therefore yields NaN epsilons by design.</span>
+<span class="sd">    full_matrices</span>
+<span class="sd">        When ``True`` (and ``telemetry=True``) the record also carries the full</span>
+<span class="sd">        candidate and deployed :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`</span>
+<span class="sd">        factors.  These are ``O(d*k)`` per record and per step; off by default.</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    MetricCore</span>
 <span class="sd">        Embeddable init/update/final bundle.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">full_matrices</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">telemetry</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;build_meta_adaptation_core: full_matrices=True requires telemetry=True; &quot;</span>
+            <span class="s2">&quot;there is no record to attach the matrices to otherwise.&quot;</span>
+        <span class="p">)</span>
     <span class="n">_max_rank</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_MAX_RANK_CAP</span> <span class="k">if</span> <span class="n">max_rank</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">max_rank</span>
     <span class="n">max_budget_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_grad_budget</span> <span class="o">//</span> <span class="n">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">_state_cls</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">MetaAdaptationTelemetryCoreState</span> <span class="k">if</span> <span class="n">telemetry</span> <span class="k">else</span> <span class="n">MetaAdaptationCoreState</span>
+    <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaAdaptationCoreState</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="c1"># half-budget ceiling; overflow is safe — RESET keeps the most-recent B draws</span>
         <span class="n">buf</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">max_budget_steps</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">max_budget_steps</span><span class="p">)</span>
         <span class="n">buf</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">_max_rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">_MIN_TRAIN_K_RATIO</span><span class="p">)</span>
         <span class="n">buf</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">max_budget_steps</span><span class="p">)</span>
         <span class="n">actual_rank</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_max_rank</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_dims</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">_MAX_RANK_CAP</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">MetaAdaptationCoreState</span><span class="p">(</span>
+        <span class="n">extra</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;publication&quot;</span><span class="p">:</span> <span class="n">empty_record</span><span class="p">(</span>
+                    <span class="n">n_dims</span><span class="p">,</span>
+                    <span class="n">actual_rank</span><span class="p">,</span>
+                    <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(())</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="n">n_chains</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                    <span class="n">multi_chain</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">full_matrices</span><span class="o">=</span><span class="n">full_matrices</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="n">telemetry</span>
+            <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_state_cls</span><span class="p">(</span>
             <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">LowRankInverseMassMatrix</span><span class="p">(</span>
                 <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_dims</span><span class="p">),</span>
                 <span class="n">U</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">actual_rank</span><span class="p">)),</span>
@@ -561,10 +621,11 @@
             <span class="n">airm_vel_prev</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
             <span class="n">airm_vel_curr</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
             <span class="n">is_slow_mixing</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">extra</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">MetaAdaptationCoreState</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">,</span>
         <span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">,</span>
         <span class="n">grad</span><span class="p">:</span> <span class="n">ArrayLikeTree</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaAdaptationCoreState</span><span class="p">:</span>
@@ -587,9 +648,12 @@
             <span class="n">budget_used</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">budget_used</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">MetaAdaptationCoreState</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetaAdaptationCoreState</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Window-boundary controller: compute signals → escalation decision →</span>
 <span class="sd">        choose IMM → hard-reset buffer (v1 reset policy always).</span>
+
+<span class="sd">        Returns the same concrete state type it was given, so the telemetry</span>
+<span class="sd">        and default paths share this body.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">B</span><span class="p">,</span> <span class="n">d</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="o">.</span><span class="n">shape</span>
         <span class="n">n</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">B</span><span class="p">))</span>  <span class="c1"># cap at B (Fix 4)</span>
@@ -702,7 +766,92 @@
             <span class="n">state</span><span class="o">.</span><span class="n">converged_at_step</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">MetaAdaptationCoreState</span><span class="p">(</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_publication</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Build the window&#39;s publication record, or {} when telemetry is off.</span>
+
+<span class="sd">            Called before the buffer reset below, from the live locals above --</span>
+<span class="sd">            no candidate is reconstructed from cleared buffers.</span>
+
+<span class="sd">            The two masks mean different things and are not nested.</span>
+<span class="sd">            ``gate_predicate_true`` is the RAW truth of each predicate as the</span>
+<span class="sd">            controller computed it.  JAX&#39;s ``&amp;`` is eager, so every predicate is</span>
+<span class="sd">            computed on every window including after escalation and including</span>
+<span class="sd">            when a sibling conjunct is false; the raw values stay reportable.</span>
+<span class="sd">            ``escalation_gate_applicable`` says whether the predicate bears on a</span>
+<span class="sd">            NEW escalation decision: clear once ``has_escalated`` holds, and</span>
+<span class="sd">            clear for the stability test until a previous S_gap exists.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">telemetry</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{}</span>
+
+            <span class="n">prev</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">publication</span>
+            <span class="n">window_index</span> <span class="o">=</span> <span class="n">prev</span><span class="o">.</span><span class="n">window_index</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">escalation_open</span> <span class="o">=</span> <span class="o">~</span><span class="n">state</span><span class="o">.</span><span class="n">has_escalated</span>
+
+            <span class="c1"># Raw predicate truth.  s_gap_prev_valid is an availability</span>
+            <span class="c1"># condition, not part of the stability predicate itself, so it is</span>
+            <span class="c1"># reported through applicability rather than folded in here.</span>
+            <span class="n">predicate_true</span> <span class="o">=</span> <span class="n">encode_gates</span><span class="p">(</span>
+                <span class="n">deadline</span><span class="o">=</span><span class="n">deadline_ok</span><span class="p">,</span>
+                <span class="n">sc_r2</span><span class="o">=</span><span class="n">r2_gate</span><span class="p">,</span>
+                <span class="n">sc_s_gap_magnitude</span><span class="o">=</span><span class="n">s_gap_new</span> <span class="o">&gt;=</span> <span class="n">_S_MIN</span><span class="p">,</span>
+                <span class="n">sc_s_gap_stability</span><span class="o">=</span><span class="n">relative_change</span> <span class="o">&lt;</span> <span class="n">_S_GAP_STABILITY_TOL</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">applicable</span> <span class="o">=</span> <span class="n">encode_gates</span><span class="p">(</span>
+                <span class="n">deadline</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">sc_r2</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">sc_s_gap_magnitude</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">sc_s_gap_stability</span><span class="o">=</span><span class="n">escalation_open</span> <span class="o">&amp;</span> <span class="n">s_gap_prev_valid</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">record</span> <span class="o">=</span> <span class="n">MetricPublicationRecord</span><span class="p">(</span>
+                <span class="n">window_index</span><span class="o">=</span><span class="n">window_index</span><span class="p">,</span>
+                <span class="c1"># Host-owned: the core sees neither the scan index nor the</span>
+                <span class="c1"># step-size state.  Carried forward, then overwritten.</span>
+                <span class="n">warmup_step_index</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">warmup_step_index</span><span class="p">,</span>
+                <span class="n">core_updates_per_chain</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">budget_used</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">core_chain_updates_total</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">budget_used</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">n_chains</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">dim</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">support_per_chain</span><span class="o">=</span><span class="n">n</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">support_pooled_rows</span><span class="o">=</span><span class="n">n</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">buffer_capacity</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">buffer_capacity_reached</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">&gt;=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">B</span><span class="p">),</span>
+                <span class="n">dropped_draws</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                    <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">B</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">gate_predicate_true</span><span class="o">=</span><span class="n">predicate_true</span><span class="p">,</span>
+                <span class="n">escalation_gate_applicable</span><span class="o">=</span><span class="n">applicable</span><span class="p">,</span>
+                <span class="n">escalated_now</span><span class="o">=</span><span class="n">escalate_now</span><span class="p">,</span>
+                <span class="n">has_escalated_before</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">has_escalated</span><span class="p">,</span>
+                <span class="n">has_escalated</span><span class="o">=</span><span class="n">new_has_escalated</span><span class="p">,</span>
+                <span class="n">escalation_rank_stored</span><span class="o">=</span><span class="n">new_escalation_rank</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">deployed_effective_rank</span><span class="o">=</span><span class="n">_effective_rank</span><span class="p">(</span><span class="n">chosen_imm</span><span class="p">),</span>
+                <span class="n">deployed_logdet</span><span class="o">=</span><span class="n">_logdet</span><span class="p">(</span><span class="n">chosen_imm</span><span class="p">),</span>
+                <span class="n">deployed_sigma_gm</span><span class="o">=</span><span class="n">_sigma_gm</span><span class="p">(</span><span class="n">chosen_imm</span><span class="p">),</span>
+                <span class="n">in_force_logdet</span><span class="o">=</span><span class="n">_logdet</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">),</span>
+                <span class="n">r2_raw</span><span class="o">=</span><span class="n">r2_new</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                <span class="n">r2_mode</span><span class="o">=</span><span class="n">mode_new</span><span class="p">,</span>
+                <span class="n">is_slow_mixing</span><span class="o">=</span><span class="n">is_slow</span><span class="p">,</span>
+                <span class="n">epsilon_in_force</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">epsilon_in_force</span><span class="p">,</span>
+                <span class="n">epsilon_after_window_da</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">epsilon_after_window_da</span><span class="p">,</span>
+                <span class="n">epsilon_window_average</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">epsilon_window_average</span><span class="p">,</span>
+                <span class="n">epsilon_next_window</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">epsilon_next_window</span><span class="p">,</span>
+                <span class="n">deployed_full</span><span class="o">=</span><span class="n">chosen_imm</span> <span class="k">if</span> <span class="n">full_matrices</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">single_chain</span><span class="o">=</span><span class="n">SingleChainDetail</span><span class="p">(</span>
+                    <span class="n">detection_rank</span><span class="o">=</span><span class="n">k_new</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                    <span class="n">s_gap</span><span class="o">=</span><span class="n">s_gap_new</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="n">s_gap_prev</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">s_gap_curr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="n">s_gap_relative_change</span><span class="o">=</span><span class="n">relative_change</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="n">candidate</span><span class="o">=</span><span class="n">candidate_summary</span><span class="p">(</span>
+                        <span class="n">lr_imm</span><span class="p">,</span> <span class="n">chosen_imm</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="n">full_matrices</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+                <span class="n">multi_chain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;publication&quot;</span><span class="p">:</span> <span class="n">record</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
             <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">chosen_imm</span><span class="p">,</span>
             <span class="n">mu_star</span><span class="o">=</span><span class="n">chosen_mu</span><span class="p">,</span>
             <span class="n">draws_buffer</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">),</span>
@@ -722,6 +871,7 @@
             <span class="n">airm_vel_prev</span><span class="o">=</span><span class="n">new_airm_vel_prev</span><span class="p">,</span>
             <span class="n">airm_vel_curr</span><span class="o">=</span><span class="n">new_airm_vel_curr</span><span class="p">,</span>
             <span class="n">is_slow_mixing</span><span class="o">=</span><span class="n">is_slow</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">_publication</span><span class="p">(),</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">MetricCore</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">)</span></div>
@@ -737,6 +887,8 @@
     <span class="n">max_rank</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span>
     <span class="n">cutoff</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+    <span class="n">telemetry</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">full_matrices</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricCore</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the multi-chain meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.</span>
 
@@ -792,6 +944,11 @@
 <span class="sd">        Embeddable init/update/final bundle.  ``update`` expects ``position``</span>
 <span class="sd">        of shape ``(n_chains, d)`` and ``grad`` of shape ``(n_chains, d)``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">full_matrices</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">telemetry</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;build_multi_chain_meta_core: full_matrices=True requires telemetry=True; &quot;</span>
+            <span class="s2">&quot;there is no record to attach the matrices to otherwise.&quot;</span>
+        <span class="p">)</span>
     <span class="k">if</span> <span class="n">n_chains</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;build_multi_chain_meta_core: n_chains must be &gt;= 2, got </span><span class="si">{</span><span class="n">n_chains</span><span class="si">}</span><span class="s2">. &quot;</span>
@@ -810,19 +967,38 @@
             <span class="n">stacklevel</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="n">_max_rank</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">_MAX_RANK_CAP</span> <span class="k">if</span> <span class="n">max_rank</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">max_rank</span>
+    <span class="n">_state_cls</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">MultiChainMetaAdaptationTelemetryCoreState</span>
+        <span class="k">if</span> <span class="n">telemetry</span>
+        <span class="k">else</span> <span class="n">MultiChainMetaAdaptationCoreState</span>
+    <span class="p">)</span>
     <span class="c1"># Per-chain step budget: total budget divided across M chains</span>
     <span class="n">max_budget_steps_total</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span>
         <span class="n">max_grad_budget</span> <span class="o">//</span> <span class="n">_ASSUMED_AVG_LEAPFROGS_PER_STEP</span><span class="p">,</span> <span class="mi">1</span>
     <span class="p">)</span>
     <span class="n">max_budget_steps_per_chain</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_budget_steps_total</span> <span class="o">//</span> <span class="n">n_chains</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">n_dims</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="c1"># half-budget ceiling per chain; same logic as single-chain init</span>
         <span class="n">buf</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">max_budget_steps_per_chain</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">max_budget_steps_per_chain</span><span class="p">)</span>
         <span class="n">buf</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">_max_rank</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">_MIN_TRAIN_K_RATIO</span><span class="p">)</span>
         <span class="n">buf</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">max_budget_steps_per_chain</span><span class="p">)</span>
         <span class="n">actual_rank</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">_max_rank</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">n_dims</span> <span class="o">//</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">_MAX_RANK_CAP</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">(</span>
+        <span class="n">extra</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;publication&quot;</span><span class="p">:</span> <span class="n">empty_record</span><span class="p">(</span>
+                    <span class="n">n_dims</span><span class="p">,</span>
+                    <span class="n">actual_rank</span><span class="p">,</span>
+                    <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(())</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                    <span class="n">n_chains</span><span class="o">=</span><span class="n">n_chains</span><span class="p">,</span>
+                    <span class="n">multi_chain</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">full_matrices</span><span class="o">=</span><span class="n">full_matrices</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="n">telemetry</span>
+            <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_state_cls</span><span class="p">(</span>
             <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">LowRankInverseMassMatrix</span><span class="p">(</span>
                 <span class="n">sigma</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">n_dims</span><span class="p">),</span>
                 <span class="n">U</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_dims</span><span class="p">,</span> <span class="n">actual_rank</span><span class="p">)),</span>
@@ -855,10 +1031,11 @@
             <span class="n">r1_top</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="s2">&quot;nan&quot;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
             <span class="n">detection_branch</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">_DETECTION_BRANCH_NONE</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
             <span class="n">unimodality_flag_count</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">extra</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">update</span><span class="p">(</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">,</span>
         <span class="n">positions</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
         <span class="n">grads</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">:</span>
@@ -899,9 +1076,7 @@
             <span class="n">budget_used</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">budget_used</span> <span class="o">+</span> <span class="n">n_chains</span><span class="p">,</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span>
-        <span class="n">state</span><span class="p">:</span> <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">,</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">final</span><span class="p">(</span><span class="n">state</span><span class="p">):</span>
 <span class="w">        </span><span class="sd">&quot;&quot;&quot;Window-boundary controller: W-branch ∪ T-branch detection (v2.1).</span>
 
 <span class="sd">        v2.1 two-branch union:</span>
@@ -1244,7 +1419,160 @@
             <span class="n">state</span><span class="o">.</span><span class="n">converged_at_step</span><span class="p">,</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">MultiChainMetaAdaptationCoreState</span><span class="p">(</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">_publication</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Build the window&#39;s publication record, or {} when telemetry is off.</span>
+
+<span class="sd">            Built from the live locals above, before the buffer reset below.</span>
+
+<span class="sd">            The masks follow the same contract as the single-chain path: raw</span>
+<span class="sd">            predicate truth in one, applicability to a NEW escalation in the</span>
+<span class="sd">            other, and no nesting between them.  Every predicate here is</span>
+<span class="sd">            computed unconditionally by the expressions above -- ``&amp;`` is eager</span>
+<span class="sd">            -- so the raw values remain meaningful after escalation, which</span>
+<span class="sd">            matters because the deferral latch below is gated on ``~escalate_T``</span>
+<span class="sd">            and NOT on ``has_escalated``, and so can fire post-escalation.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">telemetry</span><span class="p">:</span>
+                <span class="k">return</span> <span class="p">{}</span>
+
+            <span class="n">prev</span> <span class="o">=</span> <span class="n">state</span><span class="o">.</span><span class="n">publication</span>
+            <span class="n">prev_mc</span> <span class="o">=</span> <span class="n">prev</span><span class="o">.</span><span class="n">multi_chain</span>
+            <span class="n">window_index</span> <span class="o">=</span> <span class="n">prev</span><span class="o">.</span><span class="n">window_index</span> <span class="o">+</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">escalation_open</span> <span class="o">=</span> <span class="o">~</span><span class="n">state</span><span class="o">.</span><span class="n">has_escalated</span>
+
+            <span class="n">predicate_true</span> <span class="o">=</span> <span class="n">encode_gates</span><span class="p">(</span>
+                <span class="n">deadline</span><span class="o">=</span><span class="n">deadline_ok</span><span class="p">,</span>
+                <span class="n">w_magnitude</span><span class="o">=</span><span class="n">w_magnitude</span><span class="p">,</span>
+                <span class="n">w_psi</span><span class="o">=</span><span class="n">w_psi_gate</span><span class="p">,</span>
+                <span class="n">w_r1</span><span class="o">=</span><span class="n">w_r1_gate</span><span class="p">,</span>
+                <span class="n">w_r2_raw</span><span class="o">=</span><span class="n">r2_gate_w</span><span class="p">,</span>
+                <span class="n">t_magnitude</span><span class="o">=</span><span class="n">t_magnitude</span><span class="p">,</span>
+                <span class="n">t_collinearity</span><span class="o">=</span><span class="n">t_collinearity</span><span class="p">,</span>
+                <span class="n">t_loo</span><span class="o">=</span><span class="n">t_loo</span><span class="p">,</span>
+                <span class="n">t_support</span><span class="o">=</span><span class="n">t_support</span><span class="p">,</span>
+                <span class="n">t_unimodality</span><span class="o">=</span><span class="n">t_unimodality</span><span class="p">,</span>
+                <span class="n">t_r2_routed</span><span class="o">=</span><span class="n">r2_gate</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">applicable</span> <span class="o">=</span> <span class="n">encode_gates</span><span class="p">(</span>
+                <span class="n">deadline</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">w_magnitude</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">w_psi</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">w_r1</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">w_r2_raw</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">t_magnitude</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">t_collinearity</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">t_loo</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">t_support</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">t_unimodality</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+                <span class="n">t_r2_routed</span><span class="o">=</span><span class="n">escalation_open</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># What fired now, what the carried history says, and what is</span>
+            <span class="c1"># actually deployed are three different answers.  BOTH firing</span>
+            <span class="c1"># deploys the W metric.  The route IS derivable from</span>
+            <span class="c1"># has_escalated plus the carried branch by reapplying the routing</span>
+            <span class="c1"># rule below; it is reported so a consumer never has to.</span>
+            <span class="n">branch_fired</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">escalate_W</span> <span class="o">&amp;</span> <span class="n">escalate_T</span><span class="p">,</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_DETECTION_BRANCH_BOTH</span><span class="p">),</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                    <span class="n">escalate_W</span><span class="p">,</span>
+                    <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_DETECTION_BRANCH_POOLED_WITHIN</span><span class="p">),</span>
+                    <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                        <span class="n">escalate_T</span><span class="p">,</span>
+                        <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">_DETECTION_BRANCH_BETWEEN_MEANS</span><span class="p">),</span>
+                        <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">BRANCH_NONE</span><span class="p">),</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">deployed_route</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="n">new_has_escalated</span><span class="p">,</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">prev_was_w</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">ROUTE_W</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">ROUTE_T</span><span class="p">)),</span>
+                <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">ROUTE_DIAGONAL</span><span class="p">),</span>
+            <span class="p">)</span>
+            <span class="c1"># Stamped only on the genuine NONE -&gt; non-NONE transition of the</span>
+            <span class="c1"># controller&#39;s own carried branch, and unchanged afterwards.</span>
+            <span class="n">branch_first_set</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">detection_branch</span> <span class="o">==</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">BRANCH_NONE</span><span class="p">))</span>
+                <span class="o">&amp;</span> <span class="p">(</span><span class="n">new_detection_branch</span> <span class="o">!=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">BRANCH_NONE</span><span class="p">)),</span>
+                <span class="n">window_index</span><span class="p">,</span>
+                <span class="n">prev_mc</span><span class="o">.</span><span class="n">branch_first_set_at_window</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="n">record</span> <span class="o">=</span> <span class="n">MetricPublicationRecord</span><span class="p">(</span>
+                <span class="n">window_index</span><span class="o">=</span><span class="n">window_index</span><span class="p">,</span>
+                <span class="n">warmup_step_index</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">warmup_step_index</span><span class="p">,</span>
+                <span class="c1"># budget_used advances by n_chains per core update, so the</span>
+                <span class="c1"># per-chain count divides it back out.  Neither is a warmup</span>
+                <span class="c1"># step count.</span>
+                <span class="n">core_updates_per_chain</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">state</span><span class="o">.</span><span class="n">budget_used</span> <span class="o">//</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">n_chains</span><span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">core_chain_updates_total</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">budget_used</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">n_chains</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">n_chains</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">dim</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">support_per_chain</span><span class="o">=</span><span class="n">n</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">support_pooled_rows</span><span class="o">=</span><span class="p">(</span><span class="n">n</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">M_stat</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+                    <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span>
+                <span class="p">),</span>
+                <span class="n">buffer_capacity</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">B</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">buffer_capacity_reached</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">&gt;=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">B</span><span class="p">),</span>
+                <span class="n">dropped_draws</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span>
+                    <span class="n">state</span><span class="o">.</span><span class="n">buffer_idx</span> <span class="o">-</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="n">B</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">gate_predicate_true</span><span class="o">=</span><span class="n">predicate_true</span><span class="p">,</span>
+                <span class="n">escalation_gate_applicable</span><span class="o">=</span><span class="n">applicable</span><span class="p">,</span>
+                <span class="n">escalated_now</span><span class="o">=</span><span class="n">escalate_now</span><span class="p">,</span>
+                <span class="n">has_escalated_before</span><span class="o">=</span><span class="n">state</span><span class="o">.</span><span class="n">has_escalated</span><span class="p">,</span>
+                <span class="n">has_escalated</span><span class="o">=</span><span class="n">new_has_escalated</span><span class="p">,</span>
+                <span class="n">escalation_rank_stored</span><span class="o">=</span><span class="n">new_escalation_rank</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                <span class="n">deployed_effective_rank</span><span class="o">=</span><span class="n">_effective_rank</span><span class="p">(</span><span class="n">chosen_imm</span><span class="p">),</span>
+                <span class="n">deployed_logdet</span><span class="o">=</span><span class="n">_logdet</span><span class="p">(</span><span class="n">chosen_imm</span><span class="p">),</span>
+                <span class="n">deployed_sigma_gm</span><span class="o">=</span><span class="n">_sigma_gm</span><span class="p">(</span><span class="n">chosen_imm</span><span class="p">),</span>
+                <span class="n">in_force_logdet</span><span class="o">=</span><span class="n">_logdet</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">inverse_mass_matrix</span><span class="p">),</span>
+                <span class="n">r2_raw</span><span class="o">=</span><span class="n">r2_new</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                <span class="n">r2_mode</span><span class="o">=</span><span class="n">mode_new</span><span class="p">,</span>
+                <span class="n">is_slow_mixing</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">((),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">bool_</span><span class="p">),</span>
+                <span class="n">epsilon_in_force</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">epsilon_in_force</span><span class="p">,</span>
+                <span class="n">epsilon_after_window_da</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">epsilon_after_window_da</span><span class="p">,</span>
+                <span class="n">epsilon_window_average</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">epsilon_window_average</span><span class="p">,</span>
+                <span class="n">epsilon_next_window</span><span class="o">=</span><span class="n">prev</span><span class="o">.</span><span class="n">epsilon_next_window</span><span class="p">,</span>
+                <span class="n">deployed_full</span><span class="o">=</span><span class="n">chosen_imm</span> <span class="k">if</span> <span class="n">full_matrices</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="n">single_chain</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">multi_chain</span><span class="o">=</span><span class="n">MultiChainDetail</span><span class="p">(</span>
+                    <span class="n">branch_fired_this_window</span><span class="o">=</span><span class="n">branch_fired</span><span class="p">,</span>
+                    <span class="n">detection_branch_history</span><span class="o">=</span><span class="n">new_detection_branch</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                    <span class="n">deployed_metric_route</span><span class="o">=</span><span class="n">deployed_route</span><span class="p">,</span>
+                    <span class="n">branch_first_set_at_window</span><span class="o">=</span><span class="n">branch_first_set</span><span class="p">,</span>
+                    <span class="n">t_detection_rank</span><span class="o">=</span><span class="n">k_new</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                    <span class="n">r2_routed</span><span class="o">=</span><span class="n">r2_routing</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="n">is_converging</span><span class="o">=</span><span class="n">is_converging</span><span class="p">,</span>
+                    <span class="n">is_unimodal</span><span class="o">=</span><span class="n">is_unimodal</span><span class="p">,</span>
+                    <span class="n">any_mode_flag</span><span class="o">=</span><span class="n">any_mode_flag</span><span class="p">,</span>
+                    <span class="n">t_unimodality_resolved</span><span class="o">=</span><span class="n">t_unimodality</span><span class="p">,</span>
+                    <span class="n">t_contraction_stat</span><span class="o">=</span><span class="n">t_contr</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="n">unimodality_gap_ratio</span><span class="o">=</span><span class="n">_gap_ratio</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="n">unimodality_flag_count</span><span class="o">=</span><span class="n">new_flag_count</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">int32</span><span class="p">),</span>
+                    <span class="n">deferred_to_ensemble</span><span class="o">=</span><span class="n">new_deferred</span><span class="p">,</span>
+                    <span class="n">chain_collinearity_f1</span><span class="o">=</span><span class="n">f1</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="n">within_lam1</span><span class="o">=</span><span class="n">lam1_w</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="n">chain_consistency_psi</span><span class="o">=</span><span class="n">psi_w</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="n">r1_top</span><span class="o">=</span><span class="n">r1_w</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
+                    <span class="c1"># Both candidates, built before routing and not</span>
+                    <span class="c1"># interchangeable.  Before escalation both are discarded;</span>
+                    <span class="c1"># afterwards the historical route deploys a freshly</span>
+                    <span class="c1"># computed one, so these are not always &quot;the withheld one&quot;.</span>
+                    <span class="n">candidate_w</span><span class="o">=</span><span class="n">candidate_summary</span><span class="p">(</span>
+                        <span class="n">w_lr_imm</span><span class="p">,</span> <span class="n">chosen_imm</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="n">full_matrices</span>
+                    <span class="p">),</span>
+                    <span class="n">candidate_t</span><span class="o">=</span><span class="n">candidate_summary</span><span class="p">(</span>
+                        <span class="n">t_lr_imm</span><span class="p">,</span> <span class="n">chosen_imm</span><span class="p">,</span> <span class="n">full_matrices</span><span class="o">=</span><span class="n">full_matrices</span>
+                    <span class="p">),</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;publication&quot;</span><span class="p">:</span> <span class="n">record</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
             <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="n">chosen_imm</span><span class="p">,</span>
             <span class="n">mu_star</span><span class="o">=</span><span class="n">chosen_mu</span><span class="p">,</span>
             <span class="n">draws_buffer</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">draws_buffer</span><span class="p">),</span>
@@ -1272,6 +1600,7 @@
             <span class="n">r1_top</span><span class="o">=</span><span class="n">r1_w</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span>
             <span class="n">detection_branch</span><span class="o">=</span><span class="n">new_detection_branch</span><span class="p">,</span>
             <span class="n">unimodality_flag_count</span><span class="o">=</span><span class="n">new_flag_count</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">_publication</span><span class="p">(),</span>
         <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">MetricCore</span><span class="p">(</span><span class="n">init</span><span class="o">=</span><span class="n">init</span><span class="p">,</span> <span class="n">update</span><span class="o">=</span><span class="n">update</span><span class="p">,</span> <span class="n">final</span><span class="o">=</span><span class="n">final</span><span class="p">)</span></div>

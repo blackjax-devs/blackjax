@@ -52,6 +52,8 @@ blackjax.adaptation.meta
        Core builder functions: build_meta_adaptation_core, build_multi_chain_meta_core.
    :mod:`~blackjax.adaptation.meta.verdict`
        Post-run verdict extractors: extract_meta_verdict, extract_multi_chain_verdict.
+       Opt-in publication telemetry (single-chain): MetricPublicationRecord,
+       publication_adapt_info_fn, extract_publication_chronology, decode_gates.
 
 
 

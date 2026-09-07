@@ -138,7 +138,7 @@ Module Contents
    :rtype: A list of tuples (window_label, is_middle_window_end).
 
 
-.. py:function:: staged_adaptation(algorithm, logdensity_fn: Callable, metric: str | blackjax.adaptation.metric_recipes.MetricRecipe | blackjax.adaptation.metric_recipes.MetricCore = 'welford_diag', *, max_grad_budget: int | None = None, n_chains: int = 1, imm_shrinkage_to_previous: float = 0.0, initial_inverse_mass_matrix: blackjax.types.Array | None = None, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, schedule_fn: Callable | None = None, initial_metric_state: Any = None, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
+.. py:function:: staged_adaptation(algorithm, logdensity_fn: Callable, metric: str | blackjax.adaptation.metric_recipes.MetricRecipe | blackjax.adaptation.metric_recipes.MetricCore = 'welford_diag', *, max_grad_budget: int | None = None, n_chains: int = 1, imm_shrinkage_to_previous: float = 0.0, initial_inverse_mass_matrix: blackjax.types.Array | None = None, initial_step_size: float = 1.0, target_acceptance_rate: float = 0.8, adaptation_info_fn: Callable = return_all_adapt_info, integrator=mcmc.integrators.velocity_verlet, schedule_fn: Callable | None = None, initial_metric_state: Any = None, metric_telemetry: bool = False, telemetry_full_matrices: bool = False, **extra_parameters) -> blackjax.base.AdaptationAlgorithm
 
    Adapt the step size and inverse mass matrix for HMC-family algorithms.
 
@@ -198,6 +198,19 @@ Module Contents
    :param initial_step_size: Step size used to seed the dual-averaging adaptation.
    :param target_acceptance_rate: Target Metropolis acceptance rate for step-size adaptation.  Default
                                   ``0.80`` (Stan default).
+   :param metric_telemetry: Opt-in read-only observation of the metric-publication decision made at
+                            each slow-window boundary: the support actually consumed, the candidate
+                            metrics even when they are withheld, the raw-truth and
+                            escalation-applicability gate masks, and the step-size chronology across
+                            the boundary.  Supported on both the single- and multi-chain
+                            ``metric="auto"`` paths; raises for a core that carries no publication
+                            record.  Default ``False``, which is a Python-time constant — the off
+                            path traces and computes exactly as before.  Read the records with
+                            :func:`~blackjax.adaptation.meta._telemetry.publication_adapt_info_fn`
+                            as ``adaptation_info_fn``.
+   :param telemetry_full_matrices: Also carry the full candidate/deployed low-rank factors in each record.
+                                   ``O(d*k)`` per record *per step*; off by default.  Requires
+                                   ``metric_telemetry=True``.
    :param adaptation_info_fn: Function to select the adaptation info returned at each step.  See
                               :func:`~blackjax.adaptation.base.return_all_adapt_info` and
                               :func:`~blackjax.adaptation.base.get_filter_adapt_info_fn`.  By default

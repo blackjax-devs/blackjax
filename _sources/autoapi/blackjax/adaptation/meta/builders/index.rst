@@ -30,7 +30,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: build_meta_adaptation_core(max_grad_budget: int, *, max_rank: int | None = None, gamma: float = 1e-05, cutoff: float = 2.0) -> blackjax.adaptation.metric_recipes.MetricCore
+.. py:function:: build_meta_adaptation_core(max_grad_budget: int, *, max_rank: int | None = None, gamma: float = 1e-05, cutoff: float = 2.0, telemetry: bool = False, full_matrices: bool = False) -> blackjax.adaptation.metric_recipes.MetricCore
 
    Build the meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.
 
@@ -39,12 +39,29 @@ Module Contents
    :param max_rank: Maximum low-rank rank; ``None`` uses :data:`~blackjax.adaptation.meta._calibration._MAX_RANK_CAP`.
    :param gamma: Fisher-estimator parameters; defaults match ``fisher_low_rank`` recipe.
    :param cutoff: Fisher-estimator parameters; defaults match ``fisher_low_rank`` recipe.
+   :param telemetry: When ``True`` the core carries a
+                     :class:`~blackjax.adaptation.meta._telemetry.MetricPublicationRecord`
+                     describing each window-boundary publication, and its state type is
+                     :class:`~blackjax.adaptation.meta._state.MetaAdaptationTelemetryCoreState`
+                     instead of :class:`~blackjax.adaptation.meta._state.MetaAdaptationCoreState`.
+
+                     This is pure observation: no threshold, gate, ordering or published
+                     metric changes.  ``telemetry=False`` (the default) is a Python-time
+                     constant, so no record is built and nothing extra is traced -- the
+                     default path keeps the original state type, treedef and arithmetic.
+
+                     The record's four epsilon fields are left NaN by the core, which cannot
+                     see the step-size state; the ``staged_adaptation`` host fills them in.
+                     Calling ``final()`` directly therefore yields NaN epsilons by design.
+   :param full_matrices: When ``True`` (and ``telemetry=True``) the record also carries the full
+                         candidate and deployed :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`
+                         factors.  These are ``O(d*k)`` per record and per step; off by default.
 
    :returns: Embeddable init/update/final bundle.
    :rtype: MetricCore
 
 
-.. py:function:: build_multi_chain_meta_core(max_grad_budget: int, n_chains: int = _MULTI_CHAIN_DEFAULT_N_CHAINS, *, max_rank: int | None = None, gamma: float = 1e-05, cutoff: float = 2.0) -> blackjax.adaptation.metric_recipes.MetricCore
+.. py:function:: build_multi_chain_meta_core(max_grad_budget: int, n_chains: int = _MULTI_CHAIN_DEFAULT_N_CHAINS, *, max_rank: int | None = None, gamma: float = 1e-05, cutoff: float = 2.0, telemetry: bool = False, full_matrices: bool = False) -> blackjax.adaptation.metric_recipes.MetricCore
 
    Build the multi-chain meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.
 
