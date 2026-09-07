@@ -113,6 +113,7 @@ def _make_engine(
     *,
     target_acceptance_rate: float,
     n_da_updates: int = 1,
+    metric_telemetry: bool = False,
 ) -> tuple[Callable, Callable, Callable]:
     """Build the (init, update, final) triple for the staged adaptation HOST.
 
@@ -170,12 +171,50 @@ def _make_engine(
 
         return da_update(ss_state, jnp.mean(acceptance_rates))
 
+    def _stamp_epsilons(imm_state, **epsilons):
+        """Write the host-owned epsilon fields into the publication record.
+
+        The metric core computes the record but cannot see the step-size state,
+        so it leaves these NaN; this is the only writer.  Every value is cast to
+        the dual-averaging scheme's own working dtype (float64 under
+        ``jax_enable_x64``) rather than a fixed float32, which would silently
+        destroy the chronology the record promises.
+        """
+        record = imm_state.publication
+        eps_dtype = record.epsilon_in_force.dtype
+        return imm_state._replace(
+            publication=record._replace(
+                **{k: jnp.asarray(v).astype(eps_dtype) for k, v in epsilons.items()}
+            )
+        )
+
     def init(
         position: ArrayLikeTree, initial_step_size: float
     ) -> StagedAdaptationState:
         n_dims = pytree_size(position)
         imm_state = metric_core.init(n_dims)
         ss_state = da_init(initial_step_size)
+        if metric_telemetry:
+            if not hasattr(imm_state, "publication"):
+                raise ValueError(
+                    "staged_adaptation: metric_telemetry=True requires a metric core "
+                    "that carries a publication record, but "
+                    f"{type(imm_state).__name__} has no 'publication' field. Build the "
+                    "core with build_meta_adaptation_core(..., telemetry=True), or pass "
+                    "metric='auto' with n_chains=1 and let staged_adaptation build it."
+                )
+            # Match the record's epsilon dtype to the DA's own, then leave the
+            # values NaN: no window has been published yet.
+            eps_dtype = jnp.exp(ss_state.log_step_size).dtype
+            nan = jnp.array(float("nan"), dtype=eps_dtype)
+            imm_state = imm_state._replace(
+                publication=imm_state.publication._replace(
+                    epsilon_in_force=nan,
+                    epsilon_after_window_da=nan,
+                    epsilon_window_average=nan,
+                    epsilon_next_window=nan,
+                )
+            )
         return StagedAdaptationState(
             ss_state,
             imm_state,
@@ -230,17 +269,38 @@ def _make_engine(
             new_ss, new_metric_st, new_step_size, new_metric_st.inverse_mass_matrix
         )
 
-    def slow_final(ws: StagedAdaptationState) -> StagedAdaptationState:
+    def slow_final(
+        ws: StagedAdaptationState, epsilon_in_force=None
+    ) -> StagedAdaptationState:
         """Finalize a slow window: recompute IMM and re-initialise step-size DA.
 
         Delegates IMM computation and window-buffer reset to
         ``metric_core.final``.  The new inverse mass matrix is read from
         ``new_metric_st.inverse_mass_matrix`` and stored in the returned state
         for the MCMC kernel to use in the next window.
+
+        ``epsilon_in_force`` is the step size the MCMC kernel actually used for
+        the transition whose draw this window just absorbed — read from the
+        carry *before* this step's dual-averaging update, which is the only
+        place it exists.  It is used for telemetry only and is ignored when
+        ``metric_telemetry`` is off.
         """
         new_metric_st = metric_core.final(ws.imm_state)
-        new_ss = da_init(da_final(ws.ss_state))
+        epsilon_after_window_da = jnp.exp(ws.ss_state.log_step_size)
+        epsilon_window_average = da_final(ws.ss_state)
+        new_ss = da_init(epsilon_window_average)
         new_step_size = jnp.exp(new_ss.log_step_size)
+        if metric_telemetry:
+            # Four distinct values, never collapsed: epsilon_window_average and
+            # epsilon_next_window are related by exp(log(.)), which is not
+            # guaranteed bitwise-identical, and neither equals what was in force.
+            new_metric_st = _stamp_epsilons(
+                new_metric_st,
+                epsilon_in_force=epsilon_in_force,
+                epsilon_after_window_da=epsilon_after_window_da,
+                epsilon_window_average=epsilon_window_average,
+                epsilon_next_window=new_step_size,
+            )
         return StagedAdaptationState(
             new_ss,
             new_metric_st,
@@ -289,12 +349,24 @@ def _make_engine(
             adaptation_state,
         )
 
-        ws = jax.lax.cond(
-            is_middle_window_end,
-            slow_final,
-            lambda x: x,
-            ws,
-        )
+        if metric_telemetry:
+            # Capture the step size the kernel used for the transition just
+            # absorbed, before slow_update's DA update overwrote it.
+            epsilon_in_force = adaptation_state.step_size
+            ws = jax.lax.cond(
+                is_middle_window_end,
+                lambda w: slow_final(w, epsilon_in_force),
+                lambda w: w,
+                ws,
+            )
+        else:
+            # Python-time branch: the off path traces exactly as before.
+            ws = jax.lax.cond(
+                is_middle_window_end,
+                slow_final,
+                lambda x: x,
+                ws,
+            )
 
         return ws
 
@@ -418,6 +490,8 @@ def _resolve_metric_and_schedule(
     n_chains: int = 1,
     imm_shrinkage_to_previous: float = 0.0,
     initial_inverse_mass_matrix: Array | None = None,
+    metric_telemetry: bool = False,
+    telemetry_full_matrices: bool = False,
 ) -> tuple[MetricCore, Callable]:
     """Resolve (metric, schedule_fn) to a (MetricCore, schedule_callable) pair.
 
@@ -459,11 +533,17 @@ def _resolve_metric_and_schedule(
         if n_chains > 1:
             from blackjax.adaptation.meta import build_multi_chain_meta_core
 
-            metric_core = build_multi_chain_meta_core(max_grad_budget, n_chains)
+            metric_core = build_multi_chain_meta_core(
+                max_grad_budget, n_chains, telemetry=metric_telemetry
+            )
         else:
             from blackjax.adaptation.meta import build_meta_adaptation_core
 
-            metric_core = build_meta_adaptation_core(max_grad_budget)
+            metric_core = build_meta_adaptation_core(
+                max_grad_budget,
+                telemetry=metric_telemetry,
+                full_matrices=telemetry_full_matrices,
+            )
         # Override the schedule ONLY when the caller has not specified one.
         # Using None as the sentinel (not build_schedule) is load-bearing: an
         # explicit schedule_fn=build_schedule must be preserved — the old
@@ -531,6 +611,8 @@ def staged_adaptation(
     integrator=mcmc.integrators.velocity_verlet,
     schedule_fn: Callable | None = None,
     initial_metric_state: Any = None,
+    metric_telemetry: bool = False,
+    telemetry_full_matrices: bool = False,
     **extra_parameters,
 ) -> AdaptationAlgorithm:
     """Adapt the step size and inverse mass matrix for HMC-family algorithms.
@@ -601,6 +683,20 @@ def staged_adaptation(
     target_acceptance_rate
         Target Metropolis acceptance rate for step-size adaptation.  Default
         ``0.80`` (Stan default).
+    metric_telemetry
+        Opt-in read-only observation of the metric-publication decision made at
+        each slow-window boundary: the support actually consumed, the candidate
+        metric even when it is withheld, per-gate pass/evaluated masks, and the
+        step-size chronology across the boundary.  Single-chain ``metric="auto"``
+        only; raises for ``n_chains > 1`` and for cores without a publication
+        record.  Default ``False``, which is a Python-time constant — the off
+        path traces and computes exactly as before.  Read the records with
+        :func:`~blackjax.adaptation.meta._telemetry.publication_adapt_info_fn`
+        as ``adaptation_info_fn``.
+    telemetry_full_matrices
+        Also carry the full candidate/deployed low-rank factors in each record.
+        ``O(d*k)`` per record *per step*; off by default.  Requires
+        ``metric_telemetry=True``.
     adaptation_info_fn
         Function to select the adaptation info returned at each step.  See
         :func:`~blackjax.adaptation.base.return_all_adapt_info` and
@@ -672,6 +768,20 @@ def staged_adaptation(
             "vmap the warmup call externally."
         )
 
+    if telemetry_full_matrices and not metric_telemetry:
+        raise ValueError(
+            "staged_adaptation: telemetry_full_matrices=True requires "
+            "metric_telemetry=True; there is no record to attach the matrices to."
+        )
+    if metric_telemetry and n_chains > 1:
+        raise NotImplementedError(
+            "staged_adaptation: metric_telemetry is single-chain only "
+            f"(got n_chains={n_chains}). The multi-chain controller runs a "
+            "different predicate set and two pre-routing candidate metrics; its "
+            "record schema is deliberately unsettled. See "
+            "blackjax.adaptation.meta._telemetry."
+        )
+
     metric_core, _resolved_schedule_fn = _resolve_metric_and_schedule(
         metric,
         schedule_fn,
@@ -679,6 +789,8 @@ def staged_adaptation(
         n_chains=n_chains,
         imm_shrinkage_to_previous=imm_shrinkage_to_previous,
         initial_inverse_mass_matrix=initial_inverse_mass_matrix,
+        metric_telemetry=metric_telemetry,
+        telemetry_full_matrices=telemetry_full_matrices,
     )
 
     # Closure variables for the auto-metric path: used inside run() to derive
@@ -711,6 +823,7 @@ def staged_adaptation(
         # statistical model for M chains sharing one epsilon.
         # Single-chain path (n_da_updates=1) is unchanged.
         n_da_updates=_n_chains if _is_multi_chain else 1,
+        metric_telemetry=metric_telemetry,
     )
 
     if initial_metric_state is not None:
