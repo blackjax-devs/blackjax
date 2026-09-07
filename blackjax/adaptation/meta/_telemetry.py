@@ -187,9 +187,14 @@ class CandidateSummary(NamedTuple):
         Reading a zero here as "*this* candidate is the deployed one" is wrong:
         it means *a* candidate sharing this sigma was deployed.
 
-        What separates W from T lives in ``U`` and ``lam``, not in sigma; use
-        ``effective_rank`` and the ``lam`` extremes for that, or the full
-        factors under ``full_matrices=True``.
+        What separates W from T lives in ``U`` and ``lam``, not in sigma.
+        ``effective_rank`` and the ``lam`` extremes distinguish *some* cases,
+        but they are scalar summaries and cannot certify that two metrics are
+        equal or that they differ — two metrics can share a rank and an
+        eigenvalue range while pointing in different directions.  Orientation
+        is only answerable from the full factors, under ``full_matrices=True``
+        and a declared comparison convention.  This field is a diagonal-scale
+        comparison, not a candidate-identity test.
     full
         The full factors, or ``None`` unless ``full_matrices=True``.
     """
@@ -416,14 +421,23 @@ class MetricPublicationRecord(NamedTuple):
     in_force_logdet
         The metric that drove the window just completed.
 
-        In exact arithmetic this equals the previous window's
-        ``deployed_logdet`` — it is the same matrix, and the host carry is
-        bit-identical across the window.  In practice the two call sites are
-        fused differently and can disagree by a few ulp (measured ~8 ulp at
-        float32, ~1e-6 absolute).  So differencing
-        ``deployed_logdet - in_force_logdet`` to ask "did the metric move this
-        window" has a small non-zero noise floor; compare against a tolerance,
-        not against zero.  The same caution the epsilons carry.
+        **A log-determinant is a volume summary, and differencing two of them
+        does not answer "did the metric move".**  Equal log-determinants never
+        imply equal metrics, even in exact arithmetic: a metric can change
+        orientation or shape at unchanged volume, and this field would not
+        move.  Read ``deployed_logdet - in_force_logdet`` as a change in volume
+        and nothing more.  The stronger question needs the full factors, or the
+        metric's action on vectors, under a declared comparison convention.
+
+        Separately, the two are computed at different call sites from what is,
+        in principle, the same matrix — the host carry was measured
+        bit-identical across the window — and they can still disagree in the
+        last few ulp.  One measured instance differed by ~8 ulp at float32 in
+        one of six window pairs.  The mechanism was not isolated; differing
+        floating-point summation or fusion order is the hypothesis, not an
+        established cause, and that single measurement is not a universal noise
+        floor.  So do not compare these for exact equality, and do not treat
+        any particular tolerance as calibrated.
     r2_raw, r2_mode
         Score-linearity R² as measured, and which fit mode produced it.  On the
         multi-chain path this is the raw value the W branch uses; the routed
