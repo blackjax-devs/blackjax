@@ -382,11 +382,13 @@ def _average_ranks(x_flat: Array) -> Array:
     -----
     The implementation is written with sort and cumulative-reduction
     primitives only, so it is ``jit``/``vmap``-compatible and has no
-    data-dependent shapes.  ``NaN`` values sort last and are treated as tied
-    with one another: they are mutually indistinguishable, so ranking them by
-    position would reintroduce the very asymmetry this function removes.  As before, non-finite entries are ranked rather than
-    propagated — no ``NaN`` is silently replaced, but none is silently
-    introduced either.
+    data-dependent shapes.
+
+    A ``NaN`` is a missing or invalid observation, not an ordered value that
+    could be tied with anything, so a component containing one cannot be
+    ranked: the whole component returns ``NaN``.  The reduction runs over
+    axis 0 alone, so an invalid component never poisons an independent finite
+    sibling.  Infinities are ordered and are ranked normally.
     """
     n = x_flat.shape[0]
     extra_shape = x_flat.shape[1:]
@@ -394,11 +396,8 @@ def _average_ranks(x_flat: Array) -> Array:
     order = jnp.argsort(x_flat, axis=0)
     x_sorted = jnp.take_along_axis(x_flat, order, axis=0)
 
-    # Adjacent sorted entries share a tie group when they are equal.  ``nan
-    # != nan``, so NaNs are grouped explicitly.
-    same_as_prev = (x_sorted[1:] == x_sorted[:-1]) | (
-        jnp.isnan(x_sorted[1:]) & jnp.isnan(x_sorted[:-1])
-    )
+    # Adjacent sorted entries share a tie group when they are equal.
+    same_as_prev = x_sorted[1:] == x_sorted[:-1]
     true_row = jnp.ones((1, *extra_shape), dtype=bool)
     is_first = jnp.concatenate([true_row, ~same_as_prev], axis=0)
     is_last = jnp.concatenate([~same_as_prev, true_row], axis=0)
@@ -418,7 +417,42 @@ def _average_ranks(x_flat: Array) -> Array:
 
     # Scatter back to the original positions.
     inverse = jnp.argsort(order, axis=0)
-    return jnp.take_along_axis(avg_rank_sorted, inverse, axis=0)
+    ranks = jnp.take_along_axis(avg_rank_sorted, inverse, axis=0)
+
+    # A component holding a missing observation has no valid ranking.
+    contaminated = jnp.any(jnp.isnan(x_flat), axis=0, keepdims=True)
+    return jnp.where(contaminated, jnp.nan, ranks)
+
+
+def _propagate_nan_components(value: Array, x: Array) -> Array:
+    """Set the entries of ``value`` whose draws contain a ``NaN`` to ``NaN``.
+
+    Parameters
+    ----------
+    value
+        Diagnostic values of shape ``x.shape[2:]``.
+    x
+        Draws of shape ``(nchains, nsamples, …)``.
+
+    Returns
+    -------
+    ``value`` with every contaminated component replaced by ``NaN``.
+
+    Notes
+    -----
+    The reduction runs over the chain and draw axes only, so a component
+    holding a missing observation never poisons an independent finite one.
+
+    The guard is needed because the estimators downstream do not propagate
+    ``NaN`` on their own.  Geyer's initial-positive-sequence truncation in
+    :func:`effective_sample_size` compares partial autocorrelation sums
+    against zero; every such comparison is ``False`` for ``NaN``, so the
+    truncation collapses and :math:`\\hat{\\tau}` falls back to its
+    ``1 / log10(MN)`` floor — turning an all-``NaN`` input into a large and
+    entirely fictitious sample size instead of ``NaN``.
+    """
+    contaminated = jnp.any(jnp.isnan(x), axis=(0, 1))
+    return jnp.where(contaminated, jnp.nan, value)
 
 
 def _rank_normalize(x: Array) -> Array:
@@ -511,7 +545,7 @@ def ess_bulk(
     x = _to_standard_axes(jnp.asarray(input_array), chain_axis, sample_axis)
     x_split = _split_chains(x)
     x_rn = _rank_normalize(x_split)
-    return effective_sample_size(x_rn)
+    return _propagate_nan_components(effective_sample_size(x_rn), x_split)
 
 
 def ess_tail(
@@ -589,6 +623,12 @@ def ess_tail(
 
     ess_lower = effective_sample_size(I_lower)
     ess_upper = effective_sample_size(I_upper)
+
+    # A NaN draw makes the pooled quantiles NaN, every indicator comparison
+    # False, and the resulting all-zero series degenerate — which would report
+    # 0 rather than "undefined".  Propagate instead.
+    ess_lower = _propagate_nan_components(ess_lower, x_split)
+    ess_upper = _propagate_nan_components(ess_upper, x_split)
 
     return jnp.minimum(ess_lower, ess_upper)
 

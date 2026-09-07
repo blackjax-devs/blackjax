@@ -644,12 +644,99 @@ class RankNormalizeTiesTest(chex.TestCase):
         assert ess[0] == 0.0, f"constant event must report ESS 0, got {ess[0]}"
         assert ess[1] > 0.0, f"varying event must report positive ESS, got {ess[1]}"
 
-    def test_nan_draws_are_tied_with_one_another(self):
-        # NaNs are mutually indistinguishable; ranking them by position would
-        # reintroduce the asymmetry this fix removes.
-        pooled = jnp.array([1.0, jnp.nan, 0.0, jnp.nan, 2.0])
+    # -- NaN is a missing observation, not an ordered tie ----------------
+
+    def _contaminated(self):
+        """Deterministic draws whose component 0 holds one NaN, 1 is clean."""
+        base = np.arange(4 * 64, dtype=np.float64).reshape(4, 64) % 7
+        dirty = base.copy()
+        dirty[1, 5] = np.nan
+        return jnp.asarray(np.stack([dirty, base], axis=-1))
+
+    def test_nan_component_cannot_be_ranked(self):
+        pooled = jnp.array([1.0, jnp.nan, 0.0, 2.0, 0.0])
         ranks = np.asarray(diagnostics._average_ranks(pooled))
-        assert ranks[1] == ranks[3], f"NaNs received different ranks: {ranks}"
+        assert np.all(
+            np.isnan(ranks)
+        ), f"a component holding a missing observation has no ranking: {ranks}"
+
+    def test_nan_does_not_poison_a_finite_sibling_component(self):
+        draws = self._contaminated()
+        ranks = np.asarray(diagnostics._average_ranks(draws.reshape(4 * 64, 2)))
+        assert np.all(np.isnan(ranks[:, 0])), "contaminated component must be NaN"
+        assert np.all(np.isfinite(ranks[:, 1])), "clean sibling must be untouched"
+        # The clean sibling ranks exactly as it would on its own.
+        alone = np.asarray(diagnostics._average_ranks(draws[..., 1].reshape(4 * 64)))
+        np.testing.assert_array_equal(ranks[:, 1], alone)
+
+    @parameterized.parameters("rhat", "ess_bulk", "ess_tail")
+    def test_nan_propagates_per_component(self, name):
+        # A NaN-contaminated series must not report an apparently valid
+        # finite diagnostic, and must not disturb an independent component.
+        draws = self._contaminated()
+        result = np.asarray(getattr(diagnostics, name)(draws))
+        assert np.isnan(
+            result[0]
+        ), f"{name} reported {result[0]} for a NaN-contaminated component"
+        assert np.isfinite(
+            result[1]
+        ), f"{name} poisoned a clean sibling component: {result[1]}"
+        alone = np.asarray(getattr(diagnostics, name)(draws[..., 1]))
+        np.testing.assert_allclose(result[1], alone, rtol=1e-6)
+
+    def test_nan_propagation_survives_jit(self):
+        draws = self._contaminated()
+        for name in ("rhat", "ess_bulk", "ess_tail"):
+            fn = getattr(diagnostics, name)
+            eager = np.asarray(fn(draws))
+            jitted = np.asarray(jax.jit(fn)(draws))
+            np.testing.assert_array_equal(
+                np.isnan(eager),
+                np.isnan(jitted),
+                err_msg=f"{name}: NaN contract differs under jit",
+            )
+            np.testing.assert_allclose(eager[1], jitted[1], rtol=1e-6)
+
+    def test_nan_propagation_is_permutation_invariant(self):
+        # Where the NaN sits in the pool must not matter.
+        base = (np.arange(4 * 64, dtype=np.float64) % 7).reshape(4, 64)
+        results = []
+        for position in ((0, 0), (1, 5), (3, 63)):
+            dirty = base.copy()
+            dirty[position] = np.nan
+            results.append(float(diagnostics.ess_bulk(jnp.asarray(dirty))))
+        assert all(
+            np.isnan(r) for r in results
+        ), f"NaN handling depends on position in the pool: {results}"
+
+    def test_ess_bulk_would_otherwise_invent_a_sample_size(self):
+        # Guards the reason _propagate_nan_components exists: Geyer's
+        # truncation collapses on NaN and tau_hat falls back to its
+        # 1/log10(MN) floor, which manufactures a large finite ESS.
+        all_nan = jnp.full((4, 64), jnp.nan)
+        unguarded = float(diagnostics.effective_sample_size(all_nan))
+        assert np.isfinite(unguarded) and unguarded > 0, (
+            "premise no longer holds: effective_sample_size now propagates NaN"
+            f" on its own (got {unguarded}); the boundary guard may be"
+            " redundant and should be re-reviewed"
+        )
+        assert np.isnan(float(diagnostics.ess_bulk(all_nan)))
+
+    def test_infinities_are_ordered_and_still_ranked(self):
+        # Infinity policy is deliberately out of scope: +/-inf are ordered
+        # values and keep their ranks.
+        pooled = jnp.array([-jnp.inf, 0.0, 0.0, jnp.inf, 1.0])
+        ranks = np.asarray(diagnostics._average_ranks(pooled))
+        np.testing.assert_array_equal(ranks, np.array([1.0, 2.5, 2.5, 5.0, 4.0]))
+
+    def test_raw_effective_sample_size_semantics_are_unchanged(self):
+        # The raw estimator is deliberately untouched by the NaN extension:
+        # its constant-chain and antithetic contracts must still hold.
+        np.testing.assert_array_equal(
+            np.asarray(diagnostics.effective_sample_size(jnp.zeros((4, 64)))), 0.0
+        )
+        antithetic = jnp.tile(jnp.array([-1.0, 1.0]), 256)[None, :]
+        assert float(diagnostics.effective_sample_size(antithetic)) > 512
 
     # -- end-to-end diagnostics -----------------------------------------
 
