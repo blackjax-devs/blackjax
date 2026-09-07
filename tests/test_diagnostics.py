@@ -800,6 +800,10 @@ class RankNormalizeTiesTest(chex.TestCase):
         # rhat is then NaN for input containing no NaN at all, while ess_bulk
         # and ess_tail stay finite.  NaN from rhat therefore does not uniquely
         # mean "missing observation".  Infinity handling is an open question.
+        #
+        # NOTE: this test pins CURRENT behaviour, not a guarantee.  If the
+        # inf-fold is ever fixed, this test must be updated or deleted rather
+        # than treated as a regression — it is green by construction today.
         draws = np.asarray(
             jax.random.normal(self.rng, shape=(4, 64)), dtype=np.float32
         ).copy()

@@ -136,13 +136,36 @@ class TestRankGuard:
         ), "Expected a UserWarning about rank clamping but none was emitted"
 
     def test_non_finite_pilot_ess_is_refused_before_rank_selection(self):
-        """An invalid pilot must fail loudly, before int() and before the SVD.
+        """An invalid pilot must fail with a descriptive error, not a bare one.
 
         `effective_sample_size` reports NaN for any dimension holding a
         non-finite draw. Previously that NaN reached `int(n_eff / 2)` and
         raised a bare `ValueError: cannot convert float NaN to integer`; before
         that it was worse, because the estimator fabricated a finite ESS and
         the contaminated dimension was reported as the best-mixing one.
+
+        What each assertion actually covers, since the two are often
+        conflated: the ``match=`` carries the discriminating claim, because
+        the bare `int(nan)` also raised ValueError at the pre-guard tree.  The
+        `_extract_lrd_from_samples` tripwire covers only non-execution — the
+        old `int(nan)` was itself upstream of the SVD, so the tripwire would
+        have passed there too.  It earns its place as the assertion that fails
+        if someone later moves the guard *below* the SVD, not as evidence
+        about the previous behaviour.
+
+        Falling back instead of raising would not degrade gracefully: the SVD
+        consumes the same contaminated `flat_pilot`, and on a (32, 3) pilot
+        with one NaN draw it returns sigma 33% NaN and U, lam_k, lam_all 100%
+        NaN — an all-NaN preconditioner out of a public warmup.  `n_eff = 0.0`
+        means "not measured"; NaN means "measured, and the draws are corrupt".
+
+        Monkeypatching the ESS is deterministic and independent of sampler
+        behaviour, but it does not exercise the real NaN-draws -> NaN-ESS
+        link, so on its own it would keep passing if
+        `effective_sample_size` ever stopped propagating and this guard went
+        dead.  `test_raw_ess_does_not_invent_a_sample_size_for_nan` in
+        `tests/test_diagnostics.py` covers that half; the two are complete as
+        a pair, not individually.
         """
         import blackjax.adaptation.mclmc_lrd_adaptation as lrd_mod
 
