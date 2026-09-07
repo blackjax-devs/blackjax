@@ -36,6 +36,7 @@ from blackjax.adaptation.meta._calibration import (
     _DETECTION_BRANCH_NONE,
     _DETECTION_BRANCH_POOLED_WITHIN,
     _GAIN_THRESHOLD,
+    _LAM_NONTRIVIAL_TOL,
     _MAX_RANK_CAP,
     _MC_COLLINEARITY_TOL,
     _MC_MIN_CHAINS,
@@ -78,8 +79,10 @@ from blackjax.adaptation.meta._signals import (
 )
 from blackjax.adaptation.meta._state import (
     MetaAdaptationCoreState,
+    MetaAdaptationTelemetryCoreState,
     MultiChainMetaAdaptationCoreState,
 )
+from blackjax.adaptation.meta._telemetry import MetricPublicationRecord, encode_gates
 from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 from blackjax.adaptation.metric_recipes import MetricCore
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
@@ -92,6 +95,8 @@ def build_meta_adaptation_core(
     max_rank: int | None = None,
     gamma: float = 1e-5,
     cutoff: float = 2.0,
+    telemetry: bool = False,
+    full_matrices: bool = False,
 ) -> MetricCore:
     """Build the meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.
 
@@ -104,22 +109,136 @@ def build_meta_adaptation_core(
         Maximum low-rank rank; ``None`` uses :data:`~blackjax.adaptation.meta._calibration._MAX_RANK_CAP`.
     gamma, cutoff
         Fisher-estimator parameters; defaults match ``fisher_low_rank`` recipe.
+    telemetry
+        When ``True`` the core carries a
+        :class:`~blackjax.adaptation.meta._telemetry.MetricPublicationRecord`
+        describing each window-boundary publication, and its state type is
+        :class:`~blackjax.adaptation.meta._state.MetaAdaptationTelemetryCoreState`
+        instead of :class:`~blackjax.adaptation.meta._state.MetaAdaptationCoreState`.
+
+        This is pure observation: no threshold, gate, ordering or published
+        metric changes.  ``telemetry=False`` (the default) is a Python-time
+        constant, so no record is built and nothing extra is traced -- the
+        default path keeps the original state type, treedef and arithmetic.
+
+        The record's four epsilon fields are left NaN by the core, which cannot
+        see the step-size state; the ``staged_adaptation`` host fills them in.
+        Calling ``final()`` directly therefore yields NaN epsilons by design.
+    full_matrices
+        When ``True`` (and ``telemetry=True``) the record also carries the full
+        candidate and deployed :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`
+        factors.  These are ``O(d*k)`` per record and per step; off by default.
 
     Returns
     -------
     MetricCore
         Embeddable init/update/final bundle.
     """
+    if full_matrices and not telemetry:
+        raise ValueError(
+            "build_meta_adaptation_core: full_matrices=True requires telemetry=True; "
+            "there is no record to attach the matrices to otherwise."
+        )
     _max_rank: int = _MAX_RANK_CAP if max_rank is None else max_rank
     max_budget_steps: int = max(max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP, 1)
+    _state_cls = (
+        MetaAdaptationTelemetryCoreState if telemetry else MetaAdaptationCoreState
+    )
 
-    def init(n_dims: int) -> MetaAdaptationCoreState:
+    def _logdet(imm: LowRankInverseMassMatrix) -> Array:
+        """log det M^-1 for M^-1 = diag(s)(I + U(L-I)U')diag(s), U orthonormal.
+
+        The non-unit eigenvalues of ``I + U(L-I)U'`` are exactly ``lam``, so the
+        determinant factorises; no dense d x d matrix is formed.
+        """
+        return 2.0 * jnp.sum(jnp.log(imm.sigma)) + jnp.sum(jnp.log(imm.lam))
+
+    def _sigma_gm(imm: LowRankInverseMassMatrix) -> Array:
+        return jnp.exp(jnp.mean(jnp.log(imm.sigma)))
+
+    def _effective_rank(imm: LowRankInverseMassMatrix) -> Array:
+        """Count of eigenvalues the kernel actually sees as non-trivial.
+
+        Distinct from the detection rank: the Fisher estimator can return
+        sub-threshold directions that are numerically lam=1 and so contribute
+        no structure to the deployed metric.
+        """
+        return jnp.sum(
+            jnp.abs(imm.lam - 1.0) > jnp.asarray(_LAM_NONTRIVIAL_TOL, imm.lam.dtype)
+        ).astype(jnp.int32)
+
+    def _empty_record(
+        n_dims: int, actual_rank: int, buf_dtype
+    ) -> MetricPublicationRecord:
+        """Pre-first-publication record: window_index -1, everything else NaN/0.
+
+        Dtypes mirror exactly what ``final()`` will produce so both branches of
+        the host's window-boundary ``lax.cond`` agree.  The epsilons are host-
+        owned; the placeholder dtype here never escapes because the host stamps
+        them unconditionally at init and at every boundary.
+        """
+        nan_b = jnp.array(float("nan"), dtype=buf_dtype)
+        nan_32 = jnp.array(float("nan"), dtype=jnp.float32)
+        zero_i = jnp.zeros((), dtype=jnp.int32)
+        false_ = jnp.zeros((), dtype=jnp.bool_)
+        empty_imm = (
+            LowRankInverseMassMatrix(
+                sigma=jnp.zeros(n_dims, dtype=buf_dtype),
+                U=jnp.zeros((n_dims, actual_rank), dtype=buf_dtype),
+                lam=jnp.zeros(actual_rank, dtype=buf_dtype),
+            )
+            if full_matrices
+            else None
+        )
+        return MetricPublicationRecord(
+            window_index=jnp.array(-1, dtype=jnp.int32),
+            step_at_publication=zero_i,
+            support_n=zero_i,
+            support_saturated=false_,
+            buffer_capacity=zero_i,
+            gate_passed=zero_i,
+            gate_evaluated=zero_i,
+            escalated_now=false_,
+            has_escalated_before=false_,
+            has_escalated=false_,
+            detection_rank=zero_i,
+            candidate_effective_rank=zero_i,
+            deployed_effective_rank=zero_i,
+            escalation_rank=zero_i,
+            candidate_logdet=nan_b,
+            deployed_logdet=nan_b,
+            in_force_logdet=nan_b,
+            candidate_lam_max=nan_b,
+            candidate_lam_min=nan_b,
+            candidate_sigma_gm=nan_b,
+            deployed_sigma_gm=nan_b,
+            sigma_log_ratio_rms=nan_b,
+            r2=nan_32,
+            r2_mode=jnp.array(_R2_DEFERRED, dtype=jnp.int32),
+            s_gap=nan_32,
+            s_gap_prev=nan_32,
+            s_gap_relative_change=nan_32,
+            is_slow_mixing=false_,
+            epsilon_in_force=nan_b,
+            epsilon_after_window_da=nan_b,
+            epsilon_window_average=nan_b,
+            epsilon_next_window=nan_b,
+            candidate=empty_imm,
+            deployed=empty_imm,
+        )
+
+    def init(n_dims: int):
         # half-budget ceiling; overflow is safe — RESET keeps the most-recent B draws
         buf = min(max(max_budget_steps // 2, 256), max_budget_steps)
         buf = max(buf, 2 * (_max_rank + 1) * _MIN_TRAIN_K_RATIO)
         buf = min(buf, max_budget_steps)
         actual_rank = min(_max_rank, max(n_dims // 2, 1), _MAX_RANK_CAP)
-        return MetaAdaptationCoreState(
+        extra = (
+            {"publication": _empty_record(n_dims, actual_rank, jnp.zeros(()).dtype)}
+            if telemetry
+            else {}
+        )
+        return _state_cls(
             inverse_mass_matrix=LowRankInverseMassMatrix(
                 sigma=jnp.ones(n_dims),
                 U=jnp.zeros((n_dims, actual_rank)),
@@ -143,10 +262,11 @@ def build_meta_adaptation_core(
             airm_vel_prev=jnp.array(float("inf"), dtype=jnp.float32),
             airm_vel_curr=jnp.array(float("inf"), dtype=jnp.float32),
             is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
+            **extra,
         )
 
     def update(
-        state: MetaAdaptationCoreState,
+        state,
         position: ArrayLikeTree,
         grad: ArrayLikeTree | None = None,
     ) -> MetaAdaptationCoreState:
@@ -169,9 +289,12 @@ def build_meta_adaptation_core(
             budget_used=state.budget_used + 1,
         )
 
-    def final(state: MetaAdaptationCoreState) -> MetaAdaptationCoreState:
+    def final(state):
         """Window-boundary controller: compute signals → escalation decision →
         choose IMM → hard-reset buffer (v1 reset policy always).
+
+        Returns the same concrete state type it was given, so the telemetry
+        and default paths share this body.
         """
         B, d = state.draws_buffer.shape
         n = jnp.minimum(state.buffer_idx, jnp.int32(B))  # cap at B (Fix 4)
@@ -284,7 +407,81 @@ def build_meta_adaptation_core(
             state.converged_at_step,
         )
 
-        return MetaAdaptationCoreState(
+        def _publication() -> dict:
+            """Build the window's publication record, or {} when telemetry is off.
+
+            Called before the buffer reset below, from the live locals above --
+            no candidate is reconstructed from cleared buffers.
+
+            Gate accounting uses two masks.  ``escalation_gates_evaluated`` is
+            ``~state.has_escalated``: once the controller has escalated it stops
+            consulting the escalation predicates entirely, and reporting them as
+            failures would be wrong.  The S_gap stability predicate additionally
+            needs the previous window's S_gap, so it is unevaluated in the first
+            window rather than failed.
+            """
+            if not telemetry:
+                return {}
+
+            escalation_open = ~state.has_escalated
+            s_gap_magnitude = s_gap_new >= _S_MIN
+
+            passed = encode_gates(
+                r2=r2_gate & escalation_open,
+                s_gap_magnitude=s_gap_magnitude & escalation_open,
+                s_gap_stability=(relative_change < _S_GAP_STABILITY_TOL)
+                & s_gap_prev_valid
+                & escalation_open,
+                deadline=deadline_ok & escalation_open,
+            )
+            evaluated = encode_gates(
+                r2=escalation_open,
+                s_gap_magnitude=escalation_open,
+                s_gap_stability=escalation_open & s_gap_prev_valid,
+                deadline=escalation_open,
+            )
+
+            sigma_ratio_log = jnp.log(lr_imm.sigma) - jnp.log(chosen_imm.sigma)
+            record = MetricPublicationRecord(
+                window_index=state.publication.window_index + jnp.int32(1),
+                step_at_publication=state.budget_used.astype(jnp.int32),
+                support_n=n.astype(jnp.int32),
+                support_saturated=state.buffer_idx > jnp.int32(B),
+                buffer_capacity=jnp.array(B, dtype=jnp.int32),
+                gate_passed=passed,
+                gate_evaluated=evaluated,
+                escalated_now=escalate_now,
+                has_escalated_before=state.has_escalated,
+                has_escalated=new_has_escalated,
+                detection_rank=k_new.astype(jnp.int32),
+                candidate_effective_rank=_effective_rank(lr_imm),
+                deployed_effective_rank=_effective_rank(chosen_imm),
+                escalation_rank=new_escalation_rank.astype(jnp.int32),
+                candidate_logdet=_logdet(lr_imm),
+                deployed_logdet=_logdet(chosen_imm),
+                in_force_logdet=_logdet(state.inverse_mass_matrix),
+                candidate_lam_max=jnp.max(lr_imm.lam),
+                candidate_lam_min=jnp.min(lr_imm.lam),
+                candidate_sigma_gm=_sigma_gm(lr_imm),
+                deployed_sigma_gm=_sigma_gm(chosen_imm),
+                sigma_log_ratio_rms=jnp.sqrt(jnp.mean(sigma_ratio_log**2)),
+                r2=r2_new.astype(jnp.float32),
+                r2_mode=mode_new,
+                s_gap=s_gap_new.astype(jnp.float32),
+                s_gap_prev=state.s_gap_curr.astype(jnp.float32),
+                s_gap_relative_change=relative_change.astype(jnp.float32),
+                is_slow_mixing=is_slow,
+                # Host-owned; the core cannot see the step-size state.
+                epsilon_in_force=state.publication.epsilon_in_force,
+                epsilon_after_window_da=state.publication.epsilon_after_window_da,
+                epsilon_window_average=state.publication.epsilon_window_average,
+                epsilon_next_window=state.publication.epsilon_next_window,
+                candidate=lr_imm if full_matrices else None,
+                deployed=chosen_imm if full_matrices else None,
+            )
+            return {"publication": record}
+
+        return state._replace(
             inverse_mass_matrix=chosen_imm,
             mu_star=chosen_mu,
             draws_buffer=jnp.zeros_like(state.draws_buffer),
@@ -304,6 +501,7 @@ def build_meta_adaptation_core(
             airm_vel_prev=new_airm_vel_prev,
             airm_vel_curr=new_airm_vel_curr,
             is_slow_mixing=is_slow,
+            **_publication(),
         )
 
     return MetricCore(init=init, update=update, final=final)
@@ -316,6 +514,8 @@ def build_multi_chain_meta_core(
     max_rank: int | None = None,
     gamma: float = 1e-5,
     cutoff: float = 2.0,
+    telemetry: bool = False,
+    full_matrices: bool = False,
 ) -> MetricCore:
     """Build the multi-chain meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.
 
@@ -371,6 +571,18 @@ def build_multi_chain_meta_core(
         Embeddable init/update/final bundle.  ``update`` expects ``position``
         of shape ``(n_chains, d)`` and ``grad`` of shape ``(n_chains, d)``.
     """
+    if telemetry or full_matrices:
+        raise NotImplementedError(
+            "build_multi_chain_meta_core: publication telemetry is single-chain only. "
+            "The multi-chain controller runs a different predicate set than the "
+            "single-chain one -- distinct raw-W and routed-T R2 gates, a "
+            "branch-specific support gate, two candidate metrics (W and T) that are "
+            "chosen between only after routing, a three-way unimodality rule, and a "
+            "detection_branch that is historical when no escalation fires this "
+            "window. Emitting those through the single-chain record shape would "
+            "misreport them, so the multi-chain schema is deliberately unsettled. "
+            "Use build_meta_adaptation_core(..., telemetry=True) for n_chains=1."
+        )
     if n_chains < 2:
         raise ValueError(
             f"build_multi_chain_meta_core: n_chains must be >= 2, got {n_chains}. "
