@@ -320,6 +320,22 @@ def _check_innovations(standard_normal, uniform, flat_position) -> None:
             "`uniform` dtype must match the position dtype exactly (no "
             f"narrowing); got {uniform.dtype}, expected {flat_position.dtype}"
         )
+    # A uniform outside [0, 1) is refused, never clipped and never allowed to
+    # masquerade as an ordinary Metropolis rejection.  The value can only be
+    # read when it is concrete, so under `jit` or `vmap` this remains a
+    # documented precondition rather than a check.
+    if not isinstance(uniform, jax.core.Tracer):
+        value = float(uniform)
+        if not 0.0 <= value < 1.0:
+            raise ValueError(
+                f"`uniform` must lie in [0, 1); got {value!r}. It is not "
+                "clipped, because a clipped uniform would silently become an "
+                "ordinary rejection."
+            )
+    if not isinstance(standard_normal, jax.core.Tracer) and not bool(
+        jnp.all(jnp.isfinite(standard_normal))
+    ):
+        raise ValueError("`standard_normal` must be finite")
 
 
 def validate_marginal_inputs(inverse_mass_matrix, step_size, num_integration_steps):

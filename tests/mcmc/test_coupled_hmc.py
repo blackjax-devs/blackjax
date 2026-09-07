@@ -774,6 +774,58 @@ class CoupledHMCContractTest(BlackJAXTest):
             with self.assertRaisesRegex(TypeError, "no narrowing"):
                 step(state, noise, just_below_one)
 
+    @parameterized.named_parameters(
+        {"testcase_name": "one", "uniform": 1.0},
+        {"testcase_name": "above_one", "uniform": 1.5},
+        {"testcase_name": "negative", "uniform": -0.1},
+        {"testcase_name": "nan", "uniform": float("nan")},
+    )
+    def test_an_out_of_domain_uniform_is_refused_not_clipped(self, uniform):
+        """An inadmissible uniform must raise, not become a rejection.
+
+        Clipping or comparing it anyway would turn caller error into an
+        ordinary Metropolis rejection, which is indistinguishable from a
+        legitimate one and so would never be noticed.
+        """
+        with _x64():
+            position = jnp.zeros((_DIM,), jnp.float64)
+            state = HMCState(
+                position,
+                _standard_normal_logdensity(position),
+                jax.grad(_standard_normal_logdensity)(position),
+            )
+            _, step = coupled_hmc._build_prescribed_marginal(
+                _standard_normal_logdensity,
+                jnp.ones((_DIM,), jnp.float64),
+                0.1,
+                2,
+                integrators.velocity_verlet,
+                1000.0,
+            )
+            noise = jnp.zeros((_DIM,), jnp.float64)
+            with self.assertRaisesRegex(ValueError, r"must lie in \[0, 1\)"):
+                step(state, noise, jnp.asarray(uniform, jnp.float64))
+
+    def test_a_non_finite_innovation_is_refused(self):
+        with _x64():
+            position = jnp.zeros((_DIM,), jnp.float64)
+            state = HMCState(
+                position,
+                _standard_normal_logdensity(position),
+                jax.grad(_standard_normal_logdensity)(position),
+            )
+            _, step = coupled_hmc._build_prescribed_marginal(
+                _standard_normal_logdensity,
+                jnp.ones((_DIM,), jnp.float64),
+                0.1,
+                2,
+                integrators.velocity_verlet,
+                1000.0,
+            )
+            bad = jnp.asarray([jnp.inf, 0.0, 0.0, 0.0], jnp.float64)
+            with self.assertRaisesRegex(ValueError, "must be finite"):
+                step(state, bad, jnp.asarray(0.5, jnp.float64))
+
     def test_prescribed_innovations_must_match_shape_and_dtype(self):
         with _x64():
             position = jnp.zeros((_DIM,), jnp.float64)
