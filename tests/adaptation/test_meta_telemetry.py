@@ -1079,19 +1079,31 @@ class GateReconstructionTest(chex.TestCase):
 
         Reconstructing on the never-escalated record would assert that False
         rebuilds as False — dressing up the single-chain escalation blind spot
-        as protection.  ``_make_correlated_buffer`` gives R2 = 1 and
-        S_gap >> _S_MIN; running two windows on identical data makes the S_gap
-        relative change exactly zero, so the stability gate can pass.
+        as protection.  ``_make_correlated_buffer``, at the e2e module's own
+        escalation configuration, gives R2 = 1 and S_gap >> _S_MIN; running two
+        windows on identical data makes the S_gap relative change exactly zero,
+        so the stability gate can pass too.
         """
-        core = build_meta_adaptation_core(_BUDGET, telemetry=True)
-        draws, grads = _make_correlated_buffer(_D, 40)
-        state = _fill_state_from_buffer(core.init(_D), draws, grads)
+        # Configuration reused verbatim from the established escalation control
+        # in test_meta_builders_e2e.py::test_s_gap_stability_passes_on_second_stable_window.
+        # Two windows alone do not guarantee S_gap. At d=5 the rank-2 spike
+        # concentrates in a few coordinates, inflating diag(Sigma), and Welford
+        # whitening then divides most of it away: the whitened top eigenvalue
+        # lands under _choose_rank's cutoff, so S_gap stays below _S_MIN and the
+        # MAGNITUDE gate blocks, not the stability gate the two windows address.
+        # At d=20 the same spike spreads thinly across the diagonal and survives.
+        d, n = 20, 500
+        core = build_meta_adaptation_core(50_000, max_rank=10, telemetry=True)
+        draws, grads = _make_correlated_buffer(d, n, rank=2, lam_spike=20.0, seed=33)
+        draws = jnp.asarray(draws, dtype=jnp.float32)
+        grads = jnp.asarray(grads, dtype=jnp.float32)
 
+        state = core.init(d)
         records = []
         for _ in range(2):
+            state = _fill_state_from_buffer(state, draws, grads)
             state = core.final(state)
             records.append(state.publication)
-            state = _fill_state_from_buffer(state, draws, grads)
 
         self.assertTrue(
             any(bool(r.escalated_now) for r in records),
