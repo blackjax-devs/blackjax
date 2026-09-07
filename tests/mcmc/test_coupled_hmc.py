@@ -554,9 +554,16 @@ class CoupledHMCContractTest(BlackJAXTest):
             # The reported unit must match the independently built one, and
             # must not have changed between the probe call and this one, since
             # the direction depends on the incoming states alone.
-            chex.assert_trees_all_close(
-                info.reflection_unit, reference_unit, atol=1e-12
-            )
+            if coupling == "reflection":
+                chex.assert_trees_all_close(
+                    info.reflection_unit, reference_unit, atol=1e-12
+                )
+            else:
+                # Synchronous reports an exactly zero unit, which is the
+                # documented encoding of "the identity map".
+                chex.assert_trees_all_equal(
+                    info.reflection_unit, jnp.zeros((_DIM,), jnp.float64)
+                )
             chex.assert_trees_all_equal(
                 info.reflection_unit, probe_info.reflection_unit
             )
@@ -989,7 +996,7 @@ class CoupledHMCContractTest(BlackJAXTest):
 
             with self.assertRaisesRegex(ValueError, "flat vector matching"):
                 step(state, jnp.zeros((_DIM + 1,), jnp.float64), good_uniform)
-            with self.assertRaisesRegex(TypeError, "dtype must match"):
+            with self.assertRaisesRegex(TypeError, "effective dtype"):
                 step(state, jnp.zeros((_DIM,), jnp.float32), good_uniform)
             with self.assertRaisesRegex(ValueError, "must be a scalar"):
                 step(state, good_noise, jnp.zeros((2,), jnp.float64))
