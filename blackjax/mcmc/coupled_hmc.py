@@ -530,19 +530,18 @@ def whitened_difference(
     first_state: hmc.HMCState,
     second_state: hmc.HMCState,
     first_metric: metrics.Metric,
-    second_metric: metrics.Metric,
 ) -> Array:
     """Default reflection direction: the position difference, whitened.
 
     Returns :math:`A^{-1}(x_1 - x_2)` in flat coordinates, where :math:`A` is
-    the **first** marginal's momentum square root.  ``Metric.scale`` with
+    the first marginal's momentum square root.  ``Metric.scale`` with
     ``inv=True, trans=True`` is exactly that inverse map.
 
-    The second marginal's metric is accepted for signature completeness and
-    deliberately unused: when the two marginals carry different metrics this
-    direction is first-metric-based, and no property is claimed for the pair.
+    Only the first marginal's metric is used.  When the two marginals carry
+    different metrics this is therefore a first-metric-based direction, and no
+    property is claimed for the pair.  A policy needing the second metric can
+    close over it.
     """
-    del second_metric
     delta = jax.tree.map(
         lambda a, b: a - b, first_state.position, second_state.position
     )
@@ -585,7 +584,7 @@ def _build_prescribed_pair(
         integrator,
         divergence_threshold,
     )
-    second_metric, second_step = _build_prescribed_marginal(
+    _, second_step = _build_prescribed_marginal(
         logdensity_fns[1],
         inverse_mass_matrices[1],
         step_sizes[1],
@@ -602,7 +601,7 @@ def _build_prescribed_pair(
 
         if coupling == "reflection":
             direction = jnp.asarray(
-                direction_fn(state.first, state.second, first_metric, second_metric)
+                direction_fn(state.first, state.second, first_metric)
             )
             if direction.shape != flat.shape:
                 raise ValueError(
@@ -692,8 +691,8 @@ def build_kernel(
         reflected copy.
     direction_fn
         Only for ``"reflection"``.  A callable
-        ``(first_state, second_state, first_metric, second_metric) -> Array``
-        returning a flat direction; defaults to :func:`whitened_difference`.
+        ``(first_state, second_state, first_metric) -> Array`` returning a
+        flat direction; defaults to :func:`whitened_difference`.
         Passing one under synchronous coupling is an error, since it would
         have no effect.
 
@@ -761,7 +760,6 @@ def as_top_level_api(
     direction_fn: Callable | None = None,
     integrator: Callable = integrators.velocity_verlet,
     divergence_threshold: float = 1000,
-    validate: bool = True,
 ) -> SamplingAlgorithm:
     """Build a ``SamplingAlgorithm`` for a coupled HMC pair.
 
@@ -795,12 +793,15 @@ def as_top_level_api(
         Symplectic integrator used by both marginals.
     divergence_threshold
         Per-marginal divergence threshold.
-    validate
-        When true (the default), each marginal's concrete metric and
-        integration settings are checked eagerly by
-        :func:`validate_marginal_inputs`.  Those checks read concrete values
-        on the host and so cover the arguments given here; they say nothing
-        about traced values appearing later under ``jit`` or ``vmap``.
+
+    Notes
+    -----
+    Each marginal's concrete metric and integration settings are checked here
+    by :func:`validate_marginal_inputs`.  Those checks read concrete values on
+    the host, so they cover the arguments given here and say nothing about
+    traced values appearing later under ``jit`` or ``vmap``.  Callers who need
+    to supply traced metrics use :func:`build_kernel` directly, which performs
+    no eager numerical validation.
 
     Returns
     -------
@@ -812,13 +813,12 @@ def as_top_level_api(
     integration_steps = _as_pair(num_integration_steps, "num_integration_steps")
     _as_pair(logdensity_fn, "logdensity_fn")
 
-    if validate:
-        for index in (0, 1):
-            validate_marginal_inputs(
-                inverse_mass_matrices[index],
-                step_sizes[index],
-                integration_steps[index],
-            )
+    for index in (0, 1):
+        validate_marginal_inputs(
+            inverse_mass_matrices[index],
+            step_sizes[index],
+            integration_steps[index],
+        )
 
     kernel = build_kernel(
         integrator,
