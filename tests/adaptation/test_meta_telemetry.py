@@ -68,8 +68,8 @@ from blackjax.adaptation.staged_adaptation import build_schedule, staged_adaptat
 
 from ._meta_fixtures import (
     _fill_mc_state,
-    _make_correlated_buffer,
     _fill_state_from_buffer,
+    _make_correlated_buffer,
     _make_isotropic_buffer,
     _make_mc_both_branches,
     _make_mc_converging_split_chains,
