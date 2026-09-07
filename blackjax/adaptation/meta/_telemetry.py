@@ -225,6 +225,10 @@ class MultiChainDetail(NamedTuple):
         *firing* window's branch and is unchanged in windows where nothing
         fires.  This carried value — not the current one — selects which
         escalated metric is deployed.
+
+        It and ``branch_fired_this_window`` necessarily leave ``NONE`` in the
+        same window, since the carry is only ever written when a branch fires;
+        they diverge only afterwards, once a later window fires nothing.
     ``deployed_metric_route``
         What the kernel will actually use: ``ROUTE_DIAGONAL`` before escalation,
         else ``ROUTE_W``/``ROUTE_T``.  ``BOTH`` firing deploys the W metric.
@@ -256,6 +260,14 @@ class MultiChainDetail(NamedTuple):
         The three separate observations behind the three-way unimodality rule.
     t_unimodality_resolved
         Its resolved outcome: ``is_converging | (is_unimodal & ~any_mode_flag)``.
+
+        Carried rather than left to the consumer because the obvious derivation
+        is wrong: ``is_converging`` is an **override**, not a fourth conjunct,
+        and writing ``is_unimodal & ~any_mode_flag`` alone fails silently on
+        exactly the converging-chains case the three-way rule was added for.
+        This is a policy and it can change.  Equal to the ``t_unimodality`` gate
+        bit by construction — if you find both, there is no difference to hunt
+        for.
     t_contraction_stat, unimodality_gap_ratio
         The numerics behind those observations.
     unimodality_flag_count
@@ -328,8 +340,11 @@ class MetricPublicationRecord(NamedTuple):
     support_per_chain
         Draws per chain the controller consumed: ``min(buffer_idx, buffer_capacity)``.
     support_pooled_rows
-        ``support_per_chain * n_chains`` — retained buffer rows fed to the
-        estimator.  Not an effective sample size and not independent observations.
+        ``support_per_chain * n_chains``, precomputed.  Read it as retained
+        buffer rows; despite the name it is emphatically not an effective sample
+        size and not a count of independent observations — multiplying a
+        per-chain draw count by the chain count does not make observations
+        independent.
     buffer_capacity
         Buffer length ``B``.
     buffer_capacity_reached
