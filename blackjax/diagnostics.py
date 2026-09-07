@@ -360,6 +360,67 @@ def _split_chains(x: Array) -> Array:
     return jnp.concatenate([first, second], axis=0)
 
 
+def _average_ranks(x_flat: Array) -> Array:
+    """One-indexed ranks along axis 0, averaging the ranks of tied values.
+
+    Equal values form a *tie group* and all receive the mean of the ordinal
+    ranks that the group spans.  This makes the ranking invariant to the
+    permutation of the pooled draws, which ordinal (``argsort``-of-``argsort``)
+    ranking is not.
+
+    Parameters
+    ----------
+    x_flat
+        Array of shape ``(n, …)``; ranks are computed along axis 0
+        independently for each element of the trailing dimensions.
+
+    Returns
+    -------
+    Array of the same shape holding 1-indexed average ranks.
+
+    Notes
+    -----
+    The implementation is written with sort and cumulative-reduction
+    primitives only, so it is ``jit``/``vmap``-compatible and has no
+    data-dependent shapes.  ``NaN`` values sort last and are treated as tied
+    with one another: they are mutually indistinguishable, so ranking them by
+    position would reintroduce the very asymmetry this function removes.  As before, non-finite entries are ranked rather than
+    propagated — no ``NaN`` is silently replaced, but none is silently
+    introduced either.
+    """
+    n = x_flat.shape[0]
+    extra_shape = x_flat.shape[1:]
+
+    order = jnp.argsort(x_flat, axis=0)
+    x_sorted = jnp.take_along_axis(x_flat, order, axis=0)
+
+    # Adjacent sorted entries share a tie group when they are equal.  ``nan
+    # != nan``, so NaNs are grouped explicitly.
+    same_as_prev = (x_sorted[1:] == x_sorted[:-1]) | (
+        jnp.isnan(x_sorted[1:]) & jnp.isnan(x_sorted[:-1])
+    )
+    true_row = jnp.ones((1, *extra_shape), dtype=bool)
+    is_first = jnp.concatenate([true_row, ~same_as_prev], axis=0)
+    is_last = jnp.concatenate([~same_as_prev, true_row], axis=0)
+
+    positions = jnp.broadcast_to(
+        jnp.arange(n).reshape((n, *(1,) * len(extra_shape))), x_flat.shape
+    )
+    # Running max/min of the group boundary markers gives, for every sorted
+    # position, the first and last 0-indexed position of its tie group.
+    group_start = jax.lax.cummax(jnp.where(is_first, positions, 0), axis=0)
+    group_end = jax.lax.cummin(
+        jnp.where(is_last, positions, n - 1), axis=0, reverse=True
+    )
+
+    # Mean of the 1-indexed ordinal ranks spanned by the group.
+    avg_rank_sorted = (group_start + group_end) / 2.0 + 1.0
+
+    # Scatter back to the original positions.
+    inverse = jnp.argsort(order, axis=0)
+    return jnp.take_along_axis(avg_rank_sorted, inverse, axis=0)
+
+
 def _rank_normalize(x: Array) -> Array:
     """Rank-normalize draws using the Blom plotting position.
 
@@ -384,6 +445,16 @@ def _rank_normalize(x: Array) -> Array:
 
     where :math:`r` is the 1-indexed rank and :math:`n = \\text{nchains}
     \\times \\text{nsamples}`.
+
+    Tied draws receive the *average* of the ordinal ranks their tie group
+    spans (see :func:`_average_ranks`), matching Vehtari et al. (2021) and
+    ``scipy.stats.rankdata(method="average")``.  Ordinal ranking would give
+    equal values different scores depending on where they sit in the pooled
+    array, manufacturing chain/time structure out of ties — a constant input
+    would acquire a spurious spread, and repeated states (rejections,
+    indicator observables) would inflate R̂ and deflate bulk ESS.  A constant
+    input now maps to a constant field of zeros, leaving R̂ undefined (0/0)
+    and the ESS degeneracy guard free to report 0.
     """
     nchains, nsamples = x.shape[0], x.shape[1]
     extra_shape = x.shape[2:]
@@ -392,8 +463,8 @@ def _rank_normalize(x: Array) -> Array:
     # Pool chains and draws into the leading axis: (n, …extra).
     x_flat = x.reshape(n, *extra_shape)
 
-    # Double argsort gives 0-indexed ranks; +1 for 1-indexed.
-    ranks = jnp.argsort(jnp.argsort(x_flat, axis=0), axis=0).astype(float) + 1
+    # Average ranks, so that tied draws receive identical scores.
+    ranks = _average_ranks(x_flat)
 
     # Blom plotting position.
     z = jax.scipy.special.ndtri((ranks - 3.0 / 8) / (n + 1.0 / 4))
