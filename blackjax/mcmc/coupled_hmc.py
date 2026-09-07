@@ -375,8 +375,11 @@ def _concrete_real_scalar(value, name: str) -> float:
 def _concrete_integer_scalar(value, name: str) -> int:
     """Read a concrete integer scalar, accepting NumPy and JAX scalar forms.
 
-    A floating value is refused rather than truncated: silently rounding an
-    integration count would change the trajectory without telling anyone.
+    A floating value is refused here rather than left to fail later.  It would
+    not be silently truncated in any case -- ``fori_loop`` rejects a float bound
+    -- but it does so with a message about loop bound types that never names the
+    parameter, and only once a trajectory is being built.  Refusing it at the
+    validation boundary is a diagnostic improvement, not a correctness guard.
     """
     if isinstance(value, jax.core.Tracer):
         raise TypeError(
@@ -389,11 +392,7 @@ def _concrete_integer_scalar(value, name: str) -> int:
     if array.ndim != 0:
         raise ValueError(f"`{name}` must be a scalar, got shape {array.shape}")
     if not np.issubdtype(array.dtype, np.integer):
-        raise TypeError(
-            f"`{name}` must have an integer dtype, got {array.dtype}. It is not "
-            "rounded, because a silently truncated count would change the "
-            "trajectory."
-        )
+        raise TypeError(f"`{name}` must have an integer dtype, got {array.dtype}")
     return int(array)
 
 
