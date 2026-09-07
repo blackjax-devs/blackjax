@@ -540,7 +540,10 @@ def _resolve_metric_and_schedule(
             from blackjax.adaptation.meta import build_multi_chain_meta_core
 
             metric_core = build_multi_chain_meta_core(
-                max_grad_budget, n_chains, telemetry=metric_telemetry
+                max_grad_budget,
+                n_chains,
+                telemetry=metric_telemetry,
+                full_matrices=telemetry_full_matrices,
             )
         else:
             from blackjax.adaptation.meta import build_meta_adaptation_core

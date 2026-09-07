@@ -72,6 +72,7 @@ from ._meta_fixtures import (
     _fill_state_from_buffer,
     _make_isotropic_buffer,
     _make_mc_both_branches,
+    _make_mc_converging_split_chains,
     _make_mc_deep_spread,
     _make_mc_even_spread,
     _make_mc_isotropic,
@@ -365,12 +366,22 @@ class UnitsTest(chex.TestCase):
             self.assertEqual(entry["support_per_chain"], entry["support_pooled_rows"])
 
     def test_multi_chain_units_are_separated(self):
-        record = _mc_record(_make_mc_deep_spread)
+        """Drive real update() calls: filling the buffer directly leaves the
+        counters at zero, where ``0 == 0 * M`` holds vacuously."""
+        core = _mc_core(telemetry=True)
+        state = core.init(_MC_D)
+        n_updates = 37
+        draws, grads = _make_mc_deep_spread(_MC_M, _MC_N, _MC_D)
+        for i in range(n_updates):
+            state = core.update(state, draws[:, i, :], grads[:, i, :])
+        record = core.final(state).publication
+
         self.assertEqual(int(record.n_chains), _MC_M)
-        self.assertEqual(
-            int(record.core_update_chain_steps_total),
-            int(record.core_update_steps_per_chain) * _MC_M,
-        )
+        self.assertEqual(int(record.core_update_steps_per_chain), n_updates)
+        self.assertEqual(int(record.core_update_chain_steps_total), n_updates * _MC_M)
+        self.assertEqual(int(record.support_per_chain), n_updates)
+
+        record = _mc_record(_make_mc_deep_spread)
         # Pooled rows are retained buffer rows -- not an ESS, not independent
         # observations -- and are exactly per-chain support times chain count.
         self.assertEqual(
@@ -727,15 +738,99 @@ class MultiChainEscalationSequenceTest(chex.TestCase):
             self.assertIsNotNone(getattr(detail, name))
         self.assertTrue(np.isfinite(np.asarray(detail.t_contraction_stat)))
 
-    def test_three_unimodality_observations_and_the_resolved_outcome(self):
-        record = _mc_record(_make_mc_split_means)
-        detail = record.multi_chain
-        resolved = bool(detail.is_converging) or (
-            bool(detail.is_unimodal) and not bool(detail.any_mode_flag)
-        )
-        self.assertEqual(bool(detail.t_unimodality_resolved), resolved)
+    def test_gap_stat_split_resolves_unimodality_false(self):
+        """Branch (iii): not converging, gap-stat flags a split -> not resolved."""
+        detail = _mc_record(_make_mc_split_means).multi_chain
+        self.assertFalse(bool(detail.is_converging))
+        self.assertFalse(bool(detail.is_unimodal))
+        self.assertFalse(bool(detail.t_unimodality_resolved))
         self.assertTrue(np.isfinite(np.asarray(detail.unimodality_gap_ratio)))
         self.assertTrue(np.isfinite(np.asarray(detail.t_contraction_stat)))
+
+    def test_converging_override_resolves_unimodality_true_on_its_own(self):
+        """Branch (i): the override is the ONLY thing making this resolve True.
+
+        Every other multi-chain fixture has ``is_converging=False`` and
+        ``is_unimodal=True``, so the two branches of the three-way rule agree
+        and a test cannot tell them apart -- wiring
+        ``t_unimodality_resolved = is_unimodal`` would pass.  Here the chains are
+        gap-stat mode-split (``is_unimodal=False``) yet measurably contracting,
+        so the default branch is False and only the override can carry it.
+        """
+        detail = _mc_record(_make_mc_converging_split_chains).multi_chain
+        self.assertTrue(bool(detail.is_converging))
+        self.assertFalse(bool(detail.is_unimodal))
+        default_branch = bool(detail.is_unimodal) and not bool(detail.any_mode_flag)
+        self.assertFalse(default_branch)
+        self.assertTrue(bool(detail.t_unimodality_resolved))
+        self.assertLess(float(detail.t_contraction_stat), -2.365)
+
+    def test_mode_consistency_flag_branch_is_not_covered(self):
+        """Explicit gap, asserted so it cannot be forgotten.
+
+        Branch (ii) of the three-way rule fires on ``any_mode_flag``, which
+        compares a per-chain-local score fit against a grand-centred one.  Every
+        fixture in this module uses the exact-linear ``g = -x``, for which the
+        two fits cannot separate, so none of them raises the flag and the branch
+        is UNTESTED here.
+
+        That is a limitation of *this fixture family*, not evidence that the
+        branch is intrinsically untestable -- a score that is locally linear but
+        globally curved should reach it.  Delete this placeholder once such a
+        fixture exists.
+        """
+        flags = [
+            bool(_mc_record(fx).multi_chain.any_mode_flag)
+            for fx in (
+                _make_mc_deep_spread,
+                _make_mc_even_spread,
+                _make_mc_isotropic,
+                _make_mc_split_means,
+                _make_mc_converging_split_chains,
+            )
+        ]
+        self.assertNotIn(
+            True,
+            flags,
+            msg="a fixture now raises any_mode_flag -- cover branch (ii) and "
+            "delete this placeholder",
+        )
+
+    def test_r2_gate_bits_are_pinned_to_their_own_predicates(self):
+        """w_r2_raw is the raw R2 gate; t_r2_routed is the GAIN-overridden one.
+
+        In the hand-built fixtures both R2 values are 1.0, so the two gates are
+        numerically identical and swapping the bits would pass.  A real run
+        reaches windows where the routed value is NaN while the raw value is
+        finite and above threshold -- there the two bits must disagree, which
+        pins each to its own predicate.
+        """
+        warmup = staged_adaptation(
+            blackjax.nuts,
+            _logdensity_fn,
+            metric="auto",
+            max_grad_budget=16_000,
+            n_chains=_MC_M,
+            metric_telemetry=True,
+            adaptation_info_fn=publication_adapt_info_fn(),
+        )
+        x0 = jax.random.normal(jax.random.key(1), (_MC_M, _D))
+        _, records = warmup.run(jax.random.key(0), x0)
+        split = [
+            e
+            for e in extract_publication_chronology(records)
+            if e["gates_true"]["w_r2_raw"] != e["gates_true"]["t_r2_routed"]
+        ]
+        self.assertNotEmpty(
+            split,
+            msg="expected a window where the raw and routed R2 gates disagree",
+        )
+        for entry in split:
+            # raw finite and passing, routed NaN and therefore failing
+            self.assertTrue(entry["gates_true"]["w_r2_raw"])
+            self.assertFalse(entry["gates_true"]["t_r2_routed"])
+            self.assertTrue(np.isnan(entry["multi_chain.r2_routed"]))
+            self.assertFalse(np.isnan(entry["r2_raw"]))
 
     def test_stored_escalation_rank_is_the_t_detection_rank_even_when_w_fires(self):
         """Reported, not corrected: the controller stores k_new regardless.
@@ -829,6 +924,28 @@ class UnsupportedConfigurationTest(chex.TestCase):
                 max_grad_budget=_BUDGET,
                 telemetry_full_matrices=True,
             )
+
+    def test_multi_chain_full_matrices_reaches_the_core(self):
+        """Regression: the flag was accepted and silently dropped for n_chains>1.
+
+        staged_adaptation forwarded full_matrices on the single-chain branch
+        only, so a multi-chain caller got compact records with no error.
+        """
+        warmup = staged_adaptation(
+            blackjax.nuts,
+            _logdensity_fn,
+            metric="auto",
+            max_grad_budget=16_000,
+            n_chains=_MC_M,
+            metric_telemetry=True,
+            telemetry_full_matrices=True,
+            adaptation_info_fn=publication_adapt_info_fn(),
+        )
+        x0 = jax.random.normal(jax.random.key(1), (_MC_M, _D))
+        _, records = warmup.run(jax.random.key(0), x0)
+        self.assertIsNotNone(records.deployed_full)
+        self.assertIsNotNone(records.multi_chain.candidate_w.full)
+        self.assertIsNotNone(records.multi_chain.candidate_t.full)
 
     def test_core_without_publication_is_rejected(self):
         warmup = staged_adaptation(

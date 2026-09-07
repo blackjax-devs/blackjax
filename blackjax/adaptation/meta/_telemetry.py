@@ -579,9 +579,23 @@ def record_nbytes(record) -> int:
 def _logdet(imm: LowRankInverseMassMatrix) -> Array:
     """``log det M^-1`` for ``M^-1 = diag(s)(I + U(L-I)U')diag(s)``.
 
-    ``U`` has orthonormal columns, so the non-unit eigenvalues of the middle
-    factor are exactly ``lam`` and the determinant factorises; no dense ``d x d``
-    matrix is formed.
+    Returns ``2*sum(log sigma) + sum(log lam)``; no dense ``d x d`` matrix is
+    formed.  Verified against a dense ``slogdet`` for every metric shape this
+    controller builds.
+
+    **The identity holds for two different reasons, and only one of them is the
+    obvious one.**  For the Fisher-LR metrics (``lr_imm``, ``w_lr_imm``) ``U``
+    has orthonormal columns, so the middle factor's non-unit eigenvalues are
+    exactly ``lam``.  The T-branch metric ``t_lr_imm`` is *not* of that form: it
+    concatenates the slow direction ``e_dir`` with Fisher columns that have no
+    orthogonality relation to it (measured ``||U'U - I||_max`` up to 0.79).  It
+    stays exact only because ``lam`` there is ``[lam_slow, 1, ..., 1]``, which
+    collapses ``U(L-I)U'`` to the rank-1 update ``(lam_slow - 1) e_dir e_dir'``
+    with ``e_dir`` unit-norm, whose determinant is ``lam_slow``.
+
+    So the real precondition is: **either** ``U`` is orthonormal, **or** at most
+    one ``lam`` is non-unit and its column is unit-norm.  Give ``t_lr_imm`` a
+    second non-unit eigenvalue and this function becomes silently wrong.
     """
     return 2.0 * jnp.sum(jnp.log(imm.sigma)) + jnp.sum(jnp.log(imm.lam))
 

@@ -602,3 +602,29 @@ def _make_mc_both_branches(M, n, d, mean_scale=1.0, seed=_RNG_SEED):
     draws_t, _ = _make_mc_even_spread(M, n, d, seed=seed)
     offsets = draws_t.mean(axis=1, keepdims=True) * mean_scale
     return draws_w + offsets, grads_w - offsets
+
+
+def _make_mc_converging_split_chains(
+    M, n, d, separation=12.0, decay_rate=3.0, noise_scale=0.4, seed=_RNG_SEED
+):
+    """Chains that are gap-stat mode-split yet measurably contracting.
+
+    Isolates branch (i) of the T-branch three-way unimodality rule.  Chain-mean
+    offsets sit in two tight clusters along one axis, so ``_unimodality_gap_stat``
+    reports ``is_unimodal=False``; every chain then decays toward the grand mean
+    across the window, so ``_compute_contraction_stat`` clears the convergence
+    threshold.  The resolved outcome is therefore True **only** via the
+    ``is_converging`` override -- with ``is_unimodal=True`` (as in every other
+    multi-chain fixture) the two branches agree and the test cannot tell them
+    apart.
+
+    Scores are the exact-linear ``g = -x`` for the realised draws.
+    """
+    key = jax.random.key(seed)
+    _, k_noise = jax.random.split(key)
+    axis = jnp.zeros(d).at[0].set(1.0)
+    cluster = (jnp.arange(M) < M // 2).astype(jnp.float32) * 2.0 - 1.0
+    offsets = (cluster[:, None, None] * separation) * axis[None, None, :]
+    decay = jnp.exp(-decay_rate * jnp.arange(n, dtype=jnp.float32) / n)[None, :, None]
+    draws = offsets * decay + jax.random.normal(k_noise, (M, n, d)) * noise_scale
+    return draws, -draws
