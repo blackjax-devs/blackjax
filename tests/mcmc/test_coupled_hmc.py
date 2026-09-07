@@ -36,13 +36,29 @@ from blackjax.mcmc.hmc import HMCState, flip_momentum
 from blackjax.mcmc.proposal import safe_energy_diff
 from blackjax.mcmc.trajectory import hmc_energy
 from blackjax.util import generate_gaussian_noise, run_inference_algorithm
-from tests.fixtures import BlackJAXTest
+from tests.fixtures import BlackJAXTest, smooth_skewed_logdensity
 
 # ---------------------------------------------------------------------------
 # Targets and metric payloads
 # ---------------------------------------------------------------------------
 _DIM = 4
 _RANK = 2
+
+# Deterministic controls that must land on a chosen side of an acceptance
+# probability get their own fixed seed. `BlackJAXTest` seeds from today's date,
+# which is right for a test whose outcome must hold for any draw and wrong for
+# a control whose whole point is that `p_accept` is interior -- the same test
+# would pass or fail depending on the day it ran. This is a local fixture, not
+# a change to the shared key management.
+_CONTROL_SEED = 20260907
+
+# The reference comparison needs a fixture whose acceptance probabilities are
+# interior under BOTH couplings, since the second marginal receives a reflected
+# innovation and so has a different probability there. These values were chosen
+# by scanning seeds and step sizes for that property; the test asserts it rather
+# than trusting this comment.
+_REFERENCE_SEED = 11
+_REFERENCE_STEP_SIZES = (0.75, 0.90)
 
 
 def _standard_normal_logdensity(x):
@@ -61,6 +77,23 @@ def _stiff_logdensity(x):
     """Sharply curved, so a large step size makes rejection near-certain."""
     flat, _ = jax.flatten_util.ravel_pytree(x)
     return -0.5 * jnp.sum((flat * 60.0) ** 2)
+
+
+def _skewed_anisotropic_logdensity(x):
+    """A second non-Gaussian target, scaled differently from the first.
+
+    The reference comparison needs both marginals to have an acceptance
+    probability strictly inside (0, 1), so that one uniform can be chosen to
+    accept and another to reject. A Gaussian target cannot supply that
+    reliably: leapfrog energy error on a Gaussian stays bounded until the
+    stability limit and then blows up, so ``p_accept`` jumps from 1 to 0 with
+    almost no interval between. A skewed target gives a genuinely intermediate
+    probability.
+    """
+    flat, _ = jax.flatten_util.ravel_pytree(x)
+    scales = jnp.arange(1, flat.size + 1, dtype=flat.dtype)
+    y = flat / scales
+    return jnp.sum(y - jnp.exp(y))
 
 
 def _moderately_stiff_logdensity(x):
@@ -423,11 +456,18 @@ class CoupledHMCMathTest(BlackJAXTest):
 class CoupledHMCContractTest(BlackJAXTest):
     """Checks that coupling changes only the joint law of the inputs."""
 
-    def _pair_state(self, dtype=jnp.float64, first_fn=None, second_fn=None):
+    def _pair_state(self, dtype=jnp.float64, first_fn=None, second_fn=None, key=None):
+        """Build a paired state.
+
+        Pass ``key`` for a control that needs reproducible positions rather
+        than a fresh draw per day.
+        """
         first_fn = first_fn or _standard_normal_logdensity
         second_fn = second_fn or _standard_normal_logdensity
-        first_position = jax.random.normal(self.next_key(), (_DIM,), dtype)
-        second_position = jax.random.normal(self.next_key(), (_DIM,), dtype)
+        position_key = self.next_key() if key is None else key
+        first_key, second_key = jax.random.split(position_key)
+        first_position = jax.random.normal(first_key, (_DIM,), dtype)
+        second_position = jax.random.normal(second_key, (_DIM,), dtype)
         return coupled_hmc.init(
             (first_position, second_position), (first_fn, second_fn)
         )
@@ -447,11 +487,26 @@ class CoupledHMCContractTest(BlackJAXTest):
         """
         with _x64():
             payloads = _metric_payloads(jnp.float64)
-            first_fn, second_fn = _standard_normal_logdensity, _tilted_logdensity
+            # Two different non-Gaussian targets, two different metrics, two
+            # different step sizes and integration counts. These settings are a
+            # fixture chosen so that BOTH reference acceptance probabilities are
+            # strictly interior under both couplings (about 0.53 for the first,
+            # and 0.82 synchronous / 0.75 reflected for the second), which is
+            # what lets one uniform accept and another reject.
+            first_fn = smooth_skewed_logdensity
+            second_fn = _skewed_anisotropic_logdensity
             first_mass, second_mass = payloads["dense"], payloads["low_rank"]
-            step_sizes, integration_steps = (0.09, 0.23), (3, 5)
+            step_sizes, integration_steps = _REFERENCE_STEP_SIZES, (3, 5)
 
-            state = self._pair_state(first_fn=first_fn, second_fn=second_fn)
+            control_key, noise_key = jax.random.split(jax.random.key(_REFERENCE_SEED))
+            first_key, second_key = jax.random.split(control_key)
+            state = coupled_hmc.init(
+                (
+                    0.5 * jax.random.normal(first_key, (_DIM,), jnp.float64),
+                    0.5 * jax.random.normal(second_key, (_DIM,), jnp.float64),
+                ),
+                (first_fn, second_fn),
+            )
             step = coupled_hmc._build_prescribed_pair(
                 (first_fn, second_fn),
                 (first_mass, second_mass),
@@ -462,7 +517,7 @@ class CoupledHMCContractTest(BlackJAXTest):
                 coupling,
                 coupled_hmc.whitened_difference if coupling == "reflection" else None,
             )
-            noise = jax.random.normal(self.next_key(), (_DIM,), jnp.float64)
+            noise = jax.random.normal(noise_key, (_DIM,), jnp.float64)
 
             # Running only an accepting case would leave the rejection branch
             # uncompared, so a kernel that always returned the proposal would
@@ -492,11 +547,29 @@ class CoupledHMCContractTest(BlackJAXTest):
                 second_noise,
                 0.0,
             )[2]
-            lowest = min(float(probe_first), float(probe_second))
+            # Both reference probabilities must be strictly INTERIOR, or this
+            # control cannot force both outcomes and asserts nothing. A
+            # probability that has rounded to exactly 1 makes the rejecting case
+            # unreachable; the fixture is chosen so that does not happen, and
+            # the test fails loudly rather than being skipped or clipped into
+            # passing if it ever does.
+            for label, probability in (
+                ("first", float(probe_first)),
+                ("second", float(probe_second)),
+            ):
+                self.assertGreater(
+                    probability,
+                    0.0,
+                    f"{label} reference p_accept is 0, no accepting uniform exists",
+                )
+                self.assertLess(
+                    probability,
+                    1.0,
+                    f"{label} reference p_accept rounded to 1, no rejecting "
+                    "uniform exists -- choose a different control fixture rather "
+                    "than skipping or clipping this case",
+                )
             highest = max(float(probe_first), float(probe_second))
-            # Both branches must be reachable for this case to mean anything.
-            self.assertGreater(lowest, 0.0)
-            self.assertLess(highest, 1.0)
             # Acceptance is `uniform < p_accept`, so `uniform = highest` rejects
             # both marginals and `uniform = 0` accepts both.
             uniform = jnp.asarray(0.0 if accept else highest, jnp.float64)
@@ -825,7 +898,9 @@ class CoupledHMCContractTest(BlackJAXTest):
             _, step = coupled_hmc._build_prescribed_marginal(
                 _stiff_logdensity, mass, 5.0, 8, integrators.velocity_verlet, 1000.0
             )
-            noise = jax.random.normal(self.next_key(), (_DIM,), jnp.float64)
+            noise = jax.random.normal(
+                jax.random.key(_CONTROL_SEED), (_DIM,), jnp.float64
+            )
             new_state, info = step(state, noise, jnp.asarray(0.0, jnp.float64))
             self.assertEqual(float(info.acceptance_rate), 0.0)
             self.assertFalse(bool(info.is_accepted))
