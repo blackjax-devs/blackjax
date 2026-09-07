@@ -227,8 +227,14 @@ class MultiChainDetail(NamedTuple):
         escalated metric is deployed.
     ``deployed_metric_route``
         What the kernel will actually use: ``ROUTE_DIAGONAL`` before escalation,
-        else ``ROUTE_W``/``ROUTE_T``.  ``BOTH`` firing deploys the W metric, so
-        this is genuinely not recoverable from the branch fields alone.
+        else ``ROUTE_W``/``ROUTE_T``.  ``BOTH`` firing deploys the W metric.
+
+        This *is* derivable, from ``has_escalated`` and
+        ``detection_branch_history``, by reapplying the controller's own routing
+        rule (``BOTH`` and ``W`` both route to W).  It is carried anyway so that
+        reading the record never requires reimplementing that rule — the same
+        trade the unit fields make.  Do not read it as information held nowhere
+        else; see the module docstring's list of what genuinely is.
 
     Attributes
     ----------
@@ -411,16 +417,6 @@ class MetricPublicationRecord(NamedTuple):
     deployed_full: Any = None
     single_chain: Any = None
     multi_chain: Any = None
-
-
-#: Fields the staged-adaptation host stamps after ``final()`` returns.
-HOST_STAMPED_FIELDS: tuple[str, ...] = (
-    "warmup_step_index",
-    "epsilon_in_force",
-    "epsilon_after_window_da",
-    "epsilon_window_average",
-    "epsilon_next_window",
-)
 
 
 def encode_gates(**bits: Any) -> Array:
