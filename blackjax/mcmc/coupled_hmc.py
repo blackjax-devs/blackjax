@@ -216,7 +216,11 @@ def _as_pair(value, name: str) -> tuple:
     Nothing is broadcast: a value shared by both marginals must be written
     ``(value, value)``.  Positions, metrics and step sizes can themselves be
     tuples, so inferring a pair from a bare value would be ambiguous exactly
-    where the mistake is most costly.
+    where the mistake is most costly -- and the cost is silent.  A bare dense
+    ``(d, d)`` inverse mass matrix, if it were unpacked as a pair, would index
+    to its first two ROWS: the first marginal would run with row 0 as a
+    *diagonal* metric and the second with row 1.  The shapes are plausible, the
+    run completes, and the results are wrong with nothing raised anywhere.
     """
     if isinstance(value, tuple) and len(value) == 2:
         return value
@@ -682,8 +686,15 @@ def _reflection_unit(direction: Array) -> Array:
 
     The direction is first divided by its largest absolute entry, so a
     direction whose norm would overflow or underflow in the working dtype is
-    still normalised correctly.  A direction that is exactly zero is returned
-    as zero, which makes the reflection the identity map.
+    still normalised correctly.  This is load-bearing rather than defensive, and
+    the failure it prevents is silent.  At float32 -- BlackJAX's default -- a
+    difference like ``[1e20, -2e20, 5e19, 3e20]`` has a norm that overflows, so
+    a naive ``d / norm(d)`` yields exactly zero: the reflection would quietly
+    become the identity and the pair would report ``reflection_unit = 0`` while
+    running synchronous coupling under a reflection label.  The mirrored
+    underflow case yields infinities.  Both are reachable for a diverging chain.
+    A direction that is exactly zero is returned as zero, which makes the
+    reflection the identity map -- that case is intended and documented.
 
     A direction containing a non-finite entry propagates as non-finite rather
     than silently producing a plausible-looking unit vector.
