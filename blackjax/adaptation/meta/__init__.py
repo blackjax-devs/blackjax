@@ -58,6 +58,8 @@ Submodule layout
     Core builder functions: build_meta_adaptation_core, build_multi_chain_meta_core.
 :mod:`~blackjax.adaptation.meta.verdict`
     Post-run verdict extractors: extract_meta_verdict, extract_multi_chain_verdict.
+    Opt-in publication telemetry (single-chain): MetricPublicationRecord,
+    publication_adapt_info_fn, extract_publication_chronology, decode_gates.
 """
 from blackjax.adaptation.meta._calibration import (
     _mc_detection_edge,
@@ -69,8 +71,29 @@ from blackjax.adaptation.meta._detection import (
 )
 from blackjax.adaptation.meta._state import (
     MetaAdaptationCoreState,
+    MetaAdaptationTelemetryCoreState,
     MetaAdaptationVerdict,
     MultiChainMetaAdaptationCoreState,
+    MultiChainMetaAdaptationTelemetryCoreState,
+)
+from blackjax.adaptation.meta._telemetry import (
+    BRANCH_BOTH,
+    BRANCH_NONE,
+    BRANCH_T,
+    BRANCH_W,
+    GATE_BITS,
+    ROUTE_DIAGONAL,
+    ROUTE_T,
+    ROUTE_W,
+    SCHEMA_VERSION,
+    CandidateSummary,
+    MetricPublicationRecord,
+    MultiChainDetail,
+    SingleChainDetail,
+    decode_gates,
+    extract_publication_chronology,
+    publication_adapt_info_fn,
+    record_nbytes,
 )
 from blackjax.adaptation.meta.builders import (
     build_meta_adaptation_core,
@@ -83,8 +106,27 @@ from blackjax.adaptation.meta.verdict import (
 
 __all__ = [
     "MetaAdaptationCoreState",
+    "MetaAdaptationTelemetryCoreState",
     "MetaAdaptationVerdict",
+    "MetricPublicationRecord",
+    "SCHEMA_VERSION",
+    "decode_gates",
+    "extract_publication_chronology",
+    "publication_adapt_info_fn",
+    "record_nbytes",
     "MultiChainMetaAdaptationCoreState",
+    "MultiChainMetaAdaptationTelemetryCoreState",
+    "MultiChainDetail",
+    "SingleChainDetail",
+    "CandidateSummary",
+    "GATE_BITS",
+    "BRANCH_NONE",
+    "BRANCH_W",
+    "BRANCH_T",
+    "BRANCH_BOTH",
+    "ROUTE_DIAGONAL",
+    "ROUTE_W",
+    "ROUTE_T",
     "build_meta_adaptation_core",
     "build_multi_chain_meta_core",
     "extract_meta_verdict",

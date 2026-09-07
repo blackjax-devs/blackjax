@@ -583,3 +583,59 @@ def _fill_mc_state(
         grads_buffer=grads_buf,
         buffer_idx=jnp.array(n_fill, dtype=jnp.int32),
     )
+
+
+def _make_mc_both_branches(M, n, d, mean_scale=1.0, seed=_RNG_SEED):
+    """Buffers that make BOTH the W and T branches escalate in the same window.
+
+    Composes the two single-branch fixtures: the deep within-chain spread that
+    drives the W branch, plus the evenly-spread chain-mean offsets that drive
+    the T branch.
+
+    The gradients are shifted alongside the positions.  **This does not make the
+    score exact for the shifted geometry**, contrary to what this docstring
+    previously claimed: the base fixture's score is ``-Sigma^-1 x`` for the
+    anisotropic ``Sigma``, not ``-x``, so shifting by ``o_m`` yields the score of
+    a distribution whose mean lies along the within-chain direction rather than
+    at ``o_m`` where the draws sit.  What the shift actually does is shrink the
+    per-chain gradient intercept, which matters because
+    ``_compute_mode_consistency_flag`` reads the RAW gradient buffer: intercept
+    heterogeneity is the GAIN that raises ``any_mode_flag``, and if it fired,
+    ``t_unimodality`` would resolve False, T could not escalate and the BOTH
+    outcome would not occur.  The fixture's margin against that gate is
+    undocumented and unmeasured -- see the review follow-ups.
+
+    Used to check that a record distinguishes "both branches fired" from "which
+    metric was deployed": the controller sets ``_DETECTION_BRANCH_BOTH`` but
+    routes to the W metric.
+    """
+    draws_w, grads_w = _make_mc_deep_spread(M, n, d, seed=seed)
+    draws_t, _ = _make_mc_even_spread(M, n, d, seed=seed)
+    offsets = draws_t.mean(axis=1, keepdims=True) * mean_scale
+    return draws_w + offsets, grads_w - offsets
+
+
+def _make_mc_converging_split_chains(
+    M, n, d, separation=12.0, decay_rate=3.0, noise_scale=0.4, seed=_RNG_SEED
+):
+    """Chains that are gap-stat mode-split yet measurably contracting.
+
+    Isolates branch (i) of the T-branch three-way unimodality rule.  Chain-mean
+    offsets sit in two tight clusters along one axis, so ``_unimodality_gap_stat``
+    reports ``is_unimodal=False``; every chain then decays toward the grand mean
+    across the window, so ``_compute_contraction_stat`` clears the convergence
+    threshold.  The resolved outcome is therefore True **only** via the
+    ``is_converging`` override -- with ``is_unimodal=True`` (as in every other
+    multi-chain fixture) the two branches agree and the test cannot tell them
+    apart.
+
+    Scores are the exact-linear ``g = -x`` for the realised draws.
+    """
+    key = jax.random.key(seed)
+    _, k_noise = jax.random.split(key)
+    axis = jnp.zeros(d).at[0].set(1.0)
+    cluster = (jnp.arange(M) < M // 2).astype(jnp.float32) * 2.0 - 1.0
+    offsets = (cluster[:, None, None] * separation) * axis[None, None, :]
+    decay = jnp.exp(-decay_rate * jnp.arange(n, dtype=jnp.float32) / n)[None, :, None]
+    draws = offsets * decay + jax.random.normal(k_noise, (M, n, d)) * noise_scale
+    return draws, -draws

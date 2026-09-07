@@ -78,7 +78,24 @@ from blackjax.adaptation.meta._signals import (
 )
 from blackjax.adaptation.meta._state import (
     MetaAdaptationCoreState,
+    MetaAdaptationTelemetryCoreState,
     MultiChainMetaAdaptationCoreState,
+    MultiChainMetaAdaptationTelemetryCoreState,
+)
+from blackjax.adaptation.meta._telemetry import (
+    BRANCH_NONE,
+    ROUTE_DIAGONAL,
+    ROUTE_T,
+    ROUTE_W,
+    MetricPublicationRecord,
+    MultiChainDetail,
+    SingleChainDetail,
+    _effective_rank,
+    _logdet,
+    _sigma_gm,
+    candidate_summary,
+    empty_record,
+    encode_gates,
 )
 from blackjax.adaptation.metric_estimators import _compute_low_rank_metric
 from blackjax.adaptation.metric_recipes import MetricCore
@@ -92,6 +109,8 @@ def build_meta_adaptation_core(
     max_rank: int | None = None,
     gamma: float = 1e-5,
     cutoff: float = 2.0,
+    telemetry: bool = False,
+    full_matrices: bool = False,
 ) -> MetricCore:
     """Build the meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.
 
@@ -104,22 +123,63 @@ def build_meta_adaptation_core(
         Maximum low-rank rank; ``None`` uses :data:`~blackjax.adaptation.meta._calibration._MAX_RANK_CAP`.
     gamma, cutoff
         Fisher-estimator parameters; defaults match ``fisher_low_rank`` recipe.
+    telemetry
+        When ``True`` the core carries a
+        :class:`~blackjax.adaptation.meta._telemetry.MetricPublicationRecord`
+        describing each window-boundary publication, and its state type is
+        :class:`~blackjax.adaptation.meta._state.MetaAdaptationTelemetryCoreState`
+        instead of :class:`~blackjax.adaptation.meta._state.MetaAdaptationCoreState`.
+
+        This is pure observation: no threshold, gate, ordering or published
+        metric changes.  ``telemetry=False`` (the default) is a Python-time
+        constant, so no record is built and nothing extra is traced -- the
+        default path keeps the original state type, treedef and arithmetic.
+
+        The record's four epsilon fields are left NaN by the core, which cannot
+        see the step-size state; the ``staged_adaptation`` host fills them in.
+        Calling ``final()`` directly therefore yields NaN epsilons by design.
+    full_matrices
+        When ``True`` (and ``telemetry=True``) the record also carries the full
+        candidate and deployed :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`
+        factors.  These are ``O(d*k)`` per record and per step; off by default.
 
     Returns
     -------
     MetricCore
         Embeddable init/update/final bundle.
     """
+    if full_matrices and not telemetry:
+        raise ValueError(
+            "build_meta_adaptation_core: full_matrices=True requires telemetry=True; "
+            "there is no record to attach the matrices to otherwise."
+        )
     _max_rank: int = _MAX_RANK_CAP if max_rank is None else max_rank
     max_budget_steps: int = max(max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP, 1)
+    _state_cls = (
+        MetaAdaptationTelemetryCoreState if telemetry else MetaAdaptationCoreState
+    )
 
-    def init(n_dims: int) -> MetaAdaptationCoreState:
+    def init(n_dims: int):
         # half-budget ceiling; overflow is safe — RESET keeps the most-recent B draws
         buf = min(max(max_budget_steps // 2, 256), max_budget_steps)
         buf = max(buf, 2 * (_max_rank + 1) * _MIN_TRAIN_K_RATIO)
         buf = min(buf, max_budget_steps)
         actual_rank = min(_max_rank, max(n_dims // 2, 1), _MAX_RANK_CAP)
-        return MetaAdaptationCoreState(
+        extra = (
+            {
+                "publication": empty_record(
+                    n_dims,
+                    actual_rank,
+                    jnp.zeros(()).dtype,
+                    n_chains=1,
+                    multi_chain=False,
+                    full_matrices=full_matrices,
+                )
+            }
+            if telemetry
+            else {}
+        )
+        return _state_cls(
             inverse_mass_matrix=LowRankInverseMassMatrix(
                 sigma=jnp.ones(n_dims),
                 U=jnp.zeros((n_dims, actual_rank)),
@@ -143,10 +203,11 @@ def build_meta_adaptation_core(
             airm_vel_prev=jnp.array(float("inf"), dtype=jnp.float32),
             airm_vel_curr=jnp.array(float("inf"), dtype=jnp.float32),
             is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
+            **extra,
         )
 
     def update(
-        state: MetaAdaptationCoreState,
+        state,
         position: ArrayLikeTree,
         grad: ArrayLikeTree | None = None,
     ) -> MetaAdaptationCoreState:
@@ -169,9 +230,12 @@ def build_meta_adaptation_core(
             budget_used=state.budget_used + 1,
         )
 
-    def final(state: MetaAdaptationCoreState) -> MetaAdaptationCoreState:
+    def final(state):
         """Window-boundary controller: compute signals → escalation decision →
         choose IMM → hard-reset buffer (v1 reset policy always).
+
+        Returns the same concrete state type it was given, so the telemetry
+        and default paths share this body.
         """
         B, d = state.draws_buffer.shape
         n = jnp.minimum(state.buffer_idx, jnp.int32(B))  # cap at B (Fix 4)
@@ -284,7 +348,92 @@ def build_meta_adaptation_core(
             state.converged_at_step,
         )
 
-        return MetaAdaptationCoreState(
+        def _publication() -> dict:
+            """Build the window's publication record, or {} when telemetry is off.
+
+            Called before the buffer reset below, from the live locals above --
+            no candidate is reconstructed from cleared buffers.
+
+            The two masks mean different things and are not nested.
+            ``gate_predicate_true`` is the RAW truth of each predicate as the
+            controller computed it.  JAX's ``&`` is eager, so every predicate is
+            computed on every window including after escalation and including
+            when a sibling conjunct is false; the raw values stay reportable.
+            ``escalation_gate_applicable`` says whether the predicate bears on a
+            NEW escalation decision: clear once ``has_escalated`` holds, and
+            clear for the stability test until a previous S_gap exists.
+            """
+            if not telemetry:
+                return {}
+
+            prev = state.publication
+            window_index = prev.window_index + jnp.int32(1)
+            escalation_open = ~state.has_escalated
+
+            # Raw predicate truth.  s_gap_prev_valid is an availability
+            # condition, not part of the stability predicate itself, so it is
+            # reported through applicability rather than folded in here.
+            predicate_true = encode_gates(
+                deadline=deadline_ok,
+                sc_r2=r2_gate,
+                sc_s_gap_magnitude=s_gap_new >= _S_MIN,
+                sc_s_gap_stability=relative_change < _S_GAP_STABILITY_TOL,
+            )
+            applicable = encode_gates(
+                deadline=escalation_open,
+                sc_r2=escalation_open,
+                sc_s_gap_magnitude=escalation_open,
+                sc_s_gap_stability=escalation_open & s_gap_prev_valid,
+            )
+
+            record = MetricPublicationRecord(
+                window_index=window_index,
+                # Host-owned: the core sees neither the scan index nor the
+                # step-size state.  Carried forward, then overwritten.
+                warmup_step_index=prev.warmup_step_index,
+                core_updates_per_chain=state.budget_used.astype(jnp.int32),
+                core_chain_updates_total=state.budget_used.astype(jnp.int32),
+                n_chains=jnp.array(1, dtype=jnp.int32),
+                dim=jnp.array(d, dtype=jnp.int32),
+                support_per_chain=n.astype(jnp.int32),
+                support_pooled_rows=n.astype(jnp.int32),
+                buffer_capacity=jnp.array(B, dtype=jnp.int32),
+                buffer_capacity_reached=state.buffer_idx >= jnp.int32(B),
+                dropped_draws=jnp.maximum(
+                    state.buffer_idx - jnp.int32(B), jnp.int32(0)
+                ).astype(jnp.int32),
+                gate_predicate_true=predicate_true,
+                escalation_gate_applicable=applicable,
+                escalated_now=escalate_now,
+                has_escalated_before=state.has_escalated,
+                has_escalated=new_has_escalated,
+                escalation_rank_stored=new_escalation_rank.astype(jnp.int32),
+                deployed_effective_rank=_effective_rank(chosen_imm),
+                deployed_logdet=_logdet(chosen_imm),
+                deployed_sigma_gm=_sigma_gm(chosen_imm),
+                in_force_logdet=_logdet(state.inverse_mass_matrix),
+                r2_raw=r2_new.astype(jnp.float32),
+                r2_mode=mode_new,
+                is_slow_mixing=is_slow,
+                epsilon_in_force=prev.epsilon_in_force,
+                epsilon_after_window_da=prev.epsilon_after_window_da,
+                epsilon_window_average=prev.epsilon_window_average,
+                epsilon_next_window=prev.epsilon_next_window,
+                deployed_full=chosen_imm if full_matrices else None,
+                single_chain=SingleChainDetail(
+                    detection_rank=k_new.astype(jnp.int32),
+                    s_gap=s_gap_new.astype(jnp.float32),
+                    s_gap_prev=state.s_gap_curr.astype(jnp.float32),
+                    s_gap_relative_change=relative_change.astype(jnp.float32),
+                    candidate=candidate_summary(
+                        lr_imm, chosen_imm, full_matrices=full_matrices
+                    ),
+                ),
+                multi_chain=None,
+            )
+            return {"publication": record}
+
+        return state._replace(
             inverse_mass_matrix=chosen_imm,
             mu_star=chosen_mu,
             draws_buffer=jnp.zeros_like(state.draws_buffer),
@@ -304,6 +453,7 @@ def build_meta_adaptation_core(
             airm_vel_prev=new_airm_vel_prev,
             airm_vel_curr=new_airm_vel_curr,
             is_slow_mixing=is_slow,
+            **_publication(),
         )
 
     return MetricCore(init=init, update=update, final=final)
@@ -316,6 +466,8 @@ def build_multi_chain_meta_core(
     max_rank: int | None = None,
     gamma: float = 1e-5,
     cutoff: float = 2.0,
+    telemetry: bool = False,
+    full_matrices: bool = False,
 ) -> MetricCore:
     """Build the multi-chain meta-adaptation :class:`~blackjax.adaptation.metric_recipes.MetricCore`.
 
@@ -371,6 +523,11 @@ def build_multi_chain_meta_core(
         Embeddable init/update/final bundle.  ``update`` expects ``position``
         of shape ``(n_chains, d)`` and ``grad`` of shape ``(n_chains, d)``.
     """
+    if full_matrices and not telemetry:
+        raise ValueError(
+            "build_multi_chain_meta_core: full_matrices=True requires telemetry=True; "
+            "there is no record to attach the matrices to otherwise."
+        )
     if n_chains < 2:
         raise ValueError(
             f"build_multi_chain_meta_core: n_chains must be >= 2, got {n_chains}. "
@@ -389,19 +546,38 @@ def build_multi_chain_meta_core(
             stacklevel=2,
         )
     _max_rank: int = _MAX_RANK_CAP if max_rank is None else max_rank
+    _state_cls = (
+        MultiChainMetaAdaptationTelemetryCoreState
+        if telemetry
+        else MultiChainMetaAdaptationCoreState
+    )
     # Per-chain step budget: total budget divided across M chains
     max_budget_steps_total: int = max(
         max_grad_budget // _ASSUMED_AVG_LEAPFROGS_PER_STEP, 1
     )
     max_budget_steps_per_chain: int = max(max_budget_steps_total // n_chains, 1)
 
-    def init(n_dims: int) -> MultiChainMetaAdaptationCoreState:
+    def init(n_dims: int):
         # half-budget ceiling per chain; same logic as single-chain init
         buf = min(max(max_budget_steps_per_chain // 2, 256), max_budget_steps_per_chain)
         buf = max(buf, 2 * (_max_rank + 1) * _MIN_TRAIN_K_RATIO)
         buf = min(buf, max_budget_steps_per_chain)
         actual_rank = min(_max_rank, max(n_dims // 2, 1), _MAX_RANK_CAP)
-        return MultiChainMetaAdaptationCoreState(
+        extra = (
+            {
+                "publication": empty_record(
+                    n_dims,
+                    actual_rank,
+                    jnp.zeros(()).dtype,
+                    n_chains=n_chains,
+                    multi_chain=True,
+                    full_matrices=full_matrices,
+                )
+            }
+            if telemetry
+            else {}
+        )
+        return _state_cls(
             inverse_mass_matrix=LowRankInverseMassMatrix(
                 sigma=jnp.ones(n_dims),
                 U=jnp.zeros((n_dims, actual_rank)),
@@ -434,10 +610,11 @@ def build_multi_chain_meta_core(
             r1_top=jnp.array(float("nan"), dtype=jnp.float32),
             detection_branch=jnp.array(_DETECTION_BRANCH_NONE, dtype=jnp.int32),
             unimodality_flag_count=jnp.zeros((), dtype=jnp.int32),
+            **extra,
         )
 
     def update(
-        state: MultiChainMetaAdaptationCoreState,
+        state,
         positions: Array,
         grads: Array,
     ) -> MultiChainMetaAdaptationCoreState:
@@ -478,9 +655,7 @@ def build_multi_chain_meta_core(
             budget_used=state.budget_used + n_chains,
         )
 
-    def final(
-        state: MultiChainMetaAdaptationCoreState,
-    ) -> MultiChainMetaAdaptationCoreState:
+    def final(state):
         """Window-boundary controller: W-branch ∪ T-branch detection (v2.1).
 
         v2.1 two-branch union:
@@ -823,7 +998,160 @@ def build_multi_chain_meta_core(
             state.converged_at_step,
         )
 
-        return MultiChainMetaAdaptationCoreState(
+        def _publication() -> dict:
+            """Build the window's publication record, or {} when telemetry is off.
+
+            Built from the live locals above, before the buffer reset below.
+
+            The masks follow the same contract as the single-chain path: raw
+            predicate truth in one, applicability to a NEW escalation in the
+            other, and no nesting between them.  Every predicate here is
+            computed unconditionally by the expressions above -- ``&`` is eager
+            -- so the raw values remain meaningful after escalation, which
+            matters because the deferral latch below is gated on ``~escalate_T``
+            and NOT on ``has_escalated``, and so can fire post-escalation.
+            """
+            if not telemetry:
+                return {}
+
+            prev = state.publication
+            prev_mc = prev.multi_chain
+            window_index = prev.window_index + jnp.int32(1)
+            escalation_open = ~state.has_escalated
+
+            predicate_true = encode_gates(
+                deadline=deadline_ok,
+                w_magnitude=w_magnitude,
+                w_psi=w_psi_gate,
+                w_r1=w_r1_gate,
+                w_r2_raw=r2_gate_w,
+                t_magnitude=t_magnitude,
+                t_collinearity=t_collinearity,
+                t_loo=t_loo,
+                t_support=t_support,
+                t_unimodality=t_unimodality,
+                t_r2_routed=r2_gate,
+            )
+            applicable = encode_gates(
+                deadline=escalation_open,
+                w_magnitude=escalation_open,
+                w_psi=escalation_open,
+                w_r1=escalation_open,
+                w_r2_raw=escalation_open,
+                t_magnitude=escalation_open,
+                t_collinearity=escalation_open,
+                t_loo=escalation_open,
+                t_support=escalation_open,
+                t_unimodality=escalation_open,
+                t_r2_routed=escalation_open,
+            )
+
+            # What fired now, what the carried history says, and what is
+            # actually deployed are three different answers.  BOTH firing
+            # deploys the W metric.  The route IS derivable from
+            # has_escalated plus the carried branch by reapplying the routing
+            # rule below; it is reported so a consumer never has to.
+            branch_fired = jnp.where(
+                escalate_W & escalate_T,
+                jnp.int32(_DETECTION_BRANCH_BOTH),
+                jnp.where(
+                    escalate_W,
+                    jnp.int32(_DETECTION_BRANCH_POOLED_WITHIN),
+                    jnp.where(
+                        escalate_T,
+                        jnp.int32(_DETECTION_BRANCH_BETWEEN_MEANS),
+                        jnp.int32(BRANCH_NONE),
+                    ),
+                ),
+            )
+            deployed_route = jnp.where(
+                new_has_escalated,
+                jnp.where(prev_was_w, jnp.int32(ROUTE_W), jnp.int32(ROUTE_T)),
+                jnp.int32(ROUTE_DIAGONAL),
+            )
+            # Stamped only on the genuine NONE -> non-NONE transition of the
+            # controller's own carried branch, and unchanged afterwards.
+            branch_first_set = jnp.where(
+                (state.detection_branch == jnp.int32(BRANCH_NONE))
+                & (new_detection_branch != jnp.int32(BRANCH_NONE)),
+                window_index,
+                prev_mc.branch_first_set_at_window,
+            )
+
+            record = MetricPublicationRecord(
+                window_index=window_index,
+                warmup_step_index=prev.warmup_step_index,
+                # budget_used advances by n_chains per core update, so the
+                # per-chain count divides it back out.  Neither is a warmup
+                # step count.
+                core_updates_per_chain=(
+                    state.budget_used // jnp.int32(n_chains)
+                ).astype(jnp.int32),
+                core_chain_updates_total=state.budget_used.astype(jnp.int32),
+                n_chains=jnp.array(n_chains, dtype=jnp.int32),
+                dim=jnp.array(d, dtype=jnp.int32),
+                support_per_chain=n.astype(jnp.int32),
+                support_pooled_rows=(n.astype(jnp.int32) * jnp.int32(M_stat)).astype(
+                    jnp.int32
+                ),
+                buffer_capacity=jnp.array(B, dtype=jnp.int32),
+                buffer_capacity_reached=state.buffer_idx >= jnp.int32(B),
+                dropped_draws=jnp.maximum(
+                    state.buffer_idx - jnp.int32(B), jnp.int32(0)
+                ).astype(jnp.int32),
+                gate_predicate_true=predicate_true,
+                escalation_gate_applicable=applicable,
+                escalated_now=escalate_now,
+                has_escalated_before=state.has_escalated,
+                has_escalated=new_has_escalated,
+                escalation_rank_stored=new_escalation_rank.astype(jnp.int32),
+                deployed_effective_rank=_effective_rank(chosen_imm),
+                deployed_logdet=_logdet(chosen_imm),
+                deployed_sigma_gm=_sigma_gm(chosen_imm),
+                in_force_logdet=_logdet(state.inverse_mass_matrix),
+                r2_raw=r2_new.astype(jnp.float32),
+                r2_mode=mode_new,
+                is_slow_mixing=jnp.zeros((), dtype=jnp.bool_),
+                epsilon_in_force=prev.epsilon_in_force,
+                epsilon_after_window_da=prev.epsilon_after_window_da,
+                epsilon_window_average=prev.epsilon_window_average,
+                epsilon_next_window=prev.epsilon_next_window,
+                deployed_full=chosen_imm if full_matrices else None,
+                single_chain=None,
+                multi_chain=MultiChainDetail(
+                    branch_fired_this_window=branch_fired,
+                    detection_branch_history=new_detection_branch.astype(jnp.int32),
+                    deployed_metric_route=deployed_route,
+                    branch_first_set_at_window=branch_first_set,
+                    t_detection_rank=k_new.astype(jnp.int32),
+                    r2_routed=r2_routing.astype(jnp.float32),
+                    is_converging=is_converging,
+                    is_unimodal=is_unimodal,
+                    any_mode_flag=any_mode_flag,
+                    t_unimodality_resolved=t_unimodality,
+                    t_contraction_stat=t_contr.astype(jnp.float32),
+                    unimodality_gap_ratio=_gap_ratio.astype(jnp.float32),
+                    unimodality_flag_count=new_flag_count.astype(jnp.int32),
+                    deferred_to_ensemble=new_deferred,
+                    chain_collinearity_f1=f1.astype(jnp.float32),
+                    within_lam1=lam1_w.astype(jnp.float32),
+                    chain_consistency_psi=psi_w.astype(jnp.float32),
+                    r1_top=r1_w.astype(jnp.float32),
+                    # Both candidates, built before routing and not
+                    # interchangeable.  Before escalation both are discarded;
+                    # afterwards the historical route deploys a freshly
+                    # computed one, so these are not always "the withheld one".
+                    candidate_w=candidate_summary(
+                        w_lr_imm, chosen_imm, full_matrices=full_matrices
+                    ),
+                    candidate_t=candidate_summary(
+                        t_lr_imm, chosen_imm, full_matrices=full_matrices
+                    ),
+                ),
+            )
+            return {"publication": record}
+
+        return state._replace(
             inverse_mass_matrix=chosen_imm,
             mu_star=chosen_mu,
             draws_buffer=jnp.zeros_like(state.draws_buffer),
@@ -851,6 +1179,7 @@ def build_multi_chain_meta_core(
             r1_top=r1_w.astype(jnp.float32),
             detection_branch=new_detection_branch,
             unimodality_flag_count=new_flag_count,
+            **_publication(),
         )
 
     return MetricCore(init=init, update=update, final=final)
