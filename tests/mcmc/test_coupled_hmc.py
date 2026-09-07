@@ -29,6 +29,7 @@ import jax.numpy as jnp
 import numpy as np
 from absl.testing import absltest, parameterized
 
+import blackjax
 from blackjax.base import SamplingAlgorithm
 from blackjax.mcmc import coupled_hmc, integrators, metrics, trajectory
 from blackjax.mcmc.hmc import HMCState, flip_momentum
@@ -925,6 +926,120 @@ class CoupledHMCContractTest(BlackJAXTest):
             coupled_hmc.validate_marginal_inputs(good, -0.1, 4)
         with self.assertRaisesRegex(ValueError, "num_integration_steps.*positive"):
             coupled_hmc.validate_marginal_inputs(good, 0.1, 0)
+
+    def test_warmup_output_is_accepted_without_hand_casting(self):
+        """A real ``window_adaptation`` payload must drive the pair directly.
+
+        Warmup returns ``step_size`` as a zero-dimensional JAX array, so a
+        validator that insisted on a Python float would force every caller to
+        cast ordinary BlackJAX output before use.
+        """
+        warmup = blackjax.window_adaptation(
+            blackjax.hmc, _standard_normal_logdensity, num_integration_steps=5
+        )
+        (_, parameters), _ = warmup.run(
+            self.next_key(), jnp.ones((_DIM,)), num_steps=120
+        )
+        step_size = parameters["step_size"]
+        inverse_mass_matrix = parameters["inverse_mass_matrix"]
+        # Precondition for this test to mean anything: it is not a plain float.
+        self.assertFalse(isinstance(step_size, float))
+        self.assertEqual(jnp.ndim(step_size), 0)
+
+        algorithm = coupled_hmc.as_top_level_api(
+            (_standard_normal_logdensity,) * 2,
+            (step_size, step_size),
+            (inverse_mass_matrix, inverse_mass_matrix),
+            (5, 5),
+        )
+        state = algorithm.init((jnp.ones((_DIM,)), -jnp.ones((_DIM,))))
+        new_state, _ = algorithm.step(self.next_key(), state)
+        self.assertTrue(bool(jnp.all(jnp.isfinite(new_state.first.position))))
+
+    @parameterized.named_parameters(
+        {"testcase_name": "python_float", "value": 0.1},
+        {"testcase_name": "python_int", "value": 1},
+        {"testcase_name": "numpy_float32", "value": np.float32(0.1)},
+        {"testcase_name": "numpy_float64", "value": np.float64(0.1)},
+        {"testcase_name": "jax_scalar_f32", "value": jnp.asarray(0.1, jnp.float32)},
+    )
+    def test_step_size_accepts_ordinary_scalar_forms(self, value):
+        coupled_hmc.validate_marginal_inputs(jnp.ones((_DIM,)), value, 4)
+
+    @parameterized.named_parameters(
+        {"testcase_name": "bool", "value": True, "error": TypeError},
+        {"testcase_name": "numpy_bool", "value": np.bool_(True), "error": TypeError},
+        {"testcase_name": "complex", "value": 1 + 2j, "error": TypeError},
+        {
+            "testcase_name": "nonscalar",
+            "value": jnp.asarray([0.1, 0.2]),
+            "error": ValueError,
+        },
+        {"testcase_name": "nan", "value": float("nan"), "error": ValueError},
+        {"testcase_name": "inf", "value": float("inf"), "error": ValueError},
+    )
+    def test_step_size_refuses_inadmissible_scalar_forms(self, value, error):
+        """Accepting array forms must not also let bad values through."""
+        with self.assertRaises(error):
+            coupled_hmc.validate_marginal_inputs(jnp.ones((_DIM,)), value, 4)
+
+    @parameterized.named_parameters(
+        {"testcase_name": "python_int", "value": 4},
+        {"testcase_name": "numpy_int32", "value": np.int32(4)},
+        {"testcase_name": "jax_scalar_i32", "value": jnp.asarray(4, jnp.int32)},
+    )
+    def test_integration_count_accepts_integer_scalar_forms(self, value):
+        """The count contract: any concrete integer scalar, matching the engine.
+
+        All three forms already run through ``static_integration`` unchanged,
+        so the validator must not be stricter than the machinery it guards.
+        """
+        coupled_hmc.validate_marginal_inputs(jnp.ones((_DIM,)), 0.1, value)
+        _, step = coupled_hmc._build_prescribed_marginal(
+            _standard_normal_logdensity,
+            jnp.ones((_DIM,)),
+            0.1,
+            value,
+            integrators.velocity_verlet,
+            1000.0,
+        )
+        position = jnp.ones((_DIM,))
+        state = HMCState(
+            position,
+            _standard_normal_logdensity(position),
+            jax.grad(_standard_normal_logdensity)(position),
+        )
+        _, info = step(state, jnp.zeros((_DIM,)), jnp.asarray(0.5, position.dtype))
+        self.assertEqual(int(info.num_integration_steps), 4)
+
+    @parameterized.named_parameters(
+        {"testcase_name": "bool", "value": True, "error": TypeError},
+        {"testcase_name": "float", "value": 4.0, "error": TypeError},
+        {
+            "testcase_name": "jax_float_scalar",
+            "value": jnp.asarray(4.0, jnp.float32),
+            "error": TypeError,
+        },
+        {
+            "testcase_name": "nonscalar",
+            "value": jnp.asarray([4, 5]),
+            "error": ValueError,
+        },
+    )
+    def test_integration_count_refuses_inadmissible_forms(self, value, error):
+        """A floating count is refused, never silently truncated."""
+        with self.assertRaises(error):
+            coupled_hmc.validate_marginal_inputs(jnp.ones((_DIM,)), 0.1, value)
+
+    def test_eager_validation_refuses_a_tracer(self):
+        """Eager checks cannot read a traced value, and say so rather than pass."""
+
+        def under_jit(value):
+            coupled_hmc.validate_marginal_inputs(jnp.ones((_DIM,)), value, 4)
+            return value
+
+        with self.assertRaisesRegex(TypeError, "must be concrete"):
+            jax.jit(under_jit)(jnp.asarray(0.1))
 
     def test_the_convenience_api_validates_and_build_kernel_does_not(self):
         """Eager checks belong to the convenience API, not to the traced path.

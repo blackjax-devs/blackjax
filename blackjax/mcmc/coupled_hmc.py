@@ -70,7 +70,9 @@ below draw a single :math:`z` and hand each marginal a transformed copy:
 
     ``e`` comes from ``direction_fn``, which is fixed when the kernel is
     built and is evaluated on the *incoming* pair of states, before any
-    randomness for the transition is drawn.  The default direction is the
+    randomness for the transition is drawn and without being given any of it.
+    Supplying a ``direction_fn`` that is a pure function of its arguments is
+    the caller's part of the contract.  The default direction is the
     difference of the two positions whitened by the **first** marginal's
     metric, :math:`e \\propto A^{-1}(x_1 - x_2)`.  That particular choice is a
     heuristic: it is the direction along which, to leading order, the two
@@ -338,6 +340,63 @@ def _check_innovations(standard_normal, uniform, flat_position) -> None:
         raise ValueError("`standard_normal` must be finite")
 
 
+def _concrete_real_scalar(value, name: str) -> float:
+    """Read a concrete real scalar, accepting the array forms BlackJAX produces.
+
+    Warmup returns a step size as a zero-dimensional JAX array rather than a
+    Python float, and NumPy scalars are just as ordinary, so all of those are
+    accepted here: requiring callers to hand-cast routine BlackJAX output would
+    be a gratuitous obstacle.  Booleans, complex values, non-scalars and
+    non-finite values are still refused, and so are tracers -- this reads the
+    value, which is only possible when it is concrete.
+    """
+    if isinstance(value, jax.core.Tracer):
+        raise TypeError(
+            f"`{name}` must be concrete here; a traced value cannot be checked "
+            "eagerly. Use `build_kernel`, which performs no eager validation."
+        )
+    if isinstance(value, (bool, np.bool_)):
+        raise TypeError(f"`{name}` must be a real number, not a boolean")
+    array = np.asarray(value)
+    if array.ndim != 0:
+        raise ValueError(f"`{name}` must be a scalar; got shape {array.shape}")
+    if array.dtype == np.bool_ or not (
+        np.issubdtype(array.dtype, np.floating)
+        or np.issubdtype(array.dtype, np.integer)
+    ):
+        raise TypeError(
+            f"`{name}` must have a real floating or integer dtype; got {array.dtype}"
+        )
+    if not np.isfinite(array):
+        raise ValueError(f"`{name}` must be finite; got {array!r}")
+    return float(array)
+
+
+def _concrete_integer_scalar(value, name: str) -> int:
+    """Read a concrete integer scalar, accepting NumPy and JAX scalar forms.
+
+    A floating value is refused rather than truncated: silently rounding an
+    integration count would change the trajectory without telling anyone.
+    """
+    if isinstance(value, jax.core.Tracer):
+        raise TypeError(
+            f"`{name}` must be concrete here; a traced value cannot be checked "
+            "eagerly. Use `build_kernel`, which performs no eager validation."
+        )
+    if isinstance(value, (bool, np.bool_)):
+        raise TypeError(f"`{name}` must be an integer, not a boolean")
+    array = np.asarray(value)
+    if array.ndim != 0:
+        raise ValueError(f"`{name}` must be a scalar; got shape {array.shape}")
+    if not np.issubdtype(array.dtype, np.integer):
+        raise TypeError(
+            f"`{name}` must have an integer dtype; got {array.dtype}. It is not "
+            "rounded, because a silently truncated count would change the "
+            "trajectory."
+        )
+    return int(array)
+
+
 def validate_marginal_inputs(inverse_mass_matrix, step_size, num_integration_steps):
     """Eagerly validate one marginal's concrete metric and integration settings.
 
@@ -362,15 +421,9 @@ def validate_marginal_inputs(inverse_mass_matrix, step_size, num_integration_ste
     """
     inverse_mass_matrix = _check_metric_kind(inverse_mass_matrix)
 
-    if isinstance(step_size, bool) or not isinstance(step_size, (int, float)):
-        raise TypeError("`step_size` must be a real scalar")
-    if not np.isfinite(step_size) or step_size <= 0:
-        raise ValueError("`step_size` must be positive and finite")
-    if isinstance(num_integration_steps, bool) or not isinstance(
-        num_integration_steps, (int, np.integer)
-    ):
-        raise TypeError("`num_integration_steps` must be an integer")
-    if num_integration_steps <= 0:
+    if _concrete_real_scalar(step_size, "step_size") <= 0:
+        raise ValueError("`step_size` must be positive")
+    if _concrete_integer_scalar(num_integration_steps, "num_integration_steps") <= 0:
         raise ValueError("`num_integration_steps` must be positive")
 
     if isinstance(inverse_mass_matrix, metrics.LowRankInverseMassMatrix):
@@ -583,9 +636,11 @@ def _build_prescribed_pair(
     function, which is what makes the coupling separately checkable without
     also reasoning about key splitting.  It is internal to this module.
 
-    The reflection direction is measured here, from the incoming states only.
-    Neither ``direction_fn`` nor anything it is given has access to the
-    innovations this transition will use.
+    The reflection direction is measured here, and this function passes
+    ``direction_fn`` nothing but the incoming states and the first metric: the
+    innovations are not among its arguments.  Whether the returned direction is
+    genuinely free of them is a contract the caller keeps, since a callable may
+    close over anything.
     """
     logdensity_fns = _as_pair(logdensity_fn, "logdensity_fn")
     step_sizes = _as_pair(step_size, "step_size")
@@ -688,11 +743,14 @@ def build_kernel(
     ``coupling`` and ``direction_fn`` are fixed here, when the kernel is
     built, and not at call time.  The kernel evaluates ``direction_fn`` on the
     pair of incoming states before drawing any randomness for the transition,
-    so under BlackJAX's ordinary pure-function convention -- kernels take all
-    randomness through their ``rng_key`` argument and hold no hidden state --
-    the direction cannot depend on the innovations it will be used to reflect.
-    That is a property of the data flow here, not something enforceable
-    against an arbitrary Python callable.
+    and supplies it no innovations.
+
+    That is a statement about what this API hands over, not a guarantee about
+    what a caller's callable does.  A ``direction_fn`` that closes over
+    innovations, or draws its own randomness, breaks the reflection's marginal
+    correctness, and nothing here can detect it.  Keeping it a pure function of
+    the arguments it is given is the caller's part of the contract -- the same
+    purity convention every BlackJAX kernel already assumes.
 
     Parameters
     ----------
