@@ -369,6 +369,13 @@ class MetricPublicationRecord(NamedTuple):
         See the module docstring.  Not nested; decode with :func:`decode_gates`.
     escalated_now, has_escalated_before, has_escalated
         Escalation state around this window.
+
+        ``escalation_gate_applicable`` is computed against
+        ``has_escalated_before`` — the state on entry — not against
+        ``has_escalated``.  Validating the mask contract with the post-state
+        instead shows a spurious contradiction in exactly the escalation
+        window, where applicability bits are set and ``has_escalated`` is
+        already True.
     first_escalation_window_index
         ``window_index`` of the genuine ``False -> True`` transition of
         ``has_escalated``; ``-1`` until it happens, unchanged afterwards.
