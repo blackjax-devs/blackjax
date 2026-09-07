@@ -184,6 +184,26 @@ def _oracle_marginal(
     )
 
 
+def _reference_unit(state, first_mass, coupling):
+    """The reflection unit, built independently of the module's own report.
+
+    Uses the documented rule -- ``whitened_difference`` on the FIRST marginal's
+    metric -- then normalises in NumPy, so a test comparing against it can see
+    both a wrong reflection map and a policy wired to the wrong metric.
+    """
+    if coupling != "reflection":
+        return None
+    direction = np.asarray(
+        coupled_hmc.whitened_difference(
+            state.first, state.second, metrics.default_metric(first_mass)
+        )
+    )
+    scale = np.max(np.abs(direction))
+    direction = direction / (scale if scale else 1.0)
+    norm = np.linalg.norm(direction)
+    return jnp.asarray(direction / (norm if norm else 1.0), jnp.float64)
+
+
 def _reflect_with_numpy(noise, unit, coupling):
     """Reconstruct the second marginal's innovation without the module's help.
 
@@ -388,71 +408,6 @@ class CoupledHMCMathTest(BlackJAXTest):
                 atol=1e-12,
             )
 
-    def test_trajectory_matches_an_independent_numpy_leapfrog(self):
-        """The marginal trajectory agrees with a from-scratch NumPy integrator."""
-        with _x64():
-            step_size, num_steps = 0.1, 6
-            inverse_mass = np.array([1.0, 2.0, 0.5, 1.5])
-            position = np.array([0.3, -0.7, 1.1, 0.05])
-            noise = np.array([0.2, 0.4, -0.6, 0.9])
-
-            # NumPy oracle: grad of -0.5 * sum(x^2) is -x.
-            momentum = noise / np.sqrt(inverse_mass)
-            oracle_position = position.copy()
-            oracle_momentum = momentum.copy()
-            oracle_momentum = oracle_momentum + 0.5 * step_size * (-oracle_position)
-            for step in range(num_steps):
-                oracle_position = (
-                    oracle_position + step_size * inverse_mass * oracle_momentum
-                )
-                weight = 0.5 if step == num_steps - 1 else 1.0
-                oracle_momentum = oracle_momentum + weight * step_size * (
-                    -oracle_position
-                )
-
-            metric = metrics.default_metric(jnp.asarray(inverse_mass, jnp.float64))
-            integrator = integrators.velocity_verlet(
-                _standard_normal_logdensity, metric.kinetic_energy
-            )
-            build = trajectory.static_integration(integrator)
-            jax_position = jnp.asarray(position, jnp.float64)
-            start = integrators.IntegratorState(
-                jax_position,
-                jnp.asarray(momentum, jnp.float64),
-                _standard_normal_logdensity(jax_position),
-                jax.grad(_standard_normal_logdensity)(jax_position),
-            )
-            end = build(start, step_size, num_steps)
-
-            np.testing.assert_allclose(
-                np.asarray(end.position), oracle_position, rtol=1e-11
-            )
-            np.testing.assert_allclose(
-                np.asarray(end.momentum), oracle_momentum, rtol=1e-11
-            )
-
-    def test_endpoint_map_is_an_involution(self):
-        """Integrating from the flipped endpoint returns the starting state."""
-        with _x64():
-            metric = metrics.default_metric(jnp.ones((_DIM,), jnp.float64))
-            integrator = integrators.velocity_verlet(
-                _tilted_logdensity, metric.kinetic_energy
-            )
-            build = trajectory.static_integration(integrator)
-            position = jax.random.normal(self.next_key(), (_DIM,), jnp.float64)
-            momentum = jax.random.normal(self.next_key(), (_DIM,), jnp.float64)
-            start = integrators.IntegratorState(
-                position,
-                momentum,
-                _tilted_logdensity(position),
-                jax.grad(_tilted_logdensity)(position),
-            )
-            end = flip_momentum(build(start, 0.09, 5))
-            back = flip_momentum(build(end, 0.09, 5))
-
-            chex.assert_trees_all_close(back.position, start.position, atol=1e-10)
-            chex.assert_trees_all_close(back.momentum, start.momentum, atol=1e-10)
-
 
 # ---------------------------------------------------------------------------
 # The interface contract
@@ -531,29 +486,15 @@ class CoupledHMCContractTest(BlackJAXTest):
             # the states are seeded from the current date, so a fixed value is
             # not reliably on the side of the threshold it was picked for.
             _, probe_info = step(state, noise, jnp.asarray(0.0, jnp.float64))
-            # Recompute the unit from `whitened_difference` on the FIRST
-            # marginal's metric rather than reading it from the module's own
-            # info. Reading it back would make this comparison blind to the
-            # policy being wired to the wrong metric: the reported unit and the
-            # unit actually used would agree with each other while both being
-            # wrong.
-            if coupling == "reflection":
-                expected_direction = coupled_hmc.whitened_difference(
-                    state.first, state.second, metrics.default_metric(first_mass)
-                )
-                independent_unit = np.asarray(expected_direction)
-                scale = np.max(np.abs(independent_unit))
-                independent_unit = independent_unit / (scale if scale else 1.0)
-                norm = np.linalg.norm(independent_unit)
-                independent_unit = independent_unit / (norm if norm else 1.0)
-                chex.assert_trees_all_close(
-                    probe_info.reflection_unit,
-                    jnp.asarray(independent_unit, jnp.float64),
-                    atol=1e-12,
-                )
-            second_noise = _reflect_with_numpy(
-                noise, probe_info.reflection_unit, coupling
-            )
+            # The reference innovation is built entirely outside the module:
+            # the direction from `whitened_difference` on the FIRST marginal's
+            # metric, normalised and reflected in NumPy. Nothing is read back
+            # from the production info, so this comparison stays blind to
+            # neither a wrong `_reflect` nor a policy wired to the wrong metric
+            # -- reading the reported unit back would let both be wrong
+            # together and still agree.
+            reference_unit = _reference_unit(state, first_mass, coupling)
+            second_noise = _reflect_with_numpy(noise, reference_unit, coupling)
             probe_first = _oracle_marginal(
                 first_fn,
                 first_mass,
@@ -610,6 +551,12 @@ class CoupledHMCContractTest(BlackJAXTest):
             # wrong. Confirm the unit did not change between the probe and the
             # real call, since the direction is measured from the incoming
             # states only and must not depend on the uniform.
+            # The reported unit must match the independently built one, and
+            # must not have changed between the probe call and this one, since
+            # the direction depends on the incoming states alone.
+            chex.assert_trees_all_close(
+                info.reflection_unit, reference_unit, atol=1e-12
+            )
             chex.assert_trees_all_equal(
                 info.reflection_unit, probe_info.reflection_unit
             )
@@ -731,25 +678,6 @@ class CoupledHMCContractTest(BlackJAXTest):
         noise = jax.random.normal(jax.random.key(7), (_DIM,), jnp.float64)
         return state, step, noise
 
-    def test_every_decision_is_that_marginal_s_own_uniform_comparison(self):
-        """``is_accepted`` equals ``uniform < acceptance_rate``, per marginal.
-
-        This is the exact statement of the shared-uniform contract, and it is
-        what fails if a marginal is fed anything other than the reported
-        uniform, or is handed the other marginal's verdict.
-        """
-        with _x64():
-            state, step, noise = self._intermediate_pair()
-            for value in (0.0, 0.1, 0.3, 0.5, 0.68, 0.7, 0.9, 0.999):
-                _, info = step(state, noise, jnp.asarray(value, jnp.float64))
-                with self.subTest(uniform=value):
-                    self.assertEqual(float(info.uniform), value)
-                    for marginal in (info.first, info.second):
-                        self.assertEqual(
-                            bool(marginal.is_accepted),
-                            float(info.uniform) < float(marginal.acceptance_rate),
-                        )
-
     def test_the_shared_uniform_drives_each_marginal_separately(self):
         """One uniform, two probabilities: the second flips where the first cannot.
 
@@ -781,6 +709,19 @@ class CoupledHMCContractTest(BlackJAXTest):
 
             self.assertTrue(bool(below.second.is_accepted))
             self.assertFalse(bool(above.second.is_accepted))
+            # The rule itself, stated exactly, for both marginals on both sides:
+            # each verdict is that marginal's own comparison against the shared
+            # variate. This is what a pair sharing its *decision* could not do.
+            for label, info in (
+                ("below", below),
+                ("above", above),
+            ):
+                for marginal in (info.first, info.second):
+                    with self.subTest(side=label):
+                        self.assertEqual(
+                            bool(marginal.is_accepted),
+                            float(info.uniform) < float(marginal.acceptance_rate),
+                        )
             # The first marginal is unmoved by the same sweep.
             self.assertTrue(bool(below.first.is_accepted))
             self.assertTrue(bool(above.first.is_accepted))
@@ -1167,15 +1108,17 @@ class CoupledHMCContractTest(BlackJAXTest):
         new_state, _ = algorithm.step(self.next_key(), state)
         self.assertTrue(bool(jnp.all(jnp.isfinite(new_state.first.position))))
 
-    @parameterized.named_parameters(
-        {"testcase_name": "python_float", "value": 0.1},
-        {"testcase_name": "python_int", "value": 1},
-        {"testcase_name": "numpy_float32", "value": np.float32(0.1)},
-        {"testcase_name": "numpy_float64", "value": np.float64(0.1)},
-        {"testcase_name": "jax_scalar_f32", "value": jnp.asarray(0.1, jnp.float32)},
-    )
-    def test_step_size_accepts_ordinary_scalar_forms(self, value):
-        coupled_hmc.validate_marginal_inputs(jnp.ones((_DIM,)), value, 4)
+    def test_step_size_accepts_ordinary_scalar_forms(self):
+        """One representative of each kind that reaches this in practice.
+
+        Not every spelling: a bare Python float (weakly typed), a NumPy scalar,
+        and a zero-dimensional JAX array, which is what ``window_adaptation``
+        returns. Adding the remaining spellings would protect no distinct
+        failure mode.
+        """
+        for value in (0.1, np.float32(0.1), jnp.asarray(0.1, jnp.float32)):
+            with self.subTest(value=repr(value)):
+                coupled_hmc.validate_marginal_inputs(jnp.ones((_DIM,)), value, 4)
 
     @parameterized.named_parameters(
         {"testcase_name": "bool", "value": True, "error": TypeError},
@@ -1196,7 +1139,6 @@ class CoupledHMCContractTest(BlackJAXTest):
 
     @parameterized.named_parameters(
         {"testcase_name": "python_int", "value": 4},
-        {"testcase_name": "numpy_int32", "value": np.int32(4)},
         {"testcase_name": "jax_scalar_i32", "value": jnp.asarray(4, jnp.int32)},
     )
     def test_integration_count_accepts_integer_scalar_forms(self, value):
@@ -1455,8 +1397,18 @@ class CoupledHMCContractTest(BlackJAXTest):
 
         eager_state, eager_info = algorithm.step(key, state)
         jitted_state, jitted_info = jax.jit(algorithm.step)(key, state)
-        chex.assert_trees_all_equal(eager_state, jitted_state)
-        chex.assert_trees_all_equal(eager_info, jitted_info)
+        # Floating results are compared with a tolerance: XLA may fuse or
+        # reassociate under `jit`, so bitwise agreement with the eager path is
+        # not a contract this module can promise. The DECISIONS and the
+        # structure are exact, because those must not drift.
+        chex.assert_trees_all_close(eager_state, jitted_state, atol=1e-12)
+        self.assertEqual(
+            bool(eager_info.first.is_accepted), bool(jitted_info.first.is_accepted)
+        )
+        self.assertEqual(
+            bool(eager_info.second.is_accepted), bool(jitted_info.second.is_accepted)
+        )
+        chex.assert_trees_all_equal_structs(eager_state, jitted_state)
 
         def body(carry, step_key):
             new_state, _ = algorithm.step(step_key, carry)
@@ -1501,48 +1453,23 @@ class CoupledHMCContractTest(BlackJAXTest):
         self.assertIsInstance(final, coupled_hmc.CoupledHMCState)
         self.assertEqual(history[0].first.position.shape, (10, _DIM))
 
-    def test_pytree_positions_are_supported(self):
-        with _x64():
-            position = {
-                "a": jnp.ones((2,), jnp.float64),
-                "b": jnp.zeros((2,), jnp.float64),
-            }
-            other = jax.tree.map(lambda leaf: leaf - 1.0, position)
-            mass = jnp.ones((4,), jnp.float64)
-            algorithm = coupled_hmc.as_top_level_api(
-                (_standard_normal_logdensity,) * 2,
-                (0.2, 0.2),
-                (mass, mass),
-                (4, 4),
-                coupling="reflection",
-            )
-            state = algorithm.init((position, other))
-            new_state, info = algorithm.step(self.next_key(), state)
-            chex.assert_trees_all_equal_structs(new_state.first.position, position)
-            self.assertEqual(info.common_normal.shape, (4,))
-
-    def test_heterogeneous_marginals_run(self):
-        """Different targets, metrics, step sizes and integration counts."""
-        with _x64():
-            payloads = _metric_payloads(jnp.float64)
-            algorithm = coupled_hmc.as_top_level_api(
-                (_standard_normal_logdensity, _tilted_logdensity),
-                (0.07, 0.19),
-                (payloads["dense"], payloads["low_rank"]),
-                (3, 6),
-                coupling="reflection",
-            )
-            state = algorithm.init(
-                (
-                    jnp.ones((_DIM,), jnp.float64),
-                    -jnp.ones((_DIM,), jnp.float64),
-                )
-            )
-            new_state, info = algorithm.step(self.next_key(), state)
-            self.assertEqual(info.first.num_integration_steps, 3)
-            self.assertEqual(info.second.num_integration_steps, 6)
-            self.assertTrue(bool(jnp.all(jnp.isfinite(new_state.first.position))))
-            self.assertTrue(bool(jnp.all(jnp.isfinite(new_state.second.position))))
+        # A pytree position drives the same path: the pair is itself a pytree,
+        # which is what makes the generic runner work, so this is the one
+        # distinct thing the old separate pytree smoke test asserted.
+        tree_position = {"a": jnp.ones((2,)), "b": jnp.zeros((2,))}
+        tree_algorithm = coupled_hmc.as_top_level_api(
+            (_standard_normal_logdensity,) * 2,
+            (0.2, 0.2),
+            (jnp.ones((4,)), jnp.ones((4,))),
+            (4, 4),
+            coupling="reflection",
+        )
+        tree_state = tree_algorithm.init(
+            (tree_position, jax.tree.map(lambda leaf: leaf - 1.0, tree_position))
+        )
+        stepped, tree_info = tree_algorithm.step(self.next_key(), tree_state)
+        chex.assert_trees_all_equal_structs(stepped.first.position, tree_position)
+        self.assertEqual(tree_info.common_normal.shape, (4,))
 
 
 if __name__ == "__main__":

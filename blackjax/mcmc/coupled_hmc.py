@@ -71,10 +71,12 @@ below draw a single :math:`z` and hand each marginal a transformed copy:
     coupling quality, and none is made.
 
     ``e`` comes from ``direction_fn``, which is fixed when the kernel is
-    built and is evaluated on the *incoming* pair of states, before any
-    randomness for the transition is drawn and without being given any of it.
-    Supplying a ``direction_fn`` that is a pure function of its arguments is
-    the caller's part of the contract.  The default direction is the
+    built and is applied to the *incoming* pair of states.  It is given the two
+    states and the first metric, and no innovations.  Note that this is a
+    statement about its arguments, not about ordering: the kernel draws ``z``
+    and the uniform first and only then runs the transition that evaluates
+    ``direction_fn``.  Supplying a ``direction_fn`` that is a pure function of
+    its arguments is the caller's part of the contract.  The default direction is the
     difference of the two positions whitened by the **first** marginal's
     metric, :math:`e \\propto A^{-1}(x_1 - x_2)`.  That particular choice is a
     heuristic: it is the direction along which, to leading order, the two
@@ -257,7 +259,26 @@ def _check_metric_kind(inverse_mass_matrix):
 
 
 def _flat_position(position: ArrayLikeTree) -> tuple[Array, Callable]:
-    """Flatten a position, requiring one nonempty real floating dtype."""
+    """Flatten a position, requiring one nonempty real floating dtype.
+
+    The dtype compared here is the **effective** one -- what the leaf becomes
+    once JAX has it, via ``jnp.asarray`` -- not the dtype the caller's object
+    declares.  That is deliberate and is the opposite choice from
+    :func:`_check_innovations`, so the difference is worth stating.
+
+    A position is the thing everything else is measured against, and
+    ``ravel_pytree`` will convert its leaves regardless, so what matters is the
+    dtype they end up with.  Under JAX's default configuration a float64 leaf
+    becomes float32, and a position mixing float64 and float32 leaves is
+    therefore accepted: after conversion they genuinely agree, and there is no
+    later step at which they could disagree.
+
+    An innovation is a different case.  There the caller supplies a value that
+    is compared against an acceptance probability, so narrowing it silently
+    changes the number the Metropolis test uses.  :func:`_check_innovations`
+    consequently inspects the *declared* dtype and refuses a mismatch instead
+    of converting.  Neither function promises both notions at once.
+    """
     leaves = jax.tree.leaves(position)
     if not leaves:
         raise TypeError("positions must have at least one array leaf")
@@ -305,6 +326,8 @@ def _check_paired_positions(first_position, second_position) -> None:
     second_flat, _ = _flat_position(second_position)
     # No separate flat-shape check: equal tree structure with equal per-leaf
     # shapes already implies equal flattened shape.
+    # Effective dtype, per `_flat_position`: this compares what the positions
+    # become in the computation, not what the caller's objects declared.
     if first_flat.dtype != second_flat.dtype:
         raise TypeError(
             "paired positions must have matching floating dtypes, got "
@@ -363,17 +386,12 @@ def _check_innovations(standard_normal, uniform, flat_position) -> None:
     comparing dtypes afterwards compares two values that already agree and
     checks nothing.
 
-    Narrowing an innovation is not cosmetic.  A float64 uniform strictly below
-    one becomes exactly ``1.0`` in float32, which then fails ``uniform <
-    p_accept`` even when ``p_accept`` is one, silently turning a certain
-    acceptance into a rejection; and a float64 uniform anywhere in range
-    becomes a *different* float32, so the Metropolis test would use a value the
-    caller never supplied.
-
-    An array that declares a dtype must therefore match the position exactly.
-    A bare Python scalar declares none, is weakly typed, and is adopted -- so
-    for those the domain is checked on the value **as it will be used**, after
-    conversion, which is where a bad Python float would otherwise slip past.
+    Narrowing is not cosmetic: a float64 uniform below one becomes exactly
+    ``1.0`` in float32 and then rejects a certain acceptance, and one in range
+    becomes a *different* float32, so the test would use a value the caller
+    never gave.  An array declaring a dtype must match the position exactly; a
+    bare Python scalar declares none, is weakly typed and is adopted, so its
+    domain is checked after conversion instead.
     """
     if _declared_shape(standard_normal) != flat_position.shape:
         raise ValueError(
@@ -420,12 +438,10 @@ def _check_innovations(standard_normal, uniform, flat_position) -> None:
 def _concrete_real_scalar(value, name: str) -> float:
     """Read a concrete real scalar, accepting the array forms BlackJAX produces.
 
-    Warmup returns a step size as a zero-dimensional JAX array rather than a
-    Python float, and NumPy scalars are just as ordinary, so all of those are
-    accepted here: requiring callers to hand-cast routine BlackJAX output would
-    be a gratuitous obstacle.  Booleans, complex values, non-scalars and
-    non-finite values are still refused, and so are tracers -- this reads the
-    value, which is only possible when it is concrete.
+    Warmup returns a step size as a zero-dimensional JAX array, so requiring a
+    Python float would force callers to hand-cast routine BlackJAX output.
+    Booleans, complex values, non-scalars, non-finite values and tracers are
+    still refused.
     """
     if isinstance(value, jax.core.Tracer):
         raise TypeError(
@@ -452,11 +468,11 @@ def _concrete_real_scalar(value, name: str) -> float:
 def _concrete_integer_scalar(value, name: str) -> int:
     """Read a concrete integer scalar, accepting NumPy and JAX scalar forms.
 
-    A floating value is refused here rather than left to fail later.  It would
-    not be silently truncated in any case -- ``fori_loop`` rejects a float bound
-    -- but it does so with a message about loop bound types that never names the
-    parameter, and only once a trajectory is being built.  Refusing it at the
-    validation boundary is a diagnostic improvement, not a correctness guard.
+    A floating value is refused here rather than left to fail later. Nothing
+    truncates it -- ``fori_loop`` rejects a float bound -- but it does so with a
+    message about loop bound types that never names the parameter, and only
+    once a trajectory is being built. This is a diagnostic improvement, not a
+    correctness guard.
     """
     if isinstance(value, jax.core.Tracer):
         raise TypeError(
@@ -724,11 +740,11 @@ def _build_prescribed_pair(
     function, which is what makes the coupling separately checkable without
     also reasoning about key splitting.  It is internal to this module.
 
-    The reflection direction is measured here, and this function passes
-    ``direction_fn`` nothing but the incoming states and the first metric: the
-    innovations are not among its arguments.  Whether the returned direction is
-    genuinely free of them is a contract the caller keeps, since a callable may
-    close over anything.
+    This function passes ``direction_fn`` nothing but the incoming states and
+    the first metric -- the innovations it receives are not among its
+    arguments, though they do already exist by the time it is called. Whether
+    the returned direction is genuinely free of them is a contract the caller
+    keeps, since a callable may close over anything.
     """
     logdensity_fns = _as_pair(logdensity_fn, "logdensity_fn")
     step_sizes = _as_pair(step_size, "step_size")
@@ -835,16 +851,18 @@ def build_kernel(
     """Build a coupled HMC kernel.
 
     ``coupling`` and ``direction_fn`` are fixed here, when the kernel is
-    built, and not at call time.  The kernel evaluates ``direction_fn`` on the
-    pair of incoming states before drawing any randomness for the transition,
-    and supplies it no innovations.
+    built, and not at call time.  ``direction_fn`` is applied to the pair of
+    incoming states and the first metric, and is supplied no innovations.
 
-    That is a statement about what this API hands over, not a guarantee about
-    what a caller's callable does.  A ``direction_fn`` that closes over
-    innovations, or draws its own randomness, breaks the reflection's marginal
-    correctness, and nothing here can detect it.  Keeping it a pure function of
-    the arguments it is given is the caller's part of the contract -- the same
-    purity convention every BlackJAX kernel already assumes.
+    It is worth being exact about what that does and does not say, because an
+    earlier version of this docstring overstated it.  The kernel draws ``z``
+    and the uniform *before* running the transition in which ``direction_fn``
+    is evaluated, so the guarantee is **not** one of ordering.  It is that the
+    innovations are not among the arguments handed over.  A ``direction_fn``
+    that closes over innovations, or draws its own randomness, breaks the
+    reflection's marginal correctness and nothing here can detect it. Keeping
+    it a pure function of the arguments it is given is the caller's part of the
+    contract -- the same purity convention every BlackJAX kernel assumes.
 
     Parameters
     ----------
