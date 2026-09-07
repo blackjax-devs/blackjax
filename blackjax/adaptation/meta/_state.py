@@ -13,14 +13,15 @@
 # limitations under the License.
 """State NamedTuples for the meta-adaptation controller.
 
-Three types:
+Four types:
 - :class:`MetaAdaptationCoreState` — single-chain scan-carry state.
+- :class:`MetaAdaptationTelemetryCoreState` — the same, plus a publication record.
 - :class:`MultiChainMetaAdaptationCoreState` — multi-chain (M-chain) scan-carry state.
 - :class:`MetaAdaptationVerdict` — Python-side verdict extracted after the warmup scan.
 """
 from __future__ import annotations
 
-from typing import NamedTuple
+from typing import Any, NamedTuple
 
 from blackjax.mcmc.metrics import LowRankInverseMassMatrix
 from blackjax.types import Array, ArrayLikeTree  # noqa: F401  (re-used by callers)
@@ -56,6 +57,55 @@ class MetaAdaptationCoreState(NamedTuple):
     airm_vel_prev: Array  # AIRM velocity proxy from window before last
     airm_vel_curr: Array  # AIRM velocity proxy from most recent window
     is_slow_mixing: Array  # True = slow-mixing (selects the RESET buffer policy)
+
+
+class MetaAdaptationTelemetryCoreState(NamedTuple):
+    """Telemetry-enabled twin of :class:`MetaAdaptationCoreState`.
+
+    Identical fields in identical order, plus a trailing ``publication``
+    holding the most recent
+    :class:`~blackjax.adaptation.meta._telemetry.MetricPublicationRecord`.
+
+    This is a **separate type** rather than an extra field on
+    :class:`MetaAdaptationCoreState` on purpose.  Adding even a defaulted
+    ``publication: ... = None`` to the existing class would change its tuple
+    length, exact unpacking, ``_asdict`` keys and -- because ``None`` is an
+    empty pytree *node*, not the absence of a child -- its JAX treedef
+    (``[*, *]`` vs ``[*, *, None]``), despite adding zero leaves.  Selecting
+    the type at build time instead leaves the default path byte-for-byte and
+    treedef-for-treedef what it was.
+
+    :func:`~blackjax.adaptation.meta.builders.build_meta_adaptation_core`
+    returns a core over this type when ``telemetry=True``; nothing else
+    constructs it.  Field access is the same as the default type, so the
+    controller body is shared between the two.
+
+    ``tests/adaptation/test_meta_telemetry.py`` asserts the field lists stay in
+    step; add any new controller field to both classes.
+    """
+
+    # --- identical to MetaAdaptationCoreState, in order ---
+    inverse_mass_matrix: LowRankInverseMassMatrix
+    mu_star: Array
+    draws_buffer: Array
+    grads_buffer: Array
+    buffer_idx: Array
+    background_split: Array
+    recompute_counter: Array
+    has_escalated: Array
+    escalation_rank: Array
+    s_gap_prev: Array
+    s_gap_curr: Array
+    r2_latest: Array
+    r2_mode: Array
+    budget_used: Array
+    converged_at_step: Array
+    prev_lam: Array
+    airm_vel_prev: Array
+    airm_vel_curr: Array
+    is_slow_mixing: Array
+    # --- telemetry ---
+    publication: Any = None
 
 
 class MetaAdaptationVerdict(NamedTuple):
