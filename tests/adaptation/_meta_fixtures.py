@@ -583,3 +583,22 @@ def _fill_mc_state(
         grads_buffer=grads_buf,
         buffer_idx=jnp.array(n_fill, dtype=jnp.int32),
     )
+
+
+def _make_mc_both_branches(M, n, d, mean_scale=1.0, seed=_RNG_SEED):
+    """Buffers that make BOTH the W and T branches escalate in the same window.
+
+    Composes the two single-branch fixtures: the deep within-chain spread that
+    drives the W branch, plus the evenly-spread chain-mean offsets that drive
+    the T branch.  The gradients are shifted with the positions so the score
+    stays consistent with the translated draws (these are exact-linear scores,
+    ``g = -x``, for the shifted geometry).
+
+    Used to check that a record distinguishes "both branches fired" from "which
+    metric was deployed": the controller sets ``_DETECTION_BRANCH_BOTH`` but
+    routes to the W metric.
+    """
+    draws_w, grads_w = _make_mc_deep_spread(M, n, d, seed=seed)
+    draws_t, _ = _make_mc_even_spread(M, n, d, seed=seed)
+    offsets = draws_t.mean(axis=1, keepdims=True) * mean_scale
+    return draws_w + offsets, grads_w - offsets

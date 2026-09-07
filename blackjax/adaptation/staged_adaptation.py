@@ -171,20 +171,23 @@ def _make_engine(
 
         return da_update(ss_state, jnp.mean(acceptance_rates))
 
-    def _stamp_epsilons(imm_state, **epsilons):
-        """Write the host-owned epsilon fields into the publication record.
+    def _stamp_host_fields(imm_state, *, warmup_step_index, **epsilons):
+        """Write the host-owned fields into the publication record.
 
-        The metric core computes the record but cannot see the step-size state,
-        so it leaves these NaN; this is the only writer.  Every value is cast to
-        the dual-averaging scheme's own working dtype (float64 under
-        ``jax_enable_x64``) rather than a fixed float32, which would silently
-        destroy the chronology the record promises.
+        The metric core computes the record but sees neither the scan index nor
+        the step-size state, so it leaves these placeholders; this is the only
+        writer.  Every epsilon is cast to the dual-averaging scheme's own
+        working dtype (float64 under ``jax_enable_x64``) rather than a fixed
+        float32, which would silently destroy the chronology the record
+        promises.  The scan index is the only field here measured in warmup
+        steps -- the record's core-update counts are not.
         """
         record = imm_state.publication
         eps_dtype = record.epsilon_in_force.dtype
         return imm_state._replace(
             publication=record._replace(
-                **{k: jnp.asarray(v).astype(eps_dtype) for k, v in epsilons.items()}
+                warmup_step_index=jnp.asarray(warmup_step_index, dtype=jnp.int32),
+                **{k: jnp.asarray(v).astype(eps_dtype) for k, v in epsilons.items()},
             )
         )
 
@@ -209,6 +212,7 @@ def _make_engine(
             nan = jnp.array(float("nan"), dtype=eps_dtype)
             imm_state = imm_state._replace(
                 publication=imm_state.publication._replace(
+                    warmup_step_index=jnp.array(-1, dtype=jnp.int32),
                     epsilon_in_force=nan,
                     epsilon_after_window_da=nan,
                     epsilon_window_average=nan,
@@ -270,7 +274,7 @@ def _make_engine(
         )
 
     def slow_final(
-        ws: StagedAdaptationState, epsilon_in_force=None
+        ws: StagedAdaptationState, epsilon_in_force=None, warmup_step_index=-1
     ) -> StagedAdaptationState:
         """Finalize a slow window: recompute IMM and re-initialise step-size DA.
 
@@ -294,8 +298,9 @@ def _make_engine(
             # Four distinct values, never collapsed: epsilon_window_average and
             # epsilon_next_window are related by exp(log(.)), which is not
             # guaranteed bitwise-identical, and neither equals what was in force.
-            new_metric_st = _stamp_epsilons(
+            new_metric_st = _stamp_host_fields(
                 new_metric_st,
+                warmup_step_index=warmup_step_index,
                 epsilon_in_force=epsilon_in_force,
                 epsilon_after_window_da=epsilon_after_window_da,
                 epsilon_window_average=epsilon_window_average,
@@ -314,6 +319,7 @@ def _make_engine(
         position: ArrayLikeTree,
         grad: ArrayLikeTree,
         acceptance_rate: float,
+        warmup_step_index=-1,
     ) -> StagedAdaptationState:
         """Dispatch one warmup step to the correct fast/slow update.
 
@@ -355,7 +361,7 @@ def _make_engine(
             epsilon_in_force = adaptation_state.step_size
             ws = jax.lax.cond(
                 is_middle_window_end,
-                lambda w: slow_final(w, epsilon_in_force),
+                lambda w: slow_final(w, epsilon_in_force, warmup_step_index),
                 lambda w: w,
                 ws,
             )
@@ -773,15 +779,6 @@ def staged_adaptation(
             "staged_adaptation: telemetry_full_matrices=True requires "
             "metric_telemetry=True; there is no record to attach the matrices to."
         )
-    if metric_telemetry and n_chains > 1:
-        raise NotImplementedError(
-            "staged_adaptation: metric_telemetry is single-chain only "
-            f"(got n_chains={n_chains}). The multi-chain controller runs a "
-            "different predicate set and two pre-routing candidate metrics; its "
-            "record schema is deliberately unsettled. See "
-            "blackjax.adaptation.meta._telemetry."
-        )
-
     metric_core, _resolved_schedule_fn = _resolve_metric_and_schedule(
         metric,
         schedule_fn,
@@ -842,7 +839,7 @@ def staged_adaptation(
             )
 
     def one_step(carry, xs):
-        _, rng_key, adaptation_stage = xs
+        warmup_step_index, rng_key, adaptation_stage = xs
         state, adaptation_state = carry
 
         new_state, info = mcmc_kernel(
@@ -859,6 +856,7 @@ def staged_adaptation(
             new_state.position,
             new_state.logdensity_grad,
             info.acceptance_rate,
+            warmup_step_index,
         )
 
         return (
@@ -1026,7 +1024,7 @@ def staged_adaptation(
             )
 
             def one_step_mc(carry, xs):
-                _, rng_key_mc, adaptation_stage = xs
+                warmup_step_index, rng_key_mc, adaptation_stage = xs
                 states_mc, adaptation_state = carry
 
                 # Split one key per chain for independent proposals.
@@ -1060,6 +1058,7 @@ def staged_adaptation(
                     positions_mc,
                     grads_mc,
                     per_chain_accepts,
+                    warmup_step_index,
                 )
 
                 return (

@@ -13,10 +13,11 @@
 # limitations under the License.
 """State NamedTuples for the meta-adaptation controller.
 
-Four types:
+Five types:
 - :class:`MetaAdaptationCoreState` — single-chain scan-carry state.
 - :class:`MetaAdaptationTelemetryCoreState` — the same, plus a publication record.
 - :class:`MultiChainMetaAdaptationCoreState` — multi-chain (M-chain) scan-carry state.
+- :class:`MultiChainMetaAdaptationTelemetryCoreState` — the same, plus a publication record.
 - :class:`MetaAdaptationVerdict` — Python-side verdict extracted after the warmup scan.
 """
 from __future__ import annotations
@@ -184,3 +185,52 @@ class MultiChainMetaAdaptationCoreState(NamedTuple):
     r1_top: Array  # lag-1 autocorr in top W-branch direction (NaN until first window)
     detection_branch: Array  # _DETECTION_BRANCH_* code from the most recent firing window
     unimodality_flag_count: Array  # consecutive windows gap-stat flagged (for 2-window confirmation)
+
+
+class MultiChainMetaAdaptationTelemetryCoreState(NamedTuple):
+    """Telemetry-enabled twin of :class:`MultiChainMetaAdaptationCoreState`.
+
+    Identical fields in identical order, plus a trailing ``publication``.  A
+    separate type for the same reason as
+    :class:`MetaAdaptationTelemetryCoreState`: a defaulted extra field on the
+    existing class would change its tuple length, exact unpacking, ``_asdict``
+    keys and JAX treedef even though ``None`` adds no leaves.
+
+    ``tests/adaptation/test_meta_telemetry.py`` asserts the field lists stay in
+    step; add any new controller field to both classes.
+    """
+
+    # Shared metric (all M chains adopt the same inverse mass matrix)
+    inverse_mass_matrix: LowRankInverseMassMatrix
+    mu_star: Array  # optimal translation, (d,)
+    # Per-chain buffers: (n_chains, buf_size, d)
+    draws_buffer: Array
+    grads_buffer: Array
+    buffer_idx: Array  # steps elapsed in the current window
+    background_split: Array  # always 0 (protocol compat)
+    recompute_counter: Array  # always 0 (protocol compat)
+    # Controller carry — same semantics as MetaAdaptationCoreState
+    has_escalated: Array  # monotone True-once flag
+    escalation_rank: Array  # rank k chosen at escalation (0 before)
+    s_gap_prev: Array  # retained for diagnostic compatibility (NaN in multi-chain path)
+    s_gap_curr: Array  # retained for diagnostic compatibility (NaN in multi-chain path)
+    r2_latest: Array  # most recent R² from pooled draws
+    r2_mode: Array  # _R2_DEFERRED / _R2_PROJECTED / _R2_FULL_AFFINE
+    budget_used: Array  # warmup step evaluations elapsed
+    converged_at_step: Array  # step of first AIRM convergence (<0 = not yet)
+    prev_lam: Array  # (max_rank,); lam from previous window for AIRM velocity
+    airm_vel_prev: Array  # AIRM velocity proxy from window before last
+    airm_vel_curr: Array  # AIRM velocity proxy from most recent window
+    is_slow_mixing: Array  # always False in the multi-chain path (pooled diagnostic)
+    # Multi-chain-specific carry
+    chain_collinearity: Array  # collinearity score f₁ from most recent window (NaN initially)
+    unimodality_passed: Array  # True = gap-stat found unimodal distribution (False = mode-split flag)
+    deferred_to_ensemble: Array  # True = other gates passed but unimodality blocked (P1→P3 handoff)
+    # W-branch diagnostics + T-branch guard state
+    within_lam1: Array  # top eigenvalue of pooled within-chain residual (NaN until first window)
+    chain_consistency_psi: Array  # Ψ cross-chain consistency cosine (NaN until first window)
+    r1_top: Array  # lag-1 autocorr in top W-branch direction (NaN until first window)
+    detection_branch: Array  # _DETECTION_BRANCH_* code from the most recent firing window
+    unimodality_flag_count: Array  # consecutive windows gap-stat flagged (for 2-window confirmation)
+    # --- telemetry ---
+    publication: Any = None
