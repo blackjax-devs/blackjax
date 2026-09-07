@@ -135,6 +135,77 @@ class TestRankGuard:
             issubclass(w.category, UserWarning) for w in caught
         ), "Expected a UserWarning about rank clamping but none was emitted"
 
+    def test_non_finite_pilot_ess_is_refused_before_rank_selection(self):
+        """An invalid pilot must fail loudly, before int() and before the SVD.
+
+        `effective_sample_size` reports NaN for any dimension holding a
+        non-finite draw. Previously that NaN reached `int(n_eff / 2)` and
+        raised a bare `ValueError: cannot convert float NaN to integer`; before
+        that it was worse, because the estimator fabricated a finite ESS and
+        the contaminated dimension was reported as the best-mixing one.
+        """
+        import blackjax.adaptation.mclmc_lrd_adaptation as lrd_mod
+
+        called = []
+
+        def _contaminated_ess(x, *args, **kwargs):
+            # Controlled contamination: stand in for a pilot whose draws
+            # contain non-finite values, without relying on a diverging chain.
+            return jnp.full((x.shape[-1],), jnp.nan)
+
+        def _tripwire(*args, **kwargs):
+            called.append("svd")
+            raise AssertionError("SVD ran despite invalid pilot diagnostics")
+
+        monkey = pytest.MonkeyPatch()
+        try:
+            monkey.setattr(lrd_mod, "effective_sample_size", _contaminated_ess)
+            monkey.setattr(lrd_mod, "_extract_lrd_from_samples", _tripwire)
+            with pytest.raises(ValueError, match="pilot diagnostics are invalid"):
+                mclmc_lrd_warmup(
+                    logdensity_fn,
+                    jnp.zeros(D),
+                    jax.random.key(11),
+                    k=K,
+                    pilot_num_warmup=50,
+                    pilot_num_samples=32,
+                    lrd_num_steps=50,
+                    num_chains=2,
+                )
+        finally:
+            monkey.undo()
+
+        assert not called, "the guard must fire before the Phase-2 SVD"
+
+    def test_finite_pilot_ess_path_is_unchanged(self):
+        """The finite path, including a zero-ESS pilot, must be untouched."""
+        import blackjax.adaptation.mclmc_lrd_adaptation as lrd_mod
+
+        def _zero_ess(x, *args, **kwargs):
+            return jnp.zeros((x.shape[-1],))
+
+        monkey = pytest.MonkeyPatch()
+        try:
+            monkey.setattr(lrd_mod, "effective_sample_size", _zero_ess)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                result = mclmc_lrd_warmup(
+                    logdensity_fn,
+                    jnp.zeros(D),
+                    jax.random.key(12),
+                    k=K,
+                    pilot_num_warmup=50,
+                    pilot_num_samples=32,
+                    lrd_num_steps=50,
+                    num_chains=2,
+                )
+        finally:
+            monkey.undo()
+
+        # n_eff = 0.0 is finite: k_safe = 0, clamped to k_used = 1, no raise.
+        assert isinstance(result, MCLMCLRDAdaptationState)
+        assert result.diagnostics["k_used"] == 1
+
     def test_no_warning_when_k_within_bound(self):
         """When k ≤ n_eff/2, no clamping warning should be emitted."""
         rng = jax.random.key(6)

@@ -115,6 +115,7 @@ Limitations
   The unadjusted default remains the stable, broadly validated path.
 """
 
+import math
 import warnings
 from typing import Any, NamedTuple
 
@@ -641,6 +642,23 @@ def mclmc_lrd_warmup(
         n_eff = float(jnp.min(ess_per_dim))  # conservative: use min over dims
     else:
         n_eff = 0.0  # degenerate: force k_safe=0 → k_used=1
+
+    # A non-finite n_eff means the pilot diagnostics are invalid, not that the
+    # rank bound is small: effective_sample_size reports NaN for any dimension
+    # holding a non-finite draw.  Refuse explicitly here, before the int()
+    # conversion and before the Phase-2 SVD, rather than crashing in int() or
+    # letting a fabricated rank through.
+    if not math.isfinite(n_eff):
+        raise ValueError(
+            "mclmc_lrd_warmup: pilot diagnostics are invalid — the effective "
+            f"sample size of the pilot draws is {n_eff}, so the rank-safety "
+            "bound k_safe = floor(n_eff / 2) cannot be computed and low-rank "
+            "selection cannot proceed. This means the pilot draws contain "
+            "non-finite values; inspect the pilot chain rather than the rank "
+            "bound. Usual causes are a diverging pilot trajectory, a pilot "
+            "step size that is too large, or a log-density that returns NaN "
+            "somewhere in the pilot region."
+        )
 
     k_safe = int(n_eff / 2)  # floor(n_eff / 2)
     k_used = min(k, max(k_safe, 1))  # clamp; always use at least rank 1
