@@ -173,8 +173,19 @@ class CandidateSummary(NamedTuple):
     lam_max, lam_min, sigma_gm
         Eigenvalue extremes and the geometric mean of the diagonal scaling.
     sigma_log_ratio_rms_vs_deployed
-        ``rms(log(this sigma) - log(deployed sigma))``; zero when this candidate
-        *is* what was deployed.
+        ``rms(log(this sigma) - log(deployed sigma))``.
+
+        **This compares diagonal scalings only, and on the multi-chain path it
+        cannot tell the two candidates apart.**  ``candidate_w`` and
+        ``candidate_t`` are built from the same ``sigma_lr``, so both report the
+        identical value in every window — zero once either has been deployed,
+        and a common non-zero value against the pre-escalation diagonal metric.
+        Reading a zero here as "*this* candidate is the deployed one" is wrong:
+        it means *a* candidate sharing this sigma was deployed.
+
+        What separates W from T lives in ``U`` and ``lam``, not in sigma; use
+        ``effective_rank`` and the ``lam`` extremes for that, or the full
+        factors under ``full_matrices=True``.
     full
         The full factors, or ``None`` unless ``full_matrices=True``.
     """
@@ -372,6 +383,15 @@ class MetricPublicationRecord(NamedTuple):
         once and so a per-window series exists.
     in_force_logdet
         The metric that drove the window just completed.
+
+        In exact arithmetic this equals the previous window's
+        ``deployed_logdet`` — it is the same matrix, and the host carry is
+        bit-identical across the window.  In practice the two call sites are
+        fused differently and can disagree by a few ulp (measured ~8 ulp at
+        float32, ~1e-6 absolute).  So differencing
+        ``deployed_logdet - in_force_logdet`` to ask "did the metric move this
+        window" has a small non-zero noise floor; compare against a tolerance,
+        not against zero.  The same caution the epsilons carry.
     r2_raw, r2_mode
         Score-linearity R² as measured, and which fit mode produced it.  On the
         multi-chain path this is the raw value the W branch uses; the routed
