@@ -77,6 +77,10 @@ from blackjax.adaptation.meta._state import (
     MultiChainMetaAdaptationTelemetryCoreState,
 )
 from blackjax.adaptation.meta._telemetry import (
+    BRANCH_BOTH,
+    BRANCH_NONE,
+    BRANCH_T,
+    BRANCH_W,
     GATE_BITS,
     ROUTE_DIAGONAL,
     ROUTE_T,
@@ -116,6 +120,10 @@ __all__ = [
     "SingleChainDetail",
     "CandidateSummary",
     "GATE_BITS",
+    "BRANCH_NONE",
+    "BRANCH_W",
+    "BRANCH_T",
+    "BRANCH_BOTH",
     "ROUTE_DIAGONAL",
     "ROUTE_W",
     "ROUTE_T",

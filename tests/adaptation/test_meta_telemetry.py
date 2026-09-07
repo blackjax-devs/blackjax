@@ -68,6 +68,7 @@ from blackjax.adaptation.staged_adaptation import build_schedule, staged_adaptat
 
 from ._meta_fixtures import (
     _fill_mc_state,
+    _make_correlated_buffer,
     _fill_state_from_buffer,
     _make_isotropic_buffer,
     _make_mc_both_branches,
@@ -922,7 +923,11 @@ class PayloadAndSchemaTest(chex.TestCase):
         the version, and the names present at that version.
         """
         entry = _shared_run()["chronology"][0]
-        self.assertEqual(entry["schema_version"], SCHEMA_VERSION)
+        # Against a LITERAL, not against SCHEMA_VERSION: the extractor writes
+        # entry["schema_version"] = SCHEMA_VERSION, so comparing the two is a
+        # tautology that cannot fail whether or not the constant is bumped.
+        self.assertEqual(entry["schema_version"], 3)
+        self.assertEqual(SCHEMA_VERSION, 3)
 
         required = {
             "window_index",
@@ -1015,6 +1020,126 @@ class UnsupportedConfigurationTest(chex.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "no 'publication' field"):
             warmup.run(jax.random.key(0), jnp.zeros(_D), num_steps=60)
+
+
+class GateReconstructionTest(chex.TestCase):
+    """The reported bits must be JOINTLY sufficient to rebuild the decision.
+
+    Individually-correct bits are not enough: a bit-position collision, a
+    raw/routed swap, or a conjunct the controller gained and the encoder did not
+    would all leave every single bit right and the decision unrecoverable.  These
+    assertions combine reported booleans only — they do not recompute any
+    predicate, so they are not a second implementation of the controller.
+    """
+
+    @staticmethod
+    def _reconstruct_mc(record):
+        raw = decode_gates(record.gate_predicate_true)
+        open_ = not bool(record.has_escalated_before)
+        escalate_w = open_ and all(
+            raw[n] for n in ("w_magnitude", "w_psi", "w_r1", "w_r2_raw", "deadline")
+        )
+        escalate_t = open_ and all(
+            raw[n]
+            for n in (
+                "t_magnitude",
+                "t_collinearity",
+                "t_loo",
+                "t_support",
+                "t_unimodality",
+                "t_r2_routed",
+                "deadline",
+            )
+        )
+        return escalate_w, escalate_t
+
+    @parameterized.named_parameters(
+        ("w_only", _make_mc_deep_spread),
+        ("t_only", _make_mc_even_spread),
+        ("both", _make_mc_both_branches),
+        ("neither", _make_mc_isotropic),
+    )
+    def test_multi_chain_decision_rebuilds_from_the_reported_bits(self, fixture):
+        record = _mc_record(fixture)
+        escalate_w, escalate_t = self._reconstruct_mc(record)
+        self.assertEqual(bool(record.escalated_now), escalate_w or escalate_t)
+
+        expected_branch = {
+            (True, True): BRANCH_BOTH,
+            (True, False): BRANCH_W,
+            (False, True): BRANCH_T,
+            (False, False): BRANCH_NONE,
+        }[(escalate_w, escalate_t)]
+        self.assertEqual(
+            int(record.multi_chain.branch_fired_this_window), expected_branch
+        )
+
+    def test_single_chain_decision_rebuilds_from_the_reported_bits(self):
+        """Driven through a window that GENUINELY escalates.
+
+        Reconstructing on the never-escalated record would assert that False
+        rebuilds as False — dressing up the single-chain escalation blind spot
+        as protection.  ``_make_correlated_buffer`` gives R2 = 1 and
+        S_gap >> _S_MIN; running two windows on identical data makes the S_gap
+        relative change exactly zero, so the stability gate can pass.
+        """
+        core = build_meta_adaptation_core(_BUDGET, telemetry=True)
+        draws, grads = _make_correlated_buffer(_D, 40)
+        state = _fill_state_from_buffer(core.init(_D), draws, grads)
+
+        records = []
+        for _ in range(2):
+            state = core.final(state)
+            records.append(state.publication)
+            state = _fill_state_from_buffer(state, draws, grads)
+
+        self.assertTrue(
+            any(bool(r.escalated_now) for r in records),
+            msg="fixture no longer escalates; this test would be vacuous",
+        )
+
+        for record in records:
+            raw = decode_gates(record.gate_predicate_true)
+            applicable = decode_gates(record.escalation_gate_applicable)
+            rebuilt = (
+                not bool(record.has_escalated_before)
+                and raw["sc_r2"]
+                and raw["sc_s_gap_magnitude"]
+                and raw["sc_s_gap_stability"]
+                and raw["deadline"]
+                # the availability precondition lives in the applicability mask
+                and applicable["sc_s_gap_stability"]
+            )
+            self.assertEqual(bool(record.escalated_now), rebuilt)
+
+    def test_escalated_window_reports_a_nonzero_deployed_rank(self):
+        """The only value assertion on deployed_effective_rank was `== 0`."""
+        record = _mc_record(_make_mc_deep_spread)
+        self.assertTrue(bool(record.escalated_now))
+        self.assertGreater(int(record.deployed_effective_rank), 0)
+
+
+class PublicSurfaceTest(chex.TestCase):
+    """The branch codes must be reachable without importing a private module."""
+
+    def test_branch_and_route_codes_are_public(self):
+        import blackjax.adaptation.meta as meta
+
+        for name in (
+            "BRANCH_NONE",
+            "BRANCH_W",
+            "BRANCH_T",
+            "BRANCH_BOTH",
+            "ROUTE_DIAGONAL",
+            "ROUTE_W",
+            "ROUTE_T",
+        ):
+            self.assertTrue(hasattr(meta, name), msg=f"{name} not exported")
+            self.assertIn(name, meta.__all__)
+        self.assertEqual(
+            {meta.BRANCH_NONE, meta.BRANCH_W, meta.BRANCH_T, meta.BRANCH_BOTH},
+            {0, 1, 2, 3},
+        )
 
 
 if __name__ == "__main__":

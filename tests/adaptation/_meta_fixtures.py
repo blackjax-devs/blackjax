@@ -590,9 +590,20 @@ def _make_mc_both_branches(M, n, d, mean_scale=1.0, seed=_RNG_SEED):
 
     Composes the two single-branch fixtures: the deep within-chain spread that
     drives the W branch, plus the evenly-spread chain-mean offsets that drive
-    the T branch.  The gradients are shifted with the positions so the score
-    stays consistent with the translated draws (these are exact-linear scores,
-    ``g = -x``, for the shifted geometry).
+    the T branch.
+
+    The gradients are shifted alongside the positions.  **This does not make the
+    score exact for the shifted geometry**, contrary to what this docstring
+    previously claimed: the base fixture's score is ``-Sigma^-1 x`` for the
+    anisotropic ``Sigma``, not ``-x``, so shifting by ``o_m`` yields the score of
+    a distribution whose mean lies along the within-chain direction rather than
+    at ``o_m`` where the draws sit.  What the shift actually does is shrink the
+    per-chain gradient intercept, which matters because
+    ``_compute_mode_consistency_flag`` reads the RAW gradient buffer: intercept
+    heterogeneity is the GAIN that raises ``any_mode_flag``, and if it fired,
+    ``t_unimodality`` would resolve False, T could not escalate and the BOTH
+    outcome would not occur.  The fixture's margin against that gate is
+    undocumented and unmeasured -- see the review follow-ups.
 
     Used to check that a record distinguishes "both branches fired" from "which
     metric was deployed": the controller sets ``_DETECTION_BRANCH_BOTH`` but
