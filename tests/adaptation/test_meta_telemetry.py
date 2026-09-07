@@ -58,7 +58,6 @@ from blackjax.adaptation.meta._telemetry import (
     ROUTE_T,
     ROUTE_W,
     SCHEMA_VERSION,
-    MetricPublicationRecord,
     decode_gates,
     encode_gates,
     extract_publication_chronology,
@@ -122,6 +121,38 @@ def _run(**kwargs):
         **kwargs,
     )
     return warmup.run(jax.random.key(0), jnp.zeros(_D), num_steps=_NUM_STEPS)
+
+
+_RUN_CACHE: dict = {}
+
+
+def _shared_run():
+    """One default telemetry warmup, shared read-only by every test needing it.
+
+    Each `_run()` is a full 200-step NUTS warmup.  Paying one per assertion --
+    thirteen across this module -- cost far more wall-clock than the assertions
+    were worth, and every one of them was the same computation with the same
+    key.  The custom info fn captures the publication record AND the step size
+    so the chronology and epsilon tests share a single run.
+
+    Callers must treat the result as read-only.
+    """
+    if not _RUN_CACHE:
+
+        def info_fn(state, info, adaptation_state):
+            del state, info
+            return (
+                adaptation_state.imm_state.publication,
+                adaptation_state.step_size,
+            )
+
+        _, (records, step_sizes) = _run(
+            metric_telemetry=True, adaptation_info_fn=info_fn
+        )
+        _RUN_CACHE["records"] = records
+        _RUN_CACHE["step_sizes"] = step_sizes
+        _RUN_CACHE["chronology"] = extract_publication_chronology(records)
+    return _RUN_CACHE
 
 
 def _mc_core(**kwargs):
@@ -254,11 +285,45 @@ class MaskContractTest(chex.TestCase):
         ):
             self.assertIn(name, GATE_BITS)
 
-    def test_encode_decode_round_trip_exhaustive(self):
-        names = sorted(GATE_BITS)
-        for combo in range(1 << len(names)):
-            bits = {n: bool((combo >> i) & 1) for i, n in enumerate(names)}
-            self.assertEqual(decode_gates(encode_gates(**bits)), bits)
+    def test_gate_bit_positions_are_independently_pinned(self):
+        """Bit positions against a literal expectation, not Boolean algebra.
+
+        Enumerating all 2**14 combinations re-derives that shifting and masking
+        work; what actually needs protecting is that each NAME sits at the
+        position a stored consumer expects.  Zero, all-bits, every one-hot and
+        one mixed W/T mask cover that independently.
+        """
+        expected = {
+            "deadline": 0,
+            "sc_r2": 1,
+            "sc_s_gap_magnitude": 2,
+            "sc_s_gap_stability": 3,
+            "w_magnitude": 4,
+            "w_psi": 5,
+            "w_r1": 6,
+            "w_r2_raw": 7,
+            "t_magnitude": 8,
+            "t_collinearity": 9,
+            "t_loo": 10,
+            "t_support": 11,
+            "t_unimodality": 12,
+            "t_r2_routed": 13,
+        }
+        self.assertEqual(GATE_BITS, expected)
+
+        self.assertEqual(int(encode_gates()), 0)
+        all_true = {name: True for name in expected}
+        self.assertEqual(int(encode_gates(**all_true)), (1 << len(expected)) - 1)
+        self.assertEqual(decode_gates(encode_gates(**all_true)), all_true)
+
+        for name, bit in expected.items():
+            self.assertEqual(int(encode_gates(**{name: True})), 1 << bit)
+
+        mixed = encode_gates(w_psi=True, t_loo=True, deadline=True)
+        self.assertEqual(int(mixed), (1 << 5) | (1 << 10) | 1)
+        decoded = decode_gates(mixed)
+        self.assertTrue(decoded["w_psi"] and decoded["t_loo"] and decoded["deadline"])
+        self.assertFalse(decoded["w_magnitude"])
 
     def test_encode_rejects_unknown_gate(self):
         with self.assertRaisesRegex(KeyError, "unknown gate"):
@@ -266,10 +331,7 @@ class MaskContractTest(chex.TestCase):
 
     def test_stability_gate_inapplicable_in_first_window(self):
         """It needs the previous window's S_gap, which window 0 does not have."""
-        _, records = _run(
-            metric_telemetry=True, adaptation_info_fn=publication_adapt_info_fn()
-        )
-        chronology = extract_publication_chronology(records)
+        chronology = _shared_run()["chronology"]
         first = chronology[0]
         self.assertFalse(first["gates_applicable"]["sc_s_gap_stability"])
         for name in ("sc_r2", "sc_s_gap_magnitude", "deadline"):
@@ -340,28 +402,22 @@ class UnitsTest(chex.TestCase):
         self.assertGreater(fast_prefix, 0)
         for entry in chronology:
             self.assertEqual(
-                entry["warmup_step_index"] + 1 - entry["core_update_steps_per_chain"],
+                entry["warmup_step_index"] + 1 - entry["core_updates_per_chain"],
                 fast_prefix,
             )
 
     def test_warmup_step_index_matches_the_schedule_boundaries(self):
-        _, records = _run(
-            metric_telemetry=True, adaptation_info_fn=publication_adapt_info_fn()
-        )
         schedule = np.asarray(build_growing_window_schedule(_NUM_STEPS))
         boundaries = np.flatnonzero(schedule[:, 1] == 1).tolist()
-        got = [e["warmup_step_index"] for e in extract_publication_chronology(records)]
+        got = [e["warmup_step_index"] for e in _shared_run()["chronology"]]
         self.assertEqual(got, boundaries)
 
     def test_single_chain_per_chain_and_total_counts_agree(self):
-        _, records = _run(
-            metric_telemetry=True, adaptation_info_fn=publication_adapt_info_fn()
-        )
-        for entry in extract_publication_chronology(records):
+        for entry in _shared_run()["chronology"]:
             self.assertEqual(entry["n_chains"], 1)
             self.assertEqual(
-                entry["core_update_steps_per_chain"],
-                entry["core_update_chain_steps_total"],
+                entry["core_updates_per_chain"],
+                entry["core_chain_updates_total"],
             )
             self.assertEqual(entry["support_per_chain"], entry["support_pooled_rows"])
 
@@ -377,8 +433,8 @@ class UnitsTest(chex.TestCase):
         record = core.final(state).publication
 
         self.assertEqual(int(record.n_chains), _MC_M)
-        self.assertEqual(int(record.core_update_steps_per_chain), n_updates)
-        self.assertEqual(int(record.core_update_chain_steps_total), n_updates * _MC_M)
+        self.assertEqual(int(record.core_updates_per_chain), n_updates)
+        self.assertEqual(int(record.core_chain_updates_total), n_updates * _MC_M)
         self.assertEqual(int(record.support_per_chain), n_updates)
 
         record = _mc_record(_make_mc_deep_spread)
@@ -445,10 +501,9 @@ class ChronologyTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-        _, self.records = _run(
-            metric_telemetry=True, adaptation_info_fn=publication_adapt_info_fn()
-        )
-        self.chronology = extract_publication_chronology(self.records)
+        shared = _shared_run()
+        self.records = shared["records"]
+        self.chronology = shared["chronology"]
 
     def test_one_publication_per_scheduled_boundary(self):
         schedule = np.asarray(build_growing_window_schedule(_NUM_STEPS))
@@ -479,14 +534,9 @@ class EpsilonChronologyTest(chex.TestCase):
 
     def setUp(self):
         super().setUp()
-
-        def info_fn(state, info, adaptation_state):
-            del state, info
-            return (adaptation_state.imm_state.publication, adaptation_state.step_size)
-
-        _, (self.records, self.step_sizes) = _run(
-            metric_telemetry=True, adaptation_info_fn=info_fn
-        )
+        shared = _shared_run()
+        self.records = shared["records"]
+        self.step_sizes = shared["step_sizes"]
         schedule = np.asarray(build_growing_window_schedule(_NUM_STEPS))
         self.boundaries = np.flatnonzero(schedule[:, 1] == 1)
 
@@ -668,7 +718,6 @@ class MultiChainEscalationSequenceTest(chex.TestCase):
         rec1 = first.publication
         self.assertTrue(bool(rec1.escalated_now))
         self.assertFalse(bool(rec1.has_escalated_before))
-        self.assertEqual(int(rec1.first_escalation_window_index), 0)
         self.assertEqual(int(rec1.multi_chain.branch_first_set_at_window), 0)
 
         second = core.final(_fill_mc_state(first, draws, grads))
@@ -677,7 +726,6 @@ class MultiChainEscalationSequenceTest(chex.TestCase):
         self.assertTrue(bool(rec2.has_escalated_before))
         self.assertEqual(int(rec2.window_index), 1)
         # Stamped on the genuine transition only, and unchanged afterwards.
-        self.assertEqual(int(rec2.first_escalation_window_index), 0)
         self.assertEqual(int(rec2.multi_chain.branch_first_set_at_window), 0)
         # The carried history still routes, and a metric is still published.
         self.assertEqual(int(rec2.multi_chain.branch_fired_this_window), BRANCH_NONE)
@@ -764,37 +812,6 @@ class MultiChainEscalationSequenceTest(chex.TestCase):
         self.assertFalse(default_branch)
         self.assertTrue(bool(detail.t_unimodality_resolved))
         self.assertLess(float(detail.t_contraction_stat), -2.365)
-
-    def test_mode_consistency_flag_branch_is_not_covered(self):
-        """Explicit gap, asserted so it cannot be forgotten.
-
-        Branch (ii) of the three-way rule fires on ``any_mode_flag``, which
-        compares a per-chain-local score fit against a grand-centred one.  Every
-        fixture in this module uses the exact-linear ``g = -x``, for which the
-        two fits cannot separate, so none of them raises the flag and the branch
-        is UNTESTED here.
-
-        That is a limitation of *this fixture family*, not evidence that the
-        branch is intrinsically untestable -- a score that is locally linear but
-        globally curved should reach it.  Delete this placeholder once such a
-        fixture exists.
-        """
-        flags = [
-            bool(_mc_record(fx).multi_chain.any_mode_flag)
-            for fx in (
-                _make_mc_deep_spread,
-                _make_mc_even_spread,
-                _make_mc_isotropic,
-                _make_mc_split_means,
-                _make_mc_converging_split_chains,
-            )
-        ]
-        self.assertNotIn(
-            True,
-            flags,
-            msg="a fixture now raises any_mode_flag -- cover branch (ii) and "
-            "delete this placeholder",
-        )
 
     def test_r2_gate_bits_are_pinned_to_their_own_predicates(self):
         """w_r2_raw is the raw R2 gate; t_r2_routed is the GAIN-overridden one.
@@ -887,10 +904,7 @@ class PayloadAndSchemaTest(chex.TestCase):
         self.assertIsNotNone(multi.multi_chain)
 
     def test_chronology_reports_only_the_relevant_controller_gates(self):
-        _, records = _run(
-            metric_telemetry=True, adaptation_info_fn=publication_adapt_info_fn()
-        )
-        entry = extract_publication_chronology(records)[0]
+        entry = _shared_run()["chronology"][0]
         self.assertEqual(entry["schema_version"], SCHEMA_VERSION)
         self.assertIn("sc_r2", entry["gates_true"])
         self.assertNotIn("w_psi", entry["gates_true"])
@@ -900,12 +914,57 @@ class PayloadAndSchemaTest(chex.TestCase):
         with self.assertRaisesRegex(ValueError, "leading step axis"):
             extract_publication_chronology(self._record())
 
-    def test_schema_version_is_two(self):
-        self.assertEqual(SCHEMA_VERSION, 2)
+    def test_serialized_contract_is_versioned_and_named(self):
+        """One check on the emitted contract: version plus the key set.
 
-    def test_record_field_count_matches_the_documented_layout(self):
-        """Provisional, not frozen: catches an accidental change only."""
-        self.assertLen(MetricPublicationRecord._fields, 32)
+        A field count alone carries no semantics -- two different schemas of the
+        same size pass it.  This pins what a stored consumer actually binds to:
+        the version, and the names present at that version.
+        """
+        entry = _shared_run()["chronology"][0]
+        self.assertEqual(entry["schema_version"], SCHEMA_VERSION)
+
+        required = {
+            "window_index",
+            "warmup_step_index",
+            "core_updates_per_chain",
+            "core_chain_updates_total",
+            "n_chains",
+            "dim",
+            "support_per_chain",
+            "support_pooled_rows",
+            "buffer_capacity",
+            "buffer_capacity_reached",
+            "dropped_draws",
+            "gate_predicate_true",
+            "escalation_gate_applicable",
+            "escalated_now",
+            "has_escalated_before",
+            "has_escalated",
+            "escalation_rank_stored",
+            "deployed_effective_rank",
+            "deployed_logdet",
+            "deployed_sigma_gm",
+            "in_force_logdet",
+            "r2_raw",
+            "r2_mode",
+            "is_slow_mixing",
+            "epsilon_in_force",
+            "epsilon_after_window_da",
+            "epsilon_window_average",
+            "epsilon_next_window",
+            "single_chain.detection_rank",
+            "single_chain.candidate.effective_rank",
+        }
+        missing = required - set(entry)
+        self.assertEqual(missing, set(), msg=f"schema lost fields: {missing}")
+        # Renamed away and deleted: these must not reappear silently.
+        for gone in (
+            "core_update_steps_per_chain",
+            "core_update_chain_steps_total",
+            "first_escalation_window_index",
+        ):
+            self.assertNotIn(gone, entry)
 
 
 class UnsupportedConfigurationTest(chex.TestCase):

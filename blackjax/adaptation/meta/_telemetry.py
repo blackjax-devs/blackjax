@@ -62,16 +62,18 @@ positions are never reused across versions.
 
 Units
 -----
-Counts here are **not** warmup scan steps.  ``core_update_steps_per_chain``
+Counts here are **not** warmup scan steps.  ``core_updates_per_chain``
 counts calls to the metric core's ``update()``, which the host makes only on
 slow-window steps: under Stan's :func:`~blackjax.adaptation.staged_adaptation.build_schedule`
 it lags the scan index by the whole initial fast buffer (75 by default).
 ``warmup_step_index`` is the scan index and is stamped by the host.
 ``support_pooled_rows`` is a count of retained buffer rows; it is neither an
-effective sample size nor a count of independent observations — the chains are
-independent of each other, but the rows within a chain are autocorrelated draws.
+effective sample size nor a count of independent observations.  The rows
+within a chain are autocorrelated draws, and the chains are not independent of
+each other either: they share one adapted metric and one step size, so each
+window's adaptation couples them.
 ``support_per_chain``, ``buffer_capacity`` and ``dropped_draws`` are per-chain;
-``support_pooled_rows`` and ``core_update_chain_steps_total`` are the only
+``support_pooled_rows`` and ``core_chain_updates_total`` are the only
 summed ones.
 """
 from __future__ import annotations
@@ -114,7 +116,7 @@ __all__ = [
     "empty_record",
 ]
 
-SCHEMA_VERSION: int = 2
+SCHEMA_VERSION: int = 3
 
 #: Bit positions, branch-scoped and disjoint.  ``deadline`` is shared because
 #: the two controllers apply the identical budget test.  Positions are frozen
@@ -348,13 +350,18 @@ class MetricPublicationRecord(NamedTuple):
     warmup_step_index
         The host's scan index at this boundary, or ``-1`` if the host did not
         stamp one.  This is the *only* field measured in warmup steps.
-    core_update_steps_per_chain, core_update_chain_steps_total
-        Calls to the metric core's ``update()``, per chain and summed over
-        chains.  **Not** warmup steps: the host calls ``update()`` only on slow
-        stages, so under Stan's schedule these lag the scan index by the whole
-        initial fast buffer.  Equal to each other when ``n_chains == 1``, and
-        ``total == per_chain * n_chains`` always — one quantity in two units,
-        not two measurements.
+    core_updates_per_chain, core_chain_updates_total
+        Metric-core updates, per chain and summed over chains.  One core
+        ``update()`` consumes all ``n_chains`` chains at once, so a single
+        update adds 1 to the first and ``n_chains`` to the second — the total
+        counts chain-contributions, not invocations, which is why it is not
+        named for calls.  ``total == per_chain * n_chains`` always: one quantity
+        in two units, not two measurements.
+
+        **Neither is a warmup step count.** The host calls ``update()`` only on
+        slow stages, so under Stan's schedule both lag the scan index by the
+        whole initial fast buffer.  ``warmup_step_index`` alone carries the host
+        warmup clock, under the indexing convention stated on that field.
 
         **Cumulative across windows**, not per-window: the controller
         deliberately does not reset ``budget_used`` at a boundary, so these grow
@@ -406,9 +413,6 @@ class MetricPublicationRecord(NamedTuple):
         instead shows a spurious contradiction in exactly the escalation
         window, where applicability bits are set and ``has_escalated`` is
         already True.
-    first_escalation_window_index
-        ``window_index`` of the genuine ``False -> True`` transition of
-        ``has_escalated``; ``-1`` until it happens, unchanged afterwards.
     escalation_rank_stored
         The controller's carried nominal rank.  Distinct from the detection
         rank and from ``deployed_effective_rank``; on the multi-chain path it
@@ -443,7 +447,11 @@ class MetricPublicationRecord(NamedTuple):
         multi-chain path this is the raw value the W branch uses; the routed
         value the T branch uses is in :class:`MultiChainDetail`.
     is_slow_mixing
-        Transient-mixing class reported by the controller.
+        Transient-mixing class reported by the controller.  Meaningful on the
+        single-chain path only: the multi-chain controller does not compute a
+        transient-mixing signal and carries a constant ``False``, which this
+        field faithfully reports.  Do not read a ``False`` there as "mixing is
+        fast".
     epsilon_in_force
         Step size that drove the window's **last completed transition** — the
         value handed to the kernel, captured before that step's dual-averaging
@@ -468,8 +476,8 @@ class MetricPublicationRecord(NamedTuple):
 
     window_index: Array
     warmup_step_index: Array
-    core_update_steps_per_chain: Array
-    core_update_chain_steps_total: Array
+    core_updates_per_chain: Array
+    core_chain_updates_total: Array
     n_chains: Array
     dim: Array
     support_per_chain: Array
@@ -482,7 +490,6 @@ class MetricPublicationRecord(NamedTuple):
     escalated_now: Array
     has_escalated_before: Array
     has_escalated: Array
-    first_escalation_window_index: Array
     escalation_rank_stored: Array
     deployed_effective_rank: Array
     deployed_logdet: Array
@@ -661,22 +668,19 @@ def _logdet(imm: LowRankInverseMassMatrix) -> Array:
     """``log det M^-1`` for ``M^-1 = diag(s)(I + U(L-I)U')diag(s)``.
 
     Returns ``2*sum(log sigma) + sum(log lam)``; no dense ``d x d`` matrix is
-    formed.  Verified against a dense ``slogdet`` for every metric shape this
-    controller builds.
+    formed.
 
-    **The identity holds for two different reasons, and only one of them is the
-    obvious one.**  For the Fisher-LR metrics (``lr_imm``, ``w_lr_imm``) ``U``
-    has orthonormal columns, so the middle factor's non-unit eigenvalues are
-    exactly ``lam``.  The T-branch metric ``t_lr_imm`` is *not* of that form: it
-    concatenates the slow direction ``e_dir`` with Fisher columns that have no
-    orthogonality relation to it (measured ``||U'U - I||_max`` up to 0.79).  It
-    stays exact only because ``lam`` there is ``[lam_slow, 1, ..., 1]``, which
-    collapses ``U(L-I)U'`` to the rank-1 update ``(lam_slow - 1) e_dir e_dir'``
-    with ``e_dir`` unit-norm, whose determinant is ``lam_slow``.
+    **Precondition: the *active* columns of ``U`` — those whose ``lam`` is not
+    1 — must be orthonormal.**  Columns carrying ``lam == 1`` are annihilated by
+    ``(L - I)`` and their orientation is irrelevant, so they need not be
+    orthogonal to anything.  Under that condition the non-unit eigenvalues of
+    the middle factor are exactly the non-unit ``lam`` and the determinant
+    factorises.
 
-    So the real precondition is: **either** ``U`` is orthonormal, **or** at most
-    one ``lam`` is non-unit and its column is unit-norm.  Give ``t_lr_imm`` a
-    second non-unit eigenvalue and this function becomes silently wrong.
+    This is weaker than requiring ``U`` orthonormal, and deliberately so: not
+    every metric this controller publishes has orthonormal ``U``.  A metric with
+    two non-unit ``lam`` on columns that are not mutually orthogonal violates
+    the precondition, and this function would be silently wrong for it.
     """
     return 2.0 * jnp.sum(jnp.log(imm.sigma)) + jnp.sum(jnp.log(imm.lam))
 
@@ -803,8 +807,8 @@ def empty_record(
     return MetricPublicationRecord(
         window_index=minus_one,
         warmup_step_index=minus_one,
-        core_update_steps_per_chain=zero_i,
-        core_update_chain_steps_total=zero_i,
+        core_updates_per_chain=zero_i,
+        core_chain_updates_total=zero_i,
         n_chains=jnp.array(n_chains, dtype=jnp.int32),
         dim=jnp.array(n_dims, dtype=jnp.int32),
         support_per_chain=zero_i,
@@ -817,7 +821,6 @@ def empty_record(
         escalated_now=false_,
         has_escalated_before=false_,
         has_escalated=false_,
-        first_escalation_window_index=minus_one,
         escalation_rank_stored=zero_i,
         deployed_effective_rank=zero_i,
         deployed_logdet=nan,

@@ -391,8 +391,8 @@ def build_meta_adaptation_core(
                 # Host-owned: the core sees neither the scan index nor the
                 # step-size state.  Carried forward, then overwritten.
                 warmup_step_index=prev.warmup_step_index,
-                core_update_steps_per_chain=state.budget_used.astype(jnp.int32),
-                core_update_chain_steps_total=state.budget_used.astype(jnp.int32),
+                core_updates_per_chain=state.budget_used.astype(jnp.int32),
+                core_chain_updates_total=state.budget_used.astype(jnp.int32),
                 n_chains=jnp.array(1, dtype=jnp.int32),
                 dim=jnp.array(d, dtype=jnp.int32),
                 support_per_chain=n.astype(jnp.int32),
@@ -407,11 +407,6 @@ def build_meta_adaptation_core(
                 escalated_now=escalate_now,
                 has_escalated_before=state.has_escalated,
                 has_escalated=new_has_escalated,
-                first_escalation_window_index=jnp.where(
-                    escalation_open & new_has_escalated,
-                    window_index,
-                    prev.first_escalation_window_index,
-                ),
                 escalation_rank_stored=new_escalation_rank.astype(jnp.int32),
                 deployed_effective_rank=_effective_rank(chosen_imm),
                 deployed_logdet=_logdet(chosen_imm),
@@ -1053,8 +1048,9 @@ def build_multi_chain_meta_core(
 
             # What fired now, what the carried history says, and what is
             # actually deployed are three different answers.  BOTH firing
-            # deploys the W metric, so the route is not derivable from the
-            # branch fields alone.
+            # deploys the W metric.  The route IS derivable from
+            # has_escalated plus the carried branch by reapplying the routing
+            # rule below; it is reported so a consumer never has to.
             branch_fired = jnp.where(
                 escalate_W & escalate_T,
                 jnp.int32(_DETECTION_BRANCH_BOTH),
@@ -1088,10 +1084,10 @@ def build_multi_chain_meta_core(
                 # budget_used advances by n_chains per core update, so the
                 # per-chain count divides it back out.  Neither is a warmup
                 # step count.
-                core_update_steps_per_chain=(
+                core_updates_per_chain=(
                     state.budget_used // jnp.int32(n_chains)
                 ).astype(jnp.int32),
-                core_update_chain_steps_total=state.budget_used.astype(jnp.int32),
+                core_chain_updates_total=state.budget_used.astype(jnp.int32),
                 n_chains=jnp.array(n_chains, dtype=jnp.int32),
                 dim=jnp.array(d, dtype=jnp.int32),
                 support_per_chain=n.astype(jnp.int32),
@@ -1108,11 +1104,6 @@ def build_multi_chain_meta_core(
                 escalated_now=escalate_now,
                 has_escalated_before=state.has_escalated,
                 has_escalated=new_has_escalated,
-                first_escalation_window_index=jnp.where(
-                    escalation_open & new_has_escalated,
-                    window_index,
-                    prev.first_escalation_window_index,
-                ),
                 escalation_rank_stored=new_escalation_rank.astype(jnp.int32),
                 deployed_effective_rank=_effective_rank(chosen_imm),
                 deployed_logdet=_logdet(chosen_imm),

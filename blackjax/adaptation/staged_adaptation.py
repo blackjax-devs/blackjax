@@ -695,9 +695,10 @@ def staged_adaptation(
     metric_telemetry
         Opt-in read-only observation of the metric-publication decision made at
         each slow-window boundary: the support actually consumed, the candidate
-        metric even when it is withheld, per-gate pass/evaluated masks, and the
-        step-size chronology across the boundary.  Single-chain ``metric="auto"``
-        only; raises for ``n_chains > 1`` and for cores without a publication
+        metrics even when they are withheld, the raw-truth and
+        escalation-applicability gate masks, and the step-size chronology across
+        the boundary.  Supported on both the single- and multi-chain
+        ``metric="auto"`` paths; raises for a core that carries no publication
         record.  Default ``False``, which is a Python-time constant — the off
         path traces and computes exactly as before.  Read the records with
         :func:`~blackjax.adaptation.meta._telemetry.publication_adapt_info_fn`
