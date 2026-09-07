@@ -68,7 +68,11 @@ slow-window steps: under Stan's :func:`~blackjax.adaptation.staged_adaptation.bu
 it lags the scan index by the whole initial fast buffer (75 by default).
 ``warmup_step_index`` is the scan index and is stamped by the host.
 ``support_pooled_rows`` is a count of retained buffer rows; it is neither an
-effective sample size nor a count of independent observations.
+effective sample size nor a count of independent observations — the chains are
+independent of each other, but the rows within a chain are autocorrelated draws.
+``support_per_chain``, ``buffer_capacity`` and ``dropped_draws`` are per-chain;
+``support_pooled_rows`` and ``core_update_chain_steps_total`` are the only
+summed ones.
 """
 from __future__ import annotations
 
@@ -343,7 +347,17 @@ class MetricPublicationRecord(NamedTuple):
         Calls to the metric core's ``update()``, per chain and summed over
         chains.  **Not** warmup steps: the host calls ``update()`` only on slow
         stages, so under Stan's schedule these lag the scan index by the whole
-        initial fast buffer.  Equal to each other when ``n_chains == 1``.
+        initial fast buffer.  Equal to each other when ``n_chains == 1``, and
+        ``total == per_chain * n_chains`` always — one quantity in two units,
+        not two measurements.
+
+        **Cumulative across windows**, not per-window: the controller
+        deliberately does not reset ``budget_used`` at a boundary, so these grow
+        monotonically over the warmup.  Difference successive records for a
+        per-window count.  The per-chain figure divides ``budget_used`` by
+        ``n_chains``, which is exact because the counter advances by
+        ``n_chains`` per update — unless a caller supplies an
+        ``initial_metric_state`` carrying an off-multiple value.
     n_chains, dim
         Chain count and dimension.  Carried so a consumer can recompute the
         calibration thresholds (which are pure functions of ``M``, ``n``, ``d``)
@@ -365,6 +379,17 @@ class MetricPublicationRecord(NamedTuple):
         window was longer than the buffer.  Zero when the buffer merely filled
         exactly.  These two are separate because "full" and "lossy" are
         different facts.
+
+        **Per chain**, like ``buffer_capacity`` and unlike ``support_pooled_rows``
+        — a 7-step overflow at ``n_chains=8`` reports 7 here while 56 buffer rows
+        were actually overwritten.  Multiply by ``n_chains`` for the pooled count.
+
+        It is also the only surviving signal that the retained rows are
+        *rotated* rather than chronological.  That is irrelevant to the
+        covariance-style estimators, which are order-blind, but not to the
+        transient-mixing and lag-1 autocorrelation signals, which read time
+        order — a consumer diagnosing those can use this to spot the condition
+        after the fact.
     gate_predicate_true, escalation_gate_applicable
         See the module docstring.  Not nested; decode with :func:`decode_gates`.
     escalated_now, has_escalated_before, has_escalated
