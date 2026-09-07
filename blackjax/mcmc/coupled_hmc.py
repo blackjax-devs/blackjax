@@ -550,6 +550,87 @@ def whitened_difference(
     return ravel_pytree(scaled)[0]
 
 
+def _build_prescribed_pair(
+    logdensity_fn: Sequence[Callable],
+    inverse_mass_matrix: Sequence[metrics.MetricTypes],
+    step_size: Sequence[float],
+    num_integration_steps: Sequence[int],
+    integrator: Callable,
+    divergence_threshold: float,
+    coupling: str,
+    direction_fn: Callable | None,
+):
+    """Build the coupled transition whose randomness is supplied, not drawn.
+
+    Returns ``step(state, standard_normal, uniform) -> (CoupledHMCState,
+    CoupledHMCInfo)``.  This is the deterministic core of the kernel: given
+    the pair of incoming states and one ``(z, u)`` pair it is an ordinary pure
+    function, which is what makes the coupling separately checkable without
+    also reasoning about key splitting.  It is internal to this module.
+
+    The reflection direction is measured here, from the incoming states only.
+    Neither ``direction_fn`` nor anything it is given has access to the
+    innovations this transition will use.
+    """
+    logdensity_fns = _as_pair(logdensity_fn, "logdensity_fn")
+    step_sizes = _as_pair(step_size, "step_size")
+    inverse_mass_matrices = _as_pair(inverse_mass_matrix, "inverse_mass_matrix")
+    integration_steps = _as_pair(num_integration_steps, "num_integration_steps")
+
+    first_metric, first_step = _build_prescribed_marginal(
+        logdensity_fns[0],
+        inverse_mass_matrices[0],
+        step_sizes[0],
+        integration_steps[0],
+        integrator,
+        divergence_threshold,
+    )
+    second_metric, second_step = _build_prescribed_marginal(
+        logdensity_fns[1],
+        inverse_mass_matrices[1],
+        step_sizes[1],
+        integration_steps[1],
+        integrator,
+        divergence_threshold,
+    )
+
+    def step(
+        state: CoupledHMCState, standard_normal: Array, uniform: Array
+    ) -> tuple[CoupledHMCState, CoupledHMCInfo]:
+        _check_paired_positions(state.first.position, state.second.position)
+        flat, _ = _flat_position(state.first.position)
+
+        if coupling == "reflection":
+            direction = jnp.asarray(
+                direction_fn(state.first, state.second, first_metric, second_metric)
+            )
+            if direction.shape != flat.shape:
+                raise ValueError(
+                    "`direction_fn` must return a flat direction matching the "
+                    f"position; got {direction.shape}, expected {flat.shape}"
+                )
+            if direction.dtype != flat.dtype:
+                raise TypeError(
+                    "`direction_fn` must return the position dtype; got "
+                    f"{direction.dtype}, expected {flat.dtype}"
+                )
+            unit = _reflection_unit(direction)
+            second_normal = _reflect(standard_normal, unit)
+        else:
+            unit = jnp.zeros(flat.shape, flat.dtype)
+            second_normal = standard_normal
+
+        first_state, first_info = first_step(state.first, standard_normal, uniform)
+        second_state, second_info = second_step(state.second, second_normal, uniform)
+
+        return (
+            CoupledHMCState(first_state, second_state),
+            CoupledHMCInfo(first_info, second_info, standard_normal, unit, uniform),
+        )
+
+    return step
+
+
 # --------------------------------------------------------------------
 #                            PUBLIC API
 # --------------------------------------------------------------------
@@ -646,50 +727,17 @@ def build_kernel(
         num_integration_steps: Sequence[int],
     ) -> tuple[CoupledHMCState, CoupledHMCInfo]:
         """Advance a coupled pair by one transition."""
-        logdensity_fns = _as_pair(logdensity_fn, "logdensity_fn")
-        step_sizes = _as_pair(step_size, "step_size")
-        inverse_mass_matrices = _as_pair(inverse_mass_matrix, "inverse_mass_matrix")
-        integration_steps = _as_pair(num_integration_steps, "num_integration_steps")
-        _check_paired_positions(state.first.position, state.second.position)
-
-        first_metric, first_step = _build_prescribed_marginal(
-            logdensity_fns[0],
-            inverse_mass_matrices[0],
-            step_sizes[0],
-            integration_steps[0],
+        step = _build_prescribed_pair(
+            logdensity_fn,
+            inverse_mass_matrix,
+            step_size,
+            num_integration_steps,
             integrator,
             divergence_threshold,
+            coupling,
+            direction_fn,
         )
-        second_metric, second_step = _build_prescribed_marginal(
-            logdensity_fns[1],
-            inverse_mass_matrices[1],
-            step_sizes[1],
-            integration_steps[1],
-            integrator,
-            divergence_threshold,
-        )
-
         flat, _ = _flat_position(state.first.position)
-
-        # The coupling direction is measured on the incoming states, before
-        # any innovation for this transition exists.
-        if coupling == "reflection":
-            direction = jnp.asarray(
-                direction_fn(state.first, state.second, first_metric, second_metric)
-            )
-            if direction.shape != flat.shape:
-                raise ValueError(
-                    "`direction_fn` must return a flat direction matching the "
-                    f"position; got {direction.shape}, expected {flat.shape}"
-                )
-            if direction.dtype != flat.dtype:
-                raise TypeError(
-                    "`direction_fn` must return the position dtype; got "
-                    f"{direction.dtype}, expected {flat.dtype}"
-                )
-            unit = _reflection_unit(direction)
-        else:
-            unit = jnp.zeros(flat.shape, flat.dtype)
 
         key_normal, key_uniform = jax.random.split(rng_key, 2)
         standard_normal = jax.random.normal(key_normal, flat.shape, flat.dtype)
@@ -698,18 +746,7 @@ def build_kernel(
         # hence no narrowing -- is needed.
         uniform = jax.random.uniform(key_uniform, (), flat.dtype)
 
-        if coupling == "reflection":
-            second_normal = _reflect(standard_normal, unit)
-        else:
-            second_normal = standard_normal
-
-        first_state, first_info = first_step(state.first, standard_normal, uniform)
-        second_state, second_info = second_step(state.second, second_normal, uniform)
-
-        return (
-            CoupledHMCState(first_state, second_state),
-            CoupledHMCInfo(first_info, second_info, standard_normal, unit, uniform),
-        )
+        return step(state, standard_normal, uniform)
 
     return kernel
 
