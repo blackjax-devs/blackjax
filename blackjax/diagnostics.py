@@ -128,6 +128,18 @@ def rhat(input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> A
        them, and compute split-R̂ again (**tail**).
     5. Return :math:`\\max(\\hat{R}_{\\text{bulk}}, \\hat{R}_{\\text{tail}})`.
 
+    .. warning::
+
+       ``NaN`` from this function does **not** uniquely mean "the draws
+       contained a missing observation".  The folded component subtracts the
+       pooled median, so when at least half of a component's pooled draws are
+       ``+inf`` (or ``-inf``) the median is infinite and the fold evaluates
+       ``inf - inf``, which is ``NaN``.  Such a component returns ``NaN`` from
+       :func:`rhat` while containing no ``NaN`` at all — and while
+       :func:`ess_bulk` and :func:`ess_tail` still return finite values for it.
+       Infinity handling is a separate open question from the missing-data
+       contract; this is documented, not yet decided.
+
     References
     ----------
     .. cite:p:`vehtari2021rank`
@@ -173,7 +185,10 @@ def effective_sample_size(
     -------
     NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.
     Variables whose within-chain variance is numerically zero have an effective
-    sample size of zero.
+    sample size of zero.  Variables containing a ``NaN`` draw are undefined and
+    report ``NaN``; the reduction is per variable, so an independent finite
+    variable is unaffected.  Infinities are ordered values and are not treated
+    as missing.
 
     Notes
     -----
@@ -301,6 +316,17 @@ def effective_sample_size(
     ess = ess_raw / tau_hat
     ess = jnp.where(is_numerically_degenerate.squeeze(), 0.0, ess.squeeze())
 
+    # A NaN draw is a missing observation, not a value the estimator can use.
+    # Geyer's truncation above gates on partial sums being > 0, and every such
+    # comparison is False for NaN, so the truncation collapses and tau_hat
+    # falls back to its 1 / log10(MN) floor — manufacturing a large, entirely
+    # fictitious sample size.  Report the component as undefined instead.  The
+    # reduction runs over the chain and draw axes only, so a contaminated
+    # component never poisons an independent finite one, and ``.squeeze()``
+    # mirrors the squeeze applied to ``ess`` just above.
+    has_nan = jnp.any(jnp.isnan(input_array), axis=(chain_axis, sample_axis))
+    ess = jnp.where(jnp.squeeze(has_nan), jnp.nan, ess)
+
     return ess
 
 
@@ -360,6 +386,115 @@ def _split_chains(x: Array) -> Array:
     return jnp.concatenate([first, second], axis=0)
 
 
+def _average_ranks(x_flat: Array) -> Array:
+    """One-indexed ranks along axis 0, averaging the ranks of tied values.
+
+    Equal values form a *tie group* and all receive the mean of the ordinal
+    ranks that the group spans.  This makes the ranking invariant to the
+    permutation of the pooled draws, which ordinal (``argsort``-of-``argsort``)
+    ranking is not.
+
+    Parameters
+    ----------
+    x_flat
+        Array of shape ``(n, …)``; ranks are computed along axis 0
+        independently for each element of the trailing dimensions.
+
+    Returns
+    -------
+    Array of the same shape holding 1-indexed average ranks.
+
+    Notes
+    -----
+    The implementation is written with sort and cumulative-reduction
+    primitives only, so it is ``jit``/``vmap``-compatible and has no
+    data-dependent shapes.
+
+    A ``NaN`` is a missing or invalid observation, not an ordered value that
+    could be tied with anything, so a component containing one cannot be
+    ranked: the whole component returns ``NaN``.  The reduction runs over
+    axis 0 alone, so an invalid component never poisons an independent finite
+    sibling.
+
+    Infinities are ordered values and are ranked normally *by this function*.
+    That does not make the whole diagnostic pipeline infinity-safe: see the
+    note on folding in :func:`rhat`.
+    """
+    n = x_flat.shape[0]
+    extra_shape = x_flat.shape[1:]
+
+    order = jnp.argsort(x_flat, axis=0)
+    x_sorted = jnp.take_along_axis(x_flat, order, axis=0)
+
+    # Adjacent sorted entries share a tie group when they are equal.
+    same_as_prev = x_sorted[1:] == x_sorted[:-1]
+    true_row = jnp.ones((1, *extra_shape), dtype=bool)
+    is_first = jnp.concatenate([true_row, ~same_as_prev], axis=0)
+    is_last = jnp.concatenate([~same_as_prev, true_row], axis=0)
+
+    positions = jnp.broadcast_to(
+        jnp.arange(n).reshape((n, *(1,) * len(extra_shape))), x_flat.shape
+    )
+    # Running max/min of the group boundary markers gives, for every sorted
+    # position, the first and last 0-indexed position of its tie group.
+    group_start = jax.lax.cummax(jnp.where(is_first, positions, 0), axis=0)
+    group_end = jax.lax.cummin(
+        jnp.where(is_last, positions, n - 1), axis=0, reverse=True
+    )
+
+    # Mean of the 1-indexed ordinal ranks spanned by the group.
+    avg_rank_sorted = (group_start + group_end) / 2.0 + 1.0
+
+    # Scatter back to the original positions.
+    inverse = jnp.argsort(order, axis=0)
+    ranks = jnp.take_along_axis(avg_rank_sorted, inverse, axis=0)
+
+    # A component holding a missing observation has no valid ranking.
+    contaminated = jnp.any(jnp.isnan(x_flat), axis=0, keepdims=True)
+    return jnp.where(contaminated, jnp.nan, ranks)
+
+
+def _propagate_nan_components(value: Array, x: Array) -> Array:
+    """Set the entries of ``value`` whose draws contain a ``NaN`` to ``NaN``.
+
+    Parameters
+    ----------
+    value
+        Diagnostic values of shape ``x.shape[2:]``.
+    x
+        Draws of shape ``(nchains, nsamples, …)``.
+
+    Returns
+    -------
+    ``value`` with every contaminated component replaced by ``NaN``.
+
+    Notes
+    -----
+    The reduction runs over the chain and draw axes only, so a component
+    holding a missing observation never poisons an independent finite one.
+
+    ``x`` here is the *split* array, so with an odd number of draws the last
+    draw has already been trimmed by :func:`_split_chains` and a ``NaN``
+    sitting only in that draw is not seen.  The contract is therefore "a
+    ``NaN`` among the draws the diagnostic actually uses", which is narrower
+    than "a ``NaN`` anywhere in the input".
+
+    The guard is needed because the estimators downstream do not propagate
+    ``NaN`` on their own.  Geyer's initial-positive-sequence truncation in
+    :func:`effective_sample_size` compares partial autocorrelation sums
+    against zero; every such comparison is ``False`` for ``NaN``, so the
+    truncation collapses and :math:`\\hat{\\tau}` falls back to its
+    ``1 / log10(MN)`` floor — turning an all-``NaN`` input into a large and
+    entirely fictitious sample size instead of ``NaN``.
+    """
+    contaminated = jnp.any(jnp.isnan(x), axis=(0, 1))
+    # ``effective_sample_size`` ends with a bare ``.squeeze()``, which drops
+    # genuine size-1 event axes as well as the chain/draw axes.  Squeeze the
+    # mask the same way, or ``jnp.where`` broadcasts a (…, 1) mask against a
+    # squeezed value and silently changes both the shape and the numbers.
+    return jnp.where(jnp.squeeze(contaminated), jnp.nan, value)
+
+
 def _rank_normalize(x: Array) -> Array:
     """Rank-normalize draws using the Blom plotting position.
 
@@ -384,6 +519,19 @@ def _rank_normalize(x: Array) -> Array:
 
     where :math:`r` is the 1-indexed rank and :math:`n = \\text{nchains}
     \\times \\text{nsamples}`.
+
+    Tied draws receive the *average* of the ordinal ranks their tie group
+    spans (see :func:`_average_ranks`), matching Vehtari et al. (2021) and
+    ``scipy.stats.rankdata(method="average")``.  Ordinal ranking would give
+    equal values different scores depending on where they sit in the pooled
+    array, manufacturing chain/time structure out of ties — a constant input
+    would acquire a spurious spread, and repeated states would inflate R̂ and
+    deflate bulk ESS.  The damage scales with how large and how scattered the
+    tie groups are: it is severe for indicator and discrete observables, and
+    mild for rejection repeats in a continuous chain, where the repeats form
+    short contiguous runs.  A constant input now maps to a constant field of
+    zeros, leaving R̂ undefined (0/0) and the ESS degeneracy guard free to
+    report 0.
     """
     nchains, nsamples = x.shape[0], x.shape[1]
     extra_shape = x.shape[2:]
@@ -392,8 +540,8 @@ def _rank_normalize(x: Array) -> Array:
     # Pool chains and draws into the leading axis: (n, …extra).
     x_flat = x.reshape(n, *extra_shape)
 
-    # Double argsort gives 0-indexed ranks; +1 for 1-indexed.
-    ranks = jnp.argsort(jnp.argsort(x_flat, axis=0), axis=0).astype(float) + 1
+    # Average ranks, so that tied draws receive identical scores.
+    ranks = _average_ranks(x_flat)
 
     # Blom plotting position.
     z = jax.scipy.special.ndtri((ranks - 3.0 / 8) / (n + 1.0 / 4))
@@ -440,6 +588,8 @@ def ess_bulk(
     x = _to_standard_axes(jnp.asarray(input_array), chain_axis, sample_axis)
     x_split = _split_chains(x)
     x_rn = _rank_normalize(x_split)
+    # A contaminated component is already all-NaN after _rank_normalize, and
+    # effective_sample_size propagates that on its own.
     return effective_sample_size(x_rn)
 
 
@@ -458,8 +608,22 @@ def ess_tail(
     The tail quantiles are determined by ``prob``: the lower tail uses the
     ``(1 - prob) / 2`` quantile and the upper tail uses the
     ``(1 + prob) / 2`` quantile.  The default ``prob=0.90`` corresponds to
-    the 5th/95th percentiles, which matches ``az.ess(method="tail")`` in
-    ArviZ (the ArviZ default is also ``prob=(0.05, 0.95)``).
+    the 5th/95th percentiles, matching ArviZ's default ``prob=(0.05, 0.95)``.
+
+    .. warning::
+
+       The agreement with ``az.ess(method="tail")`` holds for **continuous**
+       draws only.  The upper-tail indicator here is
+       :math:`\\mathbf{1}(x \\ge q_{\\text{high}})`, whereas Vehtari et al.
+       and ArviZ use :math:`\\mathbf{1}(x \\le q)` for both tails.  On
+       continuous draws the two are exact complements and the ESS is
+       identical, but on tied draws they are not: for iid Bernoulli(0.1),
+       :math:`P(x \\ge q_{95})` is 0.097 rather than 0.05, and for a 5-level
+       grid it is 0.21.  This is a separate known defect in the tail
+       estimator's tie handling, tracked independently of the
+       rank-normalization fix; note that simply switching to ``<=`` does not
+       resolve it, since that indicator is identically 1 on such draws and
+       would be reported as degenerate.
 
     Parameters
     ----------
@@ -519,7 +683,12 @@ def ess_tail(
     ess_lower = effective_sample_size(I_lower)
     ess_upper = effective_sample_size(I_upper)
 
-    return jnp.minimum(ess_lower, ess_upper)
+    # A NaN draw makes the pooled quantiles NaN, every indicator comparison
+    # False, and the resulting all-zero series degenerate — which would report
+    # 0 rather than "undefined".  Guard once on the reduced value: the
+    # indicators themselves are never NaN, so the estimator cannot propagate
+    # this on its own the way it does for ess_bulk.
+    return _propagate_nan_components(jnp.minimum(ess_lower, ess_upper), x_split)
 
 
 def pareto_khat(x: ArrayLike, tail: str = "both", tail_frac: float = 0.10) -> Array:

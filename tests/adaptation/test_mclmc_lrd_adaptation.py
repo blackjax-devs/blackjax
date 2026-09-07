@@ -135,6 +135,39 @@ class TestRankGuard:
             issubclass(w.category, UserWarning) for w in caught
         ), "Expected a UserWarning about rank clamping but none was emitted"
 
+    def test_non_finite_pilot_ess_is_refused_before_rank_selection(self, monkeypatch):
+        """An invalid pilot fails with a descriptive error, before the SVD.
+
+        The discriminating assertion is the message match: the pre-guard tree
+        also raised, but as a bare "cannot convert float NaN to integer". The
+        tripwire adds that the guard has not drifted below the SVD, which
+        matters because `_extract_lrd_from_samples` consumes the same
+        contaminated draws and returns an all-NaN preconditioner from them.
+        """
+        import blackjax.adaptation.mclmc_lrd_adaptation as lrd_mod
+
+        def _tripwire(*args, **kwargs):
+            raise AssertionError("SVD ran despite invalid pilot diagnostics")
+
+        monkeypatch.setattr(
+            lrd_mod,
+            "effective_sample_size",
+            lambda x, *a, **k: jnp.full(x.shape[-1], jnp.nan),
+        )
+        monkeypatch.setattr(lrd_mod, "_extract_lrd_from_samples", _tripwire)
+
+        with pytest.raises(ValueError, match="pilot diagnostics are invalid"):
+            mclmc_lrd_warmup(
+                logdensity_fn,
+                jnp.zeros(D),
+                jax.random.key(11),
+                k=K,
+                pilot_num_warmup=50,
+                pilot_num_samples=32,
+                lrd_num_steps=50,
+                num_chains=2,
+            )
+
     def test_no_warning_when_k_within_bound(self):
         """When k ≤ n_eff/2, no clamping warning should be emitted."""
         rng = jax.random.key(6)
