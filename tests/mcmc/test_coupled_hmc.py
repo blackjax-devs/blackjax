@@ -84,11 +84,15 @@ def _skewed_anisotropic_logdensity(x):
 
     The reference comparison needs both marginals to have an acceptance
     probability strictly inside (0, 1), so that one uniform can be chosen to
-    accept and another to reject. A Gaussian target cannot supply that
-    reliably: leapfrog energy error on a Gaussian stays bounded until the
-    stability limit and then blows up, so ``p_accept`` jumps from 1 to 0 with
-    almost no interval between. A skewed target gives a genuinely intermediate
-    probability.
+    accept and another to reject. On the Gaussian targets first tried here, a
+    coarse step-size grid moved from ``p_accept`` 1.0 to 0.0 between 0.70 and
+    0.80 without landing inside, which made the fixture hard to pick. That is
+    an observation about the grid that was scanned, NOT evidence that no
+    interior interval exists: for a fixed leapfrog count the energy error
+    varies continuously with the step size, so a narrower interval may well be
+    there and simply was not sampled. This skewed target is a controlled
+    choice that made an interior probability easy to find and pin, not a claim
+    about Gaussian targets being unusable.
     """
     flat, _ = jax.flatten_util.ravel_pytree(x)
     scales = jnp.arange(1, flat.size + 1, dtype=flat.dtype)
@@ -489,7 +493,8 @@ class CoupledHMCContractTest(BlackJAXTest):
             payloads = _metric_payloads(jnp.float64)
             # Two different non-Gaussian targets, two different metrics, two
             # different step sizes and integration counts. These settings are a
-            # fixture chosen so that BOTH reference acceptance probabilities are
+            # fixture found by scanning, chosen because BOTH reference
+            # acceptance probabilities are
             # strictly interior under both couplings (about 0.53 for the first,
             # and 0.82 synchronous / 0.75 reflected for the second), which is
             # what lets one uniform accept and another reject.
@@ -1270,6 +1275,102 @@ class CoupledHMCContractTest(BlackJAXTest):
             # And it is genuinely the pre-transition state, not the result.
             self.assertFalse(
                 bool(jnp.allclose(seen["first"], new_state.first.position))
+            )
+
+    def test_common_normal_reports_the_first_marginal_s_innovation(self):
+        """``common_normal`` is the innovation the FIRST marginal received.
+
+        The field's docstring promises exactly that, and under reflection the
+        two marginals receive different vectors, so reporting the second one
+        would make the field contradict its own documentation with nothing to
+        catch it.
+        """
+        with _x64():
+            mass = jnp.ones((_DIM,), jnp.float64)
+            first_position = jnp.ones((_DIM,), jnp.float64)
+            second_position = -jnp.ones((_DIM,), jnp.float64)
+            state = coupled_hmc.init(
+                (first_position, second_position),
+                (_standard_normal_logdensity,) * 2,
+            )
+            for coupling in ("synchronous", "reflection"):
+                step = coupled_hmc._build_prescribed_pair(
+                    (_standard_normal_logdensity,) * 2,
+                    (mass, mass),
+                    (0.2, 0.2),
+                    (3, 3),
+                    integrators.velocity_verlet,
+                    1000.0,
+                    coupling,
+                    (
+                        coupled_hmc.whitened_difference
+                        if coupling == "reflection"
+                        else None
+                    ),
+                )
+                noise = jax.random.normal(
+                    jax.random.key(_CONTROL_SEED), (_DIM,), jnp.float64
+                )
+                _, info = step(state, noise, jnp.asarray(0.3, jnp.float64))
+                with self.subTest(coupling=coupling):
+                    chex.assert_trees_all_equal(info.common_normal, noise)
+                    if coupling == "reflection":
+                        # The check has bite only if the second marginal really
+                        # received something else.
+                        second = _reflect_with_numpy(
+                            noise, info.reflection_unit, coupling
+                        )
+                        self.assertFalse(bool(jnp.allclose(second, noise, atol=1e-10)))
+
+    def test_direction_policy_receives_the_first_marginal_s_metric(self):
+        """The default direction is documented as first-metric-based.
+
+        Handing the policy the second marginal's metric would silently change
+        which direction is reflected along while leaving every marginal
+        property intact, so it has to be asserted directly.
+        """
+        with _x64():
+            payloads = _metric_payloads(jnp.float64)
+            first_mass, second_mass = payloads["dense"], payloads["low_rank"]
+            seen = {}
+
+            def recording_direction_fn(first, second, first_metric):
+                seen["metric"] = first_metric
+                return coupled_hmc.whitened_difference(first, second, first_metric)
+
+            state = self._pair_state(key=jax.random.key(_CONTROL_SEED))
+            step = coupled_hmc._build_prescribed_pair(
+                (_standard_normal_logdensity,) * 2,
+                (first_mass, second_mass),
+                (0.2, 0.2),
+                (3, 3),
+                integrators.velocity_verlet,
+                1000.0,
+                "reflection",
+                recording_direction_fn,
+            )
+            noise = jax.random.normal(
+                jax.random.key(_CONTROL_SEED), (_DIM,), jnp.float64
+            )
+            step(state, noise, jnp.asarray(0.3, jnp.float64))
+
+            # Identify the metric by what it computes, not by object identity.
+            probe = jax.random.normal(
+                jax.random.key(_CONTROL_SEED + 1), (_DIM,), jnp.float64
+            )
+            observed = seen["metric"].scale(
+                state.first.position, probe, inv=False, trans=False
+            )
+            expected_first = metrics.default_metric(first_mass).scale(
+                state.first.position, probe, inv=False, trans=False
+            )
+            expected_second = metrics.default_metric(second_mass).scale(
+                state.first.position, probe, inv=False, trans=False
+            )
+            chex.assert_trees_all_close(observed, expected_first, atol=1e-12)
+            # The two metrics must actually differ, or this proves nothing.
+            self.assertFalse(
+                bool(jnp.allclose(expected_first, expected_second, atol=1e-8))
             )
 
     def test_synchronous_coupling_keeps_identical_states_identical(self):

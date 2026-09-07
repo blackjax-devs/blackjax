@@ -61,10 +61,12 @@ below draw a single :math:`z` and hand each marginal a transformed copy:
 
         z' = z - 2 e (e^\\top z)
 
-    for a unit vector :math:`e`.  Because that map is an orthogonal
-    reflection it preserves :math:`N(0, I)` exactly, so the second marginal's
+    for a unit vector :math:`e`.  That map is an orthogonal reflection, so in
+    exact arithmetic it preserves :math:`N(0, I)` and the second marginal's
     momentum law is unchanged **for any** unit :math:`e` that does not depend
-    on :math:`z`.  That is the whole of what reflection buys here: marginal
+    on :math:`z`.  In floating point the normalisation of :math:`e` carries a
+    rounding error of a few units in the last place, so the preservation is
+    exact in the mathematics and accurate to that tolerance in the code.  That is the whole of what reflection buys here: marginal
     correctness.  It is not a statement about contraction, meeting, or
     coupling quality, and none is made.
 
@@ -281,9 +283,12 @@ def _check_paired_positions(first_position, second_position) -> None:
         )
     # Per-leaf shapes, not merely equal flattened size.  Two positions can share
     # a tree structure and a total size while splitting it differently -- say
-    # {"a": (2,), "b": (3,)} against {"a": (3,), "b": (2,)} -- and then the one
-    # shared flat innovation is unravelled across different leaf boundaries in
-    # each marginal, so "the same z" silently means two different things.
+    # {"a": (2,), "b": (3,)} against {"a": (3,), "b": (2,)}.  This enforces the
+    # documented contract that the pair has matching leaf shapes.  Each marginal
+    # would still be individually valid in that situation, since each unravels
+    # the flat innovation consistently with its own position; what breaks is the
+    # pairing, because the shared vector lands on different leaf boundaries in
+    # each chain and so does not mean the same thing to both.
     first_leaves = jax.tree.leaves(first_position)
     second_leaves = jax.tree.leaves(second_position)
     for index, (first_leaf, second_leaf) in enumerate(zip(first_leaves, second_leaves)):
@@ -727,8 +732,12 @@ def _build_prescribed_pair(
                     f"position, got {direction.shape}, expected {flat.shape}"
                 )
             if direction.dtype != flat.dtype:
+                # Name the likely cause rather than only the messenger: with
+                # the default direction this mismatch comes from a metric whose
+                # dtype differs from the position's, not from anything the
+                # caller wrote.
                 raise TypeError(
-                    "`direction_fn` must return the position dtype, got "
+                    "the reflection direction must have the position dtype, got "
                     f"{direction.dtype}, expected {flat.dtype}"
                 )
             unit = _reflection_unit(direction)
