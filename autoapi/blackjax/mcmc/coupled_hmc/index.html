@@ -1,0 +1,932 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>blackjax.mcmc.coupled_hmc</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@4/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'autoapi/blackjax/mcmc/coupled_hmc/index';</script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" />
+    <link rel="next" title="blackjax.mcmc.diffusions" href="../diffusions/index.html" />
+    <link rel="prev" title="blackjax.mcmc.composed.trajectory_length" href="../composed/trajectory_length/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+geb9c6c81d" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../../index.html">API Reference</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../adaptation/meta/index.html">blackjax.adaptation.meta</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../adaptation/meta/builders/index.html">blackjax.adaptation.meta.builders</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../adaptation/meta/verdict/index.html">blackjax.adaptation.meta.verdict</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/meta_adaptation/index.html">blackjax.adaptation.meta_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/metric_recipes/index.html">blackjax.adaptation.metric_recipes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="../index.html">blackjax.mcmc</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="../adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../composed/index.html">blackjax.mcmc.composed</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../composed/step_size/index.html">blackjax.mcmc.composed.step_size</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../composed/trajectory_length/index.html">blackjax.mcmc.composed.trajectory_length</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">blackjax.mcmc.coupled_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+<button class="sidebar-toggle secondary-toggle btn btn-sm pst-navbar-icon" title="Toggle secondary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="fa-solid fa-list"></span>
+</button>
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1>blackjax.mcmc.coupled_hmc</h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+            <div>
+                <h2> Contents </h2>
+            </div>
+            <nav aria-label="Page">
+                <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-contract">The contract</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-semantics">Mathematical semantics</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#relation-to-blackjax-hmc">Relation to <code class="docutils literal notranslate"><span class="pre">blackjax.hmc</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState"><code class="docutils literal notranslate"><span class="pre">CoupledHMCState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState.first"><code class="docutils literal notranslate"><span class="pre">CoupledHMCState.first</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState.second"><code class="docutils literal notranslate"><span class="pre">CoupledHMCState.second</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.first"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.first</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.second"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.second</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.common_normal"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.common_normal</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.reflection_unit"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.reflection_unit</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.uniform"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.uniform</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.validate_marginal_inputs"><code class="docutils literal notranslate"><span class="pre">validate_marginal_inputs()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
+</ul>
+</li>
+</ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="module-blackjax.mcmc.coupled_hmc">
+<span id="blackjax-mcmc-coupled-hmc"></span><h1>blackjax.mcmc.coupled_hmc<a class="headerlink" href="#module-blackjax.mcmc.coupled_hmc" title="Link to this heading">#</a></h1>
+<p>Two HMC chains advanced from a shared source of randomness.</p>
+<p>This module runs two ordinary HMC marginals side by side and couples them
+<em>only through their random inputs</em>: the standard normal that becomes each
+momentum, and the single uniform that drives each Metropolis test.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The scope of what is implemented here is deliberately narrow.  This
+module provides a <strong>coupling of the random inputs</strong>.  It makes no claim
+that the pair is invariant for the product of the two targets, that the
+chains meet (exactly, maximally, or at all), that any estimator built
+from the pair is unbiased, or that coupling improves sampling efficiency
+in any sense.  None of those properties is implemented or tested.</p>
+</div>
+<section id="the-contract">
+<h2>The contract<a class="headerlink" href="#the-contract" title="Link to this heading">#</a></h2>
+<p>The one property this module does assert, and test, is:</p>
+<blockquote>
+<div><p>Coupling changes only the <em>joint law</em> of the two marginals’ random
+inputs.  It never changes either marginal’s transition function, its
+Metropolis decision rule, or its cached log-density and gradient.</p>
+</div></blockquote>
+<p>Concretely, given the same <code class="docutils literal notranslate"><span class="pre">(state,</span> <span class="pre">standard_normal,</span> <span class="pre">uniform)</span></code> triple, each
+marginal here performs exactly the transition an uncoupled HMC marginal built
+from the same target, metric, step size and integration count would perform,
+and returns exactly the same state and info.  The two marginals share a
+uniform but each compares it against <strong>its own</strong> acceptance probability, so a
+shared uniform is emphatically <em>not</em> a shared decision.  Each marginal carries
+its own <code class="docutils literal notranslate"><span class="pre">logdensity</span></code>/<code class="docutils literal notranslate"><span class="pre">logdensity_grad</span></code> cache.</p>
+</section>
+<section id="mathematical-semantics">
+<h2>Mathematical semantics<a class="headerlink" href="#mathematical-semantics" title="Link to this heading">#</a></h2>
+<p>Write <span class="math notranslate nohighlight">\(M\)</span> for a marginal’s mass matrix and <span class="math notranslate nohighlight">\(A\)</span> for the momentum
+square root BlackJAX uses, so that a momentum drawn as <span class="math notranslate nohighlight">\(p = A z\)</span> with
+<span class="math notranslate nohighlight">\(z \sim N(0, I)\)</span> has covariance <span class="math notranslate nohighlight">\(A A^\top = M\)</span>.  Both couplings
+below draw a single <span class="math notranslate nohighlight">\(z\)</span> and hand each marginal a transformed copy:</p>
+<dl>
+<dt><code class="docutils literal notranslate"><span class="pre">synchronous</span></code></dt><dd><p>Both marginals receive the same <span class="math notranslate nohighlight">\(z\)</span>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">reflection</span></code></dt><dd><p>The first marginal receives <span class="math notranslate nohighlight">\(z\)</span>; the second receives</p>
+<div class="math notranslate nohighlight">
+\[z' = z - 2 e (e^\top z)\]</div>
+<p>for a unit vector <span class="math notranslate nohighlight">\(e\)</span>.  That map is an orthogonal reflection, so in
+exact arithmetic it preserves <span class="math notranslate nohighlight">\(N(0, I)\)</span> and the second marginal’s
+momentum law is unchanged <strong>for any</strong> unit <span class="math notranslate nohighlight">\(e\)</span> that does not depend
+on <span class="math notranslate nohighlight">\(z\)</span>.  In floating point the normalisation of <span class="math notranslate nohighlight">\(e\)</span> carries a
+rounding error of a few units in the last place, so the preservation is
+exact in the mathematics and accurate to that tolerance in the code.  That is the whole of what reflection buys here: marginal
+correctness.  It is not a statement about contraction, meeting, or
+coupling quality, and none is made.</p>
+<p><code class="docutils literal notranslate"><span class="pre">e</span></code> comes from <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>, which is fixed when the kernel is
+built and is applied to the <em>incoming</em> pair of states.  It is given the two
+states and the first metric, and no innovations.  Note that this is a
+statement about its arguments, not about ordering: the kernel draws <code class="docutils literal notranslate"><span class="pre">z</span></code>
+and the uniform first and only then runs the transition that evaluates
+<code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>.  Supplying a <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code> that is a pure function of
+its arguments is the caller’s part of the contract.  The default direction is the
+difference of the two positions whitened by the <strong>first</strong> marginal’s
+metric, <span class="math notranslate nohighlight">\(e \propto A^{-1}(x_1 - x_2)\)</span>.  That particular choice is a
+heuristic: it is the direction along which, to leading order, the two
+chains’ displacements respond oppositely, since the velocity
+<span class="math notranslate nohighlight">\(\partial K / \partial p\)</span> equals <span class="math notranslate nohighlight">\(A^{-\top} z\)</span> and hence
+<span class="math notranslate nohighlight">\(\langle x_1 - x_2, \partial K/\partial p\rangle = \langle
+A^{-1}(x_1 - x_2), z\rangle\)</span>.  When the two marginals use <em>different</em>
+metrics the default still uses the first marginal’s metric only; it is
+then a first-metric-based direction with no claimed property for the
+pair.  A zero direction is the identity map, i.e. reflection degenerates
+to synchronous coupling for that transition.</p>
+</dd>
+</dl>
+</section>
+<section id="relation-to-blackjax-hmc">
+<h2>Relation to <code class="docutils literal notranslate"><span class="pre">blackjax.hmc</span></code><a class="headerlink" href="#relation-to-blackjax-hmc" title="Link to this heading">#</a></h2>
+<p>Each marginal applies the same <em>mathematical</em> Metropolis rule as ordinary
+HMC: accept with probability <span class="math notranslate nohighlight">\(\min(1, e^{\Delta})\)</span>.  It realises that
+rule by comparing a supplied uniform against the acceptance probability,
+whereas <a class="reference internal" href="../proposal/index.html#blackjax.mcmc.proposal.static_binomial_sampling" title="blackjax.mcmc.proposal.static_binomial_sampling"><code class="xref py py-func docutils literal notranslate"><span class="pre">static_binomial_sampling()</span></code></a> realises it
+with <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.random.bernoulli.html#jax.random.bernoulli" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.random.bernoulli()</span></code></a>.  The two agree as distributions and do
+<strong>not</strong> agree draw-for-draw: feeding the same key to this kernel and to
+<code class="docutils literal notranslate"><span class="pre">blackjax.hmc</span></code> will not reproduce the same accept/reject sequence, and no
+such parity is claimed or tested.</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">#</a></h2>
+<p>There is deliberately no top-level <code class="docutils literal notranslate"><span class="pre">blackjax.coupled_hmc</span></code>; reach this
+module at <code class="docutils literal notranslate"><span class="pre">blackjax.mcmc.coupled_hmc</span></code>.  Every per-marginal parameter is
+passed as an explicit <code class="docutils literal notranslate"><span class="pre">(first,</span> <span class="pre">second)</span></code> pair – including when both
+marginals share a value, which is written <code class="docutils literal notranslate"><span class="pre">(value,</span> <span class="pre">value)</span></code>.  Nothing is
+broadcast or inferred, because positions, metrics and step sizes may
+themselves legitimately be tuples.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.coupled_hmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">coupled_hmc</span>
+
+<span class="n">algorithm</span> <span class="o">=</span> <span class="n">coupled_hmc</span><span class="o">.</span><span class="n">as_top_level_api</span><span class="p">(</span>
+    <span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">),</span>
+    <span class="n">step_size</span><span class="o">=</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span>
+    <span class="n">inverse_mass_matrix</span><span class="o">=</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">inverse_mass_matrix</span><span class="p">),</span>
+    <span class="n">num_integration_steps</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span>
+    <span class="n">coupling</span><span class="o">=</span><span class="s2">&quot;reflection&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">state</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">init</span><span class="p">((</span><span class="n">position_one</span><span class="p">,</span> <span class="n">position_two</span><span class="p">))</span>
+<span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">algorithm</span><span class="o">.</span><span class="n">step</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="n">state</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState" title="blackjax.mcmc.coupled_hmc.CoupledHMCState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CoupledHMCState</span></code></a></p></td>
+<td><p>State of a pair of coupled HMC chains.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo" title="blackjax.mcmc.coupled_hmc.CoupledHMCInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CoupledHMCInfo</span></code></a></p></td>
+<td><p>Additional information on a coupled HMC transition.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="autosummary longtable table">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.validate_marginal_inputs" title="blackjax.mcmc.coupled_hmc.validate_marginal_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_marginal_inputs</span></code></a>(inverse_mass_matrix, ...)</p></td>
+<td><p>Eagerly validate one marginal's concrete metric and integration settings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.init" title="blackjax.mcmc.coupled_hmc.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ CoupledHMCState)</p></td>
+<td><p>Initialise a coupled pair.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.build_kernel" title="blackjax.mcmc.coupled_hmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([integrator, divergence_threshold, ...])</p></td>
+<td><p>Build a coupled HMC kernel.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.as_top_level_api" title="blackjax.mcmc.coupled_hmc.as_top_level_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">as_top_level_api</span></code></a>(→ blackjax.base.SamplingAlgorithm)</p></td>
+<td><p>Build a <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> for a coupled HMC pair.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCState">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CoupledHMCState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState" title="Link to this definition">#</a></dt>
+<dd><p>State of a pair of coupled HMC chains.</p>
+<p>The two marginals are held as two complete, independent
+<a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCState" title="blackjax.mcmc.hmc.HMCState"><code class="xref py py-class docutils literal notranslate"><span class="pre">HMCState</span></code></a> values, so each carries its own
+position and its own cached <code class="docutils literal notranslate"><span class="pre">logdensity</span></code>/<code class="docutils literal notranslate"><span class="pre">logdensity_grad</span></code>.  Keeping
+them separate makes crossing the two caches an obvious error rather than
+a silent one – it does not make it impossible, so the test suite checks
+it explicitly.</p>
+<dl class="simple">
+<dt>first</dt><dd><p>State of the first marginal chain.</p>
+</dd>
+<dt>second</dt><dd><p>State of the second marginal chain.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCState.first">
+<span class="sig-name descname"><span class="pre">first</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCState" title="blackjax.mcmc.hmc.HMCState"><span class="pre">blackjax.mcmc.hmc.HMCState</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCState.first"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState.first" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCState.second">
+<span class="sig-name descname"><span class="pre">second</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCState" title="blackjax.mcmc.hmc.HMCState"><span class="pre">blackjax.mcmc.hmc.HMCState</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCState.second"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState.second" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCInfo">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CoupledHMCInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo" title="Link to this definition">#</a></dt>
+<dd><p>Additional information on a coupled HMC transition.</p>
+<p>Both marginals’ complete <a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCInfo" title="blackjax.mcmc.hmc.HMCInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">HMCInfo</span></code></a> objects are
+preserved untouched, so every per-chain diagnostic (momentum, acceptance
+rate, acceptance decision, divergence flag, energy, proposal, integration
+count) stays separately visible.  The remaining three fields describe the
+shared randomness itself.</p>
+<dl class="simple">
+<dt>first</dt><dd><p>Transition information for the first marginal.</p>
+</dd>
+<dt>second</dt><dd><p>Transition information for the second marginal.</p>
+</dd>
+<dt>common_normal</dt><dd><p>The flat standard normal vector handed to the first marginal.  The
+second marginal receives this vector under the coupling map, i.e.
+unchanged for <code class="docutils literal notranslate"><span class="pre">&quot;synchronous&quot;</span></code> and reflected for <code class="docutils literal notranslate"><span class="pre">&quot;reflection&quot;</span></code>.</p>
+</dd>
+<dt>reflection_unit</dt><dd><p>The unit vector used by the reflection, in the same flat coordinates
+as <code class="docutils literal notranslate"><span class="pre">common_normal</span></code>.  Exactly zero under synchronous coupling, and
+exactly zero for a reflection whose direction was zero (both denote
+the identity map).</p>
+</dd>
+<dt>uniform</dt><dd><p>The single uniform variate shared by both Metropolis tests.  Each
+marginal compares it against its own acceptance probability.</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCInfo.first">
+<span class="sig-name descname"><span class="pre">first</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCInfo" title="blackjax.mcmc.hmc.HMCInfo"><span class="pre">blackjax.mcmc.hmc.HMCInfo</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCInfo.first"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.first" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCInfo.second">
+<span class="sig-name descname"><span class="pre">second</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCInfo" title="blackjax.mcmc.hmc.HMCInfo"><span class="pre">blackjax.mcmc.hmc.HMCInfo</span></a></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCInfo.second"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.second" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCInfo.common_normal">
+<span class="sig-name descname"><span class="pre">common_normal</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCInfo.common_normal"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.common_normal" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCInfo.reflection_unit">
+<span class="sig-name descname"><span class="pre">reflection_unit</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCInfo.reflection_unit"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.reflection_unit" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCInfo.uniform">
+<span class="sig-name descname"><span class="pre">uniform</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">blackjax.types.Array</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCInfo.uniform"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.uniform" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.validate_marginal_inputs">
+<span class="sig-name descname"><span class="pre">validate_marginal_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#validate_marginal_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.validate_marginal_inputs" title="Link to this definition">#</a></dt>
+<dd><p>Eagerly validate one marginal’s concrete metric and integration settings.</p>
+<p>These are host-side numerical checks on <em>concrete</em> values: they use NumPy
+and cannot run on tracers, so they are performed once when an algorithm is
+constructed and are deliberately absent from the traced kernel.</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Passing this check says the values supplied <em>now</em> are admissible.  It
+says nothing about values that appear later inside a jitted or
+vmapped computation, which are never seen by this function.  A caller
+who builds a kernel with <a class="reference internal" href="#blackjax.mcmc.coupled_hmc.build_kernel" title="blackjax.mcmc.coupled_hmc.build_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_kernel()</span></code></a> and feeds it traced
+metrics is responsible for their admissibility.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a><strong>, </strong><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the metric is not a supported kind, is not finite, is not positive
+definite, or the integration settings are not positive and finite.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.init">
+<span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.base.Position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState" title="blackjax.mcmc.coupled_hmc.CoupledHMCState"><span class="pre">CoupledHMCState</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.init" title="Link to this definition">#</a></dt>
+<dd><p>Initialise a coupled pair.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>position</strong> – An explicit <code class="docutils literal notranslate"><span class="pre">(first_position,</span> <span class="pre">second_position)</span></code> pair.  The two
+positions must share a pytree structure, leaf shapes and one floating
+dtype.</p></li>
+<li><p><strong>logdensity_fn</strong> – An explicit <code class="docutils literal notranslate"><span class="pre">(first_logdensity_fn,</span> <span class="pre">second_logdensity_fn)</span></code> pair.  The
+two may target different distributions.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.build_kernel">
+<span class="sig-name descname"><span class="pre">build_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">coupling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'synchronous'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#build_kernel"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.build_kernel" title="Link to this definition">#</a></dt>
+<dd><p>Build a coupled HMC kernel.</p>
+<p><code class="docutils literal notranslate"><span class="pre">coupling</span></code> and <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code> are fixed here, when the kernel is
+built, and not at call time.  <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code> is applied to the pair of
+incoming states and the first metric, and is supplied no innovations.</p>
+<p>It is worth being exact about what that does and does not say, because an
+earlier version of this docstring overstated it.  The kernel draws <code class="docutils literal notranslate"><span class="pre">z</span></code>
+and the uniform <em>before</em> running the transition in which <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>
+is evaluated, so the guarantee is <strong>not</strong> one of ordering.  It is that the
+innovations are not among the arguments handed over.  A <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>
+that closes over innovations, or draws its own randomness, breaks the
+reflection’s marginal correctness and nothing here can detect it. Keeping
+it a pure function of the arguments it is given is the caller’s part of the
+contract – the same purity convention every BlackJAX kernel assumes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>integrator</strong> – Symplectic integrator used by both marginals.</p></li>
+<li><p><strong>divergence_threshold</strong> – Energy difference above which a marginal transition is flagged
+divergent.  Applied to each marginal separately.</p></li>
+<li><p><strong>coupling</strong> – <code class="docutils literal notranslate"><span class="pre">&quot;synchronous&quot;</span></code>, which gives both marginals the same standard
+normal, or <code class="docutils literal notranslate"><span class="pre">&quot;reflection&quot;</span></code>, which gives the second marginal a
+reflected copy.</p></li>
+<li><p><strong>direction_fn</strong> – Only for <code class="docutils literal notranslate"><span class="pre">&quot;reflection&quot;</span></code>.  A callable
+<code class="docutils literal notranslate"><span class="pre">(first_state,</span> <span class="pre">second_state,</span> <span class="pre">first_metric)</span> <span class="pre">-&gt;</span> <span class="pre">Array</span></code> returning a
+flat direction; defaults to <code class="xref py py-func docutils literal notranslate"><span class="pre">whitened_difference()</span></code>.
+Passing one under synchronous coupling is an error, since it would
+have no effect.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p>A kernel <a href="#id1"><span class="problematic" id="id2">``</span></a>(rng_key, state, logdensity_fn, step_size,</p></li>
+<li><p><em>inverse_mass_matrix, num_integration_steps) -&gt; (CoupledHMCState,</em></p></li>
+<li><p>CoupledHMCInfo)`` in which every per-marginal parameter is an explicit</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">(first,</span> <span class="pre">second)</span></code> pair.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.as_top_level_api">
+<span class="sig-name descname"><span class="pre">as_top_level_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">blackjax.mcmc.metrics.MetricTypes</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.14)"><span class="pre">int</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">coupling</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.14)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'synchronous'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">direction_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.14)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">integrator</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">integrators.velocity_verlet</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">divergence_threshold</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.14)"><span class="pre">float</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">blackjax.base.SamplingAlgorithm</span></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#as_top_level_api"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.as_top_level_api" title="Link to this definition">#</a></dt>
+<dd><p>Build a <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> for a coupled HMC pair.</p>
+<p>There is deliberately no top-level <code class="docutils literal notranslate"><span class="pre">blackjax.coupled_hmc</span></code>; reach this
+through <code class="docutils literal notranslate"><span class="pre">blackjax.mcmc.coupled_hmc.as_top_level_api</span></code>.</p>
+<p>Every per-marginal argument is an explicit <code class="docutils literal notranslate"><span class="pre">(first,</span> <span class="pre">second)</span></code> pair, so a
+shared value is written twice.  The two marginals may target different
+distributions and use different fixed Gaussian Euclidean metrics, step
+sizes and integration counts, but their positions must share a pytree
+structure, leaf shapes and one floating dtype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>logdensity_fn</strong> – Pair of log-density functions.</p></li>
+<li><p><strong>step_size</strong> – Pair of integration step sizes.</p></li>
+<li><p><strong>inverse_mass_matrix</strong> – Pair of inverse mass matrices.  Each is a diagonal array, a dense
+array, or a <a class="reference internal" href="../metrics/index.html#blackjax.mcmc.metrics.LowRankInverseMassMatrix" title="blackjax.mcmc.metrics.LowRankInverseMassMatrix"><code class="xref py py-class docutils literal notranslate"><span class="pre">LowRankInverseMassMatrix</span></code></a>;
+callable (Riemannian) metrics and pre-built
+<code class="xref py py-class docutils literal notranslate"><span class="pre">Metric</span></code> objects are not supported.</p></li>
+<li><p><strong>num_integration_steps</strong> – Pair of integration step counts.</p></li>
+<li><p><strong>coupling</strong> – <code class="docutils literal notranslate"><span class="pre">&quot;synchronous&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;reflection&quot;</span></code>; see <a class="reference internal" href="#blackjax.mcmc.coupled_hmc.build_kernel" title="blackjax.mcmc.coupled_hmc.build_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_kernel()</span></code></a>.</p></li>
+<li><p><strong>direction_fn</strong> – Reflection direction policy; see <a class="reference internal" href="#blackjax.mcmc.coupled_hmc.build_kernel" title="blackjax.mcmc.coupled_hmc.build_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_kernel()</span></code></a>.</p></li>
+<li><p><strong>integrator</strong> – Symplectic integrator used by both marginals.</p></li>
+<li><p><strong>divergence_threshold</strong> – Per-marginal divergence threshold.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Each marginal’s concrete metric and integration settings are checked here
+by <a class="reference internal" href="#blackjax.mcmc.coupled_hmc.validate_marginal_inputs" title="blackjax.mcmc.coupled_hmc.validate_marginal_inputs"><code class="xref py py-func docutils literal notranslate"><span class="pre">validate_marginal_inputs()</span></code></a>.  Those checks read concrete values on
+the host, so they cover the arguments given here and say nothing about
+traced values appearing later under <code class="docutils literal notranslate"><span class="pre">jit</span></code> or <code class="docutils literal notranslate"><span class="pre">vmap</span></code>.  Callers who need
+to supply traced metrics use <a class="reference internal" href="#blackjax.mcmc.coupled_hmc.build_kernel" title="blackjax.mcmc.coupled_hmc.build_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_kernel()</span></code></a> directly, which performs
+no eager numerical validation.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>A <code class="docutils literal notranslate"><span class="pre">SamplingAlgorithm</span></code> whose <code class="docutils literal notranslate"><span class="pre">init</span></code> takes a pair of positions.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../composed/trajectory_length/index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">blackjax.mcmc.composed.trajectory_length</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="../diffusions/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">blackjax.mcmc.diffusions</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item"><div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> Contents
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-contract">The contract</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mathematical-semantics">Mathematical semantics</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#relation-to-blackjax-hmc">Relation to <code class="docutils literal notranslate"><span class="pre">blackjax.hmc</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#usage">Usage</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#classes">Classes</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#functions">Functions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-contents">Module Contents</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState"><code class="docutils literal notranslate"><span class="pre">CoupledHMCState</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState.first"><code class="docutils literal notranslate"><span class="pre">CoupledHMCState.first</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState.second"><code class="docutils literal notranslate"><span class="pre">CoupledHMCState.second</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.first"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.first</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.second"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.second</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.common_normal"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.common_normal</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.reflection_unit"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.reflection_unit</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.uniform"><code class="docutils literal notranslate"><span class="pre">CoupledHMCInfo.uniform</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.validate_marginal_inputs"><code class="docutils literal notranslate"><span class="pre">validate_marginal_inputs()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.init"><code class="docutils literal notranslate"><span class="pre">init()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.build_kernel"><code class="docutils literal notranslate"><span class="pre">build_kernel()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#blackjax.mcmc.coupled_hmc.as_top_level_api"><code class="docutils literal notranslate"><span class="pre">as_top_level_api()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

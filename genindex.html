@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g9e128d206" />
+  <meta name="docsearch:version" content="0.1.dev1+geb9c6c81d" />
   </head>
   
   
@@ -215,6 +215,7 @@
 <li class="toctree-l4"><a class="reference internal" href="autoapi/blackjax/mcmc/composed/trajectory_length/index.html">blackjax.mcmc.composed.trajectory_length</a></li>
 </ul>
 </details></li>
+<li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/coupled_hmc/index.html">blackjax.mcmc.coupled_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
@@ -526,10 +527,10 @@
       </ul></li>
       <li><a href="autoapi/blackjax/mcmc/trajectory/index.html#blackjax.mcmc.trajectory.append_to_trajectory">append_to_trajectory() (in module blackjax.mcmc.trajectory)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/vi/pathfinder/index.html#blackjax.vi.pathfinder.approximate">approximate() (in module blackjax.vi.pathfinder)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/adjusted_mclmc/index.html#blackjax.mcmc.adjusted_mclmc.as_top_level_api">as_top_level_api() (in module blackjax.mcmc.adjusted_mclmc)</a>
 
       <ul>
@@ -540,6 +541,8 @@
         <li><a href="autoapi/blackjax/mcmc/composed/step_size/index.html#blackjax.mcmc.composed.step_size.as_top_level_api">(in module blackjax.mcmc.composed.step_size)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/composed/trajectory_length/index.html#blackjax.mcmc.composed.trajectory_length.as_top_level_api">(in module blackjax.mcmc.composed.trajectory_length)</a>
+</li>
+        <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.as_top_level_api">(in module blackjax.mcmc.coupled_hmc)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.as_top_level_api">(in module blackjax.mcmc.dynamic_hmc)</a>
 </li>
@@ -864,6 +867,13 @@
 
       <ul>
         <li><a href="autoapi/blackjax/mcmc/composed/trajectory_length/index.html#module-blackjax.mcmc.composed.trajectory_length">module</a>
+</li>
+      </ul></li>
+      <li>
+    blackjax.mcmc.coupled_hmc
+
+      <ul>
+        <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#module-blackjax.mcmc.coupled_hmc">module</a>
 </li>
       </ul></li>
       <li>
@@ -1346,6 +1356,8 @@
 </li>
         <li><a href="autoapi/blackjax/mcmc/composed/trajectory_length/index.html#blackjax.mcmc.composed.trajectory_length.build_kernel">(in module blackjax.mcmc.composed.trajectory_length)</a>
 </li>
+        <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.build_kernel">(in module blackjax.mcmc.coupled_hmc)</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.build_kernel">(in module blackjax.mcmc.dynamic_hmc)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/elliptical_slice/index.html#blackjax.mcmc.elliptical_slice.build_kernel">(in module blackjax.mcmc.elliptical_slice)</a>
@@ -1439,6 +1451,8 @@
 </li>
       <li><a href="autoapi/blackjax/vi/fullrank_vi/index.html#blackjax.vi.fullrank_vi.FRVIState.chol_params">chol_params (FRVIState attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.common_normal">common_normal (CoupledHMCInfo attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/mcmc/proposal/index.html#blackjax.mcmc.proposal.compute_asymmetric_acceptance_ratio">compute_asymmetric_acceptance_ratio() (in module blackjax.mcmc.proposal)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/persistent_sampling/index.html#blackjax.smc.persistent_sampling.compute_log_persistent_weights">compute_log_persistent_weights() (in module blackjax.smc.persistent_sampling)</a>
@@ -1476,6 +1490,10 @@
       <li><a href="autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.MomentBlock.count">count (MomentBlock attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/metric_buffers/index.html#blackjax.adaptation.metric_buffers.AccumulatingSplitPopState.counts">counts (AccumulatingSplitPopState attribute)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo">CoupledHMCInfo (class in blackjax.mcmc.coupled_hmc)</a>
+</li>
+      <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCState">CoupledHMCState (class in blackjax.mcmc.coupled_hmc)</a>
 </li>
       <li><a href="autoapi/blackjax/ns/nss/index.html#blackjax.ns.nss.covariance_proposal">covariance_proposal() (in module blackjax.ns.nss)</a>
 </li>
@@ -1659,16 +1677,22 @@
 </li>
       <li><a href="autoapi/blackjax/adaptation/step_size/index.html#blackjax.adaptation.step_size.find_reasonable_step_size">find_reasonable_step_size() (in module blackjax.adaptation.step_size)</a>
 </li>
+      <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.first">first (CoupledHMCInfo attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCState.first">(CoupledHMCState attribute)</a>
+</li>
+      </ul></li>
       <li><a href="autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState.fisher_block">fisher_block (FisherMassMatrixAdaptationState attribute)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_diagonal">fisher_score_diagonal() (in module blackjax.adaptation.metric_estimators)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_diagonal_from_moments">fisher_score_diagonal_from_moments() (in module blackjax.adaptation.metric_estimators)</a>
 </li>
-      <li><a href="autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_low_rank">fisher_score_low_rank() (in module blackjax.adaptation.metric_estimators)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.fisher_score_low_rank">fisher_score_low_rank() (in module blackjax.adaptation.metric_estimators)</a>
+</li>
       <li><a href="autoapi/blackjax/adaptation/mass_matrix/index.html#blackjax.adaptation.mass_matrix.FisherMassMatrixAdaptationState">FisherMassMatrixAdaptationState (class in blackjax.adaptation.mass_matrix)</a>
 </li>
       <li><a href="autoapi/blackjax/mcmc/slice/index.html#blackjax.mcmc.slice.fixed_order">fixed_order() (in module blackjax.mcmc.slice)</a>
@@ -1813,6 +1837,8 @@
         <li><a href="autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html#blackjax.mcmc.adjusted_mclmc_dynamic.init">(in module blackjax.mcmc.adjusted_mclmc_dynamic)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/barker/index.html#blackjax.mcmc.barker.init">(in module blackjax.mcmc.barker)</a>
+</li>
+        <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.init">(in module blackjax.mcmc.coupled_hmc)</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/dynamic_hmc/index.html#blackjax.mcmc.dynamic_hmc.init">(in module blackjax.mcmc.dynamic_hmc)</a>
 </li>
@@ -2287,6 +2313,8 @@
 </li>
         <li><a href="autoapi/blackjax/mcmc/composed/trajectory_length/index.html#module-blackjax.mcmc.composed.trajectory_length">blackjax.mcmc.composed.trajectory_length</a>
 </li>
+        <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#module-blackjax.mcmc.coupled_hmc">blackjax.mcmc.coupled_hmc</a>
+</li>
         <li><a href="autoapi/blackjax/mcmc/diffusions/index.html#module-blackjax.mcmc.diffusions">blackjax.mcmc.diffusions</a>
 </li>
         <li><a href="autoapi/blackjax/mcmc/dynamic_hmc/index.html#module-blackjax.mcmc.dynamic_hmc">blackjax.mcmc.dynamic_hmc</a>
@@ -2756,6 +2784,8 @@
         <li><a href="autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.LowRankMetricCoreState.recompute_counter">(LowRankMetricCoreState attribute)</a>
 </li>
       </ul></li>
+      <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.reflection_unit">reflection_unit (CoupledHMCInfo attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.REGISTRY">REGISTRY (in module blackjax.adaptation.metric_recipes)</a>
 </li>
       <li><a href="autoapi/blackjax/ns/from_mcmc/index.html#blackjax.ns.from_mcmc.reject_constrained_step">reject_constrained_step() (in module blackjax.ns.from_mcmc)</a>
@@ -2840,6 +2870,12 @@
 </li>
       <li><a href="autoapi/blackjax/mcmc/composed/step_size/index.html#blackjax.mcmc.composed.step_size.GISTStepSizeInfo.search_exhausted">search_exhausted (GISTStepSizeInfo attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.second">second (CoupledHMCInfo attribute)</a>
+
+      <ul>
+        <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCState.second">(CoupledHMCState attribute)</a>
+</li>
+      </ul></li>
       <li><a href="autoapi/blackjax/adaptation/metric_recipes/index.html#blackjax.adaptation.metric_recipes.seed_low_rank_sigma_from_grad">seed_low_rank_sigma_from_grad() (in module blackjax.adaptation.metric_recipes)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/metric_estimators/index.html#blackjax.adaptation.metric_estimators.select_top_eigenvalues_by_informativeness">select_top_eigenvalues_by_informativeness() (in module blackjax.adaptation.metric_estimators)</a>
@@ -2892,10 +2928,10 @@
         <li><a href="autoapi/blackjax/adaptation/staged_adaptation/index.html#blackjax.adaptation.staged_adaptation.StagedAdaptationState.ss_state">(StagedAdaptationState attribute)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/blackjax/adaptation/staged_adaptation/index.html#blackjax.adaptation.staged_adaptation.staged_adaptation">staged_adaptation() (in module blackjax.adaptation.staged_adaptation)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/adaptation/staged_adaptation/index.html#blackjax.adaptation.staged_adaptation.staged_adaptation">staged_adaptation() (in module blackjax.adaptation.staged_adaptation)</a>
+</li>
       <li><a href="autoapi/blackjax/adaptation/staged_adaptation/index.html#blackjax.adaptation.staged_adaptation.StagedAdaptationState">StagedAdaptationState (class in blackjax.adaptation.staged_adaptation)</a>
 </li>
       <li><a href="autoapi/blackjax/adaptation/base/index.html#blackjax.adaptation.base.AdaptationInfo.state">state (AdaptationInfo attribute)</a>
@@ -3068,6 +3104,8 @@
 </li>
       <li><a href="autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html#blackjax.mcmc.marginal_latent_gaussian.MarginalState.U_x">U_x (MarginalState attribute)</a>
 </li>
+      <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.uniform">uniform (CoupledHMCInfo attribute)</a>
+</li>
       <li><a href="autoapi/blackjax/ns/utils/index.html#blackjax.ns.utils.uniform_prior">uniform_prior() (in module blackjax.ns.utils)</a>
 </li>
       <li><a href="autoapi/blackjax/smc/from_mcmc/index.html#blackjax.smc.from_mcmc.unshared_parameters_and_step_fn">unshared_parameters_and_step_fn() (in module blackjax.smc.from_mcmc)</a>
@@ -3082,10 +3120,10 @@
 </li>
       <li><a href="autoapi/blackjax/smc/base/index.html#blackjax.smc.base.update_and_take_last">update_and_take_last() (in module blackjax.smc.base)</a>
 </li>
-      <li><a href="autoapi/blackjax/adaptation/laps_burn_in/index.html#blackjax.adaptation.laps_burn_in.update_history">update_history() (in module blackjax.adaptation.laps_burn_in)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/adaptation/laps_burn_in/index.html#blackjax.adaptation.laps_burn_in.update_history">update_history() (in module blackjax.adaptation.laps_burn_in)</a>
+</li>
       <li><a href="autoapi/blackjax/adaptation/laps_burn_in/index.html#blackjax.adaptation.laps_burn_in.update_history_scalar">update_history_scalar() (in module blackjax.adaptation.laps_burn_in)</a>
 </li>
       <li><a href="autoapi/blackjax/ns/base/index.html#blackjax.ns.base.NSInfo.update_info">update_info (NSInfo attribute)</a>, <a href="autoapi/blackjax/ns/base/index.html#id3">[1]</a>
@@ -3115,6 +3153,10 @@
 
 <h2 id="V">V</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.validate_marginal_inputs">validate_marginal_inputs() (in module blackjax.mcmc.coupled_hmc)</a>
+</li>
+  </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="autoapi/blackjax/mcmc/integrators/index.html#blackjax.mcmc.integrators.velocity_verlet">velocity_verlet (in module blackjax.mcmc.integrators)</a>
 </li>

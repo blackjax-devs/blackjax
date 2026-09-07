@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.window_adaptation" href="../adaptation/window_adaptation/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g9e128d206" />
+  <meta name="docsearch:version" content="0.1.dev1+geb9c6c81d" />
   </head>
   
   
@@ -217,6 +217,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../mcmc/composed/trajectory_length/index.html">blackjax.mcmc.composed.trajectory_length</a></li>
 </ul>
 </details></li>
+<li class="toctree-l3"><a class="reference internal" href="../mcmc/coupled_hmc/index.html">blackjax.mcmc.coupled_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
@@ -581,6 +582,18 @@ and at least 4 draws per chain are required.</p></li>
 them, and compute split-R̂ again (<strong>tail</strong>).</p></li>
 <li><p>Return <span class="math notranslate nohighlight">\(\max(\hat{R}_{\text{bulk}}, \hat{R}_{\text{tail}})\)</span>.</p></li>
 </ol>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="docutils literal notranslate"><span class="pre">NaN</span></code> from this function does <strong>not</strong> uniquely mean “the draws
+contained a missing observation”.  The folded component subtracts the
+pooled median, so when at least half of a component’s pooled draws are
+<code class="docutils literal notranslate"><span class="pre">+inf</span></code> (or <code class="docutils literal notranslate"><span class="pre">-inf</span></code>) the median is infinite and the fold evaluates
+<code class="docutils literal notranslate"><span class="pre">inf</span> <span class="pre">-</span> <span class="pre">inf</span></code>, which is <code class="docutils literal notranslate"><span class="pre">NaN</span></code>.  Such a component returns <code class="docutils literal notranslate"><span class="pre">NaN</span></code> from
+<a class="reference internal" href="#blackjax.diagnostics.rhat" title="blackjax.diagnostics.rhat"><code class="xref py py-func docutils literal notranslate"><span class="pre">rhat()</span></code></a> while containing no <code class="docutils literal notranslate"><span class="pre">NaN</span></code> at all — and while
+<a class="reference internal" href="#blackjax.diagnostics.ess_bulk" title="blackjax.diagnostics.ess_bulk"><code class="xref py py-func docutils literal notranslate"><span class="pre">ess_bulk()</span></code></a> and <a class="reference internal" href="#blackjax.diagnostics.ess_tail" title="blackjax.diagnostics.ess_tail"><code class="xref py py-func docutils literal notranslate"><span class="pre">ess_tail()</span></code></a> still return finite values for it.
+Infinity handling is a separate open question from the missing-data
+contract; this is documented, not yet decided.</p>
+</div>
 <p class="rubric">References</p>
 </dd></dl>
 
@@ -601,7 +614,10 @@ contains a chain dimension and a sample dimension.</p></li>
 <dd class="field-even"><p><ul class="simple">
 <li><p><em>NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.</em></p></li>
 <li><p><em>Variables whose within-chain variance is numerically zero have an effective</em></p></li>
-<li><p><em>sample size of zero.</em></p></li>
+<li><p>sample size of zero.  Variables containing a <code class="docutils literal notranslate"><span class="pre">NaN</span></code> draw are undefined and</p></li>
+<li><p>report <code class="docutils literal notranslate"><span class="pre">NaN</span></code>; the reduction is per variable, so an independent finite</p></li>
+<li><p><em>variable is unaffected.  Infinities are ordered values and are not treated</em></p></li>
+<li><p><em>as missing.</em></p></li>
 </ul>
 </p>
 </dd>
@@ -661,8 +677,22 @@ draws.</p>
 <p>The tail quantiles are determined by <code class="docutils literal notranslate"><span class="pre">prob</span></code>: the lower tail uses the
 <code class="docutils literal notranslate"><span class="pre">(1</span> <span class="pre">-</span> <span class="pre">prob)</span> <span class="pre">/</span> <span class="pre">2</span></code> quantile and the upper tail uses the
 <code class="docutils literal notranslate"><span class="pre">(1</span> <span class="pre">+</span> <span class="pre">prob)</span> <span class="pre">/</span> <span class="pre">2</span></code> quantile.  The default <code class="docutils literal notranslate"><span class="pre">prob=0.90</span></code> corresponds to
-the 5th/95th percentiles, which matches <code class="docutils literal notranslate"><span class="pre">az.ess(method=&quot;tail&quot;)</span></code> in
-ArviZ (the ArviZ default is also <code class="docutils literal notranslate"><span class="pre">prob=(0.05,</span> <span class="pre">0.95)</span></code>).</p>
+the 5th/95th percentiles, matching ArviZ’s default <code class="docutils literal notranslate"><span class="pre">prob=(0.05,</span> <span class="pre">0.95)</span></code>.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The agreement with <code class="docutils literal notranslate"><span class="pre">az.ess(method=&quot;tail&quot;)</span></code> holds for <strong>continuous</strong>
+draws only.  The upper-tail indicator here is
+<span class="math notranslate nohighlight">\(\mathbf{1}(x \ge q_{\text{high}})\)</span>, whereas Vehtari et al.
+and ArviZ use <span class="math notranslate nohighlight">\(\mathbf{1}(x \le q)\)</span> for both tails.  On
+continuous draws the two are exact complements and the ESS is
+identical, but on tied draws they are not: for iid Bernoulli(0.1),
+<span class="math notranslate nohighlight">\(P(x \ge q_{95})\)</span> is 0.097 rather than 0.05, and for a 5-level
+grid it is 0.21.  This is a separate known defect in the tail
+estimator’s tie handling, tracked independently of the
+rank-normalization fix; note that simply switching to <code class="docutils literal notranslate"><span class="pre">&lt;=</span></code> does not
+resolve it, since that indicator is identically 1 on such draws and
+would be reported as degenerate.</p>
+</div>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">

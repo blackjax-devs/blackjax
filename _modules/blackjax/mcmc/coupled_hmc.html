@@ -1,0 +1,1575 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../../" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>blackjax.mcmc.coupled_hmc</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/styles/sphinx-book-theme.css?v=3c74b3bc" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/mystnb.11b39860a7a0cbfd473a3ad8a317855267ff0bd372690045ca344a6b62be495e.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=e37d73aa" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../../_static/documentation_options.js?v=9eb32ce0"></script>
+    <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/scripts/sphinx-book-theme.js?v=fab101a9"></script>
+    <script src="../../../_static/design-tabs.js?v=f930bc37"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/blackjax/mcmc/coupled_hmc';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="0.1.dev1+geb9c6c81d" />
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+        
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../../_static/blackjax.png" class="logo__image only-light" alt=" - Home"/>
+    <img src="../../../_static/blackjax.png" class="logo__image only-dark pst-js-only" alt=" - Home"/>
+  
+  
+</a></div>
+        <div class="sidebar-primary-item">
+
+<button class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button></div>
+        <div class="sidebar-primary-item"><nav class="bd-links bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/diagnostics.html">MCMC Diagnostics</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/speed_up_guide.html">Speed-up Guide</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">PPL INTEGRATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pytensor.html">PyTensor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_numpyro.html">Numpyro</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_funsor.html">Funsor</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_oryx.html">Oryx</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_pymc.html">PyMC</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_use_tfp.html">Tensorflow-Probability</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">HOW TO</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_sample_multiple_chains.html">Sample with multiple chains?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_progress_bar.html">Show progress during sampling?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_custom_gradients.html">Use custom gradients?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_other_frameworks.html">Use non-JAX log-prob functions?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_metropolis_within_gibbs.html">Build a Metropolis-Within-Gibbs sampler?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_laplace_hmc.html">Use Laplace-preconditioned HMC?</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples/howto_reproduce_the_blackjax_image.html">Sample from the word BlackJAX using BlackJAX?</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">LEARN BY EXAMPLE</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference external" href="https://blackjax-devs.github.io/sampling-book">The Sampling Book</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../../autoapi/blackjax/index.html">API Reference</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/index.html">blackjax.adaptation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/adjusted_mclmc_adaptation/index.html">blackjax.adaptation.adjusted_mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/base/index.html">blackjax.adaptation.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/chees_adaptation/index.html">blackjax.adaptation.chees_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps/index.html">blackjax.adaptation.laps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/laps_burn_in/index.html">blackjax.adaptation.laps_burn_in</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/low_rank_adaptation/index.html">blackjax.adaptation.low_rank_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mass_matrix/index.html">blackjax.adaptation.mass_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_adaptation/index.html">blackjax.adaptation.mclmc_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/mclmc_lrd_adaptation/index.html">blackjax.adaptation.mclmc_lrd_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meads_adaptation/index.html">blackjax.adaptation.meads_adaptation</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meta/index.html">blackjax.adaptation.meta</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meta/builders/index.html">blackjax.adaptation.meta.builders</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meta/verdict/index.html">blackjax.adaptation.meta.verdict</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/meta_adaptation/index.html">blackjax.adaptation.meta_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_buffers/index.html">blackjax.adaptation.metric_buffers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_estimators/index.html">blackjax.adaptation.metric_estimators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/metric_recipes/index.html">blackjax.adaptation.metric_recipes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/pathfinder_adaptation/index.html">blackjax.adaptation.pathfinder_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/staged_adaptation/index.html">blackjax.adaptation.staged_adaptation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/step_size/index.html">blackjax.adaptation.step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/adaptation/window_adaptation/index.html">blackjax.adaptation.window_adaptation</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/diagnostics/index.html">blackjax.diagnostics</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/eca/index.html">blackjax.eca</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/index.html">blackjax.mcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc/index.html">blackjax.mcmc.adjusted_mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/adjusted_mclmc_dynamic/index.html">blackjax.mcmc.adjusted_mclmc_dynamic</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/barker/index.html">blackjax.mcmc.barker</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/composed/index.html">blackjax.mcmc.composed</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/composed/step_size/index.html">blackjax.mcmc.composed.step_size</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/composed/trajectory_length/index.html">blackjax.mcmc.composed.trajectory_length</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html">blackjax.mcmc.coupled_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/ghmc/index.html">blackjax.mcmc.ghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist/index.html">blackjax.mcmc.gist</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_step_size/index.html">blackjax.mcmc.gist_step_size</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/gist_trajectory_length/index.html">blackjax.mcmc.gist_trajectory_length</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/hmc/index.html">blackjax.mcmc.hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/integrators/index.html">blackjax.mcmc.integrators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_dynamic_hmc/index.html">blackjax.mcmc.laplace_dynamic_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_hmc/index.html">blackjax.mcmc.laplace_hmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/laplace_marginal/index.html">blackjax.mcmc.laplace_marginal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mala/index.html">blackjax.mcmc.mala</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/marginal_latent_gaussian/index.html">blackjax.mcmc.marginal_latent_gaussian</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/mclmc/index.html">blackjax.mcmc.mclmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/metrics/index.html">blackjax.mcmc.metrics</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/nuts/index.html">blackjax.mcmc.nuts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/periodic_orbital/index.html">blackjax.mcmc.periodic_orbital</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/proposal/index.html">blackjax.mcmc.proposal</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/random_walk/index.html">blackjax.mcmc.random_walk</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/rmhmc/index.html">blackjax.mcmc.rmhmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/slice/index.html">blackjax.mcmc.slice</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/termination/index.html">blackjax.mcmc.termination</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/mcmc/trajectory/index.html">blackjax.mcmc.trajectory</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/ns/index.html">blackjax.ns</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/adaptive/index.html">blackjax.ns.adaptive</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/base/index.html">blackjax.ns.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/from_mcmc/index.html">blackjax.ns.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/integrator/index.html">blackjax.ns.integrator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/nss/index.html">blackjax.ns.nss</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/ns/utils/index.html">blackjax.ns.utils</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../../../autoapi/blackjax/progress_reader/index.html">blackjax.progress_reader</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/index.html">blackjax.sgmcmc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/csgld/index.html">blackjax.sgmcmc.csgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/diffusions/index.html">blackjax.sgmcmc.diffusions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/gradients/index.html">blackjax.sgmcmc.gradients</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sghmc/index.html">blackjax.sgmcmc.sghmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgld/index.html">blackjax.sgmcmc.sgld</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/sgmcmc/sgnht/index.html">blackjax.sgmcmc.sgnht</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/index.html">blackjax.smc</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_persistent_sampling/index.html">blackjax.smc.adaptive_persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/adaptive_tempered/index.html">blackjax.smc.adaptive_tempered</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/base/index.html">blackjax.smc.base</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/ess/index.html">blackjax.smc.ess</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/from_mcmc/index.html">blackjax.smc.from_mcmc</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/inner_kernel_tuning/index.html">blackjax.smc.inner_kernel_tuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/partial_posteriors_path/index.html">blackjax.smc.partial_posteriors_path</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/persistent_sampling/index.html">blackjax.smc.persistent_sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/pretuning/index.html">blackjax.smc.pretuning</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/resampling/index.html">blackjax.smc.resampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/solver/index.html">blackjax.smc.solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/tempered/index.html">blackjax.smc.tempered</a></li>
+<li class="toctree-l3 has-children"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/index.html">blackjax.smc.tuning</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_kernel_info/index.html">blackjax.smc.tuning.from_kernel_info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="../../../autoapi/blackjax/smc/tuning/from_particles/index.html">blackjax.smc.tuning.from_particles</a></li>
+</ul>
+</details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/smc/waste_free/index.html">blackjax.smc.waste_free</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../../autoapi/blackjax/vi/index.html">blackjax.vi</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/fullrank_vi/index.html">blackjax.vi.fullrank_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/meanfield_vi/index.html">blackjax.vi.meanfield_vi</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/multipathfinder/index.html">blackjax.vi.multipathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/pathfinder/index.html">blackjax.vi.pathfinder</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/schrodinger_follmer/index.html">blackjax.vi.schrodinger_follmer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../../autoapi/blackjax/vi/svgd/index.html">blackjax.vi.svgd</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../bib.html">Bibliography</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">DEVELOPER DOCUMENTATION</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/design_principles.html">Design Principles</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../developer/new_algorithm_guide.html">Contributing a New Algorithm</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><button class="sidebar-toggle primary-toggle btn btn-sm" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</button></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+<a href="https://github.com/blackjax-devs/blackjax" target="_blank"
+   class="btn btn-sm btn-source-repository-button"
+   title="Source repository"
+   data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fab fa-github"></i>
+  </span>
+
+</a>
+
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button pst-navbar-icon"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button>
+
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <h1>Source code for blackjax.mcmc.coupled_hmc</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright 2020- The Blackjax Authors.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#     http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing, software</span>
+<span class="c1"># distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+<span class="sd">&quot;&quot;&quot;Two HMC chains advanced from a shared source of randomness.</span>
+
+<span class="sd">This module runs two ordinary HMC marginals side by side and couples them</span>
+<span class="sd">*only through their random inputs*: the standard normal that becomes each</span>
+<span class="sd">momentum, and the single uniform that drives each Metropolis test.</span>
+
+<span class="sd">.. warning::</span>
+
+<span class="sd">    The scope of what is implemented here is deliberately narrow.  This</span>
+<span class="sd">    module provides a **coupling of the random inputs**.  It makes no claim</span>
+<span class="sd">    that the pair is invariant for the product of the two targets, that the</span>
+<span class="sd">    chains meet (exactly, maximally, or at all), that any estimator built</span>
+<span class="sd">    from the pair is unbiased, or that coupling improves sampling efficiency</span>
+<span class="sd">    in any sense.  None of those properties is implemented or tested.</span>
+
+<span class="sd">The contract</span>
+<span class="sd">------------</span>
+
+<span class="sd">The one property this module does assert, and test, is:</span>
+
+<span class="sd">    Coupling changes only the *joint law* of the two marginals&#39; random</span>
+<span class="sd">    inputs.  It never changes either marginal&#39;s transition function, its</span>
+<span class="sd">    Metropolis decision rule, or its cached log-density and gradient.</span>
+
+<span class="sd">Concretely, given the same ``(state, standard_normal, uniform)`` triple, each</span>
+<span class="sd">marginal here performs exactly the transition an uncoupled HMC marginal built</span>
+<span class="sd">from the same target, metric, step size and integration count would perform,</span>
+<span class="sd">and returns exactly the same state and info.  The two marginals share a</span>
+<span class="sd">uniform but each compares it against **its own** acceptance probability, so a</span>
+<span class="sd">shared uniform is emphatically *not* a shared decision.  Each marginal carries</span>
+<span class="sd">its own ``logdensity``/``logdensity_grad`` cache.</span>
+
+<span class="sd">Mathematical semantics</span>
+<span class="sd">----------------------</span>
+
+<span class="sd">Write :math:`M` for a marginal&#39;s mass matrix and :math:`A` for the momentum</span>
+<span class="sd">square root BlackJAX uses, so that a momentum drawn as :math:`p = A z` with</span>
+<span class="sd">:math:`z \\sim N(0, I)` has covariance :math:`A A^\\top = M`.  Both couplings</span>
+<span class="sd">below draw a single :math:`z` and hand each marginal a transformed copy:</span>
+
+<span class="sd">``synchronous``</span>
+<span class="sd">    Both marginals receive the same :math:`z`.</span>
+
+<span class="sd">``reflection``</span>
+<span class="sd">    The first marginal receives :math:`z`; the second receives</span>
+
+<span class="sd">    .. math::</span>
+
+<span class="sd">        z&#39; = z - 2 e (e^\\top z)</span>
+
+<span class="sd">    for a unit vector :math:`e`.  That map is an orthogonal reflection, so in</span>
+<span class="sd">    exact arithmetic it preserves :math:`N(0, I)` and the second marginal&#39;s</span>
+<span class="sd">    momentum law is unchanged **for any** unit :math:`e` that does not depend</span>
+<span class="sd">    on :math:`z`.  In floating point the normalisation of :math:`e` carries a</span>
+<span class="sd">    rounding error of a few units in the last place, so the preservation is</span>
+<span class="sd">    exact in the mathematics and accurate to that tolerance in the code.  That is the whole of what reflection buys here: marginal</span>
+<span class="sd">    correctness.  It is not a statement about contraction, meeting, or</span>
+<span class="sd">    coupling quality, and none is made.</span>
+
+<span class="sd">    ``e`` comes from ``direction_fn``, which is fixed when the kernel is</span>
+<span class="sd">    built and is applied to the *incoming* pair of states.  It is given the two</span>
+<span class="sd">    states and the first metric, and no innovations.  Note that this is a</span>
+<span class="sd">    statement about its arguments, not about ordering: the kernel draws ``z``</span>
+<span class="sd">    and the uniform first and only then runs the transition that evaluates</span>
+<span class="sd">    ``direction_fn``.  Supplying a ``direction_fn`` that is a pure function of</span>
+<span class="sd">    its arguments is the caller&#39;s part of the contract.  The default direction is the</span>
+<span class="sd">    difference of the two positions whitened by the **first** marginal&#39;s</span>
+<span class="sd">    metric, :math:`e \\propto A^{-1}(x_1 - x_2)`.  That particular choice is a</span>
+<span class="sd">    heuristic: it is the direction along which, to leading order, the two</span>
+<span class="sd">    chains&#39; displacements respond oppositely, since the velocity</span>
+<span class="sd">    :math:`\\partial K / \\partial p` equals :math:`A^{-\\top} z` and hence</span>
+<span class="sd">    :math:`\\langle x_1 - x_2, \\partial K/\\partial p\\rangle = \\langle</span>
+<span class="sd">    A^{-1}(x_1 - x_2), z\\rangle`.  When the two marginals use *different*</span>
+<span class="sd">    metrics the default still uses the first marginal&#39;s metric only; it is</span>
+<span class="sd">    then a first-metric-based direction with no claimed property for the</span>
+<span class="sd">    pair.  A zero direction is the identity map, i.e. reflection degenerates</span>
+<span class="sd">    to synchronous coupling for that transition.</span>
+
+<span class="sd">Relation to ``blackjax.hmc``</span>
+<span class="sd">----------------------------</span>
+
+<span class="sd">Each marginal applies the same *mathematical* Metropolis rule as ordinary</span>
+<span class="sd">HMC: accept with probability :math:`\\min(1, e^{\\Delta})`.  It realises that</span>
+<span class="sd">rule by comparing a supplied uniform against the acceptance probability,</span>
+<span class="sd">whereas :func:`~blackjax.mcmc.proposal.static_binomial_sampling` realises it</span>
+<span class="sd">with :func:`jax.random.bernoulli`.  The two agree as distributions and do</span>
+<span class="sd">**not** agree draw-for-draw: feeding the same key to this kernel and to</span>
+<span class="sd">``blackjax.hmc`` will not reproduce the same accept/reject sequence, and no</span>
+<span class="sd">such parity is claimed or tested.</span>
+
+<span class="sd">Usage</span>
+<span class="sd">-----</span>
+
+<span class="sd">There is deliberately no top-level ``blackjax.coupled_hmc``; reach this</span>
+<span class="sd">module at ``blackjax.mcmc.coupled_hmc``.  Every per-marginal parameter is</span>
+<span class="sd">passed as an explicit ``(first, second)`` pair -- including when both</span>
+<span class="sd">marginals share a value, which is written ``(value, value)``.  Nothing is</span>
+<span class="sd">broadcast or inferred, because positions, metrics and step sizes may</span>
+<span class="sd">themselves legitimately be tuples.</span>
+
+<span class="sd">.. code::</span>
+
+<span class="sd">    import blackjax.mcmc.coupled_hmc as coupled_hmc</span>
+
+<span class="sd">    algorithm = coupled_hmc.as_top_level_api(</span>
+<span class="sd">        (logdensity_fn, logdensity_fn),</span>
+<span class="sd">        step_size=(0.1, 0.1),</span>
+<span class="sd">        inverse_mass_matrix=(inverse_mass_matrix, inverse_mass_matrix),</span>
+<span class="sd">        num_integration_steps=(10, 10),</span>
+<span class="sd">        coupling=&quot;reflection&quot;,</span>
+<span class="sd">    )</span>
+<span class="sd">    state = algorithm.init((position_one, position_two))</span>
+<span class="sd">    state, info = algorithm.step(rng_key, state)</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">jax.numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">jnp</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">jax.flatten_util</span><span class="w"> </span><span class="kn">import</span> <span class="n">ravel_pytree</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.hmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">hmc</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.integrators</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">integrators</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.metrics</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">metrics</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">Info</span><span class="p">,</span> <span class="n">Position</span><span class="p">,</span> <span class="n">SamplingAlgorithm</span><span class="p">,</span> <span class="n">State</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">blackjax.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">Array</span><span class="p">,</span> <span class="n">ArrayLikeTree</span><span class="p">,</span> <span class="n">PRNGKey</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;CoupledHMCState&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CoupledHMCInfo&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;init&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_kernel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;as_top_level_api&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;validate_marginal_inputs&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="CoupledHMCState">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CoupledHMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of a pair of coupled HMC chains.</span>
+
+<span class="sd">    The two marginals are held as two complete, independent</span>
+<span class="sd">    :class:`~blackjax.mcmc.hmc.HMCState` values, so each carries its own</span>
+<span class="sd">    position and its own cached ``logdensity``/``logdensity_grad``.  Keeping</span>
+<span class="sd">    them separate makes crossing the two caches an obvious error rather than</span>
+<span class="sd">    a silent one -- it does not make it impossible, so the test suite checks</span>
+<span class="sd">    it explicitly.</span>
+
+<span class="sd">    first</span>
+<span class="sd">        State of the first marginal chain.</span>
+<span class="sd">    second</span>
+<span class="sd">        State of the second marginal chain.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CoupledHMCState.first">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCState.first">[docs]</a>
+    <span class="n">first</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span></div>
+
+<div class="viewcode-block" id="CoupledHMCState.second">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCState.second">[docs]</a>
+    <span class="n">second</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="CoupledHMCInfo">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CoupledHMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on a coupled HMC transition.</span>
+
+<span class="sd">    Both marginals&#39; complete :class:`~blackjax.mcmc.hmc.HMCInfo` objects are</span>
+<span class="sd">    preserved untouched, so every per-chain diagnostic (momentum, acceptance</span>
+<span class="sd">    rate, acceptance decision, divergence flag, energy, proposal, integration</span>
+<span class="sd">    count) stays separately visible.  The remaining three fields describe the</span>
+<span class="sd">    shared randomness itself.</span>
+
+<span class="sd">    first</span>
+<span class="sd">        Transition information for the first marginal.</span>
+<span class="sd">    second</span>
+<span class="sd">        Transition information for the second marginal.</span>
+<span class="sd">    common_normal</span>
+<span class="sd">        The flat standard normal vector handed to the first marginal.  The</span>
+<span class="sd">        second marginal receives this vector under the coupling map, i.e.</span>
+<span class="sd">        unchanged for ``&quot;synchronous&quot;`` and reflected for ``&quot;reflection&quot;``.</span>
+<span class="sd">    reflection_unit</span>
+<span class="sd">        The unit vector used by the reflection, in the same flat coordinates</span>
+<span class="sd">        as ``common_normal``.  Exactly zero under synchronous coupling, and</span>
+<span class="sd">        exactly zero for a reflection whose direction was zero (both denote</span>
+<span class="sd">        the identity map).</span>
+<span class="sd">    uniform</span>
+<span class="sd">        The single uniform variate shared by both Metropolis tests.  Each</span>
+<span class="sd">        marginal compares it against its own acceptance probability.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CoupledHMCInfo.first">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.first">[docs]</a>
+    <span class="n">first</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCInfo</span></div>
+
+<div class="viewcode-block" id="CoupledHMCInfo.second">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.second">[docs]</a>
+    <span class="n">second</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCInfo</span></div>
+
+<div class="viewcode-block" id="CoupledHMCInfo.common_normal">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.common_normal">[docs]</a>
+    <span class="n">common_normal</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="CoupledHMCInfo.reflection_unit">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.reflection_unit">[docs]</a>
+    <span class="n">reflection_unit</span><span class="p">:</span> <span class="n">Array</span></div>
+
+<div class="viewcode-block" id="CoupledHMCInfo.uniform">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo.uniform">[docs]</a>
+    <span class="n">uniform</span><span class="p">:</span> <span class="n">Array</span></div>
+</div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------</span>
+<span class="c1">#                       PAIRS AND INPUT CHECKING</span>
+<span class="c1"># --------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_as_pair</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Require an explicit two-element pair.</span>
+
+<span class="sd">    Nothing is broadcast: a value shared by both marginals must be written</span>
+<span class="sd">    ``(value, value)``.  Positions, metrics and step sizes can themselves be</span>
+<span class="sd">    tuples, so inferring a pair from a bare value would be ambiguous exactly</span>
+<span class="sd">    where the mistake is most costly -- and the cost is silent.  A bare dense</span>
+<span class="sd">    ``(d, d)`` inverse mass matrix, if it were unpacked as a pair, would index</span>
+<span class="sd">    to its first two ROWS: the first marginal would run with row 0 as a</span>
+<span class="sd">    *diagonal* metric and the second with row 1.  The shapes are plausible, the</span>
+<span class="sd">    run completes, and the results are wrong with nothing raised anywhere.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">value</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be an explicit (first, second) pair. Pass &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;`(</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">)` when both marginals share a value.&quot;</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_metric_kind</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reject metric inputs this module does not support, without tracing.</span>
+
+<span class="sd">    Only the three array-shaped Euclidean metric payloads are accepted: a</span>
+<span class="sd">    one-dimensional diagonal, a two-dimensional dense matrix, and a</span>
+<span class="sd">    :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`.  A callable</span>
+<span class="sd">    (Riemannian) metric and a pre-built :class:`~blackjax.mcmc.metrics.Metric`</span>
+<span class="sd">    are refused rather than assumed valid: the coupling maps momenta through</span>
+<span class="sd">    ``Metric.scale``, and that this reproduces ``Metric.sample_momentum``</span>
+<span class="sd">    cannot be verified for an opaque or position-dependent metric.</span>
+
+<span class="sd">    This is a static type check only.  It performs no array conversion and is</span>
+<span class="sd">    safe on tracers; the numerical checks live in</span>
+<span class="sd">    :func:`validate_marginal_inputs`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">inverse_mass_matrix</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;coupled_hmc does not accept a pre-built Metric; pass a diagonal &quot;</span>
+            <span class="s2">&quot;array, a dense array, or a LowRankInverseMassMatrix.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">callable</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;coupled_hmc does not accept a callable (Riemannian) metric; the &quot;</span>
+            <span class="s2">&quot;coupling is defined for fixed Gaussian Euclidean metrics only.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">inverse_mass_matrix</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_flat_position</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Flatten a position, requiring one nonempty real floating dtype.</span>
+
+<span class="sd">    The dtype compared here is the **effective** one -- what the leaf becomes</span>
+<span class="sd">    once JAX has it, via ``jnp.asarray`` -- not the dtype the caller&#39;s object</span>
+<span class="sd">    declares.  That is deliberate and is the opposite choice from</span>
+<span class="sd">    :func:`_check_innovations`, so the difference is worth stating.</span>
+
+<span class="sd">    A position is the thing everything else is measured against, and</span>
+<span class="sd">    ``ravel_pytree`` will convert its leaves regardless, so what matters is the</span>
+<span class="sd">    dtype they end up with.  Under JAX&#39;s default configuration a float64 leaf</span>
+<span class="sd">    becomes float32, and a position mixing float64 and float32 leaves is</span>
+<span class="sd">    therefore accepted: after conversion they genuinely agree, and there is no</span>
+<span class="sd">    later step at which they could disagree.</span>
+
+<span class="sd">    An innovation is a different case.  There the caller supplies a value that</span>
+<span class="sd">    is compared against an acceptance probability, so narrowing it silently</span>
+<span class="sd">    changes the number the Metropolis test uses.  :func:`_check_innovations`</span>
+<span class="sd">    consequently inspects the *declared* dtype and refuses a mismatch instead</span>
+<span class="sd">    of converting.  Neither function promises both notions at once.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">leaves</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">leaves</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">leaves</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;positions must have at least one array leaf&quot;</span><span class="p">)</span>
+    <span class="n">dtypes</span> <span class="o">=</span> <span class="p">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">leaf</span><span class="p">)</span><span class="o">.</span><span class="n">dtype</span> <span class="k">for</span> <span class="n">leaf</span> <span class="ow">in</span> <span class="n">leaves</span><span class="p">}</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">dtypes</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;all position leaves must share one floating dtype, got </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span><span class="w"> </span><span class="n">dtypes</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">flat</span><span class="p">,</span> <span class="n">unravel</span> <span class="o">=</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">jnp</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="ow">or</span> <span class="n">flat</span><span class="o">.</span><span class="n">size</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;positions must have nonempty real floating coordinates&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">flat</span><span class="p">,</span> <span class="n">unravel</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_paired_positions</span><span class="p">(</span><span class="n">first_position</span><span class="p">,</span> <span class="n">second_position</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Require identical tree structure, leaf shapes and dtype across the pair.</span>
+
+<span class="sd">    The dtype compared is the **effective** one, see :func:`_flat_position`, so</span>
+<span class="sd">    this guarantee is configuration-relative: under JAX&#39;s default settings two</span>
+<span class="sd">    positions declaring float64 and float32 agree here, because both become</span>
+<span class="sd">    float32.  It is not a promise that their declared dtypes match.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">first_structure</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">first_position</span><span class="p">)</span>
+    <span class="n">second_structure</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">second_position</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">first_structure</span> <span class="o">!=</span> <span class="n">second_structure</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;paired positions must share one pytree structure, got &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first_structure</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">second_structure</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="c1"># Per-leaf shapes, not merely equal flattened size.  Two positions can share</span>
+    <span class="c1"># a tree structure and a total size while splitting it differently -- say</span>
+    <span class="c1"># {&quot;a&quot;: (2,), &quot;b&quot;: (3,)} against {&quot;a&quot;: (3,), &quot;b&quot;: (2,)}.  This enforces the</span>
+    <span class="c1"># documented contract that the pair has matching leaf shapes.  Each marginal</span>
+    <span class="c1"># would still be individually valid in that situation, since each unravels</span>
+    <span class="c1"># the flat innovation consistently with its own position; what breaks is the</span>
+    <span class="c1"># pairing, because the shared vector lands on different leaf boundaries in</span>
+    <span class="c1"># each chain and so does not mean the same thing to both.</span>
+    <span class="n">first_leaves</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">leaves</span><span class="p">(</span><span class="n">first_position</span><span class="p">)</span>
+    <span class="n">second_leaves</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">leaves</span><span class="p">(</span><span class="n">second_position</span><span class="p">)</span>
+    <span class="c1"># `strict=True` states the dependence on the structure check above, which is</span>
+    <span class="c1"># what guarantees the two leaf lists have equal length.</span>
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">first_leaf</span><span class="p">,</span> <span class="n">second_leaf</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+        <span class="nb">zip</span><span class="p">(</span><span class="n">first_leaves</span><span class="p">,</span> <span class="n">second_leaves</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">first_leaf</span><span class="p">)</span> <span class="o">!=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">second_leaf</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;paired positions must have matching leaf shapes, leaf &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">index</span><span class="si">}</span><span class="s2"> has </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">first_leaf</span><span class="p">)</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">second_leaf</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+    <span class="n">first_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_flat_position</span><span class="p">(</span><span class="n">first_position</span><span class="p">)</span>
+    <span class="n">second_flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_flat_position</span><span class="p">(</span><span class="n">second_position</span><span class="p">)</span>
+    <span class="c1"># No separate flat-shape check: equal tree structure with equal per-leaf</span>
+    <span class="c1"># shapes already implies equal flattened shape.</span>
+    <span class="c1"># Effective dtype, per `_flat_position`: this compares what the positions</span>
+    <span class="c1"># become in the computation, not what the caller&#39;s objects declared.</span>
+    <span class="k">if</span> <span class="n">first_flat</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">second_flat</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;paired positions must have matching floating dtypes, got &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">first_flat</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2"> and </span><span class="si">{</span><span class="n">second_flat</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_declared_dtype</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The dtype the value itself declares, or ``None`` if it declares none.</span>
+
+<span class="sd">    A NumPy or JAX array carries a dtype and is therefore making a claim about</span>
+<span class="sd">    its precision.  A bare Python ``float`` or ``int`` carries none and is</span>
+<span class="sd">    weakly typed, exactly as elsewhere in JAX, so it is adopted into the</span>
+<span class="sd">    position dtype rather than refused.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;weak_type&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+        <span class="c1"># JAX&#39;s own weak-typing flag. A weakly typed array is adopted into the</span>
+        <span class="c1"># surrounding dtype everywhere else in JAX, so refusing it here would</span>
+        <span class="c1"># contradict the convention this function claims to follow.</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span> <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">dtype</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_declared_shape</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The shape of the value as given, without converting it.</span>
+
+<span class="sd">    ``np.shape`` rather than a ``.shape`` attribute lookup: the attribute is</span>
+<span class="sd">    absent on a plain Python list, which would then be reported as a scalar,</span>
+<span class="sd">    slip past the shape check, and fail later inside ``float()`` with a message</span>
+<span class="sd">    that never names the argument.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_metric_dimension</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;The dimension the metric is defined on, from static shapes only.</span>
+
+<span class="sd">    Read from shapes rather than values, so it is safe on tracers. Returns</span>
+<span class="sd">    ``None`` when the shape is not one of the supported forms, leaving the</span>
+<span class="sd">    existing kind checks to speak.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">):</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="o">.</span><span class="n">sigma</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_check_innovations</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="n">flat_position</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Require prescribed innovations to match the position shape and dtype.</span>
+
+<span class="sd">    The inputs are inspected **as given**, before any conversion.  That</span>
+<span class="sd">    ordering is the whole point: ``jnp.asarray`` narrows a float64 input to</span>
+<span class="sd">    float32 under JAX&#39;s default configuration, so converting first and</span>
+<span class="sd">    comparing dtypes afterwards compares two values that already agree and</span>
+<span class="sd">    checks nothing.</span>
+
+<span class="sd">    Narrowing is not cosmetic: a float64 uniform below one becomes exactly</span>
+<span class="sd">    ``1.0`` in float32 and then rejects a certain acceptance, and one in range</span>
+<span class="sd">    becomes a *different* float32, so the test would use a value the caller</span>
+<span class="sd">    never gave.  An array declaring a dtype must match the position exactly; a</span>
+<span class="sd">    bare Python scalar declares none, is weakly typed and is adopted, so its</span>
+<span class="sd">    domain is checked after conversion instead.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">_declared_shape</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)</span> <span class="o">!=</span> <span class="n">flat_position</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;`standard_normal` must be a flat vector matching the position, got &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">_declared_shape</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat_position</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">declared</span> <span class="o">=</span> <span class="n">_declared_dtype</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">declared</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">declared</span> <span class="o">!=</span> <span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;`standard_normal` must declare the position&#39;s effective dtype &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;exactly (no narrowing), got </span><span class="si">{</span><span class="n">declared</span><span class="si">}</span><span class="s2">, expected &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">_declared_shape</span><span class="p">(</span><span class="n">uniform</span><span class="p">)</span> <span class="o">!=</span> <span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;`uniform` must be a scalar, got shape </span><span class="si">{</span><span class="n">_declared_shape</span><span class="p">(</span><span class="n">uniform</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">declared</span> <span class="o">=</span> <span class="n">_declared_dtype</span><span class="p">(</span><span class="n">uniform</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">declared</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">declared</span> <span class="o">!=</span> <span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;`uniform` must declare the position&#39;s effective dtype exactly &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;(no narrowing), got </span><span class="si">{</span><span class="n">declared</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="c1"># A uniform outside [0, 1) is refused, never clipped and never allowed to</span>
+    <span class="c1"># masquerade as an ordinary Metropolis rejection.  The value can only be</span>
+    <span class="c1"># read when it is concrete, so under `jit` or `vmap` this remains a</span>
+    <span class="c1"># documented precondition rather than a check.  It is read after conversion</span>
+    <span class="c1"># to the position dtype, because that is the value the Metropolis test will</span>
+    <span class="c1"># actually compare.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">uniform</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">uniform</span><span class="p">,</span> <span class="n">flat_position</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;`uniform` must lie in [0, 1) in the position dtype, got </span><span class="si">{</span><span class="n">value</span><span class="si">!r}</span><span class="s2">. &quot;</span>
+                <span class="s2">&quot;It is not clipped, because a clipped uniform would silently &quot;</span>
+                <span class="s2">&quot;become an ordinary rejection.&quot;</span>
+            <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">bool</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)))</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`standard_normal` must be finite&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_concrete_real_scalar</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a concrete real scalar, accepting the array forms BlackJAX produces.</span>
+
+<span class="sd">    Warmup returns a step size as a zero-dimensional JAX array, so requiring a</span>
+<span class="sd">    Python float would force callers to hand-cast routine BlackJAX output.</span>
+<span class="sd">    Booleans, complex values, non-scalars, non-finite values and tracers are</span>
+<span class="sd">    still refused.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be concrete here -- a traced value cannot be checked &quot;</span>
+            <span class="s2">&quot;eagerly. Use `build_kernel`, which performs no eager validation.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be a real number, not a boolean&quot;</span><span class="p">)</span>
+    <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be a scalar, got shape </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span> <span class="ow">or</span> <span class="ow">not</span> <span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must have a real floating or integer dtype, got </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">array</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be finite, got </span><span class="si">{</span><span class="n">array</span><span class="si">!r}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_concrete_integer_scalar</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a concrete integer scalar, accepting NumPy and JAX scalar forms.</span>
+
+<span class="sd">    A floating value is refused here rather than left to fail later. Nothing</span>
+<span class="sd">    truncates it -- ``fori_loop`` rejects a float bound -- but it does so with a</span>
+<span class="sd">    message about loop bound types that never names the parameter, and only</span>
+<span class="sd">    once a trajectory is being built. This is a diagnostic improvement, not a</span>
+<span class="sd">    correctness guard.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be concrete here -- a traced value cannot be checked &quot;</span>
+            <span class="s2">&quot;eagerly. Use `build_kernel`, which performs no eager validation.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">bool</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">bool_</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be an integer, not a boolean&quot;</span><span class="p">)</span>
+    <span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">array</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be a scalar, got shape </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">integer</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must have an integer dtype, got </span><span class="si">{</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="validate_marginal_inputs">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.validate_marginal_inputs">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_marginal_inputs</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eagerly validate one marginal&#39;s concrete metric and integration settings.</span>
+
+<span class="sd">    These are host-side numerical checks on *concrete* values: they use NumPy</span>
+<span class="sd">    and cannot run on tracers, so they are performed once when an algorithm is</span>
+<span class="sd">    constructed and are deliberately absent from the traced kernel.</span>
+
+<span class="sd">    .. important::</span>
+
+<span class="sd">        Passing this check says the values supplied *now* are admissible.  It</span>
+<span class="sd">        says nothing about values that appear later inside a jitted or</span>
+<span class="sd">        vmapped computation, which are never seen by this function.  A caller</span>
+<span class="sd">        who builds a kernel with :func:`build_kernel` and feeds it traced</span>
+<span class="sd">        metrics is responsible for their admissibility.</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    TypeError, ValueError</span>
+<span class="sd">        If the metric is not a supported kind, is not finite, is not positive</span>
+<span class="sd">        definite, or the integration settings are not positive and finite.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">_check_metric_kind</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">_concrete_real_scalar</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">&quot;step_size&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`step_size` must be positive&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">_concrete_integer_scalar</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,</span> <span class="s2">&quot;num_integration_steps&quot;</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`num_integration_steps` must be positive&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">):</span>
+        <span class="n">sigma</span><span class="p">,</span> <span class="n">basis</span><span class="p">,</span> <span class="n">eigenvalues</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">inverse_mass_matrix</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sigma</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">sigma</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`sigma` must be a nonempty vector&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">basis</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">sigma</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`U` must have shape (dimension, rank)&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">eigenvalues</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="n">basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`lam` must have shape (rank,)&quot;</span><span class="p">)</span>
+        <span class="n">arrays</span> <span class="o">=</span> <span class="p">(</span><span class="n">sigma</span><span class="p">,</span> <span class="n">basis</span><span class="p">,</span> <span class="n">eigenvalues</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;metric arrays must have real floating dtypes&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">()</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;metric arrays must be finite&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">sigma</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">eigenvalues</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`sigma` and `lam` must be positive&quot;</span><span class="p">)</span>
+        <span class="n">tolerance</span> <span class="o">=</span> <span class="mi">100</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">finfo</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">eps</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">)</span>
+        <span class="c1"># Columns with an eigenvalue of exactly one are neutral, so only the</span>
+        <span class="c1"># active columns need to be orthonormal.</span>
+        <span class="n">active</span> <span class="o">=</span> <span class="n">basis</span><span class="p">[:,</span> <span class="n">eigenvalues</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">active</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span>
+            <span class="n">active</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">active</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">active</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+            <span class="n">atol</span><span class="o">=</span><span class="n">tolerance</span><span class="p">,</span>
+            <span class="n">rtol</span><span class="o">=</span><span class="n">tolerance</span><span class="p">,</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;active `U` columns must be orthonormal; lam=1 columns are neutral&quot;</span>
+            <span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="n">matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;the inverse mass matrix must have a real floating dtype&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">matrix</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;the inverse mass matrix must be a nonempty vector or square matrix&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;the inverse mass matrix must be finite&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">matrix</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;a diagonal inverse mass matrix must be positive&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;a dense inverse mass matrix must be square&quot;</span><span class="p">)</span>
+    <span class="c1"># Do not silently symmetrize a caller&#39;s kinetic energy.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">matrix</span><span class="p">,</span> <span class="n">matrix</span><span class="o">.</span><span class="n">T</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;a dense inverse mass matrix must be exactly symmetric&quot;</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cholesky</span><span class="p">(</span><span class="n">matrix</span><span class="p">)</span>
+    <span class="k">except</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">LinAlgError</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;a dense inverse mass matrix must be positive definite&quot;</span>
+        <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">error</span></div>
+
+
+
+<span class="c1"># --------------------------------------------------------------------</span>
+<span class="c1">#                        THE MARGINAL TRANSITION</span>
+<span class="c1"># --------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_uniform_binomial_sampling</span><span class="p">(</span><span class="n">uniform</span><span class="p">,</span> <span class="n">log_p_accept</span><span class="p">,</span> <span class="n">proposal</span><span class="p">,</span> <span class="n">new_proposal</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accept or reject using a supplied uniform rather than a key.</span>
+
+<span class="sd">    This is :func:`~blackjax.mcmc.proposal.static_binomial_sampling` with the</span>
+<span class="sd">    Bernoulli draw replaced by a comparison against a uniform the caller</span>
+<span class="sd">    provides, which is what lets two marginals share one variate.  The</span>
+<span class="sd">    mathematical rule is identical -- accept with probability</span>
+<span class="sd">    ``min(1, exp(log_p_accept))`` -- and the realisation is not: it does not</span>
+<span class="sd">    reproduce ``jax.random.bernoulli`` draw-for-draw.</span>
+
+<span class="sd">    The uniform is required to lie in ``[0, 1)``.  Under that precondition the</span>
+<span class="sd">    endpoints behave correctly: ``p_accept == 0`` (including a divergence,</span>
+<span class="sd">    where ``log_p_accept`` is ``-inf``) always rejects, and ``p_accept == 1``</span>
+<span class="sd">    always accepts.  The value is never clipped, so an out-of-domain uniform</span>
+<span class="sd">    is not quietly converted into an ordinary Metropolis rejection.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">p_accept</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">log_p_accept</span><span class="p">),</span> <span class="nb">max</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">do_accept</span> <span class="o">=</span> <span class="n">uniform</span> <span class="o">&lt;</span> <span class="n">p_accept</span>
+    <span class="n">info</span> <span class="o">=</span> <span class="n">do_accept</span><span class="p">,</span> <span class="n">p_accept</span><span class="p">,</span> <span class="n">log_p_accept</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">do_accept</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">new_proposal</span><span class="p">,</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">proposal</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">info</span><span class="p">,</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_prescribed_marginal</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">,</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build one marginal whose randomness is supplied rather than drawn.</span>
+
+<span class="sd">    Returns ``(metric, step)`` where</span>
+<span class="sd">    ``step(state, standard_normal, uniform) -&gt; (HMCState, HMCInfo)`` is a pure</span>
+<span class="sd">    function of its arguments.</span>
+
+<span class="sd">    The momentum is obtained as ``metric.scale(position, z, inv=False,</span>
+<span class="sd">    trans=False)``, which is precisely the map ``Metric.sample_momentum``</span>
+<span class="sd">    applies to a standard normal for the three supported Euclidean metric</span>
+<span class="sd">    kinds.  Externalising the draw therefore leaves the marginal momentum law</span>
+<span class="sd">    unchanged; the remainder of the transition is BlackJAX&#39;s own trajectory,</span>
+<span class="sd">    endpoint flip, energy difference and Metropolis test.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inverse_mass_matrix</span> <span class="o">=</span> <span class="n">_check_metric_kind</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+    <span class="n">metric</span> <span class="o">=</span> <span class="n">metrics</span><span class="o">.</span><span class="n">default_metric</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+    <span class="n">metric_dimension</span> <span class="o">=</span> <span class="n">_metric_dimension</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">)</span>
+    <span class="n">symplectic_integrator</span> <span class="o">=</span> <span class="n">integrator</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">)</span>
+    <span class="n">generate</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">hmc_proposal</span><span class="p">(</span>
+        <span class="n">symplectic_integrator</span><span class="p">,</span>
+        <span class="n">metric</span><span class="o">.</span><span class="n">kinetic_energy</span><span class="p">,</span>
+        <span class="n">step_size</span><span class="p">,</span>
+        <span class="n">num_integration_steps</span><span class="p">,</span>
+        <span class="n">divergence_threshold</span><span class="p">,</span>
+        <span class="n">sample_proposal</span><span class="o">=</span><span class="n">_uniform_binomial_sampling</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">,</span> <span class="n">standard_normal</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">uniform</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">,</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCInfo</span><span class="p">]:</span>
+        <span class="n">flat</span><span class="p">,</span> <span class="n">unravel</span> <span class="o">=</span> <span class="n">_flat_position</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="c1"># A metric of the wrong dimension does not necessarily fail: a</span>
+        <span class="c1"># length-one diagonal broadcasts silently across any position, so one</span>
+        <span class="c1"># marginal could run isotropic while its partner runs anisotropic with</span>
+        <span class="c1"># nothing said. A mismatched-but-non-broadcasting length fails much</span>
+        <span class="c1"># later, in a message naming neither the metric nor which marginal.</span>
+        <span class="k">if</span> <span class="n">metric_dimension</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">metric_dimension</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;the inverse mass matrix must have the same dimension as the &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;position, got </span><span class="si">{</span><span class="n">metric_dimension</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="n">_check_innovations</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="n">flat</span><span class="p">)</span>
+        <span class="n">momentum</span> <span class="o">=</span> <span class="n">metric</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">unravel</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">),</span> <span class="n">inv</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">trans</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>
+        <span class="n">integrator_state</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">IntegratorState</span><span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">momentum</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">logdensity_grad</span>
+        <span class="p">)</span>
+        <span class="n">selected</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">generate</span><span class="p">(</span><span class="n">uniform</span><span class="p">,</span> <span class="n">integrator_state</span><span class="p">)</span>
+        <span class="n">new_state</span> <span class="o">=</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">(</span>
+            <span class="n">selected</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">logdensity</span><span class="p">,</span> <span class="n">selected</span><span class="o">.</span><span class="n">logdensity_grad</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_state</span><span class="p">,</span> <span class="n">info</span>
+
+    <span class="k">return</span> <span class="n">metric</span><span class="p">,</span> <span class="n">step</span>
+
+
+<span class="c1"># --------------------------------------------------------------------</span>
+<span class="c1">#                          THE COUPLING MAPS</span>
+<span class="c1"># --------------------------------------------------------------------</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reflection_unit</span><span class="p">(</span><span class="n">direction</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise a direction robustly; a zero direction gives the identity.</span>
+
+<span class="sd">    The direction is first divided by its largest absolute entry, so a</span>
+<span class="sd">    direction whose norm would overflow or underflow in the working dtype is</span>
+<span class="sd">    still normalised correctly.  This is load-bearing rather than defensive, and</span>
+<span class="sd">    the failure it prevents is silent.  At float32 -- BlackJAX&#39;s default -- a</span>
+<span class="sd">    difference like ``[1e20, -2e20, 5e19, 3e20]`` has a norm that overflows, so</span>
+<span class="sd">    a naive ``d / norm(d)`` yields exactly zero: the reflection would quietly</span>
+<span class="sd">    become the identity and the pair would report ``reflection_unit = 0`` while</span>
+<span class="sd">    running synchronous coupling under a reflection label.  The mirrored</span>
+<span class="sd">    underflow case yields infinities.  Both are reachable for a diverging chain.</span>
+<span class="sd">    A direction that is exactly zero is returned as zero, which makes the</span>
+<span class="sd">    reflection the identity map -- that case is intended and documented.</span>
+
+<span class="sd">    A direction containing a non-finite entry propagates as non-finite rather</span>
+<span class="sd">    than silently producing a plausible-looking unit vector.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">maximum</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">direction</span><span class="p">))</span>
+    <span class="n">scaled</span> <span class="o">=</span> <span class="n">direction</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">maximum</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">maximum</span><span class="p">)</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">scaled</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">scaled</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">norm</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">norm</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_reflect</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">unit</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reflect ``standard_normal`` in the hyperplane orthogonal to ``unit``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">standard_normal</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">unit</span> <span class="o">*</span> <span class="n">jnp</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">unit</span><span class="p">,</span> <span class="n">standard_normal</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">whitened_difference</span><span class="p">(</span>
+    <span class="n">first_state</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">,</span>
+    <span class="n">second_state</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">,</span>
+    <span class="n">first_metric</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default reflection direction: the position difference, whitened.</span>
+
+<span class="sd">    Returns :math:`A^{-1}(x_1 - x_2)` in flat coordinates, where :math:`A` is</span>
+<span class="sd">    the first marginal&#39;s momentum square root.  ``Metric.scale`` with</span>
+<span class="sd">    ``inv=True, trans=True`` is exactly that inverse map.</span>
+
+<span class="sd">    Only the first marginal&#39;s metric is used.  When the two marginals carry</span>
+<span class="sd">    different metrics this is therefore a first-metric-based direction, and no</span>
+<span class="sd">    property is claimed for the pair.  A policy needing the second metric can</span>
+<span class="sd">    close over it.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="n">first_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">second_state</span><span class="o">.</span><span class="n">position</span>
+    <span class="p">)</span>
+    <span class="n">scaled</span> <span class="o">=</span> <span class="n">first_metric</span><span class="o">.</span><span class="n">scale</span><span class="p">(</span><span class="n">first_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">delta</span><span class="p">,</span> <span class="n">inv</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">trans</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">ravel_pytree</span><span class="p">(</span><span class="n">scaled</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_build_prescribed_pair</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">],</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">coupling</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">direction_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the coupled transition whose randomness is supplied, not drawn.</span>
+
+<span class="sd">    Returns ``step(state, standard_normal, uniform) -&gt; (CoupledHMCState,</span>
+<span class="sd">    CoupledHMCInfo)``.  This is the deterministic core of the kernel: given</span>
+<span class="sd">    the pair of incoming states and one ``(z, u)`` pair it is an ordinary pure</span>
+<span class="sd">    function, which is what makes the coupling separately checkable without</span>
+<span class="sd">    also reasoning about key splitting.  It is internal to this module.</span>
+
+<span class="sd">    This function passes ``direction_fn`` nothing but the incoming states and</span>
+<span class="sd">    the first metric -- the innovations it receives are not among its</span>
+<span class="sd">    arguments, though they do already exist by the time it is called. Whether</span>
+<span class="sd">    the returned direction is genuinely free of them is a contract the caller</span>
+<span class="sd">    keeps, since a callable may close over anything.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logdensity_fns</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">&quot;logdensity_fn&quot;</span><span class="p">)</span>
+    <span class="n">step_sizes</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">&quot;step_size&quot;</span><span class="p">)</span>
+    <span class="n">inverse_mass_matrices</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">)</span>
+    <span class="n">integration_steps</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,</span> <span class="s2">&quot;num_integration_steps&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">coupling</span> <span class="o">==</span> <span class="s2">&quot;reflection&quot;</span> <span class="ow">and</span> <span class="n">direction_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;reflection coupling requires a direction function&quot;</span><span class="p">)</span>
+    <span class="n">measure_direction</span> <span class="o">=</span> <span class="n">direction_fn</span>
+
+    <span class="n">first_metric</span><span class="p">,</span> <span class="n">first_step</span> <span class="o">=</span> <span class="n">_build_prescribed_marginal</span><span class="p">(</span>
+        <span class="n">logdensity_fns</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">inverse_mass_matrices</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">step_sizes</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">integration_steps</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="n">integrator</span><span class="p">,</span>
+        <span class="n">divergence_threshold</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">second_step</span> <span class="o">=</span> <span class="n">_build_prescribed_marginal</span><span class="p">(</span>
+        <span class="n">logdensity_fns</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">inverse_mass_matrices</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">step_sizes</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">integration_steps</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">integrator</span><span class="p">,</span>
+        <span class="n">divergence_threshold</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">step</span><span class="p">(</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">CoupledHMCState</span><span class="p">,</span> <span class="n">standard_normal</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">uniform</span><span class="p">:</span> <span class="n">Array</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CoupledHMCState</span><span class="p">,</span> <span class="n">CoupledHMCInfo</span><span class="p">]:</span>
+        <span class="n">_check_paired_positions</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">second</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+        <span class="n">flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_flat_position</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">coupling</span> <span class="o">==</span> <span class="s2">&quot;reflection&quot;</span><span class="p">:</span>
+            <span class="k">assert</span> <span class="n">measure_direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>  <span class="c1"># narrowed above</span>
+            <span class="n">direction</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span>
+                <span class="n">measure_direction</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">first</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">second</span><span class="p">,</span> <span class="n">first_metric</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">direction</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;`direction_fn` must return a flat direction matching the &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;position, got </span><span class="si">{</span><span class="n">direction</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">direction</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+                <span class="c1"># Name the likely cause rather than only the messenger: with</span>
+                <span class="c1"># the default direction this mismatch comes from a metric whose</span>
+                <span class="c1"># dtype differs from the position&#39;s, not from anything the</span>
+                <span class="c1"># caller wrote.</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                    <span class="s2">&quot;the reflection direction must have the position dtype, got &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">direction</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">, expected </span><span class="si">{</span><span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="n">_reflection_unit</span><span class="p">(</span><span class="n">direction</span><span class="p">)</span>
+            <span class="n">second_normal</span> <span class="o">=</span> <span class="n">_reflect</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">,</span> <span class="n">unit</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">unit</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="n">second_normal</span> <span class="o">=</span> <span class="n">standard_normal</span>
+
+        <span class="n">first_state</span><span class="p">,</span> <span class="n">first_info</span> <span class="o">=</span> <span class="n">first_step</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">first</span><span class="p">,</span> <span class="n">standard_normal</span><span class="p">,</span> <span class="n">uniform</span><span class="p">)</span>
+        <span class="n">second_state</span><span class="p">,</span> <span class="n">second_info</span> <span class="o">=</span> <span class="n">second_step</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">second</span><span class="p">,</span> <span class="n">second_normal</span><span class="p">,</span> <span class="n">uniform</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">CoupledHMCState</span><span class="p">(</span><span class="n">first_state</span><span class="p">,</span> <span class="n">second_state</span><span class="p">),</span>
+            <span class="n">CoupledHMCInfo</span><span class="p">(</span><span class="n">first_info</span><span class="p">,</span> <span class="n">second_info</span><span class="p">,</span> <span class="n">standard_normal</span><span class="p">,</span> <span class="n">unit</span><span class="p">,</span> <span class="n">uniform</span><span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">step</span>
+
+
+<span class="c1"># --------------------------------------------------------------------</span>
+<span class="c1">#                            PUBLIC API</span>
+<span class="c1"># --------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="init">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.init">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">Position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">CoupledHMCState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialise a coupled pair.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    position</span>
+<span class="sd">        An explicit ``(first_position, second_position)`` pair.  The two</span>
+<span class="sd">        positions must share a pytree structure, leaf shapes and one floating</span>
+<span class="sd">        dtype.</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        An explicit ``(first_logdensity_fn, second_logdensity_fn)`` pair.  The</span>
+<span class="sd">        two may target different distributions.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">positions</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="s2">&quot;position&quot;</span><span class="p">)</span>
+    <span class="n">logdensity_fns</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">&quot;logdensity_fn&quot;</span><span class="p">)</span>
+    <span class="n">_check_paired_positions</span><span class="p">(</span><span class="o">*</span><span class="n">positions</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CoupledHMCState</span><span class="p">(</span>
+        <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">logdensity_fns</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="n">hmc</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">positions</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">logdensity_fns</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="build_kernel">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.build_kernel">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">build_kernel</span><span class="p">(</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">coupling</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;synchronous&quot;</span><span class="p">,</span>
+    <span class="n">direction_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a coupled HMC kernel.</span>
+
+<span class="sd">    ``coupling`` and ``direction_fn`` are fixed here, when the kernel is</span>
+<span class="sd">    built, and not at call time.  ``direction_fn`` is applied to the pair of</span>
+<span class="sd">    incoming states and the first metric, and is supplied no innovations.</span>
+
+<span class="sd">    It is worth being exact about what that does and does not say, because an</span>
+<span class="sd">    earlier version of this docstring overstated it.  The kernel draws ``z``</span>
+<span class="sd">    and the uniform *before* running the transition in which ``direction_fn``</span>
+<span class="sd">    is evaluated, so the guarantee is **not** one of ordering.  It is that the</span>
+<span class="sd">    innovations are not among the arguments handed over.  A ``direction_fn``</span>
+<span class="sd">    that closes over innovations, or draws its own randomness, breaks the</span>
+<span class="sd">    reflection&#39;s marginal correctness and nothing here can detect it. Keeping</span>
+<span class="sd">    it a pure function of the arguments it is given is the caller&#39;s part of the</span>
+<span class="sd">    contract -- the same purity convention every BlackJAX kernel assumes.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    integrator</span>
+<span class="sd">        Symplectic integrator used by both marginals.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        Energy difference above which a marginal transition is flagged</span>
+<span class="sd">        divergent.  Applied to each marginal separately.</span>
+<span class="sd">    coupling</span>
+<span class="sd">        ``&quot;synchronous&quot;``, which gives both marginals the same standard</span>
+<span class="sd">        normal, or ``&quot;reflection&quot;``, which gives the second marginal a</span>
+<span class="sd">        reflected copy.</span>
+<span class="sd">    direction_fn</span>
+<span class="sd">        Only for ``&quot;reflection&quot;``.  A callable</span>
+<span class="sd">        ``(first_state, second_state, first_metric) -&gt; Array`` returning a</span>
+<span class="sd">        flat direction; defaults to :func:`whitened_difference`.</span>
+<span class="sd">        Passing one under synchronous coupling is an error, since it would</span>
+<span class="sd">        have no effect.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A kernel ``(rng_key, state, logdensity_fn, step_size,</span>
+<span class="sd">    inverse_mass_matrix, num_integration_steps) -&gt; (CoupledHMCState,</span>
+<span class="sd">    CoupledHMCInfo)`` in which every per-marginal parameter is an explicit</span>
+<span class="sd">    ``(first, second)`` pair.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">coupling</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;synchronous&quot;</span><span class="p">,</span> <span class="s2">&quot;reflection&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s1">&#39;`coupling` must be &quot;synchronous&quot; or &quot;reflection&quot;, got </span><span class="si">{</span><span class="n">coupling</span><span class="si">!r}</span><span class="s1">&#39;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="n">coupling</span> <span class="o">==</span> <span class="s2">&quot;synchronous&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">direction_fn</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;synchronous coupling does not use a direction; pass &quot;</span>
+                <span class="s1">&#39;coupling=&quot;reflection&quot; to reflect.&#39;</span>
+            <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">direction_fn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">direction_fn</span> <span class="o">=</span> <span class="n">whitened_difference</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">kernel</span><span class="p">(</span>
+        <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span>
+        <span class="n">state</span><span class="p">:</span> <span class="n">CoupledHMCState</span><span class="p">,</span>
+        <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span>
+        <span class="n">step_size</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">],</span>
+        <span class="n">num_integration_steps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">CoupledHMCState</span><span class="p">,</span> <span class="n">CoupledHMCInfo</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Advance a coupled pair by one transition.&quot;&quot;&quot;</span>
+        <span class="n">step</span> <span class="o">=</span> <span class="n">_build_prescribed_pair</span><span class="p">(</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrix</span><span class="p">,</span>
+            <span class="n">step_size</span><span class="p">,</span>
+            <span class="n">num_integration_steps</span><span class="p">,</span>
+            <span class="n">integrator</span><span class="p">,</span>
+            <span class="n">divergence_threshold</span><span class="p">,</span>
+            <span class="n">coupling</span><span class="p">,</span>
+            <span class="n">direction_fn</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">flat</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_flat_position</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">first</span><span class="o">.</span><span class="n">position</span><span class="p">)</span>
+
+        <span class="n">key_normal</span><span class="p">,</span> <span class="n">key_uniform</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">rng_key</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">standard_normal</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key_normal</span><span class="p">,</span> <span class="n">flat</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="c1"># jax.random.uniform returns a value in [0, 1) in the requested dtype,</span>
+        <span class="c1"># so the Metropolis precondition holds by construction and no cast --</span>
+        <span class="c1"># hence no narrowing -- is needed.</span>
+        <span class="n">uniform</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">key_uniform</span><span class="p">,</span> <span class="p">(),</span> <span class="n">flat</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">step</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">standard_normal</span><span class="p">,</span> <span class="n">uniform</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">kernel</span></div>
+
+
+
+<div class="viewcode-block" id="as_top_level_api">
+<a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.as_top_level_api">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">as_top_level_api</span><span class="p">(</span>
+    <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="n">inverse_mass_matrix</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">metrics</span><span class="o">.</span><span class="n">MetricTypes</span><span class="p">],</span>
+    <span class="n">num_integration_steps</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">coupling</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;synchronous&quot;</span><span class="p">,</span>
+    <span class="n">direction_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">integrator</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="n">integrators</span><span class="o">.</span><span class="n">velocity_verlet</span><span class="p">,</span>
+    <span class="n">divergence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SamplingAlgorithm</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build a ``SamplingAlgorithm`` for a coupled HMC pair.</span>
+
+<span class="sd">    There is deliberately no top-level ``blackjax.coupled_hmc``; reach this</span>
+<span class="sd">    through ``blackjax.mcmc.coupled_hmc.as_top_level_api``.</span>
+
+<span class="sd">    Every per-marginal argument is an explicit ``(first, second)`` pair, so a</span>
+<span class="sd">    shared value is written twice.  The two marginals may target different</span>
+<span class="sd">    distributions and use different fixed Gaussian Euclidean metrics, step</span>
+<span class="sd">    sizes and integration counts, but their positions must share a pytree</span>
+<span class="sd">    structure, leaf shapes and one floating dtype.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    logdensity_fn</span>
+<span class="sd">        Pair of log-density functions.</span>
+<span class="sd">    step_size</span>
+<span class="sd">        Pair of integration step sizes.</span>
+<span class="sd">    inverse_mass_matrix</span>
+<span class="sd">        Pair of inverse mass matrices.  Each is a diagonal array, a dense</span>
+<span class="sd">        array, or a :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`;</span>
+<span class="sd">        callable (Riemannian) metrics and pre-built</span>
+<span class="sd">        :class:`~blackjax.mcmc.metrics.Metric` objects are not supported.</span>
+<span class="sd">    num_integration_steps</span>
+<span class="sd">        Pair of integration step counts.</span>
+<span class="sd">    coupling</span>
+<span class="sd">        ``&quot;synchronous&quot;`` or ``&quot;reflection&quot;``; see :func:`build_kernel`.</span>
+<span class="sd">    direction_fn</span>
+<span class="sd">        Reflection direction policy; see :func:`build_kernel`.</span>
+<span class="sd">    integrator</span>
+<span class="sd">        Symplectic integrator used by both marginals.</span>
+<span class="sd">    divergence_threshold</span>
+<span class="sd">        Per-marginal divergence threshold.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Each marginal&#39;s concrete metric and integration settings are checked here</span>
+<span class="sd">    by :func:`validate_marginal_inputs`.  Those checks read concrete values on</span>
+<span class="sd">    the host, so they cover the arguments given here and say nothing about</span>
+<span class="sd">    traced values appearing later under ``jit`` or ``vmap``.  Callers who need</span>
+<span class="sd">    to supply traced metrics use :func:`build_kernel` directly, which performs</span>
+<span class="sd">    no eager numerical validation.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    A ``SamplingAlgorithm`` whose ``init`` takes a pair of positions.</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">step_sizes</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">&quot;step_size&quot;</span><span class="p">)</span>
+    <span class="n">inverse_mass_matrices</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="s2">&quot;inverse_mass_matrix&quot;</span><span class="p">)</span>
+    <span class="n">integration_steps</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">num_integration_steps</span><span class="p">,</span> <span class="s2">&quot;num_integration_steps&quot;</span><span class="p">)</span>
+    <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">&quot;logdensity_fn&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="n">validate_marginal_inputs</span><span class="p">(</span>
+            <span class="n">inverse_mass_matrices</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+            <span class="n">step_sizes</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+            <span class="n">integration_steps</span><span class="p">[</span><span class="n">index</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="n">kernel</span> <span class="o">=</span> <span class="n">build_kernel</span><span class="p">(</span>
+        <span class="n">integrator</span><span class="p">,</span>
+        <span class="n">divergence_threshold</span><span class="p">,</span>
+        <span class="n">coupling</span><span class="o">=</span><span class="n">coupling</span><span class="p">,</span>
+        <span class="n">direction_fn</span><span class="o">=</span><span class="n">direction_fn</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># `build_sampling_algorithm` is typed for a single ``logdensity_fn``; this</span>
+    <span class="c1"># algorithm takes a pair, so the two-line wrapper is written out rather than</span>
+    <span class="c1"># forced through a helper whose contract does not cover it.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">init_fn</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">Position</span><span class="p">,</span> <span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">State</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">rng_key</span>
+        <span class="k">return</span> <span class="n">init</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">step_fn</span><span class="p">(</span><span class="n">rng_key</span><span class="p">:</span> <span class="n">PRNGKey</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">State</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">State</span><span class="p">,</span> <span class="n">Info</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span>
+            <span class="n">rng_key</span><span class="p">,</span>
+            <span class="n">state</span><span class="p">,</span>
+            <span class="n">logdensity_fn</span><span class="p">,</span>
+            <span class="n">step_sizes</span><span class="p">,</span>
+            <span class="n">inverse_mass_matrices</span><span class="p">,</span>
+            <span class="n">integration_steps</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">SamplingAlgorithm</span><span class="p">(</span><span class="n">init_fn</span><span class="p">,</span> <span class="n">step_fn</span><span class="p">)</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By The Blackjax developers
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+
+  <p class="copyright">
+    
+      © Copyright 2026, The Blackjax developers.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

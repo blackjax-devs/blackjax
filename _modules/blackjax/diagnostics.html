@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g9e128d206" />
+  <meta name="docsearch:version" content="0.1.dev1+geb9c6c81d" />
   </head>
   
   
@@ -215,6 +215,7 @@
 <li class="toctree-l4"><a class="reference internal" href="../../autoapi/blackjax/mcmc/composed/trajectory_length/index.html">blackjax.mcmc.composed.trajectory_length</a></li>
 </ul>
 </details></li>
+<li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/coupled_hmc/index.html">blackjax.mcmc.coupled_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/diffusions/index.html">blackjax.mcmc.diffusions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/dynamic_hmc/index.html">blackjax.mcmc.dynamic_hmc</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../autoapi/blackjax/mcmc/elliptical_slice/index.html">blackjax.mcmc.elliptical_slice</a></li>
@@ -548,6 +549,18 @@
 <span class="sd">       them, and compute split-R̂ again (**tail**).</span>
 <span class="sd">    5. Return :math:`\\max(\\hat{R}_{\\text{bulk}}, \\hat{R}_{\\text{tail}})`.</span>
 
+<span class="sd">    .. warning::</span>
+
+<span class="sd">       ``NaN`` from this function does **not** uniquely mean &quot;the draws</span>
+<span class="sd">       contained a missing observation&quot;.  The folded component subtracts the</span>
+<span class="sd">       pooled median, so when at least half of a component&#39;s pooled draws are</span>
+<span class="sd">       ``+inf`` (or ``-inf``) the median is infinite and the fold evaluates</span>
+<span class="sd">       ``inf - inf``, which is ``NaN``.  Such a component returns ``NaN`` from</span>
+<span class="sd">       :func:`rhat` while containing no ``NaN`` at all — and while</span>
+<span class="sd">       :func:`ess_bulk` and :func:`ess_tail` still return finite values for it.</span>
+<span class="sd">       Infinity handling is a separate open question from the missing-data</span>
+<span class="sd">       contract; this is documented, not yet decided.</span>
+
 <span class="sd">    References</span>
 <span class="sd">    ----------</span>
 <span class="sd">    .. cite:p:`vehtari2021rank`</span>
@@ -596,7 +609,10 @@
 <span class="sd">    -------</span>
 <span class="sd">    NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.</span>
 <span class="sd">    Variables whose within-chain variance is numerically zero have an effective</span>
-<span class="sd">    sample size of zero.</span>
+<span class="sd">    sample size of zero.  Variables containing a ``NaN`` draw are undefined and</span>
+<span class="sd">    report ``NaN``; the reduction is per variable, so an independent finite</span>
+<span class="sd">    variable is unaffected.  Infinities are ordered values and are not treated</span>
+<span class="sd">    as missing.</span>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
@@ -724,6 +740,17 @@
     <span class="n">ess</span> <span class="o">=</span> <span class="n">ess_raw</span> <span class="o">/</span> <span class="n">tau_hat</span>
     <span class="n">ess</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_numerically_degenerate</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">ess</span><span class="o">.</span><span class="n">squeeze</span><span class="p">())</span>
 
+    <span class="c1"># A NaN draw is a missing observation, not a value the estimator can use.</span>
+    <span class="c1"># Geyer&#39;s truncation above gates on partial sums being &gt; 0, and every such</span>
+    <span class="c1"># comparison is False for NaN, so the truncation collapses and tau_hat</span>
+    <span class="c1"># falls back to its 1 / log10(MN) floor — manufacturing a large, entirely</span>
+    <span class="c1"># fictitious sample size.  Report the component as undefined instead.  The</span>
+    <span class="c1"># reduction runs over the chain and draw axes only, so a contaminated</span>
+    <span class="c1"># component never poisons an independent finite one, and ``.squeeze()``</span>
+    <span class="c1"># mirrors the squeeze applied to ``ess`` just above.</span>
+    <span class="n">has_nan</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">input_array</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="n">chain_axis</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">))</span>
+    <span class="n">ess</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">has_nan</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">ess</span><span class="p">)</span>
+
     <span class="k">return</span> <span class="n">ess</span></div>
 
 
@@ -784,6 +811,115 @@
     <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">first</span><span class="p">,</span> <span class="n">second</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 
+<span class="k">def</span><span class="w"> </span><span class="nf">_average_ranks</span><span class="p">(</span><span class="n">x_flat</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;One-indexed ranks along axis 0, averaging the ranks of tied values.</span>
+
+<span class="sd">    Equal values form a *tie group* and all receive the mean of the ordinal</span>
+<span class="sd">    ranks that the group spans.  This makes the ranking invariant to the</span>
+<span class="sd">    permutation of the pooled draws, which ordinal (``argsort``-of-``argsort``)</span>
+<span class="sd">    ranking is not.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    x_flat</span>
+<span class="sd">        Array of shape ``(n, …)``; ranks are computed along axis 0</span>
+<span class="sd">        independently for each element of the trailing dimensions.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    Array of the same shape holding 1-indexed average ranks.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The implementation is written with sort and cumulative-reduction</span>
+<span class="sd">    primitives only, so it is ``jit``/``vmap``-compatible and has no</span>
+<span class="sd">    data-dependent shapes.</span>
+
+<span class="sd">    A ``NaN`` is a missing or invalid observation, not an ordered value that</span>
+<span class="sd">    could be tied with anything, so a component containing one cannot be</span>
+<span class="sd">    ranked: the whole component returns ``NaN``.  The reduction runs over</span>
+<span class="sd">    axis 0 alone, so an invalid component never poisons an independent finite</span>
+<span class="sd">    sibling.</span>
+
+<span class="sd">    Infinities are ordered values and are ranked normally *by this function*.</span>
+<span class="sd">    That does not make the whole diagnostic pipeline infinity-safe: see the</span>
+<span class="sd">    note on folding in :func:`rhat`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">x_flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">extra_shape</span> <span class="o">=</span> <span class="n">x_flat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+
+    <span class="n">order</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">x_sorted</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="n">order</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Adjacent sorted entries share a tie group when they are equal.</span>
+    <span class="n">same_as_prev</span> <span class="o">=</span> <span class="n">x_sorted</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">==</span> <span class="n">x_sorted</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">true_row</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="o">*</span><span class="n">extra_shape</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
+    <span class="n">is_first</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">true_row</span><span class="p">,</span> <span class="o">~</span><span class="n">same_as_prev</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">is_last</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="o">~</span><span class="n">same_as_prev</span><span class="p">,</span> <span class="n">true_row</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">positions</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="o">*</span><span class="p">(</span><span class="mi">1</span><span class="p">,)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">extra_shape</span><span class="p">))),</span> <span class="n">x_flat</span><span class="o">.</span><span class="n">shape</span>
+    <span class="p">)</span>
+    <span class="c1"># Running max/min of the group boundary markers gives, for every sorted</span>
+    <span class="c1"># position, the first and last 0-indexed position of its tie group.</span>
+    <span class="n">group_start</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cummax</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_first</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">group_end</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cummin</span><span class="p">(</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">is_last</span><span class="p">,</span> <span class="n">positions</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Mean of the 1-indexed ordinal ranks spanned by the group.</span>
+    <span class="n">avg_rank_sorted</span> <span class="o">=</span> <span class="p">(</span><span class="n">group_start</span> <span class="o">+</span> <span class="n">group_end</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="mf">1.0</span>
+
+    <span class="c1"># Scatter back to the original positions.</span>
+    <span class="n">inverse</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">ranks</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">take_along_axis</span><span class="p">(</span><span class="n">avg_rank_sorted</span><span class="p">,</span> <span class="n">inverse</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># A component holding a missing observation has no valid ranking.</span>
+    <span class="n">contaminated</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x_flat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">contaminated</span><span class="p">,</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">ranks</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_propagate_nan_components</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set the entries of ``value`` whose draws contain a ``NaN`` to ``NaN``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    value</span>
+<span class="sd">        Diagnostic values of shape ``x.shape[2:]``.</span>
+<span class="sd">    x</span>
+<span class="sd">        Draws of shape ``(nchains, nsamples, …)``.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ``value`` with every contaminated component replaced by ``NaN``.</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    The reduction runs over the chain and draw axes only, so a component</span>
+<span class="sd">    holding a missing observation never poisons an independent finite one.</span>
+
+<span class="sd">    ``x`` here is the *split* array, so with an odd number of draws the last</span>
+<span class="sd">    draw has already been trimmed by :func:`_split_chains` and a ``NaN``</span>
+<span class="sd">    sitting only in that draw is not seen.  The contract is therefore &quot;a</span>
+<span class="sd">    ``NaN`` among the draws the diagnostic actually uses&quot;, which is narrower</span>
+<span class="sd">    than &quot;a ``NaN`` anywhere in the input&quot;.</span>
+
+<span class="sd">    The guard is needed because the estimators downstream do not propagate</span>
+<span class="sd">    ``NaN`` on their own.  Geyer&#39;s initial-positive-sequence truncation in</span>
+<span class="sd">    :func:`effective_sample_size` compares partial autocorrelation sums</span>
+<span class="sd">    against zero; every such comparison is ``False`` for ``NaN``, so the</span>
+<span class="sd">    truncation collapses and :math:`\\hat{\\tau}` falls back to its</span>
+<span class="sd">    ``1 / log10(MN)`` floor — turning an all-``NaN`` input into a large and</span>
+<span class="sd">    entirely fictitious sample size instead of ``NaN``.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">contaminated</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="c1"># ``effective_sample_size`` ends with a bare ``.squeeze()``, which drops</span>
+    <span class="c1"># genuine size-1 event axes as well as the chain/draw axes.  Squeeze the</span>
+    <span class="c1"># mask the same way, or ``jnp.where`` broadcasts a (…, 1) mask against a</span>
+    <span class="c1"># squeezed value and silently changes both the shape and the numbers.</span>
+    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">contaminated</span><span class="p">),</span> <span class="n">jnp</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+
 <span class="k">def</span><span class="w"> </span><span class="nf">_rank_normalize</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Rank-normalize draws using the Blom plotting position.</span>
 
@@ -808,6 +944,19 @@
 
 <span class="sd">    where :math:`r` is the 1-indexed rank and :math:`n = \\text{nchains}</span>
 <span class="sd">    \\times \\text{nsamples}`.</span>
+
+<span class="sd">    Tied draws receive the *average* of the ordinal ranks their tie group</span>
+<span class="sd">    spans (see :func:`_average_ranks`), matching Vehtari et al. (2021) and</span>
+<span class="sd">    ``scipy.stats.rankdata(method=&quot;average&quot;)``.  Ordinal ranking would give</span>
+<span class="sd">    equal values different scores depending on where they sit in the pooled</span>
+<span class="sd">    array, manufacturing chain/time structure out of ties — a constant input</span>
+<span class="sd">    would acquire a spurious spread, and repeated states would inflate R̂ and</span>
+<span class="sd">    deflate bulk ESS.  The damage scales with how large and how scattered the</span>
+<span class="sd">    tie groups are: it is severe for indicator and discrete observables, and</span>
+<span class="sd">    mild for rejection repeats in a continuous chain, where the repeats form</span>
+<span class="sd">    short contiguous runs.  A constant input now maps to a constant field of</span>
+<span class="sd">    zeros, leaving R̂ undefined (0/0) and the ESS degeneracy guard free to</span>
+<span class="sd">    report 0.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">nchains</span><span class="p">,</span> <span class="n">nsamples</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
     <span class="n">extra_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
@@ -816,8 +965,8 @@
     <span class="c1"># Pool chains and draws into the leading axis: (n, …extra).</span>
     <span class="n">x_flat</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="o">*</span><span class="n">extra_shape</span><span class="p">)</span>
 
-    <span class="c1"># Double argsort gives 0-indexed ranks; +1 for 1-indexed.</span>
-    <span class="n">ranks</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">x_flat</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="c1"># Average ranks, so that tied draws receive identical scores.</span>
+    <span class="n">ranks</span> <span class="o">=</span> <span class="n">_average_ranks</span><span class="p">(</span><span class="n">x_flat</span><span class="p">)</span>
 
     <span class="c1"># Blom plotting position.</span>
     <span class="n">z</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">scipy</span><span class="o">.</span><span class="n">special</span><span class="o">.</span><span class="n">ndtri</span><span class="p">((</span><span class="n">ranks</span> <span class="o">-</span> <span class="mf">3.0</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="mi">4</span><span class="p">))</span>
@@ -866,6 +1015,8 @@
     <span class="n">x</span> <span class="o">=</span> <span class="n">_to_standard_axes</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">input_array</span><span class="p">),</span> <span class="n">chain_axis</span><span class="p">,</span> <span class="n">sample_axis</span><span class="p">)</span>
     <span class="n">x_split</span> <span class="o">=</span> <span class="n">_split_chains</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="n">x_rn</span> <span class="o">=</span> <span class="n">_rank_normalize</span><span class="p">(</span><span class="n">x_split</span><span class="p">)</span>
+    <span class="c1"># A contaminated component is already all-NaN after _rank_normalize, and</span>
+    <span class="c1"># effective_sample_size propagates that on its own.</span>
     <span class="k">return</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">x_rn</span><span class="p">)</span></div>
 
 
@@ -887,8 +1038,22 @@
 <span class="sd">    The tail quantiles are determined by ``prob``: the lower tail uses the</span>
 <span class="sd">    ``(1 - prob) / 2`` quantile and the upper tail uses the</span>
 <span class="sd">    ``(1 + prob) / 2`` quantile.  The default ``prob=0.90`` corresponds to</span>
-<span class="sd">    the 5th/95th percentiles, which matches ``az.ess(method=&quot;tail&quot;)`` in</span>
-<span class="sd">    ArviZ (the ArviZ default is also ``prob=(0.05, 0.95)``).</span>
+<span class="sd">    the 5th/95th percentiles, matching ArviZ&#39;s default ``prob=(0.05, 0.95)``.</span>
+
+<span class="sd">    .. warning::</span>
+
+<span class="sd">       The agreement with ``az.ess(method=&quot;tail&quot;)`` holds for **continuous**</span>
+<span class="sd">       draws only.  The upper-tail indicator here is</span>
+<span class="sd">       :math:`\\mathbf{1}(x \\ge q_{\\text{high}})`, whereas Vehtari et al.</span>
+<span class="sd">       and ArviZ use :math:`\\mathbf{1}(x \\le q)` for both tails.  On</span>
+<span class="sd">       continuous draws the two are exact complements and the ESS is</span>
+<span class="sd">       identical, but on tied draws they are not: for iid Bernoulli(0.1),</span>
+<span class="sd">       :math:`P(x \\ge q_{95})` is 0.097 rather than 0.05, and for a 5-level</span>
+<span class="sd">       grid it is 0.21.  This is a separate known defect in the tail</span>
+<span class="sd">       estimator&#39;s tie handling, tracked independently of the</span>
+<span class="sd">       rank-normalization fix; note that simply switching to ``&lt;=`` does not</span>
+<span class="sd">       resolve it, since that indicator is identically 1 on such draws and</span>
+<span class="sd">       would be reported as degenerate.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -948,7 +1113,12 @@
     <span class="n">ess_lower</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">I_lower</span><span class="p">)</span>
     <span class="n">ess_upper</span> <span class="o">=</span> <span class="n">effective_sample_size</span><span class="p">(</span><span class="n">I_upper</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">ess_lower</span><span class="p">,</span> <span class="n">ess_upper</span><span class="p">)</span></div>
+    <span class="c1"># A NaN draw makes the pooled quantiles NaN, every indicator comparison</span>
+    <span class="c1"># False, and the resulting all-zero series degenerate — which would report</span>
+    <span class="c1"># 0 rather than &quot;undefined&quot;.  Guard once on the reduced value: the</span>
+    <span class="c1"># indicators themselves are never NaN, so the estimator cannot propagate</span>
+    <span class="c1"># this on its own the way it does for ess_bulk.</span>
+    <span class="k">return</span> <span class="n">_propagate_nan_components</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">ess_lower</span><span class="p">,</span> <span class="n">ess_upper</span><span class="p">),</span> <span class="n">x_split</span><span class="p">)</span></div>
 
 
 

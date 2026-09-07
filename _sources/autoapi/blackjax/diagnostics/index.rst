@@ -93,6 +93,18 @@ Module Contents
       them, and compute split-R̂ again (**tail**).
    5. Return :math:`\max(\hat{R}_{\text{bulk}}, \hat{R}_{\text{tail}})`.
 
+   .. warning::
+
+      ``NaN`` from this function does **not** uniquely mean "the draws
+      contained a missing observation".  The folded component subtracts the
+      pooled median, so when at least half of a component's pooled draws are
+      ``+inf`` (or ``-inf``) the median is infinite and the fold evaluates
+      ``inf - inf``, which is ``NaN``.  Such a component returns ``NaN`` from
+      :func:`rhat` while containing no ``NaN`` at all — and while
+      :func:`ess_bulk` and :func:`ess_tail` still return finite values for it.
+      Infinity handling is a separate open question from the missing-data
+      contract; this is documented, not yet decided.
+
    .. rubric:: References
 
    .. cite:p:`vehtari2021rank`
@@ -109,7 +121,10 @@ Module Contents
 
    :returns: * *NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.*
              * *Variables whose within-chain variance is numerically zero have an effective*
-             * *sample size of zero.*
+             * sample size of zero.  Variables containing a ``NaN`` draw are undefined and
+             * report ``NaN``; the reduction is per variable, so an independent finite
+             * *variable is unaffected.  Infinities are ordered values and are not treated*
+             * *as missing.*
 
    .. rubric:: Notes
 
@@ -168,8 +183,22 @@ Module Contents
    The tail quantiles are determined by ``prob``: the lower tail uses the
    ``(1 - prob) / 2`` quantile and the upper tail uses the
    ``(1 + prob) / 2`` quantile.  The default ``prob=0.90`` corresponds to
-   the 5th/95th percentiles, which matches ``az.ess(method="tail")`` in
-   ArviZ (the ArviZ default is also ``prob=(0.05, 0.95)``).
+   the 5th/95th percentiles, matching ArviZ's default ``prob=(0.05, 0.95)``.
+
+   .. warning::
+
+      The agreement with ``az.ess(method="tail")`` holds for **continuous**
+      draws only.  The upper-tail indicator here is
+      :math:`\mathbf{1}(x \ge q_{\text{high}})`, whereas Vehtari et al.
+      and ArviZ use :math:`\mathbf{1}(x \le q)` for both tails.  On
+      continuous draws the two are exact complements and the ESS is
+      identical, but on tied draws they are not: for iid Bernoulli(0.1),
+      :math:`P(x \ge q_{95})` is 0.097 rather than 0.05, and for a 5-level
+      grid it is 0.21.  This is a separate known defect in the tail
+      estimator's tie handling, tracked independently of the
+      rank-normalization fix; note that simply switching to ``<=`` does not
+      resolve it, since that indicator is identically 1 on such draws and
+      would be reported as degenerate.
 
    :param input_array: An array representing multiple chains of MCMC samples. The array must
                        contain a chain dimension and a sample dimension.
