@@ -717,7 +717,7 @@ class RankNormalizeTiesTest(chex.TestCase):
         unguarded = float(diagnostics.effective_sample_size(all_nan))
         assert np.isfinite(unguarded) and unguarded > 0, (
             "premise no longer holds: effective_sample_size now propagates NaN"
-            f" on its own (got {unguarded}); the boundary guard may be"
+            f" on its own (got {unguarded}) — the boundary guard may be"
             " redundant and should be re-reviewed"
         )
         assert np.isnan(float(diagnostics.ess_bulk(all_nan)))
