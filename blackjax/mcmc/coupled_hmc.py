@@ -202,7 +202,7 @@ class CoupledHMCInfo(NamedTuple):
     second: hmc.HMCInfo
     common_normal: Array
     reflection_unit: Array
-    uniform: float
+    uniform: Array
 
 
 # --------------------------------------------------------------------
@@ -298,7 +298,13 @@ def _flat_position(position: ArrayLikeTree) -> tuple[Array, Callable]:
 
 
 def _check_paired_positions(first_position, second_position) -> None:
-    """Require identical tree structure, leaf shapes and dtype across the pair."""
+    """Require identical tree structure, leaf shapes and dtype across the pair.
+
+    The dtype compared is the **effective** one, see :func:`_flat_position`, so
+    this guarantee is configuration-relative: under JAX's default settings two
+    positions declaring float64 and float32 agree here, because both become
+    float32.  It is not a promise that their declared dtypes match.
+    """
     first_structure = jax.tree.structure(first_position)
     second_structure = jax.tree.structure(second_position)
     if first_structure != second_structure:
@@ -405,8 +411,9 @@ def _check_innovations(standard_normal, uniform, flat_position) -> None:
     declared = _declared_dtype(standard_normal)
     if declared is not None and declared != flat_position.dtype:
         raise TypeError(
-            "`standard_normal` dtype must match the position dtype exactly "
-            f"(no narrowing), got {declared}, expected {flat_position.dtype}"
+            "`standard_normal` must declare the position's effective dtype "
+            f"exactly (no narrowing), got {declared}, expected "
+            f"{flat_position.dtype}"
         )
     if _declared_shape(uniform) != ():
         raise ValueError(
@@ -415,8 +422,8 @@ def _check_innovations(standard_normal, uniform, flat_position) -> None:
     declared = _declared_dtype(uniform)
     if declared is not None and declared != flat_position.dtype:
         raise TypeError(
-            "`uniform` dtype must match the position dtype exactly (no "
-            f"narrowing), got {declared}, expected {flat_position.dtype}"
+            "`uniform` must declare the position's effective dtype exactly "
+            f"(no narrowing), got {declared}, expected {flat_position.dtype}"
         )
 
     # A uniform outside [0, 1) is refused, never clipped and never allowed to
