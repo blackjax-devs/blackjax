@@ -8,6 +8,7 @@ import jax.numpy as jnp
 import numpy as np
 import pytest
 from absl.testing import absltest, parameterized
+from scipy.stats import norm, rankdata
 
 import blackjax.diagnostics as diagnostics
 
@@ -467,6 +468,320 @@ class EssTailTest(chex.TestCase):
         x = jax.random.normal(k2, shape=(_NCHAINS, _NSAMPLES)) * jnp.exp(v / 2.0)
         result = float(diagnostics.ess_tail(x))
         assert result > 0, f"ess_tail for funnel draws must be positive, got {result}"
+
+
+# ---------------------------------------------------------------------------
+# Regressions for tied-draw handling in the rank-normalized diagnostics
+# ---------------------------------------------------------------------------
+
+
+def _pairwise_average_ranks(x):
+    """1-indexed average ranks along axis 0, by direct pairwise counting.
+
+    Uses ``rank(v) = (1 + #{x < v} + #{x <= v}) / 2`` — the definition of the
+    mean of the ordinal ranks a tie group spans.  This shares no code path
+    with the sort/cumulative-reduction implementation under test, so it is an
+    independent oracle rather than a restatement of it.
+    """
+    a = np.asarray(x)
+    flat = a.reshape(a.shape[0], -1)
+    out = np.empty(flat.shape, dtype=np.float64)
+    for j in range(flat.shape[1]):
+        col = flat[:, j]
+        n_lt = (col[None, :] < col[:, None]).sum(axis=1)
+        n_le = (col[None, :] <= col[:, None]).sum(axis=1)
+        out[:, j] = (1.0 + n_lt + n_le) / 2.0
+    return out.reshape(a.shape)
+
+
+def _reference_rank_normalize(x):
+    """Blom rank-normalization of ``(nchains, nsamples, ...)`` draws, in NumPy."""
+    n = x.shape[0] * x.shape[1]
+    flat = np.asarray(x).reshape(n, *x.shape[2:])
+    ranks = _pairwise_average_ranks(flat)
+    return norm.ppf((ranks - 3.0 / 8) / (n + 1.0 / 4)).reshape(x.shape)
+
+
+def _reference_split(x):
+    """Split each chain of a ``(nchains, nsamples, ...)`` array in half."""
+    half = x.shape[1] // 2
+    x = x[:, : 2 * half]
+    return np.concatenate([x[:, :half], x[:, half:]], axis=0)
+
+
+def _reference_split_rhat(x):
+    """Plain split-R-hat on already-split, already-normalized draws."""
+    num_samples = x.shape[1]
+    between = num_samples * x.mean(axis=1).var(axis=0, ddof=1)
+    within = x.var(axis=1, ddof=1).mean(axis=0)
+    return np.sqrt((between / within + num_samples - 1) / num_samples)
+
+
+def _reference_rhat(x):
+    """Independent NumPy implementation of rank-normalized split-R-hat."""
+    x_split = _reference_split(np.asarray(x))
+    r_bulk = _reference_split_rhat(_reference_rank_normalize(x_split))
+    pooled = x_split.reshape(x_split.shape[0] * x_split.shape[1], *x_split.shape[2:])
+    folded = np.abs(x_split - np.median(pooled, axis=0))
+    r_tail = _reference_split_rhat(_reference_rank_normalize(folded))
+    return np.maximum(r_bulk, r_tail)
+
+
+class RankNormalizeTiesTest(chex.TestCase):
+    """Tied draws must receive equal, permutation-invariant rank scores.
+
+    Ordinal (double-``argsort``) ranking hands equal values different ranks
+    according to where they sit in the pooled array, which manufactures
+    chain/time structure out of ties and corrupts :func:`rhat` and
+    :func:`ess_bulk` for repeated states, indicator observables and
+    rejection-heavy chains.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.rng = jax.random.key(20260906)
+
+    def _tied_draws(self, nchains=4, nsamples=48, num_levels=5, shape=()):
+        """Draws from a small discrete grid, so most values are tied."""
+        levels = jax.random.randint(
+            self.rng, shape=(nchains, nsamples, *shape), minval=0, maxval=num_levels
+        )
+        return levels.astype(jnp.float32)
+
+    # -- the ranking primitive ------------------------------------------
+
+    def test_average_ranks_match_pairwise_reference(self):
+        pooled = np.asarray(self._tied_draws()).reshape(4 * 48)
+        ranks = np.asarray(diagnostics._average_ranks(jnp.asarray(pooled)))
+        np.testing.assert_array_equal(ranks, _pairwise_average_ranks(pooled))
+
+    def test_average_ranks_match_scipy_rankdata(self):
+        pooled = np.asarray(self._tied_draws(num_levels=3)).reshape(-1)
+        ranks = np.asarray(diagnostics._average_ranks(jnp.asarray(pooled)))
+        np.testing.assert_array_equal(ranks, rankdata(pooled, method="average"))
+
+    def test_average_ranks_are_independent_per_event(self):
+        # Trailing dimensions must be ranked independently of one another.
+        draws = self._tied_draws(shape=(3,))
+        pooled = np.asarray(draws).reshape(4 * 48, 3)
+        ranks = np.asarray(diagnostics._average_ranks(jnp.asarray(pooled)))
+        np.testing.assert_array_equal(ranks, _pairwise_average_ranks(pooled))
+        for event in range(3):
+            column = np.asarray(
+                diagnostics._average_ranks(jnp.asarray(pooled[:, event]))
+            )
+            np.testing.assert_array_equal(ranks[:, event], column)
+
+    def test_distinct_values_keep_ordinal_ranks(self):
+        # With no ties the average rank reduces to the ordinal rank, so the
+        # pre-existing behaviour on continuous draws is untouched.
+        # A shuffled arange, so the values are distinct by construction —
+        # float32 normal draws do collide occasionally at this size.
+        draws = jax.random.permutation(self.rng, jnp.arange(4 * 48)).astype(jnp.float32)
+        ranks = np.asarray(diagnostics._average_ranks(draws))
+        ordinal = np.asarray(jnp.argsort(jnp.argsort(draws)) + 1, dtype=np.float64)
+        np.testing.assert_array_equal(ranks, ordinal)
+
+    # -- permutation symmetry -------------------------------------------
+
+    def test_tied_draws_receive_identical_scores(self):
+        draws = self._tied_draws()
+        z = np.asarray(diagnostics._rank_normalize(draws))
+        values = np.asarray(draws).reshape(-1)
+        scores = z.reshape(-1)
+        for level in np.unique(values):
+            group = scores[values == level]
+            np.testing.assert_array_equal(
+                group,
+                np.full_like(group, group[0]),
+                err_msg=f"tied value {level} received unequal scores",
+            )
+
+    def test_rank_normalize_is_permutation_invariant(self):
+        draws = self._tied_draws()
+        z = np.asarray(diagnostics._rank_normalize(draws))
+
+        rng = np.random.default_rng(0)
+        pooled = np.asarray(draws).reshape(-1)
+        permutation = rng.permutation(pooled.size)
+        shuffled = pooled[permutation].reshape(draws.shape)
+        z_shuffled = np.asarray(diagnostics._rank_normalize(jnp.asarray(shuffled)))
+
+        inverse = np.empty_like(permutation)
+        inverse[permutation] = np.arange(permutation.size)
+        restored = z_shuffled.reshape(-1)[inverse].reshape(draws.shape)
+        np.testing.assert_array_equal(
+            z,
+            restored,
+            err_msg="rank normalization is not invariant to pooled permutation",
+        )
+
+    # -- degenerate inputs ----------------------------------------------
+
+    def test_constant_input_normalizes_to_zero(self):
+        # A constant input must not acquire artificial spread.
+        draws = jnp.full((4, 48), 2.5)
+        z = np.asarray(diagnostics._rank_normalize(draws))
+        np.testing.assert_allclose(z, np.zeros_like(z), atol=1e-6)
+
+    def test_constant_input_rhat_is_undefined(self):
+        # R-hat is 0/0 for a constant input: undefined, not a large number.
+        result = np.asarray(diagnostics.rhat(jnp.full((4, 64), 2.5)))
+        assert np.isnan(result), f"expected undefined R-hat, got {result}"
+
+    def test_constant_input_ess_bulk_reports_degeneracy(self):
+        # BlackJAX flags zero-variance variables with ESS 0; rank
+        # normalization must not turn the constant into a varying sequence
+        # first.  (This deliberately differs from ArviZ, which reports N.)
+        result = np.asarray(diagnostics.ess_bulk(jnp.full((4, 64), 2.5)))
+        np.testing.assert_array_equal(result, 0.0)
+
+    def test_mixed_constant_and_varying_events(self):
+        # Per-event degeneracy must be decided per event, not globally.
+        varying = jax.random.normal(self.rng, shape=(4, 64))
+        draws = jnp.stack([jnp.full((4, 64), 1.0), varying], axis=-1)
+        ess = np.asarray(diagnostics.ess_bulk(draws))
+        assert ess[0] == 0.0, f"constant event must report ESS 0, got {ess[0]}"
+        assert ess[1] > 0.0, f"varying event must report positive ESS, got {ess[1]}"
+
+    def test_nan_draws_are_tied_with_one_another(self):
+        # NaNs are mutually indistinguishable; ranking them by position would
+        # reintroduce the asymmetry this fix removes.
+        pooled = jnp.array([1.0, jnp.nan, 0.0, jnp.nan, 2.0])
+        ranks = np.asarray(diagnostics._average_ranks(pooled))
+        assert ranks[1] == ranks[3], f"NaNs received different ranks: {ranks}"
+
+    # -- end-to-end diagnostics -----------------------------------------
+
+    def test_binary_draws_match_independent_rhat(self):
+        # Bernoulli(0.1) indicator draws: heavily tied, and the case where
+        # ordinal ranking previously reported R-hat far above 1 for iid data.
+        draws = (jax.random.uniform(self.rng, shape=(8, 96, 2)) < 0.1).astype(
+            jnp.float32
+        )
+        result = np.asarray(diagnostics.rhat(draws))
+        expected = _reference_rhat(np.asarray(draws, dtype=np.float64))
+        np.testing.assert_allclose(result, expected, rtol=1e-5)
+        assert np.all(
+            result < 1.01
+        ), f"iid Bernoulli draws must not look non-converged, got {result}"
+
+    def test_binary_draws_bulk_ess_is_not_collapsed(self):
+        # Ordinal ranking collapsed bulk ESS for these draws to ~1% of N.
+        draws = (jax.random.uniform(self.rng, shape=(8, 96, 2)) < 0.1).astype(
+            jnp.float32
+        )
+        total = 8 * 96
+        result = np.asarray(diagnostics.ess_bulk(draws))
+        assert np.all(
+            result > 0.5 * total
+        ), f"bulk ESS for iid Bernoulli draws collapsed: {result} (N={total})"
+
+    def test_binary_draws_match_arviz(self):
+        az = pytest.importorskip("arviz")
+        draws = np.asarray(
+            (jax.random.uniform(self.rng, shape=(8, 96, 2)) < 0.1).astype(jnp.float32),
+            dtype=np.float64,
+        )
+        idata = az.convert_to_dataset({"x": draws})
+        az_rhat = np.asarray(az.rhat(idata, method="rank")["x"]).ravel()
+        az_ess = np.asarray(az.ess(idata, method="bulk")["x"]).ravel()
+        bj_rhat = np.asarray(diagnostics.rhat(jnp.asarray(draws)))
+        bj_ess = np.asarray(diagnostics.ess_bulk(jnp.asarray(draws)))
+        np.testing.assert_allclose(bj_rhat, az_rhat, rtol=1e-4)
+        np.testing.assert_allclose(bj_ess, az_ess, rtol=1e-3)
+
+    def test_repeated_states_do_not_inflate_rhat(self):
+        # A Metropolis-like trace with an 80% rejection rate repeats states;
+        # those repeats are ties, not chain structure.  Built with NumPy so
+        # the trace itself owes nothing to the code under test.
+        rng = np.random.default_rng(20260906)
+        proposals = rng.normal(size=(4, 512))
+        accepted = rng.uniform(size=(4, 512)) < 0.2
+        draws = np.empty_like(proposals)
+        draws[:, 0] = proposals[:, 0]
+        for t in range(1, proposals.shape[1]):
+            draws[:, t] = np.where(accepted[:, t], proposals[:, t], draws[:, t - 1])
+        assert (draws[:, 1:] == draws[:, :-1]).mean() > 0.5, "trace has too few repeats"
+
+        result = np.asarray(diagnostics.rhat(jnp.asarray(draws, dtype=jnp.float32)))
+        expected = _reference_rhat(draws)
+        np.testing.assert_allclose(result, expected, rtol=1e-4)
+
+    def test_folded_tail_component_uses_average_ranks(self):
+        # rhat folds about the median before rank-normalizing; the folded
+        # draws of a symmetric tied grid are themselves heavily tied.
+        draws = self._tied_draws(nsamples=64, num_levels=4)
+        result = np.asarray(diagnostics.rhat(draws))
+        expected = _reference_rhat(np.asarray(draws, dtype=np.float64))
+        np.testing.assert_allclose(result, expected, rtol=1e-5)
+
+    def test_antithetic_binary_bulk_ess_may_exceed_draw_count(self):
+        # No global ESS <= N cap: an antithetic sequence validly exceeds N.
+        nsamples = 512
+        draws = jnp.tile(
+            jnp.tile(jnp.array([0.0, 1.0]), nsamples // 2)[None, :], (4, 1)
+        )
+        result = float(diagnostics.ess_bulk(draws))
+        assert (
+            result > 4 * nsamples
+        ), f"antithetic bulk ESS was capped: {result} <= {4 * nsamples}"
+
+    # -- axes, dtypes, transformations ----------------------------------
+
+    @parameterized.parameters(*test_cases)
+    def test_axis_invariance_with_ties(self, chain_axis, sample_axis):
+        draws = self._tied_draws(nchains=4, nsamples=64)
+        expected = diagnostics.rhat(draws)
+        expected_ess = diagnostics.ess_bulk(draws)
+
+        if (chain_axis, sample_axis) == (0, 1):
+            moved = draws
+        else:
+            ndim = 2
+            moved = jnp.transpose(
+                draws, np.argsort([chain_axis % ndim, sample_axis % ndim])
+            )
+        np.testing.assert_allclose(
+            diagnostics.rhat(moved, chain_axis, sample_axis), expected, rtol=1e-6
+        )
+        np.testing.assert_allclose(
+            diagnostics.ess_bulk(moved, chain_axis, sample_axis),
+            expected_ess,
+            rtol=1e-6,
+        )
+
+    def test_dtype_is_preserved(self):
+        # Rank normalization must not silently widen or narrow the draws.
+        default_float = jnp.zeros(0).dtype
+        draws = self._tied_draws().astype(default_float)
+        assert diagnostics._rank_normalize(draws).dtype == default_float
+        assert diagnostics.ess_bulk(draws).dtype == default_float
+        assert diagnostics.rhat(draws).dtype == default_float
+
+    def test_integer_draws_are_accepted(self):
+        # Discrete draws are exactly the tied case; they must rank without
+        # first being cast to something lossy.
+        integers = jax.random.randint(self.rng, (4, 64), minval=0, maxval=5)
+        ranks = np.asarray(diagnostics._average_ranks(integers.reshape(-1)))
+        np.testing.assert_array_equal(
+            ranks, rankdata(np.asarray(integers).reshape(-1), method="average")
+        )
+
+    @chex.all_variants(with_pmap=False)
+    def test_jit_compatible(self):
+        draws = self._tied_draws()
+        rank_normalize = self.variant(diagnostics._rank_normalize)
+        np.testing.assert_array_equal(
+            np.asarray(rank_normalize(draws)),
+            np.asarray(diagnostics._rank_normalize(draws)),
+        )
+
+    def test_vmap_over_events(self):
+        draws = self._tied_draws(shape=(3,))
+        stacked = jnp.moveaxis(draws, -1, 0)
+        mapped = jax.vmap(diagnostics.ess_bulk)(stacked)
+        np.testing.assert_allclose(mapped, diagnostics.ess_bulk(draws), rtol=1e-6)
 
 
 class ParetoKhatTest(chex.TestCase):
