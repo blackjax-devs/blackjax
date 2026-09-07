@@ -62,9 +62,14 @@ apply the identical budget test.
 
 Stability
 ---------
-:data:`SCHEMA_VERSION` is **2**.  Consumers must read it and refuse a version
-they do not know rather than inferring meaning from raw mask bits.  Bit
-positions are never reused across versions.
+Read :data:`SCHEMA_VERSION` from the module; do not hard-code it here or
+anywhere else.  Consumers must check it and refuse a version they do not know
+rather than inferring meaning from raw mask bits.  Bit positions are never
+reused across versions.
+
+(This paragraph previously restated the number and went stale against the
+constant across a bump.  Naming it once, in the constant, is the only way that
+cannot happen again.)
 
 Units
 -----
