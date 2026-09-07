@@ -132,7 +132,7 @@ from jax.flatten_util import ravel_pytree
 import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
-from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
+from blackjax.base import Info, Position, SamplingAlgorithm, State
 from blackjax.types import Array, ArrayLikeTree, PRNGKey
 
 __all__ = [
@@ -219,7 +219,7 @@ def _as_pair(value, name: str) -> tuple:
     if isinstance(value, list) and len(value) == 2:
         return tuple(value)
     raise TypeError(
-        f"`{name}` must be an explicit (first, second) pair; pass "
+        f"`{name}` must be an explicit (first, second) pair. Pass "
         f"`({name}, {name})` when both marginals share a value."
     )
 
@@ -262,7 +262,7 @@ def _flat_position(position: ArrayLikeTree) -> tuple[Array, Callable]:
     dtypes = {jnp.asarray(leaf).dtype for leaf in leaves}
     if len(dtypes) != 1:
         raise TypeError(
-            f"all position leaves must share one floating dtype; got {sorted(map(str, dtypes))}"
+            f"all position leaves must share one floating dtype, got {sorted(map(str, dtypes))}"
         )
     flat, unravel = ravel_pytree(position)
     if not jnp.issubdtype(flat.dtype, jnp.floating) or flat.size == 0:
@@ -276,19 +276,19 @@ def _check_paired_positions(first_position, second_position) -> None:
     second_structure = jax.tree.structure(second_position)
     if first_structure != second_structure:
         raise ValueError(
-            "paired positions must share one pytree structure; got "
+            "paired positions must share one pytree structure, got "
             f"{first_structure} and {second_structure}"
         )
     first_flat, _ = _flat_position(first_position)
     second_flat, _ = _flat_position(second_position)
     if first_flat.shape != second_flat.shape:
         raise ValueError(
-            "paired positions must have matching flat shapes; got "
+            "paired positions must have matching flat shapes, got "
             f"{first_flat.shape} and {second_flat.shape}"
         )
     if first_flat.dtype != second_flat.dtype:
         raise TypeError(
-            "paired positions must have matching floating dtypes; got "
+            "paired positions must have matching floating dtypes, got "
             f"{first_flat.dtype} and {second_flat.dtype}"
         )
 
@@ -307,20 +307,20 @@ def _check_innovations(standard_normal, uniform, flat_position) -> None:
     uniform = jnp.asarray(uniform)
     if standard_normal.shape != flat_position.shape:
         raise ValueError(
-            "`standard_normal` must be a flat vector matching the position; got "
+            "`standard_normal` must be a flat vector matching the position, got "
             f"{standard_normal.shape}, expected {flat_position.shape}"
         )
     if standard_normal.dtype != flat_position.dtype:
         raise TypeError(
             "`standard_normal` dtype must match the position dtype exactly "
-            f"(no narrowing); got {standard_normal.dtype}, expected {flat_position.dtype}"
+            f"(no narrowing), got {standard_normal.dtype}, expected {flat_position.dtype}"
         )
     if uniform.shape != ():
-        raise ValueError(f"`uniform` must be a scalar; got shape {uniform.shape}")
+        raise ValueError(f"`uniform` must be a scalar, got shape {uniform.shape}")
     if uniform.dtype != flat_position.dtype:
         raise TypeError(
             "`uniform` dtype must match the position dtype exactly (no "
-            f"narrowing); got {uniform.dtype}, expected {flat_position.dtype}"
+            f"narrowing), got {uniform.dtype}, expected {flat_position.dtype}"
         )
     # A uniform outside [0, 1) is refused, never clipped and never allowed to
     # masquerade as an ordinary Metropolis rejection.  The value can only be
@@ -330,7 +330,7 @@ def _check_innovations(standard_normal, uniform, flat_position) -> None:
         value = float(uniform)
         if not 0.0 <= value < 1.0:
             raise ValueError(
-                f"`uniform` must lie in [0, 1); got {value!r}. It is not "
+                f"`uniform` must lie in [0, 1), got {value!r}. It is not "
                 "clipped, because a clipped uniform would silently become an "
                 "ordinary rejection."
             )
@@ -352,23 +352,23 @@ def _concrete_real_scalar(value, name: str) -> float:
     """
     if isinstance(value, jax.core.Tracer):
         raise TypeError(
-            f"`{name}` must be concrete here; a traced value cannot be checked "
+            f"`{name}` must be concrete here -- a traced value cannot be checked "
             "eagerly. Use `build_kernel`, which performs no eager validation."
         )
     if isinstance(value, (bool, np.bool_)):
         raise TypeError(f"`{name}` must be a real number, not a boolean")
     array = np.asarray(value)
     if array.ndim != 0:
-        raise ValueError(f"`{name}` must be a scalar; got shape {array.shape}")
+        raise ValueError(f"`{name}` must be a scalar, got shape {array.shape}")
     if array.dtype == np.bool_ or not (
         np.issubdtype(array.dtype, np.floating)
         or np.issubdtype(array.dtype, np.integer)
     ):
         raise TypeError(
-            f"`{name}` must have a real floating or integer dtype; got {array.dtype}"
+            f"`{name}` must have a real floating or integer dtype, got {array.dtype}"
         )
     if not np.isfinite(array):
-        raise ValueError(f"`{name}` must be finite; got {array!r}")
+        raise ValueError(f"`{name}` must be finite, got {array!r}")
     return float(array)
 
 
@@ -380,17 +380,17 @@ def _concrete_integer_scalar(value, name: str) -> int:
     """
     if isinstance(value, jax.core.Tracer):
         raise TypeError(
-            f"`{name}` must be concrete here; a traced value cannot be checked "
+            f"`{name}` must be concrete here -- a traced value cannot be checked "
             "eagerly. Use `build_kernel`, which performs no eager validation."
         )
     if isinstance(value, (bool, np.bool_)):
         raise TypeError(f"`{name}` must be an integer, not a boolean")
     array = np.asarray(value)
     if array.ndim != 0:
-        raise ValueError(f"`{name}` must be a scalar; got shape {array.shape}")
+        raise ValueError(f"`{name}` must be a scalar, got shape {array.shape}")
     if not np.issubdtype(array.dtype, np.integer):
         raise TypeError(
-            f"`{name}` must have an integer dtype; got {array.dtype}. It is not "
+            f"`{name}` must have an integer dtype, got {array.dtype}. It is not "
             "rounded, because a silently truncated count would change the "
             "trajectory."
         )
@@ -646,6 +646,9 @@ def _build_prescribed_pair(
     step_sizes = _as_pair(step_size, "step_size")
     inverse_mass_matrices = _as_pair(inverse_mass_matrix, "inverse_mass_matrix")
     integration_steps = _as_pair(num_integration_steps, "num_integration_steps")
+    if coupling == "reflection" and direction_fn is None:
+        raise ValueError("reflection coupling requires a direction function")
+    measure_direction = direction_fn
 
     first_metric, first_step = _build_prescribed_marginal(
         logdensity_fns[0],
@@ -671,17 +674,18 @@ def _build_prescribed_pair(
         flat, _ = _flat_position(state.first.position)
 
         if coupling == "reflection":
+            assert measure_direction is not None  # narrowed above
             direction = jnp.asarray(
-                direction_fn(state.first, state.second, first_metric)
+                measure_direction(state.first, state.second, first_metric)
             )
             if direction.shape != flat.shape:
                 raise ValueError(
                     "`direction_fn` must return a flat direction matching the "
-                    f"position; got {direction.shape}, expected {flat.shape}"
+                    f"position, got {direction.shape}, expected {flat.shape}"
                 )
             if direction.dtype != flat.dtype:
                 raise TypeError(
-                    "`direction_fn` must return the position dtype; got "
+                    "`direction_fn` must return the position dtype, got "
                     f"{direction.dtype}, expected {flat.dtype}"
                 )
             unit = _reflection_unit(direction)
@@ -706,9 +710,7 @@ def _build_prescribed_pair(
 # --------------------------------------------------------------------
 
 
-def init(
-    position: Sequence[ArrayLikeTree], logdensity_fn: Sequence[Callable]
-) -> CoupledHMCState:
+def init(position: Position, logdensity_fn: Sequence[Callable]) -> CoupledHMCState:
     """Initialise a coupled pair.
 
     Parameters
@@ -780,7 +782,7 @@ def build_kernel(
     """
     if coupling not in ("synchronous", "reflection"):
         raise ValueError(
-            f'`coupling` must be "synchronous" or "reflection"; got {coupling!r}'
+            f'`coupling` must be "synchronous" or "reflection", got {coupling!r}'
         )
     if coupling == "synchronous":
         if direction_fn is not None:
@@ -900,9 +902,22 @@ def as_top_level_api(
         coupling=coupling,
         direction_fn=direction_fn,
     )
-    return build_sampling_algorithm(
-        kernel,
-        init,
-        logdensity_fn,
-        kernel_args=(step_sizes, inverse_mass_matrices, integration_steps),
-    )
+
+    # `build_sampling_algorithm` is typed for a single ``logdensity_fn``; this
+    # algorithm takes a pair, so the two-line wrapper is written out rather than
+    # forced through a helper whose contract does not cover it.
+    def init_fn(position: Position, rng_key: PRNGKey | None = None) -> State:
+        del rng_key
+        return init(position, logdensity_fn)
+
+    def step_fn(rng_key: PRNGKey, state: State) -> tuple[State, Info]:
+        return kernel(
+            rng_key,
+            state,
+            logdensity_fn,
+            step_sizes,
+            inverse_mass_matrices,
+            integration_steps,
+        )
+
+    return SamplingAlgorithm(init_fn, step_fn)
