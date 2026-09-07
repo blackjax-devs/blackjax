@@ -147,6 +147,22 @@ def _oracle_marginal(
     )
 
 
+def _reflect_with_numpy(noise, unit, coupling):
+    """Reconstruct the second marginal's innovation without the module's help.
+
+    Deliberately NumPy: calling ``coupled_hmc._reflect`` here would make every
+    comparison that uses this value circular for a defect in ``_reflect``.
+    """
+    if coupling != "reflection":
+        return noise
+    unit_array = np.asarray(unit)
+    noise_array = np.asarray(noise)
+    return jnp.asarray(
+        noise_array - 2 * unit_array * float(noise_array @ unit_array),
+        dtype=noise.dtype,
+    )
+
+
 # ---------------------------------------------------------------------------
 # Mathematics and numerics
 # ---------------------------------------------------------------------------
@@ -202,6 +218,31 @@ class CoupledHMCMathTest(BlackJAXTest):
                 coupled_hmc._reflect(reflected, unit), noise, atol=1e-12
             )
             np.testing.assert_allclose(float(jnp.linalg.norm(unit)), 1.0, rtol=1e-12)
+
+    def test_reflection_negates_the_component_along_the_unit(self):
+        """The reflection must actually reflect.
+
+        Norm preservation, involution and a unit-norm ``e`` are all satisfied
+        by the identity map, so asserting only those leaves the map itself
+        unconstrained. What distinguishes a reflection is that the component
+        along ``e`` flips sign while the orthogonal complement is untouched.
+        """
+        with _x64():
+            unit = coupled_hmc._reflection_unit(
+                jnp.asarray([1.0, 2.0, -0.5, 0.25], jnp.float64)
+            )
+            noise = jax.random.normal(self.next_key(), (_DIM,), jnp.float64)
+            reflected = coupled_hmc._reflect(noise, unit)
+
+            along_before = float(jnp.dot(unit, noise))
+            along_after = float(jnp.dot(unit, reflected))
+            self.assertNotAlmostEqual(along_before, 0.0, places=6)
+            np.testing.assert_allclose(along_after, -along_before, rtol=1e-12)
+
+            # The component orthogonal to `unit` is unchanged.
+            orthogonal_before = noise - unit * along_before
+            orthogonal_after = reflected - unit * along_after
+            chex.assert_trees_all_close(orthogonal_after, orthogonal_before, atol=1e-12)
 
     def test_reflection_preserves_the_standard_normal(self):
         """Finite-sample check that the reflected innovations are still N(0, I).
@@ -392,8 +433,13 @@ class CoupledHMCContractTest(BlackJAXTest):
         )
 
     # -- each marginal is unchanged by coupling -----------------------------
-    @parameterized.parameters("synchronous", "reflection")
-    def test_marginals_match_an_independent_reference(self, coupling):
+    @parameterized.named_parameters(
+        {"testcase_name": "sync_accept", "coupling": "synchronous", "accept": True},
+        {"testcase_name": "sync_reject", "coupling": "synchronous", "accept": False},
+        {"testcase_name": "reflect_accept", "coupling": "reflection", "accept": True},
+        {"testcase_name": "reflect_reject", "coupling": "reflection", "accept": False},
+    )
+    def test_marginals_match_an_independent_reference(self, coupling, accept):
         """Both marginals' state AND info equal the uncoupled reference's.
 
         Heterogeneous on purpose: different targets, metrics, step sizes and
@@ -417,15 +463,57 @@ class CoupledHMCContractTest(BlackJAXTest):
                 coupled_hmc.whitened_difference if coupling == "reflection" else None,
             )
             noise = jax.random.normal(self.next_key(), (_DIM,), jnp.float64)
-            uniform = jnp.asarray(0.4, jnp.float64)
+
+            # Running only an accepting case would leave the rejection branch
+            # uncompared, so a kernel that always returned the proposal would
+            # still match the reference. The uniform is therefore chosen from
+            # the REFERENCE's acceptance probabilities rather than hard-coded:
+            # the states are seeded from the current date, so a fixed value is
+            # not reliably on the side of the threshold it was picked for.
+            _, probe_info = step(state, noise, jnp.asarray(0.0, jnp.float64))
+            second_noise = _reflect_with_numpy(
+                noise, probe_info.reflection_unit, coupling
+            )
+            probe_first = _oracle_marginal(
+                first_fn,
+                first_mass,
+                step_sizes[0],
+                integration_steps[0],
+                state.first,
+                noise,
+                0.0,
+            )[2]
+            probe_second = _oracle_marginal(
+                second_fn,
+                second_mass,
+                step_sizes[1],
+                integration_steps[1],
+                state.second,
+                second_noise,
+                0.0,
+            )[2]
+            lowest = min(float(probe_first), float(probe_second))
+            highest = max(float(probe_first), float(probe_second))
+            # Both branches must be reachable for this case to mean anything.
+            self.assertGreater(lowest, 0.0)
+            self.assertLess(highest, 1.0)
+            # Acceptance is `uniform < p_accept`, so `uniform = highest` rejects
+            # both marginals and `uniform = 0` accepts both.
+            uniform = jnp.asarray(0.0 if accept else highest, jnp.float64)
 
             new_state, info = step(state, noise, uniform)
+            # Confirm this case exercises the branch it is named for.
+            self.assertEqual(bool(info.first.is_accepted), accept)
+            self.assertEqual(bool(info.second.is_accepted), accept)
 
-            # Reconstruct the innovation each marginal must have received.
-            second_noise = (
-                coupled_hmc._reflect(noise, info.reflection_unit)
-                if coupling == "reflection"
-                else noise
+            # `second_noise` was already reconstructed above with NumPy rather
+            # than by calling `coupled_hmc._reflect`, which would make the
+            # comparison circular for exactly the defect of `_reflect` being
+            # wrong. Confirm the unit did not change between the probe and the
+            # real call, since the direction is measured from the incoming
+            # states only and must not depend on the uniform.
+            chex.assert_trees_all_equal(
+                info.reflection_unit, probe_info.reflection_unit
             )
             for label, marginal_state, marginal_info, fn, mass, size, count, z in (
                 (
@@ -738,10 +826,22 @@ class CoupledHMCContractTest(BlackJAXTest):
                 _stiff_logdensity, mass, 5.0, 8, integrators.velocity_verlet, 1000.0
             )
             noise = jax.random.normal(self.next_key(), (_DIM,), jnp.float64)
-            _, info = step(state, noise, jnp.asarray(0.0, jnp.float64))
+            new_state, info = step(state, noise, jnp.asarray(0.0, jnp.float64))
             self.assertEqual(float(info.acceptance_rate), 0.0)
             self.assertFalse(bool(info.is_accepted))
-            chex.assert_trees_all_equal(info.proposal.position, info.proposal.position)
+            # The returned STATE must be the old one. Asserting only the flag
+            # would leave the rejection branch itself unconstrained: a kernel
+            # that reported `is_accepted=False` while returning the proposal
+            # would pass.
+            chex.assert_trees_all_equal(new_state.position, state.position)
+            chex.assert_trees_all_equal(new_state.logdensity, state.logdensity)
+            chex.assert_trees_all_equal(
+                new_state.logdensity_grad, state.logdensity_grad
+            )
+            # And the proposal really did move, so the check above has bite.
+            self.assertFalse(
+                bool(jnp.allclose(info.proposal.position, state.position, atol=1e-10))
+            )
 
     def test_prescribed_uniform_is_not_narrowed(self):
         """A float64 uniform must be refused by a float32 marginal, not cast.
@@ -880,8 +980,19 @@ class CoupledHMCContractTest(BlackJAXTest):
         fns = (_standard_normal_logdensity,) * 2
         with self.assertRaisesRegex(ValueError, "one pytree structure"):
             coupled_hmc.init((jnp.ones((_DIM,)), {"a": jnp.ones((_DIM,))}), fns)
-        with self.assertRaisesRegex(ValueError, "matching flat shapes"):
+        with self.assertRaisesRegex(ValueError, "matching leaf shapes"):
             coupled_hmc.init((jnp.ones((_DIM,)), jnp.ones((_DIM + 1,))), fns)
+        # Same structure and same total size, but split differently across
+        # leaves: the shared flat innovation would be unravelled across
+        # different leaf boundaries in each marginal.
+        with self.assertRaisesRegex(ValueError, "matching leaf shapes"):
+            coupled_hmc.init(
+                (
+                    {"a": jnp.ones((2,)), "b": jnp.ones((3,))},
+                    {"a": jnp.ones((3,)), "b": jnp.ones((2,))},
+                ),
+                fns,
+            )
         with _x64():
             with self.assertRaisesRegex(TypeError, "matching floating dtypes"):
                 coupled_hmc.init(

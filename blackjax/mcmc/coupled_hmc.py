@@ -279,13 +279,23 @@ def _check_paired_positions(first_position, second_position) -> None:
             "paired positions must share one pytree structure, got "
             f"{first_structure} and {second_structure}"
         )
+    # Per-leaf shapes, not merely equal flattened size.  Two positions can share
+    # a tree structure and a total size while splitting it differently -- say
+    # {"a": (2,), "b": (3,)} against {"a": (3,), "b": (2,)} -- and then the one
+    # shared flat innovation is unravelled across different leaf boundaries in
+    # each marginal, so "the same z" silently means two different things.
+    first_leaves = jax.tree.leaves(first_position)
+    second_leaves = jax.tree.leaves(second_position)
+    for index, (first_leaf, second_leaf) in enumerate(zip(first_leaves, second_leaves)):
+        if jnp.shape(first_leaf) != jnp.shape(second_leaf):
+            raise ValueError(
+                "paired positions must have matching leaf shapes, leaf "
+                f"{index} has {jnp.shape(first_leaf)} and {jnp.shape(second_leaf)}"
+            )
     first_flat, _ = _flat_position(first_position)
     second_flat, _ = _flat_position(second_position)
-    if first_flat.shape != second_flat.shape:
-        raise ValueError(
-            "paired positions must have matching flat shapes, got "
-            f"{first_flat.shape} and {second_flat.shape}"
-        )
+    # No separate flat-shape check: equal tree structure with equal per-leaf
+    # shapes already implies equal flattened shape.
     if first_flat.dtype != second_flat.dtype:
         raise TypeError(
             "paired positions must have matching floating dtypes, got "
@@ -293,49 +303,83 @@ def _check_paired_positions(first_position, second_position) -> None:
         )
 
 
-def _check_innovations(standard_normal, uniform, flat_position) -> None:
-    """Require prescribed innovations to match the position shape and dtype exactly.
+def _declared_dtype(value):
+    """The dtype the value itself declares, or ``None`` if it declares none.
 
-    No conversion is performed, on purpose.  Casting a caller's uniform into
-    the position dtype can *narrow* it: a float64 value strictly below one can
-    become exactly ``1.0`` in float32, which then fails ``uniform <
-    p_accept`` even when ``p_accept`` is one, silently turning a certain
-    acceptance into a rejection.  Refusing the mismatch removes that failure
-    mode instead of hiding it.
+    A NumPy or JAX array carries a dtype and is therefore making a claim about
+    its precision.  A bare Python ``float`` or ``int`` carries none and is
+    weakly typed, exactly as elsewhere in JAX, so it is adopted into the
+    position dtype rather than refused.
     """
-    standard_normal = jnp.asarray(standard_normal)
-    uniform = jnp.asarray(uniform)
-    if standard_normal.shape != flat_position.shape:
+    dtype = getattr(value, "dtype", None)
+    return None if dtype is None else np.dtype(dtype)
+
+
+def _declared_shape(value):
+    """The shape the value declares, treating a bare Python scalar as ``()``."""
+    shape = getattr(value, "shape", None)
+    return () if shape is None else tuple(shape)
+
+
+def _check_innovations(standard_normal, uniform, flat_position) -> None:
+    """Require prescribed innovations to match the position shape and dtype.
+
+    The inputs are inspected **as given**, before any conversion.  That
+    ordering is the whole point: ``jnp.asarray`` narrows a float64 input to
+    float32 under JAX's default configuration, so converting first and
+    comparing dtypes afterwards compares two values that already agree and
+    checks nothing.
+
+    Narrowing an innovation is not cosmetic.  A float64 uniform strictly below
+    one becomes exactly ``1.0`` in float32, which then fails ``uniform <
+    p_accept`` even when ``p_accept`` is one, silently turning a certain
+    acceptance into a rejection; and a float64 uniform anywhere in range
+    becomes a *different* float32, so the Metropolis test would use a value the
+    caller never supplied.
+
+    An array that declares a dtype must therefore match the position exactly.
+    A bare Python scalar declares none, is weakly typed, and is adopted -- so
+    for those the domain is checked on the value **as it will be used**, after
+    conversion, which is where a bad Python float would otherwise slip past.
+    """
+    if _declared_shape(standard_normal) != flat_position.shape:
         raise ValueError(
             "`standard_normal` must be a flat vector matching the position, got "
-            f"{standard_normal.shape}, expected {flat_position.shape}"
+            f"{_declared_shape(standard_normal)}, expected {flat_position.shape}"
         )
-    if standard_normal.dtype != flat_position.dtype:
+    declared = _declared_dtype(standard_normal)
+    if declared is not None and declared != flat_position.dtype:
         raise TypeError(
             "`standard_normal` dtype must match the position dtype exactly "
-            f"(no narrowing), got {standard_normal.dtype}, expected {flat_position.dtype}"
+            f"(no narrowing), got {declared}, expected {flat_position.dtype}"
         )
-    if uniform.shape != ():
-        raise ValueError(f"`uniform` must be a scalar, got shape {uniform.shape}")
-    if uniform.dtype != flat_position.dtype:
+    if _declared_shape(uniform) != ():
+        raise ValueError(
+            f"`uniform` must be a scalar, got shape {_declared_shape(uniform)}"
+        )
+    declared = _declared_dtype(uniform)
+    if declared is not None and declared != flat_position.dtype:
         raise TypeError(
             "`uniform` dtype must match the position dtype exactly (no "
-            f"narrowing), got {uniform.dtype}, expected {flat_position.dtype}"
+            f"narrowing), got {declared}, expected {flat_position.dtype}"
         )
+
     # A uniform outside [0, 1) is refused, never clipped and never allowed to
     # masquerade as an ordinary Metropolis rejection.  The value can only be
     # read when it is concrete, so under `jit` or `vmap` this remains a
-    # documented precondition rather than a check.
+    # documented precondition rather than a check.  It is read after conversion
+    # to the position dtype, because that is the value the Metropolis test will
+    # actually compare.
     if not isinstance(uniform, jax.core.Tracer):
-        value = float(uniform)
+        value = float(jnp.asarray(uniform, flat_position.dtype))
         if not 0.0 <= value < 1.0:
             raise ValueError(
-                f"`uniform` must lie in [0, 1), got {value!r}. It is not "
-                "clipped, because a clipped uniform would silently become an "
-                "ordinary rejection."
+                f"`uniform` must lie in [0, 1) in the position dtype, got {value!r}. "
+                "It is not clipped, because a clipped uniform would silently "
+                "become an ordinary rejection."
             )
     if not isinstance(standard_normal, jax.core.Tracer) and not bool(
-        jnp.all(jnp.isfinite(standard_normal))
+        np.all(np.isfinite(np.asarray(standard_normal)))
     ):
         raise ValueError("`standard_normal` must be finite")
 
