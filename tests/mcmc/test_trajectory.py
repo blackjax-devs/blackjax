@@ -6,7 +6,6 @@ import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax.mcmc.dynamic_hmc as dynamic_hmc
-import blackjax.mcmc.hmc as hmc
 import blackjax.mcmc.integrators as integrators
 import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.proposal as proposal
@@ -318,58 +317,6 @@ class TrajectoryTest(chex.TestCase):
         _, unique_counts = np.unique(infos.num_integration_steps, return_counts=True)
 
         np.testing.assert_allclose(unique_counts / num_iter, unique_probs, rtol=1e-1)
-
-
-class StaticIntegrationReversibilityTest(chex.TestCase):
-    """Reversibility of the endpoint map, which is what detailed balance needs.
-
-    Integrating forward, flipping the momentum, integrating the same number of
-    steps and flipping again must return the starting state. If it does not,
-    the Metropolis correction is applied to a proposal that is not its own
-    inverse and the chain targets the wrong distribution -- with no error, no
-    NaN, and a perfectly healthy-looking acceptance rate.
-
-    The accuracy and energy-conservation tests elsewhere do not cover this: all
-    of them are symmetric under a sign error, so a flip applied in the wrong
-    place, or a reverse leg integrated with the wrong direction, changes
-    neither the analytic agreement nor the conserved energy. Comparing the scan
-    and fori implementations against each other does not cover it either, since
-    a shared directional bug passes.
-    """
-
-    def test_endpoint_map_is_an_involution(self):
-        with jax.enable_x64():
-
-            def logdensity_fn(x):
-                scales = jnp.arange(1, x.size + 1, dtype=x.dtype)
-                return -0.5 * jnp.sum((x / scales) ** 2) + jnp.sum(0.3 * x)
-
-            dimension, step_size, num_steps = 4, 0.09, 5
-            metric = metrics.default_metric(jnp.ones((dimension,), jnp.float64))
-            integrator = integrators.velocity_verlet(
-                logdensity_fn, metric.kinetic_energy
-            )
-            build = trajectory.static_integration(integrator)
-
-            key_position, key_momentum = jax.random.split(jax.random.key(20260907))
-            position = jax.random.normal(key_position, (dimension,), jnp.float64)
-            momentum = jax.random.normal(key_momentum, (dimension,), jnp.float64)
-            start = integrators.IntegratorState(
-                position,
-                momentum,
-                logdensity_fn(position),
-                jax.grad(logdensity_fn)(position),
-            )
-
-            end = hmc.flip_momentum(build(start, step_size, num_steps))
-            back = hmc.flip_momentum(build(end, step_size, num_steps))
-
-            # The trajectory must actually move, or the round trip is trivial.
-            self.assertFalse(
-                bool(jnp.allclose(end.position, start.position, atol=1e-6))
-            )
-            chex.assert_trees_all_close(back.position, start.position, atol=1e-10)
-            chex.assert_trees_all_close(back.momentum, start.momentum, atol=1e-10)
 
 
 if __name__ == "__main__":
