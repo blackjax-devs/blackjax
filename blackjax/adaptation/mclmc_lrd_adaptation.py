@@ -653,11 +653,9 @@ def mclmc_lrd_warmup(
             "mclmc_lrd_warmup: pilot diagnostics are invalid — the effective "
             f"sample size of the pilot draws is {n_eff}, so the rank-safety "
             "bound k_safe = floor(n_eff / 2) cannot be computed and low-rank "
-            "selection cannot proceed. This means the pilot draws contain "
-            "non-finite values; inspect the pilot chain rather than the rank "
-            "bound. Usual causes are a diverging pilot trajectory, a pilot "
-            "step size that is too large, or a log-density that returns NaN "
-            "somewhere in the pilot region."
+            "selection cannot proceed. Inspect the pilot chain, its step size "
+            "and the log-density over the pilot region rather than the rank "
+            "bound."
         )
 
     k_safe = int(n_eff / 2)  # floor(n_eff / 2)

@@ -685,11 +685,10 @@ def ess_tail(
 
     # A NaN draw makes the pooled quantiles NaN, every indicator comparison
     # False, and the resulting all-zero series degenerate — which would report
-    # 0 rather than "undefined".  Propagate instead.
-    ess_lower = _propagate_nan_components(ess_lower, x_split)
-    ess_upper = _propagate_nan_components(ess_upper, x_split)
-
-    return jnp.minimum(ess_lower, ess_upper)
+    # 0 rather than "undefined".  Guard once on the reduced value: the
+    # indicators themselves are never NaN, so the estimator cannot propagate
+    # this on its own the way it does for ess_bulk.
+    return _propagate_nan_components(jnp.minimum(ess_lower, ess_upper), x_split)
 
 
 def pareto_khat(x: ArrayLike, tail: str = "both", tail_frac: float = 0.10) -> Array:

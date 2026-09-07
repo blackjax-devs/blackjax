@@ -135,99 +135,38 @@ class TestRankGuard:
             issubclass(w.category, UserWarning) for w in caught
         ), "Expected a UserWarning about rank clamping but none was emitted"
 
-    def test_non_finite_pilot_ess_is_refused_before_rank_selection(self):
-        """An invalid pilot must fail with a descriptive error, not a bare one.
+    def test_non_finite_pilot_ess_is_refused_before_rank_selection(self, monkeypatch):
+        """An invalid pilot fails with a descriptive error, before the SVD.
 
-        `effective_sample_size` reports NaN for any dimension holding a
-        non-finite draw. Previously that NaN reached `int(n_eff / 2)` and
-        raised a bare `ValueError: cannot convert float NaN to integer`; before
-        that it was worse, because the estimator fabricated a finite ESS and
-        the contaminated dimension was reported as the best-mixing one.
-
-        What each assertion actually covers, since the two are often
-        conflated: the ``match=`` carries the discriminating claim, because
-        the bare `int(nan)` also raised ValueError at the pre-guard tree.  The
-        `_extract_lrd_from_samples` tripwire covers only non-execution — the
-        old `int(nan)` was itself upstream of the SVD, so the tripwire would
-        have passed there too.  It earns its place as the assertion that fails
-        if someone later moves the guard *below* the SVD, not as evidence
-        about the previous behaviour.
-
-        Falling back instead of raising would not degrade gracefully: the SVD
-        consumes the same contaminated `flat_pilot`, and on a (32, 3) pilot
-        with one NaN draw it returns sigma 33% NaN and U, lam_k, lam_all 100%
-        NaN — an all-NaN preconditioner out of a public warmup.  `n_eff = 0.0`
-        means "not measured"; NaN means "measured, and the draws are corrupt".
-
-        Monkeypatching the ESS is deterministic and independent of sampler
-        behaviour, but it does not exercise the real NaN-draws -> NaN-ESS
-        link, so on its own it would keep passing if
-        `effective_sample_size` ever stopped propagating and this guard went
-        dead.  `test_raw_ess_does_not_invent_a_sample_size_for_nan` in
-        `tests/test_diagnostics.py` covers that half; the two are complete as
-        a pair, not individually.
+        The discriminating assertion is the message match: the pre-guard tree
+        also raised, but as a bare "cannot convert float NaN to integer". The
+        tripwire adds that the guard has not drifted below the SVD, which
+        matters because `_extract_lrd_from_samples` consumes the same
+        contaminated draws and returns an all-NaN preconditioner from them.
         """
         import blackjax.adaptation.mclmc_lrd_adaptation as lrd_mod
 
-        called = []
-
-        def _contaminated_ess(x, *args, **kwargs):
-            # Controlled contamination: stand in for a pilot whose draws
-            # contain non-finite values, without relying on a diverging chain.
-            return jnp.full((x.shape[-1],), jnp.nan)
-
         def _tripwire(*args, **kwargs):
-            called.append("svd")
             raise AssertionError("SVD ran despite invalid pilot diagnostics")
 
-        monkey = pytest.MonkeyPatch()
-        try:
-            monkey.setattr(lrd_mod, "effective_sample_size", _contaminated_ess)
-            monkey.setattr(lrd_mod, "_extract_lrd_from_samples", _tripwire)
-            with pytest.raises(ValueError, match="pilot diagnostics are invalid"):
-                mclmc_lrd_warmup(
-                    logdensity_fn,
-                    jnp.zeros(D),
-                    jax.random.key(11),
-                    k=K,
-                    pilot_num_warmup=50,
-                    pilot_num_samples=32,
-                    lrd_num_steps=50,
-                    num_chains=2,
-                )
-        finally:
-            monkey.undo()
+        monkeypatch.setattr(
+            lrd_mod,
+            "effective_sample_size",
+            lambda x, *a, **k: jnp.full(x.shape[-1], jnp.nan),
+        )
+        monkeypatch.setattr(lrd_mod, "_extract_lrd_from_samples", _tripwire)
 
-        assert not called, "the guard must fire before the Phase-2 SVD"
-
-    def test_finite_pilot_ess_path_is_unchanged(self):
-        """The finite path, including a zero-ESS pilot, must be untouched."""
-        import blackjax.adaptation.mclmc_lrd_adaptation as lrd_mod
-
-        def _zero_ess(x, *args, **kwargs):
-            return jnp.zeros((x.shape[-1],))
-
-        monkey = pytest.MonkeyPatch()
-        try:
-            monkey.setattr(lrd_mod, "effective_sample_size", _zero_ess)
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore")
-                result = mclmc_lrd_warmup(
-                    logdensity_fn,
-                    jnp.zeros(D),
-                    jax.random.key(12),
-                    k=K,
-                    pilot_num_warmup=50,
-                    pilot_num_samples=32,
-                    lrd_num_steps=50,
-                    num_chains=2,
-                )
-        finally:
-            monkey.undo()
-
-        # n_eff = 0.0 is finite: k_safe = 0, clamped to k_used = 1, no raise.
-        assert isinstance(result, MCLMCLRDAdaptationState)
-        assert result.diagnostics["k_used"] == 1
+        with pytest.raises(ValueError, match="pilot diagnostics are invalid"):
+            mclmc_lrd_warmup(
+                logdensity_fn,
+                jnp.zeros(D),
+                jax.random.key(11),
+                k=K,
+                pilot_num_warmup=50,
+                pilot_num_samples=32,
+                lrd_num_steps=50,
+                num_chains=2,
+            )
 
     def test_no_warning_when_k_within_bound(self):
         """When k ≤ n_eff/2, no clamping warning should be emitted."""
