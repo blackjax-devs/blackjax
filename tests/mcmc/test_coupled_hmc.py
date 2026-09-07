@@ -531,6 +531,26 @@ class CoupledHMCContractTest(BlackJAXTest):
             # the states are seeded from the current date, so a fixed value is
             # not reliably on the side of the threshold it was picked for.
             _, probe_info = step(state, noise, jnp.asarray(0.0, jnp.float64))
+            # Recompute the unit from `whitened_difference` on the FIRST
+            # marginal's metric rather than reading it from the module's own
+            # info. Reading it back would make this comparison blind to the
+            # policy being wired to the wrong metric: the reported unit and the
+            # unit actually used would agree with each other while both being
+            # wrong.
+            if coupling == "reflection":
+                expected_direction = coupled_hmc.whitened_difference(
+                    state.first, state.second, metrics.default_metric(first_mass)
+                )
+                independent_unit = np.asarray(expected_direction)
+                scale = np.max(np.abs(independent_unit))
+                independent_unit = independent_unit / (scale if scale else 1.0)
+                norm = np.linalg.norm(independent_unit)
+                independent_unit = independent_unit / (norm if norm else 1.0)
+                chex.assert_trees_all_close(
+                    probe_info.reflection_unit,
+                    jnp.asarray(independent_unit, jnp.float64),
+                    atol=1e-12,
+                )
             second_noise = _reflect_with_numpy(
                 noise, probe_info.reflection_unit, coupling
             )

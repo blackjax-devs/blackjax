@@ -291,7 +291,11 @@ def _check_paired_positions(first_position, second_position) -> None:
     # each chain and so does not mean the same thing to both.
     first_leaves = jax.tree.leaves(first_position)
     second_leaves = jax.tree.leaves(second_position)
-    for index, (first_leaf, second_leaf) in enumerate(zip(first_leaves, second_leaves)):
+    # `strict=True` states the dependence on the structure check above, which is
+    # what guarantees the two leaf lists have equal length.
+    for index, (first_leaf, second_leaf) in enumerate(
+        zip(first_leaves, second_leaves, strict=True)
+    ):
         if jnp.shape(first_leaf) != jnp.shape(second_leaf):
             raise ValueError(
                 "paired positions must have matching leaf shapes, leaf "
@@ -316,14 +320,38 @@ def _declared_dtype(value):
     weakly typed, exactly as elsewhere in JAX, so it is adopted into the
     position dtype rather than refused.
     """
+    if getattr(value, "weak_type", False):
+        # JAX's own weak-typing flag. A weakly typed array is adopted into the
+        # surrounding dtype everywhere else in JAX, so refusing it here would
+        # contradict the convention this function claims to follow.
+        return None
     dtype = getattr(value, "dtype", None)
     return None if dtype is None else np.dtype(dtype)
 
 
 def _declared_shape(value):
-    """The shape the value declares, treating a bare Python scalar as ``()``."""
-    shape = getattr(value, "shape", None)
-    return () if shape is None else tuple(shape)
+    """The shape of the value as given, without converting it.
+
+    ``np.shape`` rather than a ``.shape`` attribute lookup: the attribute is
+    absent on a plain Python list, which would then be reported as a scalar,
+    slip past the shape check, and fail later inside ``float()`` with a message
+    that never names the argument.
+    """
+    return tuple(np.shape(value))
+
+
+def _metric_dimension(inverse_mass_matrix):
+    """The dimension the metric is defined on, from static shapes only.
+
+    Read from shapes rather than values, so it is safe on tracers. Returns
+    ``None`` when the shape is not one of the supported forms, leaving the
+    existing kind checks to speak.
+    """
+    if isinstance(inverse_mass_matrix, metrics.LowRankInverseMassMatrix):
+        shape = jnp.shape(inverse_mass_matrix.sigma)
+        return shape[0] if len(shape) == 1 else None
+    shape = jnp.shape(inverse_mass_matrix)
+    return shape[0] if len(shape) in (1, 2) else None
 
 
 def _check_innovations(standard_normal, uniform, flat_position) -> None:
@@ -585,7 +613,9 @@ def _build_prescribed_marginal(
     unchanged; the remainder of the transition is BlackJAX's own trajectory,
     endpoint flip, energy difference and Metropolis test.
     """
-    metric = metrics.default_metric(_check_metric_kind(inverse_mass_matrix))
+    inverse_mass_matrix = _check_metric_kind(inverse_mass_matrix)
+    metric = metrics.default_metric(inverse_mass_matrix)
+    metric_dimension = _metric_dimension(inverse_mass_matrix)
     symplectic_integrator = integrator(logdensity_fn, metric.kinetic_energy)
     generate = hmc.hmc_proposal(
         symplectic_integrator,
@@ -600,6 +630,16 @@ def _build_prescribed_marginal(
         state: hmc.HMCState, standard_normal: Array, uniform: Array
     ) -> tuple[hmc.HMCState, hmc.HMCInfo]:
         flat, unravel = _flat_position(state.position)
+        # A metric of the wrong dimension does not necessarily fail: a
+        # length-one diagonal broadcasts silently across any position, so one
+        # marginal could run isotropic while its partner runs anisotropic with
+        # nothing said. A mismatched-but-non-broadcasting length fails much
+        # later, in a message naming neither the metric nor which marginal.
+        if metric_dimension is not None and flat.shape[0] != metric_dimension:
+            raise ValueError(
+                "the inverse mass matrix must have the same dimension as the "
+                f"position, got {metric_dimension}, expected {flat.shape[0]}"
+            )
         _check_innovations(standard_normal, uniform, flat)
         momentum = metric.scale(
             state.position, unravel(standard_normal), inv=False, trans=False
