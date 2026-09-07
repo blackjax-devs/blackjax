@@ -128,6 +128,18 @@ def rhat(input_array: ArrayLike, chain_axis: int = 0, sample_axis: int = 1) -> A
        them, and compute split-R̂ again (**tail**).
     5. Return :math:`\\max(\\hat{R}_{\\text{bulk}}, \\hat{R}_{\\text{tail}})`.
 
+    .. warning::
+
+       ``NaN`` from this function does **not** uniquely mean "the draws
+       contained a missing observation".  The folded component subtracts the
+       pooled median, so when at least half of a component's pooled draws are
+       ``+inf`` (or ``-inf``) the median is infinite and the fold evaluates
+       ``inf - inf``, which is ``NaN``.  Such a component returns ``NaN`` from
+       :func:`rhat` while containing no ``NaN`` at all — and while
+       :func:`ess_bulk` and :func:`ess_tail` still return finite values for it.
+       Infinity handling is a separate open question from the missing-data
+       contract; this is documented, not yet decided.
+
     References
     ----------
     .. cite:p:`vehtari2021rank`
@@ -173,7 +185,10 @@ def effective_sample_size(
     -------
     NDArray of the resulting statistics (ess), with the chain and sample dimensions squeezed.
     Variables whose within-chain variance is numerically zero have an effective
-    sample size of zero.
+    sample size of zero.  Variables containing a ``NaN`` draw are undefined and
+    report ``NaN``; the reduction is per variable, so an independent finite
+    variable is unaffected.  Infinities are ordered values and are not treated
+    as missing.
 
     Notes
     -----
@@ -301,6 +316,17 @@ def effective_sample_size(
     ess = ess_raw / tau_hat
     ess = jnp.where(is_numerically_degenerate.squeeze(), 0.0, ess.squeeze())
 
+    # A NaN draw is a missing observation, not a value the estimator can use.
+    # Geyer's truncation above gates on partial sums being > 0, and every such
+    # comparison is False for NaN, so the truncation collapses and tau_hat
+    # falls back to its 1 / log10(MN) floor — manufacturing a large, entirely
+    # fictitious sample size.  Report the component as undefined instead.  The
+    # reduction runs over the chain and draw axes only, so a contaminated
+    # component never poisons an independent finite one, and ``.squeeze()``
+    # mirrors the squeeze applied to ``ess`` just above.
+    has_nan = jnp.any(jnp.isnan(input_array), axis=(chain_axis, sample_axis))
+    ess = jnp.where(jnp.squeeze(has_nan), jnp.nan, ess)
+
     return ess
 
 
@@ -388,7 +414,11 @@ def _average_ranks(x_flat: Array) -> Array:
     could be tied with anything, so a component containing one cannot be
     ranked: the whole component returns ``NaN``.  The reduction runs over
     axis 0 alone, so an invalid component never poisons an independent finite
-    sibling.  Infinities are ordered and are ranked normally.
+    sibling.
+
+    Infinities are ordered values and are ranked normally *by this function*.
+    That does not make the whole diagnostic pipeline infinity-safe: see the
+    note on folding in :func:`rhat`.
     """
     n = x_flat.shape[0]
     extra_shape = x_flat.shape[1:]
@@ -443,6 +473,12 @@ def _propagate_nan_components(value: Array, x: Array) -> Array:
     The reduction runs over the chain and draw axes only, so a component
     holding a missing observation never poisons an independent finite one.
 
+    ``x`` here is the *split* array, so with an odd number of draws the last
+    draw has already been trimmed by :func:`_split_chains` and a ``NaN``
+    sitting only in that draw is not seen.  The contract is therefore "a
+    ``NaN`` among the draws the diagnostic actually uses", which is narrower
+    than "a ``NaN`` anywhere in the input".
+
     The guard is needed because the estimators downstream do not propagate
     ``NaN`` on their own.  Geyer's initial-positive-sequence truncation in
     :func:`effective_sample_size` compares partial autocorrelation sums
@@ -452,7 +488,11 @@ def _propagate_nan_components(value: Array, x: Array) -> Array:
     entirely fictitious sample size instead of ``NaN``.
     """
     contaminated = jnp.any(jnp.isnan(x), axis=(0, 1))
-    return jnp.where(contaminated, jnp.nan, value)
+    # ``effective_sample_size`` ends with a bare ``.squeeze()``, which drops
+    # genuine size-1 event axes as well as the chain/draw axes.  Squeeze the
+    # mask the same way, or ``jnp.where`` broadcasts a (…, 1) mask against a
+    # squeezed value and silently changes both the shape and the numbers.
+    return jnp.where(jnp.squeeze(contaminated), jnp.nan, value)
 
 
 def _rank_normalize(x: Array) -> Array:
@@ -485,10 +525,13 @@ def _rank_normalize(x: Array) -> Array:
     ``scipy.stats.rankdata(method="average")``.  Ordinal ranking would give
     equal values different scores depending on where they sit in the pooled
     array, manufacturing chain/time structure out of ties — a constant input
-    would acquire a spurious spread, and repeated states (rejections,
-    indicator observables) would inflate R̂ and deflate bulk ESS.  A constant
-    input now maps to a constant field of zeros, leaving R̂ undefined (0/0)
-    and the ESS degeneracy guard free to report 0.
+    would acquire a spurious spread, and repeated states would inflate R̂ and
+    deflate bulk ESS.  The damage scales with how large and how scattered the
+    tie groups are: it is severe for indicator and discrete observables, and
+    mild for rejection repeats in a continuous chain, where the repeats form
+    short contiguous runs.  A constant input now maps to a constant field of
+    zeros, leaving R̂ undefined (0/0) and the ESS degeneracy guard free to
+    report 0.
     """
     nchains, nsamples = x.shape[0], x.shape[1]
     extra_shape = x.shape[2:]
@@ -545,7 +588,9 @@ def ess_bulk(
     x = _to_standard_axes(jnp.asarray(input_array), chain_axis, sample_axis)
     x_split = _split_chains(x)
     x_rn = _rank_normalize(x_split)
-    return _propagate_nan_components(effective_sample_size(x_rn), x_split)
+    # A contaminated component is already all-NaN after _rank_normalize, and
+    # effective_sample_size propagates that on its own.
+    return effective_sample_size(x_rn)
 
 
 def ess_tail(
@@ -563,8 +608,22 @@ def ess_tail(
     The tail quantiles are determined by ``prob``: the lower tail uses the
     ``(1 - prob) / 2`` quantile and the upper tail uses the
     ``(1 + prob) / 2`` quantile.  The default ``prob=0.90`` corresponds to
-    the 5th/95th percentiles, which matches ``az.ess(method="tail")`` in
-    ArviZ (the ArviZ default is also ``prob=(0.05, 0.95)``).
+    the 5th/95th percentiles, matching ArviZ's default ``prob=(0.05, 0.95)``.
+
+    .. warning::
+
+       The agreement with ``az.ess(method="tail")`` holds for **continuous**
+       draws only.  The upper-tail indicator here is
+       :math:`\\mathbf{1}(x \\ge q_{\\text{high}})`, whereas Vehtari et al.
+       and ArviZ use :math:`\\mathbf{1}(x \\le q)` for both tails.  On
+       continuous draws the two are exact complements and the ESS is
+       identical, but on tied draws they are not: for iid Bernoulli(0.1),
+       :math:`P(x \\ge q_{95})` is 0.097 rather than 0.05, and for a 5-level
+       grid it is 0.21.  This is a separate known defect in the tail
+       estimator's tie handling, tracked independently of the
+       rank-normalization fix; note that simply switching to ``<=`` does not
+       resolve it, since that indicator is identically 1 on such draws and
+       would be reported as degenerate.
 
     Parameters
     ----------

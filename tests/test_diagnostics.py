@@ -709,25 +709,121 @@ class RankNormalizeTiesTest(chex.TestCase):
             np.isnan(r) for r in results
         ), f"NaN handling depends on position in the pool: {results}"
 
-    def test_ess_bulk_would_otherwise_invent_a_sample_size(self):
-        # Guards the reason _propagate_nan_components exists: Geyer's
-        # truncation collapses on NaN and tau_hat falls back to its
-        # 1/log10(MN) floor, which manufactures a large finite ESS.
+    def test_raw_ess_does_not_invent_a_sample_size_for_nan(self):
+        # Geyer's truncation gates on partial sums being > 0; every such
+        # comparison is False for NaN, so without a guard the truncation
+        # collapses and tau_hat falls back to its 1/log10(MN) floor,
+        # manufacturing a large finite ESS (measured: 616.51 for this input).
         all_nan = jnp.full((4, 64), jnp.nan)
-        unguarded = float(diagnostics.effective_sample_size(all_nan))
-        assert np.isfinite(unguarded) and unguarded > 0, (
-            "premise no longer holds: effective_sample_size now propagates NaN"
-            f" on its own (got {unguarded}) — the boundary guard may be"
-            " redundant and should be re-reviewed"
-        )
+        assert np.isnan(float(diagnostics.effective_sample_size(all_nan)))
         assert np.isnan(float(diagnostics.ess_bulk(all_nan)))
 
+    # Axis conventions for a rank-3 (chain, sample, event) array, including
+    # genuinely negative arguments — normalising them inside the test would
+    # mean a negative-axis regression could never fail it.
+    _AXES_3D = ((0, 1), (1, 0), (-3, -2), (-2, -3), (0, -2), (-3, 1))
+
+    @parameterized.parameters(*_AXES_3D)
+    def test_raw_ess_propagates_nan_on_every_axis_convention(
+        self, chain_axis, sample_axis
+    ):
+        draws = np.asarray(self._contaminated(), dtype=np.float64)  # (4, 64, 2)
+        chain, sample = chain_axis % 3, sample_axis % 3
+        event = ({0, 1, 2} - {chain, sample}).pop()
+        perm = [0, 0, 0]
+        perm[chain], perm[sample], perm[event] = 0, 1, 2
+        moved = np.transpose(draws, perm)
+        # Pass the raw, possibly negative, axis arguments through.
+        result = np.asarray(
+            diagnostics.effective_sample_size(
+                jnp.asarray(moved), chain_axis, sample_axis
+            )
+        )
+        assert np.isnan(result[0]), f"contaminated component reported {result[0]}"
+        assert np.isfinite(result[1]), f"clean sibling poisoned: {result[1]}"
+
+    def test_raw_ess_nan_does_not_poison_a_finite_sibling(self):
+        draws = self._contaminated()
+        result = np.asarray(diagnostics.effective_sample_size(draws))
+        alone = np.asarray(diagnostics.effective_sample_size(draws[..., 1]))
+        assert np.isnan(result[0])
+        np.testing.assert_array_equal(result[1], alone)
+
+    def test_raw_ess_nan_propagation_survives_jit(self):
+        draws = self._contaminated()
+        eager = np.asarray(diagnostics.effective_sample_size(draws))
+        jitted = np.asarray(jax.jit(diagnostics.effective_sample_size)(draws))
+        np.testing.assert_array_equal(np.isnan(eager), np.isnan(jitted))
+        np.testing.assert_allclose(eager[1], jitted[1], rtol=1e-6)
+
+    @parameterized.parameters(
+        (4, 64),
+        (4, 64, 1),
+        (4, 64, 2),
+        (4, 64, 1, 2),
+        (4, 64, 3, 1),
+        (4, 64, 1, 1),
+        (1, 64, 3),
+        (4, 64, 2, 3),
+    )
+    def test_nan_guards_preserve_output_shape(self, *shape):
+        # The NaN guards must not change the shape contract.  A mask that
+        # keeps size-1 event axes broadcasts against the estimators' squeezed
+        # output: (4, 64, 3, 1) once produced ess_bulk of shape (3, 3).
+        draws = jax.random.normal(self.rng, shape=shape)
+        expected = diagnostics.effective_sample_size(draws).shape
+        assert diagnostics.ess_bulk(draws).shape == expected
+        assert diagnostics.ess_tail(draws).shape == expected
+        assert diagnostics.rhat(draws).shape == expected
+
     def test_infinities_are_ordered_and_still_ranked(self):
-        # Infinity policy is deliberately out of scope: +/-inf are ordered
-        # values and keep their ranks.
+        # +/-inf are ordered values and keep their ranks in _average_ranks.
         pooled = jnp.array([-jnp.inf, 0.0, 0.0, jnp.inf, 1.0])
         ranks = np.asarray(diagnostics._average_ranks(pooled))
         np.testing.assert_array_equal(ranks, np.array([1.0, 2.5, 2.5, 5.0, 4.0]))
+
+    def test_sparse_infinities_do_not_break_the_diagnostics(self):
+        # A handful of infinities leaves the pooled median finite, so the fold
+        # is well defined and all three helpers return finite values.
+        draws = np.asarray(
+            jax.random.normal(self.rng, shape=(4, 64)), dtype=np.float32
+        ).copy()
+        draws.reshape(-1)[:8] = np.inf
+        x = jnp.asarray(draws)
+        assert np.isfinite(float(diagnostics.rhat(x)))
+        assert np.isfinite(float(diagnostics.ess_bulk(x)))
+
+    def test_majority_infinity_makes_rhat_nan_without_any_nan_input(self):
+        # Pins a KNOWN limitation rather than a desired behaviour: rhat folds
+        # about the pooled median, so when >= half of a component's pooled
+        # draws are +inf the median is inf and the fold computes inf - inf.
+        # rhat is then NaN for input containing no NaN at all, while ess_bulk
+        # and ess_tail stay finite.  NaN from rhat therefore does not uniquely
+        # mean "missing observation".  Infinity handling is an open question.
+        draws = np.asarray(
+            jax.random.normal(self.rng, shape=(4, 64)), dtype=np.float32
+        ).copy()
+        draws[:, :40] = np.inf
+        x = jnp.asarray(draws)
+        assert not np.isnan(draws).any(), "fixture must contain no NaN"
+        assert np.isnan(float(diagnostics.rhat(x)))
+        assert np.isfinite(float(diagnostics.ess_bulk(x)))
+        assert np.isfinite(float(diagnostics.ess_tail(x)))
+
+    def test_nan_in_a_trimmed_odd_draw_is_not_seen(self):
+        # Pins the exact scope of the NaN contract.  With an odd number of
+        # draws _split_chains trims the last one, so a NaN sitting only there
+        # is never used and the diagnostics stay finite.  A NaN among the
+        # draws actually used propagates as normal.
+        base = np.asarray(
+            jax.random.normal(self.rng, shape=(4, 65)), dtype=np.float64
+        ).copy()
+        trimmed = base.copy()
+        trimmed[1, 64] = np.nan
+        assert np.isfinite(float(diagnostics.ess_bulk(jnp.asarray(trimmed))))
+        used = base.copy()
+        used[1, 3] = np.nan
+        assert np.isnan(float(diagnostics.ess_bulk(jnp.asarray(used))))
 
     def test_raw_effective_sample_size_semantics_are_unchanged(self):
         # The raw estimator is deliberately untouched by the NaN extension:
@@ -778,22 +874,42 @@ class RankNormalizeTiesTest(chex.TestCase):
         np.testing.assert_allclose(bj_rhat, az_rhat, rtol=1e-4)
         np.testing.assert_allclose(bj_ess, az_ess, rtol=1e-3)
 
-    def test_repeated_states_do_not_inflate_rhat(self):
-        # A Metropolis-like trace with an 80% rejection rate repeats states;
-        # those repeats are ties, not chain structure.  Built with NumPy so
-        # the trace itself owes nothing to the code under test.
-        rng = np.random.default_rng(20260906)
-        proposals = rng.normal(size=(4, 512))
-        accepted = rng.uniform(size=(4, 512)) < 0.2
+    def _rejection_trace(self, proposals, accepted):
+        """Carry the last accepted proposal forward — a Metropolis-like trace."""
         draws = np.empty_like(proposals)
         draws[:, 0] = proposals[:, 0]
         for t in range(1, proposals.shape[1]):
             draws[:, t] = np.where(accepted[:, t], proposals[:, t], draws[:, t - 1])
-        assert (draws[:, 1:] == draws[:, :-1]).mean() > 0.5, "trace has too few repeats"
+        return draws
+
+    def test_repeated_discrete_states_do_not_inflate_rhat(self):
+        # An 80%-rejection trace over a 5-level proposal: the repeats form
+        # large, scattered tie groups, which is where ordinal ranking does
+        # real damage.  Measured at 9e128d206 vs the fix: R-hat 1.1404 ->
+        # 1.0291 and bulk ESS 120.57 -> 237.55.
+        rng = np.random.default_rng(20260906)
+        accepted = rng.uniform(size=(4, 512)) < 0.2
+        draws = self._rejection_trace(
+            rng.integers(0, 5, size=(4, 512)).astype(float), accepted
+        )
+        assert (draws[:, 1:] == draws[:, :-1]).mean() > 0.5, "too few repeats"
 
         result = np.asarray(diagnostics.rhat(jnp.asarray(draws, dtype=jnp.float32)))
         expected = _reference_rhat(draws)
         np.testing.assert_allclose(result, expected, rtol=1e-4)
+        assert result < 1.05, f"tied repeats still inflate R-hat: {result}"
+
+    def test_continuous_rejection_trace_matches_the_oracle(self):
+        # The continuous-proposal counterpart.  This one is an oracle-parity
+        # check, NOT a regression guard: rejection repeats in a continuous
+        # chain form short contiguous runs, so ordinal ranking perturbs them
+        # by only ~2e-5 and this assertion passes at 9e128d206 too.
+        rng = np.random.default_rng(20260906)
+        draws = self._rejection_trace(
+            rng.normal(size=(4, 512)), rng.uniform(size=(4, 512)) < 0.2
+        )
+        result = np.asarray(diagnostics.rhat(jnp.asarray(draws, dtype=jnp.float32)))
+        np.testing.assert_allclose(result, _reference_rhat(draws), rtol=1e-4)
 
     def test_folded_tail_component_uses_average_ranks(self):
         # rhat folds about the median before rank-normalizing; the folded
@@ -859,9 +975,13 @@ class RankNormalizeTiesTest(chex.TestCase):
     def test_jit_compatible(self):
         draws = self._tied_draws()
         rank_normalize = self.variant(diagnostics._rank_normalize)
-        np.testing.assert_array_equal(
+        # ndtri is fused differently under XLA, so this is a tolerance
+        # comparison rather than bit equality; the ranks themselves are exact.
+        np.testing.assert_allclose(
             np.asarray(rank_normalize(draws)),
             np.asarray(diagnostics._rank_normalize(draws)),
+            rtol=1e-5,
+            atol=1e-6,
         )
 
     def test_vmap_over_events(self):
