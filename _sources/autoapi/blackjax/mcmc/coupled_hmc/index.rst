@@ -5,45 +5,28 @@ blackjax.mcmc.coupled_hmc
 
 .. autoapi-nested-parse::
 
-   Two HMC chains advanced from a shared source of randomness.
+   Two HMC marginals coupled only through their random inputs.
 
-   This module runs two ordinary HMC marginals side by side and couples them
-   *only through their random inputs*: the standard normal that becomes each
-   momentum, and the single uniform that drives each Metropolis test.
-
-   .. warning::
-
-       The scope of what is implemented here is deliberately narrow.  This
-       module provides a **coupling of the random inputs**.  It makes no claim
-       that the pair is invariant for the product of the two targets, that the
-       chains meet (exactly, maximally, or at all), that any estimator built
-       from the pair is unbiased, or that coupling improves sampling efficiency
-       in any sense.  None of those properties is implemented or tested.
+   The pair consists of ordinary HMC transitions with one shared normal
+   innovation and one shared uniform variate.  Each marginal keeps its own
+   transition, acceptance probability, decision, and cached state.  This module
+   does not claim product-target invariance, meeting, unbiased estimators, or an
+   efficiency improvement.
 
    The contract
    ------------
 
-   The one property this module does assert, and test, is:
-
-       Coupling changes only the *joint law* of the two marginals' random
-       inputs.  It never changes either marginal's transition function, its
-       Metropolis decision rule, or its cached log-density and gradient.
-
-   Concretely, given the same ``(state, standard_normal, uniform)`` triple, each
-   marginal here performs exactly the transition an uncoupled HMC marginal built
-   from the same target, metric, step size and integration count would perform,
-   and returns exactly the same state and info.  The two marginals share a
-   uniform but each compares it against **its own** acceptance probability, so a
-   shared uniform is emphatically *not* a shared decision.  Each marginal carries
-   its own ``logdensity``/``logdensity_grad`` cache.
+   Given the same ``(state, standard_normal, uniform)`` triple and per-marginal
+   parameters, each marginal performs the same transition as ordinary HMC.  A
+   shared uniform is compared against each marginal's own acceptance probability;
+   it is not a shared decision.
 
    Mathematical semantics
    ----------------------
 
-   Write :math:`M` for a marginal's mass matrix and :math:`A` for the momentum
-   square root BlackJAX uses, so that a momentum drawn as :math:`p = A z` with
-   :math:`z \sim N(0, I)` has covariance :math:`A A^\top = M`.  Both couplings
-   below draw a single :math:`z` and hand each marginal a transformed copy:
+   Writing :math:`p = A z` for the momentum and :math:`A A^\top = M` for its
+   covariance, both couplings draw one :math:`z \sim N(0,I)` and hand each
+   marginal a transformed copy:
 
    ``synchronous``
        Both marginals receive the same :math:`z`.
@@ -55,55 +38,33 @@ blackjax.mcmc.coupled_hmc
 
            z' = z - 2 e (e^\top z)
 
-       for a unit vector :math:`e`.  That map is an orthogonal reflection, so in
-       exact arithmetic it preserves :math:`N(0, I)` and the second marginal's
-       momentum law is unchanged **for any** unit :math:`e` that does not depend
-       on :math:`z`.  In floating point the normalisation of :math:`e` carries a
-       rounding error of a few units in the last place, so the preservation is
-       exact in the mathematics and accurate to that tolerance in the code.  That is the whole of what reflection buys here: marginal
-       correctness.  It is not a statement about contraction, meeting, or
-       coupling quality, and none is made.
+       For unit ``e`` independent of ``z``, this orthogonal reflection preserves
+       the normal law exactly in mathematics (floating-point normalization is
+       accurate to rounding).
 
-       ``e`` comes from ``direction_fn``, which is fixed when the kernel is
-       built and is applied to the *incoming* pair of states.  It is given the two
-       states and the first metric, and no innovations.  Note that this is a
-       statement about its arguments, not about ordering: the kernel draws ``z``
-       and the uniform first and only then runs the transition that evaluates
-       ``direction_fn``.  Supplying a ``direction_fn`` that is a pure function of
-       its arguments is the caller's part of the contract.  The default direction is the
+       ``e`` comes from ``direction_fn``, fixed at build time and applied to the
+       incoming states and first metric only; it receives no innovations and must
+       be pure in those arguments.  The default direction is the
        difference of the two positions whitened by the **first** marginal's
        metric, :math:`e \propto A^{-1}(x_1 - x_2)`.  That particular choice is a
-       heuristic: it is the direction along which, to leading order, the two
-       chains' displacements respond oppositely, since the velocity
-       :math:`\partial K / \partial p` equals :math:`A^{-\top} z` and hence
-       :math:`\langle x_1 - x_2, \partial K/\partial p\rangle = \langle
-       A^{-1}(x_1 - x_2), z\rangle`.  When the two marginals use *different*
-       metrics the default still uses the first marginal's metric only; it is
-       then a first-metric-based direction with no claimed property for the
-       pair.  A zero direction is the identity map, i.e. reflection degenerates
-       to synchronous coupling for that transition.
+       heuristic.  With different metrics it remains only a first-metric-based
+       direction with no claimed property for the pair, and a zero direction is
+       the identity.
 
    Relation to ``blackjax.hmc``
    ----------------------------
 
-   Each marginal applies the same *mathematical* Metropolis rule as ordinary
-   HMC: accept with probability :math:`\min(1, e^{\Delta})`.  It realises that
-   rule by comparing a supplied uniform against the acceptance probability,
-   whereas :func:`~blackjax.mcmc.proposal.static_binomial_sampling` realises it
-   with :func:`jax.random.bernoulli`.  The two agree as distributions and do
-   **not** agree draw-for-draw: feeding the same key to this kernel and to
-   ``blackjax.hmc`` will not reproduce the same accept/reject sequence, and no
-   such parity is claimed or tested.
+   Each marginal accepts with probability :math:`\min(1,e^{\Delta})`, comparing
+   the supplied uniform directly.  This is distributionally equivalent to
+   ordinary HMC's Bernoulli implementation, but not draw-for-draw equivalent.
 
    Usage
    -----
 
-   There is deliberately no top-level ``blackjax.coupled_hmc``; reach this
-   module at ``blackjax.mcmc.coupled_hmc``.  Every per-marginal parameter is
-   passed as an explicit ``(first, second)`` pair -- including when both
-   marginals share a value, which is written ``(value, value)``.  Nothing is
-   broadcast or inferred, because positions, metrics and step sizes may
-   themselves legitimately be tuples.
+   There is no top-level ``blackjax.coupled_hmc``; use
+   ``blackjax.mcmc.coupled_hmc``.  Every per-marginal argument is an explicit
+   ``(first, second)`` pair, including shared values as ``(value, value)``;
+   nothing is broadcast or inferred.
 
    .. code::
 
@@ -148,14 +109,10 @@ Module Contents
 
 
 
-   State of a pair of coupled HMC chains.
+   Pair of HMC states, each with its own caches.
 
-   The two marginals are held as two complete, independent
-   :class:`~blackjax.mcmc.hmc.HMCState` values, so each carries its own
-   position and its own cached ``logdensity``/``logdensity_grad``.  Keeping
-   them separate makes crossing the two caches an obvious error rather than
-   a silent one -- it does not make it impossible, so the test suite checks
-   it explicitly.
+   Each marginal retains its own position and cached
+   ``logdensity``/``logdensity_grad``.
 
    first
        State of the first marginal chain.
@@ -176,30 +133,23 @@ Module Contents
 
 
 
-   Additional information on a coupled HMC transition.
+   Per-marginal transition information and the shared random inputs.
 
-   Both marginals' complete :class:`~blackjax.mcmc.hmc.HMCInfo` objects are
-   preserved untouched, so every per-chain diagnostic (momentum, acceptance
-   rate, acceptance decision, divergence flag, energy, proposal, integration
-   count) stays separately visible.  The remaining three fields describe the
-   shared randomness itself.
+   ``first`` and ``second`` retain complete, separate HMC diagnostics.
 
    first
        Transition information for the first marginal.
    second
        Transition information for the second marginal.
    common_normal
-       The flat standard normal vector handed to the first marginal.  The
-       second marginal receives this vector under the coupling map, i.e.
-       unchanged for ``"synchronous"`` and reflected for ``"reflection"``.
+       Standard normal handed to the first marginal; the second receives its
+       synchronous or reflected image.
    reflection_unit
-       The unit vector used by the reflection, in the same flat coordinates
-       as ``common_normal``.  Exactly zero under synchronous coupling, and
-       exactly zero for a reflection whose direction was zero (both denote
-       the identity map).
+       Reflection direction in the same coordinates, or exactly zero for
+       synchronous/identity coupling.
    uniform
-       The single uniform variate shared by both Metropolis tests.  Each
-       marginal compares it against its own acceptance probability.
+       Uniform shared by both tests; each marginal compares it with its own
+       acceptance probability.
 
 
 
@@ -225,19 +175,11 @@ Module Contents
 
 .. py:function:: validate_marginal_inputs(inverse_mass_matrix, step_size, num_integration_steps)
 
-   Eagerly validate one marginal's concrete metric and integration settings.
+   Eagerly validate one marginal's concrete metric and settings.
 
-   These are host-side numerical checks on *concrete* values: they use NumPy
-   and cannot run on tracers, so they are performed once when an algorithm is
-   constructed and are deliberately absent from the traced kernel.
-
-   .. important::
-
-       Passing this check says the values supplied *now* are admissible.  It
-       says nothing about values that appear later inside a jitted or
-       vmapped computation, which are never seen by this function.  A caller
-       who builds a kernel with :func:`build_kernel` and feeds it traced
-       metrics is responsible for their admissibility.
+   Checks use NumPy on concrete host values and are absent from the traced
+   kernel.  Passing them validates only the values supplied now; callers using
+   traced values through :func:`build_kernel` retain responsibility for them.
 
    :raises TypeError, ValueError: If the metric is not a supported kind, is not finite, is not positive
        definite, or the integration settings are not positive and finite.
@@ -245,7 +187,7 @@ Module Contents
 
 .. py:function:: init(position: blackjax.base.Position, logdensity_fn: Sequence[Callable]) -> CoupledHMCState
 
-   Initialise a coupled pair.
+   Initialize a coupled pair from explicit position and log-density pairs.
 
    :param position: An explicit ``(first_position, second_position)`` pair.  The two
                     positions must share a pytree structure, leaf shapes and one floating
@@ -262,15 +204,11 @@ Module Contents
    built, and not at call time.  ``direction_fn`` is applied to the pair of
    incoming states and the first metric, and is supplied no innovations.
 
-   It is worth being exact about what that does and does not say, because an
-   earlier version of this docstring overstated it.  The kernel draws ``z``
-   and the uniform *before* running the transition in which ``direction_fn``
-   is evaluated, so the guarantee is **not** one of ordering.  It is that the
-   innovations are not among the arguments handed over.  A ``direction_fn``
-   that closes over innovations, or draws its own randomness, breaks the
-   reflection's marginal correctness and nothing here can detect it. Keeping
-   it a pure function of the arguments it is given is the caller's part of the
-   contract -- the same purity convention every BlackJAX kernel assumes.
+   The kernel draws ``z`` and the uniform before the transition evaluates
+   ``direction_fn``; the contract concerns its arguments, not ordering.  A
+   callable that closes over innovations or draws randomness breaks reflection
+   marginal correctness and cannot be detected here, so callers must keep it
+   pure in the supplied arguments.
 
    :param integrator: Symplectic integrator used by both marginals.
    :param divergence_threshold: Energy difference above which a marginal transition is flagged

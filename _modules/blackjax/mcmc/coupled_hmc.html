@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g112dae7b4" />
+  <meta name="docsearch:version" content="0.1.dev1+g74a2c1c90" />
   </head>
   
   
@@ -427,45 +427,28 @@
 <span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
 <span class="c1"># See the License for the specific language governing permissions and</span>
 <span class="c1"># limitations under the License.</span>
-<span class="sd">&quot;&quot;&quot;Two HMC chains advanced from a shared source of randomness.</span>
+<span class="sd">&quot;&quot;&quot;Two HMC marginals coupled only through their random inputs.</span>
 
-<span class="sd">This module runs two ordinary HMC marginals side by side and couples them</span>
-<span class="sd">*only through their random inputs*: the standard normal that becomes each</span>
-<span class="sd">momentum, and the single uniform that drives each Metropolis test.</span>
-
-<span class="sd">.. warning::</span>
-
-<span class="sd">    The scope of what is implemented here is deliberately narrow.  This</span>
-<span class="sd">    module provides a **coupling of the random inputs**.  It makes no claim</span>
-<span class="sd">    that the pair is invariant for the product of the two targets, that the</span>
-<span class="sd">    chains meet (exactly, maximally, or at all), that any estimator built</span>
-<span class="sd">    from the pair is unbiased, or that coupling improves sampling efficiency</span>
-<span class="sd">    in any sense.  None of those properties is implemented or tested.</span>
+<span class="sd">The pair consists of ordinary HMC transitions with one shared normal</span>
+<span class="sd">innovation and one shared uniform variate.  Each marginal keeps its own</span>
+<span class="sd">transition, acceptance probability, decision, and cached state.  This module</span>
+<span class="sd">does not claim product-target invariance, meeting, unbiased estimators, or an</span>
+<span class="sd">efficiency improvement.</span>
 
 <span class="sd">The contract</span>
 <span class="sd">------------</span>
 
-<span class="sd">The one property this module does assert, and test, is:</span>
-
-<span class="sd">    Coupling changes only the *joint law* of the two marginals&#39; random</span>
-<span class="sd">    inputs.  It never changes either marginal&#39;s transition function, its</span>
-<span class="sd">    Metropolis decision rule, or its cached log-density and gradient.</span>
-
-<span class="sd">Concretely, given the same ``(state, standard_normal, uniform)`` triple, each</span>
-<span class="sd">marginal here performs exactly the transition an uncoupled HMC marginal built</span>
-<span class="sd">from the same target, metric, step size and integration count would perform,</span>
-<span class="sd">and returns exactly the same state and info.  The two marginals share a</span>
-<span class="sd">uniform but each compares it against **its own** acceptance probability, so a</span>
-<span class="sd">shared uniform is emphatically *not* a shared decision.  Each marginal carries</span>
-<span class="sd">its own ``logdensity``/``logdensity_grad`` cache.</span>
+<span class="sd">Given the same ``(state, standard_normal, uniform)`` triple and per-marginal</span>
+<span class="sd">parameters, each marginal performs the same transition as ordinary HMC.  A</span>
+<span class="sd">shared uniform is compared against each marginal&#39;s own acceptance probability;</span>
+<span class="sd">it is not a shared decision.</span>
 
 <span class="sd">Mathematical semantics</span>
 <span class="sd">----------------------</span>
 
-<span class="sd">Write :math:`M` for a marginal&#39;s mass matrix and :math:`A` for the momentum</span>
-<span class="sd">square root BlackJAX uses, so that a momentum drawn as :math:`p = A z` with</span>
-<span class="sd">:math:`z \\sim N(0, I)` has covariance :math:`A A^\\top = M`.  Both couplings</span>
-<span class="sd">below draw a single :math:`z` and hand each marginal a transformed copy:</span>
+<span class="sd">Writing :math:`p = A z` for the momentum and :math:`A A^\\top = M` for its</span>
+<span class="sd">covariance, both couplings draw one :math:`z \\sim N(0,I)` and hand each</span>
+<span class="sd">marginal a transformed copy:</span>
 
 <span class="sd">``synchronous``</span>
 <span class="sd">    Both marginals receive the same :math:`z`.</span>
@@ -477,55 +460,33 @@
 
 <span class="sd">        z&#39; = z - 2 e (e^\\top z)</span>
 
-<span class="sd">    for a unit vector :math:`e`.  That map is an orthogonal reflection, so in</span>
-<span class="sd">    exact arithmetic it preserves :math:`N(0, I)` and the second marginal&#39;s</span>
-<span class="sd">    momentum law is unchanged **for any** unit :math:`e` that does not depend</span>
-<span class="sd">    on :math:`z`.  In floating point the normalisation of :math:`e` carries a</span>
-<span class="sd">    rounding error of a few units in the last place, so the preservation is</span>
-<span class="sd">    exact in the mathematics and accurate to that tolerance in the code.  That is the whole of what reflection buys here: marginal</span>
-<span class="sd">    correctness.  It is not a statement about contraction, meeting, or</span>
-<span class="sd">    coupling quality, and none is made.</span>
+<span class="sd">    For unit ``e`` independent of ``z``, this orthogonal reflection preserves</span>
+<span class="sd">    the normal law exactly in mathematics (floating-point normalization is</span>
+<span class="sd">    accurate to rounding).</span>
 
-<span class="sd">    ``e`` comes from ``direction_fn``, which is fixed when the kernel is</span>
-<span class="sd">    built and is applied to the *incoming* pair of states.  It is given the two</span>
-<span class="sd">    states and the first metric, and no innovations.  Note that this is a</span>
-<span class="sd">    statement about its arguments, not about ordering: the kernel draws ``z``</span>
-<span class="sd">    and the uniform first and only then runs the transition that evaluates</span>
-<span class="sd">    ``direction_fn``.  Supplying a ``direction_fn`` that is a pure function of</span>
-<span class="sd">    its arguments is the caller&#39;s part of the contract.  The default direction is the</span>
+<span class="sd">    ``e`` comes from ``direction_fn``, fixed at build time and applied to the</span>
+<span class="sd">    incoming states and first metric only; it receives no innovations and must</span>
+<span class="sd">    be pure in those arguments.  The default direction is the</span>
 <span class="sd">    difference of the two positions whitened by the **first** marginal&#39;s</span>
 <span class="sd">    metric, :math:`e \\propto A^{-1}(x_1 - x_2)`.  That particular choice is a</span>
-<span class="sd">    heuristic: it is the direction along which, to leading order, the two</span>
-<span class="sd">    chains&#39; displacements respond oppositely, since the velocity</span>
-<span class="sd">    :math:`\\partial K / \\partial p` equals :math:`A^{-\\top} z` and hence</span>
-<span class="sd">    :math:`\\langle x_1 - x_2, \\partial K/\\partial p\\rangle = \\langle</span>
-<span class="sd">    A^{-1}(x_1 - x_2), z\\rangle`.  When the two marginals use *different*</span>
-<span class="sd">    metrics the default still uses the first marginal&#39;s metric only; it is</span>
-<span class="sd">    then a first-metric-based direction with no claimed property for the</span>
-<span class="sd">    pair.  A zero direction is the identity map, i.e. reflection degenerates</span>
-<span class="sd">    to synchronous coupling for that transition.</span>
+<span class="sd">    heuristic.  With different metrics it remains only a first-metric-based</span>
+<span class="sd">    direction with no claimed property for the pair, and a zero direction is</span>
+<span class="sd">    the identity.</span>
 
 <span class="sd">Relation to ``blackjax.hmc``</span>
 <span class="sd">----------------------------</span>
 
-<span class="sd">Each marginal applies the same *mathematical* Metropolis rule as ordinary</span>
-<span class="sd">HMC: accept with probability :math:`\\min(1, e^{\\Delta})`.  It realises that</span>
-<span class="sd">rule by comparing a supplied uniform against the acceptance probability,</span>
-<span class="sd">whereas :func:`~blackjax.mcmc.proposal.static_binomial_sampling` realises it</span>
-<span class="sd">with :func:`jax.random.bernoulli`.  The two agree as distributions and do</span>
-<span class="sd">**not** agree draw-for-draw: feeding the same key to this kernel and to</span>
-<span class="sd">``blackjax.hmc`` will not reproduce the same accept/reject sequence, and no</span>
-<span class="sd">such parity is claimed or tested.</span>
+<span class="sd">Each marginal accepts with probability :math:`\\min(1,e^{\\Delta})`, comparing</span>
+<span class="sd">the supplied uniform directly.  This is distributionally equivalent to</span>
+<span class="sd">ordinary HMC&#39;s Bernoulli implementation, but not draw-for-draw equivalent.</span>
 
 <span class="sd">Usage</span>
 <span class="sd">-----</span>
 
-<span class="sd">There is deliberately no top-level ``blackjax.coupled_hmc``; reach this</span>
-<span class="sd">module at ``blackjax.mcmc.coupled_hmc``.  Every per-marginal parameter is</span>
-<span class="sd">passed as an explicit ``(first, second)`` pair -- including when both</span>
-<span class="sd">marginals share a value, which is written ``(value, value)``.  Nothing is</span>
-<span class="sd">broadcast or inferred, because positions, metrics and step sizes may</span>
-<span class="sd">themselves legitimately be tuples.</span>
+<span class="sd">There is no top-level ``blackjax.coupled_hmc``; use</span>
+<span class="sd">``blackjax.mcmc.coupled_hmc``.  Every per-marginal argument is an explicit</span>
+<span class="sd">``(first, second)`` pair, including shared values as ``(value, value)``;</span>
+<span class="sd">nothing is broadcast or inferred.</span>
 
 <span class="sd">.. code::</span>
 
@@ -568,14 +529,10 @@
 <div class="viewcode-block" id="CoupledHMCState">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCState">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CoupledHMCState</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;State of a pair of coupled HMC chains.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Pair of HMC states, each with its own caches.</span>
 
-<span class="sd">    The two marginals are held as two complete, independent</span>
-<span class="sd">    :class:`~blackjax.mcmc.hmc.HMCState` values, so each carries its own</span>
-<span class="sd">    position and its own cached ``logdensity``/``logdensity_grad``.  Keeping</span>
-<span class="sd">    them separate makes crossing the two caches an obvious error rather than</span>
-<span class="sd">    a silent one -- it does not make it impossible, so the test suite checks</span>
-<span class="sd">    it explicitly.</span>
+<span class="sd">    Each marginal retains its own position and cached</span>
+<span class="sd">    ``logdensity``/``logdensity_grad``.</span>
 
 <span class="sd">    first</span>
 <span class="sd">        State of the first marginal chain.</span>
@@ -598,30 +555,23 @@
 <div class="viewcode-block" id="CoupledHMCInfo">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.CoupledHMCInfo">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">CoupledHMCInfo</span><span class="p">(</span><span class="n">NamedTuple</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Additional information on a coupled HMC transition.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Per-marginal transition information and the shared random inputs.</span>
 
-<span class="sd">    Both marginals&#39; complete :class:`~blackjax.mcmc.hmc.HMCInfo` objects are</span>
-<span class="sd">    preserved untouched, so every per-chain diagnostic (momentum, acceptance</span>
-<span class="sd">    rate, acceptance decision, divergence flag, energy, proposal, integration</span>
-<span class="sd">    count) stays separately visible.  The remaining three fields describe the</span>
-<span class="sd">    shared randomness itself.</span>
+<span class="sd">    ``first`` and ``second`` retain complete, separate HMC diagnostics.</span>
 
 <span class="sd">    first</span>
 <span class="sd">        Transition information for the first marginal.</span>
 <span class="sd">    second</span>
 <span class="sd">        Transition information for the second marginal.</span>
 <span class="sd">    common_normal</span>
-<span class="sd">        The flat standard normal vector handed to the first marginal.  The</span>
-<span class="sd">        second marginal receives this vector under the coupling map, i.e.</span>
-<span class="sd">        unchanged for ``&quot;synchronous&quot;`` and reflected for ``&quot;reflection&quot;``.</span>
+<span class="sd">        Standard normal handed to the first marginal; the second receives its</span>
+<span class="sd">        synchronous or reflected image.</span>
 <span class="sd">    reflection_unit</span>
-<span class="sd">        The unit vector used by the reflection, in the same flat coordinates</span>
-<span class="sd">        as ``common_normal``.  Exactly zero under synchronous coupling, and</span>
-<span class="sd">        exactly zero for a reflection whose direction was zero (both denote</span>
-<span class="sd">        the identity map).</span>
+<span class="sd">        Reflection direction in the same coordinates, or exactly zero for</span>
+<span class="sd">        synchronous/identity coupling.</span>
 <span class="sd">    uniform</span>
-<span class="sd">        The single uniform variate shared by both Metropolis tests.  Each</span>
-<span class="sd">        marginal compares it against its own acceptance probability.</span>
+<span class="sd">        Uniform shared by both tests; each marginal compares it with its own</span>
+<span class="sd">        acceptance probability.</span>
 
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -656,14 +606,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_as_pair</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Require an explicit two-element pair.</span>
 
-<span class="sd">    Nothing is broadcast: a value shared by both marginals must be written</span>
-<span class="sd">    ``(value, value)``.  Positions, metrics and step sizes can themselves be</span>
-<span class="sd">    tuples, so inferring a pair from a bare value would be ambiguous exactly</span>
-<span class="sd">    where the mistake is most costly -- and the cost is silent.  A bare dense</span>
-<span class="sd">    ``(d, d)`` inverse mass matrix, if it were unpacked as a pair, would index</span>
-<span class="sd">    to its first two ROWS: the first marginal would run with row 0 as a</span>
-<span class="sd">    *diagonal* metric and the second with row 1.  The shapes are plausible, the</span>
-<span class="sd">    run completes, and the results are wrong with nothing raised anywhere.</span>
+<span class="sd">    Nothing is broadcast: shared values must be written ``(value, value)``.</span>
+<span class="sd">    Inferring pairs is ambiguous because positions and metrics can themselves</span>
+<span class="sd">    be tuples, so a bare value raises ``TypeError``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">value</span>
@@ -676,18 +621,11 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_metric_kind</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reject metric inputs this module does not support, without tracing.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Accept fixed Euclidean diagonal, dense, or low-rank metrics only.</span>
 
-<span class="sd">    Only the three array-shaped Euclidean metric payloads are accepted: a</span>
-<span class="sd">    one-dimensional diagonal, a two-dimensional dense matrix, and a</span>
-<span class="sd">    :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`.  A callable</span>
-<span class="sd">    (Riemannian) metric and a pre-built :class:`~blackjax.mcmc.metrics.Metric`</span>
-<span class="sd">    are refused rather than assumed valid: the coupling maps momenta through</span>
-<span class="sd">    ``Metric.scale``, and that this reproduces ``Metric.sample_momentum``</span>
-<span class="sd">    cannot be verified for an opaque or position-dependent metric.</span>
-
-<span class="sd">    This is a static type check only.  It performs no array conversion and is</span>
-<span class="sd">    safe on tracers; the numerical checks live in</span>
+<span class="sd">    Callable/Riemannian and pre-built ``Metric`` inputs are rejected because</span>
+<span class="sd">    their momentum scaling cannot be verified.  This static check does no</span>
+<span class="sd">    conversion or tracing; numerical checks are in</span>
 <span class="sd">    :func:`validate_marginal_inputs`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">metrics</span><span class="o">.</span><span class="n">LowRankInverseMassMatrix</span><span class="p">):</span>
@@ -708,23 +646,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_flat_position</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">ArrayLikeTree</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Array</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Flatten a position, requiring one nonempty real floating dtype.</span>
 
-<span class="sd">    The dtype compared here is the **effective** one -- what the leaf becomes</span>
-<span class="sd">    once JAX has it, via ``jnp.asarray`` -- not the dtype the caller&#39;s object</span>
-<span class="sd">    declares.  That is deliberate and is the opposite choice from</span>
-<span class="sd">    :func:`_check_innovations`, so the difference is worth stating.</span>
-
-<span class="sd">    A position is the thing everything else is measured against, and</span>
-<span class="sd">    ``ravel_pytree`` will convert its leaves regardless, so what matters is the</span>
-<span class="sd">    dtype they end up with.  Under JAX&#39;s default configuration a float64 leaf</span>
-<span class="sd">    becomes float32, and a position mixing float64 and float32 leaves is</span>
-<span class="sd">    therefore accepted: after conversion they genuinely agree, and there is no</span>
-<span class="sd">    later step at which they could disagree.</span>
-
-<span class="sd">    An innovation is a different case.  There the caller supplies a value that</span>
-<span class="sd">    is compared against an acceptance probability, so narrowing it silently</span>
-<span class="sd">    changes the number the Metropolis test uses.  :func:`_check_innovations`</span>
-<span class="sd">    consequently inspects the *declared* dtype and refuses a mismatch instead</span>
-<span class="sd">    of converting.  Neither function promises both notions at once.</span>
+<span class="sd">    This uses the effective dtype after ``jnp.asarray`` rather than the</span>
+<span class="sd">    declared dtype (the opposite of :func:`_check_innovations`, which protects</span>
+<span class="sd">    supplied Metropolis innovations from silent narrowing).</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">leaves</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">leaves</span><span class="p">(</span><span class="n">position</span><span class="p">)</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">leaves</span><span class="p">:</span>
@@ -743,10 +667,9 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_paired_positions</span><span class="p">(</span><span class="n">first_position</span><span class="p">,</span> <span class="n">second_position</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Require identical tree structure, leaf shapes and dtype across the pair.</span>
 
-<span class="sd">    The dtype compared is the **effective** one, see :func:`_flat_position`, so</span>
-<span class="sd">    this guarantee is configuration-relative: under JAX&#39;s default settings two</span>
-<span class="sd">    positions declaring float64 and float32 agree here, because both become</span>
-<span class="sd">    float32.  It is not a promise that their declared dtypes match.</span>
+<span class="sd">    Dtype means effective dtype after conversion, as in</span>
+<span class="sd">    :func:`_flat_position`; declared dtypes need not match under default JAX</span>
+<span class="sd">    narrowing.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">first_structure</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">first_position</span><span class="p">)</span>
     <span class="n">second_structure</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">structure</span><span class="p">(</span><span class="n">second_position</span><span class="p">)</span>
@@ -833,18 +756,11 @@
 <span class="k">def</span><span class="w"> </span><span class="nf">_check_innovations</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">,</span> <span class="n">uniform</span><span class="p">,</span> <span class="n">flat_position</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Require prescribed innovations to match the position shape and dtype.</span>
 
-<span class="sd">    The inputs are inspected **as given**, before any conversion.  That</span>
-<span class="sd">    ordering is the whole point: ``jnp.asarray`` narrows a float64 input to</span>
-<span class="sd">    float32 under JAX&#39;s default configuration, so converting first and</span>
-<span class="sd">    comparing dtypes afterwards compares two values that already agree and</span>
-<span class="sd">    checks nothing.</span>
-
-<span class="sd">    Narrowing is not cosmetic: a float64 uniform below one becomes exactly</span>
-<span class="sd">    ``1.0`` in float32 and then rejects a certain acceptance, and one in range</span>
-<span class="sd">    becomes a *different* float32, so the test would use a value the caller</span>
-<span class="sd">    never gave.  An array declaring a dtype must match the position exactly; a</span>
-<span class="sd">    bare Python scalar declares none, is weakly typed and is adopted, so its</span>
-<span class="sd">    domain is checked after conversion instead.</span>
+<span class="sd">    Inputs are inspected before conversion: strong array dtypes must match</span>
+<span class="sd">    exactly (no silent narrowing), while weak Python or JAX scalar arrays adopt</span>
+<span class="sd">    the position dtype.  For concrete values, shapes, finiteness, and the</span>
+<span class="sd">    uniform&#39;s ``[0, 1)`` domain are checked; traced values remain the kernel&#39;s</span>
+<span class="sd">    responsibility.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="n">_declared_shape</span><span class="p">(</span><span class="n">standard_normal</span><span class="p">)</span> <span class="o">!=</span> <span class="n">flat_position</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -890,13 +806,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_concrete_real_scalar</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a concrete real scalar, accepting the array forms BlackJAX produces.</span>
-
-<span class="sd">    Warmup returns a step size as a zero-dimensional JAX array, so requiring a</span>
-<span class="sd">    Python float would force callers to hand-cast routine BlackJAX output.</span>
-<span class="sd">    Booleans, complex values, non-scalars, non-finite values and tracers are</span>
-<span class="sd">    still refused.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a concrete finite real scalar; reject tracers and non-scalars.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be concrete here -- a traced value cannot be checked &quot;</span>
@@ -920,14 +830,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_concrete_integer_scalar</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a concrete integer scalar, accepting NumPy and JAX scalar forms.</span>
-
-<span class="sd">    A floating value is refused here rather than left to fail later. Nothing</span>
-<span class="sd">    truncates it -- ``fori_loop`` rejects a float bound -- but it does so with a</span>
-<span class="sd">    message about loop bound types that never names the parameter, and only</span>
-<span class="sd">    once a trajectory is being built. This is a diagnostic improvement, not a</span>
-<span class="sd">    correctness guard.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Read a concrete integer scalar without truncating floating inputs.&quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">jax</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">Tracer</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;`</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">` must be concrete here -- a traced value cannot be checked &quot;</span>
@@ -946,19 +849,11 @@
 <div class="viewcode-block" id="validate_marginal_inputs">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.validate_marginal_inputs">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">validate_marginal_inputs</span><span class="p">(</span><span class="n">inverse_mass_matrix</span><span class="p">,</span> <span class="n">step_size</span><span class="p">,</span> <span class="n">num_integration_steps</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eagerly validate one marginal&#39;s concrete metric and integration settings.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Eagerly validate one marginal&#39;s concrete metric and settings.</span>
 
-<span class="sd">    These are host-side numerical checks on *concrete* values: they use NumPy</span>
-<span class="sd">    and cannot run on tracers, so they are performed once when an algorithm is</span>
-<span class="sd">    constructed and are deliberately absent from the traced kernel.</span>
-
-<span class="sd">    .. important::</span>
-
-<span class="sd">        Passing this check says the values supplied *now* are admissible.  It</span>
-<span class="sd">        says nothing about values that appear later inside a jitted or</span>
-<span class="sd">        vmapped computation, which are never seen by this function.  A caller</span>
-<span class="sd">        who builds a kernel with :func:`build_kernel` and feeds it traced</span>
-<span class="sd">        metrics is responsible for their admissibility.</span>
+<span class="sd">    Checks use NumPy on concrete host values and are absent from the traced</span>
+<span class="sd">    kernel.  Passing them validates only the values supplied now; callers using</span>
+<span class="sd">    traced values through :func:`build_kernel` retain responsibility for them.</span>
 
 <span class="sd">    Raises</span>
 <span class="sd">    ------</span>
@@ -1135,22 +1030,10 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">_reflection_unit</span><span class="p">(</span><span class="n">direction</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalise a direction robustly; a zero direction gives the identity.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Normalize after scaling by the maximum absolute entry.</span>
 
-<span class="sd">    The direction is first divided by its largest absolute entry, so a</span>
-<span class="sd">    direction whose norm would overflow or underflow in the working dtype is</span>
-<span class="sd">    still normalised correctly.  This is load-bearing rather than defensive, and</span>
-<span class="sd">    the failure it prevents is silent.  At float32 -- BlackJAX&#39;s default -- a</span>
-<span class="sd">    difference like ``[1e20, -2e20, 5e19, 3e20]`` has a norm that overflows, so</span>
-<span class="sd">    a naive ``d / norm(d)`` yields exactly zero: the reflection would quietly</span>
-<span class="sd">    become the identity and the pair would report ``reflection_unit = 0`` while</span>
-<span class="sd">    running synchronous coupling under a reflection label.  The mirrored</span>
-<span class="sd">    underflow case yields infinities.  Both are reachable for a diverging chain.</span>
-<span class="sd">    A direction that is exactly zero is returned as zero, which makes the</span>
-<span class="sd">    reflection the identity map -- that case is intended and documented.</span>
-
-<span class="sd">    A direction containing a non-finite entry propagates as non-finite rather</span>
-<span class="sd">    than silently producing a plausible-looking unit vector.</span>
+<span class="sd">    A zero direction remains zero (identity reflection); non-finite entries</span>
+<span class="sd">    propagate rather than becoming a plausible unit vector.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">maximum</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">jnp</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">direction</span><span class="p">))</span>
     <span class="n">scaled</span> <span class="o">=</span> <span class="n">direction</span> <span class="o">/</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">maximum</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">maximum</span><span class="p">)</span>
@@ -1168,16 +1051,10 @@
     <span class="n">second_state</span><span class="p">:</span> <span class="n">hmc</span><span class="o">.</span><span class="n">HMCState</span><span class="p">,</span>
     <span class="n">first_metric</span><span class="p">:</span> <span class="n">metrics</span><span class="o">.</span><span class="n">Metric</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Default reflection direction: the position difference, whitened.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return the first-metric-whitened position difference in flat space.</span>
 
-<span class="sd">    Returns :math:`A^{-1}(x_1 - x_2)` in flat coordinates, where :math:`A` is</span>
-<span class="sd">    the first marginal&#39;s momentum square root.  ``Metric.scale`` with</span>
-<span class="sd">    ``inv=True, trans=True`` is exactly that inverse map.</span>
-
-<span class="sd">    Only the first marginal&#39;s metric is used.  When the two marginals carry</span>
-<span class="sd">    different metrics this is therefore a first-metric-based direction, and no</span>
-<span class="sd">    property is claimed for the pair.  A policy needing the second metric can</span>
-<span class="sd">    close over it.</span>
+<span class="sd">    Only the first metric is used; a policy needing the second can close over</span>
+<span class="sd">    it.  No property is claimed for pairs with different metrics.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">delta</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">tree</span><span class="o">.</span><span class="n">map</span><span class="p">(</span>
         <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">,</span> <span class="n">first_state</span><span class="o">.</span><span class="n">position</span><span class="p">,</span> <span class="n">second_state</span><span class="o">.</span><span class="n">position</span>
@@ -1196,19 +1073,11 @@
     <span class="n">coupling</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">direction_fn</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the coupled transition whose randomness is supplied, not drawn.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Build the deterministic core with prescribed ``(z, u)`` inputs.</span>
 
-<span class="sd">    Returns ``step(state, standard_normal, uniform) -&gt; (CoupledHMCState,</span>
-<span class="sd">    CoupledHMCInfo)``.  This is the deterministic core of the kernel: given</span>
-<span class="sd">    the pair of incoming states and one ``(z, u)`` pair it is an ordinary pure</span>
-<span class="sd">    function, which is what makes the coupling separately checkable without</span>
-<span class="sd">    also reasoning about key splitting.  It is internal to this module.</span>
-
-<span class="sd">    This function passes ``direction_fn`` nothing but the incoming states and</span>
-<span class="sd">    the first metric -- the innovations it receives are not among its</span>
-<span class="sd">    arguments, though they do already exist by the time it is called. Whether</span>
-<span class="sd">    the returned direction is genuinely free of them is a contract the caller</span>
-<span class="sd">    keeps, since a callable may close over anything.</span>
+<span class="sd">    It returns ``step(state, standard_normal, uniform)`` and passes</span>
+<span class="sd">    ``direction_fn`` only incoming states and the first metric.  Purity of that</span>
+<span class="sd">    callable remains the caller&#39;s responsibility.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">logdensity_fns</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">logdensity_fn</span><span class="p">,</span> <span class="s2">&quot;logdensity_fn&quot;</span><span class="p">)</span>
     <span class="n">step_sizes</span> <span class="o">=</span> <span class="n">_as_pair</span><span class="p">(</span><span class="n">step_size</span><span class="p">,</span> <span class="s2">&quot;step_size&quot;</span><span class="p">)</span>
@@ -1285,7 +1154,7 @@
 <div class="viewcode-block" id="init">
 <a class="viewcode-back" href="../../../autoapi/blackjax/mcmc/coupled_hmc/index.html#blackjax.mcmc.coupled_hmc.init">[docs]</a>
 <span class="k">def</span><span class="w"> </span><span class="nf">init</span><span class="p">(</span><span class="n">position</span><span class="p">:</span> <span class="n">Position</span><span class="p">,</span> <span class="n">logdensity_fn</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">CoupledHMCState</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialise a coupled pair.</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Initialize a coupled pair from explicit position and log-density pairs.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
@@ -1323,15 +1192,11 @@
 <span class="sd">    built, and not at call time.  ``direction_fn`` is applied to the pair of</span>
 <span class="sd">    incoming states and the first metric, and is supplied no innovations.</span>
 
-<span class="sd">    It is worth being exact about what that does and does not say, because an</span>
-<span class="sd">    earlier version of this docstring overstated it.  The kernel draws ``z``</span>
-<span class="sd">    and the uniform *before* running the transition in which ``direction_fn``</span>
-<span class="sd">    is evaluated, so the guarantee is **not** one of ordering.  It is that the</span>
-<span class="sd">    innovations are not among the arguments handed over.  A ``direction_fn``</span>
-<span class="sd">    that closes over innovations, or draws its own randomness, breaks the</span>
-<span class="sd">    reflection&#39;s marginal correctness and nothing here can detect it. Keeping</span>
-<span class="sd">    it a pure function of the arguments it is given is the caller&#39;s part of the</span>
-<span class="sd">    contract -- the same purity convention every BlackJAX kernel assumes.</span>
+<span class="sd">    The kernel draws ``z`` and the uniform before the transition evaluates</span>
+<span class="sd">    ``direction_fn``; the contract concerns its arguments, not ordering.  A</span>
+<span class="sd">    callable that closes over innovations or draws randomness breaks reflection</span>
+<span class="sd">    marginal correctness and cannot be detected here, so callers must keep it</span>
+<span class="sd">    pure in the supplied arguments.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>

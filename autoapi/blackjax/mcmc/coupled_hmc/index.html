@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.mcmc.composed.trajectory_length" href="../composed/trajectory_length/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g112dae7b4" />
+  <meta name="docsearch:version" content="0.1.dev1+g74a2c1c90" />
   </head>
   
   
@@ -452,95 +452,56 @@
                   
   <section id="module-blackjax.mcmc.coupled_hmc">
 <span id="blackjax-mcmc-coupled-hmc"></span><h1>blackjax.mcmc.coupled_hmc<a class="headerlink" href="#module-blackjax.mcmc.coupled_hmc" title="Link to this heading">#</a></h1>
-<p>Two HMC chains advanced from a shared source of randomness.</p>
-<p>This module runs two ordinary HMC marginals side by side and couples them
-<em>only through their random inputs</em>: the standard normal that becomes each
-momentum, and the single uniform that drives each Metropolis test.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>The scope of what is implemented here is deliberately narrow.  This
-module provides a <strong>coupling of the random inputs</strong>.  It makes no claim
-that the pair is invariant for the product of the two targets, that the
-chains meet (exactly, maximally, or at all), that any estimator built
-from the pair is unbiased, or that coupling improves sampling efficiency
-in any sense.  None of those properties is implemented or tested.</p>
-</div>
+<p>Two HMC marginals coupled only through their random inputs.</p>
+<p>The pair consists of ordinary HMC transitions with one shared normal
+innovation and one shared uniform variate.  Each marginal keeps its own
+transition, acceptance probability, decision, and cached state.  This module
+does not claim product-target invariance, meeting, unbiased estimators, or an
+efficiency improvement.</p>
 <section id="the-contract">
 <h2>The contract<a class="headerlink" href="#the-contract" title="Link to this heading">#</a></h2>
-<p>The one property this module does assert, and test, is:</p>
-<blockquote>
-<div><p>Coupling changes only the <em>joint law</em> of the two marginals’ random
-inputs.  It never changes either marginal’s transition function, its
-Metropolis decision rule, or its cached log-density and gradient.</p>
-</div></blockquote>
-<p>Concretely, given the same <code class="docutils literal notranslate"><span class="pre">(state,</span> <span class="pre">standard_normal,</span> <span class="pre">uniform)</span></code> triple, each
-marginal here performs exactly the transition an uncoupled HMC marginal built
-from the same target, metric, step size and integration count would perform,
-and returns exactly the same state and info.  The two marginals share a
-uniform but each compares it against <strong>its own</strong> acceptance probability, so a
-shared uniform is emphatically <em>not</em> a shared decision.  Each marginal carries
-its own <code class="docutils literal notranslate"><span class="pre">logdensity</span></code>/<code class="docutils literal notranslate"><span class="pre">logdensity_grad</span></code> cache.</p>
+<p>Given the same <code class="docutils literal notranslate"><span class="pre">(state,</span> <span class="pre">standard_normal,</span> <span class="pre">uniform)</span></code> triple and per-marginal
+parameters, each marginal performs the same transition as ordinary HMC.  A
+shared uniform is compared against each marginal’s own acceptance probability;
+it is not a shared decision.</p>
 </section>
 <section id="mathematical-semantics">
 <h2>Mathematical semantics<a class="headerlink" href="#mathematical-semantics" title="Link to this heading">#</a></h2>
-<p>Write <span class="math notranslate nohighlight">\(M\)</span> for a marginal’s mass matrix and <span class="math notranslate nohighlight">\(A\)</span> for the momentum
-square root BlackJAX uses, so that a momentum drawn as <span class="math notranslate nohighlight">\(p = A z\)</span> with
-<span class="math notranslate nohighlight">\(z \sim N(0, I)\)</span> has covariance <span class="math notranslate nohighlight">\(A A^\top = M\)</span>.  Both couplings
-below draw a single <span class="math notranslate nohighlight">\(z\)</span> and hand each marginal a transformed copy:</p>
+<p>Writing <span class="math notranslate nohighlight">\(p = A z\)</span> for the momentum and <span class="math notranslate nohighlight">\(A A^\top = M\)</span> for its
+covariance, both couplings draw one <span class="math notranslate nohighlight">\(z \sim N(0,I)\)</span> and hand each
+marginal a transformed copy:</p>
 <dl>
 <dt><code class="docutils literal notranslate"><span class="pre">synchronous</span></code></dt><dd><p>Both marginals receive the same <span class="math notranslate nohighlight">\(z\)</span>.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">reflection</span></code></dt><dd><p>The first marginal receives <span class="math notranslate nohighlight">\(z\)</span>; the second receives</p>
 <div class="math notranslate nohighlight">
 \[z' = z - 2 e (e^\top z)\]</div>
-<p>for a unit vector <span class="math notranslate nohighlight">\(e\)</span>.  That map is an orthogonal reflection, so in
-exact arithmetic it preserves <span class="math notranslate nohighlight">\(N(0, I)\)</span> and the second marginal’s
-momentum law is unchanged <strong>for any</strong> unit <span class="math notranslate nohighlight">\(e\)</span> that does not depend
-on <span class="math notranslate nohighlight">\(z\)</span>.  In floating point the normalisation of <span class="math notranslate nohighlight">\(e\)</span> carries a
-rounding error of a few units in the last place, so the preservation is
-exact in the mathematics and accurate to that tolerance in the code.  That is the whole of what reflection buys here: marginal
-correctness.  It is not a statement about contraction, meeting, or
-coupling quality, and none is made.</p>
-<p><code class="docutils literal notranslate"><span class="pre">e</span></code> comes from <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>, which is fixed when the kernel is
-built and is applied to the <em>incoming</em> pair of states.  It is given the two
-states and the first metric, and no innovations.  Note that this is a
-statement about its arguments, not about ordering: the kernel draws <code class="docutils literal notranslate"><span class="pre">z</span></code>
-and the uniform first and only then runs the transition that evaluates
-<code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>.  Supplying a <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code> that is a pure function of
-its arguments is the caller’s part of the contract.  The default direction is the
+<p>For unit <code class="docutils literal notranslate"><span class="pre">e</span></code> independent of <code class="docutils literal notranslate"><span class="pre">z</span></code>, this orthogonal reflection preserves
+the normal law exactly in mathematics (floating-point normalization is
+accurate to rounding).</p>
+<p><code class="docutils literal notranslate"><span class="pre">e</span></code> comes from <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>, fixed at build time and applied to the
+incoming states and first metric only; it receives no innovations and must
+be pure in those arguments.  The default direction is the
 difference of the two positions whitened by the <strong>first</strong> marginal’s
 metric, <span class="math notranslate nohighlight">\(e \propto A^{-1}(x_1 - x_2)\)</span>.  That particular choice is a
-heuristic: it is the direction along which, to leading order, the two
-chains’ displacements respond oppositely, since the velocity
-<span class="math notranslate nohighlight">\(\partial K / \partial p\)</span> equals <span class="math notranslate nohighlight">\(A^{-\top} z\)</span> and hence
-<span class="math notranslate nohighlight">\(\langle x_1 - x_2, \partial K/\partial p\rangle = \langle
-A^{-1}(x_1 - x_2), z\rangle\)</span>.  When the two marginals use <em>different</em>
-metrics the default still uses the first marginal’s metric only; it is
-then a first-metric-based direction with no claimed property for the
-pair.  A zero direction is the identity map, i.e. reflection degenerates
-to synchronous coupling for that transition.</p>
+heuristic.  With different metrics it remains only a first-metric-based
+direction with no claimed property for the pair, and a zero direction is
+the identity.</p>
 </dd>
 </dl>
 </section>
 <section id="relation-to-blackjax-hmc">
 <h2>Relation to <code class="docutils literal notranslate"><span class="pre">blackjax.hmc</span></code><a class="headerlink" href="#relation-to-blackjax-hmc" title="Link to this heading">#</a></h2>
-<p>Each marginal applies the same <em>mathematical</em> Metropolis rule as ordinary
-HMC: accept with probability <span class="math notranslate nohighlight">\(\min(1, e^{\Delta})\)</span>.  It realises that
-rule by comparing a supplied uniform against the acceptance probability,
-whereas <a class="reference internal" href="../proposal/index.html#blackjax.mcmc.proposal.static_binomial_sampling" title="blackjax.mcmc.proposal.static_binomial_sampling"><code class="xref py py-func docutils literal notranslate"><span class="pre">static_binomial_sampling()</span></code></a> realises it
-with <a class="reference external" href="https://docs.jax.dev/en/latest/_autosummary/jax.random.bernoulli.html#jax.random.bernoulli" title="(in JAX)"><code class="xref py py-func docutils literal notranslate"><span class="pre">jax.random.bernoulli()</span></code></a>.  The two agree as distributions and do
-<strong>not</strong> agree draw-for-draw: feeding the same key to this kernel and to
-<code class="docutils literal notranslate"><span class="pre">blackjax.hmc</span></code> will not reproduce the same accept/reject sequence, and no
-such parity is claimed or tested.</p>
+<p>Each marginal accepts with probability <span class="math notranslate nohighlight">\(\min(1,e^{\Delta})\)</span>, comparing
+the supplied uniform directly.  This is distributionally equivalent to
+ordinary HMC’s Bernoulli implementation, but not draw-for-draw equivalent.</p>
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">#</a></h2>
-<p>There is deliberately no top-level <code class="docutils literal notranslate"><span class="pre">blackjax.coupled_hmc</span></code>; reach this
-module at <code class="docutils literal notranslate"><span class="pre">blackjax.mcmc.coupled_hmc</span></code>.  Every per-marginal parameter is
-passed as an explicit <code class="docutils literal notranslate"><span class="pre">(first,</span> <span class="pre">second)</span></code> pair – including when both
-marginals share a value, which is written <code class="docutils literal notranslate"><span class="pre">(value,</span> <span class="pre">value)</span></code>.  Nothing is
-broadcast or inferred, because positions, metrics and step sizes may
-themselves legitimately be tuples.</p>
+<p>There is no top-level <code class="docutils literal notranslate"><span class="pre">blackjax.coupled_hmc</span></code>; use
+<code class="docutils literal notranslate"><span class="pre">blackjax.mcmc.coupled_hmc</span></code>.  Every per-marginal argument is an explicit
+<code class="docutils literal notranslate"><span class="pre">(first,</span> <span class="pre">second)</span></code> pair, including shared values as <code class="docutils literal notranslate"><span class="pre">(value,</span> <span class="pre">value)</span></code>;
+nothing is broadcast or inferred.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">blackjax.mcmc.coupled_hmc</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">coupled_hmc</span>
 
 <span class="n">algorithm</span> <span class="o">=</span> <span class="n">coupled_hmc</span><span class="o">.</span><span class="n">as_top_level_api</span><span class="p">(</span>
@@ -560,10 +521,10 @@ themselves legitimately be tuples.</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState" title="blackjax.mcmc.coupled_hmc.CoupledHMCState"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CoupledHMCState</span></code></a></p></td>
-<td><p>State of a pair of coupled HMC chains.</p></td>
+<td><p>Pair of HMC states, each with its own caches.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo" title="blackjax.mcmc.coupled_hmc.CoupledHMCInfo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">CoupledHMCInfo</span></code></a></p></td>
-<td><p>Additional information on a coupled HMC transition.</p></td>
+<td><p>Per-marginal transition information and the shared random inputs.</p></td>
 </tr>
 </tbody>
 </table>
@@ -574,10 +535,10 @@ themselves legitimately be tuples.</p>
 <div class="pst-scrollable-table-container"><table class="autosummary longtable table">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.validate_marginal_inputs" title="blackjax.mcmc.coupled_hmc.validate_marginal_inputs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_marginal_inputs</span></code></a>(inverse_mass_matrix, ...)</p></td>
-<td><p>Eagerly validate one marginal's concrete metric and integration settings.</p></td>
+<td><p>Eagerly validate one marginal's concrete metric and settings.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.init" title="blackjax.mcmc.coupled_hmc.init"><code class="xref py py-obj docutils literal notranslate"><span class="pre">init</span></code></a>(→ CoupledHMCState)</p></td>
-<td><p>Initialise a coupled pair.</p></td>
+<td><p>Initialize a coupled pair from explicit position and log-density pairs.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.build_kernel" title="blackjax.mcmc.coupled_hmc.build_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_kernel</span></code></a>([integrator, divergence_threshold, ...])</p></td>
 <td><p>Build a coupled HMC kernel.</p></td>
@@ -594,13 +555,9 @@ themselves legitimately be tuples.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCState">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CoupledHMCState</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCState"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState" title="Link to this definition">#</a></dt>
-<dd><p>State of a pair of coupled HMC chains.</p>
-<p>The two marginals are held as two complete, independent
-<a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCState" title="blackjax.mcmc.hmc.HMCState"><code class="xref py py-class docutils literal notranslate"><span class="pre">HMCState</span></code></a> values, so each carries its own
-position and its own cached <code class="docutils literal notranslate"><span class="pre">logdensity</span></code>/<code class="docutils literal notranslate"><span class="pre">logdensity_grad</span></code>.  Keeping
-them separate makes crossing the two caches an obvious error rather than
-a silent one – it does not make it impossible, so the test suite checks
-it explicitly.</p>
+<dd><p>Pair of HMC states, each with its own caches.</p>
+<p>Each marginal retains its own position and cached
+<code class="docutils literal notranslate"><span class="pre">logdensity</span></code>/<code class="docutils literal notranslate"><span class="pre">logdensity_grad</span></code>.</p>
 <dl class="simple">
 <dt>first</dt><dd><p>State of the first marginal chain.</p>
 </dd>
@@ -622,28 +579,21 @@ it explicitly.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.CoupledHMCInfo">
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">CoupledHMCInfo</span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#CoupledHMCInfo"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.CoupledHMCInfo" title="Link to this definition">#</a></dt>
-<dd><p>Additional information on a coupled HMC transition.</p>
-<p>Both marginals’ complete <a class="reference internal" href="../hmc/index.html#blackjax.mcmc.hmc.HMCInfo" title="blackjax.mcmc.hmc.HMCInfo"><code class="xref py py-class docutils literal notranslate"><span class="pre">HMCInfo</span></code></a> objects are
-preserved untouched, so every per-chain diagnostic (momentum, acceptance
-rate, acceptance decision, divergence flag, energy, proposal, integration
-count) stays separately visible.  The remaining three fields describe the
-shared randomness itself.</p>
+<dd><p>Per-marginal transition information and the shared random inputs.</p>
+<p><code class="docutils literal notranslate"><span class="pre">first</span></code> and <code class="docutils literal notranslate"><span class="pre">second</span></code> retain complete, separate HMC diagnostics.</p>
 <dl class="simple">
 <dt>first</dt><dd><p>Transition information for the first marginal.</p>
 </dd>
 <dt>second</dt><dd><p>Transition information for the second marginal.</p>
 </dd>
-<dt>common_normal</dt><dd><p>The flat standard normal vector handed to the first marginal.  The
-second marginal receives this vector under the coupling map, i.e.
-unchanged for <code class="docutils literal notranslate"><span class="pre">&quot;synchronous&quot;</span></code> and reflected for <code class="docutils literal notranslate"><span class="pre">&quot;reflection&quot;</span></code>.</p>
+<dt>common_normal</dt><dd><p>Standard normal handed to the first marginal; the second receives its
+synchronous or reflected image.</p>
 </dd>
-<dt>reflection_unit</dt><dd><p>The unit vector used by the reflection, in the same flat coordinates
-as <code class="docutils literal notranslate"><span class="pre">common_normal</span></code>.  Exactly zero under synchronous coupling, and
-exactly zero for a reflection whose direction was zero (both denote
-the identity map).</p>
+<dt>reflection_unit</dt><dd><p>Reflection direction in the same coordinates, or exactly zero for
+synchronous/identity coupling.</p>
 </dd>
-<dt>uniform</dt><dd><p>The single uniform variate shared by both Metropolis tests.  Each
-marginal compares it against its own acceptance probability.</p>
+<dt>uniform</dt><dd><p>Uniform shared by both tests; each marginal compares it with its own
+acceptance probability.</p>
 </dd>
 </dl>
 <dl class="py attribute">
@@ -676,18 +626,10 @@ marginal compares it against its own acceptance probability.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.validate_marginal_inputs">
 <span class="sig-name descname"><span class="pre">validate_marginal_inputs</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">inverse_mass_matrix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_integration_steps</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#validate_marginal_inputs"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.validate_marginal_inputs" title="Link to this definition">#</a></dt>
-<dd><p>Eagerly validate one marginal’s concrete metric and integration settings.</p>
-<p>These are host-side numerical checks on <em>concrete</em> values: they use NumPy
-and cannot run on tracers, so they are performed once when an algorithm is
-constructed and are deliberately absent from the traced kernel.</p>
-<div class="admonition important">
-<p class="admonition-title">Important</p>
-<p>Passing this check says the values supplied <em>now</em> are admissible.  It
-says nothing about values that appear later inside a jitted or
-vmapped computation, which are never seen by this function.  A caller
-who builds a kernel with <a class="reference internal" href="#blackjax.mcmc.coupled_hmc.build_kernel" title="blackjax.mcmc.coupled_hmc.build_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_kernel()</span></code></a> and feeds it traced
-metrics is responsible for their admissibility.</p>
-</div>
+<dd><p>Eagerly validate one marginal’s concrete metric and settings.</p>
+<p>Checks use NumPy on concrete host values and are absent from the traced
+kernel.  Passing them validates only the values supplied now; callers using
+traced values through <a class="reference internal" href="#blackjax.mcmc.coupled_hmc.build_kernel" title="blackjax.mcmc.coupled_hmc.build_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_kernel()</span></code></a> retain responsibility for them.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Raises<span class="colon">:</span></dt>
 <dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#TypeError" title="(in Python v3.14)"><strong>TypeError</strong></a><strong>, </strong><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.14)"><strong>ValueError</strong></a> – If the metric is not a supported kind, is not finite, is not positive
@@ -699,7 +641,7 @@ definite, or the integration settings are not positive and finite.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="blackjax.mcmc.coupled_hmc.init">
 <span class="sig-name descname"><span class="pre">init</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">position</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">blackjax.base.Position</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">logdensity_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#blackjax.mcmc.coupled_hmc.CoupledHMCState" title="blackjax.mcmc.coupled_hmc.CoupledHMCState"><span class="pre">CoupledHMCState</span></a></span></span><a class="reference internal" href="../../../../_modules/blackjax/mcmc/coupled_hmc.html#init"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blackjax.mcmc.coupled_hmc.init" title="Link to this definition">#</a></dt>
-<dd><p>Initialise a coupled pair.</p>
+<dd><p>Initialize a coupled pair from explicit position and log-density pairs.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -720,15 +662,11 @@ two may target different distributions.</p></li>
 <p><code class="docutils literal notranslate"><span class="pre">coupling</span></code> and <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code> are fixed here, when the kernel is
 built, and not at call time.  <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code> is applied to the pair of
 incoming states and the first metric, and is supplied no innovations.</p>
-<p>It is worth being exact about what that does and does not say, because an
-earlier version of this docstring overstated it.  The kernel draws <code class="docutils literal notranslate"><span class="pre">z</span></code>
-and the uniform <em>before</em> running the transition in which <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>
-is evaluated, so the guarantee is <strong>not</strong> one of ordering.  It is that the
-innovations are not among the arguments handed over.  A <code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>
-that closes over innovations, or draws its own randomness, breaks the
-reflection’s marginal correctness and nothing here can detect it. Keeping
-it a pure function of the arguments it is given is the caller’s part of the
-contract – the same purity convention every BlackJAX kernel assumes.</p>
+<p>The kernel draws <code class="docutils literal notranslate"><span class="pre">z</span></code> and the uniform before the transition evaluates
+<code class="docutils literal notranslate"><span class="pre">direction_fn</span></code>; the contract concerns its arguments, not ordering.  A
+callable that closes over innovations or draws randomness breaks reflection
+marginal correctness and cannot be detected here, so callers must keep it
+pure in the supplied arguments.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
