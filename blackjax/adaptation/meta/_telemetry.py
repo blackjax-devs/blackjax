@@ -13,40 +13,30 @@
 # limitations under the License.
 """Opt-in observation of metric-publication decisions at slow-window boundaries.
 
-The meta-adaptation controller's ``final()`` computes candidate metrics, the
-escalation predicates and the number of draws it consumed, then resets its
-buffers and returns only the new state.  Everything except the deployed metric
-is discarded, so a caller watching the adaptation info stream sees the
-*outcome* of a publication decision but none of its *inputs*.
-
-This module adds a read-only record of those inputs.  It changes no threshold,
-no predicate, no ordering and no published metric: with telemetry disabled
-nothing here is constructed or traced.
+The controller's ``final()`` computes candidates, predicates, and draw counts,
+then resets its buffers; the adaptation info stream otherwise exposes only the
+deployed metric.  This module records those inputs read-only.  It changes no
+threshold, predicate, ordering, or published metric, and telemetry-disabled
+runs construct or trace nothing here.
 
 Two masks, and what they do *not* mean
 --------------------------------------
-The controller's escalation decision is a JAX expression such as
-``~has_escalated & r2_gate & s_gap_gate & deadline_ok``.  ``&`` is eager:
-**every** predicate is computed on **every** window, including after escalation
-and including when a sibling conjunct is false.  There is no short-circuit, and
-a failed conjunct does not prevent its siblings from being evaluated.  Some of
-those same predicates additionally govern the multi-chain deferral latch, which
-is *not* gated on ``has_escalated`` and can therefore fire post-escalation.
+The escalation expression (for example,
+``~has_escalated & r2_gate & s_gap_gate & deadline_ok``) uses eager ``&``:
+every predicate is computed every window, including after escalation and when
+siblings are false.  Some also govern the multi-chain deferral latch, which is
+not gated on ``has_escalated``.
 
-Reporting "was this computed?" would thus be uninformative — the answer is
-always yes.  The two masks are defined instead as:
+Thus the masks report predicate truth and applicability, not computation:
 
 ``gate_predicate_true``
-    Raw truth of each named predicate this window, exactly as the controller
-    computed it.  Always populated, including after escalation, so that the
-    deferral latch and the branch decisions remain reconstructable.
+    Raw truth of each named predicate this window, always populated so branch
+    decisions and the deferral latch remain reconstructable.
 
 ``escalation_gate_applicable``
-    Whether the predicate bears on a **new** escalation decision this window.
-    Clear once the controller has escalated (the ``~has_escalated`` conjunct
-    makes a new escalation impossible regardless of the others), and clear for
-    a predicate whose inputs are not yet available — the S_gap stability test
-    needs the previous window's S_gap, which the first window does not have.
+    Whether the predicate bears on a **new** escalation decision.  Clear after
+    escalation and when inputs are unavailable (the first S_gap stability test
+    lacks a previous-window S_gap).
 
 **The two are not nested.** A raw predicate can be true while its applicability
 is zero; that is the normal post-escalation state and is not a contradiction.
@@ -66,10 +56,6 @@ Read :data:`SCHEMA_VERSION` from the module; do not hard-code it here or
 anywhere else.  Consumers must check it and refuse a version they do not know
 rather than inferring meaning from raw mask bits.  Bit positions are never
 reused across versions.
-
-(This paragraph previously restated the number and went stale against the
-constant across a bump.  Naming it once, in the constant, is the only way that
-cannot happen again.)
 
 Units
 -----
@@ -174,51 +160,26 @@ BRANCH_BOTH: int = _DETECTION_BRANCH_BOTH
 class CandidateSummary(NamedTuple):
     """Compact description of one candidate inverse mass matrix.
 
-    Emitted for every candidate the controller builds, including the ones it
-    does not deploy — before escalation those are computed and discarded, which
-    is the single most important thing this module preserves.
-
-    After escalation the picture is different and the record reflects it: the
-    historical route deploys a *freshly computed* candidate each window, so a
-    candidate summary post-escalation generally describes the metric that was
-    just published rather than one that was thrown away.
+    Emitted for every candidate, including candidates computed but not deployed
+    before escalation.  On the multi-chain path, both freshly computed
+    candidates remain recorded; history selects one route for deployment.
 
     Attributes
     ----------
     effective_rank
-        Count of ``|lam - 1| > 1e-6``, the same convention
-        :func:`~blackjax.adaptation.meta.verdict.extract_meta_verdict` uses.
+        Count of ``|lam - 1| > 1e-6``, matching the verdict convention.
     logdet
-        ``2*sum(log sigma) + sum(log lam)``, exact for this parameterisation
-        (``U`` has orthonormal columns, so the non-unit eigenvalues are ``lam``).
+        ``2*sum(log sigma) + sum(log lam)`` under the documented
+        :func:`_logdet` invariant: active ``lam != 1`` columns of ``U`` are
+        orthonormal (including T's one-active-column case).
     lam_max, lam_min, sigma_gm
         Eigenvalue extremes and the geometric mean of the diagonal scaling.
-
-        On the multi-chain path ``sigma_gm`` is necessarily EQUAL between
-        ``candidate_w`` and ``candidate_t``, for the same reason
-        ``sigma_log_ratio_rms_vs_deployed`` is: both candidates are built from
-        the same ``sigma_lr``.  The scalars that do differ between them are
-        ``logdet``, ``effective_rank`` and ``lam_max`` — and note that even
-        together those are summaries, not a metric identity test.
+        Only ``sigma_gm`` is shared by W and T on the multi-chain path; their
+        eigenvalue summaries can differ.
     sigma_log_ratio_rms_vs_deployed
-        ``rms(log(this sigma) - log(deployed sigma))``.
-
-        **This compares diagonal scalings only, and on the multi-chain path it
-        cannot tell the two candidates apart.**  ``candidate_w`` and
-        ``candidate_t`` are built from the same ``sigma_lr``, so both report the
-        identical value in every window — zero once either has been deployed,
-        and a common non-zero value against the pre-escalation diagonal metric.
-        Reading a zero here as "*this* candidate is the deployed one" is wrong:
-        it means *a* candidate sharing this sigma was deployed.
-
-        What separates W from T lives in ``U`` and ``lam``, not in sigma.
-        ``effective_rank`` and the ``lam`` extremes distinguish *some* cases,
-        but they are scalar summaries and cannot certify that two metrics are
-        equal or that they differ — two metrics can share a rank and an
-        eigenvalue range while pointing in different directions.  Orientation
-        is only answerable from the full factors, under ``full_matrices=True``
-        and a declared comparison convention.  This field is a diagonal-scale
-        comparison, not a candidate-identity test.
+        RMS log-scale difference from the deployed metric.  This compares only
+        diagonal scaling; W and T share the same value, so candidate identity
+        requires full factors under a declared comparison convention.
     full
         The full factors, or ``None`` unless ``full_matrices=True``.
     """
@@ -233,18 +194,16 @@ class CandidateSummary(NamedTuple):
 
 
 class SingleChainDetail(NamedTuple):
-    """Fields specific to :func:`~blackjax.adaptation.meta.builders.build_meta_adaptation_core`.
+    """Fields specific to the single-chain meta-adaptation core.
 
     Attributes
     ----------
     detection_rank
-        ``k_new``, chosen from the whitened-residual spectrum.  A detection
-        quantity: distinct from the candidate's and the deployed metric's
-        effective ranks, and distinct again from the stored nominal
-        ``escalation_rank_stored`` on the parent record.
+        ``k_new`` from the whitened-residual spectrum; distinct from candidate,
+        deployed, and stored nominal escalation ranks.
     s_gap, s_gap_prev, s_gap_relative_change
-        The stability test's inputs.  ``s_gap_prev`` is NaN in the first window,
-        which is why ``sc_s_gap_stability`` is inapplicable there.
+        Stability inputs; ``s_gap_prev`` is NaN in the first window, making
+        ``sc_s_gap_stability`` inapplicable there.
     candidate
         The single low-rank candidate this controller builds.
     """
@@ -257,75 +216,47 @@ class SingleChainDetail(NamedTuple):
 
 
 class MultiChainDetail(NamedTuple):
-    """Fields specific to :func:`~blackjax.adaptation.meta.builders.build_multi_chain_meta_core`.
+    """Fields specific to the multi-chain meta-adaptation core.
 
-    Three branch fields, because three different questions have three different
-    answers and the controller keeps them apart:
+    Branch fields intentionally answer different questions:
 
     ``branch_fired_this_window``
         What escalated *now*: ``NONE`` / W / T / ``BOTH``.
     ``detection_branch_history``
-        The controller's carried ``detection_branch``, which holds the last
-        *firing* window's branch and is unchanged in windows where nothing
-        fires.  This carried value — not the current one — selects which
-        escalated metric is deployed.
-
-        It and ``branch_fired_this_window`` necessarily leave ``NONE`` in the
-        same window, since the carry is only ever written when a branch fires;
-        they diverge only afterwards, once a later window fires nothing.
+        Carried last firing branch, unchanged when nothing fires; this selects
+        the escalated metric and can diverge from the current branch.
     ``deployed_metric_route``
-        What the kernel will actually use: ``ROUTE_DIAGONAL`` before escalation,
-        else ``ROUTE_W``/``ROUTE_T``.  ``BOTH`` firing deploys the W metric.
-
-        This *is* derivable, from ``has_escalated`` and
-        ``detection_branch_history``, by reapplying the controller's own routing
-        rule (``BOTH`` and ``W`` both route to W).  It is carried anyway so that
-        reading the record never requires reimplementing that rule — the same
-        trade the unit fields make.  Do not read it as information held nowhere
-        else; see the module docstring's list of what genuinely is.
+        Metric used by the kernel: diagonal before escalation, then W or T;
+        BOTH routes to W.  It is carried to avoid reimplementing this rule.
 
     Attributes
     ----------
     branch_first_set_at_window
-        ``window_index`` at which ``detection_branch`` first left ``NONE``,
-        stamped on that transition only and unchanged afterwards; ``-1`` until
-        it happens.
+        First window where ``detection_branch`` left ``NONE``; ``-1`` before.
     t_detection_rank
-        ``k_new``, the **between-chain** detection rank.  Note that the
-        controller stores this into ``escalation_rank`` even when the W branch
-        is what fired, so ``escalation_rank_stored`` can describe a different
-        branch than the one that escalated.  Reported, not corrected.
+        Between-chain ``k_new``.  The controller stores it as
+        ``escalation_rank`` even when W fires, so the stored rank can describe a
+        different branch; the record reports it unchanged.
     r2_routed
-        The GAIN-overridden R² the T branch and the verdict use.  Distinct from
-        the parent record's raw ``r2_raw``, which is what the W branch uses;
-        the two can disagree, and the override exists precisely because the raw
-        value is meaningless at ``k << d``.
+        GAIN-overridden R² used by T and the verdict, distinct from raw
+        ``r2_raw`` used by W; they can disagree, especially when ``k << d``.
     is_converging, is_unimodal, any_mode_flag
-        The three separate observations behind the three-way unimodality rule.
+        Separate observations behind the three-way unimodality rule.
     t_unimodality_resolved
-        Its resolved outcome: ``is_converging | (is_unimodal & ~any_mode_flag)``.
-
-        Carried rather than left to the consumer because the obvious derivation
-        is wrong: ``is_converging`` is an **override**, not a fourth conjunct,
-        and writing ``is_unimodal & ~any_mode_flag`` alone fails silently on
-        exactly the converging-chains case the three-way rule was added for.
-        This is a policy and it can change.  Equal to the ``t_unimodality`` gate
-        bit by construction — if you find both, there is no difference to hunt
-        for.
+        Resolved outcome ``is_converging | (is_unimodal & ~any_mode_flag)``;
+        convergence is an override, not a fourth conjunct.  This policy can
+        change and equals the ``t_unimodality`` gate bit by construction.
     t_contraction_stat, unimodality_gap_ratio
         The numerics behind those observations.
     unimodality_flag_count
-        Consecutive flagged windows; deferral needs this to reach
-        ``_MC_UNIMODALITY_CONFIRM_WINDOWS``.
+        Consecutive flagged windows; deferral waits for the confirmation limit.
     deferred_to_ensemble
-        The deferral latch.  Non-monotone, and *not* gated on ``has_escalated``,
-        so it can fire after escalation.
+        Deferral latch; non-monotone and not gated on ``has_escalated``.
     chain_collinearity_f1, within_lam1, chain_consistency_psi, r1_top
-        Detector signals as measured this window.
+        Detector signals measured this window.
     candidate_w, candidate_t
-        **Both** candidates.  They are built before routing and are not
-        interchangeable: W is the full Fisher-LR on per-chain-centred pooled
-        buffers, T is a rank-1 geometric-mean slow-direction correction.
+        Both candidates, built before routing: W is full Fisher-LR on pooled
+        per-chain-centred buffers; T is a rank-1 geometric-mean correction.
     """
 
     branch_fired_this_window: Array
