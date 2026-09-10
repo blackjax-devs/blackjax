@@ -60,11 +60,8 @@ _CONTROL_SEED = 20260907
 _REFERENCE_SEED = 11
 _REFERENCE_STEP_SIZES = (0.75, 0.90)
 
-# `test_jit_vmap_and_scan`'s decision-margin control needs an interior
-# acceptance probability for BOTH marginals of its own fixture (standard
-# normal vs. tilted, mass 1, step 0.2, 4 leapfrog steps, positions +-1). Both
-# `_CONTROL_SEED` and `_REFERENCE_SEED` saturate at least one marginal to
-# exactly 1.0 there, so this fixture gets its own seed, found by scanning.
+# `test_jit_vmap_and_scan`'s margin control needs both marginals interior;
+# `_CONTROL_SEED` and `_REFERENCE_SEED` saturate one to 1.0 on that fixture.
 _JIT_MARGIN_SEED = 10248
 
 
@@ -543,29 +540,8 @@ class CoupledHMCContractTest(BlackJAXTest):
                     "than skipping or clipping this case",
                 )
             highest = max(float(probe_first), float(probe_second))
-            # Acceptance is `uniform < p_accept`. `uniform = 0` accepts both
-            # with a margin of a whole probability (both probes are strictly
-            # > 0, asserted above), so the accepting case is safe as written.
-            #
-            # The rejecting case must NOT use `uniform = highest` verbatim:
-            # `highest` is the ORACLE's own recomputation of the higher
-            # marginal's probability, not the module's. The module computes
-            # `log_p_accept` via its own composition of the same primitives
-            # (`_build_prescribed_pair` builds and runs both marginals
-            # together, rather than the oracle's one-at-a-time recomputation
-            # in `_oracle_marginal`), so the two can disagree in the last
-            # ULP even in float64 on one fixed JAX version -- a sweep of 51
-            # independently-drawn reference fixtures found the module's own
-            # acceptance rate for the higher marginal exceeding `highest` by
-            # exactly one ULP (e.g. 0.8137129940550802 vs
-            # 0.8137129940550795) in 3 of them, which flips that marginal to
-            # "accepted" when `uniform` sits exactly on the oracle's value.
-            # The midpoint of `(highest, 1.0)` rejects both marginals with a
-            # margin of `0.5 * (1.0 - highest)` -- order 0.1 here, many
-            # orders of magnitude past any ULP-level disagreement -- while
-            # `uniform = 0` already has an equally wide margin on the
-            # accepting side, so both branches are now robust by construction
-            # rather than by landing on the correct side of a knife edge.
+            # Reject with a margin, not at `highest`: oracle and module p_accept
+            # can disagree by 1 ULP, making `uniform = highest` a coin flip.
             uniform = jnp.asarray(0.0 if accept else 0.5 * (highest + 1.0), jnp.float64)
 
             new_state, info = step(state, noise, uniform)
@@ -863,22 +839,9 @@ class CoupledHMCContractTest(BlackJAXTest):
     def test_certain_acceptance_accepts_at_both_uniform_endpoints(self, uniform):
         """``p_accept == 1`` accepts for every admissible uniform in [0, 1).
 
-        A *small* step size does not make this hold: the leapfrog's energy
-        error is ``O(step_size**2)`` from truncation alone, not from
-        floating-point rounding, so with ``step_size = 1e-8`` the error sits
-        right at ~1e-16 with a sign that a seed sweep showed is essentially a
-        coin flip -- a prior version of this test drew its momentum from
-        ``self.next_key()`` (date-seeded) and, checked across 200 synthetic
-        "days", failed on 128 of them because `p_accept` rounded to fractionally
-        *below* 1 as often as not. `p_accept == 1` must instead hold BY
-        CONSTRUCTION: start at ``position = momentum = 0``. The standard
-        normal's gradient there is exactly ``0``, so every leapfrog half-step
-        multiplies a zero gradient into a zero update and the trajectory
-        stays bit-for-bit at the origin for any step size or step count.
-        Both endpoints' energies are then the same float64 value evaluated
-        twice, so their difference is exactly ``0.0`` -- not merely small --
-        and `p_accept` clips to exactly `1.0` regardless of JAX version or
-        operation ordering.
+        Pinned at a stationary point (position = momentum = 0, energy
+        difference exactly 0.0); a small step size alone left ~1e-16 sign
+        noise that failed 128/200 seeded days.
         """
         with _x64():
             if uniform is None:
@@ -898,9 +861,7 @@ class CoupledHMCContractTest(BlackJAXTest):
                 integrators.velocity_verlet,
                 1000.0,
             )
-            # Zero momentum, not a fresh draw: see the docstring above for
-            # why this is what pins `p_accept` at exactly 1.0.
-            noise = jnp.zeros((_DIM,), jnp.float64)
+            noise = jnp.zeros((_DIM,), jnp.float64)  # see docstring
             _, info = step(state, noise, jnp.asarray(uniform, jnp.float64))
             self.assertEqual(
                 float(info.acceptance_rate),
@@ -1455,40 +1416,7 @@ class CoupledHMCContractTest(BlackJAXTest):
 
         eager_state, eager_info = algorithm.step(key, state)
         jitted_state, jitted_info = jax.jit(algorithm.step)(key, state)
-        # Floating results are compared with a tolerance: XLA may fuse or
-        # reassociate under `jit`, so bitwise agreement with the eager path is
-        # not a contract this module can promise. `atol=1e-12` on the STATE
-        # was already too tight for that: a 300,000-seed sweep of this
-        # fixture found the accepted position differing by up to 2.861e-6
-        # (float32) between the two paths -- comfortably smaller than the
-        # state values themselves (roughly 0.3 to 11 over that same sweep,
-        # median ~1.9), so this is drift, not a real divergence.
-        # `chex.assert_trees_all_close` combines `atol` with a default
-        # `rtol=1e-6` (fails when `|actual - desired| > atol + rtol *
-        # |desired|`), so the two knobs interact: at `atol=1e-12` alone ~33%
-        # of the sweep's simulated days exceeded it, but the `rtol` term
-        # (about 1e-6 times an O(1) state value) rescued most of those,
-        # leaving 13/200 (6.5%) simulated days that failed the actual
-        # (combined) assertion -- `self.next_key()`'s date-seeded draw is one
-        # such day roughly one day in fifteen, which is what was actually
-        # breaking CI (main Tests run 34185840275 on pinned JAX failed at
-        # exactly this line). `atol=1e-4` is ~35x the measured 2.861e-6 gap
-        # and ~800 float32 ULP; perturbing the jitted state by 1e-2 (two
-        # orders above this atol) still trips the assertion, confirming the
-        # loosened check still catches a genuine divergence rather than
-        # merely tolerating drift.
-        #
-        # The same drift reaches the accept/reject DECISION itself, since it
-        # is a `<` comparison against exactly the float that may move: that
-        # same sweep found the acceptance rate differing by up to 3.815e-6
-        # for the second marginal, with no natural draw among them flipping
-        # either decision; an adversarial probe -- a uniform placed inside
-        # one such gap by construction, not drawn -- confirmed the gap really
-        # does flip `is_accepted` between the two paths. So the probability
-        # is compared with a tolerance (atol=1e-4, ~26x that measured gap)
-        # instead of asserting the boolean at `key`'s essentially arbitrary
-        # point, and decision coverage is restored below at a uniform held
-        # deliberately far from `p_accept` instead.
+        # atol=1e-4: ~35x measured float32 eager/jit drift (state 2.86e-6, rate 3.82e-6).
         chex.assert_trees_all_close(eager_state, jitted_state, atol=1e-4)
         chex.assert_trees_all_close(
             eager_info.first.acceptance_rate,
@@ -1503,13 +1431,8 @@ class CoupledHMCContractTest(BlackJAXTest):
         chex.assert_trees_all_equal_structs(eager_state, jitted_state)
         chex.assert_trees_all_equal_structs(eager_info, jitted_info)
 
-        # Decision coverage, without the knife edge: exercise accept/reject
-        # through the same prescribed-pair machinery `algorithm.step` is built
-        # from (`_build_prescribed_pair`), but with an explicit uniform held
-        # comfortably away from `p_accept` on either side, rather than at
-        # `key`'s arbitrary draw. `_JIT_MARGIN_SEED` is a fixed control (see
-        # its definition) chosen so both marginals' `p_accept` are interior
-        # here; the interiority is asserted rather than trusted.
+        # Decisions exercised through the same machinery, but with the uniform
+        # held far from p_accept. Interiority is asserted, not trusted.
         margin_step = coupled_hmc._build_prescribed_pair(
             (_standard_normal_logdensity, _tilted_logdensity),
             (mass, mass),
@@ -1521,8 +1444,7 @@ class CoupledHMCContractTest(BlackJAXTest):
             coupled_hmc.whitened_difference,
         )
         margin_noise = jax.random.normal(jax.random.key(_JIT_MARGIN_SEED), (_DIM,))
-        # `acceptance_rate` does not depend on the uniform supplied, so this
-        # placeholder call only reads off `p_accept` for both marginals.
+        # acceptance_rate is independent of the uniform; this only reads p_accept.
         _, rate_probe_info = margin_step(state, margin_noise, jnp.asarray(0.5))
         first_p_accept = float(rate_probe_info.first.acceptance_rate)
         second_p_accept = float(rate_probe_info.second.acceptance_rate)
@@ -1540,11 +1462,7 @@ class CoupledHMCContractTest(BlackJAXTest):
                 "choose a different `_JIT_MARGIN_SEED`",
             )
         highest = max(first_p_accept, second_p_accept)
-        # `uniform = 0` accepts both marginals with a margin of a whole
-        # probability; `uniform = 0.5 * (highest + 1.0)` rejects both with a
-        # margin of `0.5 * (1 - highest)` -- see the `reflect_reject` fixture
-        # above for why the rejecting case is built from `highest` and not
-        # pinned to either marginal's own probability directly.
+        # Same margin construction as reflect_reject above.
         for uniform, expect_accepted in (
             (jnp.asarray(0.0), True),
             (jnp.asarray(0.5 * (highest + 1.0)), False),

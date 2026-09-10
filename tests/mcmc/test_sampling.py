@@ -769,49 +769,30 @@ class LinearRegressionTest(chex.TestCase):
             superchain_size=1,
         )
 
-        # ``final_state`` is the ENSEMBLE at the final step -- one draw per chain,
-        # not a time series -- so the checks below are over 100 draws.
+        # ``final_state`` is the ensemble at the final step: one draw per chain.
         ensemble = np.asarray(final_state.position)
 
-        # Reference posterior for this fixed dataset, from an independent 4-chain
-        # NUTS run (1000 warmup + 5000 draws per chain, no divergences, R-hat
-        # 1.00003, ESS ~1.6e4): log_scale ~ (0.0325, sd 0.0224); coefs ~ (3.0135,
-        # sd 0.0335). With 1000 observations the posterior is extremely tight, so a
-        # converged ensemble is a narrow cloud around these values.
+        # Reference posterior: independent 4-chain NUTS, R-hat 1.00003, ESS ~1.6e4. See #1035.
         posterior_mean = np.array([0.0325, 3.0135])
         posterior_sd = np.array([0.0224, 0.0335])
 
-        # Check the adaptation stayed alive before interpreting any draws. If the
-        # adapted step size ever becomes non-finite, every subsequent proposal is
-        # rejected and LAPS returns a frozen, un-equilibrated ensemble -- with no
-        # error and no NaN in the positions -- so the draws look plausible while
-        # meaning nothing.
+        # A non-finite step size means the rest of the budget ran as no-ops; gate on it first.
         for phase in ("phase_1", "phase_2"):
             step_sizes = np.asarray(info[phase]["step_size"])
-            # Precomputed into a plain variable rather than nested inline in the
-            # f-string below: the pinned flake8 6.0.0 / pycodestyle 2.10.0 (see
-            # .pre-commit-config.yaml) misreads a semicolon inside a multi-brace
-            # f-string as a statement separator (E702) under CPython's PEP 701
-            # f-string tokenizer (landed in 3.12, so this reproduces on CI's own
-            # Python versions -- not merely a newer-interpreter artifact). Do not
-            # inline this back into the f-string.
-            first_bad_iter = int(np.argmax(~np.isfinite(step_sizes)))
-            msg = (
-                f"{phase}: adapted step size became non-finite at iteration "
-                f"{first_bad_iter} of {step_sizes.size}, "
-                "the rest of the budget ran as no-ops"
+            first_bad_iter = int(
+                np.argmax(~np.isfinite(step_sizes))
+            )  # not inlined: pycodestyle 2.10.0 E702 on PEP 701 f-strings (3.12+)
+            assert np.all(np.isfinite(step_sizes)), (
+                f"{phase}: step size became non-finite at iteration "
+                f"{first_bad_iter} of {step_sizes.size}"
             )
-            assert np.all(np.isfinite(step_sizes)), msg
         mean_acceptance = float(np.mean(np.asarray(info["phase_2"]["acc_prob"])))
         assert (
             mean_acceptance > 0.01
         ), f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
 
-        # The ensemble must look like a sample from that posterior: right location,
-        # right dispersion, and no chain left behind. Location is checked on the
-        # median so that one stray chain cannot carry the verdict, and dispersion is
-        # checked on both sides so that an ensemble which never moved (the initial
-        # draws have sd 1.0) fails just as loudly as one that scattered.
+        # Median location (robust to one stray chain) and two-sided dispersion
+        # (an ensemble that never moved has sd 1.0, not ~0.02).
         z_scores = (ensemble - posterior_mean) / posterior_sd
         np.testing.assert_array_less(np.abs(np.median(z_scores, axis=0)), 6.0)
 
@@ -820,17 +801,11 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_array_less(0.5, sd_ratio)
 
         equilibrated = np.mean(np.all(np.abs(z_scores) < 6.0, axis=1))
-        # Deliberately not f"{equilibrated:.0%}": the pinned flake8 6.0.0 /
-        # pycodestyle 2.10.0 misparses the ':' of an f-string percent-format
-        # spec as "missing whitespace after ':'" (E231) under CPython's PEP 701
-        # f-string tokenizer. Reproduces on 3.11/3.12/3.13 (CI's own matrix),
-        # not just newer interpreters -- confirmed independently twice. If you
-        # "simplify" this back to a format spec, CI's lint job will fail.
+        # not f"{x:.0%}": pycodestyle 2.10.0 flags E231 on PEP 701 f-strings
         equilibrated_pct = round(100 * equilibrated)
-        assert equilibrated >= 0.9, (
-            f"only {equilibrated_pct}% of chains are within 6 posterior sd of "
-            "the posterior mean in both coordinates"
-        )
+        assert (
+            equilibrated >= 0.9
+        ), f"only {equilibrated_pct}% of chains are within 6 posterior sd"
 
     @parameterized.named_parameters(
         {"testcase_name": "typed_key", "use_typed_key": True},
