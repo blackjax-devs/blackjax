@@ -788,6 +788,13 @@ class LinearRegressionTest(chex.TestCase):
         # meaning nothing.
         for phase in ("phase_1", "phase_2"):
             step_sizes = np.asarray(info[phase]["step_size"])
+            # Precomputed into a plain variable rather than nested inline in the
+            # f-string below: the pinned flake8 6.0.0 / pycodestyle 2.10.0 (see
+            # .pre-commit-config.yaml) misreads a semicolon inside a multi-brace
+            # f-string as a statement separator (E702) under CPython's PEP 701
+            # f-string tokenizer (landed in 3.12, so this reproduces on CI's own
+            # Python versions -- not merely a newer-interpreter artifact). Do not
+            # inline this back into the f-string.
             first_bad_iter = int(np.argmax(~np.isfinite(step_sizes)))
             msg = (
                 f"{phase}: adapted step size became non-finite at iteration "
@@ -813,6 +820,12 @@ class LinearRegressionTest(chex.TestCase):
         np.testing.assert_array_less(0.5, sd_ratio)
 
         equilibrated = np.mean(np.all(np.abs(z_scores) < 6.0, axis=1))
+        # Deliberately not f"{equilibrated:.0%}": the pinned flake8 6.0.0 /
+        # pycodestyle 2.10.0 misparses the ':' of an f-string percent-format
+        # spec as "missing whitespace after ':'" (E231) under CPython's PEP 701
+        # f-string tokenizer. Reproduces on 3.11/3.12/3.13 (CI's own matrix),
+        # not just newer interpreters -- confirmed independently twice. If you
+        # "simplify" this back to a format spec, CI's lint job will fail.
         equilibrated_pct = round(100 * equilibrated)
         assert equilibrated >= 0.9, (
             f"only {equilibrated_pct}% of chains are within 6 posterior sd of "
