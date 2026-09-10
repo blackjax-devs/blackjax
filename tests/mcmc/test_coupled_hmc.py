@@ -1460,9 +1460,23 @@ class CoupledHMCContractTest(BlackJAXTest):
         # not a contract this module can promise. `atol=1e-12` on the STATE
         # was already too tight for that: a 300,000-seed sweep of this
         # fixture found the accepted position differing by up to 2.861e-6
-        # (float32) between the two paths, so this `key`'s date-seeded draw
-        # tripped it on roughly a third of simulated days. `atol=1e-4` is
-        # ~35x that measured gap.
+        # (float32) between the two paths -- comfortably smaller than the
+        # state values themselves (roughly 0.3 to 11 over that same sweep,
+        # median ~1.9), so this is drift, not a real divergence.
+        # `chex.assert_trees_all_close` combines `atol` with a default
+        # `rtol=1e-6` (fails when `|actual - desired| > atol + rtol *
+        # |desired|`), so the two knobs interact: at `atol=1e-12` alone ~33%
+        # of the sweep's simulated days exceeded it, but the `rtol` term
+        # (about 1e-6 times an O(1) state value) rescued most of those,
+        # leaving 13/200 (6.5%) simulated days that failed the actual
+        # (combined) assertion -- `self.next_key()`'s date-seeded draw is one
+        # such day roughly one day in fifteen, which is what was actually
+        # breaking CI (main Tests run 34185840275 on pinned JAX failed at
+        # exactly this line). `atol=1e-4` is ~35x the measured 2.861e-6 gap
+        # and ~800 float32 ULP; perturbing the jitted state by 1e-2 (two
+        # orders above this atol) still trips the assertion, confirming the
+        # loosened check still catches a genuine divergence rather than
+        # merely tolerating drift.
         #
         # The same drift reaches the accept/reject DECISION itself, since it
         # is a `<` comparison against exactly the float that may move: that
