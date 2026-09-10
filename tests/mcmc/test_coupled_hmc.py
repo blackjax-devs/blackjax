@@ -60,6 +60,13 @@ _CONTROL_SEED = 20260907
 _REFERENCE_SEED = 11
 _REFERENCE_STEP_SIZES = (0.75, 0.90)
 
+# `test_jit_vmap_and_scan`'s decision-margin control needs an interior
+# acceptance probability for BOTH marginals of its own fixture (standard
+# normal vs. tilted, mass 1, step 0.2, 4 leapfrog steps, positions +-1). Both
+# `_CONTROL_SEED` and `_REFERENCE_SEED` saturate at least one marginal to
+# exactly 1.0 there, so this fixture gets its own seed, found by scanning.
+_JIT_MARGIN_SEED = 10248
+
 
 def _standard_normal_logdensity(x):
     flat, _ = jax.flatten_util.ravel_pytree(x)
@@ -1450,16 +1457,107 @@ class CoupledHMCContractTest(BlackJAXTest):
         jitted_state, jitted_info = jax.jit(algorithm.step)(key, state)
         # Floating results are compared with a tolerance: XLA may fuse or
         # reassociate under `jit`, so bitwise agreement with the eager path is
-        # not a contract this module can promise. The DECISIONS and the
-        # structure are exact, because those must not drift.
-        chex.assert_trees_all_close(eager_state, jitted_state, atol=1e-12)
-        self.assertEqual(
-            bool(eager_info.first.is_accepted), bool(jitted_info.first.is_accepted)
+        # not a contract this module can promise. `atol=1e-12` on the STATE
+        # was already too tight for that: a 300,000-seed sweep of this
+        # fixture found the accepted position differing by up to 2.861e-6
+        # (float32) between the two paths, so this `key`'s date-seeded draw
+        # tripped it on roughly a third of simulated days. `atol=1e-4` is
+        # ~35x that measured gap.
+        #
+        # The same drift reaches the accept/reject DECISION itself, since it
+        # is a `<` comparison against exactly the float that may move: that
+        # same sweep found the acceptance rate differing by up to 3.815e-6
+        # for the second marginal, with no natural draw among them flipping
+        # either decision; an adversarial probe -- a uniform placed inside
+        # one such gap by construction, not drawn -- confirmed the gap really
+        # does flip `is_accepted` between the two paths. So the probability
+        # is compared with a tolerance (atol=1e-4, ~26x that measured gap)
+        # instead of asserting the boolean at `key`'s essentially arbitrary
+        # point, and decision coverage is restored below at a uniform held
+        # deliberately far from `p_accept` instead.
+        chex.assert_trees_all_close(eager_state, jitted_state, atol=1e-4)
+        chex.assert_trees_all_close(
+            eager_info.first.acceptance_rate,
+            jitted_info.first.acceptance_rate,
+            atol=1e-4,
         )
-        self.assertEqual(
-            bool(eager_info.second.is_accepted), bool(jitted_info.second.is_accepted)
+        chex.assert_trees_all_close(
+            eager_info.second.acceptance_rate,
+            jitted_info.second.acceptance_rate,
+            atol=1e-4,
         )
         chex.assert_trees_all_equal_structs(eager_state, jitted_state)
+        chex.assert_trees_all_equal_structs(eager_info, jitted_info)
+
+        # Decision coverage, without the knife edge: exercise accept/reject
+        # through the same prescribed-pair machinery `algorithm.step` is built
+        # from (`_build_prescribed_pair`), but with an explicit uniform held
+        # comfortably away from `p_accept` on either side, rather than at
+        # `key`'s arbitrary draw. `_JIT_MARGIN_SEED` is a fixed control (see
+        # its definition) chosen so both marginals' `p_accept` are interior
+        # here; the interiority is asserted rather than trusted.
+        margin_step = coupled_hmc._build_prescribed_pair(
+            (_standard_normal_logdensity, _tilted_logdensity),
+            (mass, mass),
+            (0.2, 0.2),
+            (4, 4),
+            integrators.velocity_verlet,
+            1000.0,
+            "reflection",
+            coupled_hmc.whitened_difference,
+        )
+        margin_noise = jax.random.normal(jax.random.key(_JIT_MARGIN_SEED), (_DIM,))
+        # `acceptance_rate` does not depend on the uniform supplied, so this
+        # placeholder call only reads off `p_accept` for both marginals.
+        _, rate_probe_info = margin_step(state, margin_noise, jnp.asarray(0.5))
+        first_p_accept = float(rate_probe_info.first.acceptance_rate)
+        second_p_accept = float(rate_probe_info.second.acceptance_rate)
+        for label, probability in (
+            ("first", first_p_accept),
+            ("second", second_p_accept),
+        ):
+            self.assertGreater(
+                probability, 0.0, f"{label} p_accept is 0, no accepting uniform exists"
+            )
+            self.assertLess(
+                probability,
+                1.0,
+                f"{label} p_accept rounded to 1, no rejecting uniform exists -- "
+                "choose a different `_JIT_MARGIN_SEED`",
+            )
+        highest = max(first_p_accept, second_p_accept)
+        # `uniform = 0` accepts both marginals with a margin of a whole
+        # probability; `uniform = 0.5 * (highest + 1.0)` rejects both with a
+        # margin of `0.5 * (1 - highest)` -- see the `reflect_reject` fixture
+        # above for why the rejecting case is built from `highest` and not
+        # pinned to either marginal's own probability directly.
+        for uniform, expect_accepted in (
+            (jnp.asarray(0.0), True),
+            (jnp.asarray(0.5 * (highest + 1.0)), False),
+        ):
+            eager_margin_state, eager_margin_info = margin_step(
+                state, margin_noise, uniform
+            )
+            jitted_margin_state, jitted_margin_info = jax.jit(margin_step)(
+                state, margin_noise, uniform
+            )
+            for name, info in (
+                ("eager", eager_margin_info),
+                ("jitted", jitted_margin_info),
+            ):
+                self.assertEqual(
+                    bool(info.first.is_accepted),
+                    expect_accepted,
+                    f"{name} first marginal at uniform={float(uniform)!r}",
+                )
+                self.assertEqual(
+                    bool(info.second.is_accepted),
+                    expect_accepted,
+                    f"{name} second marginal at uniform={float(uniform)!r}",
+                )
+            chex.assert_trees_all_close(
+                eager_margin_state, jitted_margin_state, atol=1e-12
+            )
 
         def body(carry, step_key):
             new_state, _ = algorithm.step(step_key, carry)
