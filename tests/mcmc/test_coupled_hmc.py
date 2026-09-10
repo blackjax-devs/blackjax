@@ -833,7 +833,25 @@ class CoupledHMCContractTest(BlackJAXTest):
         {"testcase_name": "u_just_below_one", "uniform": None},
     )
     def test_certain_acceptance_accepts_at_both_uniform_endpoints(self, uniform):
-        """``p_accept == 1`` accepts for every admissible uniform in [0, 1)."""
+        """``p_accept == 1`` accepts for every admissible uniform in [0, 1).
+
+        A *small* step size does not make this hold: the leapfrog's energy
+        error is ``O(step_size**2)`` from truncation alone, not from
+        floating-point rounding, so with ``step_size = 1e-8`` the error sits
+        right at ~1e-16 with a sign that a seed sweep showed is essentially a
+        coin flip -- a prior version of this test drew its momentum from
+        ``self.next_key()`` (date-seeded) and, checked across 200 synthetic
+        "days", failed on 128 of them because `p_accept` rounded to fractionally
+        *below* 1 as often as not. `p_accept == 1` must instead hold BY
+        CONSTRUCTION: start at ``position = momentum = 0``. The standard
+        normal's gradient there is exactly ``0``, so every leapfrog half-step
+        multiplies a zero gradient into a zero update and the trajectory
+        stays bit-for-bit at the origin for any step size or step count.
+        Both endpoints' energies are then the same float64 value evaluated
+        twice, so their difference is exactly ``0.0`` -- not merely small --
+        and `p_accept` clips to exactly `1.0` regardless of JAX version or
+        operation ordering.
+        """
         with _x64():
             if uniform is None:
                 uniform = float(jnp.nextafter(jnp.float64(1.0), jnp.float64(0.0)))
@@ -844,7 +862,6 @@ class CoupledHMCContractTest(BlackJAXTest):
                 _standard_normal_logdensity(position),
                 jax.grad(_standard_normal_logdensity)(position),
             )
-            # A vanishing step size makes the energy error ~0, so p_accept == 1.
             _, step = coupled_hmc._build_prescribed_marginal(
                 _standard_normal_logdensity,
                 mass,
@@ -853,9 +870,15 @@ class CoupledHMCContractTest(BlackJAXTest):
                 integrators.velocity_verlet,
                 1000.0,
             )
-            noise = jax.random.normal(self.next_key(), (_DIM,), jnp.float64)
+            # Zero momentum, not a fresh draw: see the docstring above for
+            # why this is what pins `p_accept` at exactly 1.0.
+            noise = jnp.zeros((_DIM,), jnp.float64)
             _, info = step(state, noise, jnp.asarray(uniform, jnp.float64))
-            np.testing.assert_allclose(float(info.acceptance_rate), 1.0, rtol=1e-12)
+            self.assertEqual(
+                float(info.acceptance_rate),
+                1.0,
+                "p_accept must be bit-exact 1.0 at a stationary point, not merely close",
+            )
             self.assertTrue(bool(info.is_accepted))
 
     def test_certain_rejection_rejects_at_the_zero_uniform(self):
