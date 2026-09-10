@@ -769,14 +769,55 @@ class LinearRegressionTest(chex.TestCase):
             superchain_size=1,
         )
 
-        scale_samples = np.exp(final_state.position[:, 0])
-        coefs_samples = final_state.position[:, 1]
+        # ``final_state`` is the ENSEMBLE at the final step -- one draw per chain,
+        # not a time series -- so the checks below are over 100 draws.
+        ensemble = np.asarray(final_state.position)
 
-        print(np.mean(scale_samples))
-        print(np.mean(coefs_samples))
+        # Reference posterior for this fixed dataset, from an independent 4-chain
+        # NUTS run (1000 warmup + 5000 draws per chain, no divergences, R-hat
+        # 1.00003, ESS ~1.6e4): log_scale ~ (0.0325, sd 0.0224); coefs ~ (3.0135,
+        # sd 0.0335). With 1000 observations the posterior is extremely tight, so a
+        # converged ensemble is a narrow cloud around these values.
+        posterior_mean = np.array([0.0325, 3.0135])
+        posterior_sd = np.array([0.0224, 0.0335])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+        # Check the adaptation stayed alive before interpreting any draws. If the
+        # adapted step size ever becomes non-finite, every subsequent proposal is
+        # rejected and LAPS returns a frozen, un-equilibrated ensemble -- with no
+        # error and no NaN in the positions -- so the draws look plausible while
+        # meaning nothing.
+        for phase in ("phase_1", "phase_2"):
+            step_sizes = np.asarray(info[phase]["step_size"])
+            first_bad_iter = int(np.argmax(~np.isfinite(step_sizes)))
+            msg = (
+                f"{phase}: adapted step size became non-finite at iteration "
+                f"{first_bad_iter} of {step_sizes.size}, "
+                "the rest of the budget ran as no-ops"
+            )
+            assert np.all(np.isfinite(step_sizes)), msg
+        mean_acceptance = float(np.mean(np.asarray(info["phase_2"]["acc_prob"])))
+        assert (
+            mean_acceptance > 0.01
+        ), f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
+
+        # The ensemble must look like a sample from that posterior: right location,
+        # right dispersion, and no chain left behind. Location is checked on the
+        # median so that one stray chain cannot carry the verdict, and dispersion is
+        # checked on both sides so that an ensemble which never moved (the initial
+        # draws have sd 1.0) fails just as loudly as one that scattered.
+        z_scores = (ensemble - posterior_mean) / posterior_sd
+        np.testing.assert_array_less(np.abs(np.median(z_scores, axis=0)), 6.0)
+
+        sd_ratio = ensemble.std(axis=0) / posterior_sd
+        np.testing.assert_array_less(sd_ratio, 2.0)
+        np.testing.assert_array_less(0.5, sd_ratio)
+
+        equilibrated = np.mean(np.all(np.abs(z_scores) < 6.0, axis=1))
+        equilibrated_pct = round(100 * equilibrated)
+        assert equilibrated >= 0.9, (
+            f"only {equilibrated_pct}% of chains are within 6 posterior sd of "
+            "the posterior mean in both coordinates"
+        )
 
     @parameterized.named_parameters(
         {"testcase_name": "typed_key", "use_typed_key": True},
