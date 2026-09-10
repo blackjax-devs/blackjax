@@ -536,9 +536,30 @@ class CoupledHMCContractTest(BlackJAXTest):
                     "than skipping or clipping this case",
                 )
             highest = max(float(probe_first), float(probe_second))
-            # Acceptance is `uniform < p_accept`, so `uniform = highest` rejects
-            # both marginals and `uniform = 0` accepts both.
-            uniform = jnp.asarray(0.0 if accept else highest, jnp.float64)
+            # Acceptance is `uniform < p_accept`. `uniform = 0` accepts both
+            # with a margin of a whole probability (both probes are strictly
+            # > 0, asserted above), so the accepting case is safe as written.
+            #
+            # The rejecting case must NOT use `uniform = highest` verbatim:
+            # `highest` is the ORACLE's own recomputation of the higher
+            # marginal's probability, not the module's. The module computes
+            # `log_p_accept` via its own composition of the same primitives
+            # (`_build_prescribed_pair` builds and runs both marginals
+            # together, rather than the oracle's one-at-a-time recomputation
+            # in `_oracle_marginal`), so the two can disagree in the last
+            # ULP even in float64 on one fixed JAX version -- a sweep of 51
+            # independently-drawn reference fixtures found the module's own
+            # acceptance rate for the higher marginal exceeding `highest` by
+            # exactly one ULP (e.g. 0.8137129940550802 vs
+            # 0.8137129940550795) in 3 of them, which flips that marginal to
+            # "accepted" when `uniform` sits exactly on the oracle's value.
+            # The midpoint of `(highest, 1.0)` rejects both marginals with a
+            # margin of `0.5 * (1.0 - highest)` -- order 0.1 here, many
+            # orders of magnitude past any ULP-level disagreement -- while
+            # `uniform = 0` already has an equally wide margin on the
+            # accepting side, so both branches are now robust by construction
+            # rather than by landing on the correct side of a knife edge.
+            uniform = jnp.asarray(0.0 if accept else 0.5 * (highest + 1.0), jnp.float64)
 
             new_state, info = step(state, noise, uniform)
             # Confirm this case exercises the branch it is named for.
