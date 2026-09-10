@@ -227,11 +227,25 @@ def handle_nans(previous_state, next_state, info, key):
     # at moderate overshoot) are correctly detected and reverted.  Pre-fix, case-2
     # left info.nonans=True while the state carried a NaN logdensity, silently
     # corrupting subsequent energy_change computations and blocking step-size shrinkage.
+    #
+    # D1 fix (LAPS nightly regression): also check kinetic_change / energy_change.
+    # `momentum_proj` in the isokinetic integrator is a dot product of two unit
+    # vectors that can round marginally below -1 in float32, driving the argument of
+    # `jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)` negative and
+    # producing a NaN kinetic_change while position, momentum and logdensity all stay
+    # finite. Pre-fix this route left info.nonans=True: a single poisoned chain's NaN
+    # silently propagated through ECA's `lax.psum` ensemble average and, downstream,
+    # made the LAPS-adapted step size non-finite forever (see laps_burn_in.py).
     nonans = jnp.logical_and(
         jnp.logical_and(
             isfinite_pytree(next_state.position), isfinite_pytree(next_state.momentum)
         ),
-        jnp.isfinite(next_state.logdensity),
+        jnp.logical_and(
+            jnp.isfinite(next_state.logdensity),
+            jnp.logical_and(
+                jnp.isfinite(info.kinetic_change), jnp.isfinite(info.energy_change)
+            ),
+        ),
     )
 
     state, info = jax.lax.cond(

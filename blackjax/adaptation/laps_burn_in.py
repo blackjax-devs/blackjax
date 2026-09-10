@@ -66,6 +66,14 @@ def build_kernel(logdensity_fn, ndims, microcanonical=True):
         # no_nans(new_state) was always True after the kernel's own revert, so
         # the "nans" diagnostic and the eps_factor 0.5 halving safety in
         # Adaptation.update() (:332-334) were dead code.
+        #
+        # D1 fix (LAPS nightly regression): until mclmc.handle_nans also checked
+        # kinetic_change / energy_change, info.nonans was blind to a NaN
+        # kinetic_change that left position, momentum and logdensity all finite
+        # (see mclmc.py:handle_nans). That NaN passed this gate silently, poisoned
+        # the ECA `lax.psum` ensemble average, and produced a permanently
+        # non-finite step size (see the D2 fix on the multiplicative update
+        # below). info.nonans now covers that route too.
         nonans = info.nonans
         new_state = nan_reject(nonans, state, new_state)
 
@@ -351,10 +359,27 @@ class Adaptation:
             "observables": Etheta["observables"],
         }
 
+        # D2 fix (LAPS nightly regression): make "the adapted step size is always
+        # finite" an invariant of the update itself, not just of the nan_reject
+        # trigger above. The update is multiplicative (step_size * eps_factor), so
+        # a single non-finite eps_factor -- from this trigger or from any other
+        # route this function does not explicitly guard -- is otherwise absorbing:
+        # once step_size is NaN it stays NaN for every remaining burn-in
+        # iteration, and LAPS silently returns a frozen, un-equilibrated ensemble
+        # with no error and no warning. Falling back to the previous step size
+        # (finite, by induction from the finite initial state) lets the chain
+        # survive a poisoned iteration instead of being permanently killed by it.
+        step_size_candidate = adaptation_state.step_size * eps_factor
+        step_size_new = jnp.where(
+            jnp.isfinite(step_size_candidate),
+            step_size_candidate,
+            adaptation_state.step_size,
+        )
+
         adaptation_state_new = AdaptationState(
             L,
             inverse_mass_matrix,
-            adaptation_state.step_size * eps_factor,  # set the stepsize directly
+            step_size_new,  # set the stepsize directly
             adaptation_state.step_count + 1,
             EEVPD,
             EEVPD_wanted,
