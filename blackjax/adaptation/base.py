@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import NamedTuple, Set
+from typing import NamedTuple
 
 import jax
 
@@ -37,9 +37,9 @@ def return_all_adapt_info(state, info, adaptation_state):
 
 
 def get_filter_adapt_info_fn(
-    state_keys: Set[str] = set(),
-    info_keys: Set[str] = set(),
-    adapt_state_keys: Set[str] = set(),
+    state_keys: set[str] = set(),
+    info_keys: set[str] = set(),
+    adapt_state_keys: set[str] = set(),
 ):
     """Generate a function to filter what is saved in AdaptationInfo.  Used
     for adptation_info_fn parameters of the adaptation algorithms.

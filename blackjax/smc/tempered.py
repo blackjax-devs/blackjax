@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -71,7 +71,8 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
-    update_particles_fn: Optional[Callable] = None,
+    update_particles_fn: Callable | None = None,
+    batch_size: int = 0,
 ) -> Callable:
     """Build the base Tempered SMC kernel.
 
@@ -104,6 +105,12 @@ def build_kernel(
     update_particles_fn: Callable, optional
         Optional custom function to update particles. If None, uses
         smc_from_mcmc.build_kernel.
+    batch_size: int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Passed to the underlying
+        ``smc_from_mcmc.build_kernel`` call to enable ``jax.lax.map``-based
+        batching, reducing peak GPU memory. ``0`` (default) keeps the
+        original ``jax.vmap`` behaviour.
 
     Returns
     -------
@@ -119,6 +126,7 @@ def build_kernel(
             mcmc_init_fn,
             resampling_fn,
             update_strategy,
+            batch_size=batch_size,
         )
         if update_particles_fn is None
         else update_particles_fn
@@ -192,9 +200,10 @@ def as_top_level_api(
     mcmc_init_fn: Callable,
     mcmc_parameters: dict,
     resampling_fn: Callable,
-    num_mcmc_steps: Optional[int] = 10,
+    num_mcmc_steps: int | None = 10,
     update_strategy: Callable = update_and_take_last,
-    update_particles_fn: Optional[Callable] = None,
+    update_particles_fn: Callable | None = None,
+    batch_size: int = 0,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the Tempered SMC kernel.
 
@@ -222,6 +231,11 @@ def as_top_level_api(
     update_particles_fn: Callable, optional
         Optional custom function to update particles. If None, uses
         smc_from_mcmc.build_kernel.
+    batch_size: int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Reduces peak GPU memory by using
+        ``jax.lax.map`` instead of a full ``jax.vmap``. ``0`` (default) keeps
+        the original ``jax.vmap`` behaviour.
 
     Returns
     -------
@@ -238,10 +252,11 @@ def as_top_level_api(
         resampling_fn,
         update_strategy,
         update_particles_fn,
+        batch_size=batch_size,
     )
 
     def init_fn(
-        position: ArrayLikeTree, rng_key: Optional[PRNGKey] = None
+        position: ArrayLikeTree, rng_key: PRNGKey | None = None
     ) -> TemperedSMCState:
         del rng_key
         return init(position)

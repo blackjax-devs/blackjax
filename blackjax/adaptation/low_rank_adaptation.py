@@ -1,0 +1,652 @@
+# Copyright 2020- The Blackjax Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Adaptation of the low-rank-modified mass matrix for HMC-family samplers.
+
+Implements Algorithm 1 of :cite:p:`seyboldt2026preconditioning`, following the
+nutpie reference implementation.  The mass matrix has the form
+
+.. math::
+
+    M^{-1} = \\operatorname{diag}(\\sigma)
+             \\bigl(I + U(\\Lambda - I)U^\\top\\bigr)
+             \\operatorname{diag}(\\sigma)
+
+and is adapted by minimising the sample Fisher divergence.  All HMC operations
+cost :math:`O(dk)` where :math:`k` is the low rank.
+
+Key algorithmic choices that match nutpie:
+
+* **Population variance** (divide by *n*, not *n-1*) for diagonal scaling.
+* **σ clipping** to ``[1e-20, 1e20]`` to avoid premature saturation.
+* **Optimal translation** μ* = x̄ + σ²⊙ᾱ is computed and returned.
+* **Regularisation**: projected covariance is ``P P^T / γ + I`` (nutpie's
+  convention: the *unnormalised* sum-of-outer-products is divided by ``γ``
+  directly, with no ``n`` scaling; see ``nuts-rs``
+  ``src/transform/adapt/low_rank.rs::estimate_mass_matrix``). Default
+  ``γ=1e-5`` matches nutpie's ``LowRankSettings::default``. The
+  regularisation therefore only matters when the projected subspace is
+  rank-deficient (few draws relative to ``2·max_rank``); it fades away as
+  the number of draws grows, consistent with Theorem 2.4 of
+  :cite:p:`seyboldt2026preconditioning` (exact recovery once draws exceed
+  ``d+1``).
+* **SPD mean of the draw covariance and the *inverse* score covariance**:
+  Theorem 2.3 / Eq. 9 of :cite:p:`seyboldt2026preconditioning` give the
+  (regularised) optimal inverse mass matrix as
+  ``M_γ⁻¹ = (cov(x)+γI) # (cov(∇log p)+γI)⁻¹`` — the AIRM geometric mean of
+  the draw covariance with the *inverse* of the score/gradient covariance.
+  Cross-validated against nutpie's own Rust ``spd_mean`` (``nuts-rs``
+  ``src/transform/adapt/low_rank.rs``), whose own unit test confirms
+  ``spd_mean(cov_draws, cov_grads) == cov_draws # cov_grads⁻¹``.
+* **Eigenvalue masking**: components with λ ∈ [1/cutoff, cutoff] are set
+  to λ=1 rather than clipped (default cutoff=2, matching nutpie's ``c=2``).
+
+The warmup schedule mirrors Stan's window adaptation: an initial fast phase,
+a series of doubling slow windows (metric + step-size), and a final fast
+phase.
+
+**Buffer policy and recompute cadence** (opt-in, default unchanged). The
+schedule above hard-resets the draw/gradient buffer to empty at every window
+switch and only recomputes the metric at a window's end. nutpie instead keeps
+an *accumulating*, partial-forget buffer: at a switch it pops only the draws
+that were already "background" (i.e. from the window before last), so the
+buffer retains the just-completed window's draws in addition to whatever
+accumulates in the next one -- and it recomputes the metric up to every draw
+(``mass_matrix_update_freq=1`` in ``nuts-rs``), not just at window ends
+(``nuts-rs`` ``src/transform/adapt/low_rank.rs::switch`` /
+``src/adapt_strategy.rs``). Passing ``buffer_policy="accumulating"`` to
+:func:`window_adaptation_low_rank` enables this; the default
+``"reset"`` reproduces the original hard-reset behaviour exactly.
+
+**Numerical robustness** (round-9 schedule-port audit). ``_compute_low_rank_metric``
+opportunistically promotes its internal computation to ``float64`` when JAX's
+``jax_enable_x64`` mode is enabled (regardless of the chain's own working
+dtype), and always applies a scale-relative positive-definiteness floor to
+both intermediate eigenspectra and the metric's own final eigenvalues --
+matching nuts-rs's own f64-throughout, PD-by-construction estimator. Enabling
+``jax_enable_x64`` is strongly recommended for this warmup.
+
+**Memory**: :func:`window_adaptation_low_rank`'s default ``adaptation_info_fn``
+drops the internal ``draws_buffer``/``grads_buffer`` working buffers from the
+per-step diagnostic trace (an O(``num_steps`` x ``buffer_size`` x ``d``)
+allocation ``jax.lax.scan`` would otherwise stack for no benefit); pass
+``adaptation_info_fn=blackjax.adaptation.base.return_all_adapt_info``
+explicitly to keep them.
+"""
+from typing import Callable, NamedTuple
+
+import jax.flatten_util as fu
+import jax.numpy as jnp
+import numpy as np
+
+import blackjax.mcmc as mcmc
+from blackjax.adaptation.base import AdaptationInfo, AdaptationResults
+from blackjax.adaptation.metric_estimators import (  # noqa: F401 — backward-compat re-export; callers import from here
+    _compute_low_rank_metric,
+    _relative_pd_floor,
+    _spd_mean,
+)
+from blackjax.adaptation.metric_recipes import (
+    _build_fisher_low_rank_accumulating_core,
+    _build_fisher_low_rank_core,
+    seed_low_rank_sigma_from_grad,
+)
+from blackjax.adaptation.staged_adaptation import (
+    StagedAdaptationState,
+    staged_adaptation,
+)
+from blackjax.adaptation.step_size import DualAveragingAdaptationState
+from blackjax.adaptation.window_adaptation import build_schedule
+from blackjax.base import AdaptationAlgorithm
+from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.util import pytree_size
+
+__all__ = [
+    "LowRankAdaptationState",
+    "build_growing_window_schedule",
+    "window_adaptation_low_rank",
+]
+
+
+class LowRankAdaptationState(NamedTuple):
+    """State for the low-rank mass matrix window adaptation.
+
+    ss_state
+        Internal state of the dual-averaging step-size adapter.
+    sigma
+        Current diagonal scaling, shape ``(d,)``.
+    mu_star
+        Current optimal translation ``x̄ + σ² ⊙ ᾱ``, shape ``(d,)``.
+    U
+        Current low-rank eigenvectors, shape ``(d, max_rank)``.
+    lam
+        Current eigenvalues, shape ``(max_rank,)``.
+    step_size
+        Current step size (updated every iteration).
+    draws_buffer
+        Circular buffer storing the last ``buffer_size`` chain positions,
+        shape ``(buffer_size, d)``.
+    grads_buffer
+        Circular buffer storing the corresponding log-density gradients,
+        shape ``(buffer_size, d)``.
+    buffer_idx
+        Number of currently-valid samples in the buffer (the first
+        ``buffer_idx`` rows). Under ``buffer_policy="reset"`` this resets to
+        0 at each slow window boundary; under ``"accumulating"`` it only
+        shrinks by ``background_split`` at a switch (nutpie's partial-forget
+        pop), so it persists across window boundaries.
+    background_split
+        Number of the buffer's leading (oldest) rows considered "background"
+        -- to be dropped at the *next* switch, matching nuts-rs's
+        ``LowRankMassMatrixStrategy::background_split`` (``switch()`` pops
+        this many draws from the front, then resets it to the post-pop
+        buffer length). Always ``0`` and inert under ``buffer_policy="reset"``.
+    recompute_counter
+        Number of slow-stage steps since the metric was last recomputed;
+        gates the ``recompute_every`` cadence under ``buffer_policy=
+        "accumulating"``. Always inert under ``buffer_policy="reset"``
+        (recompute there is tied solely to ``is_window_end``).
+    """
+
+    ss_state: DualAveragingAdaptationState
+    sigma: Array
+    mu_star: Array
+    U: Array
+    lam: Array
+    step_size: float
+    draws_buffer: Array
+    grads_buffer: Array
+    buffer_idx: int
+    background_split: int
+    recompute_counter: int
+
+
+def _default_low_rank_adaptation_info_fn(
+    state, info, adaptation_state: LowRankAdaptationState
+) -> AdaptationInfo:
+    """Default ``adaptation_info_fn`` for :func:`window_adaptation_low_rank`.
+
+    Root-caused OOM finding (round-9 audit, calibration harness escalation
+    ``BUFFER_BUG.md``): with the framework's generic
+    :func:`~blackjax.adaptation.base.return_all_adapt_info` as the default,
+    ``run``'s ``jax.lax.scan`` stacks the ENTIRE per-step
+    :class:`LowRankAdaptationState` -- including ``draws_buffer`` and
+    ``grads_buffer``, each shape ``(buffer_size, d)`` -- into a
+    ``(num_steps, buffer_size, d)`` array *per field*, even though nothing
+    downstream reads the raw per-step buffer contents (verified: no test or
+    callsite in this codebase touches ``info.adaptation_state.draws_buffer``
+    /``.grads_buffer``). At d=503, ``buffer_size=4100`` (Stan's own schedule
+    at ``num_steps=5000`` under ``buffer_policy="accumulating"``), this is
+    ``5000 * 4100 * 503 * 4 bytes = 41,246,000,000`` -- an EXACT match to
+    the reported ``jax.errors.JaxRuntimeError: Out of memory allocating
+    41246000000 bytes``, confirming the stacked buffer (not
+    ``_compute_low_rank_metric``'s own SVD/QR pipeline, which uses only
+    ~350 MB in isolation at this exact (B, d) shape) is the single
+    allocation that failed. This applies to BOTH buffer policies (the same
+    state shape, same ``lax.scan`` stacking mechanism) -- "reset"'s own
+    buffer-size heuristic can reach a comparable scale at large enough
+    ``num_steps``, so this default drops the two large fields
+    unconditionally rather than special-casing ``buffer_policy``.
+
+    Drops ``draws_buffer``/``grads_buffer`` from the per-step
+    ``adaptation_state`` trace (replaced with ``None``, i.e. no leaves --
+    a standard JAX pytree pattern for "don't stack this"), while otherwise
+    behaving exactly like ``return_all_adapt_info`` (``state``/``info`` and
+    every OTHER ``adaptation_state`` field -- ``sigma``, ``mu_star``, ``U``,
+    ``lam``, ``step_size``, etc. -- stay fully populated per step, each
+    O(d) or O(d*max_rank), i.e. negligible even stacked over
+    ``num_steps``). Callers who need the raw per-step buffer trace can pass
+    ``adaptation_info_fn=return_all_adapt_info`` explicitly.
+    """
+    trimmed_adaptation_state = adaptation_state._replace(
+        draws_buffer=None, grads_buffer=None
+    )
+    return AdaptationInfo(state, info, trimmed_adaptation_state)
+
+
+def _engine_state_to_low_rank_adaptation_state(
+    engine_state: StagedAdaptationState,
+) -> "LowRankAdaptationState":
+    """Convert a :class:`~blackjax.adaptation.staged_adaptation.StagedAdaptationState`
+    (whose ``imm_state`` is a :class:`~blackjax.adaptation.metric_recipes
+    .LowRankMetricCoreState`) to a :class:`LowRankAdaptationState`.
+
+    Used by the engine-path info bridge in :func:`window_adaptation_low_rank`
+    to expose the same ``adaptation_state`` field layout for both buffer policies.
+    Downstream code that inspects
+    ``info[-1].adaptation_state.sigma``, ``.mu_star``, ``.U``, etc. continues
+    to work without change across both buffer policies.
+    """
+    imm = engine_state.imm_state  # LowRankMetricCoreState
+    return LowRankAdaptationState(
+        ss_state=engine_state.ss_state,
+        sigma=imm.inverse_mass_matrix.sigma,
+        mu_star=imm.mu_star,
+        U=imm.inverse_mass_matrix.U,
+        lam=imm.inverse_mass_matrix.lam,
+        step_size=engine_state.step_size,
+        draws_buffer=imm.draws_buffer,
+        grads_buffer=imm.grads_buffer,
+        buffer_idx=imm.buffer_idx,
+        background_split=imm.background_split,
+        recompute_counter=imm.recompute_counter,
+    )
+
+
+def _make_low_rank_bridge_info_fn(user_fn: Callable) -> Callable:
+    """Wrap a :class:`LowRankAdaptationState`-expecting info fn for use
+    with the staged-adaptation engine.
+
+    :func:`~blackjax.adaptation.staged_adaptation.staged_adaptation` produces
+    :class:`~blackjax.adaptation.staged_adaptation.StagedAdaptationState` as
+    its per-step adaptation state.  :func:`window_adaptation_low_rank`'s
+    ``adaptation_info_fn`` parameter (including the default
+    :func:`_default_low_rank_adaptation_info_fn`) expects a
+    :class:`LowRankAdaptationState`.  This factory bridges the two: the engine's
+    state is converted via :func:`_engine_state_to_low_rank_adaptation_state`
+    before ``user_fn`` is called, so the returned ``info`` pytree has the same
+    structure whether the reset or accumulating path is active.
+    """
+
+    def _wrapped(state, info, engine_state: StagedAdaptationState) -> AdaptationInfo:
+        lr_state = _engine_state_to_low_rank_adaptation_state(engine_state)
+        return user_fn(state, info, lr_state)
+
+    return _wrapped
+
+
+# ---------------------------------------------------------------------------
+# Core batch algorithm
+# ---------------------------------------------------------------------------
+
+
+# _relative_pd_floor, _spd_mean, and _compute_low_rank_metric are defined in
+# metric_estimators and imported above.  They remain accessible from this
+# module's namespace for backward-compatibility (existing callers that import
+# from low_rank_adaptation continue to work).
+# Canonical location: blackjax.adaptation.metric_estimators.
+
+
+def _accumulating_buffer_capacity(schedule: Array) -> int:
+    """Static buffer capacity required by ``buffer_policy="accumulating"``,
+    derived from a concrete ``(stage, is_window_end)`` schedule array.
+
+    Under the partial-forget switch, the buffer holds at most the
+    just-completed window's draws (kept as the new background) plus however
+    many draws have accumulated in the in-progress next window at *its* own
+    switch (up to that window's own size) -- so the tight worst case across
+    the whole schedule is ``max(window[i] + window[i-1])`` over consecutive
+    window-size pairs. Computed once, outside any trace (the schedule is a
+    concrete array by construction -- ``num_steps`` must already be a static
+    Python int for ``jax.random.split``/the scan length elsewhere in
+    :func:`window_adaptation_low_rank`'s ``run``), so ordinary numpy suffices.
+    """
+    is_end = np.asarray(schedule[:, 1]).astype(bool)
+    window_end_idx = np.flatnonzero(is_end)
+    if window_end_idx.size == 0:
+        return 1
+    window_sizes = np.diff(np.concatenate([[-1], window_end_idx]))
+    if window_sizes.size == 1:
+        return int(window_sizes[0])
+    pair_sums = window_sizes[1:] + window_sizes[:-1]
+    return int(max(window_sizes[0], pair_sums.max()))
+
+
+# ---------------------------------------------------------------------------
+# Schedule builders
+# ---------------------------------------------------------------------------
+
+
+def build_growing_window_schedule(
+    num_steps: int,
+    early_window: float = 0.3,
+    step_size_window: float = 0.15,
+    early_window_size: int = 10,
+    window_size: int = 80,
+    window_growth: float = 1.5,
+) -> Array:
+    """Proportional-to-tune, geometrically-growing-window warmup schedule.
+
+    An alternate to :func:`~blackjax.adaptation.window_adaptation.build_schedule`
+    (Stan's fixed-absolute, 2x-doubling schedule) that instead sizes windows
+    *proportionally to* ``num_steps`` and grows them by ``window_growth``
+    (1.5x) rather than doubling, matching nutpie's window-sizing and
+    growth-factor choices (see ``nuts-rs`` ``src/adapt_strategy.rs``,
+    ``EuclideanAdaptOptions::default``):
+
+    * ``early_window=0.3``, ``step_size_window=0.15`` -- fractions of
+      ``num_steps``, vs Stan/blackjax's fixed absolute defaults
+      (``initial_buffer_size=75``, ``final_buffer_size=50``) that are only
+      rescaled when they don't fit the budget.
+    * ``window_growth=1.5`` -- vs Stan's 2x doubling
+      (``mass_matrix_window_growth`` in nutpie's receipts).
+
+    **Scope note.** This function (together with the ``gradient_based_init``
+    option on :func:`window_adaptation_low_rank`) implements
+    the window-sizing and gradient-based-init components of nutpie's warmup;
+    pair it with ``buffer_policy="accumulating"`` on
+    :func:`window_adaptation_low_rank` for the partial-forget buffer and
+    continuous recompute cadence, matching nutpie's other main pieces.
+
+    nutpie's actual schedule is an *online*, per-draw decision
+    (``adapt_strategy.rs``'s ``is_late`` look-ahead + a partial-forget
+    circular buffer + up-to-every-draw metric recomputation,
+    ``mass_matrix_update_freq=1``), whereas blackjax's warmup runs the
+    entire schedule as a static array through a single ``jax.lax.scan``
+    (fixed ahead of time, like Stan's own :func:`build_schedule`), so this
+    function precomputes an equivalent *offline* schedule with the same
+    growth/sizing character -- **including the ``is_late`` rule**: the main
+    phase does not start a window whose own successor (grown by
+    ``window_growth``) would not fit before ``final_buffer_start``; instead
+    the in-progress window keeps absorbing draws, unswitched, all the way to
+    the step-size-only phase boundary. Without this, the naive
+    ``min(current_size, remaining)`` truncation manufactures a tiny final
+    window (e.g. 45 draws, under ``d=50``, at ``num_steps=2000``) that
+    starves the final low-rank/dense metric recompute -- the ``is_late``
+    rule instead gives a large, well-supported final window (e.g. 450 at the
+    same budget), matching nuts-rs's own final-recompute support (round-9
+    schedule-port audit).
+
+    Unlike Stan's schedule, there is no purely step-size-only *initial*
+    buffer: nutpie starts adapting the mass matrix from the very first draw
+    (paper §3.2, "More frequent updates"), so the entire region up to the
+    final step-size-only window is labelled "slow" (mass-matrix-adapting),
+    split into windows of size ``early_window_size`` during the early phase
+    and growing windows (starting at ``window_size``, x``window_growth``
+    each switch) during the main phase.
+
+    Parameters
+    ----------
+    num_steps
+        Total number of warmup steps.
+    early_window
+        Fraction of ``num_steps`` devoted to the early phase (fixed small
+        windows of size ``early_window_size``). Default ``0.3`` matches
+        nutpie's ``early_window``.
+    step_size_window
+        Fraction of ``num_steps`` devoted to the final step-size-only
+        phase (no mass-matrix updates). Default ``0.15`` matches nutpie's
+        ``step_size_window``.
+    early_window_size
+        Fixed window size during the early phase. Default ``10`` matches
+        nutpie's ``early_mass_matrix_switch_freq``.
+    window_size
+        Starting window size for the main (post-early) phase, before
+        growth. Default ``80`` matches nutpie's ``mass_matrix_switch_freq``.
+    window_growth
+        Multiplicative growth factor applied to the window size after each
+        switch in the main phase. Default ``1.5`` matches nutpie's
+        ``mass_matrix_window_growth``.
+
+    Returns
+    -------
+    A ``(num_steps, 2)`` array of ``(stage, is_window_end)`` pairs, in the
+    same format as :func:`~blackjax.adaptation.window_adaptation.build_schedule`
+    (stage ``0`` = fast/step-size-only, stage ``1`` = slow/mass-matrix-adapting).
+    """
+    if num_steps < 20:
+        return jnp.array([(0, False)] * num_steps)
+
+    final_buffer_size = max(int(round(step_size_window * num_steps)), 1)
+    final_buffer_start = num_steps - final_buffer_size
+    early_end = min(max(int(round(early_window * num_steps)), 1), final_buffer_start)
+
+    schedule = []
+
+    # Early phase: fixed-size windows of `early_window_size`, slow stage.
+    pos = 0
+    while pos < early_end:
+        size = min(early_window_size, early_end - pos)
+        schedule += [(1, False)] * (size - 1)
+        schedule.append((1, True))
+        pos += size
+
+    # Main phase: windows starting at `window_size`, growing by
+    # `window_growth` after each switch, slow stage.
+    #
+    # ``is_late`` (nuts-rs ``adapt_strategy.rs``: ``next_window_size + draw >
+    # final_step_size_window``): before committing to a window switch, check
+    # whether the window AFTER this one (grown by `window_growth`) would even
+    # fit before `final_buffer_start`. If not, this window never switches --
+    # it keeps absorbing draws, unswitched, all the way to
+    # `final_buffer_start`, so the metric's FINAL recompute sees a large,
+    # well-supported buffer instead of a truncated remainder. Naively
+    # truncating this window to `min(current_size, remaining)` (the pre-fix
+    # behaviour) manufactures a final window that can be far smaller than the
+    # schedule's own growth would otherwise reach -- e.g. 45 draws (< d=50)
+    # at n_warmup=2000 on a rank-10 low-rank fit, vs 450 once absorbed here
+    # (round-9 schedule-port audit, both arms).
+    current_size = window_size
+    while pos < final_buffer_start:
+        remaining = final_buffer_start - pos
+        next_size = max(current_size + 1, int(round(current_size * window_growth)))
+        is_late = (pos + current_size) + next_size > final_buffer_start
+        if is_late:
+            size = remaining
+            schedule += [(1, False)] * (size - 1)
+            schedule.append((1, True))
+            pos += size
+            break
+        size = current_size
+        schedule += [(1, False)] * (size - 1)
+        schedule.append((1, True))
+        pos += size
+        current_size = next_size
+
+    # Final phase: step-size-only, fast stage.
+    schedule += [(0, False)] * (num_steps - pos - 1)
+    schedule.append((0, False))
+
+    return jnp.array(schedule)
+
+
+# ---------------------------------------------------------------------------
+# High-level API
+# ---------------------------------------------------------------------------
+
+
+def window_adaptation_low_rank(
+    algorithm,
+    logdensity_fn: Callable,
+    max_rank: int = 10,
+    initial_step_size: float = 1.0,
+    target_acceptance_rate: float = 0.80,
+    gamma: float = 1e-5,
+    cutoff: float = 2.0,
+    adaptation_info_fn: Callable = _default_low_rank_adaptation_info_fn,
+    integrator=mcmc.integrators.velocity_verlet,
+    gradient_based_init: bool = False,
+    schedule_fn: Callable[[int], Array] = build_schedule,
+    buffer_policy: str = "reset",
+    recompute_every: int = 1,
+    **extra_parameters,
+) -> AdaptationAlgorithm:
+    """Adapt step size and a low-rank mass matrix for HMC-family samplers.
+
+    Uses the three-phase Stan-style warmup schedule while replacing Welford
+    covariance estimation with the Fisher-divergence-minimising low-rank
+    metric of :cite:p:`seyboldt2026preconditioning`.
+
+    The returned ``AdaptationAlgorithm`` has a single ``run`` method::
+
+        (state, params), info = warmup.run(rng_key, position, num_steps=1000)
+        nuts = blackjax.nuts(logdensity_fn, **params)
+
+    Parameters
+    ----------
+    algorithm
+        An HMC-family algorithm object (e.g. ``blackjax.nuts``).
+    logdensity_fn
+        Log-density of the target distribution.
+    max_rank
+        Maximum number of eigenvectors in the low-rank correction.
+    initial_step_size
+        Starting step size (adapted automatically).
+    target_acceptance_rate
+        Target acceptance rate for dual averaging.
+    gamma
+        Regularisation scale; projected covariance is divided by ``gamma``
+        before adding identity (nutpie convention -- no ``n`` scaling).
+        Default ``1e-5`` matches nutpie's ``LowRankSettings::default``.
+    cutoff
+        Eigenvectors with eigenvalue in ``[1/cutoff, cutoff]`` are masked.
+        Default ``2.0`` matches nutpie's ``c=2``.
+    adaptation_info_fn
+        Controls what adaptation info is retained; see
+        ``blackjax.adaptation.base``. Default
+        :func:`_default_low_rank_adaptation_info_fn` drops the raw
+        ``draws_buffer``/``grads_buffer`` internal working buffers from the
+        per-step trace (an O(num_steps * buffer_size * d) allocation
+        otherwise stacked by ``jax.lax.scan`` for no benefit -- the exact
+        root cause of a reported OOM at high d + large
+        ``buffer_policy="accumulating"`` buffers; see that function's
+        docstring). Pass ``blackjax.adaptation.base.return_all_adapt_info``
+        explicitly to keep the raw per-step buffer trace.
+    integrator
+        Integrator to pass to ``algorithm.build_kernel``.
+    gradient_based_init
+        Seed the diagonal scale from the initial gradient instead of the
+        identity, matching nutpie's own initialisation.
+        Default ``False`` reproduces the original behaviour exactly.
+    schedule_fn
+        Schedule-generator function ``num_steps -> (num_steps, 2)`` array of
+        ``(stage, is_window_end)`` pairs. Default is Stan's fixed-absolute,
+        2x-doubling :func:`~blackjax.adaptation.window_adaptation.build_schedule`
+        (unchanged default behaviour). Pass
+        :func:`build_growing_window_schedule` for nutpie's proportional-to-tune,
+        1.5x-growing-window schedule -- see that function's docstring for
+        exactly what it does and does not capture relative to nutpie's own
+        (online, per-draw) schedule.
+    buffer_policy
+        ``"reset"`` (default, unchanged behaviour) or ``"accumulating"``
+        (nutpie's partial-forget buffer, ``nuts-rs`` ``switch()``).
+        Composes with any ``schedule_fn``.
+    recompute_every
+        Only used when ``buffer_policy="accumulating"``: number of slow-stage
+        steps between mid-window metric recomputes.  Default 1 matches
+        nutpie's ``mass_matrix_update_freq=1``.
+    **extra_parameters
+        Additional keyword arguments forwarded to the kernel at every step
+        (e.g. ``num_integration_steps`` for HMC).
+
+    Returns
+    -------
+    An ``AdaptationAlgorithm`` whose ``run`` method returns
+    ``(AdaptationResults, info)``.  ``AdaptationResults.parameters`` contains
+    ``step_size``, ``inverse_mass_matrix`` (a
+    :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix` NamedTuple holding
+    the pure-array payload ``(sigma, U, lam)``), and any ``extra_parameters``.
+    The kernel layer normalises this into a full
+    :class:`~blackjax.mcmc.metrics.Metric` via
+    :func:`~blackjax.mcmc.metrics.default_metric` at call time. Returning the
+    pure-array form (rather than the closure-bearing ``Metric``) lets the
+    warmup compose with ``jax.vmap`` over chains; see GH #916.
+
+    ``AdaptationResults.state`` is re-initialised at the optimal translation
+    μ* = x̄ + σ²⊙ᾱ, so it can be passed directly as the starting state for
+    production sampling.  The last chain state from warmup is available as
+    ``warmup_info[-1].state``, and μ* as
+    ``warmup_info[-1].adaptation_state.mu_star``.
+
+    Notes
+    -----
+    Both buffer policies run on the staged-adaptation engine.  The reset
+    policy hard-clears the draw/gradient buffer at each slow-window boundary;
+    the accumulating policy retains the previous window's draws as background
+    (nutpie partial-forget) and recomputes the metric mid-window according to
+    ``recompute_every``.
+
+    Wrap ``warmup.run(...)`` in :func:`blackjax.progress_bar` to display a
+    progress bar, e.g. ``with blackjax.progress_bar(): warmup.run(...)``.
+    """
+    if buffer_policy not in ("reset", "accumulating"):
+        raise ValueError(
+            f"buffer_policy must be 'reset' or 'accumulating', got {buffer_policy!r}"
+        )
+    if recompute_every < 1:
+        raise ValueError(f"recompute_every must be >= 1, got {recompute_every!r}")
+
+    def run(rng_key: PRNGKey, position: ArrayLikeTree, num_steps: int = 1000):
+        # Build the MetricCore: policy-specific buffer sizing + core builder.
+        if buffer_policy == "accumulating":
+            # Pre-compute schedule to derive the tight worst-case buffer
+            # capacity from the window boundaries.  The partial-forget switch
+            # keeps the just-completed window's draws as the new background, so
+            # the tight bound is max(window[i] + window[i-1]) over all pairs.
+            schedule = schedule_fn(num_steps)
+            buffer_size = max(_accumulating_buffer_capacity(schedule), 1)
+
+            def _schedule_fn(n):
+                return schedule  # reuse the pre-computed array
+
+            core = _build_fisher_low_rank_accumulating_core(
+                buffer_size=buffer_size,
+                max_rank=max_rank,
+                gamma=gamma,
+                cutoff=cutoff,
+                recompute_every=recompute_every,
+            )
+        else:
+            # Size the buffer to the expected largest slow window rather than
+            # the full warmup length.  Modular indexing in the core's update()
+            # keeps only the most recent buffer_size draws when a window exceeds
+            # buffer_size -- avoiding O(num_steps × d) allocations for large d.
+            typical_window = max(num_steps // 5, 128)
+            buffer_size = min(typical_window * 2, max(num_steps, 1))
+            _schedule_fn = schedule_fn
+            core = _build_fisher_low_rank_core(
+                buffer_size=buffer_size,
+                max_rank=max_rank,
+                gamma=gamma,
+                cutoff=cutoff,
+            )
+
+        seeded_imm_state = None
+        if gradient_based_init:
+            # Call algorithm.init once to get the initial gradient for sigma
+            # seeding.  staged_adaptation().run() will call algorithm.init
+            # again internally (deterministic -- same result, negligible cost).
+            _init_state = algorithm.init(position, logdensity_fn)
+            n_dims = pytree_size(position)
+            seeded_imm_state = seed_low_rank_sigma_from_grad(
+                core.init(n_dims), _init_state.logdensity_grad
+            )
+
+        engine = staged_adaptation(
+            algorithm,
+            logdensity_fn,
+            metric=core,
+            initial_step_size=initial_step_size,
+            target_acceptance_rate=target_acceptance_rate,
+            # Bridge: engine produces StagedAdaptationState; user's info fn
+            # expects LowRankAdaptationState -- _make_low_rank_bridge_info_fn
+            # converts between the two so that info field access is unchanged.
+            adaptation_info_fn=_make_low_rank_bridge_info_fn(adaptation_info_fn),
+            integrator=integrator,
+            schedule_fn=_schedule_fn,
+            initial_metric_state=seeded_imm_state,
+            **extra_parameters,
+        )
+
+        results, info = engine.run(rng_key, position, num_steps)  # type: ignore[call-arg]
+
+        # Re-initialise chain at mu* = x̄ + σ²⊙ᾱ (optimal translation, §3.2).
+        # mu_star is preserved per-step in the bridged adaptation_state;
+        # [-1] gives the final warmup step's value.
+        mu_star = info.adaptation_state.mu_star[-1]
+        _, unravel = fu.ravel_pytree(position)
+        mu_star_state = algorithm.init(unravel(mu_star), logdensity_fn)
+
+        return AdaptationResults(mu_star_state, results.parameters), info
+
+    return AdaptationAlgorithm(run)

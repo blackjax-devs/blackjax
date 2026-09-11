@@ -10,13 +10,16 @@ import jax.scipy.stats as stats
 import numpy as np
 import optax
 from absl.testing import absltest, parameterized
+from jax.flatten_util import ravel_pytree
 
 # import blackjax
 import blackjax.diagnostics as diagnostics
+import blackjax.mcmc.metrics as metrics
 import blackjax.mcmc.random_walk
 from blackjax.adaptation.base import get_filter_adapt_info_fn, return_all_adapt_info
 from blackjax.adaptation.laps import laps as run_laps
-from blackjax.mcmc.adjusted_mclmc_dynamic import rescale
+from blackjax.mcmc.adjusted_mclmc import rescale
+from blackjax.mcmc.ghmc import _metric_from_momentum_inverse_scale
 from blackjax.mcmc.integrators import isokinetic_mclachlan
 from blackjax.util import run_inference_algorithm
 
@@ -66,6 +69,13 @@ regression_test_cases = [
         "parameters": {},
         "num_warmup_steps": 1_000,
         "num_sampling_steps": 1_000,
+    },
+    {
+        "algorithm": blackjax.multinomial_hmc,
+        "initial_position": {"log_scale": 0.0, "coefs": 4.0},
+        "parameters": {"num_integration_steps": 20},
+        "num_warmup_steps": 1_000,
+        "num_sampling_steps": 3_000,
     },
 ]
 
@@ -122,10 +132,8 @@ class LinearRegressionTest(chex.TestCase):
             position=initial_position, logdensity_fn=logdensity_fn, rng_key=init_key
         )
 
-        kernel = lambda inverse_mass_matrix: blackjax.mcmc.mclmc.build_kernel(
-            logdensity_fn=logdensity_fn,
+        kernel = blackjax.mcmc.mclmc.build_kernel(
             integrator=blackjax.mcmc.mclmc.isokinetic_mclachlan,
-            inverse_mass_matrix=inverse_mass_matrix,
         )
 
         (
@@ -134,6 +142,7 @@ class LinearRegressionTest(chex.TestCase):
             _,
         ) = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
+            logdensity_fn=logdensity_fn,
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
@@ -175,17 +184,11 @@ class LinearRegressionTest(chex.TestCase):
             random_generator_arg=init_key,
         )
 
-        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, inverse_mass_matrix: blackjax.mcmc.adjusted_mclmc_dynamic.build_kernel(
+        kernel = blackjax.mcmc.adjusted_mclmc_dynamic.build_kernel(
             integrator=integrator,
-            integration_steps_fn=lambda k: jnp.ceil(
-                jax.random.uniform(k) * rescale(avg_num_integration_steps)
-            ),
-            inverse_mass_matrix=inverse_mass_matrix,
-        )(
-            rng_key=rng_key,
-            state=state,
-            step_size=step_size,
-            logdensity_fn=logdensity_fn,
+            integration_steps_fn=lambda k, avg: jnp.ceil(
+                jax.random.uniform(k) * rescale(avg)
+            ).astype(jnp.int32),
         )
 
         target_acc_rate = 0.65
@@ -196,6 +199,7 @@ class LinearRegressionTest(chex.TestCase):
             _,
         ) = blackjax.adjusted_mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
+            logdensity_fn=logdensity_fn,
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
@@ -212,9 +216,10 @@ class LinearRegressionTest(chex.TestCase):
         alg = blackjax.adjusted_mclmc_dynamic(
             logdensity_fn=logdensity_fn,
             step_size=step_size,
-            integration_steps_fn=lambda key: jnp.ceil(
-                jax.random.uniform(key) * rescale(L / step_size)
-            ),
+            integration_steps_fn=lambda key, avg: jnp.ceil(
+                jax.random.uniform(key) * rescale(avg)
+            ).astype(jnp.int32),
+            integration_steps_params=(L / step_size,),
             integrator=integrator,
             inverse_mass_matrix=blackjax_mclmc_sampler_params.inverse_mass_matrix,
         )
@@ -225,7 +230,6 @@ class LinearRegressionTest(chex.TestCase):
             inference_algorithm=alg,
             num_steps=num_steps,
             transform=lambda state, _: state.position,
-            progress_bar=False,
         )
 
         return out
@@ -247,16 +251,7 @@ class LinearRegressionTest(chex.TestCase):
             logdensity_fn=logdensity_fn,
         )
 
-        kernel = lambda rng_key, state, avg_num_integration_steps, step_size, inverse_mass_matrix: blackjax.mcmc.adjusted_mclmc.build_kernel(
-            integrator=integrator,
-            inverse_mass_matrix=inverse_mass_matrix,
-            logdensity_fn=logdensity_fn,
-        )(
-            rng_key=rng_key,
-            state=state,
-            step_size=step_size,
-            num_integration_steps=avg_num_integration_steps,
-        )
+        kernel = blackjax.mcmc.adjusted_mclmc.build_kernel(integrator=integrator)
 
         target_acc_rate = 0.9
 
@@ -266,6 +261,7 @@ class LinearRegressionTest(chex.TestCase):
             _,
         ) = blackjax.adjusted_mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
+            logdensity_fn=logdensity_fn,
             num_steps=num_steps,
             state=initial_state,
             rng_key=tune_key,
@@ -293,7 +289,6 @@ class LinearRegressionTest(chex.TestCase):
             inference_algorithm=alg,
             num_steps=num_steps,
             transform=lambda state, _: state.position,
-            progress_bar=False,
         )
 
         return out
@@ -351,7 +346,6 @@ class LinearRegressionTest(chex.TestCase):
             case["algorithm"],
             logposterior_fn,
             is_mass_matrix_diagonal,
-            progress_bar=True,
             adaptation_info_fn=window_adapt_config["filter_fn"],
             **case["parameters"],
         )
@@ -544,14 +538,11 @@ class LinearRegressionTest(chex.TestCase):
                 rng_key=init_key,
             )
 
-            kernel = lambda inverse_mass_matrix: blackjax.mcmc.mclmc.build_kernel(
-                logdensity_fn=model.logdensity_fn,
-                inverse_mass_matrix=inverse_mass_matrix,
-                integrator=integrator,
-            )
+            kernel = blackjax.mcmc.mclmc.build_kernel(integrator=integrator)
 
             (_, blackjax_mclmc_sampler_params, _) = blackjax.mclmc_find_L_and_step_size(
                 mclmc_kernel=kernel,
+                logdensity_fn=model.logdensity_fn,
                 num_steps=num_steps,
                 state=initial_state,
                 rng_key=tune_key,
@@ -738,7 +729,7 @@ class LinearRegressionTest(chex.TestCase):
             optim=optax.adam(learning_rate=0.1),
             num_steps=1000,
         )
-        inference_algorithm = blackjax.dynamic_hmc(logposterior_fn, **parameters)
+        inference_algorithm = blackjax.dhmc(logposterior_fn, **parameters)
 
         chain_keys = jax.random.split(inference_key, num_chains)
         _, states = jax.vmap(
@@ -786,14 +777,95 @@ class LinearRegressionTest(chex.TestCase):
             superchain_size=1,
         )
 
-        scale_samples = np.exp(final_state.position[:, 0])
-        coefs_samples = final_state.position[:, 1]
+        # ``final_state`` is the ensemble at the final step: one draw per chain.
+        ensemble = np.asarray(final_state.position)
 
-        print(np.mean(scale_samples))
-        print(np.mean(coefs_samples))
+        # Reference posterior: independent 4-chain NUTS, R-hat 1.00003, ESS ~1.6e4. See #1035.
+        posterior_mean = np.array([0.0325, 3.0135])
+        posterior_sd = np.array([0.0224, 0.0335])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+        # A non-finite step size means the rest of the budget ran as no-ops; gate on it first.
+        for phase in ("phase_1", "phase_2"):
+            step_sizes = np.asarray(info[phase]["step_size"])
+            first_bad_iter = int(
+                np.argmax(~np.isfinite(step_sizes))
+            )  # not inlined: pycodestyle 2.10.0 E702 on PEP 701 f-strings (3.12+)
+            assert np.all(np.isfinite(step_sizes)), (
+                f"{phase}: step size became non-finite at iteration "
+                f"{first_bad_iter} of {step_sizes.size}"
+            )
+        mean_acceptance = float(np.mean(np.asarray(info["phase_2"]["acc_prob"])))
+        assert (
+            mean_acceptance > 0.01
+        ), f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
+
+        # Median location (robust to one stray chain) and two-sided dispersion
+        # (an ensemble that never moved has sd 1.0, not ~0.02).
+        z_scores = (ensemble - posterior_mean) / posterior_sd
+        np.testing.assert_array_less(np.abs(np.median(z_scores, axis=0)), 6.0)
+
+        sd_ratio = ensemble.std(axis=0) / posterior_sd
+        np.testing.assert_array_less(sd_ratio, 2.0)
+        np.testing.assert_array_less(0.5, sd_ratio)
+
+        equilibrated = np.mean(np.all(np.abs(z_scores) < 6.0, axis=1))
+        # not f"{x:.0%}": pycodestyle 2.10.0 flags E231 on PEP 701 f-strings
+        equilibrated_pct = round(100 * equilibrated)
+        assert (
+            equilibrated >= 0.9
+        ), f"only {equilibrated_pct}% of chains are within 6 posterior sd"
+
+    @parameterized.named_parameters(
+        {"testcase_name": "typed_key", "use_typed_key": True},
+        {"testcase_name": "legacy_prngkey", "use_typed_key": False},
+    )
+    def test_laps_key_style(self, use_typed_key):
+        """Regression test: LAPS/ECA must work with both typed and legacy PRNGKey styles.
+
+        ``eca.py`` previously used ``keys_sampling.T`` which reverses ALL axes.
+        For old-style PRNGKey arrays, the shape is (num_chains, num_steps, 2)
+        and ``.T`` produced (2, num_steps, num_chains) — corrupting the key data.
+        The fix uses ``jnp.swapaxes(keys_sampling, 0, 1)`` which only swaps the
+        first two axes, leaving any trailing key-representation dims intact.
+        """
+        init_key0, init_key1, inference_key = jax.random.split(self.key, 3)
+        x_data = jax.random.normal(init_key0, shape=(200, 1))
+        y_data = 3 * x_data + jax.random.normal(init_key1, shape=x_data.shape)
+
+        logposterior_fn_ = functools.partial(
+            self.regression_logprob, x=x_data, preds=y_data
+        )
+        logposterior_fn = lambda x: logposterior_fn_(log_scale=x[0], coefs=x[1])
+
+        # Convert inference_key to the requested style
+        if not use_typed_key:
+            # Force legacy uint32[2] representation
+            inference_key = jax.random.PRNGKey(int(jax.random.bits(inference_key)))
+
+        # A short run (few steps) is sufficient to exercise the transpose path;
+        # we only check that the call completes and returns plausible shapes.
+        info, grads_per_step, _acc_prob, final_state = run_laps(
+            logdensity_fn=logposterior_fn,
+            sample_init=lambda key: jax.random.normal(key, shape=(2,)),
+            ndims=2,
+            num_steps1=50,
+            num_steps2=50,
+            num_chains=10,
+            mesh=jax.sharding.Mesh(jax.devices()[:1], "chains"),
+            rng_key=inference_key,
+            early_stop=False,
+            diagonal_preconditioning=True,
+            integrator_coefficients=None,
+            steps_per_sample=5,
+            r_end=0.5,
+            diagnostics=False,
+            superchain_size=1,
+        )
+        # Verify shapes are sane — the key-corruption bug produced wrong shapes.
+        assert final_state.position.shape == (10, 2), (
+            f"Unexpected shape {final_state.position.shape} with "
+            f"{'typed' if use_typed_key else 'legacy'} key"
+        )
 
     def test_barker(self):
         """Test the Barker kernel."""
@@ -1379,6 +1451,107 @@ class ConstrainedNormal(chex.TestCase):
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 4500, 1_000
         )
+
+class GHMCRichMetricTest(chex.TestCase):
+    """Test blackjax.ghmc with dense and low-rank momentum metrics.
+
+    `momentum_inverse_scale` now accepts the same `metrics.MetricTypes`
+    that `hmc`/`nuts` already do (dense array, `LowRankInverseMassMatrix`,
+    `Metric`, callable) in addition to the legacy per-dimension inverse
+    scale.
+    """
+
+    def setUp(self):
+        super().setUp()
+        self.key = jax.random.key(7)
+
+    def correlated_gaussian(self):
+        """A 3-D correlated Gaussian target with a known mean/covariance."""
+        loc = jnp.array([1.0, -2.0, 0.5])
+        scale = jnp.array([1.0, 2.0, 0.5])
+        correlation = jnp.array([[1.0, 0.6, -0.3], [0.6, 1.0, 0.2], [-0.3, 0.2, 1.0]])
+        cov = correlation * scale[:, None] * scale[None, :]
+
+        def logdensity_fn(x):
+            return stats.multivariate_normal.logpdf(x, loc, cov).sum()
+
+        return logdensity_fn, loc, cov
+
+    def run_ghmc(self, momentum_inverse_scale, num_steps=8000, burnin=2000):
+        # `delta` is a translation applied modulo 2 to the persistent slice
+        # variable: a multiple of 2 (e.g. the `delta=2.0` used elsewhere in
+        # this file for a univariate target) leaves the slice frozen and
+        # severely biases mixing for a correlated target, so we pick a
+        # non-degenerate value here.
+        logdensity_fn, loc, cov = self.correlated_gaussian()
+        inference_algorithm = blackjax.ghmc(
+            logdensity_fn,
+            step_size=0.3,
+            momentum_inverse_scale=momentum_inverse_scale,
+            alpha=0.8,
+            delta=1.3,
+        )
+        init_key, sample_key = jax.random.split(self.key)
+        initial_state = inference_algorithm.init(loc, init_key)
+        _, states = run_inference_algorithm(
+            rng_key=sample_key,
+            initial_state=initial_state,
+            inference_algorithm=inference_algorithm,
+            transform=lambda state, info: state.position,
+            num_steps=num_steps,
+        )
+        return states[burnin:], loc, cov
+
+    def test_dense_metric_recovers_moments(self):
+        """A dense (d, d) inverse mass matrix recovers mean and covariance."""
+        _, loc, cov = self.correlated_gaussian()
+        samples, loc, cov = self.run_ghmc(cov)
+        np.testing.assert_allclose(jnp.mean(samples, axis=0), loc, atol=0.35)
+        np.testing.assert_allclose(jnp.cov(samples.T), cov, atol=0.6)
+
+    def test_low_rank_metric_recovers_moments(self):
+        """A LowRankInverseMassMatrix metric recovers mean and covariance."""
+        _, loc, cov = self.correlated_gaussian()
+        sigma = jnp.sqrt(jnp.diagonal(cov))
+        inv_sigma = 1.0 / sigma
+        correlation = cov * inv_sigma[:, None] * inv_sigma[None, :]
+        eigenvalues, eigenvectors = jnp.linalg.eigh(correlation)
+        # Keep the 2 (out of d=3) eigendirections farthest from an identity
+        # correlation -- a genuine rank-2 low-rank correction.
+        order = jnp.argsort(jnp.abs(eigenvalues - 1.0))[::-1]
+        top = order[:2]
+        imm = metrics.LowRankInverseMassMatrix(
+            sigma=sigma, U=eigenvectors[:, top], lam=eigenvalues[top]
+        )
+        samples, loc, cov = self.run_ghmc(imm)
+        np.testing.assert_allclose(jnp.mean(samples, axis=0), loc, atol=0.35)
+        np.testing.assert_allclose(jnp.cov(samples.T), cov, atol=0.6)
+
+    def test_diagonal_metric_matches_legacy_gaussian_euclidean(self):
+        """Diagonal/scalar `momentum_inverse_scale` is unchanged by the
+        generalization: it must still reproduce today's
+        `gaussian_euclidean(scale**2)` bit-for-bit. This is the scale-vs-
+        variance subtlety -- squaring is preserved exactly for the legacy
+        input shape, only the new rich types (dense array, low-rank,
+        `Metric`, callable) skip it.
+        """
+        for momentum_inverse_scale in (jnp.array(1.0), jnp.array([1.0, 2.0, 0.5])):
+            metric = _metric_from_momentum_inverse_scale(momentum_inverse_scale)
+            flat_scale = ravel_pytree(momentum_inverse_scale)[0]
+            legacy_metric = metrics.gaussian_euclidean(flat_scale**2)
+
+            position = jnp.zeros_like(flat_scale)
+            momentum = jnp.arange(flat_scale.shape[0], dtype=flat_scale.dtype) * 0.1
+            key = jax.random.key(0)
+
+            np.testing.assert_allclose(
+                metric.kinetic_energy(momentum),
+                legacy_metric.kinetic_energy(momentum),
+            )
+            np.testing.assert_allclose(
+                ravel_pytree(metric.sample_momentum(key, position))[0],
+                ravel_pytree(legacy_metric.sample_momentum(key, position))[0],
+            )
 
 
 mcse_test_cases = [

@@ -6,7 +6,7 @@ import blackjax
 from blackjax import adaptive_tempered_smc
 from blackjax.mcmc.random_walk import normal
 from blackjax.smc import extend_params
-from tests.util import BlackJAXTest
+from tests.fixtures import BlackJAXTest
 
 
 class SMCAndMCMCIntegrationTest(BlackJAXTest):

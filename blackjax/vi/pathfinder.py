@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -35,7 +35,7 @@ class PathfinderState(NamedTuple):
     Pathfinder locates normal approximations to the target density along a
     quasi-Newton optimization path, with local covariance estimated using
     the inverse Hessian estimates produced by the L-BFGS optimizer.
-    PathfinderState stores for an interation fo the L-BFGS optimizer the
+    PathfinderState stores for an iteration of the L-BFGS optimizer the
     resulting ELBO and all factors needed to sample from the approximated
     target density.
 
@@ -44,7 +44,7 @@ class PathfinderState(NamedTuple):
     grad_position:
         gradient of target distribution wrt position
     alpha, beta, gamma:
-        factored rappresentation of the inverse hessian
+        factored representation of the inverse hessian
     elbo:
         ELBO of approximation wrt target distribution
 
@@ -88,7 +88,7 @@ def approximate(
     Parameters
     ----------
     rng_key
-        PRPNG key
+        PRNG key
     logdensity_fn
         (un-normalized) log densify function of target distribution to take
         approximate samples from
@@ -97,17 +97,17 @@ def approximate(
     num_samples
         number of samples to draw to estimate ELBO
     maxiter
-        Maximum number of iterations of the LGBFS algorithm.
+        Maximum number of iterations of the L-BFGS algorithm.
     maxcor
-        Maximum number of metric corrections of the LGBFS algorithm ("history
+        Maximum number of metric corrections of the L-BFGS algorithm ("history
         size")
     ftol
-        The LGBFS algorithm terminates the minimization when `(f_k - f_{k+1}) <
+        The L-BFGS algorithm terminates the minimization when `(f_k - f_{k+1}) <
         ftol`
     gtol
-        The LGBFS algorithm terminates the minimization when `|g_k|_norm < gtol`
+        The L-BFGS algorithm terminates the minimization when `|g_k|_norm < gtol`
     maxls
-        The maximum number of line search steps (per iteration) for the LGBFS
+        The maximum number of line search steps (per iteration) for the L-BFGS
         algorithm
     **lbfgs_kwargs
         other keyword arguments passed to `jaxopt.LBFGS`.
@@ -121,7 +121,9 @@ def approximate(
 
     """
     initial_position_flatten, unravel_fn = ravel_pytree(initial_position)
-    objective_fn = lambda x: -logdensity_fn(unravel_fn(x))
+
+    def objective_fn(x):
+        return -logdensity_fn(unravel_fn(x))
 
     (_, status), history = _minimize_lbfgs(
         objective_fn,
@@ -149,11 +151,22 @@ def approximate(
     s_padded = jnp.pad(s_masked, ((maxcor, 0), (0, 0)), mode="constant")
     z_padded = jnp.pad(z_masked, ((maxcor, 0), (0, 0)), mode="constant")
 
-    def path_finder_body_fn(rng_key, S, Z, alpha_l, theta, theta_grad):
+    def path_finder_body_fn(args: tuple[int, jax.Array]):
         """The for loop body in Algorithm 1 of the Pathfinder paper."""
+
+        i, key_i = args
+
+        # lazy sliding window
+        window_idx = i + jnp.arange(maxcor)
+        S = s_padded[window_idx].reshape(maxcor, -1)
+        Z = z_padded[window_idx].reshape(maxcor, -1)
+        theta = position[i]
+        theta_grad = grad_position[i]
+        alpha_l = alpha[i]
+
         beta, gamma = lbfgs_inverse_hessian_factors(S.T, Z.T, alpha_l)
         phi, logq = bfgs_sample(
-            rng_key=rng_key,
+            rng_key=key_i,
             num_samples=num_samples,
             position=theta,
             grad_position=theta_grad,
@@ -161,21 +174,18 @@ def approximate(
             beta=beta,
             gamma=gamma,
         )
+
         logp = -jax.vmap(objective_fn)(phi)
-        elbo = (logp - logq).mean()  # Algorithm 7 of the paper
+        elbo = (logp - logq).mean()
+
         return elbo, beta, gamma
 
-    # Index and reshape S and Z to be sliding window view shape=(maxiter,
-    # maxcor, param_dim), so we can vmap over all the iterations.
-    # This is in effect numpy.lib.stride_tricks.sliding_window_view
     path_size = maxiter + 1
-    index = jnp.arange(path_size)[:, None] + jnp.arange(maxcor)[None, :]
-    s_j = s_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
-    z_j = z_padded[index.reshape(path_size, maxcor)].reshape(path_size, maxcor, -1)
     rng_keys = jax.random.split(rng_key, path_size)
-    elbo, beta, gamma = jax.vmap(path_finder_body_fn)(
-        rng_keys, s_j, z_j, alpha, position, grad_position
-    )
+    path_indices = jnp.arange(path_size)
+
+    elbo, beta, gamma = jax.vmap(path_finder_body_fn)((path_indices, rng_keys))
+
     elbo = jnp.where(
         (jnp.arange(path_size) < (status.iter_num)) & jnp.isfinite(elbo),
         elbo,
@@ -201,7 +211,7 @@ def approximate(
 def sample(
     rng_key: PRNGKey,
     state: PathfinderState,
-    num_samples: Union[int, tuple[()], tuple[int]] = (),
+    num_samples: int | tuple[()] | tuple[int] = (),
 ) -> ArrayTree:
     """Draw from the Pathfinder approximation of the target distribution.
 

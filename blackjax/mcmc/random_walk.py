@@ -60,12 +60,12 @@ Examples
         new_state, info = step(rng_key, state)
 
 """
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple
 
 import jax
 from jax import numpy as jnp
 
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc import proposal
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
@@ -174,6 +174,7 @@ def build_additive_step():
     of the chain and that returns a new state of the chain along with
     information about the transition.
     """
+    inner_kernel = build_rmh()
 
     def kernel(
         rng_key: PRNGKey, state: RWState, logdensity_fn: Callable, random_step: Callable
@@ -183,7 +184,6 @@ def build_additive_step():
             new_position = jax.tree.map(jnp.add, position, move_proposal)
             return new_position
 
-        inner_kernel = build_rmh()
         return inner_kernel(rng_key, state, logdensity_fn, proposal_generator)
 
     return kernel
@@ -244,15 +244,9 @@ def additive_step_random_walk(
     A ``SamplingAlgorithm``.
     """
     kernel = build_additive_step()
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(rng_key, state, logdensity_fn, random_step)
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel, init, logdensity_fn, kernel_args=(random_step,)
+    )
 
 
 def build_irmh() -> Callable:
@@ -267,13 +261,14 @@ def build_irmh() -> Callable:
     information about the transition.
 
     """
+    inner_kernel = build_rmh()
 
     def kernel(
         rng_key: PRNGKey,
         state: RWState,
         logdensity_fn: Callable,
         proposal_distribution: Callable,
-        proposal_logdensity_fn: Optional[Callable] = None,
+        proposal_logdensity_fn: Callable | None = None,
     ) -> tuple[RWState, RWInfo]:
         """
         Parameters
@@ -291,7 +286,6 @@ def build_irmh() -> Callable:
             del position
             return proposal_distribution(rng_key)
 
-        inner_kernel = build_rmh()
         return inner_kernel(
             rng_key, state, logdensity_fn, proposal_generator, proposal_logdensity_fn
         )
@@ -302,7 +296,7 @@ def build_irmh() -> Callable:
 def irmh_as_top_level_api(
     logdensity_fn: Callable,
     proposal_distribution: Callable,
-    proposal_logdensity_fn: Optional[Callable] = None,
+    proposal_logdensity_fn: Callable | None = None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the independent RMH.
 
@@ -341,21 +335,12 @@ def irmh_as_top_level_api(
 
     """
     kernel = build_irmh()
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            proposal_distribution,
-            proposal_logdensity_fn,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(proposal_distribution, proposal_logdensity_fn),
+    )
 
 
 def build_rmh():
@@ -374,7 +359,7 @@ def build_rmh():
         state: RWState,
         logdensity_fn: Callable,
         transition_generator: Callable,
-        proposal_logdensity_fn: Optional[Callable] = None,
+        proposal_logdensity_fn: Callable | None = None,
     ) -> tuple[RWState, RWInfo]:
         """Move the chain by one step using the Rosenbluth Metropolis Hastings
         algorithm.
@@ -419,7 +404,7 @@ def build_rmh():
 def rmh_as_top_level_api(
     logdensity_fn: Callable,
     proposal_generator: Callable[[PRNGKey, ArrayLikeTree], ArrayTree],
-    proposal_logdensity_fn: Optional[Callable[[ArrayLikeTree], ArrayTree]] = None,
+    proposal_logdensity_fn: Callable[[ArrayLikeTree], ArrayTree] | None = None,
 ) -> SamplingAlgorithm:
     """Implements the user interface for the RMH.
 
@@ -457,24 +442,32 @@ def rmh_as_top_level_api(
     A ``SamplingAlgorithm``.
     """
     kernel = build_rmh()
-
-    def init_fn(position: ArrayLikeTree, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            proposal_generator,
-            proposal_logdensity_fn,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel,
+        init,
+        logdensity_fn,
+        kernel_args=(proposal_generator, proposal_logdensity_fn),
+    )
 
 
-def build_rmh_transition_energy(proposal_logdensity_fn: Optional[Callable]) -> Callable:
+def build_rmh_transition_energy(proposal_logdensity_fn: Callable | None) -> Callable:
+    """Build the transition energy function for the Random Walk Metropolis-Hastings kernel.
+
+    For a symmetric proposal (``proposal_logdensity_fn is None``) the transition
+    energy reduces to ``-logdensity(new_state)``.  For an asymmetric proposal
+    it includes the log-density ratio of the proposal distribution, giving
+    ``-logdensity(new_state) - log q(new_state -> prev_state)``.
+
+    Parameters
+    ----------
+    proposal_logdensity_fn
+        Log-density of the proposal distribution evaluated at ``(from_state,
+        to_state)``, or ``None`` for a symmetric proposal.
+
+    Returns
+    -------
+    A callable ``(prev_state, new_state) -> transition_energy``.
+    """
     if proposal_logdensity_fn is None:
 
         def transition_energy(prev_state, new_state):
@@ -494,6 +487,28 @@ def rmh_proposal(
     compute_acceptance_ratio: Callable,
     sample_proposal: Callable = proposal.static_binomial_sampling,
 ) -> Callable:
+    """Build a Random Walk Metropolis-Hastings proposal generator.
+
+    Draws a new position from ``transition_distribution``, evaluates the
+    log-density, computes the acceptance ratio, and accepts or rejects
+    via ``sample_proposal``.
+
+    Parameters
+    ----------
+    logdensity_fn
+        Log-density of the target distribution.
+    transition_distribution
+        Callable ``(rng_key, position) -> new_position``.
+    compute_acceptance_ratio
+        Callable ``(prev_state, proposed_state) -> log_acceptance_ratio``.
+    sample_proposal
+        Accept/reject sampler; defaults to static binomial sampling.
+
+    Returns
+    -------
+    A callable ``(rng_key, state) -> (new_state, do_accept, p_accept)``.
+    """
+
     def generate(rng_key, previous_state: RWState) -> tuple[RWState, bool, float]:
         key_proposal, key_accept = jax.random.split(rng_key, 2)
         position, _ = previous_state

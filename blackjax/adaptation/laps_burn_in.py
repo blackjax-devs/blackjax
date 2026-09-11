@@ -19,6 +19,7 @@ import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 
+from blackjax.eca import ensemble_execute_fn
 from blackjax.mcmc import mclmc
 from blackjax.mcmc.integrators import (
     IntegratorState,
@@ -26,7 +27,6 @@ from blackjax.mcmc.integrators import (
     isokinetic_velocity_verlet,
 )
 from blackjax.types import Array
-from blackjax.util import ensemble_execute_fn
 
 
 def no_nans(a):
@@ -38,31 +38,35 @@ def nan_reject(nonans, old, new):
     """Equivalent to
     return new if nonans else old"""
 
-    return jax.lax.cond(nonans, lambda _: new, lambda _: old, operand=None)
+    return jax.lax.cond(nonans, lambda: new, lambda: old)
 
 
 def build_kernel(logdensity_fn, ndims, microcanonical=True):
     """MCLMC kernel (with nan rejection)"""
 
     if microcanonical:
-        kernel = mclmc.build_kernel(
-            integrator=isokinetic_velocity_verlet,
-            logdensity_fn=logdensity_fn,
-            inverse_mass_matrix=jnp.ones(ndims),
-        )
+        kernel = mclmc.build_kernel(integrator=isokinetic_velocity_verlet)
     else:
         raise ValueError("Only microcanonical mode is supported for LAPS burn-in.")
+
+    inverse_mass_matrix = jnp.ones(ndims)
 
     def sequential_kernel(key, state, adap):
         new_state, info = kernel(
             key,
             state,
+            logdensity_fn,
+            inverse_mass_matrix,
             adap.L,
             adap.step_size,
         )
 
-        # reject the new state if there were nans
-        nonans = no_nans(new_state)
+        # #969 fix: consume the kernel's truthful info.nonans instead of
+        # re-checking the already-sanitised new_state with no_nans().  Pre-fix,
+        # no_nans(new_state) was always True after the kernel's own revert, so
+        # the "nans" diagnostic and the eps_factor 0.5 halving safety in
+        # Adaptation.update() (:332-334) were dead code.
+        nonans = info.nonans
         new_state = nan_reject(nonans, state, new_state)
 
         return new_state, {
@@ -299,9 +303,8 @@ class Adaptation:
         history_stopping = update_history_scalar(
             jax.lax.cond(
                 adaptation_state.step_count > len(history_weights),
-                lambda _: fluctuations[0],
-                lambda _: jnp.nan,
-                operand=None,
+                lambda: fluctuations[0],
+                lambda: jnp.nan,
             ),
             adaptation_state.history.stopping,
         )
@@ -348,10 +351,16 @@ class Adaptation:
             "observables": Etheta["observables"],
         }
 
+        # D2 (#1035): multiplicative update is absorbing on a non-finite factor; fall back to the last finite step size.
+        step_size_new = jnp.where(
+            jnp.isfinite(adaptation_state.step_size * eps_factor),
+            adaptation_state.step_size * eps_factor,
+            adaptation_state.step_size,
+        )
         adaptation_state_new = AdaptationState(
             L,
             inverse_mass_matrix,
-            adaptation_state.step_size * eps_factor,  # set the stepsize directly
+            step_size_new,  # set the stepsize directly
             adaptation_state.step_count + 1,
             EEVPD,
             EEVPD_wanted,

@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for marginal latent Gaussian sampling."""
-from typing import Callable, NamedTuple, Optional
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 import jax.scipy.linalg as linalg
 from jax.flatten_util import ravel_pytree
 
-from blackjax.base import SamplingAlgorithm
+from blackjax.base import SamplingAlgorithm, build_sampling_algorithm
 from blackjax.mcmc.proposal import static_binomial_sampling
 from blackjax.types import Array, ArrayLikeTree, PRNGKey
 
@@ -226,9 +226,9 @@ def build_kernel(cov_svd: CovarianceSVD):
 
 def as_top_level_api(
     logdensity_fn: Callable,
-    covariance: Optional[Array] = None,
-    mean: Optional[ArrayLikeTree] = None,
-    cov_svd: Optional[CovarianceSVD] = None,
+    covariance: Array | None = None,
+    mean: ArrayLikeTree | None = None,
+    cov_svd: CovarianceSVD | None = None,
     step_size: float = 1.0,
 ) -> SamplingAlgorithm:
     """Implements the marginal sampler for latent Gaussian model of :cite:p:`titsias2018auxiliary`.
@@ -282,17 +282,6 @@ def as_top_level_api(
         logdensity_fn = generate_mean_shifted_logprob(logdensity_fn, mean, covariance)
 
     kernel = build_kernel(cov_svd)
-
-    def init_fn(position: Array, rng_key=None):
-        del rng_key
-        return init(position, logdensity_fn, U_t)
-
-    def step_fn(rng_key: PRNGKey, state):
-        return kernel(
-            rng_key,
-            state,
-            logdensity_fn,
-            step_size,
-        )
-
-    return SamplingAlgorithm(init_fn, step_fn)
+    return build_sampling_algorithm(
+        kernel, init, logdensity_fn, init_args=(U_t,), kernel_args=(step_size,)
+    )

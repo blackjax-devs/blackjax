@@ -26,7 +26,7 @@ from blackjax.mcmc.elliptical_slice import (
     ellipsis,
     init,
 )
-from tests.util import BlackJAXTest, std_normal_logdensity
+from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
 # ellipsis geometry

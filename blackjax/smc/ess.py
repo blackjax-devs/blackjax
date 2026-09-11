@@ -87,7 +87,13 @@ def ess_solver(
     target_val = jnp.log(n_particles * target_ess)
 
     def fun_to_solve(delta: float | Array) -> Array:
-        log_weights = jnp.nan_to_num(-delta * logdensity)
+        # NOTE: sign must match the SMC weight update in
+        # ``blackjax.smc.tempered`` (`log_weights_fn` uses
+        # ``delta * loglikelihood_fn(position)``). A sign mismatch makes the
+        # bisection find a δ that targets the wrong distribution, which is
+        # silent for symmetric log-likelihoods but breaks adaptive tempering
+        # on asymmetric ones. See issue #914.
+        log_weights = jnp.nan_to_num(delta * logdensity)
         ess_val = log_ess(log_weights)
 
         return ess_val - target_val

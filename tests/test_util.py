@@ -2,15 +2,15 @@ from functools import partial
 
 import chex
 import numpy as np
-from absl.testing import absltest, parameterized
+from absl.testing import absltest
 from jax import jit
 from jax import numpy as jnp
 from jax import random as jr
 from jax import tree, vmap
 
 import blackjax
+from blackjax.diagnostics import psis_weights
 from blackjax.util import (
-    psis_weights,
     run_inference_algorithm,
     store_only_expectation_values,
     thin_algorithm,
@@ -30,17 +30,16 @@ class RunInferenceAlgorithmTest(chex.TestCase):
         )
         self.num_steps = 10
 
-    def check_compatible(self, initial_state, progress_bar):
+    def check_compatible(self, initial_state):
         """
         Runs 10 steps with `run_inference_algorithm` starting with
-        `initial_state` and potentially a progress bar.
+        `initial_state`.
         """
         _ = run_inference_algorithm(
             rng_key=self.key,
             initial_state=initial_state,
             inference_algorithm=self.algorithm,
             num_steps=self.num_steps,
-            progress_bar=progress_bar,
             transform=lambda state, info: state.position,
         )
 
@@ -74,7 +73,6 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             inference_algorithm=sampling_alg,
             num_steps=num_steps,
             transform=lambda state, info: state_transform(state),
-            progress_bar=True,
         )
 
         print("average of steps (slow way):", samples.mean(axis=0))
@@ -91,26 +89,22 @@ class RunInferenceAlgorithmTest(chex.TestCase):
             inference_algorithm=memory_efficient_sampling_alg,
             num_steps=num_steps,
             transform=transform,
-            progress_bar=True,
         )
 
         assert jnp.allclose(trace_at_every_step[0][-1], samples.mean(axis=0))
 
-    @parameterized.parameters([True, False])
-    def test_compatible_with_initial_pos(self, progress_bar):
+    def test_compatible_with_initial_pos(self):
         _ = run_inference_algorithm(
             rng_key=self.key,
             initial_position=jnp.array([1.0, 1.0]),
             inference_algorithm=self.algorithm,
             num_steps=self.num_steps,
-            progress_bar=progress_bar,
             transform=lambda state, info: state.position,
         )
 
-    @parameterized.parameters([True, False])
-    def test_compatible_with_initial_state(self, progress_bar):
+    def test_compatible_with_initial_state(self):
         state = self.algorithm.init(jnp.array([1.0, 1.0]))
-        self.check_compatible(state, progress_bar)
+        self.check_compatible(state)
 
     @staticmethod
     def logdensity_fn(x):
@@ -141,17 +135,13 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
         )
 
         if thinning == 1:
-            kernel = lambda inverse_mass_matrix: blackjax.mcmc.mclmc.build_kernel(
+            kernel = blackjax.mcmc.mclmc.build_kernel(
                 integrator=isokinetic_mclachlan,
-                logdensity_fn=self.logdf,
-                inverse_mass_matrix=inverse_mass_matrix,
             )
         else:
-            kernel = lambda inverse_mass_matrix: thin_kernel(
+            kernel = thin_kernel(
                 blackjax.mcmc.mclmc.build_kernel(
                     integrator=isokinetic_mclachlan,
-                    logdensity_fn=self.logdf,
-                    inverse_mass_matrix=inverse_mass_matrix,
                 ),
                 thinning=thinning,
                 info_transform=lambda info: tree.map(
@@ -161,6 +151,7 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
 
         state, config, n_steps = blackjax.mclmc_find_L_and_step_size(
             mclmc_kernel=kernel,
+            logdensity_fn=self.logdf,
             num_steps=num_steps,
             state=state,
             rng_key=tune_key,
@@ -191,7 +182,6 @@ class ThinInferenceAlgorithmTest(chex.TestCase):
             initial_state=state,
             inference_algorithm=sampler,
             num_steps=num_steps,
-            # progress_bar=True,
         )
         return state, history
 

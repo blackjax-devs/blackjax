@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Stochastic gradient Nosé-Hoover Thermostat kernel."""
-from typing import Callable, NamedTuple, Union
+from typing import Callable, NamedTuple
 
 import blackjax.sgmcmc.diffusions as diffusions
 from blackjax.base import SamplingAlgorithm
@@ -130,7 +130,7 @@ def as_top_level_api(
     def init_fn(
         position: ArrayLikeTree,
         rng_key: PRNGKey,
-        init_xi: Union[None, float] = None,
+        init_xi: None | float = None,
     ):
         return init(position, rng_key, init_xi or alpha)
 

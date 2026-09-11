@@ -25,6 +25,7 @@ from blackjax.adaptation.laps_burn_in import (
     equipartition_diagonal_loss,
 )
 from blackjax.adaptation.step_size import bisection_monotonic_fn
+from blackjax.eca import run_eca
 from blackjax.mcmc.adjusted_mclmc import build_kernel as build_kernel_mclmc
 from blackjax.mcmc.hmc import HMCState
 from blackjax.mcmc.integrators import (
@@ -32,7 +33,6 @@ from blackjax.mcmc.integrators import (
     mclachlan_coefficients,
     omelyan_coefficients,
 )
-from blackjax.util import run_eca
 
 
 class AdaptationState(NamedTuple):
@@ -262,17 +262,17 @@ def laps(
     if microcanonical:
         integrator = generate_isokinetic_integrator(_integrator_coefficients)
 
-        build_kernel = build_kernel_mclmc(
+        built_kernel = build_kernel_mclmc(
             integrator=integrator,
-            logdensity_fn=logdensity_fn,
-            inverse_mass_matrix=inverse_mass_matrix,
         )
 
-        kernel = lambda key, state, adap: build_kernel(
+        kernel = lambda key, state, adap: built_kernel(
             rng_key=key,
             state=state,
+            logdensity_fn=logdensity_fn,
             step_size=adap.step_size,
-            num_integration_steps=adap.steps_per_sample,
+            integration_steps_params=(adap.steps_per_sample,),
+            inverse_mass_matrix=inverse_mass_matrix,
             L_proposal_factor=1.25,
         )
 

@@ -88,15 +88,14 @@ def reorder_trajectories(
     """
     return jax.lax.cond(
         direction > 0,
-        lambda _: (
+        lambda: (
             trajectory,
             new_trajectory,
         ),
-        lambda _: (
+        lambda: (
             new_trajectory,
             trajectory,
         ),
-        operand=None,
     )
 
 
@@ -168,6 +167,71 @@ def static_integration(
     return integrate
 
 
+def static_progressive_integration(
+    integrator: Callable,
+    kinetic_energy: Callable,
+    num_integration_steps: int,
+    divergence_threshold: float,
+) -> Callable:
+    """Generate a trajectory by integrating a fixed number of steps and
+    progressively sampling proposals using multinomial weighting.
+
+    Unlike ``static_integration``, which returns only the trajectory endpoint,
+    this function samples one state from the *entire* trajectory proportional
+    to ``exp(-H(z_i))`` using progressive reservoir sampling
+    (``progressive_uniform_sampling``).  Only O(1) memory is needed regardless
+    of trajectory length.
+
+    Parameters
+    ----------
+    integrator
+        One-step symplectic integrator.
+    kinetic_energy
+        Function to compute the current value of the kinetic energy.
+    num_integration_steps
+        Number of integration steps to take.
+    divergence_threshold
+        Value of the difference of energy between two consecutive states above
+        which we say a transition is divergent.
+
+    Returns
+    -------
+    An ``integrate(rng_key, initial_state, step_size)`` function that returns
+    ``(proposal, is_diverging)``.
+    """
+    hmc_energy_fn = hmc_energy(kinetic_energy)
+    _, generate_proposal = proposal_generator(hmc_energy_fn)
+    sample_proposal = progressive_uniform_sampling
+
+    def integrate(
+        rng_key: PRNGKey,
+        initial_state: IntegratorState,
+        step_size,
+    ):
+        initial_energy = hmc_energy_fn(initial_state)
+        init_proposal = Proposal(initial_state, initial_energy, 0.0, -jnp.inf)
+
+        def one_step(i, carry):
+            current_state, current_proposal, any_divergent = carry
+            step_key = jax.random.fold_in(rng_key, i)
+
+            new_state = integrator(current_state, step_size)
+            new_proposal = generate_proposal(initial_energy, new_state)
+            is_diverging = -new_proposal.weight > divergence_threshold
+            any_divergent = any_divergent | is_diverging
+            sampled_proposal = sample_proposal(step_key, current_proposal, new_proposal)
+
+            return (new_state, sampled_proposal, any_divergent)
+
+        (_, final_proposal, is_diverging) = jax.lax.fori_loop(
+            0, num_integration_steps, one_step, (initial_state, init_proposal, False)
+        )
+
+        return final_proposal, is_diverging
+
+    return integrate
+
+
 class DynamicIntegrationState(NamedTuple):
     step: int
     proposal: Proposal
@@ -201,9 +265,7 @@ def dynamic_progressive_integration(
 
     Returns
     -------
-    An ``integrate(rng_key, initial_state, direction, termination_state,
-    max_num_steps, step_size, initial_energy)`` function that returns
-    ``(proposal, new_trajectory, termination_state, is_diverging, has_terminated)``.
+    An ``integrate(rng_key, state, direction, termination_state, max_num_steps, step_size, initial_energy)`` function returning ``(proposal, new_trajectory, termination_state, is_diverging, has_terminated)``.
     """
     _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling
@@ -266,15 +328,14 @@ def dynamic_progressive_integration(
             # take one step to get the leftmost state of the tree.
             (new_trajectory, sampled_proposal) = jax.lax.cond(
                 step == 0,
-                lambda _: (
+                lambda: (
                     Trajectory(new_state, new_state, new_state.momentum, 1),
                     new_proposal,
                 ),
-                lambda _: (
+                lambda: (
                     append_to_trajectory(trajectory, new_state),
                     sample_proposal(proposal_key, proposal, new_proposal),
                 ),
-                operand=None,
             )
 
             new_termination_state = update_termination_state(
@@ -314,14 +375,13 @@ def dynamic_progressive_integration(
         # In the while_loop we always extend on the right most direction.
         new_trajectory = jax.lax.cond(
             direction > 0,
-            lambda _: trajectory,
-            lambda _: Trajectory(
+            lambda: trajectory,
+            lambda: Trajectory(
                 trajectory.rightmost_state,
                 trajectory.leftmost_state,
                 trajectory.momentum_sum,
                 trajectory.num_states,
             ),
-            operand=None,
         )
 
         return (
@@ -368,9 +428,7 @@ def dynamic_recursive_integration(
 
     Returns
     -------
-    A ``buildtree_integrate(rng_key, initial_state, direction, tree_depth,
-    step_size, initial_energy)`` function that returns
-    ``(rng_key, proposal, trajectory, is_diverging, is_turning)``.
+    A ``buildtree_integrate(rng_key, state, direction, tree_depth, step_size, initial_energy)`` function returning ``(rng_key, proposal, trajectory, is_diverging, is_turning)``.
     """
     _, generate_proposal = proposal_generator(hmc_energy(kinetic_energy))
     sample_proposal = progressive_uniform_sampling
@@ -438,9 +496,8 @@ def dynamic_recursive_integration(
             if (not is_diverging) & (not is_turning):
                 start_state = jax.lax.cond(
                     direction > 0,
-                    lambda _: trajectory.rightmost_state,
-                    lambda _: trajectory.leftmost_state,
-                    operand=None,
+                    lambda: trajectory.rightmost_state,
+                    lambda: trajectory.leftmost_state,
                 )
                 (
                     rng_key,
@@ -593,9 +650,8 @@ def dynamic_multiplicative_expansion(
             direction = jnp.where(jax.random.bernoulli(direction_key), 1, -1)
             start_state = jax.lax.cond(
                 direction > 0,
-                lambda _: trajectory.rightmost_state,
-                lambda _: trajectory.leftmost_state,
-                operand=None,
+                lambda: trajectory.rightmost_state,
+                lambda: trajectory.leftmost_state,
             )
             (
                 new_proposal,

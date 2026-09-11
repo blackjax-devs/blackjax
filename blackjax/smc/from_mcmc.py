@@ -1,10 +1,8 @@
 from functools import partial
 from typing import Callable
 
-import jax
-
 from blackjax import smc
-from blackjax.smc.base import SMCState, update_and_take_last
+from blackjax.smc.base import SMCState, map_fn, update_and_take_last
 from blackjax.types import Array, PRNGKey
 
 
@@ -49,6 +47,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
+    batch_size: int = 0,
 ) -> Callable:
     """Build an SMC step function from MCMC kernels.
 
@@ -68,6 +67,11 @@ def build_kernel(
     update_strategy: Callable
         Strategy to update particles using MCMC kernels, by default
         'update_and_take_last' from blackjax.smc.base.
+    batch_size: int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Uses ``jax.lax.map`` for both the MCMC update and
+        the weight computation, reducing peak GPU memory relative to a full
+        ``jax.vmap``. ``0`` (default) keeps the original ``jax.vmap`` behaviour.
 
     Returns
     -------
@@ -94,13 +98,16 @@ def build_kernel(
             shared_mcmc_step_fn,
             n_particles=state.weights.shape[0],
             num_mcmc_steps=num_mcmc_steps,
+            **({"batch_size": batch_size} if batch_size else {}),
         )
+
+        weight_fn = map_fn(log_weights_fn, batch_size)
 
         return smc.base.step(
             rng_key,
             SMCState(state.particles, state.weights, unshared_mcmc_parameters),
             update_fn,
-            jax.vmap(log_weights_fn),
+            weight_fn,
             resampling_fn,
             num_resampled,
         )

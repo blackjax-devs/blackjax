@@ -12,14 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Symplectic, time-reversible, integrators for Hamiltonian trajectories."""
-from typing import Any, Callable, NamedTuple, Tuple
+from typing import Any, Callable, NamedTuple, TypeAlias
 
 import jax
 import jax.numpy as jnp
 from jax.flatten_util import ravel_pytree
 from jax.random import normal
 
-from blackjax.mcmc.metrics import KineticEnergy
+from blackjax.mcmc.metrics import (
+    KineticEnergy,
+    LowRankInverseMassMatrix,
+    _low_rank_matvec,
+)
 from blackjax.types import ArrayTree
 
 __all__ = [
@@ -365,7 +369,7 @@ omelyan_coefficients = [b1, a1, b2, a2, b3, a3, b3, a2, b2, a1, b1]
 omelyan = generate_euclidean_integrator(omelyan_coefficients)
 
 
-# Intergrators with non Euclidean updates
+# Integrators with non Euclidean updates
 def _normalized_flatten_array(x, tol=1e-13):
     norm = jnp.linalg.norm(x)
     return jnp.where(norm > tol, x / norm, x), norm
@@ -374,10 +378,33 @@ def _normalized_flatten_array(x, tol=1e-13):
 def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
     """Build the ESH dynamics momentum update operator.
 
+    Supports both diagonal and Low-Rank + Diagonal (LRD) preconditioning.
+
     Parameters
     ----------
     inverse_mass_matrix
-        Inverse mass matrix. Scalar or array.
+        Inverse mass matrix.  Either a scalar / 1-D array for diagonal
+        preconditioning, or a :class:`~blackjax.mcmc.metrics.LowRankInverseMassMatrix`
+        NamedTuple for O(dk) low-rank + diagonal preconditioning.
+
+        When a ``LowRankInverseMassMatrix`` with fields ``(sigma, U, lam)`` is
+        supplied the preconditioner is
+
+        .. math::
+
+            M^{-1} = \\operatorname{diag}(\\sigma)
+                     \\bigl(I + U(\\Lambda - I)U^\\top\\bigr)
+                     \\operatorname{diag}(\\sigma)
+
+        and the two operators injected into the ESH closure are
+
+        .. math::
+
+            \\text{adjoint\\_L}(g) &= (I + U(\\sqrt{\\Lambda}-I)U^\\top)(\\sigma \\odot g) \\\\
+            \\text{forward\\_L}(u) &= \\sigma \\odot (u + U(\\sqrt{\\Lambda}-I)U^\\top u)
+
+        which satisfy :math:`\\text{forward\\_L} \\circ \\text{adjoint\\_L} = M^{-1}`
+        at O(dk) cost per call.
 
     Returns
     -------
@@ -387,7 +414,25 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
     previous_kinetic_energy_change, is_last_call) ->
     (new_momentum, kinetic_grad, kinetic_energy_change)``.
     """
-    sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
+    if isinstance(inverse_mass_matrix, LowRankInverseMassMatrix):
+        sigma = inverse_mass_matrix.sigma
+        U = inverse_mass_matrix.U
+        sqrt_lam = jnp.sqrt(inverse_mass_matrix.lam)
+
+        # forward_L(y) = σ ⊙ (I + U(√Λ−I)Uᵀ) y   — maps whitened momentum
+        #                                               to position velocity
+        def forward_L(y):
+            return sigma * _low_rank_matvec(y, U, sqrt_lam)
+
+        # adjoint_L(g) = (I + U(√Λ−I)Uᵀ)(σ ⊙ g)  — maps gradient to
+        #                                               whitened-frame gradient
+        def adjoint_L(g):
+            return _low_rank_matvec(sigma * g, U, sqrt_lam)
+
+    else:
+        sqrt_inverse_mass_matrix = jnp.sqrt(inverse_mass_matrix)
+        forward_L = lambda y: y * sqrt_inverse_mass_matrix
+        adjoint_L = lambda g: g * sqrt_inverse_mass_matrix
 
     def update(
         momentum: ArrayTree,
@@ -405,9 +450,9 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         """
         del is_last_call
 
-        logdensity_grad = logdensity_grad
         flatten_grads, unravel_fn = ravel_pytree(logdensity_grad)
-        flatten_grads = flatten_grads * sqrt_inverse_mass_matrix
+        # Apply adjoint_L: O(dk) for LRD, O(d) for diagonal
+        flatten_grads = adjoint_L(flatten_grads)
         flatten_momentum, _ = ravel_pytree(momentum)
         dims = flatten_momentum.shape[0]
         normalized_gradient, gradient_norm = _normalized_flatten_array(flatten_grads)
@@ -419,7 +464,8 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
             + 2 * zeta * flatten_momentum
         )
         new_momentum_normalized, _ = _normalized_flatten_array(new_momentum_raw)
-        gr = unravel_fn(new_momentum_normalized * sqrt_inverse_mass_matrix)
+        # Apply forward_L: O(dk) for LRD, O(d) for diagonal
+        gr = unravel_fn(forward_L(new_momentum_normalized))
         next_momentum = unravel_fn(new_momentum_normalized)
         kinetic_energy_change = (
             delta
@@ -521,9 +567,8 @@ def partially_refresh_momentum(momentum, rng_key, step_size, L):
     # return new_momentum
     return jax.lax.cond(
         jnp.isinf(L),
-        lambda _: momentum,
-        lambda _: new_momentum,
-        operand=None,
+        lambda: momentum,
+        lambda: new_momentum,
     )
 
 
@@ -557,9 +602,12 @@ def with_isokinetic_maruyama(integrator):
 
 
 FixedPointSolver = Callable[
-    [Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]], ArrayTree],
-    Tuple[ArrayTree, ArrayTree, Any],
+    [Callable[[ArrayTree], tuple[ArrayTree, ArrayTree]], ArrayTree],
+    tuple[ArrayTree, ArrayTree, Any],
 ]
+
+#: Iteration state for the fixed-point solver: (iteration count, current x, auxiliary data, norm).
+FixedPointIterState: TypeAlias = tuple[int, ArrayTree, ArrayTree, float]
 
 
 class FixedPointIterationInfo(NamedTuple):
@@ -569,20 +617,20 @@ class FixedPointIterationInfo(NamedTuple):
 
 
 def solve_fixed_point_iteration(
-    func: Callable[[ArrayTree], Tuple[ArrayTree, ArrayTree]],
+    func: Callable[[ArrayTree], tuple[ArrayTree, ArrayTree]],
     x0: ArrayTree,
     *,
     convergence_tol: float = 1e-6,
     divergence_tol: float = 1e10,
     max_iters: int = 100,
     norm_fn: Callable[[ArrayTree], float] = lambda x: jnp.max(jnp.abs(x)),
-) -> Tuple[ArrayTree, ArrayTree, FixedPointIterationInfo]:
+) -> tuple[ArrayTree, ArrayTree, FixedPointIterationInfo]:
     """Solve for x = func(x) using a fixed point iteration"""
 
     def compute_norm(x: ArrayTree, xp: ArrayTree) -> float:
         return norm_fn(ravel_pytree(jax.tree.map(jnp.subtract, x, xp))[0])
 
-    def cond_fn(args: Tuple[int, ArrayTree, ArrayTree, float]) -> bool:
+    def cond_fn(args: FixedPointIterState) -> bool:
         n, _, _, norm = args
         return (
             (n < max_iters)
@@ -591,9 +639,7 @@ def solve_fixed_point_iteration(
             & (norm > convergence_tol)
         )
 
-    def body_fn(
-        args: Tuple[int, ArrayTree, ArrayTree, float]
-    ) -> Tuple[int, ArrayTree, ArrayTree, float]:
+    def body_fn(args: FixedPointIterState) -> FixedPointIterState:
         n, x, _, _ = args
         xn, aux = func(x)
         norm = compute_norm(xn, x)
@@ -636,8 +682,8 @@ def implicit_midpoint(
             q: ArrayTree,
             p: ArrayTree,
             dUdq: ArrayTree,
-            initial: Tuple[ArrayTree, ArrayTree] = (position, momentum),
-        ) -> Tuple[ArrayTree, ArrayTree]:
+            initial: tuple[ArrayTree, ArrayTree] = (position, momentum),
+        ) -> tuple[ArrayTree, ArrayTree]:
             dTdq, dHdp = kinetic_energy_grad_fn(q, p)
             dHdq = jax.tree.map(jnp.subtract, dTdq, dUdq)
 
@@ -648,7 +694,7 @@ def implicit_midpoint(
             return q, p
 
         # Solve for the midpoint numerically
-        def _step(args: ArrayTree) -> Tuple[ArrayTree, ArrayTree]:
+        def _step(args: ArrayTree) -> tuple[ArrayTree, ArrayTree]:
             q, p = args
             _, dLdq = logdensity_and_grad_fn(q)
             return _update(q, p, dLdq), dLdq

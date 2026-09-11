@@ -20,7 +20,7 @@ import numpy as np
 from absl.testing import absltest, parameterized
 
 import blackjax.sgmcmc.diffusions as diffusions
-from tests.util import BlackJAXTest
+from tests.fixtures import BlackJAXTest
 
 
 class OverdampedLangevinTest(BlackJAXTest):

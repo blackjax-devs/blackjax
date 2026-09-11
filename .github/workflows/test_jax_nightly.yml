@@ -11,17 +11,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: '3.12'
-    - name: Install JAX nightly and dependencies
+        python-version: "3.12"
+    - name: Install dependencies
+      run: uv sync --group dev --extra progress
+    - name: Install JAX nightly
       run: |
-        python -m pip install --upgrade pip
-        pip install --pre jax jaxlib -f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html
-        pip install .
-        less requirements.txt | grep 'pytest\|chex' | xargs -i -t pip install {}
+        uv pip install --prerelease=allow --upgrade --force-reinstall jax jaxlib \
+          --index https://us-python.pkg.dev/ml-oss-artifacts-published/jax-public-nightly-artifacts-registry/simple/
+    - name: Verify JAX nightly versions
+      run: |
+        uv run --no-sync python - <<'PY'
+        import jax
+        import jaxlib
+
+        versions = {"jax": jax.__version__, "jaxlib": jaxlib.__version__}
+        print(" ".join(f"{package}={version}" for package, version in versions.items()))
+        if not all(".dev" in version for version in versions.values()):
+            raise RuntimeError(f"Expected nightly JAX builds, got {versions}")
+        PY
     - name: Run tests
-      run: |
-        pytest -n auto -vv --benchmark-disable tests
-      continue-on-error: true
+      run: uv run --no-sync pytest -n 2 -vv --benchmark-disable tests

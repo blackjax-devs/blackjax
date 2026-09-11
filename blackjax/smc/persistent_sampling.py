@@ -21,7 +21,7 @@ import jax.numpy as jnp
 from jax.scipy.special import logsumexp
 
 from blackjax.base import SamplingAlgorithm
-from blackjax.smc.base import update_and_take_last
+from blackjax.smc.base import map_fn, update_and_take_last
 from blackjax.smc.from_mcmc import unshared_parameters_and_step_fn
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
 
@@ -151,6 +151,7 @@ def init(
     particles: ArrayLikeTree,
     loglikelihood_fn: Callable,
     n_schedule: int | Array,
+    batch_size: int = 0,
 ) -> PersistentSMCState:
     """Initialize the Persistent Sampling state.
 
@@ -171,17 +172,9 @@ def init(
     Returns
     -------
     PersistentSMCState
-        Initial state, with
-        - particles set to input particles,
-        - weights set to uniform weights,
-        - log-likelihoods set to the log-likelihoods of the input particles,
-        - normalizing constant set to 1.0 (assume prior is normalized, this is
-          important),
-        - tempering parameters set to 0.0 (initial distribution is prior).
-        - set iteration to 0.
-
-        NOTE: All arrays in the PersistentSMCState are padded with zeros up
-        to the length of the tempering schedule.
+        Initial state with particles, uniform weights, log-likelihoods, normalizing
+        constant 1.0, tempering parameters 0.0, and iteration 0.
+        All arrays are padded with zeros up to the length of the tempering schedule.
     """
 
     # Infer the number of particles from the size of the leading dimension of
@@ -190,10 +183,9 @@ def init(
 
     # Allocate arrays to store persistent particles and log-likelihoods, and
     # fill in the first entry with the initial values.
+    _eval_all = map_fn(loglikelihood_fn, batch_size)(particles)
     padded_log_likelihoods = (
-        jnp.zeros((n_schedule + 1, num_particles))
-        .at[0]
-        .set(jax.vmap(loglikelihood_fn)(particles))
+        jnp.zeros((n_schedule + 1, num_particles)).at[0].set(_eval_all)
     )
     padded_particles = jax.tree.map(
         lambda x: jnp.zeros((n_schedule + 1, *x.shape)).at[0].set(x), particles
@@ -458,6 +450,7 @@ def step(
     update_fn: Callable,
     resample_fn: Callable,
     weight_fn: Callable = compute_log_persistent_weights,
+    batch_size: int = 0,
 ) -> tuple[PersistentSMCState, PersistentStateInfo]:
     """One step of the Persistent Sampling algorithm, as
     described in algorithm 2 of Karamanis et al. (2025).
@@ -488,24 +481,12 @@ def step(
     Returns
     -------
     new_state: PersistentSMCState
-        The updated PersistentSMCState. Updated fields are:
-        - particles: particles from all iterations, with current iteration's
-          particles added.
-        - weights: normalized weights for all persistent particles at current
-          iteration.
-        - log_likelihoods: log-likelihoods for all persistent particles,
-          with current iteration's log-likelihoods added.
-        - log_Z: log normalizing constants, with current iteration's
-          normalizing constant added.
-        - tempering_schedule: tempering parameters, with current iteration's
-          parameter added.
-        - iteration: incremented by 1.
+        The updated PersistentSMCState with particles, weights, log-likelihoods,
+        log normalizing constants, and tempering parameters from all iterations.
+        Iteration counter is incremented by 1.
     info: PersistentStateInfo
-        An `PersistentStateInfo` object that contains extra information about the PS
-        transition. Contains:
-        - ancestors: indices of the particles selected by the resampling step.
-        - ess: effective sample size of the persistent ensemble.
-        - update_info: any extra information returned by the update function.
+        Extra information about the transition: ancestors (resampling indices),
+        ess (effective sample size), and update_info from the MCMC update step.
 
     """
 
@@ -544,7 +525,9 @@ def step(
     )
 
     # calculate log likelihoods for new particles
-    iteration_log_likelihoods = jax.vmap(loglikelihood_fn)(iteration_particles)
+    iteration_log_likelihoods = map_fn(loglikelihood_fn, batch_size)(
+        iteration_particles
+    )
 
     # update state
     persistent_particles = jax.tree.map(
@@ -577,6 +560,7 @@ def build_kernel(
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
     update_strategy: Callable = update_and_take_last,
+    batch_size: int = 0,
 ) -> Callable:
     """Build a Persistent Sampling kernel, with signature
     (rng_key,
@@ -614,9 +598,16 @@ def build_kernel(
         loggerposterior_fn,
         mcmc_step_fn,
         num_mcmc_steps,
-        n_particles,) -> (mcmc_kernel, n_particles), like 'update_and_take_last'.
+        n_particles,
+        batch_size,) -> (mcmc_kernel, n_particles), like 'update_and_take_last'.
         The mcmc_kernel must have signature
         (rng_key, position, mcmc_parameters) -> (new_position, info).
+    batch_size: int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Passed to ``update_strategy`` for the
+        MCMC update and to ``step`` for the log-likelihood evaluation,
+        enabling ``jax.lax.map``-based batching to reduce peak GPU memory.
+        ``0`` (default) keeps the original ``jax.vmap`` behaviour.
 
     Returns
     -------
@@ -645,6 +636,7 @@ def build_kernel(
             shared_mcmc_step_fn,
             num_mcmc_steps=num_mcmc_steps,
             n_particles=n_particles,
+            **({"batch_size": batch_size} if batch_size else {}),
         )
 
         return mcmc_kernel(rng_key, current_particles, unshared_mcmc_parameters)
@@ -699,6 +691,7 @@ def build_kernel(
             loglikelihood_fn,
             update_fn_wrapper,
             resampling_fn,
+            batch_size=batch_size,
         )
 
     return kernel
@@ -714,6 +707,7 @@ def as_top_level_api(
     resampling_fn: Callable,
     num_mcmc_steps: int = 10,
     update_strategy: Callable = update_and_take_last,
+    batch_size: int = 0,
 ) -> SamplingAlgorithm:
     """
     Implements the user interface for the Persistent Sampling
@@ -761,6 +755,12 @@ def as_top_level_api(
         The strategy to update particles using MCMC kernels, by default
         'update_and_take_last' from blackjax.smc.base. See build_kernel for
         details.
+    batch_size : int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Uses ``jax.lax.map`` for both the MCMC
+        update and the initial log-likelihood computation in ``init``,
+        reducing peak GPU memory. ``0`` (default) keeps the original
+        ``jax.vmap`` behaviour.
 
     Returns
     -------
@@ -781,10 +781,11 @@ def as_top_level_api(
         mcmc_init_fn,
         resampling_fn,
         update_strategy,
+        batch_size=batch_size,
     )
 
     def init_fn(position: ArrayLikeTree) -> PersistentSMCState:
-        return init(position, loglikelihood_fn, n_schedule)
+        return init(position, loglikelihood_fn, n_schedule, batch_size=batch_size)
 
     def step_fn(
         rng_key: PRNGKey,

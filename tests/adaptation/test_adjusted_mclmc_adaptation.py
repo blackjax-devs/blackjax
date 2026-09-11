@@ -1,0 +1,444 @@
+# Copyright 2020- The Blackjax Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Tests for adjusted_mclmc_find_L_and_step_size — focusing on the
+target_num_integration_steps fix that prevents the MALA collapse (avg ≈ 1).
+"""
+
+import jax
+import jax.numpy as jnp
+import numpy as np
+
+import blackjax
+import blackjax.diagnostics as diagnostics
+from blackjax.adaptation.adjusted_mclmc_adaptation import (
+    adjusted_mclmc_make_L_step_size_adaptation,
+)
+from blackjax.adaptation.mclmc_adaptation import MCLMCAdaptationState
+from blackjax.mcmc.adjusted_mclmc import rescale
+from blackjax.mcmc.integrators import isokinetic_mclachlan
+from blackjax.util import run_inference_algorithm
+from tests.fixtures import BlackJAXTest, std_normal_logdensity
+
+# ---------------------------------------------------------------------------
+# Shared helpers
+# ---------------------------------------------------------------------------
+
+_DIM = 5
+_NUM_STEPS = 4000  # total steps including warmup
+_TUNE_TARGET = 0.65
+_TUNE_FRAC1 = 0.1
+_TUNE_FRAC2 = 0.1
+
+
+def _make_initial_state(key, logdensity_fn, dim):
+    init_key, rng_key = jax.random.split(key)
+    position = jax.random.normal(init_key, (dim,))
+    state = blackjax.mcmc.adjusted_mclmc_dynamic.init(
+        position=position,
+        logdensity_fn=logdensity_fn,
+        random_generator_arg=rng_key,
+    )
+    return state
+
+
+def _make_kernel():
+    return blackjax.mcmc.adjusted_mclmc_dynamic.build_kernel(
+        integrator=isokinetic_mclachlan,
+        integration_steps_fn=lambda key, avg: jnp.ceil(
+            jax.random.uniform(key) * rescale(avg)
+        ).astype(jnp.int32),
+    )
+
+
+def _run_tuner(key, state, logdensity_fn, *, target_num_integration_steps):
+    kernel = _make_kernel()
+    _, params, _ = blackjax.adjusted_mclmc_find_L_and_step_size(
+        mclmc_kernel=kernel,
+        logdensity_fn=logdensity_fn,
+        num_steps=_NUM_STEPS,
+        state=state,
+        rng_key=key,
+        target=_TUNE_TARGET,
+        frac_tune1=_TUNE_FRAC1,
+        frac_tune2=_TUNE_FRAC2,
+        frac_tune3=0.0,
+        target_num_integration_steps=target_num_integration_steps,
+    )
+    return params
+
+
+def _run_chain(run_key, state, logdensity_fn, params, num_steps):
+    step_size = params.step_size
+    L = params.L
+    alg = blackjax.adjusted_mclmc_dynamic(
+        logdensity_fn=logdensity_fn,
+        step_size=step_size,
+        integration_steps_fn=lambda key, avg: jnp.ceil(
+            jax.random.uniform(key) * rescale(avg)
+        ).astype(jnp.int32),
+        integration_steps_params=(L / step_size,),
+        integrator=isokinetic_mclachlan,
+        inverse_mass_matrix=params.inverse_mass_matrix,
+    )
+    _, (_, info) = run_inference_algorithm(
+        rng_key=run_key,
+        initial_state=state,
+        inference_algorithm=alg,
+        num_steps=num_steps,
+        transform=lambda state, info: (state.position, info),
+    )
+    return info
+
+
+def _run_chain_positions(run_key, state, logdensity_fn, params, num_steps):
+    step_size = params.step_size
+    L = params.L
+    alg = blackjax.adjusted_mclmc_dynamic(
+        logdensity_fn=logdensity_fn,
+        step_size=step_size,
+        integration_steps_fn=lambda key, avg: jnp.ceil(
+            jax.random.uniform(key) * rescale(avg)
+        ).astype(jnp.int32),
+        integration_steps_params=(L / step_size,),
+        integrator=isokinetic_mclachlan,
+        inverse_mass_matrix=params.inverse_mass_matrix,
+    )
+    _, (positions, _) = run_inference_algorithm(
+        rng_key=run_key,
+        initial_state=state,
+        inference_algorithm=alg,
+        num_steps=num_steps,
+        transform=lambda state, info: (state.position, info),
+    )
+    return positions
+
+
+# ---------------------------------------------------------------------------
+# Test class
+# ---------------------------------------------------------------------------
+
+
+class TestAdjustedMclmcTargetIntegrationSteps(BlackJAXTest):
+    """Tests for the target_num_integration_steps fix.
+
+    Uses a standard isotropic Gaussian (d=5) as the target.
+    All assertions use tolerance bands — statistical properties only.
+    """
+
+    def _setup_state(self):
+        logdensity_fn = lambda x: std_normal_logdensity(x)
+        state = _make_initial_state(self.next_key(), logdensity_fn, _DIM)
+        return logdensity_fn, state
+
+    def test_tuner_returns_L_over_step_approx_target(self):
+        """Tuner with target_num_integration_steps=2 returns L/step ≈ 2 (not ≈ 1).
+
+        The regression: without the fix, the L-estimators produce L ≈ step,
+        so L/step ≈ 1 and the dynamic kernel collapses to MALA.
+        """
+        logdensity_fn, state = self._setup_state()
+        params = _run_tuner(
+            self.next_key(),
+            state,
+            logdensity_fn,
+            target_num_integration_steps=2.0,
+        )
+        ratio = params.L / params.step_size
+        # Should be exactly 2.0 (post-override), within float precision.
+        np.testing.assert_allclose(ratio, 2.0, rtol=1e-5)
+
+    def test_tuner_default_is_target_2(self):
+        """Default call (no target_num_integration_steps) produces L/step ≈ 2."""
+        logdensity_fn, state = self._setup_state()
+        kernel = _make_kernel()
+        # Calling with all existing positional/keyword args, omitting the new param.
+        _, params, _ = blackjax.adjusted_mclmc_find_L_and_step_size(
+            mclmc_kernel=kernel,
+            logdensity_fn=logdensity_fn,
+            num_steps=_NUM_STEPS,
+            state=state,
+            rng_key=self.next_key(),
+            target=_TUNE_TARGET,
+            frac_tune1=_TUNE_FRAC1,
+            frac_tune2=_TUNE_FRAC2,
+        )
+        ratio = params.L / params.step_size
+        np.testing.assert_allclose(ratio, 2.0, rtol=1e-5)
+
+    def test_tuner_target_1p5_produces_ratio_1p5(self):
+        """target_num_integration_steps=1.5 produces L/step=1.5.
+
+        Verifies the parameter mechanism is correctly wired (not hardcoded to 2).
+        Note: values < 1.1 (_AVG_FLOOR) are not reachable with avg-preserving
+        calibration — the step collapses to zero.  Use 1.5 as the near-MALA
+        test case (it sits above the floor and converges cleanly).
+        """
+        logdensity_fn, state = self._setup_state()
+        params = _run_tuner(
+            self.next_key(),
+            state,
+            logdensity_fn,
+            target_num_integration_steps=1.5,
+        )
+        ratio = params.L / params.step_size
+        np.testing.assert_allclose(ratio, 1.5, rtol=1e-5)
+
+    def test_dynamic_kernel_median_steps_approx_2(self):
+        """After tuning with target=2, the dynamic kernel takes ~2 steps per proposal.
+
+        Regression test for the MALA collapse: without the fix, median steps ≈ 1.
+        With the fix, median steps should be ≥ 1.5 (avg=2 → Uniform[1, 3] → median ≈ 2).
+        """
+        logdensity_fn, state = self._setup_state()
+        tune_key, run_key = jax.random.split(self.next_key())
+        params = _run_tuner(
+            tune_key,
+            state,
+            logdensity_fn,
+            target_num_integration_steps=2.0,
+        )
+        num_sampling_steps = 2000
+        info = _run_chain(run_key, state, logdensity_fn, params, num_sampling_steps)
+        median_steps = jnp.median(info.num_integration_steps.astype(jnp.float32))
+        # avg=2 => steps ~ ceil(Uniform * rescale(2)) ~ Uniform[1, 3], median ~ 2.
+        # We assert >= 1.5 to be conservative.
+        assert median_steps >= 1.5, (
+            f"Median integration steps {float(median_steps)} too low, "
+            "expected >= 1.5 (regression: MALA collapse gives median ~ 1)."
+        )
+
+    def test_avg_2_ess_geq_avg_1p5_on_gaussian(self):
+        """avg=2 tuning gives ESS at least comparable to avg=1.5 on a std Gaussian.
+
+        With avg-preserving calibration, both avg=2 and avg=1.5 are correctly
+        calibrated (both are above _AVG_FLOOR=1.1 so neither collapses).  We
+        assert ESS_avg2 >= 0.5 * ESS_avg1p5 as a conservative lower bound: avg=2
+        should be competitive even if the simple 5-d Gaussian happens to favour
+        shorter trajectories on a short run.  The key property being tested is
+        that avg=2 does NOT collapse (if it collapsed, ESS would approach 0 or
+        NaN and the ratio would be extreme).
+        """
+        logdensity_fn = lambda x: std_normal_logdensity(x)  # noqa: E731
+
+        key1, key2, run_key1, run_key2 = jax.random.split(self.next_key(), 4)
+
+        state1 = _make_initial_state(key1, logdensity_fn, _DIM)
+        state2 = _make_initial_state(key2, logdensity_fn, _DIM)
+
+        params_avg2 = _run_tuner(
+            key1, state1, logdensity_fn, target_num_integration_steps=2.0
+        )
+        params_avg1p5 = _run_tuner(
+            key2, state2, logdensity_fn, target_num_integration_steps=1.5
+        )
+
+        num_sampling = 2000
+        positions_avg2 = _run_chain_positions(
+            run_key1, state1, logdensity_fn, params_avg2, num_sampling
+        )
+        positions_avg1p5 = _run_chain_positions(
+            run_key2, state2, logdensity_fn, params_avg1p5, num_sampling
+        )
+
+        # ESS per dimension, then average
+        ess_avg2 = float(
+            jnp.mean(diagnostics.effective_sample_size(positions_avg2[None, ...]))
+        )
+        ess_avg1p5 = float(
+            jnp.mean(diagnostics.effective_sample_size(positions_avg1p5[None, ...]))
+        )
+
+        # Both should be reasonable (not collapsed, not NaN).
+        assert jnp.isfinite(ess_avg2), f"ESS with avg=2 is not finite: {ess_avg2}"
+        assert jnp.isfinite(ess_avg1p5), f"ESS with avg=1.5 is not finite: {ess_avg1p5}"
+        # avg=2 should be at least 50% as good as avg=1.5 (conservative; avg=2 is
+        # the recommended default and is substantially better at high d).
+        assert ess_avg2 >= 0.5 * ess_avg1p5, (
+            f"ESS with avg=2 ({ess_avg2}) is worse than 50% of ESS with avg=1.5 "
+            f"({ess_avg1p5}), expected avg=2 to be competitive"
+        )
+
+    def test_backward_compat_existing_signature(self):
+        """Existing call signature (no new param) works and returns valid params."""
+        logdensity_fn, state = self._setup_state()
+        kernel = _make_kernel()
+
+        # Exact replica of the existing test_sampling.py call pattern.
+        _, params, num_steps = blackjax.adjusted_mclmc_find_L_and_step_size(
+            mclmc_kernel=kernel,
+            logdensity_fn=logdensity_fn,
+            num_steps=_NUM_STEPS,
+            state=state,
+            rng_key=self.next_key(),
+            target=_TUNE_TARGET,
+            frac_tune1=_TUNE_FRAC1,
+            frac_tune2=_TUNE_FRAC2,
+            frac_tune3=0.0,
+            diagonal_preconditioning=True,
+        )
+
+        # params must be a valid MCLMCAdaptationState with positive values.
+        assert params.step_size > 0
+        assert params.L > 0
+        assert num_steps >= 0
+        # L/step = 2.0 (the new default).
+        np.testing.assert_allclose(params.L / params.step_size, 2.0, rtol=1e-5)
+
+
+class TestAdjustedMclmcHighDimAcceptance(BlackJAXTest):
+    """High-d acceptance d-sweep: regression against the high-d collapse bug.
+
+    Before the 2c avg-preserving fix:
+      d=300 acc≈0.22, d=500 acc≈0.21 (vs target 0.65).
+    After the fix the calibrated step correctly accounts for avg=2 → no collapse.
+
+    Memory notes: runs 1 chain per d, modest sampling budget.  d=500 is marked
+    slow because the DA needs ~1600 warmup steps to converge.  No float64 is used
+    (pytest.ini treats x64-related warnings as errors).
+    """
+
+    # Budget table: frac_tune1 * num_steps = DA steps; need ~1500 at d=500.
+    _CONFIGS = {
+        10: {"num_steps": 5000, "slow": False},
+        100: {"num_steps": 8000, "slow": False},
+        300: {"num_steps": 12000, "slow": True},
+        500: {"num_steps": 16000, "slow": True},
+    }
+    _FRAC1 = 0.1
+    _FRAC2 = 0.1
+    _TARGET = 0.65
+    _TARGET_K = 2.0
+    _NUM_SAMPLING = 200  # short chain to measure acceptance post-tuning
+
+    def _run_one_dim(self, dim):
+        cfg = self._CONFIGS[dim]
+        num_steps = cfg["num_steps"]
+
+        logdensity_fn = lambda x: std_normal_logdensity(x)  # noqa: E731
+        state = _make_initial_state(self.next_key(), logdensity_fn, dim)
+        kernel = _make_kernel()
+
+        _, params, _ = blackjax.adjusted_mclmc_find_L_and_step_size(
+            mclmc_kernel=kernel,
+            logdensity_fn=logdensity_fn,
+            num_steps=num_steps,
+            state=state,
+            rng_key=self.next_key(),
+            target=self._TARGET,
+            frac_tune1=self._FRAC1,
+            frac_tune2=self._FRAC2,
+            frac_tune3=0.0,
+            target_num_integration_steps=self._TARGET_K,
+        )
+
+        # 1. L/step invariant must hold exactly.
+        ratio = float(params.L / params.step_size)
+        np.testing.assert_allclose(
+            ratio,
+            self._TARGET_K,
+            rtol=1e-5,
+            err_msg=f"d={dim}: L/step={ratio} != {self._TARGET_K}",
+        )
+
+        # 2. Step must not be collapsed (proves avg-preserving calibration released
+        # the clamp; with the bug the d=500 step over-shrinks toward zero).
+        step = float(params.step_size)
+        step_floor = 0.01 * float(jnp.sqrt(dim))
+        assert (
+            step > step_floor
+        ), f"d={dim}: step collapsed (step={step}, floor={step_floor})"
+
+        # 3. Run a short chain and check acceptance is near target (no collapse).
+        info = _run_chain(
+            self.next_key(), state, logdensity_fn, params, self._NUM_SAMPLING
+        )
+        acc = float(jnp.mean(info.acceptance_rate))
+        assert acc >= 0.45, (
+            f"d={dim}: acceptance={acc} collapsed (< 0.45). "
+            f"Before fix d=300 gave 0.22, d=500 gave 0.21"
+        )
+        assert (
+            acc <= 0.97
+        ), f"d={dim}: acceptance={acc} suspiciously high (> 0.97), step likely too small"
+        return ratio, step, acc
+
+    def test_high_d_no_collapse_d10(self):
+        """d=10: L/step=2.0 exact, acceptance near target, step not collapsed."""
+        self._run_one_dim(10)
+
+    def test_high_d_no_collapse_d100(self):
+        """d=100: L/step=2.0 exact, acceptance near target, step not collapsed."""
+        self._run_one_dim(100)
+
+    def test_high_d_no_collapse_d300(self):
+        """d=300: L/step=2.0 exact, acceptance not collapsed (was 0.22 before fix)."""
+        self._run_one_dim(300)
+
+    def test_high_d_no_collapse_d500(self):
+        """d=500: L/step=2.0 exact, acceptance not collapsed (was 0.21 before fix).
+
+        Marked slow: the DA needs ~1600 warmup steps to converge at d=500.
+        Memory-bounded: 1 chain, 200 sampling steps.
+        """
+        self._run_one_dim(500)
+
+
+class TestAdjustedMclmcLUpdateOrderBugRegression(BlackJAXTest):
+    """Regression test proving fix_L=False now updates L (the bug froze it)."""
+
+    def test_inner_fn_fix_L_false_updates_L(self):
+        """With fix_L=False, L should move when step_size changes.
+
+        This tests the inner function adjusted_mclmc_make_L_step_size_adaptation
+        directly, bypassing the post-override that masks the bug in the public API.
+
+        Before the fix: the order-of-operations bug made L *= step_new/step_old
+        effectively a no-op because step_old was already updated to step_new.
+        With the fix, L should change as step_size adapts.
+        """
+        logdensity_fn = lambda x: std_normal_logdensity(x)
+        state = _make_initial_state(self.next_key(), logdensity_fn, _DIM)
+
+        # Use adjusted_mclmc_make_L_step_size_adaptation directly (the inner fn).
+        # frac_tune2=0.0 means only pass-1 runs (no variance block).
+        # fix_L_first_da=False means pass-1 runs with fix_L=False.
+        adaptation = adjusted_mclmc_make_L_step_size_adaptation(
+            kernel=_make_kernel(),
+            logdensity_fn=logdensity_fn,
+            dim=_DIM,
+            frac_tune1=0.2,
+            frac_tune2=0.0,
+            target=_TUNE_TARGET,
+            fix_L_first_da=False,
+            diagonal_preconditioning=False,
+        )
+
+        # Initialize params with well-separated L and step_size.
+        params_in = MCLMCAdaptationState(
+            L=jnp.array(1.0),
+            step_size=jnp.array(0.1),
+            inverse_mass_matrix=jnp.ones(_DIM),
+        )
+
+        # Run the adaptation for a fraction of the total steps.
+        num_adapt_steps = int(_NUM_STEPS * 0.2)  # matches frac_tune1
+        state_out, params_out, _, _ = adaptation(
+            state, params_in, num_adapt_steps, self.next_key()
+        )
+
+        # Regression: with the bug, params_out.L == params_in.L (L-update dead).
+        # With the fix, params_out.L should move (L tracks step under fix_L=False).
+        assert not jnp.allclose(
+            params_out.L, params_in.L, rtol=1e-3
+        ), f"L did not update: in={float(params_in.L)}, out={float(params_out.L)} (ORDER BUG)"

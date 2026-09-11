@@ -17,8 +17,8 @@ import jax
 import jax.numpy as jnp
 
 from blackjax.base import VIAlgorithm
+from blackjax.diagnostics import psis_weights as _psis_weights
 from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
-from blackjax.util import psis_weights as _psis_weights
 from blackjax.vi.pathfinder import PathfinderInfo, PathfinderState, approximate, sample
 
 __all__ = [
@@ -95,9 +95,8 @@ def multi_approximate(
 
     Returns
     -------
-    A ``MultipathfinderState`` (all path states + per-path samples and log
-    densities) and a ``PathfinderInfo`` wrapping all per-path
-    ``PathfinderState``s.
+    A ``MultipathfinderState`` (all path states, per-path samples, and log densities)
+    and a ``PathfinderInfo`` wrapping all per-path ``PathfinderState`` objects.
     """
     n_paths = jax.tree.leaves(initial_positions)[0].shape[0]
     approx_key, sample_key = jax.random.split(rng_key)

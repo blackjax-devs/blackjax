@@ -1,4 +1,4 @@
-from typing import Callable, NamedTuple, Optional, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
@@ -40,14 +40,17 @@ def build_kernel(
     mcmc_step_fn: Callable,
     mcmc_init_fn: Callable,
     resampling_fn: Callable,
-    num_mcmc_steps: Optional[int],
+    num_mcmc_steps: int | None,
     mcmc_parameters: ArrayTree,
     partial_logposterior_factory: Callable[[Array], Callable],
     update_strategy=update_and_take_last,
+    batch_size: int = 0,
 ) -> Callable:
     """Build the Partial Posteriors (data tempering) SMC kernel.
+
     The distribution's trajectory includes increasingly adding more
     datapoints to the likelihood. See Section 2.2 of https://arxiv.org/pdf/2007.11936
+
     Parameters
     ----------
     mcmc_step_fn
@@ -60,21 +63,26 @@ def build_kernel(
         Number of iterations in the MCMC chain.
     mcmc_parameters
         A dictionary of parameters to be used by the inner MCMC kernels
-    partial_logposterior_factory:
-        A callable that given an array of 0 and 1, returns a function logposterior(x).
-        The array represents which values to include in the logposterior calculation. The logposterior
-        must be jax compilable.
+    partial_logposterior_factory
+        A callable taking a binary array of length n_data and returning a logposterior function.
+        The binary array indicates which data points to include. Must be JAX-compilable.
+    batch_size: int, optional
+        Number of particles processed per sequential batch when
+        ``batch_size > 0``. Uses ``jax.lax.map`` for both the MCMC update and
+        weight computation, reducing peak GPU memory. ``0`` (default) keeps the
+        original ``jax.vmap`` behaviour.
 
     Returns
     -------
-    A callable that takes a rng_key and PartialPosteriorsSMCState and selectors for
-    the current and previous posteriors, and takes a data-tempered SMC state.
+    A callable that takes a rng_key and PartialPosteriorsSMCState and selectors for the current and previous posteriors, and takes a data-tempered SMC state.
     """
-    delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
+    delegate = smc_from_mcmc(
+        mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy, batch_size
+    )
 
     def step(
         key, state: PartialPosteriorsSMCState, data_mask: Array
-    ) -> Tuple[PartialPosteriorsSMCState, smc.base.SMCInfo]:
+    ) -> tuple[PartialPosteriorsSMCState, smc.base.SMCInfo]:
         logposterior_fn = partial_logposterior_factory(data_mask)
 
         previous_logposterior_fn = partial_logposterior_factory(state.data_mask)
@@ -102,6 +110,7 @@ def as_top_level_api(
     num_mcmc_steps,
     partial_logposterior_factory: Callable,
     update_strategy=update_and_take_last,
+    batch_size: int = 0,
 ) -> SamplingAlgorithm:
     """A factory that wraps the kernel into a SamplingAlgorithm object.
     See build_kernel for full documentation on the parameters.
@@ -115,6 +124,7 @@ def as_top_level_api(
         mcmc_parameters,
         partial_logposterior_factory,
         update_strategy,
+        batch_size,
     )
 
     def init_fn(position: ArrayLikeTree, num_observations, rng_key=None):

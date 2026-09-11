@@ -24,6 +24,7 @@ from blackjax.types import Array, ArrayLikeTree
 
 __all__ = [
     "LBFGSHistory",
+    "LBFGSDiagnostics",
     "LbfgsState",
     "OptStep",
     "minimize_lbfgs",
@@ -32,6 +33,38 @@ __all__ = [
     "lbfgs_inverse_hessian_formula_2",
     "bfgs_sample",
 ]
+
+
+class LBFGSDiagnostics(NamedTuple):
+    """Per-call convergence diagnostics from a single :func:`minimize_lbfgs` run.
+
+    These fields are surfaced through the kernel ``Info`` NamedTuple of
+    Laplace-marginal samplers (:class:`~blackjax.mcmc.laplace_marginal.LaplaceHMCInfo`)
+    so that callers can detect non-convergence of the inner L-BFGS solve at
+    every MCMC step without resorting to callbacks or host-side introspection.
+
+    iter_num
+        Number of L-BFGS iterations actually taken (scalar int).  Equal to
+        ``maxiter`` when the iteration budget is exhausted — see ``hit_maxiter``.
+    error
+        Final gradient norm ``||∇f(x*)||₂`` (scalar float).  Small values
+        indicate convergence to a stationary point.  A value substantially
+        above ``gtol`` signals a non-converged solve.
+    converged
+        ``True`` iff ``error <= gtol``.  Note: warm-started solves can land at
+        ``error ~ 1e-6`` (fine in practice) and still return ``converged=False``
+        if ``gtol=1e-8``.  Prefer ``hit_maxiter`` as the primary bug-signature.
+    hit_maxiter
+        ``True`` iff ``iter_num >= maxiter``.  **This is the actionable
+        non-convergence signal**: it fires exactly when the optimizer exhausted
+        the budget without stopping early.  This is the direct descendant of the
+        ``maxiter=30`` silent-failure diagnosed in blackjax issue #925.
+    """
+
+    iter_num: Array
+    error: Array
+    converged: Array
+    hit_maxiter: Array
 
 
 class LBFGSHistory(NamedTuple):
@@ -302,9 +335,9 @@ def lbfgs_recover_alpha(alpha_lm1, s_l, z_l, epsilon=1e-12):
     """
 
     def compute_next_alpha(s_l, z_l, alpha_lm1):
-        a = z_l.T @ jnp.diag(alpha_lm1) @ z_l
-        b = z_l.T @ s_l
-        c = s_l.T @ jnp.diag(1.0 / alpha_lm1) @ s_l
+        a = jnp.sum(alpha_lm1 * z_l**2)
+        b = jnp.dot(z_l, s_l)
+        c = jnp.sum(s_l**2 / alpha_lm1)
         inv_alpha_l = (
             a / (b * alpha_lm1)
             + z_l**2 / b
@@ -338,10 +371,10 @@ def lbfgs_inverse_hessian_factors(S, Z, alpha):
 
     eta = jnp.diag(StZ)
 
-    beta = jnp.hstack([jnp.diag(alpha) @ Z, S])
+    beta = jnp.hstack((alpha[:, None] * Z, S))
 
     minvR = -jnp.linalg.inv(R)
-    alphaZ = jnp.diag(jnp.sqrt(alpha)) @ Z
+    alphaZ = jnp.sqrt(alpha)[:, None] * Z
     block_dd = minvR.T @ (alphaZ.T @ alphaZ + jnp.diag(eta)) @ minvR
     gamma = jnp.block(
         [[jnp.zeros((param_dims, param_dims)), minvR], [minvR.T, block_dd]]
@@ -387,20 +420,16 @@ def bfgs_sample(rng_key, num_samples, position, grad_position, alpha, beta, gamm
     if not isinstance(num_samples, tuple):
         num_samples = (num_samples,)
 
-    Q, R = jnp.linalg.qr(jnp.diag(jnp.sqrt(1 / alpha)) @ beta)
+    Q, R = jnp.linalg.qr(beta / jnp.sqrt(alpha)[:, None], mode="reduced")
     param_dims = beta.shape[0]
     Id = jnp.identity(R.shape[0])
     L = jnp.linalg.cholesky(Id + R @ gamma @ R.T)
 
-    logdet = jnp.log(jnp.prod(alpha)) + 2 * jnp.log(jnp.linalg.det(L))
-    mu = (
-        position
-        + jnp.diag(alpha) @ grad_position
-        + beta @ gamma @ beta.T @ grad_position
-    )
+    logdet = jnp.sum(jnp.log(alpha)) + 2.0 * jnp.sum(jnp.log(jnp.diag(L)))
+    mu = position + alpha * grad_position + beta @ (gamma @ (beta.T @ grad_position))
 
     u = jax.random.normal(rng_key, num_samples + (param_dims, 1))
-    phi = mu[..., None] + jnp.diag(jnp.sqrt(alpha)) @ (Q @ (L - Id) @ (Q.T @ u) + u)
+    phi = mu[..., None] + jnp.sqrt(alpha)[:, None] * (Q @ (L - Id) @ (Q.T @ u) + u)
 
     logdensity = -0.5 * (
         logdet

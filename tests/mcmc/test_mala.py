@@ -21,7 +21,7 @@ from absl.testing import absltest
 
 import blackjax.mcmc.diffusions as diffusions
 import blackjax.mcmc.mala as mala
-from tests.util import BlackJAXTest, std_normal_logdensity
+from tests.fixtures import BlackJAXTest, std_normal_logdensity
 
 # ---------------------------------------------------------------------------
 # mcmc/diffusions.overdamped_langevin

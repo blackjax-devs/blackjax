@@ -12,13 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Callable, NamedTuple, Tuple
+from typing import Callable, NamedTuple
 
 import jax
 import jax.numpy as jnp
 import jax.random
 from jax.flatten_util import ravel_pytree
-from jax.tree_util import tree_leaves
 from jax.typing import ArrayLike
 
 from blackjax.base import VIAlgorithm
@@ -65,7 +64,7 @@ def step(
     logdensity_fn: Callable,
     step_size: float,
     n_samples: int,
-) -> Tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]:
+) -> tuple[SchrodingerFollmerState, SchrodingerFollmerInfo]:
     """
     Runs one step of the Schrödinger-Föllmer algorithm. As per the paper, we only allow for Euler-Maruyama integration.
     It is likely possible to generalize this to other integration schemes but is not considered in the original work
@@ -177,7 +176,7 @@ def _log_fn_corrected(position, logdensity_fn):
     """
     log_pdf_val = logdensity_fn(position)
     norm = jax.tree.map(lambda a: 0.5 * jnp.sum(a**2), position)
-    norm = sum(tree_leaves(norm))
+    norm = sum(jax.tree.leaves(norm))
     return log_pdf_val + norm
 
 

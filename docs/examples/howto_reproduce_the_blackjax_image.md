@@ -1,15 +1,14 @@
 ---
-jupyter:
-  jupytext:
-    text_representation:
-      extension: .md
-      format_name: markdown
-      format_version: '1.3'
-      jupytext_version: 1.16.1
-  kernelspec:
-    display_name: Python 3
-    language: python
-    name: python3
+jupytext:
+  text_representation:
+    extension: .md
+    format_name: myst
+    format_version: 0.13
+    jupytext_version: 1.15.2
+kernelspec:
+  display_name: Python 3 (ipykernel)
+  language: python
+  name: python3
 ---
 
 # Reproducing the front page image of the repository
@@ -23,7 +22,7 @@ Here we show how we can sample from the uniform distribution corresponding to bl
 
 ## Make the image into a numpy array
 
-```python
+```{code-cell} ipython3
 import matplotlib
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
@@ -34,7 +33,7 @@ plt.rcParams["axes.spines.top"] = False
 matplotlib.rcParams['animation.embed_limit'] = 25
 ```
 
-```python
+```{code-cell} ipython3
 # Load the image
 im = mpimg.imread('./data/blackjax.png')
 
@@ -51,16 +50,15 @@ To sample from **BlackJAX**, we form a bridge between the uniform distribution o
 
 Formally, this corresponds to a prior distribution $p_0 \sim U([[0, 79]] \times [[0, 249]]$ and a target distribution $p_1(x) \propto \mathbb{1}_{x \in \text{image}}$.
 
-```python
+```{code-cell} ipython3
 import jax
 import jax.numpy as jnp
 from datetime import date
 
 rng_key = jax.random.key(int(date.today().strftime("%Y%m%d")))
-
 ```
 
-```python
+```{code-cell} ipython3
 # Sample from the uniform distribution over the domain
 key_init, rng_key = jax.random.split(rng_key)
 n_samples = 5_000
@@ -81,26 +79,25 @@ def prior_logpdf(z): return 0.0
 # The pdf is uniform, so the logpdf is constant on the domain and negative infinite outside
 def log_likelihood(z):
     x, y = z
-    # The pixel is black if x, y falls within the image, which means that their integer part is a valid index
-    floor_x, floor_y = jnp.floor(x), jnp.floor(y)
-    floor_x, floor_y = jnp.astype(floor_x, jnp.int32), jnp.astype(floor_y, jnp.int32)
+    # The pixel is black if x, y falls within the image
+    floor_x = jnp.floor(x).astype(jnp.int32)
+    floor_y = jnp.floor(y).astype(jnp.int32)
     out_of_bounds = (floor_x < 0) | (floor_x >= 80) | (floor_y < 0) | (floor_y >= 250)
-    value = jax.lax.cond(out_of_bounds,
-                         lambda *_: -INF,
-                         lambda arg: -INF * (jax_im[arg[0], arg[1]] == 0),
-                         operand=(floor_x, floor_y))
+    value = jax.lax.cond(
+        out_of_bounds,
+        lambda: -INF,
+        lambda: -INF * (jax_im[floor_x, floor_y] == 0),
+    )
     return value
-
-
 ```
 
-## The sampling procedure
+## Run the SMC sampler
 
-We will a RWMH sampler within SMC routine to sample from the target distribution.
-For more information we refer to the [documentation](https://blackjax-devs.github.io/sampling-book/algorithms/TemperedSMC.html) specific to SMC
+We use a RWMH sampler within an SMC routine to sample from the target distribution.
+For more information see the [documentation](https://blackjax-devs.github.io/sampling-book/algorithms/TemperedSMC.html) specific to SMC.
 
-
-```python
+```{code-cell} ipython3
+import functools
 import blackjax
 import blackjax.smc.resampling as resampling
 
@@ -109,34 +106,32 @@ n_temperatures = 150
 lambda_schedule = np.logspace(-3, 0, n_temperatures)
 
 # The proposal distribution is a random walk with a fixed scale
-scale = 0.5  # The scale of the proposal distribution
+scale = 0.5
 normal = blackjax.mcmc.random_walk.normal(scale * jnp.ones((2,)))
 
-rw_kernel = blackjax.additive_step_random_walk.build_kernel()
+# Bake the proposal into the kernel so no function leaks into mcmc_parameters
+rw_kernel = functools.partial(
+    blackjax.additive_step_random_walk.build_kernel(),
+    random_step=normal,
+)
 rw_init = blackjax.additive_step_random_walk.init
-rw_params = {"random_step": normal}
 
 tempered = blackjax.tempered_smc(
     prior_logpdf,
     log_likelihood,
     rw_kernel,
     rw_init,
-    rw_params,
+    {},   # mcmc_parameters must be JAX-traceable; proposal is baked into rw_kernel
     resampling.systematic,
     num_mcmc_steps=5,
 )
 
 initial_smc_state = tempered.init(zs_init)
-
 ```
 
-## Run the SMC sampler
-
-```python
-# Define the loop
+```{code-cell} ipython3
 def smc_inference_loop(loop_key, smc_kernel, init_state, schedule):
-    """Run the tempered SMC algorithm.
-    """
+    """Run the tempered SMC algorithm."""
 
     def body_fn(carry, tempering_param):
         i, state = carry
@@ -145,23 +140,21 @@ def smc_inference_loop(loop_key, smc_kernel, init_state, schedule):
         return (i + 1, new_state), (new_state, info)
 
     _, (all_samples, _) = jax.lax.scan(body_fn, (0, init_state), schedule)
-
     return all_samples
 
 
-# Run the SMC sampler
-blackjax_samples = smc_inference_loop(rng_key, tempered.step, initial_smc_state, lambda_schedule)
+rng_key, sample_key = jax.random.split(rng_key)
+blackjax_samples = smc_inference_loop(sample_key, tempered.step, initial_smc_state, lambda_schedule)
 ```
 
 ## Plot the samples
 
-```python
+```{code-cell} ipython3
 weights = np.array(blackjax_samples.weights)
 samples = np.array(blackjax_samples.particles)
 ```
 
-```python
-
+```{code-cell} ipython3
 import matplotlib.animation as animation
 from IPython.display import HTML
 
@@ -177,22 +170,13 @@ ax.set_ylim(0, 80)
 scat = ax.scatter(ys_init, 80 - xs_init, s=1000 * 1 / n_samples)
 
 
-# temp = ax.text(0.9, 0.9, r'$\lambda$: 0', horizontalalignment='center', verticalalignment='center', transform=ax.transAxes, fontsize=15)
-
 def animate(i):
     scat.set_offsets(np.c_[samples[i, :, 1], 80 - samples[i, :, 0]])
     scat.set_sizes(1000 * weights[i])
-    # temp.set_text(r'$\lambda$: {:.1e}'.format(lambda_schedule[i]))
     return scat,
 
 
 ani = animation.FuncAnimation(fig, animate, repeat=True,
                               frames=n_temperatures, blit=True, interval=100)
-
-# writer = animation.PillowWriter(fps=20,
-#                                 metadata=dict(artist='Me'),
-#                                 bitrate=1800)
-# ani.save('scatter.gif', writer=writer)
+HTML(ani.to_jshtml())
 ```
-
-![front_page_gif](./scatter.gif)
