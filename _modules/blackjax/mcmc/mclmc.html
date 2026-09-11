@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g74a2c1c90" />
+  <meta name="docsearch:version" content="0.1.dev1+gdf074f9bf" />
   </head>
   
   
@@ -667,11 +667,14 @@
     <span class="c1"># at moderate overshoot) are correctly detected and reverted.  Pre-fix, case-2</span>
     <span class="c1"># left info.nonans=True while the state carried a NaN logdensity, silently</span>
     <span class="c1"># corrupting subsequent energy_change computations and blocking step-size shrinkage.</span>
+    <span class="c1"># D1 (#1035): also require finite kinetic/energy change, else a NaN there silently poisons ECA&#39;s ensemble psum average.</span>
     <span class="n">nonans</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
         <span class="n">jnp</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
             <span class="n">isfinite_pytree</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">position</span><span class="p">),</span> <span class="n">isfinite_pytree</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">momentum</span><span class="p">)</span>
         <span class="p">),</span>
-        <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">),</span>
+        <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">next_state</span><span class="o">.</span><span class="n">logdensity</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">kinetic_change</span><span class="p">)</span>
+        <span class="o">&amp;</span> <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">info</span><span class="o">.</span><span class="n">energy_change</span><span class="p">),</span>
     <span class="p">)</span>
 
     <span class="n">state</span><span class="p">,</span> <span class="n">info</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>

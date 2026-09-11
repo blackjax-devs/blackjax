@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g74a2c1c90" />
+  <meta name="docsearch:version" content="0.1.dev1+gdf074f9bf" />
   </head>
   
   
@@ -876,10 +876,16 @@
             <span class="s2">&quot;observables&quot;</span><span class="p">:</span> <span class="n">Etheta</span><span class="p">[</span><span class="s2">&quot;observables&quot;</span><span class="p">],</span>
         <span class="p">}</span>
 
+        <span class="c1"># D2 (#1035): multiplicative update is absorbing on a non-finite factor; fall back to the last finite step size.</span>
+        <span class="n">step_size_new</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">where</span><span class="p">(</span>
+            <span class="n">jnp</span><span class="o">.</span><span class="n">isfinite</span><span class="p">(</span><span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span> <span class="o">*</span> <span class="n">eps_factor</span><span class="p">),</span>
+            <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span> <span class="o">*</span> <span class="n">eps_factor</span><span class="p">,</span>
+            <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span><span class="p">,</span>
+        <span class="p">)</span>
         <span class="n">adaptation_state_new</span> <span class="o">=</span> <span class="n">AdaptationState</span><span class="p">(</span>
             <span class="n">L</span><span class="p">,</span>
             <span class="n">inverse_mass_matrix</span><span class="p">,</span>
-            <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_size</span> <span class="o">*</span> <span class="n">eps_factor</span><span class="p">,</span>  <span class="c1"># set the stepsize directly</span>
+            <span class="n">step_size_new</span><span class="p">,</span>  <span class="c1"># set the stepsize directly</span>
             <span class="n">adaptation_state</span><span class="o">.</span><span class="n">step_count</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
             <span class="n">EEVPD</span><span class="p">,</span>
             <span class="n">EEVPD_wanted</span><span class="p">,</span>
