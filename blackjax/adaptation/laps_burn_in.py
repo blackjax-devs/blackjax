@@ -351,10 +351,16 @@ class Adaptation:
             "observables": Etheta["observables"],
         }
 
+        # D2 (#1035): multiplicative update is absorbing on a non-finite factor; fall back to the last finite step size.
+        step_size_new = jnp.where(
+            jnp.isfinite(adaptation_state.step_size * eps_factor),
+            adaptation_state.step_size * eps_factor,
+            adaptation_state.step_size,
+        )
         adaptation_state_new = AdaptationState(
             L,
             inverse_mass_matrix,
-            adaptation_state.step_size * eps_factor,  # set the stepsize directly
+            step_size_new,  # set the stepsize directly
             adaptation_state.step_count + 1,
             EEVPD,
             EEVPD_wanted,

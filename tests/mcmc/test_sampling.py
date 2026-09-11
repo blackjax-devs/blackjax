@@ -769,14 +769,43 @@ class LinearRegressionTest(chex.TestCase):
             superchain_size=1,
         )
 
-        scale_samples = np.exp(final_state.position[:, 0])
-        coefs_samples = final_state.position[:, 1]
+        # ``final_state`` is the ensemble at the final step: one draw per chain.
+        ensemble = np.asarray(final_state.position)
 
-        print(np.mean(scale_samples))
-        print(np.mean(coefs_samples))
+        # Reference posterior: independent 4-chain NUTS, R-hat 1.00003, ESS ~1.6e4. See #1035.
+        posterior_mean = np.array([0.0325, 3.0135])
+        posterior_sd = np.array([0.0224, 0.0335])
 
-        np.testing.assert_allclose(np.mean(scale_samples), 1.0, atol=1e-1)
-        np.testing.assert_allclose(np.mean(coefs_samples), 3.0, atol=1e-1)
+        # A non-finite step size means the rest of the budget ran as no-ops; gate on it first.
+        for phase in ("phase_1", "phase_2"):
+            step_sizes = np.asarray(info[phase]["step_size"])
+            first_bad_iter = int(
+                np.argmax(~np.isfinite(step_sizes))
+            )  # not inlined: pycodestyle 2.10.0 E702 on PEP 701 f-strings (3.12+)
+            assert np.all(np.isfinite(step_sizes)), (
+                f"{phase}: step size became non-finite at iteration "
+                f"{first_bad_iter} of {step_sizes.size}"
+            )
+        mean_acceptance = float(np.mean(np.asarray(info["phase_2"]["acc_prob"])))
+        assert (
+            mean_acceptance > 0.01
+        ), f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
+
+        # Median location (robust to one stray chain) and two-sided dispersion
+        # (an ensemble that never moved has sd 1.0, not ~0.02).
+        z_scores = (ensemble - posterior_mean) / posterior_sd
+        np.testing.assert_array_less(np.abs(np.median(z_scores, axis=0)), 6.0)
+
+        sd_ratio = ensemble.std(axis=0) / posterior_sd
+        np.testing.assert_array_less(sd_ratio, 2.0)
+        np.testing.assert_array_less(0.5, sd_ratio)
+
+        equilibrated = np.mean(np.all(np.abs(z_scores) < 6.0, axis=1))
+        # not f"{x:.0%}": pycodestyle 2.10.0 flags E231 on PEP 701 f-strings
+        equilibrated_pct = round(100 * equilibrated)
+        assert (
+            equilibrated >= 0.9
+        ), f"only {equilibrated_pct}% of chains are within 6 posterior sd"
 
     @parameterized.named_parameters(
         {"testcase_name": "typed_key", "use_typed_key": True},

@@ -227,11 +227,14 @@ def handle_nans(previous_state, next_state, info, key):
     # at moderate overshoot) are correctly detected and reverted.  Pre-fix, case-2
     # left info.nonans=True while the state carried a NaN logdensity, silently
     # corrupting subsequent energy_change computations and blocking step-size shrinkage.
+    # D1 (#1035): also require finite kinetic/energy change, else a NaN there silently poisons ECA's ensemble psum average.
     nonans = jnp.logical_and(
         jnp.logical_and(
             isfinite_pytree(next_state.position), isfinite_pytree(next_state.momentum)
         ),
-        jnp.isfinite(next_state.logdensity),
+        jnp.isfinite(next_state.logdensity)
+        & jnp.isfinite(info.kinetic_change)
+        & jnp.isfinite(info.energy_change),
     )
 
     state, info = jax.lax.cond(

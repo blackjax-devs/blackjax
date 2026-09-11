@@ -60,6 +60,10 @@ _CONTROL_SEED = 20260907
 _REFERENCE_SEED = 11
 _REFERENCE_STEP_SIZES = (0.75, 0.90)
 
+# `test_jit_vmap_and_scan`'s margin control needs both marginals interior;
+# `_CONTROL_SEED` and `_REFERENCE_SEED` saturate one to 1.0 on that fixture.
+_JIT_MARGIN_SEED = 10248
+
 
 def _standard_normal_logdensity(x):
     flat, _ = jax.flatten_util.ravel_pytree(x)
@@ -536,9 +540,9 @@ class CoupledHMCContractTest(BlackJAXTest):
                     "than skipping or clipping this case",
                 )
             highest = max(float(probe_first), float(probe_second))
-            # Acceptance is `uniform < p_accept`, so `uniform = highest` rejects
-            # both marginals and `uniform = 0` accepts both.
-            uniform = jnp.asarray(0.0 if accept else highest, jnp.float64)
+            # Reject with a margin, not at `highest`: oracle and module p_accept
+            # can disagree by 1 ULP, making `uniform = highest` a coin flip.
+            uniform = jnp.asarray(0.0 if accept else 0.5 * (highest + 1.0), jnp.float64)
 
             new_state, info = step(state, noise, uniform)
             # Confirm this case exercises the branch it is named for.
@@ -833,7 +837,12 @@ class CoupledHMCContractTest(BlackJAXTest):
         {"testcase_name": "u_just_below_one", "uniform": None},
     )
     def test_certain_acceptance_accepts_at_both_uniform_endpoints(self, uniform):
-        """``p_accept == 1`` accepts for every admissible uniform in [0, 1)."""
+        """``p_accept == 1`` accepts for every admissible uniform in [0, 1).
+
+        Pinned at a stationary point (position = momentum = 0, energy
+        difference exactly 0.0); a small step size alone left ~1e-16 sign
+        noise that failed 128/200 seeded days.
+        """
         with _x64():
             if uniform is None:
                 uniform = float(jnp.nextafter(jnp.float64(1.0), jnp.float64(0.0)))
@@ -844,7 +853,6 @@ class CoupledHMCContractTest(BlackJAXTest):
                 _standard_normal_logdensity(position),
                 jax.grad(_standard_normal_logdensity)(position),
             )
-            # A vanishing step size makes the energy error ~0, so p_accept == 1.
             _, step = coupled_hmc._build_prescribed_marginal(
                 _standard_normal_logdensity,
                 mass,
@@ -853,9 +861,13 @@ class CoupledHMCContractTest(BlackJAXTest):
                 integrators.velocity_verlet,
                 1000.0,
             )
-            noise = jax.random.normal(self.next_key(), (_DIM,), jnp.float64)
+            noise = jnp.zeros((_DIM,), jnp.float64)  # see docstring
             _, info = step(state, noise, jnp.asarray(uniform, jnp.float64))
-            np.testing.assert_allclose(float(info.acceptance_rate), 1.0, rtol=1e-12)
+            self.assertEqual(
+                float(info.acceptance_rate),
+                1.0,
+                "p_accept must be bit-exact 1.0 at a stationary point, not merely close",
+            )
             self.assertTrue(bool(info.is_accepted))
 
     def test_certain_rejection_rejects_at_the_zero_uniform(self):
@@ -1404,18 +1416,80 @@ class CoupledHMCContractTest(BlackJAXTest):
 
         eager_state, eager_info = algorithm.step(key, state)
         jitted_state, jitted_info = jax.jit(algorithm.step)(key, state)
-        # Floating results are compared with a tolerance: XLA may fuse or
-        # reassociate under `jit`, so bitwise agreement with the eager path is
-        # not a contract this module can promise. The DECISIONS and the
-        # structure are exact, because those must not drift.
-        chex.assert_trees_all_close(eager_state, jitted_state, atol=1e-12)
-        self.assertEqual(
-            bool(eager_info.first.is_accepted), bool(jitted_info.first.is_accepted)
+        # atol=1e-4: ~35x measured float32 eager/jit drift (state 2.86e-6, rate 3.82e-6).
+        chex.assert_trees_all_close(eager_state, jitted_state, atol=1e-4)
+        chex.assert_trees_all_close(
+            eager_info.first.acceptance_rate,
+            jitted_info.first.acceptance_rate,
+            atol=1e-4,
         )
-        self.assertEqual(
-            bool(eager_info.second.is_accepted), bool(jitted_info.second.is_accepted)
+        chex.assert_trees_all_close(
+            eager_info.second.acceptance_rate,
+            jitted_info.second.acceptance_rate,
+            atol=1e-4,
         )
         chex.assert_trees_all_equal_structs(eager_state, jitted_state)
+        chex.assert_trees_all_equal_structs(eager_info, jitted_info)
+
+        # Decisions exercised through the same machinery, but with the uniform
+        # held far from p_accept. Interiority is asserted, not trusted.
+        margin_step = coupled_hmc._build_prescribed_pair(
+            (_standard_normal_logdensity, _tilted_logdensity),
+            (mass, mass),
+            (0.2, 0.2),
+            (4, 4),
+            integrators.velocity_verlet,
+            1000.0,
+            "reflection",
+            coupled_hmc.whitened_difference,
+        )
+        margin_noise = jax.random.normal(jax.random.key(_JIT_MARGIN_SEED), (_DIM,))
+        # acceptance_rate is independent of the uniform; this only reads p_accept.
+        _, rate_probe_info = margin_step(state, margin_noise, jnp.asarray(0.5))
+        first_p_accept = float(rate_probe_info.first.acceptance_rate)
+        second_p_accept = float(rate_probe_info.second.acceptance_rate)
+        for label, probability in (
+            ("first", first_p_accept),
+            ("second", second_p_accept),
+        ):
+            self.assertGreater(
+                probability, 0.0, f"{label} p_accept is 0, no accepting uniform exists"
+            )
+            self.assertLess(
+                probability,
+                1.0,
+                f"{label} p_accept rounded to 1, no rejecting uniform exists -- "
+                "choose a different `_JIT_MARGIN_SEED`",
+            )
+        highest = max(first_p_accept, second_p_accept)
+        # Same margin construction as reflect_reject above.
+        for uniform, expect_accepted in (
+            (jnp.asarray(0.0), True),
+            (jnp.asarray(0.5 * (highest + 1.0)), False),
+        ):
+            eager_margin_state, eager_margin_info = margin_step(
+                state, margin_noise, uniform
+            )
+            jitted_margin_state, jitted_margin_info = jax.jit(margin_step)(
+                state, margin_noise, uniform
+            )
+            for name, info in (
+                ("eager", eager_margin_info),
+                ("jitted", jitted_margin_info),
+            ):
+                self.assertEqual(
+                    bool(info.first.is_accepted),
+                    expect_accepted,
+                    f"{name} first marginal at uniform={float(uniform)!r}",
+                )
+                self.assertEqual(
+                    bool(info.second.is_accepted),
+                    expect_accepted,
+                    f"{name} second marginal at uniform={float(uniform)!r}",
+                )
+            chex.assert_trees_all_close(
+                eager_margin_state, jitted_margin_state, atol=1e-12
+            )
 
         def body(carry, step_key):
             new_state, _ = algorithm.step(step_key, carry)
