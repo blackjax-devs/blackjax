@@ -467,11 +467,16 @@ def esh_dynamics_momentum_update_one_step(inverse_mass_matrix=1.0):
         # Apply forward_L: O(dk) for LRD, O(d) for diagonal
         gr = unravel_fn(forward_L(new_momentum_normalized))
         next_momentum = unravel_fn(new_momentum_normalized)
-        kinetic_energy_change = (
-            delta
-            - jnp.log(2)
-            + jnp.log(1 + momentum_proj + (1 - momentum_proj) * zeta**2)
-        ) * (dims - 1)
+        s_plus = 0.5 * jnp.square(flatten_momentum + normalized_gradient).sum()
+        s_minus = 0.5 * jnp.square(flatten_momentum - normalized_gradient).sum()
+        log_a = jnp.log(
+            jnp.where(
+                zeta**2 <= 1,
+                s_plus * (1 - zeta**2) + 2 * zeta**2,
+                s_minus * (zeta**2 - 1) + 2,
+            )
+        )
+        kinetic_energy_change = (delta - jnp.log(2) + log_a) * (dims - 1)
         if previous_kinetic_energy_change is not None:
             kinetic_energy_change += previous_kinetic_energy_change
         return next_momentum, gr, kinetic_energy_change
