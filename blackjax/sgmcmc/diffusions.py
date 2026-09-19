@@ -13,6 +13,7 @@
 # limitations under the License.
 """Solvers for Langevin diffusions."""
 import operator
+from typing import Callable
 
 import jax
 import jax.numpy as jnp
@@ -20,7 +21,7 @@ import jax.numpy as jnp
 from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise, pytree_size
 
-__all__ = ["overdamped_langevin", "sghmc", "sgnht"]
+__all__ = ["overdamped_langevin", "sghmc", "sghmc_lie_trotter", "sgnht"]
 
 
 def overdamped_langevin():
@@ -79,6 +80,54 @@ def sghmc(alpha: float = 0.01, beta: float = 0):
             * n,
             momentum,
             logdensity_grad,
+            noise,
+        )
+
+        return position, momentum
+
+    return one_step
+
+
+def sghmc_lie_trotter(alpha: float = 0.01, beta: float = 0):
+    """Lie-Trotter solver for the diffusion equation of the SGHMC algorithm.
+
+    The Hamiltonian part is integrated with one deterministic leapfrog step,
+    followed by the exact Ornstein-Uhlenbeck update for the momentum. The
+    ``alpha`` parameter is the friction coefficient. The ``beta`` parameter is
+    accepted for API compatibility with :func:`sghmc` and is unused.
+
+    """
+    del beta
+
+    def one_step(
+        rng_key: PRNGKey,
+        position: ArrayLikeTree,
+        momentum: ArrayLikeTree,
+        grad_estimator: Callable,
+        minibatch: ArrayLikeTree,
+        step_size: float,
+        temperature: float = 1.0,
+    ):
+        logdensity_grad = grad_estimator(position, minibatch)
+        momentum = jax.tree.map(
+            lambda p, g: p + 0.5 * step_size * g,
+            momentum,
+            logdensity_grad,
+        )
+        position = jax.tree.map(lambda x, p: x + step_size * p, position, momentum)
+        logdensity_grad = grad_estimator(position, minibatch)
+        momentum = jax.tree.map(
+            lambda p, g: p + 0.5 * step_size * g,
+            momentum,
+            logdensity_grad,
+        )
+
+        noise = generate_gaussian_noise(rng_key, position)
+        friction = jnp.exp(-alpha * step_size)
+        noise_scale = jnp.sqrt(temperature * (1.0 - jnp.exp(-2.0 * alpha * step_size)))
+        momentum = jax.tree.map(
+            lambda p, n: friction * p + noise_scale * n,
+            momentum,
             noise,
         )
 

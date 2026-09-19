@@ -28,11 +28,59 @@ def init(position: ArrayLikeTree) -> ArrayLikeTree:
     return position
 
 
-def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
-    """Stochastic gradient Hamiltonian Monte Carlo (SgHMC) algorithm."""
-    integrator = diffusions.sghmc(alpha, beta)
+def build_kernel(
+    alpha: float = 0.01,
+    beta: float = 0,
+    *,
+    integrator: Callable | None = None,
+) -> Callable:
+    """Stochastic gradient Hamiltonian Monte Carlo (SgHMC) algorithm.
 
-    def kernel(
+    Parameters
+    ----------
+    alpha
+        Friction parameter for the SGHMC diffusion.
+    beta
+        Gradient noise estimate parameter for the default Euler diffusion.
+    integrator
+        Optional diffusion integrator factory. When ``None``, the original
+        Euler SGHMC diffusion is used. Custom factories should accept
+        ``(alpha, beta)`` and return a one-step integrator with signature
+        ``(rng_key, position, momentum, grad_estimator, minibatch, step_size,
+        temperature)``.
+
+    """
+    if integrator is None:
+        integrator = diffusions.sghmc(alpha, beta)
+
+        def default_kernel(
+            rng_key: PRNGKey,
+            position: ArrayLikeTree,
+            grad_estimator: Callable,
+            minibatch: ArrayLikeTree,
+            step_size: float,
+            num_integration_steps: int,
+            temperature: float = 1.0,
+        ) -> ArrayTree:
+            def body_fn(state, rng_key):
+                position, momentum = state
+                logdensity_grad = grad_estimator(position, minibatch)
+                position, momentum = integrator(
+                    rng_key, position, momentum, logdensity_grad, step_size, temperature
+                )
+                return ((position, momentum), position)
+
+            momentum = generate_gaussian_noise(rng_key, position)
+            keys = jax.random.split(rng_key, num_integration_steps)
+            (position, momentum), _ = jax.lax.scan(body_fn, (position, momentum), keys)
+
+            return position
+
+        return default_kernel
+
+    integrator = integrator(alpha, beta)
+
+    def custom_integrator_kernel(
         rng_key: PRNGKey,
         position: ArrayLikeTree,
         grad_estimator: Callable,
@@ -43,9 +91,14 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
     ) -> ArrayTree:
         def body_fn(state, rng_key):
             position, momentum = state
-            logdensity_grad = grad_estimator(position, minibatch)
             position, momentum = integrator(
-                rng_key, position, momentum, logdensity_grad, step_size, temperature
+                rng_key,
+                position,
+                momentum,
+                grad_estimator,
+                minibatch,
+                step_size,
+                temperature,
             )
             return ((position, momentum), position)
 
@@ -55,7 +108,7 @@ def build_kernel(alpha: float = 0.01, beta: float = 0) -> Callable:
 
         return position
 
-    return kernel
+    return custom_integrator_kernel
 
 
 def as_top_level_api(
@@ -63,6 +116,8 @@ def as_top_level_api(
     num_integration_steps: int = 10,
     alpha: float = 0.01,
     beta: float = 0,
+    *,
+    integrator: Callable | None = None,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the SGHMC kernel.
 
@@ -116,7 +171,7 @@ def as_top_level_api(
 
     """
 
-    kernel = build_kernel(alpha, beta)
+    kernel = build_kernel(alpha, beta, integrator=integrator)
 
     def init_fn(position: ArrayLikeTree, rng_key=None):
         del rng_key
