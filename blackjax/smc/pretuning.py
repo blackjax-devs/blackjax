@@ -116,6 +116,7 @@ def build_pretune(
     performance_of_chain_measure_factory: Callable = default_measure_factory,
     natural_parameters: list[str] | None = None,
     positive_parameters: list[str] | None = None,
+    batch_size: int = 0,
 ):
     """Implements Buchholz et al https://arxiv.org/pdf/1808.07730 pretuning procedure.
     The goal is to maintain a probability distribution of parameters, in order
@@ -153,7 +154,12 @@ def build_pretune(
         )
 
         one_step_fn, _ = update_and_take_last(
-            mcmc_init_fn, logposterior, shared_mcmc_step_fn, 1, n_particles
+            mcmc_init_fn,
+            logposterior,
+            shared_mcmc_step_fn,
+            1,
+            n_particles,
+            batch_size,
         )
 
         new_state, info = one_step_fn(
@@ -212,6 +218,7 @@ def build_kernel(
     pretune_fn: Callable,
     num_mcmc_steps: int = 10,
     update_strategy=update_and_take_last,
+    batch_size: int = 0,
     **extra_parameters,
 ) -> Callable:
     """In the context of an SMC sampler (whose step_fn returning state has a .particles attribute), there's an inner
@@ -234,6 +241,8 @@ def build_kernel(
         A callable that initializes the inner kernel
     pretune_fn
         A callable that can update the probability distribution of parameters.
+    batch_size
+        Number of particles processed per sequential batch when batch_size > 0.
     extra_parameters
         Parameters to be used for the creation of the smc_algorithm.
 
@@ -241,7 +250,7 @@ def build_kernel(
     -------
     A ``kernel(rng_key, state, **extra_step_parameters) -> (StateWithParameterOverride, SMCInfo)`` function.
     """
-    delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy)
+    delegate = smc_from_mcmc(mcmc_step_fn, mcmc_init_fn, resampling_fn, update_strategy, batch_size=batch_size)
 
     def pretuned_step(
         rng_key: PRNGKey,
@@ -276,6 +285,7 @@ def build_kernel(
         rng_key: PRNGKey, state: StateWithParameterOverride, **extra_step_parameters
     ) -> tuple[StateWithParameterOverride, SMCInfo]:
         extra_parameters["update_particles_fn"] = pretuned_step
+        extra_parameters["batch_size"] = batch_size  
         step_fn = smc_algorithm(
             logprior_fn=logprior_fn,
             loglikelihood_fn=loglikelihood_fn,
