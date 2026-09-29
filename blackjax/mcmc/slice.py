@@ -153,25 +153,24 @@ def stepping_out(
     j = jnp.floor(max_expansions * v).astype(int)
     k = (max_expansions - 1) - j
 
-    def left_cond(carry):
-        left, n = carry
-        return in_slice(left) & (n > 0)
+    # The in-slice test of each bracket end is computed once, in the loop body,
+    # and carried in the loop state. Evaluating it in the loop condition instead
+    # makes it run twice per step under ``vmap`` (to decide whether to continue
+    # and to select which elements to update); the two copies can round
+    # differently in float32, and the loop then never ends.
+    def cond(carry):
+        _, n, inside = carry
+        return inside & (n > 0)
 
-    def left_body(carry):
-        left, n = carry
-        return left - width, n - 1
+    def expand(step):
+        def body(carry):
+            t, n, _ = carry
+            return t + step, n - 1, in_slice(t + step)
 
-    left, jl = jax.lax.while_loop(left_cond, left_body, (left, j))
+        return body
 
-    def right_cond(carry):
-        right, n = carry
-        return in_slice(right) & (n > 0)
-
-    def right_body(carry):
-        right, n = carry
-        return right + width, n - 1
-
-    right, kr = jax.lax.while_loop(right_cond, right_body, (right, k))
+    left, jl, _ = jax.lax.while_loop(cond, expand(-width), (left, j, in_slice(left)))
+    right, kr, _ = jax.lax.while_loop(cond, expand(width), (right, k, in_slice(right)))
     num_expansions = (j - jl) + (k - kr)
     accept_fn = lambda t: jnp.asarray(True)  # noqa: E731  (stepping-out: no test)
     return left, right, num_expansions, accept_fn
