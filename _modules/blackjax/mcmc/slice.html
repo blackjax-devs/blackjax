@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+gfc7f33149" />
+  <meta name="docsearch:version" content="0.1.dev1+g5b67f5ab5" />
   </head>
   
   
@@ -601,25 +601,24 @@
     <span class="n">j</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">max_expansions</span> <span class="o">*</span> <span class="n">v</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
     <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_expansions</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="n">j</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">left_cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
-        <span class="n">left</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">carry</span>
-        <span class="k">return</span> <span class="n">in_slice</span><span class="p">(</span><span class="n">left</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="c1"># The in-slice test of each bracket end is computed once, in the loop body,</span>
+    <span class="c1"># and carried in the loop state. Evaluating it in the loop condition instead</span>
+    <span class="c1"># makes it run twice per step under ``vmap`` (to decide whether to continue</span>
+    <span class="c1"># and to select which elements to update); the two copies can round</span>
+    <span class="c1"># differently in float32, and the loop then never ends.</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">inside</span> <span class="o">=</span> <span class="n">carry</span>
+        <span class="k">return</span> <span class="n">inside</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">left_body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
-        <span class="n">left</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">carry</span>
-        <span class="k">return</span> <span class="n">left</span> <span class="o">-</span> <span class="n">width</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">expand</span><span class="p">(</span><span class="n">step</span><span class="p">):</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
+            <span class="n">t</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">carry</span>
+            <span class="k">return</span> <span class="n">t</span> <span class="o">+</span> <span class="n">step</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">in_slice</span><span class="p">(</span><span class="n">t</span> <span class="o">+</span> <span class="n">step</span><span class="p">)</span>
 
-    <span class="n">left</span><span class="p">,</span> <span class="n">jl</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span><span class="n">left_cond</span><span class="p">,</span> <span class="n">left_body</span><span class="p">,</span> <span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">body</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">right_cond</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
-        <span class="n">right</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">carry</span>
-        <span class="k">return</span> <span class="n">in_slice</span><span class="p">(</span><span class="n">right</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">right_body</span><span class="p">(</span><span class="n">carry</span><span class="p">):</span>
-        <span class="n">right</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">carry</span>
-        <span class="k">return</span> <span class="n">right</span> <span class="o">+</span> <span class="n">width</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="mi">1</span>
-
-    <span class="n">right</span><span class="p">,</span> <span class="n">kr</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span><span class="n">right_cond</span><span class="p">,</span> <span class="n">right_body</span><span class="p">,</span> <span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">k</span><span class="p">))</span>
+    <span class="n">left</span><span class="p">,</span> <span class="n">jl</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">expand</span><span class="p">(</span><span class="o">-</span><span class="n">width</span><span class="p">),</span> <span class="p">(</span><span class="n">left</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">in_slice</span><span class="p">(</span><span class="n">left</span><span class="p">)))</span>
+    <span class="n">right</span><span class="p">,</span> <span class="n">kr</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">lax</span><span class="o">.</span><span class="n">while_loop</span><span class="p">(</span><span class="n">cond</span><span class="p">,</span> <span class="n">expand</span><span class="p">(</span><span class="n">width</span><span class="p">),</span> <span class="p">(</span><span class="n">right</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">in_slice</span><span class="p">(</span><span class="n">right</span><span class="p">)))</span>
     <span class="n">num_expansions</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span> <span class="o">-</span> <span class="n">jl</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="n">kr</span><span class="p">)</span>
     <span class="n">accept_fn</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">t</span><span class="p">:</span> <span class="n">jnp</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># noqa: E731  (stepping-out: no test)</span>
     <span class="k">return</span> <span class="n">left</span><span class="p">,</span> <span class="n">right</span><span class="p">,</span> <span class="n">num_expansions</span><span class="p">,</span> <span class="n">accept_fn</span></div>
