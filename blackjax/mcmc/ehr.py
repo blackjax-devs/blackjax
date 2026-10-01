@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Public API for the Elliptical Hit-and-Run (EHR) algorithm."""
+
 from typing import Callable, NamedTuple
 
 import jax.numpy as jnp
@@ -20,6 +21,7 @@ from jax.random import split, uniform
 
 import blackjax.mcmc.proposal as proposal
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.constraints import build_intersect_fn
 from blackjax.mcmc.diffusions import (
     DiffusionMetric,
     logdet,
@@ -29,10 +31,17 @@ from blackjax.mcmc.diffusions import (
 )
 from blackjax.mcmc.metrics import _format_covariance
 from blackjax.mcmc.step_distributions import normchi
-from blackjax.types import Array, ArrayLikeTree, ArrayTree, PRNGKey
+from blackjax.types import ArrayLikeTree, ArrayTree, PRNGKey
 from blackjax.util import generate_gaussian_noise
 
-__all__ = ["init", "build_kernel", "EHRState", "EHRInfo", "as_top_level_api"]
+__all__ = [
+    "init",
+    "build_kernel",
+    "build_intersect_fn",
+    "EHRState",
+    "EHRInfo",
+    "as_top_level_api",
+]
 
 
 class EHRState(NamedTuple):
@@ -48,7 +57,6 @@ class EHRState(NamedTuple):
         Current local metric.
     clip
         Current clipped step size along the gradient.
-
     """
 
     position: ArrayTree
@@ -61,55 +69,37 @@ class EHRState(NamedTuple):
 class EHRInfo(NamedTuple):
     """Additional information on the EHR transition.
 
-    This additional information can be used for debugging or computing
-    diagnostics.
-
     acceptance_rate
         The acceptance rate of the transition.
     is_accepted
         Whether the proposed position was accepted or the original position
         was returned.
-
     """
 
     acceptance_rate: float
     is_accepted: bool
 
 
-def compute_constraint_intersection(A, b, x, u, eps=1e-8):
-    Au = A @ u
-    s = (b - A @ x) / Au
-
-    mask_pos = Au > eps
-    s_max = jnp.min(jnp.where(mask_pos, s, jnp.inf))
-    s_max = lax.select(
-        s_max > 0.0,
-        s_max,
-        0.0,
-    )
-
-    return s_max
-
-
 def init(
     position: ArrayLikeTree,
     logdensity_fn: Callable,
-    A,
-    b,
+    constraint,
     vector_field_fn: Callable,
     mass_matrix_fn: Callable,
     step_size: float,
     grad_clip: float = 0.5,
+    eps: float = 1e-8,
+    max_iter: int = 100,
 ) -> EHRState:
+    intersect_fn = build_intersect_fn(constraint, eps=eps, max_iter=max_iter)
+
     logdensity = logdensity_fn(position)
     logdensity_grad = vector_field_fn(position)
     metric = mass_matrix_fn(position)
 
-    logdensity_grad = solve(
-        metric, logdensity_grad
-    )  # natural logdensity_gradient H^{-1}g
+    logdensity_grad = solve(metric, logdensity_grad)  # natural gradient H^{-1}g
 
-    intersection = compute_constraint_intersection(A, b, position, logdensity_grad)
+    intersection = intersect_fn(position, logdensity_grad)
     clip = lax.select(
         0.5 * step_size**2 < grad_clip * intersection,
         0.5 * step_size**2,
@@ -119,19 +109,32 @@ def init(
     return EHRState(position, logdensity, logdensity_grad, metric, clip)
 
 
-def build_kernel(A, b, step_dist):
-    """Build a EHR kernel.
+def build_kernel(
+    constraint, dim: int, step_dist, eps: float = 1e-8, max_iter: int = 100
+):
+    """Build an EHR kernel.
+
+    Parameters
+    ----------
+    constraint
+        A ``LinearConstraint``, ``QuadraticConstraint``, ``GeneralConstraint``,
+        or ``ComposedConstraint`` describing the feasible region.
+    dim
+        Dimension of the state space.
+    step_dist
+        Univariate step-size distribution.
+    eps
+        Tolerance used by Newton's method (for ``GeneralConstraint``).
+    max_iter
+        Maximum Newton iterations (for ``GeneralConstraint``).
 
     Returns
     -------
     A kernel that takes a rng_key and a Pytree that contains the current state
-    of the chain and that returns a new state of the chain along with
-    information about the transition.
-
+    of the chain and returns a new state along with information about the
+    transition.
     """
-    dim = A.shape[-1]
-
-    compute_intersection = lambda x, u: compute_constraint_intersection(A, b, x, u)
+    compute_intersection = build_intersect_fn(constraint, eps=eps, max_iter=max_iter)
 
     def truncate(dist):
         p_min = dist.cdf(0.0)
@@ -140,10 +143,7 @@ def build_kernel(A, b, step_dist):
             p_max = dist.cdf(s_max)
             u = uniform(key)
             p = p_min + u * (p_max - p_min)
-            y = dist.ppf(
-                p,
-            )
-            return y
+            return dist.ppf(p)
 
         def logpdf(x, s_max, step_size=1.0):
             def _in():
@@ -165,30 +165,20 @@ def build_kernel(A, b, step_dist):
     def proposal_logdensity_fn(state, new_state, step_size):
         delta = (
             new_state.position - state.position - state.clip * state.logdensity_grad
-        )  # Delta = y - x - g
-        step = jnp.linalg.norm(
-            sqrt_multiply(state.metric, delta / step_size)
-        )  # gamma = || L^-T Delta ||
-        direction = delta / step / step_size  # v = Delta / gamma
+        )  # Δ = y − x − g
+        step = jnp.linalg.norm(sqrt_multiply(state.metric, delta / step_size))
+        direction = delta / step / step_size
 
         s_max = compute_intersection(
-            state.position + state.clip * state.logdensity_grad, step_size * direction
+            state.position + state.clip * state.logdensity_grad,
+            step_size * direction,
         )
 
-        trunc_logp = trunc_logpdf(
-            step,
-            s_max,
-        )
-        proposal_logdensity = (
-            trunc_logp + 0.5 * logdet(state.metric) - (dim - 1) * jnp.log(step)
-        )
-
-        return proposal_logdensity
+        trunc_logp = trunc_logpdf(step, s_max)
+        return trunc_logp + 0.5 * logdet(state.metric) - (dim - 1) * jnp.log(step)
 
     def transition_energy(state, new_state, step_size):
-        """Transition energy to go from `state` to `new_state`"""
-
-        # makes sure we don't compute meaningless proposal densities for infeasible samples
+        """Transition energy to go from `state` to `new_state`."""
         proposal_logdensity = lax.cond(
             jnp.isinf(new_state.logdensity),
             lambda state, new_state, stepsize: 0.0,
@@ -217,29 +207,24 @@ def build_kernel(A, b, step_dist):
         position, _, logdensity_grad, metric, clip = state
         key_direction, key_step, key_accept = split(rng_key, num=3)
 
-        # sample the elliptical hit and run distribution
         noise = generate_gaussian_noise(key_direction, position)
-        noise = noise / jnp.linalg.norm(
-            noise
-        )  # noise uniformly distributed on hypersphere
-        direction = sqrt_solve(metric, noise)  # v = L.T u with LL.T = H^{-1}
+        noise = noise / jnp.linalg.norm(noise)
+        direction = sqrt_solve(metric, noise)
 
         intersection = compute_intersection(
-            position + clip * logdensity_grad, step_size * direction  # type: ignore[operator]
+            position + clip * logdensity_grad,  # type: ignore[operator]
+            step_size * direction,
         )
-        step = trunc_sample(
-            key_step,
-            intersection,
-        )
+        step = trunc_sample(key_step, intersection)
 
-        new_position = position + clip * logdensity_grad + step * step_size * direction  # type: ignore[operator]
+        new_position = (
+            position + clip * logdensity_grad + step * step_size * direction  # type: ignore[operator]
+        )
 
         new_logdensity = logdensity_fn(new_position)
         new_logdensity_grad = vector_field_fn(new_position)
         new_metric = mass_matrix_fn(new_position)
-        new_logdensity_grad = solve(
-            new_metric, new_logdensity_grad
-        )  # natural logdensity_gradient
+        new_logdensity_grad = solve(new_metric, new_logdensity_grad)
 
         intersection = compute_intersection(new_position, new_logdensity_grad)
         new_clip = lax.select(
@@ -258,23 +243,23 @@ def build_kernel(A, b, step_dist):
         )
         do_accept, p_accept, _ = info
 
-        info = EHRInfo(p_accept, do_accept)
-
-        return accepted_state, info
+        return accepted_state, EHRInfo(p_accept, do_accept)
 
     return kernel
 
 
 def as_top_level_api(
     logdensity_fn: Callable,
-    A: Array,
-    b: Array,
+    constraint,
+    dim: int,
     vector_field_fn: Callable,
     mass_matrix_fn: Callable,
     step_size: float,
     step_dist=None,
     grad_clip: float = 0.5,
     format_covariance: bool = True,
+    eps: float = 1e-8,
+    max_iter: int = 100,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the EHR kernel.
 
@@ -282,44 +267,71 @@ def as_top_level_api(
     ----------
     logdensity_fn
         The log-density function we wish to draw samples from.
-    A
-        Left-hand side matrix of the linear inequality system Ax <= b.
-    b
-        Right-hand side bounds of the linear inequality system Ax <= b.
+    constraint
+        A ``LinearConstraint``, ``QuadraticConstraint``, ``GeneralConstraint``,
+        or ``ComposedConstraint`` from ``blackjax.mcmc.constraints`` describing
+        the feasible region.  Use ``ComposedConstraint`` to combine multiple
+        constraints of different types.  Each type uses its optimal intersection
+        solver:
+
+        * ``LinearConstraint``    — closed-form (exact).
+        * ``QuadraticConstraint`` — quadratic formula (exact, one step).
+        * ``GeneralConstraint``   — Newton's method (controlled by ``max_iter``
+                                    and ``eps``).
+    dim
+        Dimension of the state space.  Used to set the default ``step_dist``.
     vector_field_fn
-        A function which computes the drift at a given position. Could be for example the gradient.
+        A function which computes the drift at a given position.
     mass_matrix_fn
-        A function which computes the mass matrix (not inverse) at a given
+        A function which computes the mass matrix (not its inverse) at a given
         position.
     step_size
-        The value to use for the step size in the EHR algorithm.
+        Step size for the EHR algorithm.
     step_dist
-        The univariate distribution from which the magnitude step will be sampled. If omitted,
-        the default choice is a normal distribution moment-matched against a Chi distribution with
-        A.shape[1] degrees of freedom.
+        Univariate distribution for the step magnitude.  Defaults to a normal
+        distribution moment-matched to a Chi distribution with ``dim`` degrees
+        of freedom.
     grad_clip
-        The relative maximal step size along the gradient before hitting the closest constraint.
-        Defaults to 0.5, which means the current position will be drifted at most halfway up
-        to the closest constraint.
+        Maximum fraction of the distance to the nearest constraint boundary
+        used for the gradient drift step.  Defaults to 0.5.
     format_covariance
-        If true, `mass_matrix_fn(position)` is expected to return the local mass matrix,
-        if false, `mass_matrix_fn(position)` is expected to return a `blackjax.mcmc.diffusions.DiffusionMetric`
-        object.
+        If ``True``, ``mass_matrix_fn(position)`` should return the local mass
+        matrix; if ``False`` it should return a
+        ``blackjax.mcmc.diffusions.DiffusionMetric``.
+    eps
+        Convergence tolerance for Newton's method (``GeneralConstraint`` only).
+    max_iter
+        Maximum Newton iterations (``GeneralConstraint`` only).
 
     Returns
     -------
     A ``SamplingAlgorithm``.
 
+    Examples
+    --------
+    Linear constraints only::
+
+        from blackjax.mcmc.constraints import LinearConstraint
+        algo = blackjax.ehr(logp, LinearConstraint(A, b), dim, grad_fn, M_fn, 0.2)
+
+    Mixed linear + ellipsoidal::
+
+        from blackjax.mcmc.constraints import ComposedConstraint, LinearConstraint, ellipsoid_constraint
+        algo = blackjax.ehr(
+            logp,
+            ComposedConstraint([LinearConstraint(A, b), ellipsoid_constraint(M, center)]),
+            dim, grad_fn, M_fn, 0.2,
+        )
+
     References
     ----------
     .. [1] "Higher-Order Hit-&-Run Samplers for Linearly Constrained Densities"
         (https://arxiv.org/abs/2602.14616)
-
     """
     if step_dist is None:
-        step_dist = normchi(A.shape[-1])
+        step_dist = normchi(dim)
 
-    kernel = build_kernel(A, b, step_dist)
+    kernel = build_kernel(constraint, dim, step_dist, eps=eps, max_iter=max_iter)
 
     if format_covariance:
         _mass_matrix_fn = lambda position: DiffusionMetric(
@@ -333,12 +345,13 @@ def as_top_level_api(
         return init(
             position,
             logdensity_fn,
-            A,
-            b,
+            constraint,
             vector_field_fn,
             _mass_matrix_fn,
             step_size,
             grad_clip,
+            eps=eps,
+            max_iter=max_iter,
         )
 
     def step_fn(rng_key: PRNGKey, state):

@@ -154,11 +154,8 @@ barker_proposal = barker  # backwards-compatible alias
 gist_step_size = generate_top_level_api_from(_gist_step_size)
 gist_trajectory_length = generate_top_level_api_from(_gist_trajectory_length)
 
-<<<<<<< HEAD
 posdep_rwmh = generate_top_level_api_from(_posdep_rwmh)
 
-hmc_family = [hmc, nuts]
-=======
 mhmc = GenerateSamplingAPI(
     functools.partial(
         _hmc.as_top_level_api, build_proposal=_hmc.multinomial_hmc_proposal
@@ -203,7 +200,6 @@ laplace_dmhmc = GenerateSamplingAPI(
 )
 
 hmc_family = [hmc, nuts, mhmc]
->>>>>>> main
 
 # SMC
 adaptive_persistent_sampling_smc = generate_top_level_api_from(

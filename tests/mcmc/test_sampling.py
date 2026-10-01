@@ -512,9 +512,10 @@ class LinearRegressionTest(chex.TestCase):
                 self.logdensity_fn = lambda x: -0.5 * x.T @ self.Hessian @ x
                 self.transform = lambda x: x
 
-                self.sample_init = lambda key: jax.random.normal(
-                    key, shape=(self.ndims,)
-                ) * jnp.max(jnp.sqrt(eigs))
+                self.sample_init = lambda key: (
+                    jax.random.normal(key, shape=(self.ndims,))
+                    * jnp.max(jnp.sqrt(eigs))
+                )
 
         dim = 100
         condition_number = 10
@@ -555,8 +556,7 @@ class LinearRegressionTest(chex.TestCase):
         assert (
             jnp.abs(
                 jnp.dot(
-                    (inverse_mass_matrix**2)
-                    / jnp.linalg.norm(inverse_mass_matrix**2),
+                    (inverse_mass_matrix**2) / jnp.linalg.norm(inverse_mass_matrix**2),
                     eigs / jnp.linalg.norm(eigs),
                 )
                 - 1
@@ -795,9 +795,9 @@ class LinearRegressionTest(chex.TestCase):
                 f"{first_bad_iter} of {step_sizes.size}"
             )
         mean_acceptance = float(np.mean(np.asarray(info["phase_2"]["acc_prob"])))
-        assert (
-            mean_acceptance > 0.01
-        ), f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
+        assert mean_acceptance > 0.01, (
+            f"adjusted phase accepted nothing (mean acceptance {mean_acceptance})"
+        )
 
         # Median location (robust to one stray chain) and two-sided dispersion
         # (an ensemble that never moved has sd 1.0, not ~0.02).
@@ -811,9 +811,9 @@ class LinearRegressionTest(chex.TestCase):
         equilibrated = np.mean(np.all(np.abs(z_scores) < 6.0, axis=1))
         # not f"{x:.0%}": pycodestyle 2.10.0 flags E231 on PEP 701 f-strings
         equilibrated_pct = round(100 * equilibrated)
-        assert (
-            equilibrated >= 0.9
-        ), f"only {equilibrated_pct}% of chains are within 6 posterior sd"
+        assert equilibrated >= 0.9, (
+            f"only {equilibrated_pct}% of chains are within 6 posterior sd"
+        )
 
     @parameterized.named_parameters(
         {"testcase_name": "typed_key", "use_typed_key": True},
@@ -1385,8 +1385,11 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_dikin(self):
+        from blackjax.mcmc.constraints import LinearConstraint
         inference_algorithm = blackjax.dikin(
-            self.constrained_normal_logprob, self.A, self.b, step_size=0.2
+            self.constrained_normal_logprob,
+            LinearConstraint(A=self.A, b=self.b),
+            step_size=0.2,
         )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
@@ -1395,8 +1398,11 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_vaidya(self):
+        from blackjax.mcmc.constraints import LinearConstraint
         inference_algorithm = blackjax.vaidya(
-            self.constrained_normal_logprob, self.A, self.b, step_size=0.2
+            self.constrained_normal_logprob,
+            LinearConstraint(A=self.A, b=self.b),
+            step_size=0.2,
         )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
@@ -1405,8 +1411,11 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_mapla(self):
+        from blackjax.mcmc.constraints import LinearConstraint
         inference_algorithm = blackjax.mapla(
-            self.constrained_normal_logprob, self.A, self.b, step_size=0.2
+            self.constrained_normal_logprob,
+            LinearConstraint(A=self.A, b=self.b),
+            step_size=0.2,
         )
         initial_state = inference_algorithm.init(jnp.array([0.1, 0.1]))
         self.constrained_normal_test_case(
@@ -1437,12 +1446,15 @@ class ConstrainedNormal(chex.TestCase):
 
     @chex.all_variants(with_pmap=False)
     def test_ehr(self):
+        from blackjax.mcmc.constraints import LinearConstraint
+
         grad = jax.grad(self.constrained_normal_logprob)
         mass_matrix_fn = lambda x: jax.numpy.array([[1.0, 0.0], [0.0, 1.0]])
+        constraint = LinearConstraint(A=self.A, b=self.b)
         inference_algorithm = blackjax.ehr(
             self.constrained_normal_logprob,
-            self.A,
-            self.b,
+            constraint,
+            self.A.shape[-1],
             grad,
             mass_matrix_fn,
             step_size=0.2,
@@ -1451,6 +1463,7 @@ class ConstrainedNormal(chex.TestCase):
         self.constrained_normal_test_case(
             inference_algorithm, self.key, initial_state, 4500, 1_000
         )
+
 
 class GHMCRichMetricTest(chex.TestCase):
     """Test blackjax.ghmc with dense and low-rank momentum metrics.

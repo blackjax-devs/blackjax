@@ -15,6 +15,7 @@
 from typing import Callable
 
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.constraints import barrier_hessian
 from blackjax.mcmc.diffusions import DiffusionMetric
 from blackjax.mcmc.metrics import _format_covariance
 from blackjax.mcmc.posdep_rwmh import build_kernel, init
@@ -27,29 +28,27 @@ __all__ = [
 ]
 
 
-def dikin_metric(A, b):
-    """Builds the callable Dikin metric given A and b defining the linear equality Ax <= b."""
+def dikin_metric(constraint):
+    """Builds the Dikin metric callable for the given constraint.
 
-    def dikin(x):
-        s = (b - A @ x).reshape(-1, 1)
-        As = A / s
-        D = As.T @ As
-        return D
-
-    return dikin
+    The Dikin metric is the Hessian of the log-barrier
+    ``−Σ_i log(−c_i(x))``, which equals ``A^T diag(s)^{-2} A`` for
+    linear constraints ``Ax ≤ b`` with slacks ``s = b − Ax``.
+    """
+    return lambda x: barrier_hessian(constraint, x)
 
 
-def as_top_level_api(logdensity_fn: Callable, A, b, step_size) -> SamplingAlgorithm:
+def as_top_level_api(logdensity_fn: Callable, constraint, step_size) -> SamplingAlgorithm:
     """Implements the user interface for the Dikin walk.
 
     Parameters
     ----------
     logdensity_fn
         The log density probability density function from which we wish to sample.
-    A
-        Left-hand side matrix of the linear inequality system Ax <= b.
-    b
-        Right-hand side bounds of the linear inequality system Ax <= b.
+    constraint
+        A ``LinearConstraint``, ``QuadraticConstraint``, ``GeneralConstraint``,
+        or ``ComposedConstraint`` from ``blackjax.mcmc.constraints`` describing
+        the feasible region.
     step_size
         The value to use for the step size in the symplectic integrator.
 
@@ -63,10 +62,8 @@ def as_top_level_api(logdensity_fn: Callable, A, b, step_size) -> SamplingAlgori
         (https://dl.acm.org/doi/10.1145/1536414.1536491)
 
     """
-
-    dikin = dikin_metric(A, b)
     mass_matrix_fn = lambda position: DiffusionMetric(
-        *_format_covariance(dikin(position), is_inv=False)[:2]
+        *_format_covariance(barrier_hessian(constraint, position), is_inv=False)[:2]
     )
     kernel = build_kernel()
 

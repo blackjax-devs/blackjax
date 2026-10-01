@@ -15,19 +15,18 @@
 from typing import Callable
 
 from blackjax.base import SamplingAlgorithm
+from blackjax.mcmc.constraints import barrier_hessian
 from blackjax.mcmc.diffusions import DiffusionMetric
-from blackjax.mcmc.dikin import dikin_metric
 from blackjax.mcmc.metrics import _format_covariance
 from blackjax.mcmc.smmala import build_kernel, init
-from blackjax.types import Array, ArrayLikeTree, PRNGKey
+from blackjax.types import ArrayLikeTree, PRNGKey
 
 __all__ = ["as_top_level_api"]
 
 
 def as_top_level_api(
     logdensity_fn: Callable,
-    A: Array,
-    b: Array,
+    constraint,
     step_size: float,
 ) -> SamplingAlgorithm:
     """Implements the (basic) user interface for the MAPLA kernel.
@@ -36,10 +35,10 @@ def as_top_level_api(
     ----------
     logdensity_fn
         The log-density function we wish to draw samples from.
-    A
-        Left-hand side matrix of the linear inequality system Ax <= b.
-    b
-        Right-hand side bounds of the linear inequality system Ax <= b.
+    constraint
+        A ``LinearConstraint``, ``QuadraticConstraint``, ``GeneralConstraint``,
+        or ``ComposedConstraint`` from ``blackjax.mcmc.constraints`` describing
+        the feasible region.
     step_size
         The value to use for the step size in the symplectic integrator.
 
@@ -53,9 +52,8 @@ def as_top_level_api(
         (https://proceedings.mlr.press/v272/srinivasan25a.html)
 
     """
-    dikin = dikin_metric(A, b)
     mass_matrix_fn = lambda position: DiffusionMetric(
-        *_format_covariance(dikin(position), is_inv=False)[:2]
+        *_format_covariance(barrier_hessian(constraint, position), is_inv=False)[:2]
     )
     kernel = build_kernel()
 
