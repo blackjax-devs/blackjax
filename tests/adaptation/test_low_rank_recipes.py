@@ -30,6 +30,8 @@ Coverage:
   (reset + accumulating) vs frozen inline references on an anisotropic target
   (``recompute_every ∈ {1, 5, 25}``, ``atol=0.0``).
 """
+from functools import partial
+
 import jax
 import jax.flatten_util as fu
 import jax.numpy as jnp
@@ -1491,10 +1493,9 @@ def _reference_run_reset(rng_key, position, num_steps, n_dims, logdensity_fn=Non
         0,
     )
     keys = jax.random.split(rng_key, num_steps)
-    last_state, info = jax.lax.scan(
-        one_step,
-        (init_state, init_adaptation_state),
-        (jnp.arange(num_steps), keys, schedule),
+    # jitted to match the engine's dispatch (float reassociation)
+    last_state, info = jax.jit(partial(jax.lax.scan, one_step))(
+        (init_state, init_adaptation_state), (jnp.arange(num_steps), keys, schedule)
     )
     _, last_warmup_state, *_ = last_state
     step_size = jnp.exp(last_warmup_state.ss_state.log_step_size_avg)
@@ -1512,20 +1513,6 @@ def _reference_run_reset(rng_key, position, num_steps, n_dims, logdensity_fn=Non
         {"step_size": step_size, "inverse_mass_matrix": inverse_mass_matrix},
         info,
     )
-
-
-def _reference_run_reset_jit(rng_key, position, num_steps, n_dims, logdensity_fn=None):
-    """Same as `_reference_run_reset`, but invoked through `jax.jit` so the
-    reference takes the same dispatch path as the engine, whose own loop is
-    compiled (see blackjax/adaptation/staged_adaptation.py), when comparing
-    the two for bit-exact parity. `_reference_run_reset`'s body is untouched
-    -- only how the test calls it changes."""
-    jitted = jax.jit(
-        lambda rng_key, position: _reference_run_reset(
-            rng_key, position, num_steps, n_dims, logdensity_fn
-        )
-    )
-    return jitted(rng_key, position)
 
 
 class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
@@ -1560,9 +1547,7 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
         (_, params_engine), _ = self._run_engine(key, pos)
-        _, params_ref, _ = _reference_run_reset_jit(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
         self.assertTrue(
             bool(
                 jnp.allclose(
@@ -1575,9 +1560,7 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
         (_, params_engine), _ = self._run_engine(key, pos)
-        _, params_ref, _ = _reference_run_reset_jit(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
         self.assertTrue(
             bool(
                 jnp.allclose(
@@ -1592,9 +1575,7 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
         (_, params_engine), _ = self._run_engine(key, pos)
-        _, params_ref, _ = _reference_run_reset_jit(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
         self.assertTrue(
             bool(
                 jnp.allclose(
@@ -1609,9 +1590,7 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
         (_, params_engine), _ = self._run_engine(key, pos)
-        _, params_ref, _ = _reference_run_reset_jit(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
+        _, params_ref, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
         self.assertTrue(
             bool(
                 jnp.allclose(
@@ -1627,9 +1606,7 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
         (state_engine, _), _ = self._run_engine(key, pos)
-        state_ref, _, _ = _reference_run_reset_jit(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
+        state_ref, _, _ = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
         self.assertTrue(
             bool(jnp.allclose(state_engine.position, state_ref.position, atol=0.0))
         )
@@ -1639,9 +1616,7 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
         (_, _), info_engine = self._run_engine(key, pos)
-        _, _, info_ref = _reference_run_reset_jit(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
+        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
         self.assertTrue(
             bool(
                 jnp.allclose(
@@ -1657,9 +1632,7 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
         (_, _), info_engine = self._run_engine(key, pos)
-        _, _, info_ref = _reference_run_reset_jit(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
+        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
         self.assertTrue(
             bool(
                 jnp.allclose(
@@ -1675,9 +1648,7 @@ class WindowAdaptationLowRankResetParityTest(BlackJAXTest):
         key = self.next_key()
         pos = jnp.zeros(self._N_DIMS)
         (_, _), info_engine = self._run_engine(key, pos)
-        _, _, info_ref = _reference_run_reset_jit(
-            key, pos, self._NUM_STEPS, self._N_DIMS
-        )
+        _, _, info_ref = _reference_run_reset(key, pos, self._NUM_STEPS, self._N_DIMS)
         self.assertTrue(
             bool(
                 jnp.allclose(
@@ -1873,21 +1844,9 @@ def _reference_run_accumulating(
         0,
     )
     keys = jax.random.split(rng_key, num_steps)
-
-    # Dispatch-only change (algorithm unchanged): compiling the whole
-    # function in jax.jit (as done for `_reference_run_reset_jit` above)
-    # fails here because `_accumulating_buffer_capacity` above does a
-    # numpy conversion of the (necessarily concrete) schedule array, so
-    # only the scan itself is jit-wrapped -- matching the engine's own
-    # dispatch (blackjax/adaptation/staged_adaptation.py) for bit-exact
-    # parity, without touching anything else in this frozen reference.
-    @jax.jit
-    def _scan(carry, xs):
-        return jax.lax.scan(one_step, carry, xs)
-
-    last_state, info = _scan(
-        (init_state, init_adaptation_state),
-        (jnp.arange(num_steps), keys, schedule),
+    # jitted to match the engine's dispatch (float reassociation)
+    last_state, info = jax.jit(partial(jax.lax.scan, one_step))(
+        (init_state, init_adaptation_state), (jnp.arange(num_steps), keys, schedule)
     )
     _, last_warmup_state, *_ = last_state
     step_size = jnp.exp(last_warmup_state.ss_state.log_step_size_avg)

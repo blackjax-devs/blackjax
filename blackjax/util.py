@@ -207,18 +207,10 @@ def run_inference_algorithm(
         state, info = inference_algorithm.step(rng_key, state)
         return state, transform(state, info)
 
-    # Wrap the scan in an explicit jit. `one_step` (and the `inference_algorithm`
-    # / `transform` closures it captures) stay ordinary Python closures -- they
-    # never cross the jit boundary, so no static_argnames/hashability change is
-    # needed. Un-jitted (eager) `lax.scan` dispatch on CPU is ~2-3x slower per
-    # call on jax>=0.11 (jax-ml/jax#37465); compiling the loop once here avoids
-    # that regardless of jax version.
-    @jit
-    def _scan(initial_state, keys):
-        xs = jnp.arange(num_steps), keys
-        return lax.scan(one_step, initial_state, xs)
-
-    final_state, history = _scan(initial_state, keys)
+    # jit the loop: eager lax.scan dispatch is slow on CPU (jax-ml/jax#37465)
+    final_state, history = jit(partial(lax.scan, one_step))(
+        initial_state, (jnp.arange(num_steps), keys)
+    )
 
     return final_state, history
 
