@@ -302,16 +302,26 @@ def make_L_step_size_adaptation(
 
     def run_steps(xs, state, params):
         """Run adaptation steps via scan; return (final_carry, per_step_div_flags)."""
-        carry, div_flags = jax.lax.scan(
-            step,
-            init=(
-                state,
-                params,
-                (0.0, 0.0, jnp.inf),
-                (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
-            ),
-            xs=xs,
-        )
+
+        # Wrap the scan in an explicit jit. `step` stays an ordinary Python
+        # closure (not a jit argument), so no static_argnames / hashability
+        # change is needed. Un-jitted (eager) `lax.scan` dispatch on CPU is
+        # ~2-3x slower per call on jax>=0.11 (jax-ml/jax#37465); compiling
+        # the loop once here avoids that regardless of jax version.
+        @jax.jit
+        def _scan(xs, state, params):
+            return jax.lax.scan(
+                step,
+                init=(
+                    state,
+                    params,
+                    (0.0, 0.0, jnp.inf),
+                    (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
+                ),
+                xs=xs,
+            )
+
+        carry, div_flags = _scan(xs, state, params)
         return carry, div_flags
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
