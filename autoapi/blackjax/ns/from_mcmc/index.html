@@ -55,7 +55,7 @@
     <link rel="prev" title="blackjax.ns.base" href="../base/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g5b67f5ab5" />
+  <meta name="docsearch:version" content="0.1.dev1+g351bb9a14" />
   </head>
   
   
@@ -587,8 +587,12 @@ must return exactly <code class="docutils literal notranslate"><span class="pre"
 structure and dtypes match <code class="docutils literal notranslate"><span class="pre">state.particles</span></code>, since they are written
 back by index, and each must satisfy <code class="docutils literal notranslate"><span class="pre">loglikelihood</span> <span class="pre">&gt;</span>
 <span class="pre">loglikelihood_0</span></code> with <code class="docutils literal notranslate"><span class="pre">loglikelihood_birth</span></code> set to
-<code class="docutils literal notranslate"><span class="pre">loglikelihood_0</span></code>. Driving the particles with <code class="docutils literal notranslate"><span class="pre">constrained_step_fn</span></code>
-gives the last two properties for free. <code class="docutils literal notranslate"><span class="pre">update_info</span></code> is passed
+<code class="docutils literal notranslate"><span class="pre">loglikelihood_0</span></code>. The constrained step preserves the likelihood
+constraint on rejection when its start point is a strict survivor;
+the fallback when no strict survivor exists does not guarantee this.
+<a class="reference internal" href="#blackjax.ns.from_mcmc.update_with_mcmc_take_last" title="blackjax.ns.from_mcmc.update_with_mcmc_take_last"><code class="xref py py-func docutils literal notranslate"><span class="pre">update_with_mcmc_take_last()</span></code></a> sets <code class="docutils literal notranslate"><span class="pre">loglikelihood_birth</span></code> to
+<code class="docutils literal notranslate"><span class="pre">loglikelihood_0</span></code> on its output, including rejected chains. Custom
+update strategies must also set the output birth contour. <code class="docutils literal notranslate"><span class="pre">update_info</span></code> is passed
 through to <code class="docutils literal notranslate"><span class="pre">NSInfo.update_info</span></code> unchanged and may be any pytree.</p>
 </p></li>
 </ul>

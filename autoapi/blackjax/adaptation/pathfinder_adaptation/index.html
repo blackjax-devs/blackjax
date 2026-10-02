@@ -56,7 +56,7 @@
     <link rel="prev" title="blackjax.adaptation.metric_recipes" href="../metric_recipes/index.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g5b67f5ab5" />
+  <meta name="docsearch:version" content="0.1.dev1+g351bb9a14" />
   </head>
   
   
@@ -575,6 +575,13 @@ integration steps for HMC.</p></li>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
+<p><strong>Memory use:</strong> The inverse mass matrix is dense in every dispatch below,
+requiring <span class="math notranslate nohighlight">\(O(d^2)\)</span> storage for <code class="docutils literal notranslate"><span class="pre">d</span></code> parameters. This also applies to
+single-path adaptation: the L-BFGS history does not make the returned
+inverse mass matrix diagonal or low-rank. For high-dimensional problems
+where a dense metric is too expensive, consider <code class="xref py py-func docutils literal notranslate"><span class="pre">window_adaptation()</span></code>
+with <code class="docutils literal notranslate"><span class="pre">is_mass_matrix_diagonal=True</span></code> instead. This changes the warmup
+algorithm; <code class="docutils literal notranslate"><span class="pre">pathfinder_adaptation</span></code> has no diagonal-metric option.</p>
 <p><strong>Dispatch table</strong> — the <code class="docutils literal notranslate"><span class="pre">(num_chains,</span> <span class="pre">effective_n_paths)</span></code> combination
 selects the internal code path:</p>
 <div class="pst-scrollable-table-container"><table class="table">

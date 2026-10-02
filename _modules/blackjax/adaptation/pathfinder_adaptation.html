@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g5b67f5ab5" />
+  <meta name="docsearch:version" content="0.1.dev1+g351bb9a14" />
   </head>
   
   
@@ -775,6 +775,14 @@
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
+<span class="sd">    **Memory use:** The inverse mass matrix is dense in every dispatch below,</span>
+<span class="sd">    requiring :math:`O(d^2)` storage for ``d`` parameters. This also applies to</span>
+<span class="sd">    single-path adaptation: the L-BFGS history does not make the returned</span>
+<span class="sd">    inverse mass matrix diagonal or low-rank. For high-dimensional problems</span>
+<span class="sd">    where a dense metric is too expensive, consider :func:`window_adaptation`</span>
+<span class="sd">    with ``is_mass_matrix_diagonal=True`` instead. This changes the warmup</span>
+<span class="sd">    algorithm; ``pathfinder_adaptation`` has no diagonal-metric option.</span>
+
 <span class="sd">    **Dispatch table** --- the ``(num_chains, effective_n_paths)`` combination</span>
 <span class="sd">    selects the internal code path:</span>
 

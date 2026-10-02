@@ -52,7 +52,7 @@
     <link rel="search" title="Search" href="../../../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="0.1.dev1+g5b67f5ab5" />
+  <meta name="docsearch:version" content="0.1.dev1+g351bb9a14" />
   </head>
   
   
@@ -532,7 +532,13 @@
             <span class="k">return</span> <span class="n">final_state</span><span class="p">,</span> <span class="n">infos</span>
 
         <span class="n">sample_keys</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">sample_key</span><span class="p">,</span> <span class="n">num_delete</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">mcmc_kernel</span><span class="p">)(</span><span class="n">sample_keys</span><span class="p">,</span> <span class="n">start_state</span><span class="p">)</span>
+        <span class="n">new_particles</span><span class="p">,</span> <span class="n">infos</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">vmap</span><span class="p">(</span><span class="n">mcmc_kernel</span><span class="p">)(</span><span class="n">sample_keys</span><span class="p">,</span> <span class="n">start_state</span><span class="p">)</span>
+        <span class="n">new_particles</span> <span class="o">=</span> <span class="n">new_particles</span><span class="o">.</span><span class="n">_replace</span><span class="p">(</span>
+            <span class="n">loglikelihood_birth</span><span class="o">=</span><span class="n">jnp</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span>
+                <span class="n">new_particles</span><span class="o">.</span><span class="n">loglikelihood_birth</span><span class="p">,</span> <span class="n">loglikelihood_0</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_particles</span><span class="p">,</span> <span class="n">infos</span>
 
     <span class="k">return</span> <span class="n">update_function</span></div>
 
@@ -640,8 +646,12 @@
 <span class="sd">        structure and dtypes match ``state.particles``, since they are written</span>
 <span class="sd">        back by index, and each must satisfy ``loglikelihood &gt;</span>
 <span class="sd">        loglikelihood_0`` with ``loglikelihood_birth`` set to</span>
-<span class="sd">        ``loglikelihood_0``. Driving the particles with ``constrained_step_fn``</span>
-<span class="sd">        gives the last two properties for free. ``update_info`` is passed</span>
+<span class="sd">        ``loglikelihood_0``. The constrained step preserves the likelihood</span>
+<span class="sd">        constraint on rejection when its start point is a strict survivor;</span>
+<span class="sd">        the fallback when no strict survivor exists does not guarantee this.</span>
+<span class="sd">        :func:`update_with_mcmc_take_last` sets ``loglikelihood_birth`` to</span>
+<span class="sd">        ``loglikelihood_0`` on its output, including rejected chains. Custom</span>
+<span class="sd">        update strategies must also set the output birth contour. ``update_info`` is passed</span>
 <span class="sd">        through to ``NSInfo.update_info`` unchanged and may be any pytree.</span>
 
 <span class="sd">    Returns</span>

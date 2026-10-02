@@ -120,8 +120,12 @@ Module Contents
                            structure and dtypes match ``state.particles``, since they are written
                            back by index, and each must satisfy ``loglikelihood >
                            loglikelihood_0`` with ``loglikelihood_birth`` set to
-                           ``loglikelihood_0``. Driving the particles with ``constrained_step_fn``
-                           gives the last two properties for free. ``update_info`` is passed
+                           ``loglikelihood_0``. The constrained step preserves the likelihood
+                           constraint on rejection when its start point is a strict survivor;
+                           the fallback when no strict survivor exists does not guarantee this.
+                           :func:`update_with_mcmc_take_last` sets ``loglikelihood_birth`` to
+                           ``loglikelihood_0`` on its output, including rejected chains. Custom
+                           update strategies must also set the output birth contour. ``update_info`` is passed
                            through to ``NSInfo.update_info`` unchanged and may be any pytree.
 
    :rtype: A Nested Sampling kernel ``kernel(rng_key, state) -> (new_state, info)``.
