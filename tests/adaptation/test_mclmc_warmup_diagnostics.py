@@ -22,6 +22,7 @@ import jax
 import jax.numpy as jnp
 import pytest
 
+import blackjax.adaptation.mclmc_adaptation as mclmc_adaptation
 from blackjax.adaptation.mclmc_adaptation import (
     MCLMCAdaptationState,
     mclmc_find_L_and_step_size,
@@ -104,3 +105,40 @@ def test_jaxtap_recipe_fires_on_cliff():
     # Spot-check: step index 0 should be divergent on the cliff
     first_output = output_events[0]
     assert first_output.step == 0, f"unexpected first step index: {first_output.step}"
+
+
+def test_make_adaptation_l_ignores_degenerate_ess_dims(monkeypatch):
+    """blackjax#1020 made effective_sample_size return exactly 0 for a
+    numerically-degenerate dimension. make_adaptation_L's L update divides
+    by ess (`L = l_factor * step_size * mean(num_steps_3 / ess)`), so a
+    single degenerate dim used to send the whole mean -- and L -- to inf.
+
+    Forces one ess entry to 0 (the simplest unit: mock effective_sample_size
+    rather than engineer a target with a frozen coordinate) and checks L
+    stays finite, computed as the mean of num_steps_3/ess over the
+    informative (non-degenerate) dims only.
+    """
+    target = lambda x: -0.5 * jnp.sum(x**2)
+    kernel = build_kernel(integrator=isokinetic_mclachlan)
+    init_key, tune_key = jax.random.split(jax.random.key(20261002))
+    state = mclmc_init(jnp.zeros(_DIM), target, init_key)
+    params = MCLMCAdaptationState(
+        L=jnp.sqrt(_DIM), step_size=0.1, inverse_mass_matrix=jnp.ones(_DIM)
+    )
+    num_steps, frac = 10, 0.2  # num_steps_3 = round(10 * 0.2) = 2
+
+    fake_ess = jnp.array([0.0, 4.0])  # dim 0 degenerate, dim 1 informative
+    monkeypatch.setattr(
+        mclmc_adaptation, "effective_sample_size", lambda flat_samples: fake_ess
+    )
+
+    adaptation_L = mclmc_adaptation.make_adaptation_L(
+        kernel, target, frac=frac, l_factor=0.4
+    )
+    _, new_params = adaptation_L(state, params, num_steps, tune_key)
+
+    num_steps_3 = round(num_steps * frac)
+    expected_L = 0.4 * params.step_size * (num_steps_3 / fake_ess[1])
+
+    assert jnp.isfinite(new_params.L), f"L must stay finite, got {new_params.L}"
+    assert jnp.allclose(new_params.L, expected_L), (new_params.L, expected_L)

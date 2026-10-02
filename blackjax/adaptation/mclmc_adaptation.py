@@ -388,9 +388,18 @@ def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
         flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
         ess = effective_sample_size(flat_samples[None, ...])
 
-        return state, params._replace(
-            L=l_factor * params.step_size * jnp.mean(num_steps_3 / ess)
+        # ESS is 0 for degenerate dims since #1020; they carry no
+        # autocorrelation information, so average tau over the informative
+        # (finite) dims only, and leave L unchanged if none are finite.
+        tau = num_steps_3 / ess
+        finite = jnp.isfinite(tau)
+        new_L = jnp.where(
+            jnp.any(finite),
+            l_factor * params.step_size * jnp.mean(tau, where=finite),
+            params.L,
         )
+
+        return state, params._replace(L=new_L)
 
     return adaptation_L
 
