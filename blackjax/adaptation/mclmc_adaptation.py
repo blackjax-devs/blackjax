@@ -302,16 +302,26 @@ def make_L_step_size_adaptation(
 
     def run_steps(xs, state, params):
         """Run adaptation steps via scan; return (final_carry, per_step_div_flags)."""
-        carry, div_flags = jax.lax.scan(
-            step,
-            init=(
-                state,
-                params,
-                (0.0, 0.0, jnp.inf),
-                (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
-            ),
-            xs=xs,
-        )
+
+        # Wrap the scan in an explicit jit. `step` stays an ordinary Python
+        # closure (not a jit argument), so no static_argnames / hashability
+        # change is needed. Un-jitted (eager) `lax.scan` dispatch on CPU is
+        # ~2-3x slower per call on jax>=0.11 (jax-ml/jax#37465); compiling
+        # the loop once here avoids that regardless of jax version.
+        @jax.jit
+        def _scan(xs, state, params):
+            return jax.lax.scan(
+                step,
+                init=(
+                    state,
+                    params,
+                    (0.0, 0.0, jnp.inf),
+                    (0.0, jnp.array([jnp.zeros(dim), jnp.zeros(dim)])),
+                ),
+                xs=xs,
+            )
+
+        carry, div_flags = _scan(xs, state, params)
         return carry, div_flags
 
     def L_step_size_adaptation(state, params, num_steps, rng_key):
@@ -383,14 +393,19 @@ def make_adaptation_L(kernel, logdensity_fn, frac, l_factor):
 
             return next_state, next_state.position
 
-        state, samples = jax.lax.scan(
-            f=step,
-            init=state,
-            xs=adaptation_L_keys,
-        )
+        # Wrap the scan and the effective_sample_size call it feeds in one
+        # explicit jit -- see run_steps above (and blackjax/util.py) for
+        # why: un-jitted lax.scan dispatch on CPU is ~2-3x slower per call
+        # on jax>=0.11 (jax-ml/jax#37465). `step`/`kernel`/`logdensity_fn`
+        # stay ordinary Python closures.
+        @jax.jit
+        def _run(state, keys):
+            state, samples = jax.lax.scan(f=step, init=state, xs=keys)
+            flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
+            ess = effective_sample_size(flat_samples[None, ...])
+            return state, ess
 
-        flat_samples = jax.vmap(lambda x: ravel_pytree(x)[0])(samples)
-        ess = effective_sample_size(flat_samples[None, ...])
+        state, ess = _run(state, adaptation_L_keys)
 
         return state, params._replace(
             L=l_factor * params.step_size * jnp.mean(num_steps_3 / ess)

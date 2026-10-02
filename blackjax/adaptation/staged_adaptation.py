@@ -982,11 +982,22 @@ def staged_adaptation(
             start_state = (init_state, init_adaptation_state)
             keys = jax.random.split(rng_key, num_steps)
             schedule = _eff_schedule_fn(num_steps)
-            last_state, info = jax.lax.scan(
-                one_step,
-                start_state,
-                (jnp.arange(num_steps), keys, schedule),
-            )
+
+            # Wrap the scan in an explicit jit. `one_step` stays an ordinary
+            # Python closure (not a jit argument), so no static_argnames /
+            # hashability change is needed. Un-jitted (eager) `lax.scan`
+            # dispatch on CPU is ~2-3x slower per call on jax>=0.11
+            # (jax-ml/jax#37465); compiling the loop once here avoids that
+            # regardless of jax version.
+            @jax.jit
+            def _scan(start_state, keys, schedule):
+                return jax.lax.scan(
+                    one_step,
+                    start_state,
+                    (jnp.arange(num_steps), keys, schedule),
+                )
+
+            last_state, info = _scan(start_state, keys, schedule)
 
             last_chain_state, last_warmup_state, *_ = last_state
 
@@ -1073,11 +1084,17 @@ def staged_adaptation(
             start_state = (init_states, init_adaptation_state)
             keys = jax.random.split(rng_key, num_steps)
             schedule = _eff_schedule_fn(num_steps)
-            last_state, info = jax.lax.scan(
-                one_step_mc,
-                start_state,
-                (jnp.arange(num_steps), keys, schedule),
-            )
+
+            # See the single-chain branch above for why this is jit-wrapped.
+            @jax.jit
+            def _scan_mc(start_state, keys, schedule):
+                return jax.lax.scan(
+                    one_step_mc,
+                    start_state,
+                    (jnp.arange(num_steps), keys, schedule),
+                )
+
+            last_state, info = _scan_mc(start_state, keys, schedule)
 
             last_chain_state, last_warmup_state, *_ = last_state
 
